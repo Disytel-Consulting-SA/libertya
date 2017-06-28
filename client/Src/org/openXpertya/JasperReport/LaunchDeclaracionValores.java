@@ -13,6 +13,7 @@ import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCuentaCorriente
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCuponDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDTO;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDataSource;
+import org.openXpertya.JasperReport.DataSource.DeclaracionValoresProductsFiltered;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresTransferDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasReceiptDataSource;
@@ -158,6 +159,8 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		ValoresDataSource valoresDS = getValoresDataSource();
 		// Data Source de Comprobantes Anulados
 		DeclaracionValoresVoidedDocumentsDataSource voidDocumentsDS = getVoidDocumentsDataSource();
+		// Data Source de Artículos Filtrados
+		DeclaracionValoresProductsFiltered productFilteredDS = getProductsFilteredDataSource();
 		//////////////////////////////////////
 		// Subreporte de totales por tipo de transacción
 		MJasperReport trxSubreport = getDeclaracionValoresSubreport();
@@ -192,6 +195,13 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		// Se agregan los datasources de los subreportes
 		addReportParameter("SUBREPORT_VALORES_DATASOURCE", valoresDS);
 		//////////////////////////////////////
+		// Subreporte de Artículos filtrados
+		MJasperReport totalXKindSubreport = getTotalXKindSubreport(); 
+		// Se agrega el informe compilado como parámetro.
+		addReportParameter("COMPILED_SUBREPORT_TOTALXKIND", new ByteArrayInputStream(totalXKindSubreport.getBinaryData()));
+		// Se agregan los datasources de los subreportes
+		addReportParameter("SUBREPORT_PRODUCT_FILTEREDS_DATASOURCE", productFilteredDS);
+		//////////////////////////////////////
 		//	Totales
 		addReportParameter("TOTAL_DECLARACION_VALORES", valoresDS != null?valoresDS.getDeclaracionValoresTotalAmt():null);
 		addReportParameter("TOTAL_CUPON", cuponDS != null?cuponDS.getTotalAmt():null);
@@ -203,6 +213,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addReportParameter("TOTAL_CC", ccDS != null?ccDS.getTotalAmt():null);
 		addReportParameter("TOTAL_VENTA_RECEIPT", ventaReceiptDS != null?ventaReceiptDS.getTotalAmt():null);
 		addReportParameter("TOTAL_VOID_DOCUMENTS", voidDocumentsDS != null?voidDocumentsDS.getTotalAmt():null);
+		addReportParameter("TOTAL_PRODUCT_FILTEREDS", productFilteredDS != null?productFilteredDS.getTotalAmt():null);		
 	}
 	
 	
@@ -449,6 +460,14 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		return voidDocumentsDS;
 	}
 	
+	protected DeclaracionValoresProductsFiltered getProductsFilteredDataSource() throws Exception{
+		DeclaracionValoresProductsFiltered pfDS = null;
+		pfDS = new DeclaracionValoresProductsFiltered(
+				getCtx(), getValoresDTO(), getSelect(), getGroupBy(), getOrderBy(), get_TrxName());
+		pfDS = (DeclaracionValoresProductsFiltered) loadDSData(pfDS);
+		return pfDS;
+	}
+	
 	protected DeclaracionValoresDataSource loadDSData(DeclaracionValoresDataSource ds) throws Exception{
 		ds.loadData();
 		return ds;
@@ -480,6 +499,13 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	 */
 	protected MJasperReport getDeclaracionValoresSubreportVoidDocuments() throws Exception{
 		return getJasperReport(getCtx(), "DeclaracionDeValores-Subreport-Anulados", get_TrxName());
+	}
+	
+	/**
+	 * @return el subreporte de valores
+	 */
+	protected MJasperReport getTotalXKindSubreport() throws Exception{
+		return getJasperReport(getCtx(), "DeclaracionValores-TotalXKind", get_TrxName());
 	}
 	
 	/**

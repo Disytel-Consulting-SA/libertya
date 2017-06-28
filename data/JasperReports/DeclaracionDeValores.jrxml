@@ -63,6 +63,9 @@
 	<parameter name="TOTAL_NC" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="TOTAL_CC" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="ONLY_TOTALS" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="COMPILED_SUBREPORT_TOTALXKIND" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SUBREPORT_PRODUCT_FILTEREDS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="TOTAL_PRODUCT_FILTEREDS" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<variable name="total_efectivo" class="java.math.BigDecimal" resetType="Report" calculation="Nothing">
 	</variable>
@@ -499,7 +502,7 @@
 					<textElement textAlignment="Right">
 						<font pdfFontName="Helvetica-Bold" size="12" isBold="true" isItalic="false"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[($P{TOTAL_DECLARACION_VALORES} != null?$P{TOTAL_DECLARACION_VALORES}:BigDecimal.ZERO).subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[(($P{TOTAL_DECLARACION_VALORES} != null?$P{TOTAL_DECLARACION_VALORES}:BigDecimal.ZERO).subtract($P{CASH_BALANCE} == null?java.math.BigDecimal.ZERO:$P{CASH_BALANCE})).subtract($P{TOTAL_PRODUCT_FILTEREDS} == null?java.math.BigDecimal.ZERO:$P{TOTAL_PRODUCT_FILTEREDS})]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Band" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -716,6 +719,18 @@
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_ANULADOS_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_ANULADOS}]]></subreportExpression>
+				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="225"
+						y="317"
+						width="310"
+						height="15"
+						key="subreport-10"
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_PRODUCT_FILTEREDS_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TOTALXKIND}]]></subreportExpression>
 				</subreport>
 			</band>
 		</summary>

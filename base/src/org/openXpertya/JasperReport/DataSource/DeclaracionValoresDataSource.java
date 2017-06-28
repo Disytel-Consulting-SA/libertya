@@ -2,15 +2,24 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
+import org.openXpertya.model.MPreference;
+import org.openXpertya.model.PO;
+import org.openXpertya.model.X_M_Product;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 
 public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 
+	/** Nombre de preference que posee los artículos a filtrar en todos los data source */
+	private static final String productValuesFilterPreferenceName = "DeclaracionValores_FilterProductValues";
+	
 	/** Datos necesarios para los datos */
 	private DeclaracionValoresDTO valoresDTO;
 	
@@ -26,8 +35,11 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	/** String con los campos del ORDER BY de la query */
 	private String orderBy;
 	
-	/** Claúsula where adicional que deseen agregar las subclases */
+	/** Cláusula where adicional que deseen agregar las subclases */
 	private String additionalWhereClause;
+	
+	/** Lista de artículos a filtrar */
+	private int[] filterProductIDs = new int[0];
 	
 	public DeclaracionValoresDataSource(String trxName) {
 		super(trxName);
@@ -44,6 +56,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		setGroupBy(groupBy);
 		setOrderBy(orderBy);
 		setAdditionalWhereClause(null);
+		initFilteredProducts();
 	}
 	
 	public DeclaracionValoresDataSource(Properties ctx,
@@ -51,6 +64,28 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 			String orderBy, String additionalWhereClause, String trxName) {
 		this(ctx, valoresDTO, select, groupBy, orderBy, trxName);
 		setAdditionalWhereClause(additionalWhereClause);
+	}
+	
+	protected void initFilteredProducts(){
+		String productValues = MPreference.searchCustomPreferenceValue(
+				productValuesFilterPreferenceName, Env.getAD_Client_ID(getCtx()),
+				Env.getAD_Org_ID(getCtx()), null, true);
+		if(!Util.isEmpty(productValues, true)){
+			// Iterar por los artículos de filtro
+			StringTokenizer tokens = new StringTokenizer(productValues, ";");
+			String token;
+			StringBuffer whereClause = new StringBuffer("(");
+			while(tokens.hasMoreTokens()){
+				token = tokens.nextToken();
+				whereClause.append("'").append(token).append("',");
+			}
+			whereClause = new StringBuffer(whereClause.substring(0, whereClause.lastIndexOf(",")));
+			whereClause.append(")");
+			int[] productIDs = PO.getAllIDs(X_M_Product.Table_Name,
+					"ad_client_id = " + Env.getAD_Client_ID(getCtx()) + " AND value IN " + whereClause.toString(),
+					getTrxName());
+			setFilterProductIDs(productIDs);
+		}
 	}
 	
 	protected String getStdSelect(boolean withWhereClause){
@@ -71,6 +106,10 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	}
 
 	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus, boolean withAllocationActive){
+		return getStdWhereClause(withTenderType, tableAlias, addDocStatus, withAllocationActive, true);
+	}
+	
+	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus, boolean withAllocationActive, boolean withProductFilter){
 		StringBuffer stdWhere = new StringBuffer();
 		if(!Util.isEmpty(tableAlias, true)){
 			tableAlias += ".";
@@ -102,6 +141,12 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 		}
 		if(!Util.isEmpty(getAdditionalWhereClause(), true)){
 			stdWhere.append(getAdditionalWhereClause());
+		}
+		// Filtrar documentos que posean los artículos definidos en la
+		// preference de corrección de cobranza
+		if (withProductFilter && getFilterProductIDs().length > 0
+				&& !Util.isEmpty(getFilterProductSetOperator())) {
+			stdWhere.append(getInvoiceProductFiltered("c_invoice_id", true));
 		}
 		return Util.removeInitialAND(stdWhere.toString());
 	}
@@ -152,6 +197,29 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	 */
 	protected boolean isFunView(){
 		return true;
+	}
+	
+	/***
+	 * @return el operador (IN o NOT IN) que permite filtrar los comprobantes de
+	 *         recupero de payments en base a la preference donde se registran
+	 *         los artículos a filtrar
+	 */
+	protected String getFilterProductSetOperator(){
+		return " NOT IN ";
+	}
+	
+	/**
+	 * @return Condición con el conjunto de c_invoice_id que poseen los
+	 *         artículos a filtrar
+	 */
+	protected String getInvoiceProductFiltered(String invoiceColumnName, boolean withInitialAnd){
+		StringBuffer productFilterWhereClause = new StringBuffer(withInitialAnd?" AND ":"").append(invoiceColumnName);
+		productFilterWhereClause.append(getFilterProductSetOperator());
+		productFilterWhereClause.append(" (SELECT distinct c_invoice_id FROM c_invoiceline WHERE m_product_id IN ");
+		productFilterWhereClause
+				.append(Arrays.toString(getFilterProductIDs()).replaceAll("]", ")").replaceAll("\\[", "("));
+		productFilterWhereClause.append(") ");
+		return productFilterWhereClause.toString();
 	}
 	
 	/**
@@ -205,5 +273,13 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 
 	protected void setAdditionalWhereClause(String additionalWhereClause) {
 		this.additionalWhereClause = additionalWhereClause;
+	}
+
+	protected int[] getFilterProductIDs() {
+		return filterProductIDs;
+	}
+
+	protected void setFilterProductIDs(int[] filterProductIDs) {
+		this.filterProductIDs = filterProductIDs;
 	}
 }

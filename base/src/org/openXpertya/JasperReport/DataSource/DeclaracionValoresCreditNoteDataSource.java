@@ -35,4 +35,14 @@ public class DeclaracionValoresCreditNoteDataSource extends
 	protected String getDSDataTable(){
 		return getDSFunView("c_pos_declaracionvalores_credit_filtered");
 	}
+	
+	@Override
+	protected String getInvoiceProductFiltered(String invoiceColumnName, boolean withInitialAnd){
+		StringBuffer where = new StringBuffer(" AND (( ");
+		where.append(super.getInvoiceProductFiltered(invoiceColumnName, false));
+		where.append(" ) AND ( ");
+		where.append(super.getInvoiceProductFiltered("doc_id", false));
+		where.append(" )) ");
+		return where.toString();
+	}
 }
