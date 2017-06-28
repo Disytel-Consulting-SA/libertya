@@ -58,7 +58,7 @@ public class MPerceptionsSettlement extends X_C_PerceptionsSettlement {
 				amt = amt.add(rs.getBigDecimal("amount"));
 			}
 
-			X_C_CreditCardSettlement settlement = new X_C_CreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
+			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
 			settlement.setPerception(amt);
 			if (!settlement.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
