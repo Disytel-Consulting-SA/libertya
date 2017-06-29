@@ -184,6 +184,7 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 		invoice.setC_DocTypeTarget_ID(docTypeID);
 		invoice.setPaymentRule(getInvoice().getPaymentRule());
 		invoice.setCreateCashLine(false);
+		invoice.setIsVoidable(true);
 		if(!invoice.save()){
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}
