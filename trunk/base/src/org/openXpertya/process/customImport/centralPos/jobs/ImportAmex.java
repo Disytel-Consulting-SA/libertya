@@ -76,19 +76,25 @@ public class ImportAmex extends Import {
 						if (tax != null) {
 							if (AmexPaymentsWithTaxes.match(payment, tax)) {
 								apwt = new AmexPaymentsWithTaxes(payment, tax);
-								break;
+								int no = apwt.save(ctx, trxName);
+								if (no > 0) {
+									processed += no;
+								} else if (no < 0) {
+									areadyExists += (no * -1);
+								}
 							}
 						}
 					}
 					if (apwt == null) {
 						apwt = new AmexPaymentsWithTaxes(payment);
+						int no = apwt.save(ctx, trxName);
+						if (no > 0) {
+							processed += no;
+						} else if (no < 0) {
+							areadyExists += (no * -1);
+						}
 					}
-					int no = apwt.save(ctx, trxName);
-					if (no > 0) {
-						processed += no;
-					} else if (no < 0) {
-						areadyExists += (no * -1);
-					}
+					
 				}
 			}
 			log.info("Procesados = " + processed + ", Preexistentes = " + areadyExists + ", Pagina = " + currentPage + "/" + lastPage);
