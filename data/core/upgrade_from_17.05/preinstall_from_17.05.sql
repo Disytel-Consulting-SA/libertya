@@ -110,7 +110,12 @@ ALTER TABLE c_payment_recovery_config OWNER TO libertya;
 --20170628-1400 Merge de revisión 2047
 ALTER TABLE c_perceptionssettlement ALTER COLUMN internalno DROP NOT NULL;
 
---20170630-1145 Los registros en cuestión no contenian UID
-update m_pricelist set ad_componentobjectuid = 'CORE-M_PriceList-'||m_pricelist_id where ad_client_id = 1010016 and ad_componentobjectuid is null;
-update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version-'||m_pricelist_id where ad_client_id = 1010016 and ad_componentobjectuid is null;
+--20170630-1201 Los registros en cuestión no contenian UID (usar a partir de ahora los especificados en version std) 
+update m_pricelist set ad_componentobjectuid = 'CORE-M_PriceList-1010595' where name = 'Ventas' and ad_client_id = 1010016 and ad_componentobjectuid is null;
+update m_pricelist set ad_componentobjectuid = 'CORE-M_PriceList-1010596' where name = 'Standard' and ad_client_id = 1010016 and ad_componentobjectuid is null;
+update m_pricelist set ad_componentobjectuid = 'CORE-M_PriceList-1010597' where name = 'Costo' and ad_client_id = 1010016 and ad_componentobjectuid is null;
+update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version-1010595' where name = 'Ventas Inicial' and ad_client_id = 1010016 and ad_componentobjectuid is null;
+update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version-1010596' where name = '01.08.2008' and ad_client_id = 1010016 and ad_componentobjectuid is null;
+update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version-1010597' where name = 'Costo Inicial' and ad_client_id = 1010016 and ad_componentobjectuid is null;
+
 
