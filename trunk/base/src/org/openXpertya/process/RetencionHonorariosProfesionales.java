@@ -85,16 +85,12 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 		
 		// Si los pagos anteriores acumulados son mayores al importe no
 		// imponible, entonces no lo tomo a este último
-		// TODO esta porción de código fue proporcionada por el algoritmo de
-		// Horacio, verificar si hay que dejarla o no
-		// --------------------------------------------------------------
-//		if(getPagosAnteriores().compareTo(getImporteNoImponible()) > 0){
-//			setImporteNoImponible(Env.ZERO);
-//		}
-		// --------------------------------------------------------------
+		if(getPagosAnteriores().compareTo(getImporteNoImponible()) > 0){
+			setImporteNoImponible(Env.ZERO);
+		}
 		
 		// Se calcula la base imponible. (el monto sujeto a la aplicación de la retención).
-		// BI = PAA + EP - INI 
+		// BI = PAA + EP - INI
 		baseImponible = getPagosAnteriores().add(getPayNetAmt()).subtract(getImporteNoImponible());
 		
 		// Si la base imponible es menor que cero, entonces no hay retención que aplicar y
