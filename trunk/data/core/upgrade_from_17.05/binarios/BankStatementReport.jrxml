@@ -5,10 +5,10 @@
 		 name="BankStatementReport"
 		 columnCount="1"
 		 printOrder="Vertical"
-		 orientation="Portrait"
-		 pageWidth="595"
-		 pageHeight="842"
-		 columnWidth="535"
+		 orientation="Landscape"
+		 pageWidth="842"
+		 pageHeight="595"
+		 columnWidth="782"
 		 columnSpacing="0"
 		 leftMargin="30"
 		 rightMargin="30"
@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -27,18 +27,22 @@
 	<parameter name="C_BankAccount_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="DateFrom" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="DateTo" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="OnlyCharged" isForPrompting="false" class="java.lang.String"/>
 	<queryString><![CDATA[select bs.c_bankstatement_id, bs.name as bankstatement_name, bs.statementdate, ba.description as bankaccount_description, 
 	bsl.c_bankstatementline_id, coalesce(bsl.description,p.description) as bankstatementline_description, bsl.stmtamt, bsl.line, 
-	p.c_payment_id, dt.c_doctype_id, dt.name as payment_doctypename
+	p.c_payment_id, dt.c_doctype_id, dt.name as payment_doctypename, c.c_charge_id, c.value as chargevalue, c.name as chargename
 from c_bankstatement bs
 inner join c_bankaccount ba on ba.c_bankaccount_id = bs.c_bankaccount_id
 inner join c_bankstatementline bsl on bsl.c_bankstatement_id = bs.c_bankstatement_id
+left join c_charge c on c.c_charge_id = bsl.c_charge_id
 left join c_payment p on bsl.c_payment_id = p.c_payment_id
 left join c_doctype dt on dt.c_doctype_id = p.c_doctype_id
 where bs.ad_client_id = $P{AD_CLIENT_ID}
 	and ($P{C_BankAccount_ID} is null OR $P{C_BankAccount_ID} = 0 OR bs.c_bankaccount_id = $P{C_BankAccount_ID})
 	and ($P{DateFrom}::date is null OR bs.statementdate >= $P{DateFrom}::date)
 	and ($P{DateTo}::date is null OR bs.statementdate <= $P{DateTo}::date)
+	and bs.docstatus IN ('CO','CL')
+	and (CASE WHEN $P{OnlyCharged} = 'Y' THEN bsl.c_charge_id is not null ELSE true END)
 order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryString>
 
 	<field name="c_bankstatement_id" class="java.lang.Integer"/>
@@ -52,6 +56,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 	<field name="c_payment_id" class="java.lang.Integer"/>
 	<field name="c_doctype_id" class="java.lang.Integer"/>
 	<field name="payment_doctypename" class="java.lang.String"/>
+	<field name="c_charge_id" class="java.lang.Integer"/>
+	<field name="chargevalue" class="java.lang.String"/>
+	<field name="chargename" class="java.lang.String"/>
 
 	<variable name="SUM_STMTAMT" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{stmtamt}]]></variableExpression>
@@ -61,16 +68,16 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 			</band>
 		</background>
 		<title>
-			<band height="96"  isSplitAllowed="true" >
+			<band height="106"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
 						y="0"
-						width="535"
+						width="246"
 						height="16"
 						key="staticText-1"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center">
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
 						<font pdfFontName="Helvetica-Bold" size="12" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Listado de Extractos Bancarios]]></text>
@@ -171,21 +178,12 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{DateTo}]]></textFieldExpression>
 				</textField>
-				<line direction="TopDown">
-					<reportElement
-						x="149"
-						y="16"
-						width="230"
-						height="0"
-						key="line-1"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="85"
-						y="81"
-						width="105"
+						x="106"
+						y="91"
+						width="140"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-5"/>
@@ -199,8 +197,8 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="81"
-						width="85"
+						y="91"
+						width="106"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-6"/>
@@ -213,9 +211,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="190"
-						y="81"
-						width="56"
+						x="246"
+						y="91"
+						width="61"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-7"/>
@@ -228,9 +226,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="246"
-						y="81"
-						width="126"
+						x="307"
+						y="91"
+						width="177"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-8"/>
@@ -243,9 +241,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="372"
-						y="81"
-						width="78"
+						x="585"
+						y="91"
+						width="93"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-9"/>
@@ -258,9 +256,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="450"
-						y="81"
-						width="55"
+						x="678"
+						y="91"
+						width="68"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-10"/>
@@ -273,9 +271,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="505"
-						y="81"
-						width="30"
+						x="746"
+						y="91"
+						width="36"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-11"/>
@@ -284,6 +282,37 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Linea]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="0"
+						y="73"
+						width="535"
+						height="16"
+						key="staticText-13"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{OnlyCharged} != null && $P{OnlyCharged}.equals("Y"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="9"/>
+					</textElement>
+				<text><![CDATA[Sólo Líneas de Extracto con Cargo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="484"
+						y="91"
+						width="101"
+						height="15"
+						backcolor="#EDECEC"
+						key="staticText-14"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Cargo]]></text>
 				</staticText>
 			</band>
 		</title>
@@ -301,7 +330,7 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 					<reportElement
 						x="0"
 						y="0"
-						width="85"
+						width="106"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -313,9 +342,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="85"
+						x="106"
 						y="0"
-						width="105"
+						width="140"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -327,9 +356,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="190"
+						x="246"
 						y="0"
-						width="56"
+						width="61"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -341,9 +370,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="246"
+						x="307"
 						y="0"
-						width="126"
+						width="177"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -355,9 +384,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="372"
+						x="585"
 						y="0"
-						width="78"
+						width="93"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -369,9 +398,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="450"
+						x="678"
 						y="0"
-						width="55"
+						width="68"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -383,9 +412,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="###0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="505"
+						x="746"
 						y="0"
-						width="30"
+						width="36"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -394,6 +423,20 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{line}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="484"
+						y="0"
+						width="101"
+						height="15"
+						key="textField-6"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{chargename}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
@@ -405,9 +448,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 			<band height="14"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="501"
+						x="746"
 						y="0"
-						width="34"
+						width="36"
 						height="14"
 						key="textField-4"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -422,9 +465,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 			<band height="14"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="501"
+						x="746"
 						y="0"
-						width="34"
+						width="36"
 						height="14"
 						key="textField-5"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -440,9 +483,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="368"
+						x="585"
 						y="0"
-						width="78"
+						width="93"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-12"/>
@@ -454,9 +497,9 @@ order by bs.statementdate, bs.name, bs.c_bankstatement_id, bsl.line]]></queryStr
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="446"
+						x="678"
 						y="0"
-						width="55"
+						width="68"
 						height="15"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
