@@ -1753,6 +1753,9 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	// Use PO method for persistence, or direct INSERT INTO clause from X_ 
 	protected boolean directInsert = false;
 	
+	// Bajo direct insert, omitir incluso cualquier gestion de PO (como preliminares antes de la inserción o bien saveFinish)
+	protected boolean skipHandlers = false;
+	
 	
 	/**
 	 * 	Is new record
@@ -1779,6 +1782,10 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	 * @return true if saved
 	 */
 	public boolean save() {
+		// Insercion directa omitiendo cualquier tipo de logica?
+		if (directInsert && skipHandlers) 
+			return insertDirect();
+		
 		// New
 		if (!m_createNew && m_IDs[0].equals(I_ZERO)) // first key value = 0
 		{
@@ -4680,6 +4687,15 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	public void setDirectInsert(boolean directInsert) {
 		this.directInsert = directInsert;
 	}
+	
+	public boolean isSkipHandlers() {
+		return skipHandlers;
+	}
+
+	public void setSkipHandlers(boolean skipHandlers) {
+		this.skipHandlers = skipHandlers;
+	}
+
 
 	public void setLog(CLogger log){
 		this.log = log;

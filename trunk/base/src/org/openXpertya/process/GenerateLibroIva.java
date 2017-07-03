@@ -151,6 +151,10 @@ public class GenerateLibroIva extends SvrProcess {
  		        // cargo los datos dentro de la tabla T_LibroIVA
  				X_T_LibroIva linea = new X_T_LibroIva(getCtx(),0,get_TrxName());
  				linea.setDirectInsert(true);
+ 				linea.setSkipHandlers(true);
+ 				// Esto es necesario dado que estamos usando SkipHandlers (no realiza ningun tipo de actividad previa/posterior al insert)
+ 				linea.setT_Libroiva_ID(DB.getNextID(getAD_Client_ID(), X_T_LibroIva.Table_Name, get_TrxName()));
+ 				
  				linea.setAD_PInstance_ID(getAD_PInstance_ID());
  				linea.setC_Invoice_ID(rs.getInt("c_invoice_id"));
  				linea.setDocumentNo(rs.getString("documentno"));
