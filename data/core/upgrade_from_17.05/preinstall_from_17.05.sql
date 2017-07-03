@@ -118,4 +118,7 @@ update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version
 update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version-1010596' where name = '01.08.2008' and ad_client_id = 1010016 and ad_componentobjectuid is null;
 update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version-1010597' where name = 'Costo Inicial' and ad_client_id = 1010016 and ad_componentobjectuid is null;
 
-
+--20170703-1225 Los tipos definidos generaban numeric field overflow para casos con valores grandes.
+alter table t_libroiva alter column neto type numeric(20,2);
+alter table t_libroiva alter column totalfacturado type numeric(20,2);
+alter table t_libroiva alter column importe type numeric(20,2);
