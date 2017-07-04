@@ -85,7 +85,6 @@ public class CopyVendorProducts extends SvrProcess {
 		sql.append("SELECT * ");
 		sql.append("FROM m_product_po ");
 		sql.append("WHERE c_bpartner_id = ? ");
-		sql.append("AND IsActive = 'Y'");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
