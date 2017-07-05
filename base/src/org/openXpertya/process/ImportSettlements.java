@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCommissionConcepts;
 import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.MCurrency;
@@ -37,6 +38,7 @@ import org.openXpertya.process.customImport.centralPos.mapping.VisaPayments;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Importación de liquidaciones desde tablas temporales.
@@ -56,6 +58,7 @@ public class ImportSettlements extends SvrProcess {
 	/** Moneda por defecto. */
 	private MCurrency defaultCurrency;
 
+	private Map<Integer, Integer> orgIDForBP = new HashMap<Integer, Integer>();
 
 	@Override
 	protected void prepare() {
@@ -373,7 +376,7 @@ public class ImportSettlements extends SvrProcess {
 
 				MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 				settlement.setGenerateChildrens(false);
-
+				settlement.setAD_Org_ID(getOrgID(C_BPartner_ID));
 				settlement.setCreditCardType(MCreditCardSettlement.CREDITCARDTYPE_FIRSTDATA);
 				settlement.setC_BPartner_ID(C_BPartner_ID);
 				settlement.setPaymentDate(new Timestamp(date.getTime()));
@@ -394,6 +397,7 @@ public class ImportSettlements extends SvrProcess {
 						MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 						ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
 						ec.save(get_TrxName());
 						expensesAmt = expensesAmt.add(expense);
@@ -410,6 +414,7 @@ public class ImportSettlements extends SvrProcess {
 						MIVASettlements iv = new MIVASettlements(getCtx(), 0, get_TrxName()); 
 						iv.setC_Tax_ID(C_Tax_ID);
 						iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						iv.setAD_Org_ID(settlement.getAD_Org_ID());
 						iv.setAmount(iva);
 						iv.save(get_TrxName());
 						ivaAmt = ivaAmt.add(iva);
@@ -426,6 +431,7 @@ public class ImportSettlements extends SvrProcess {
 						MCommissionConcepts cc = new MCommissionConcepts(getCtx(), 0, get_TrxName());
 						cc.setC_CardSettlementConcepts_ID(C_CardSettlementConcepts_ID);
 						cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						cc.setAD_Org_ID(settlement.getAD_Org_ID());
 						cc.setAmount(commission);
 						cc.save(get_TrxName());
 						commissionAmt = commissionAmt.add(commission); 
@@ -442,6 +448,7 @@ public class ImportSettlements extends SvrProcess {
 						MPerceptionsSettlement ps = new MPerceptionsSettlement(getCtx(), 0, get_TrxName());
 						ps.setC_Tax_ID(C_Tax_ID);
 						ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ps.setAD_Org_ID(settlement.getAD_Org_ID());
 						ps.setAmount(perception);
 						ps.save(get_TrxName());
 						perceptionAmt = perceptionAmt.add(perception); 
@@ -458,6 +465,7 @@ public class ImportSettlements extends SvrProcess {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setAmount(withholding);
 						ws.save(get_TrxName());
 						withholdingAmt = withholdingAmt.add(withholding);
@@ -474,6 +482,7 @@ public class ImportSettlements extends SvrProcess {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setAmount(withholding);
 						ws.save(get_TrxName());
 						withholdingAmt = withholdingAmt.add(withholding);
@@ -490,6 +499,7 @@ public class ImportSettlements extends SvrProcess {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setC_Region_ID(retSchema.getC_Region_ID());
 						ws.setAmount(withholding);
 						ws.save(get_TrxName());
@@ -624,7 +634,7 @@ public class ImportSettlements extends SvrProcess {
 					
 					MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 					settlement.setGenerateChildrens(false);
-	
+					settlement.setAD_Org_ID(getOrgID(C_BPartner_ID));
 					settlement.setCreditCardType(MCreditCardSettlement.CREDITCARDTYPE_NARANJA);
 					settlement.setC_BPartner_ID(C_BPartner_ID);
 					settlement.setPaymentDate(new Timestamp(date.getTime()));
@@ -646,6 +656,7 @@ public class ImportSettlements extends SvrProcess {
 							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setC_Region_ID(retSchema.getC_Region_ID());
 							ws.setAmount(withholding);
 							ws.save();
@@ -663,6 +674,7 @@ public class ImportSettlements extends SvrProcess {
 							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
 							ws.save();
 							withholdingAmt = withholdingAmt.add(withholding);
@@ -679,6 +691,7 @@ public class ImportSettlements extends SvrProcess {
 							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
 							ws.save();
 							withholdingAmt = withholdingAmt.add(withholding);
@@ -697,6 +710,7 @@ public class ImportSettlements extends SvrProcess {
 							MCommissionConcepts cc = new MCommissionConcepts(getCtx(), 0, get_TrxName());
 							cc.setC_CardSettlementConcepts_ID(C_CardSettlementConcepts_ID);
 							cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							cc.setAD_Org_ID(settlement.getAD_Org_ID());
 							cc.setAmount(commission);
 							cc.save();
 							commissionAmt = commissionAmt.add(commission); 
@@ -715,6 +729,7 @@ public class ImportSettlements extends SvrProcess {
 							MIVASettlements iv = new MIVASettlements(getCtx(), 0, get_TrxName()); 
 							iv.setC_Tax_ID(C_Tax_ID);
 							iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							iv.setAD_Org_ID(settlement.getAD_Org_ID());
 							iv.setAmount(iva);
 							iv.save();
 							ivaAmt = ivaAmt.add(iva);
@@ -735,6 +750,7 @@ public class ImportSettlements extends SvrProcess {
 							MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 							ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 							ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ec.setAD_Org_ID(settlement.getAD_Org_ID());
 							ec.setAmount(expense);
 							ec.save();
 							expensesAmt = expensesAmt.add(expense); 
@@ -884,7 +900,7 @@ public class ImportSettlements extends SvrProcess {
 				} else {
 					settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 					settlement.setGenerateChildrens(false);
-
+					settlement.setAD_Org_ID(getOrgID(C_BPartner_ID));
 					settlement.setCreditCardType(MCreditCardSettlement.CREDITCARDTYPE_AMEX);
 					settlement.setC_BPartner_ID(C_BPartner_ID);
 					settlement.setPaymentDate(date != null ? new Timestamp(date.getTime()) : null);
@@ -905,6 +921,7 @@ public class ImportSettlements extends SvrProcess {
 							MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 							ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 							ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID()); 
+							ec.setAD_Org_ID(settlement.getAD_Org_ID());
 							ec.setAmount(expense);
 							ec.save();
 							expensesAmt = expensesAmt.add(expense);
@@ -921,6 +938,7 @@ public class ImportSettlements extends SvrProcess {
 							MCommissionConcepts cc = new MCommissionConcepts(getCtx(), 0, get_TrxName());
 							cc.setC_CardSettlementConcepts_ID(C_CardSettlementConcepts_ID);
 							cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							cc.setAD_Org_ID(settlement.getAD_Org_ID());
 							cc.setAmount(commission);
 							cc.save();
 							commissionAmt = commissionAmt.add(commission);
@@ -941,6 +959,7 @@ public class ImportSettlements extends SvrProcess {
 							MIVASettlements ps = new MIVASettlements(getCtx(), 0, get_TrxName());
 							ps.setC_Tax_ID(C_Tax_ID);
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ps.setAD_Org_ID(settlement.getAD_Org_ID());
 							ps.setAmount(iva);
 							ps.save();
 							ivaAmt = ivaAmt.add(iva);
@@ -954,6 +973,7 @@ public class ImportSettlements extends SvrProcess {
 							MPerceptionsSettlement ps = new MPerceptionsSettlement(getCtx(), 0, get_TrxName());
 							ps.setC_Tax_ID(C_Tax_ID);
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ps.setAD_Org_ID(settlement.getAD_Org_ID());
 							ps.setAmount(perception);
 							ps.save();
 							perceptionAmt = perceptionAmt.add(perception);
@@ -967,6 +987,7 @@ public class ImportSettlements extends SvrProcess {
 							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
 							ws.save();
 							withholdingAmt = withholdingAmt.add(withholding);
@@ -980,6 +1001,7 @@ public class ImportSettlements extends SvrProcess {
 							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
 							ws.save();
 							withholdingAmt = withholdingAmt.add(withholding);
@@ -997,6 +1019,7 @@ public class ImportSettlements extends SvrProcess {
 								MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 								ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 								ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+								ws.setAD_Org_ID(settlement.getAD_Org_ID());
 								ws.setC_Region_ID(retSchema.getC_Region_ID());
 								ws.setAmount(withholding);
 								ws.save();
@@ -1015,6 +1038,7 @@ public class ImportSettlements extends SvrProcess {
 								MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 								ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 								ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+								ws.setAD_Org_ID(settlement.getAD_Org_ID());
 								ws.setC_Region_ID(retSch.getC_Region_ID());
 								ws.setAmount(withholding);
 								ws.save();
@@ -1158,7 +1182,7 @@ public class ImportSettlements extends SvrProcess {
 				
 				MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
 				settlement.setGenerateChildrens(false);
-
+				settlement.setAD_Org_ID(getOrgID(C_BPartner_ID));
 				settlement.setCreditCardType(MCreditCardSettlement.CREDITCARDTYPE_VISA);
 				settlement.setC_BPartner_ID(C_BPartner_ID);
 				settlement.setPaymentDate(new Timestamp(date.getTime()));
@@ -1180,6 +1204,7 @@ public class ImportSettlements extends SvrProcess {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setC_Region_ID(retSchema.getC_Region_ID());
 						ws.setAmount(withholding);
 						ws.save();
@@ -1197,6 +1222,7 @@ public class ImportSettlements extends SvrProcess {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setAmount(withholding);
 						ws.save();
 						withholdingAmt = withholdingAmt.add(withholding);
@@ -1213,6 +1239,7 @@ public class ImportSettlements extends SvrProcess {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setAmount(withholding);
 						ws.save();
 						withholdingAmt = withholdingAmt.add(withholding);
@@ -1229,6 +1256,7 @@ public class ImportSettlements extends SvrProcess {
 						MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 						ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
 						ec.save();
 						expensesAmt = expensesAmt.add(expense);
@@ -1245,6 +1273,7 @@ public class ImportSettlements extends SvrProcess {
 						MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 						ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
 						ec.save();
 						expensesAmt = expensesAmt.add(expense);
@@ -1261,6 +1290,7 @@ public class ImportSettlements extends SvrProcess {
 						MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 						ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
 						ec.save();
 						expensesAmt = expensesAmt.add(expense);
@@ -1277,6 +1307,7 @@ public class ImportSettlements extends SvrProcess {
 						MExpenseConcepts ec = new MExpenseConcepts(getCtx(), 0, get_TrxName());
 						ec.setC_Cardsettlementconcepts_ID(C_CardSettlementConcept_ID);
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
 						ec.save();
 						expensesAmt = expensesAmt.add(expense);
@@ -1293,6 +1324,7 @@ public class ImportSettlements extends SvrProcess {
 						MCommissionConcepts cc = new MCommissionConcepts(getCtx(), 0, get_TrxName());
 						cc.setC_CardSettlementConcepts_ID(C_CardSettlementConcepts_ID);
 						cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						cc.setAD_Org_ID(settlement.getAD_Org_ID());
 						cc.setAmount(commission);
 						cc.save();
 						commissionAmt = commissionAmt.add(commission);
@@ -1309,6 +1341,7 @@ public class ImportSettlements extends SvrProcess {
 						MIVASettlements iv = new MIVASettlements(getCtx(), 0, get_TrxName()); 
 						iv.setC_Tax_ID(C_Tax_ID);
 						iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						iv.setAD_Org_ID(settlement.getAD_Org_ID());
 						iv.setAmount(iva);
 						iv.save();
 						ivaAmt = ivaAmt.add(iva);
@@ -1326,6 +1359,7 @@ public class ImportSettlements extends SvrProcess {
 						MIVASettlements iv = new MIVASettlements(getCtx(), 0, get_TrxName()); 
 						iv.setC_Tax_ID(C_Tax_ID);
 						iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						iv.setAD_Org_ID(settlement.getAD_Org_ID());
 						iv.setAmount(iva);
 						iv.save();
 						ivaAmt = ivaAmt.add(iva);
@@ -1342,6 +1376,7 @@ public class ImportSettlements extends SvrProcess {
 						MPerceptionsSettlement ps = new MPerceptionsSettlement(getCtx(), 0, get_TrxName());
 						ps.setC_Tax_ID(C_Tax_ID);
 						ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+						ps.setAD_Org_ID(settlement.getAD_Org_ID());
 						ps.setAmount(perception);
 						ps.save();
 						perceptionAmt = perceptionAmt.add(perception);
@@ -1653,5 +1688,40 @@ public class ImportSettlements extends SvrProcess {
 		return -1;
 	}
 
+	/**
+	 * Obtiene la organización de la Entidad Comercial para asignar a la
+	 * liquidación
+	 * 
+	 * @param C_BPartner_ID
+	 * @return
+	 */
+	private Integer getOrgID(Integer C_BPartner_ID){
+		Integer orgID = getOrgIDForBP().get(C_BPartner_ID);
+		if(Util.isEmpty(orgID, true)){
+			orgID = obtainOrg(C_BPartner_ID);
+		}
+		if(Util.isEmpty(orgID, true)){
+			orgID = Env.getAD_Org_ID(getCtx());
+		}
+		getOrgIDForBP().put(C_BPartner_ID, orgID);
+		return orgID;
+	}
+
+	/**
+	 * @param C_BPartner_ID
+	 * @return la organización asociada a la EC parámetro
+	 */
+	protected Integer obtainOrg(Integer C_BPartner_ID){
+		MBPartner bp = new MBPartner(getCtx(), C_BPartner_ID, get_TrxName());
+		return bp.getAD_Org_ID();
+	}
+	
+	protected Map<Integer, Integer> getOrgIDForBP() {
+		return orgIDForBP;
+	}
+
+	protected void setOrgIDForBP(Map<Integer, Integer> orgIDForBP) {
+		this.orgIDForBP = orgIDForBP;
+	}
 }
 
