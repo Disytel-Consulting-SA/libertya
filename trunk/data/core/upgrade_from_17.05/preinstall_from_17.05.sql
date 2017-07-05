@@ -122,3 +122,6 @@ update m_pricelist_version set ad_componentobjectuid = 'CORE-M_PriceList_Version
 alter table t_libroiva alter column neto type numeric(20,2);
 alter table t_libroiva alter column totalfacturado type numeric(20,2);
 alter table t_libroiva alter column importe type numeric(20,2);
+
+--20170705-1200 NUeva columna botón para procesar artículos del proveedor
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner','processpo','character(1) NOT NULL DEFAULT ''Y''::bpchar'));

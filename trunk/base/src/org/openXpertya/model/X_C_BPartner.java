@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-04-27 11:40:07.923 */
+ *  @version  - 2017-07-05 12:13:05.962 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -37,6 +37,7 @@ setIsSummary (false);
 setIsVendor (false);
 setMinimumPurchasedAmt (Env.ZERO);
 setName (null);
+setProcessPO (null);
 setSearchUnallocatedPayments (false);
 setSecondaryCreditStatus (null);	// OK
 setSendEMail (false);
@@ -1376,6 +1377,29 @@ public BigDecimal getPotentialLifeTimeValue()
 BigDecimal bd = (BigDecimal)get_Value("PotentialLifeTimeValue");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+public static final int PROCESSPO_AD_Reference_ID = MReference.getReferenceID("Process PO Values");
+/** Activate Vendor Products = Y */
+public static final String PROCESSPO_ActivateVendorProducts = "Y";
+/** Desactivate Vendor Products = N */
+public static final String PROCESSPO_DesactivateVendorProducts = "N";
+/** Set Process Vendor Products */
+public void setProcessPO (String ProcessPO)
+{
+if (ProcessPO.equals("Y") || ProcessPO.equals("N") || ( refContainsValue("CORE-AD_Reference-1010382", ProcessPO) ) );
+ else throw new IllegalArgumentException ("ProcessPO Invalid value: " + ProcessPO + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010382") );
+if (ProcessPO == null) throw new IllegalArgumentException ("ProcessPO is mandatory");
+if (ProcessPO.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ProcessPO = ProcessPO.substring(0,1);
+}
+set_Value ("ProcessPO", ProcessPO);
+}
+/** Get Process Vendor Products */
+public String getProcessPO() 
+{
+return (String)get_Value("ProcessPO");
 }
 /** Set program_amt */
 public void setprogram_amt (BigDecimal program_amt)

@@ -97,8 +97,12 @@ public class MProductPO extends X_M_Product_PO {
 
     
     public static List<MProductPO> getOfBPartner(Properties ctx, Integer bPartnerID, String trxName) throws Exception{
+    	return getOfBPartner(ctx, bPartnerID, true, trxName);
+    }
+    
+    public static List<MProductPO> getOfBPartner(Properties ctx, Integer bPartnerID, boolean onlyActives, String trxName) throws Exception{
     	List<MProductPO> pos = new ArrayList<MProductPO>();
-    	String sql = "SELECT * FROM M_Product_PO " + "WHERE C_BPartner_ID=? AND IsActive='Y' ";
+		String sql = "SELECT * FROM M_Product_PO " + "WHERE C_BPartner_ID=? " + (onlyActives ? " AND IsActive='Y' " : "");
     	PreparedStatement ps = null;
     	ResultSet rs = null;
     	try {
