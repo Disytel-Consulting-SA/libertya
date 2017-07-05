@@ -45,6 +45,7 @@ public class MInOutLine extends X_M_InOutLine {
 	protected boolean isTPVInstance = false;
 	
 	protected MInvoiceLine invoiceLine = null;
+	private boolean stopSearchingInvoiceLine = false;
 	protected MOrderLine orderLine = null;
 
 	/**
@@ -903,8 +904,9 @@ public class MInOutLine extends X_M_InOutLine {
 	 * @return la línea de la factura con columna m_inoutline_id = getID().
 	 */
 	public MInvoiceLine getInvoiceLineReferenced(boolean requery) {
-		if (invoiceLine == null || requery) {
+		if ((invoiceLine == null && !isStopSearchingInvoiceLine()) || requery) {
 			invoiceLine = MInvoiceLine.getOfInOutLine(this);
+			setStopSearchingInvoiceLine(invoiceLine == null);
 		}
 		return invoiceLine;
 	}
@@ -1402,6 +1404,14 @@ public class MInOutLine extends X_M_InOutLine {
 	 */
 	public BigDecimal getPriceStdSales(){
 		return DB.getSQLValueBD(get_TrxName(), "SELECT * FROM determineproductpricestd(?,"+getAD_Org_ID()+",'Y')", getM_Product_ID());
+	}
+
+	public boolean isStopSearchingInvoiceLine() {
+		return stopSearchingInvoiceLine;
+	}
+
+	public void setStopSearchingInvoiceLine(boolean stopSearchingInvoiceLine) {
+		this.stopSearchingInvoiceLine = stopSearchingInvoiceLine;
 	}
 
 } // MInOutLine
