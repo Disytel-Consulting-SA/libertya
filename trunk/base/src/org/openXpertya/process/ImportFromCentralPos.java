@@ -104,10 +104,10 @@ public class ImportFromCentralPos extends SvrProcess {
 		if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_FIRSTDATA)) {
 
 			if (p_Date_From != null) {
-				importJob.addParam("fecha_presentacion-min", sdf.format(new Date(p_Date_From.getTime())));
+				importJob.addParam("fecha_vencimiento_clearing-min", sdf.format(new Date(p_Date_From.getTime())));
 			}
 			if (p_Date_To != null) {
-				importJob.addParam("fecha_presentacion-max", sdf.format(new Date(p_Date_To.getTime())));
+				importJob.addParam("fecha_vencimiento_clearing-max", sdf.format(new Date(p_Date_To.getTime())));
 			}
 			try {
 				msg = importJob.excecute();
@@ -143,10 +143,10 @@ public class ImportFromCentralPos extends SvrProcess {
 		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_VISA)) {
 
 			if (p_Date_From != null) {
-				importJob.addParam("fpres-min", sdf.format(new Date(p_Date_From.getTime())));
+				importJob.addParam("fpag-min", sdf.format(new Date(p_Date_From.getTime())));
 			}
 			if (p_Date_To != null) {
-				importJob.addParam("fpres-max", sdf.format(new Date(p_Date_To.getTime())));
+				importJob.addParam("fpag-max", sdf.format(new Date(p_Date_To.getTime())));
 			}
 			try {
 				msg = importJob.excecute();
