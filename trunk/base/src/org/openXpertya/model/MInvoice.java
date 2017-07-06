@@ -1961,8 +1961,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 
 		// Disytel: Si no hay conversion, no permitir seleccionar moneda destino
-		int priceListCurrency = new MPriceList(getCtx(), getM_PriceList_ID(),
-				null).getC_Currency_ID();
+		MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
+		int priceListCurrency = priceList.getC_Currency_ID();
 		if ((priceListCurrency != getC_Currency_ID() && MCurrency
 				.currencyConvert(new BigDecimal(1), priceListCurrency,
 						getC_Currency_ID(), getDateInvoiced(), getAD_Org_ID(),
@@ -2333,6 +2333,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return false;
 			}
 		} 
+		
+		// Si la Tarifa de la Factura tiene activo el campo “Actualizar Precios con Factura de Compra” y 
+		// si la Moneda de la Factura de Proveedor es diferente a la moneda de la Tarifa seleccionada para la Factura
+		// El campo Fecha de TC para Actualizar Precios debe ser obligatorio
+		if (!isSOTrx() && getC_Currency_ID() != priceListCurrency && priceList.isActualizarPreciosConFacturaDeCompra() && getFechadeTCparaActualizarPrecios()==null) {
+			log.saveError("Error", Msg.translate(getCtx(), "FechadeTCparaActualizarPreciosMandatory"));
+			return false;
+		}
 		
 		return true;
 	} // beforeSave
