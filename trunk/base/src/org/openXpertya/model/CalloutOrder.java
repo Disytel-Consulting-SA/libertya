@@ -392,9 +392,8 @@ public class CalloutOrder extends CalloutEngine {
                 MBPartner ec = new MBPartner(ctx, C_BPartner_ID, null);
             	int contEC = ec.getSalesRep_ID();
             	
-            	if (contEC == 0){
-            		mTab.setValue( "SalesRep_ID",null );
-            	} else {
+            	// No cambiar el responsable de ventas cuando no posee comercial/usuario
+            	if (!Util.isEmpty(contEC, true)){
             		mTab.setValue( "SalesRep_ID",contEC );
             	}
                 
