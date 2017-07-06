@@ -163,7 +163,7 @@ public class MBankAccount extends X_C_BankAccount {
 					 " AND (startno <= currentnext AND (endno = 0 OR endno >= currentnext)) " +
 					 " AND (bad.IsUserAssigned = 'N' OR (EXISTS (SELECT C_BankAccountDocUser_ID "
 												+ "					FROM C_BankAccountDocUser bau "
-												+ "					WHERE bau.C_BankAccountDoc_ID = C_BankAccountDoc.C_BankAccountDoc_ID "
+												+ "					WHERE bau.C_BankAccountDoc_ID = bad.C_BankAccountDoc_ID "
 												+ "						AND bau.IsActive = 'Y'"
 												+ "						AND bau.AD_User_ID = ?))) " + 
 					  "ORDER BY " +
@@ -173,13 +173,13 @@ public class MBankAccount extends X_C_BankAccount {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = DB.prepareStatement(sql, null);
+			ps = DB.prepareStatement(sql, get_TrxName());
 			
 			//Parámetros
 			ps.setInt(1, this.getID());
 			ps.setInt(2, Env.getAD_User_ID(getCtx()));
 			rs = ps.executeQuery();
-			while (rs.next()) {
+			if (rs.next()) {
 				bad = new X_C_BankAccountDoc(getCtx(), rs, get_TrxName());
 			}
 		} catch (Exception e) {
