@@ -504,7 +504,9 @@
 						y="15"
 						width="782"
 						height="0"
-						key="line-1"/>
+						key="line-1"
+						positionType="Float"
+						isPrintWhenDetailOverflows="true"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
