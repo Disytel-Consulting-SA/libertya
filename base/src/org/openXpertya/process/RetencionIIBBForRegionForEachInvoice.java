@@ -174,7 +174,8 @@ public class RetencionIIBBForRegionForEachInvoice extends RetencionIIBBForRegion
 				retencion.setIsSOTrx(isSOTrx());
 				retencion.setC_Invoice_Src_ID(invoiceSrc.getID());
 				if (save)
-					retencion.save();
+					if(!retencion.save())
+						throw new Exception(CLogger.retrieveErrorAsString());
 				retenciones.add(retencion);	
 			}
 		}
@@ -252,10 +253,6 @@ public class RetencionIIBBForRegionForEachInvoice extends RetencionIIBBForRegion
 			throw new Exception(recaudador_fac.getProcessMsg());
 		}
 		
-		if(!recaudador_fac.save()){
-			throw new Exception(CLogger.retrieveErrorAsString());
-		}
-		
 		return recaudador_fac;
 	}
 	
@@ -330,10 +327,6 @@ public class RetencionIIBBForRegionForEachInvoice extends RetencionIIBBForRegion
 		/*Completo la factura*/
 		if(!DocumentEngine.processAndSave(credito_prov, DocAction.ACTION_Complete, false)){
 			throw new Exception(credito_prov.getProcessMsg());
-		}
-		
-		if(!credito_prov.save()){
-			throw new Exception(CLogger.retrieveErrorAsString());
 		}
 		
 		retencion.setC_InvoiceLine_ID(cred_linea.getC_InvoiceLine_ID());
