@@ -375,12 +375,15 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 
 	@Override
 	public boolean voidIt() {
+		setDocAction(DOCACTION_None);
+		setProcessed(true);
 		return true;
 	}
 
 	@Override
 	public boolean closeIt() {
 		setDocAction(DOCACTION_None);
+		setProcessed(true);
 		return true;
 	}
 
