@@ -2225,7 +2225,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 
 		// Si es un débito, se aplican las percepciones
-		if (isDebit) {
+		if (isDebit && !isProcessed()) {
 			setApplyPercepcion(true);
 		}
 
