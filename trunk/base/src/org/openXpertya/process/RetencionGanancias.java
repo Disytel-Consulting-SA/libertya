@@ -218,7 +218,8 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		retencion.setbaseimponible_amt(getBaseImponible());
 		retencion.setIsSOTrx(isSOTrx());
 		if (save)
-			retencion.save();
+			if(!retencion.save())
+				throw new Exception(CLogger.retrieveErrorAsString());
 		
 		retenciones = new ArrayList<X_M_Retencion_Invoice>();
 		retenciones.add(retencion);
@@ -293,7 +294,7 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		recaudador_fac.setM_PriceList_ID(priceListID);
 
 		if (!recaudador_fac.save())
-			throw new Exception("@CollectorInvoiceSaveError@");
+			throw new Exception("@CollectorInvoiceSaveError@: " + CLogger.retrieveErrorAsString());
 
 		/* Linea de la factura */
 		MInvoiceLine fac_linea = new MInvoiceLine(Env.getCtx(), 0, getTrxName());
@@ -312,8 +313,9 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 					+ CLogger.retrieveErrorAsString());
 
 		/* Completo la factura */
-		recaudador_fac.processIt(DocAction.ACTION_Complete);
-		recaudador_fac.save();
+		if(DocumentEngine.processAndSave(recaudador_fac, MInvoice.DOCACTION_Complete, false)){
+			throw new Exception(recaudador_fac.getProcessMsg());
+		}
 
 		return recaudador_fac;
 	}
@@ -377,7 +379,7 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		credito_prov.setM_PriceList_ID(priceListID);
 
 		if (!credito_prov.save())
-			throw new Exception("@VendorRetencionDocSaveError@");
+			throw new Exception("@VendorRetencionDocSaveError@: " + CLogger.retrieveErrorAsString());
 
 		/* Linea de la nota de credito */
 		MInvoiceLine cred_linea = new MInvoiceLine(Env.getCtx(), 0,
@@ -393,11 +395,12 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		cred_linea.setC_Project_ID(credito_prov.getC_Project_ID());
 
 		if (!cred_linea.save())
-			throw new Exception("@VendorRetencionDocLineSaveError@");
+			throw new Exception("@VendorRetencionDocLineSaveError@ : " + CLogger.retrieveErrorAsString());
 
 		/* Completo la factura */
-		credito_prov.processIt(DocAction.ACTION_Complete);
-		credito_prov.save();
+		if(DocumentEngine.processAndSave(credito_prov, MInvoice.DOCACTION_Complete, false)){
+			throw new Exception(credito_prov.getProcessMsg());
+		}
 		retencion.setC_InvoiceLine_ID(cred_linea.getC_InvoiceLine_ID());
 
 		return credito_prov;
