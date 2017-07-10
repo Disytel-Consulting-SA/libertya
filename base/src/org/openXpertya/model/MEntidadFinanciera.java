@@ -20,15 +20,15 @@ public class MEntidadFinanciera extends X_M_EntidadFinanciera {
 	@Override
 	protected boolean beforeSave(boolean newRecord) {
 
-		if (!validEstablishmentNumber()) {
-			log.saveError("SaveError", Msg.getMsg(getCtx(), "WrongEstablishmentNumberErr"));
-			return false;
-		}
-
-		if (!validBankAccount()) {
-			log.saveError("SaveError", Msg.getMsg(getCtx(), "WrongBankAccountErr"));
-			return false;
-		}
+//		if (!validEstablishmentNumber()) {
+//			log.saveError("SaveError", Msg.getMsg(getCtx(), "WrongEstablishmentNumberErr"));
+//			return false;
+//		}
+//
+//		if (!validBankAccount()) {
+//			log.saveError("SaveError", Msg.getMsg(getCtx(), "WrongBankAccountErr"));
+//			return false;
+//		}
 
 		if (!validRegion()) {
 			log.saveError("SaveError", Msg.getMsg(getCtx(), "WrongRegionErr"));
