@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Charge
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-30 15:44:43.804 */
+ *  @version  - 2017-07-10 09:13:16.45 */
 public class X_C_Charge extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -109,12 +109,16 @@ public static final String CHARGETYPE_SimpleMaterialInOut = "S";
 public static final String CHARGETYPE_WarehouseTransfer = "T";
 /** Two Phase Movement = M */
 public static final String CHARGETYPE_TwoPhaseMovement = "M";
+/** Expenses = E */
+public static final String CHARGETYPE_Expenses = "E";
+/** Cash Movements = C */
+public static final String CHARGETYPE_CashMovements = "C";
 /** Set Charge Type.
 Charge Type */
 public void setChargeType (String ChargeType)
 {
-if (ChargeType.equals("D") || ChargeType.equals("W") || ChargeType.equals("S") || ChargeType.equals("T") || ChargeType.equals("M"));
- else throw new IllegalArgumentException ("ChargeType Invalid value - Reference = CHARGETYPE_AD_Reference_ID - D - W - S - T - M");
+if (ChargeType.equals("D") || ChargeType.equals("W") || ChargeType.equals("S") || ChargeType.equals("T") || ChargeType.equals("M") || ChargeType.equals("E") || ChargeType.equals("C") || ( refContainsValue("CORE-AD_Reference-1010111", ChargeType) ) );
+ else throw new IllegalArgumentException ("ChargeType Invalid value: " + ChargeType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010111") );
 if (ChargeType == null) throw new IllegalArgumentException ("ChargeType is mandatory");
 if (ChargeType.length() > 2)
 {
@@ -242,8 +246,8 @@ public static final String SIGN_1 = "1";
 /** Set Sign */
 public void setSign (String Sign)
 {
-if (Sign.equals("-1") || Sign.equals("1"));
- else throw new IllegalArgumentException ("Sign Invalid value - Reference = SIGN_AD_Reference_ID - -1 - 1");
+if (Sign.equals("-1") || Sign.equals("1") || ( refContainsValue("CORE-AD_Reference-1000069", Sign) ) );
+ else throw new IllegalArgumentException ("Sign Invalid value: " + Sign + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000069") );
 if (Sign == null) throw new IllegalArgumentException ("Sign is mandatory");
 if (Sign.length() > 10)
 {
