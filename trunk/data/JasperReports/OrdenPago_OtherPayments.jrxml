@@ -60,7 +60,7 @@
 					<reportElement
 						x="0"
 						y="0"
-						width="57"
+						width="73"
 						height="19"
 						forecolor="#666666"
 						key="staticText-7"/>
@@ -72,9 +72,9 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="57"
+						x="73"
 						y="0"
-						width="127"
+						width="117"
 						height="19"
 						forecolor="#666666"
 						key="staticText-8"/>
@@ -86,9 +86,9 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="184"
+						x="190"
 						y="0"
-						width="115"
+						width="109"
 						height="19"
 						forecolor="#666666"
 						key="staticText-9"/>
@@ -144,78 +144,84 @@
 		</columnHeader>
 		<detail>
 			<band height="18"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
-						width="57"
+						width="73"
 						height="17"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{PaymentType}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="57"
+						x="73"
 						y="0"
-						width="127"
+						width="117"
 						height="17"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{CashName}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="184"
+						x="190"
 						y="0"
-						width="115"
+						width="109"
 						height="17"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{BankAccount}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="299"
 						y="0"
 						width="100"
 						height="17"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{RoutingNo}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="399"
 						y="0"
 						width="74"
 						height="17"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$F{TransferDate}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="473"
 						y="0"
 						width="55"
 						height="17"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font/>
@@ -229,7 +235,8 @@
 						width="534"
 						height="0"
 						forecolor="#CCCCCC"
-						key="line-1"/>
+						key="line-1"
+						isPrintWhenDetailOverflows="true"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 			</band>
