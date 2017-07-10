@@ -51,6 +51,14 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String OP_OTHER_PAYMENTS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000015";
 	protected final static String OP_OTHER_PAYMENTS_JASPER_REPORT_FILENAME = "OrdenPago_OtherPayments.jasper";
 	
+	/** Listado de OC */
+	protected final static String PURCHASE_ORDER_REPORT_UID = "CORE-AD_Process-1010433";
+	protected final static String PURCHASE_ORDER_REPORT_FILENAME = "PurchaseOrderReport.jrxml";
+	
+	/** Listado de OC que Recibieron Mercadería y no Poseen Factura Cargada */
+	protected final static String PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_UID = "CORE-AD_Process-1010426";
+	protected final static String PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME = "PurchaseOrderWithInOutWithOutInvoice.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -183,6 +191,28 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(OP_OTHER_PAYMENTS_JASPER_REPORT_FILENAME)));
+		
+		// Listado de OC
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				PURCHASE_ORDER_REPORT_UID,
+				PURCHASE_ORDER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(PURCHASE_ORDER_REPORT_FILENAME)));
+		
+		// Listado de OC que Recibieron Mercadería y no Poseen Factura Cargada
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_UID,
+				PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(PURCHASE_ORDER_WITH_INOUT_WITH_OUT_INVOICE_REPORT_FILENAME)));
 		
 		return " ";
 	}
