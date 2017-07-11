@@ -298,7 +298,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 			 throw new Exception( "@CollectorInvoiceLineSaveError@: "+CLogger.retrieveErrorAsString());
 		
 		/*Completo la factura*/
-		if(DocumentEngine.processAndSave(recaudador_fac, MInvoice.DOCACTION_Complete, false)){
+		if(!DocumentEngine.processAndSave(recaudador_fac, MInvoice.DOCACTION_Complete, false)){
 			throw new Exception(recaudador_fac.getProcessMsg());
 		}
 		
@@ -374,7 +374,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 			 throw new Exception( "@VendorRetencionDocLineSaveError@: "+CLogger.retrieveErrorAsString());
 		
 		/*Completo la factura*/
-		if(DocumentEngine.processAndSave(credito_prov, MInvoice.DOCACTION_Complete, false)){
+		if(!DocumentEngine.processAndSave(credito_prov, MInvoice.DOCACTION_Complete, false)){
 			throw new Exception(credito_prov.getProcessMsg());
 		}
 		retencion.setC_InvoiceLine_ID(cred_linea.getC_InvoiceLine_ID());
