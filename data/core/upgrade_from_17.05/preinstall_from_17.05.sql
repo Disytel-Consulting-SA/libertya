@@ -171,3 +171,31 @@ UPDATE c_externalserviceattributes esa SET AD_ComponentObjectUID = 'CORE-C_Exter
 UPDATE c_externalserviceattributes esa SET AD_ComponentObjectUID = 'CORE-C_ExternalServiceAttributes-1000017', name = '', description = 'Retención' WHERE esa.ad_client_id = 1010016 and esa.ad_componentobjectuid is null and value = 'Ret Ganancias' AND EXISTS (SELECT es.c_externalservice_id FROM c_externalservice es WHERE es.c_externalservice_id = esa.c_externalservice_id and es.name = 'Central Pos - Visa');
 UPDATE c_externalserviceattributes esa SET AD_ComponentObjectUID = 'CORE-C_ExternalServiceAttributes-1000016', name = '', description = 'Retención' WHERE esa.ad_client_id = 1010016 and esa.ad_componentobjectuid is null and value = 'Ret IVA' AND EXISTS (SELECT es.c_externalservice_id FROM c_externalservice es WHERE es.c_externalservice_id = esa.c_externalservice_id and es.name = 'Central Pos - Visa');
 UPDATE c_externalserviceattributes esa SET AD_ComponentObjectUID = 'CORE-C_ExternalServiceAttributes-1000008', name = 'https://liquidacion.centralpos.com/api/v1/auth/login', description = '' WHERE esa.ad_client_id = 1010016 and esa.ad_componentobjectuid is null and value = 'URL Login' AND EXISTS (SELECT es.c_externalservice_id FROM c_externalservice es WHERE es.c_externalservice_id = esa.c_externalservice_id and es.name = 'Central Pos - Visa');
+
+--20170711-0910 Nueva columna con el número de documento de la retención
+DROP VIEW m_retencion_invoice_v;
+
+CREATE OR REPLACE VIEW m_retencion_invoice_v AS 
+ SELECT DISTINCT ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, 
+			ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, 
+			ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, 
+			ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, 
+			ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, 
+			i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, i.documentno as retencion_documentno, 
+			iv.documentno, iv.dateinvoiced AS fecha, iv.grandtotal, iv.c_project_id, iv.totallines
+   FROM c_retencionschema rs
+   JOIN c_retenciontype rt ON rs.c_retenciontype_id = rt.c_retenciontype_id
+   JOIN m_retencion_invoice ri ON rs.c_retencionschema_id = ri.c_retencionschema_id
+   JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id
+   JOIN c_bpartner bp ON i.c_bpartner_id = bp.c_bpartner_id
+   JOIN c_allocationhdr a ON ri.c_allocationhdr_id = a.c_allocationhdr_id
+   JOIN c_allocationline al ON a.c_allocationhdr_id = al.c_allocationhdr_id
+   LEFT JOIN c_invoice iv ON iv.c_invoice_id = (( SELECT allo.c_invoice_id
+   FROM c_allocationline allo
+  WHERE allo.c_allocationhdr_id = al.c_allocationhdr_id
+  ORDER BY allo.c_invoice_id DESC
+ LIMIT 1))
+  ORDER BY ri.m_retencion_invoice_id, ri.ad_client_id, ri.ad_org_id, ri.c_retencionschema_id, ri.c_invoice_id, ri.c_allocationhdr_id, ri.c_invoiceline_id, ri.c_invoice_retenc_id, ri.amt_retenc, ri.c_currency_id, ri.pagos_ant_acumulados_amt, ri.retenciones_ant_acumuladas_amt, ri.pago_actual_amt, ri.retencion_percent, ri.importe_no_imponible_amt, ri.base_calculo_percent, ri.issotrx, ri.baseimponible_amt, ri.importe_determinado_amt, rs.c_retenciontype_id, i.c_bpartner_id, rs.retencionapplication, bp.taxid, i.dateinvoiced, iv.documentno, iv.dateinvoiced, iv.grandtotal, iv.c_project_id, iv.totallines;
+
+ALTER TABLE m_retencion_invoice_v
+  OWNER TO libertya;
