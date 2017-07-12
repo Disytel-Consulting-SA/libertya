@@ -6323,6 +6323,18 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		this.skipAuthorizationChain = skipAuthorizationChain;
 	}
 
+	/**
+	 * @return true si el tipo de documento es de alguno de los tipo de
+	 *         retención (débito o crédito), false caso contrario
+	 */
+	public boolean isRetencion(){
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+		return docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_Receipt)
+				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_ReceiptCustomer)
+				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_Invoice)
+				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_InvoiceCustomer);
+	}
+	
 } // MInvoice
 
 /*
