@@ -13,12 +13,13 @@ public class TrailerParticipants extends GenericMap {
 
 	/** Campos a almacenar en la DB. */
 	public static String[] filteredFields = {
-			"fecha_vencimiento_clearing", // Fecha de la liquidación.
-			"comercio_participante", // Se utiliza para colocar la sucursal y la entidad financiera.
-			"numero_liquidacion", // Número de liquidación.
-			"total_importe_total", // Importe Bruto.
+			"fecha_vencimiento_clearing",  // Fecha de la liquidación.
+			"producto",  //Se utiliza para distinguir entre las distintas tarjetas que trae FirstData
+			"comercio_participante",  // Se utiliza para colocar la sucursal y la entidad financiera.
+			"numero_liquidacion",  // Número de liquidación.
+			"total_importe_total",  // Importe Bruto.
 			"total_importe_total_signo",
-			"neto_comercios", // Importe Acreditado.
+			"neto_comercios",  // Importe Acreditado.
 			"neto_comercios_signo",
 			"iva_aranceles_ri", // Se suma al campo Importe IVA.
 			"iva_aranceles_ri_signo",
