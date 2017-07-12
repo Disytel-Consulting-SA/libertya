@@ -158,15 +158,17 @@ public class ExportPlugin extends SvrProcess{
 	
 	/**
 	 * Determina el menor de los changelogs - cual es el primer changelog del export
+	 * Considera la eventual posibilidad de que el install o el postInstall sea -1
 	 * @return
 	 */
 	protected int getFirstChangelog() 
 	{
 		int firstChangelogID_install = ((ChangeLogXMLBuilder)(builders.get(1))).getFirstChangelogID();
 		int firstChangelogID_postInstall = ((ChangeLogXMLBuilder)(builders.get(2))).getFirstChangelogID();
-		if (firstChangelogID_install <= firstChangelogID_postInstall)
-			return firstChangelogID_install;
-		return firstChangelogID_postInstall;
+		if (firstChangelogID_install == -1 && firstChangelogID_postInstall == -1)
+			return -1;
+		return Math.min((firstChangelogID_install<=0	?Integer.MAX_VALUE:firstChangelogID_install), 
+						(firstChangelogID_postInstall<=0?Integer.MAX_VALUE:firstChangelogID_postInstall));  
 	}
 	
 	/**
