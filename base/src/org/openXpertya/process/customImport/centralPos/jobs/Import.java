@@ -95,8 +95,12 @@ public abstract class Import {
 		loginPost.addParam("password", externalService.getPassword());
 
 		Login loginResponse = (Login) loginPost.execute(Login.class);
-
-		return loginResponse.getToken();
+		
+		if (loginResponse != null) {
+			return loginResponse.getToken();
+		} else {
+			return null;
+		}
 	}
 
 	/**
