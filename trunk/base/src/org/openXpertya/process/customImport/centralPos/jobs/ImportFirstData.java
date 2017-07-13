@@ -78,18 +78,14 @@ public class ImportFirstData extends Import {
 						if (detail != null) {
 							if (FirstDataTrailerAndDetail.match(trailer, detail)) {
 								fdtad = new FirstDataTrailerAndDetail(trailer, detail);
-								break;
+								int no = fdtad.save(ctx, trxName);
+								if (no > 0) {
+									processed += no;
+								} else if (no < 0) {
+									areadyExists += (no * -1);
+								}
 							}
 						}
-					}
-					if (fdtad == null) {
-						fdtad = new FirstDataTrailerAndDetail(trailer);
-					}
-					int no = fdtad.save(ctx, trxName);
-					if (no > 0) {
-						processed += no;
-					} else if (no < 0) {
-						areadyExists += (no * -1);
 					}
 				}
 			}
