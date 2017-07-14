@@ -1,21 +1,20 @@
 package org.openXpertya.process;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
-import org.openXpertya.model.POInfo;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 
 /**
  * 
@@ -23,10 +22,6 @@ import org.openXpertya.util.DB;
  * La combinación de cuentas base a utilizar será la especificada en C_AcctSchema_Default
  * 
  * @author fcristina 
- * 
- * --------- PENDIENTES -----------
- * TODO : 	Para los casos C_BP_Customer_Acct, C_BP_Vendor_Acct, M_Product_Acct también utiliza
- * 			C_AcctSchema_Default pero en realidad deberia utilizar C_BP_GROUP_ACCT y M_PRODUCT_CATEGORY_ACCT.
  */
 
 
@@ -46,7 +41,15 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 	
 	// busqueda de tabla referencial para determinar la combinacion de cuentas default
 	private HashMap<String, String> refTables = new HashMap<String, String>();
-		
+	
+	/** Contexto local */
+	private Properties localCtx;
+	
+	public UpdateAcctTablesProcess(Properties ctx, String tableName){
+		setLocalCtx(ctx);
+		AD_Client_ID = Env.getAD_Client_ID(ctx);
+		this.tableName = tableName;
+	}
 	
 	@Override
 	protected void prepare() {
@@ -67,7 +70,11 @@ public class UpdateAcctTablesProcess extends SvrProcess {
             }
         }
         
-        // asignar tabla a obtener la combinacion de cuentas default
+        initAcctTables();
+	}
+	
+	private void initAcctTables(){
+		// asignar tabla a obtener la combinacion de cuentas default
         refTables.put("C_BP_EMPLOYEE_ACCT", "C_BP_GROUP_ACCT");
         refTables.put("C_BP_CUSTOMER_ACCT", "C_BP_GROUP_ACCT");
         refTables.put("C_BP_VENDOR_ACCT", "C_BP_GROUP_ACCT");
@@ -105,6 +112,22 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 		return "@El proceso se ejecuto correctamente@";
 	}
 	
+	
+	public String mainDoIt() throws Exception {
+		// Inicializar las tablas
+		initAcctTables();
+		System.out.println("=== Inicio de Proceso de Actualizacion de Tabla " + tableName + " === ");
+		System.out.println("=== Eliminación de registros - " + Env.getTimestamp() + ".... === ");
+		// Eliminar tuplas existentes en tabla de cuentas
+		System.out.println("=== Registros Eliminados "+ deteleTableRows() +" === ");
+		System.out.println("=== Insercion de registros - " + Env.getTimestamp() + ".... === ");
+		// Incorporar los nuevos datos de cuentas
+		System.out.println("=== Registros Insertados "+ insertNewRows() +" === ");
+		System.out.println("=== Proceso finalizado correctamente - " + Env.getTimestamp() + " === ");
+		return "";
+	}
+	
+	
 	private void getTableName()
 	{
 		try 
@@ -120,19 +143,20 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 		}
 	}
 
-	private void deteleTableRows()
+	private int deteleTableRows()
 	{
 		// Eliminar todas las tuplas de la tabla _acct
 		StringBuffer sql = new StringBuffer ("DELETE FROM " + tableName + " WHERE AD_CLIENT_ID = " + AD_Client_ID);
 		// Si la tabla es la de contabilidad de productos, ignorar los configurados manualmente
 		if (tableName.equalsIgnoreCase("M_PRODUCT_ACCT"))
 			sql.append(" AND isManual = 'N'");
-		DB.executeUpdate(sql.toString());
+		return DB.executeUpdate(sql.toString());
 
 	}
 	
-	private void insertNewRows()
+	private int insertNewRows()
 	{
+		int i = 0;
 		try 
 		{
 			// obtener la tabla de datos (por ejemplo M_Product) a partir de la tabla de cuentas (por ejemplo M_Product_Acct)
@@ -152,7 +176,7 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 			Class<?>[] paramTypes = { Properties.class, ResultSet.class, String.class };
 			Object[] args = { getCtx(), rs, null };			
 			Constructor<?> cons = clazz.getConstructor(paramTypes);
-			
+			boolean acctResult = false;
 			// recorrer el listado de tuplas
 			while (rs.next())
 			{
@@ -162,15 +186,19 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 				// Similar para los proveedores, clientes y empleados
 				// TODO: mejorar este ArrowAntiPattern!
 				if (tableName.equalsIgnoreCase("M_PRODUCT_ACCT"))
-					((MProduct)theObject).insert_Accounting(tableName, refTables.get("M_PRODUCT_ACCT"), "p.M_Product_Category_ID=" + ((MProduct)theObject).getM_Product_Category_ID());
+					acctResult = ((MProduct)theObject).insert_Accounting(tableName, refTables.get("M_PRODUCT_ACCT"), "p.M_Product_Category_ID=" + ((MProduct)theObject).getM_Product_Category_ID());
 				else if (tableName.equalsIgnoreCase("C_BP_EMPLOYEE_ACCT"))
-					((MBPartner)theObject).insert_Accounting(tableName, refTables.get("C_BP_EMPLOYEE_ACCT"), "p.C_BP_Group_ID=" + ((MBPartner)theObject).getC_BP_Group_ID());
+					acctResult = ((MBPartner)theObject).insert_Accounting(tableName, refTables.get("C_BP_EMPLOYEE_ACCT"), "p.C_BP_Group_ID=" + ((MBPartner)theObject).getC_BP_Group_ID());
 				else if (tableName.equalsIgnoreCase("C_BP_CUSTOMER_ACCT"))
-					((MBPartner)theObject).insert_Accounting(tableName, refTables.get("C_BP_CUSTOMER_ACCT"), "p.C_BP_Group_ID=" + ((MBPartner)theObject).getC_BP_Group_ID());
+					acctResult = ((MBPartner)theObject).insert_Accounting(tableName, refTables.get("C_BP_CUSTOMER_ACCT"), "p.C_BP_Group_ID=" + ((MBPartner)theObject).getC_BP_Group_ID());
 				else if (tableName.equalsIgnoreCase("C_BP_VENDOR_ACCT"))
-					((MBPartner)theObject).insert_Accounting(tableName, refTables.get("C_BP_VENDOR_ACCT"), "p.C_BP_Group_ID=" + ((MBPartner)theObject).getC_BP_Group_ID());				
+					acctResult = ((MBPartner)theObject).insert_Accounting(tableName, refTables.get("C_BP_VENDOR_ACCT"), "p.C_BP_Group_ID=" + ((MBPartner)theObject).getC_BP_Group_ID());				
 				else
-					((PO)theObject).insert_Accounting(tableName, refTables.get("OTHERS"), null);    
+					acctResult = ((PO)theObject).insert_Accounting(tableName, refTables.get("OTHERS"), null);
+				
+				if(acctResult){
+					i++;
+				}
 			}
 			
 		}
@@ -178,6 +206,79 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 		{
 			log.log(Level.SEVERE, "Error insertando las filas: " + e.getMessage());
 		}
+		return i;
+	}
+	
+	/** Parámetro ID de ad_client */
+	public static final String PARAM_CLIENT = "-c";
+	/** Parámetro nombre de table acct */
+	public static final String PARAM_TABLE = "-t";
+	/** Parámetro ayuda */
+	public static final String PARAM_HELP = "-h";
+	
+	public static void main(String args[]) {
+		Integer clientID = 0;
+		String table = "";
+		for (String arg : args) {
+			if (arg.toLowerCase().startsWith(PARAM_HELP))
+				showHelp(" Ayuda: \n  " 
+							+ PARAM_CLIENT 				+ " ID de la Compañía \n " 
+							+ PARAM_TABLE 				+ " Nombre de tabla Acct a regenerar \n ");
+			// ID de Compañía
+			else if (arg.toLowerCase().startsWith(PARAM_CLIENT))
+				clientID = Integer.parseInt(arg.substring(PARAM_CLIENT.length()));
+			// Nombre de tabla acct
+			else if (arg.toLowerCase().startsWith(PARAM_TABLE))
+				table = arg.substring(PARAM_TABLE.length());
+			else 
+				System.out.println("WARNING: Argumento " + arg + " ignorado");
+		}
+		
+	  	// OXP_HOME seteada?
+	  	String oxpHomeDir = System.getenv("OXP_HOME"); 
+	  	if (oxpHomeDir == null)
+	  		showHelp("ERROR: La variable de entorno OXP_HOME no está seteada ");
+
+	  	// Cargar el entorno basico
+	  	System.setProperty("OXP_HOME", oxpHomeDir);
+	  	if (!OpenXpertya.startupEnvironment( false ))
+	  		showHelp("ERROR: Error al iniciar el ambiente cliente.  Revise la configuración");
+
+	  	// Configuracion
+	  	Env.setContext(Env.getCtx(), "#AD_User_ID", 0);
+		Env.setContext(Env.getCtx(), "#AD_User_Name", "System");
+	  	Env.setContext(Env.getCtx(), "#AD_Language", "es_AR");
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", clientID);
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", 0);
+		
+		UpdateAcctTablesProcess uatp = new UpdateAcctTablesProcess(Env.getCtx(), table); 
+	  	try {
+	  		uatp.mainDoIt();
+	  	}
+	  	catch (Exception e) {
+	  		e.printStackTrace();
+	  	}
+	}
+
+	protected static void showHelp(String message) {
+		System.out.println(message);
+		System.exit(1);
+	}
+
+	private Properties getLocalCtx() {
+		return localCtx;
+	}
+
+	private void setLocalCtx(Properties localCtx) {
+		this.localCtx = localCtx;
+	}
+	
+	@Override
+	public Properties getCtx(){
+		if(getLocalCtx() != null){
+			return getLocalCtx();
+		}
+		return super.getCtx();
 	}
 	
 }
