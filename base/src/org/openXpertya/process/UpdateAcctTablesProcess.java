@@ -114,16 +114,22 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 	
 	
 	public String mainDoIt() throws Exception {
-		// Inicializar las tablas
-		initAcctTables();
-		System.out.println("=== Inicio de Proceso de Actualizacion de Tabla " + tableName + " === ");
-		System.out.println("=== Eliminación de registros - " + Env.getTimestamp() + ".... === ");
-		// Eliminar tuplas existentes en tabla de cuentas
-		System.out.println("=== Registros Eliminados "+ deteleTableRows() +" === ");
-		System.out.println("=== Insercion de registros - " + Env.getTimestamp() + ".... === ");
-		// Incorporar los nuevos datos de cuentas
-		System.out.println("=== Registros Insertados "+ insertNewRows() +" === ");
-		System.out.println("=== Proceso finalizado correctamente - " + Env.getTimestamp() + " === ");
+		try{
+			// Inicializar las tablas
+			initAcctTables();
+			System.out.println("=== Inicio de Proceso de Actualizacion de Tabla " + tableName + " === ");
+			System.out.println("=== Eliminación de registros - " + Env.getTimestamp() + ".... === ");
+			// Eliminar tuplas existentes en tabla de cuentas
+			System.out.println("=== Registros Eliminados "+ deteleTableRows() +" === ");
+			System.out.println("=== Insercion de registros - " + Env.getTimestamp() + ".... === ");
+			// Incorporar los nuevos datos de cuentas
+			System.out.println("=== Registros Insertados "+ insertNewRows() +" === ");
+			System.out.println("=== Proceso finalizado correctamente - " + Env.getTimestamp() + " === ");
+		} catch(Exception e){
+			System.out.println("=== Error: "+e.getMessage()+" === ");
+			e.printStackTrace();
+		}
+		
 		return "";
 	}
 	
