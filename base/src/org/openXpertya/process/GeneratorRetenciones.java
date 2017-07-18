@@ -7,11 +7,8 @@ import java.util.Vector;
 
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
-import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MLocation;
-import org.openXpertya.model.MRetSchemaConfig;
 import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_M_Retencion_Invoice;
@@ -41,7 +38,6 @@ public class GeneratorRetenciones {
 	private boolean isSOTrx;
 	private Integer projectID = 0;
 	private Integer campaignID = 0;
-	private boolean pororigenydestino = false;
 	private String paymentRule;
 	/* Listado de retenciones */
 	
@@ -120,17 +116,10 @@ public class GeneratorRetenciones {
 				 */
 				if(m_facturasManualAmounts.get(i).compareTo(Env.ZERO)>0){
 					MInvoice fc = new MInvoice(Env.getCtx(),m_facturas.get(i),getTrxName());
-					//Obtengo la region de la factura
-					int c_region_id = new MLocation(getM_ctx(), (new MBPartnerLocation(getM_ctx(), fc.getC_BPartner_Location_ID() ,getTrxName())).getC_Location_ID(), getTrxName()).getC_Region_ID();
-					// Se contempla el nuevo parámetro (Por Origen y Destino) del esquema de retención
-					if ((!pororigenydestino) || ((pororigenydestino) && 
-							((procesador.getRetencionSchema().getC_Region_ID() == c_region_id) || 
-									(procesador.getRetencionSchema().getC_Region_ID() == fc.getC_Region_Delivery_ID()))))
-						procesador.addInvoice(fc,m_facturasManualAmounts.get(i));
-			
+					procesador.addInvoice(fc,m_facturasManualAmounts.get(i));
 				}
 			}
-		}
+		}	
 	};
 	
 	
@@ -228,9 +217,6 @@ public class GeneratorRetenciones {
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 			}
-			pororigenydestino= false;
-			if ((retSchema.getParameter(MRetSchemaConfig.NAME_PorRegionOrigenYDestino) != null) && (retSchema.getParameter(MRetSchemaConfig.NAME_PorRegionOrigenYDestino).getValor().equals("Y")))
-				pororigenydestino= true;
 			retProcessor.setIsSOTrx(isSOTrx()); 
 			retProcessor.loadConfig(retSchema);
 			retProcessor.setDateTrx(vfechaPago);
