@@ -83,12 +83,6 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 		calculatePagosMensualAcumulados();
 		calculateRetencionesMensualAcumuladas();
 		
-		// Si los pagos anteriores acumulados son mayores al importe no
-		// imponible, entonces no lo tomo a este último
-		if(getPagosAnteriores().compareTo(getImporteNoImponible()) > 0){
-			setImporteNoImponible(Env.ZERO);
-		}
-		
 		// Se calcula la base imponible. (el monto sujeto a la aplicación de la retención).
 		// BI = PAA + EP - INI
 		baseImponible = getPagosAnteriores().add(getPayNetAmt()).subtract(getImporteNoImponible());

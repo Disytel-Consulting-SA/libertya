@@ -578,24 +578,6 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public BigDecimal getPayNetAmt() {
 		return getPayNetAmt(getInvoiceList(), getAmountList());
 	}
-
-	/**
-	 * Obtiene las facturas imputadas al crédito parámetro.
-	 * 
-	 * @param allocationLineCreditColumn
-	 *            nombre de columna de la tabla c_allocationline que posee el
-	 *            crédito parámetro
-	 * @param creditID
-	 *            id del crédito
-	 * @return map con clave factura y monto imputado a ella
-	 * @throws Exception
-	 *             en caso de error
-	 */
-	public Map<MInvoice, BigDecimal> getAllocatedInvoicesAmts(
-			String allocationLineCreditColumn, Integer creditID)
-			throws Exception {
-		return getAllocatedInvoicesAmts(allocationLineCreditColumn, creditID, true);
-	}
 	
 	public Map<MInvoice, BigDecimal> getAllocatedInvoicesAmts(
 			String allocationLineCreditColumn, Integer creditID, 
@@ -830,7 +812,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		while (rs.next()) {
 			paymentID = rs.getInt("c_payment_id");
 			// Determinar las facturas imputadas al pago y obtener su neto
-			allocatedAmts = getAllocatedInvoicesAmts("c_payment_id", paymentID);
+			allocatedAmts = getAllocatedInvoicesAmts("c_payment_id", paymentID, false);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
 					new ArrayList<BigDecimal>(allocatedAmts.values()));
@@ -1016,8 +998,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		while (rs.next()) {
 			cashlineID = rs.getInt("c_cashline_id");
 			// Determinar las facturas imputadas al cashline y obtener su neto
-			allocatedAmts = getAllocatedInvoicesAmts("c_cashline_id",
-					cashlineID);
+			allocatedAmts = getAllocatedInvoicesAmts("c_cashline_id", cashlineID, false);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
 					new ArrayList<BigDecimal>(allocatedAmts.values()));
