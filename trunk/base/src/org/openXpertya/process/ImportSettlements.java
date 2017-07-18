@@ -1605,10 +1605,8 @@ public class ImportSettlements extends SvrProcess {
 		if (input == null || input.signum() == 0) {
 			return BigDecimal.ZERO;
 		}
-		if (input.signum() == -1) {
-			return input.negate();
-		}
-		return input;
+		return input.negate();
+		
 	}
 
 	/**
