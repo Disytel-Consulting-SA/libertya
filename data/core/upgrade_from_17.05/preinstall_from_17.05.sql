@@ -199,3 +199,6 @@ CREATE OR REPLACE VIEW m_retencion_invoice_v AS
 
 ALTER TABLE m_retencion_invoice_v
   OWNER TO libertya;
+  
+--20170719-0955 Incremento de tamaño de columna cai
+ALTER TABLE c_bpartner_cai ALTER COLUMN cai TYPE character varying(30);

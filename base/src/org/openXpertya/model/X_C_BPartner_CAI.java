@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_CAI
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-02-10 16:16:36.169 */
+ *  @version  - 2017-07-19 10:05:46.993 */
 public class X_C_BPartner_CAI extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -53,10 +53,10 @@ return sb.toString();
 public void setCAI (String CAI)
 {
 if (CAI == null) throw new IllegalArgumentException ("CAI is mandatory");
-if (CAI.length() > 14)
+if (CAI.length() > 30)
 {
-log.warning("Length > 14 - truncated");
-CAI = CAI.substring(0,14);
+log.warning("Length > 30 - truncated");
+CAI = CAI.substring(0,30);
 }
 set_Value ("CAI", CAI);
 }
