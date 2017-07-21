@@ -187,7 +187,7 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 					.prepareStatement("SELECT dt.* FROM " + dataTable + " dt "
 							+ (isOnlyInsert() ? " LEFT JOIN " + tableName + " ta ON ta." + dataTable + "_id = dt."
 									+ dataTable + "_id " : "")
-							+ " WHERE AD_CLIENT_ID = " + AD_Client_ID
+							+ " WHERE dt.AD_CLIENT_ID = " + AD_Client_ID
 							+ (isOnlyInsert() ? " AND ta." + dataTable + "_id IS NULL " : ""), null);
 			ResultSet rs = pstmt.executeQuery();
 			
