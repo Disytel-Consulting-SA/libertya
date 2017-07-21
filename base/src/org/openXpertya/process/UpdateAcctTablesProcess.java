@@ -33,6 +33,12 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 	// compañía 
 	private int AD_Client_ID = -1;
 	
+	/**
+	 * Realizar sólo inserciones (No borra previamente registros, sólo inserta a
+	 * los que no lo tenga)
+	 */
+	private boolean onlyInsert = false;
+	
 	// nombre de tabla de cuentas a ser actualizada
 	private String tableName = "";
 	
@@ -45,10 +51,11 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 	/** Contexto local */
 	private Properties localCtx;
 	
-	public UpdateAcctTablesProcess(Properties ctx, String tableName){
+	public UpdateAcctTablesProcess(Properties ctx, String tableName, boolean onlyInsert){
 		setLocalCtx(ctx);
 		AD_Client_ID = Env.getAD_Client_ID(ctx);
 		this.tableName = tableName;
+		setOnlyInsert(onlyInsert);
 	}
 	
 	@Override
@@ -65,6 +72,8 @@ public class UpdateAcctTablesProcess extends SvrProcess {
             	AD_Table_ID = para[ i ].getParameterAsInt();
             } else if( name.equals( "AD_Client_ID" )) {
             	AD_Client_ID = para[ i ].getParameterAsInt();
+            } else if( name.equals( "OnlyInsert" )) {
+            	setOnlyInsert(((String)para[ i ].getParameter()).equals("Y"));
             } else {
                 log.log( Level.SEVERE,"Unknown Parameter: " + name );
             }
@@ -151,6 +160,9 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 
 	private int deteleTableRows()
 	{
+		if(isOnlyInsert()){
+			return 0;
+		}
 		// Eliminar todas las tuplas de la tabla _acct
 		StringBuffer sql = new StringBuffer ("DELETE FROM " + tableName + " WHERE AD_CLIENT_ID = " + AD_Client_ID);
 		// Si la tabla es la de contabilidad de productos, ignorar los configurados manualmente
@@ -171,9 +183,14 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 				throw new NoSuchElementException("No se pudo encontrar la tabla");
 			
 			// obtener las tuplas de la tabla de datos que requieren su actualizacion en tabla _acct
-			PreparedStatement pstmt = DB.prepareStatement("SELECT * FROM " + dataTable + " WHERE AD_CLIENT_ID = " + AD_Client_ID, null);
+			PreparedStatement pstmt = DB
+					.prepareStatement("SELECT dt.* FROM " + dataTable + " dt "
+							+ (isOnlyInsert() ? " LEFT JOIN " + tableName + " ta ON ta." + dataTable + "_id = dt."
+									+ dataTable + "_id " : "")
+							+ " WHERE AD_CLIENT_ID = " + AD_Client_ID
+							+ (isOnlyInsert() ? " AND ta." + dataTable + "_id IS NULL " : ""), null);
 			ResultSet rs = pstmt.executeQuery();
-			 
+			
 			// obtener una instancia de PO a fin de acceder a su actualizacion
 			M_Table table = new M_Table(getCtx(), M_Table.getID(dataTable) , null);
 			Class<?> clazz = M_Table.getClass(table.getTableName());
@@ -219,23 +236,29 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 	public static final String PARAM_CLIENT = "-c";
 	/** Parámetro nombre de table acct */
 	public static final String PARAM_TABLE = "-t";
+	/** Parámetro que determina si sólo insertar registros sin eliminar los existentes */
+	public static final String PARAM_ONLY_INSERT = "-o";
 	/** Parámetro ayuda */
 	public static final String PARAM_HELP = "-h";
 	
 	public static void main(String args[]) {
 		Integer clientID = 0;
 		String table = "";
+		String onlyInsert = "N";
 		for (String arg : args) {
 			if (arg.toLowerCase().startsWith(PARAM_HELP))
 				showHelp(" Ayuda: \n  " 
 							+ PARAM_CLIENT 				+ " ID de la Compañía \n " 
-							+ PARAM_TABLE 				+ " Nombre de tabla Acct a regenerar \n ");
+							+ PARAM_TABLE 				+ " Nombre de tabla Acct a regenerar \n "
+							+ PARAM_ONLY_INSERT			+ " Determina si sólo se debe insertar registros sobre la tabla base para aquellos que no posean contabilidad (no se eliminan registros existente). Valores permitidos Y o N (Default N). \n ");
 			// ID de Compañía
 			else if (arg.toLowerCase().startsWith(PARAM_CLIENT))
 				clientID = Integer.parseInt(arg.substring(PARAM_CLIENT.length()));
 			// Nombre de tabla acct
 			else if (arg.toLowerCase().startsWith(PARAM_TABLE))
 				table = arg.substring(PARAM_TABLE.length());
+			else if (arg.toLowerCase().startsWith(PARAM_ONLY_INSERT))
+				onlyInsert = arg.substring(PARAM_ONLY_INSERT.length());
 			else 
 				System.out.println("WARNING: Argumento " + arg + " ignorado");
 		}
@@ -257,7 +280,7 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", clientID);
 	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", 0);
 		
-		UpdateAcctTablesProcess uatp = new UpdateAcctTablesProcess(Env.getCtx(), table); 
+		UpdateAcctTablesProcess uatp = new UpdateAcctTablesProcess(Env.getCtx(), table, onlyInsert.equals("Y")); 
 	  	try {
 	  		uatp.mainDoIt();
 	  	}
@@ -285,6 +308,14 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 			return getLocalCtx();
 		}
 		return super.getCtx();
+	}
+
+	protected boolean isOnlyInsert() {
+		return onlyInsert;
+	}
+
+	protected void setOnlyInsert(boolean onlyInsert) {
+		this.onlyInsert = onlyInsert;
 	}
 	
 }
