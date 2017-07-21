@@ -252,6 +252,26 @@ public class CLogger extends Logger {
 	}   //  retrieveWarning
 	private static final String LAST_WARNING = "org.openXpertya.util.CLogger.lastWarning";
 
+	public static String retrieveWarningAsString() {
+	    String msg = "";
+		ValueNamePair np = retrieveWarning();
+		// Se intenta obtener el mensaje a partir del último error producido.
+		if (np != null) {
+			String name = (np.getName() != null) ? Msg.translate(Env.getCtx(), np.getName()) : "";
+			String value = (np.getValue() != null) ? Msg.translate(Env.getCtx(), np.getValue()) : "";
+			if (name.length() > 0 && value.length() > 0)
+				msg = value + ": " + name;
+			else if (name.length() > 0)
+				msg = name;
+			else if (value.length() > 0)
+				msg = value;
+			else
+				msg = "";
+		}
+		return msg;
+	}
+	
+	
 	public static ValueNamePair retrieveInfo()
 	{
 		ValueNamePair vp = (ValueNamePair) Env.getCtx().remove(LAST_INFO);

@@ -3185,7 +3185,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			log.fine("#" + no);
 		else
 			log.warning("#" + no + " - Table=" + acctTable + " from "
-					+ acctBaseTable);
+					+ acctBaseTable + ". Sentence: "+sb.toString());
 		return no > 0;
 	} // insert_Accounting
 

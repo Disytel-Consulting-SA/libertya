@@ -13,6 +13,7 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MProduct;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -221,6 +222,9 @@ public class UpdateAcctTablesProcess extends SvrProcess {
 				
 				if(acctResult){
 					i++;
+				}
+				else{
+					System.out.println("No Insertado: " +CLogger.retrieveWarningAsString());
 				}
 			}
 			
