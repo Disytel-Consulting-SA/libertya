@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-10 16:48:23.691 */
+ *  @version  - 2017-07-24 19:57:29.802 */
 public class X_I_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -115,6 +115,28 @@ public int getAD_User_ID()
 Integer ii = (Integer)get_Value("AD_User_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+public static final int AUTHORIZATIONCHAINSTATUS_AD_Reference_ID = MReference.getReferenceID("Authorization Status");
+/** Pending = P */
+public static final String AUTHORIZATIONCHAINSTATUS_Pending = "P";
+/** Authorized = A */
+public static final String AUTHORIZATIONCHAINSTATUS_Authorized = "A";
+/** Set Authorization Status */
+public void setAuthorizationChainStatus (String AuthorizationChainStatus)
+{
+if (AuthorizationChainStatus == null || AuthorizationChainStatus.equals("P") || AuthorizationChainStatus.equals("A") || ( refContainsValue("CORE-AD_Reference-1010261", AuthorizationChainStatus) ) );
+ else throw new IllegalArgumentException ("AuthorizationChainStatus Invalid value: " + AuthorizationChainStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010261") );
+if (AuthorizationChainStatus != null && AuthorizationChainStatus.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+AuthorizationChainStatus = AuthorizationChainStatus.substring(0,1);
+}
+set_Value ("AuthorizationChainStatus", AuthorizationChainStatus);
+}
+/** Get Authorization Status */
+public String getAuthorizationChainStatus() 
+{
+return (String)get_Value("AuthorizationChainStatus");
 }
 /** Set Authorization Chain Value */
 public void setAuthorizationChainValue (String AuthorizationChainValue)

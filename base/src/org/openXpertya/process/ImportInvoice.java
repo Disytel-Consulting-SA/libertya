@@ -741,6 +741,10 @@ public class ImportInvoice extends SvrProcess {
 					if( imp.getM_AuthorizationChain_ID() != 0 ) {
 						invoice.setM_AuthorizationChain_ID(imp.getM_AuthorizationChain_ID());
 					}
+					
+					if(!Util.isEmpty(imp.getAuthorizationChainStatus(), true)){
+						invoice.setAuthorizationChainStatus(imp.getAuthorizationChainStatus());
+					}
 
 					//
 					Timestamp dateInvoiced = imp.getDateInvoiced() != null ? imp

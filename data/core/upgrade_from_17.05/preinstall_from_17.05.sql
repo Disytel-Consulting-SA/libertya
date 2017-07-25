@@ -202,3 +202,6 @@ ALTER TABLE m_retencion_invoice_v
   
 --20170719-0955 Incremento de tamaño de columna cai
 ALTER TABLE c_bpartner_cai ALTER COLUMN cai TYPE character varying(30);
+
+--20170724-2012 Incorporación de nueva columna de estado de cadena de autorización a la importación de comprobantes
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','authorizationchainstatus','character(1)'));
