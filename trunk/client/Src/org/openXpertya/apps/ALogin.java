@@ -60,6 +60,7 @@ import org.openXpertya.db.CConnectionEditor;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MOrgInfo;
 import org.openXpertya.model.MSystem;
 import org.openXpertya.print.CPrinter;
 import org.openXpertya.reflection.CallResult;
@@ -1061,17 +1062,28 @@ public final class ALogin extends JDialog implements ActionListener,ChangeListen
 
             // initial warehouse
 
-            KeyNamePair iniValue   = null;
+            KeyNamePair iniValuePreference = null;
+            KeyNamePair iniValueOrgInfo = null;
+            KeyNamePair iniValue = null;
             String      iniDefault = Ini.getProperty( Ini.P_WAREHOUSE );
 
+            // Cargar como default el almacén relacionado en la info
+            MOrgInfo oi = MOrgInfo.get(m_ctx, org.getKey());
+            
             for( int i = 0;i < whs.length;i++ ) {
                 warehouseCombo.addItem( whs[ i ] );
 
+                if(oi.getM_Warehouse_ID() > 0 && whs[ i ].getKey() == oi.getM_Warehouse_ID()){
+                	iniValueOrgInfo = whs[ i ];
+                }
+                
                 if( whs[ i ].getName().equals( iniDefault )) {
-                    iniValue = whs[ i ];
+                	iniValuePreference = whs[ i ];
                 }
             }
 
+            iniValue = iniValueOrgInfo != null?iniValueOrgInfo:iniValuePreference;
+            
             if( iniValue != null ) {
                 warehouseCombo.setSelectedItem( iniValue );
             }
