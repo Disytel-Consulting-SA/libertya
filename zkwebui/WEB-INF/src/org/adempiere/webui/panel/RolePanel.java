@@ -38,6 +38,7 @@ import org.adempiere.webui.theme.ITheme;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.UserPreference;
 import org.adempiere.webui.window.LoginWindow;
+import org.openXpertya.model.MOrgInfo;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSysConfig;
 import org.openXpertya.util.Env;
@@ -350,14 +351,28 @@ public class RolePanel extends Window implements EventListener, Deferrable
 			String initDefault = userPreference.getProperty(UserPreference.P_WAREHOUSE);
             KeyNamePair organisationKNPair = new KeyNamePair(new Integer((String)lstItemOrganisation.getValue()), lstItemOrganisation.getLabel());
             KeyNamePair warehouseKNPairs[] = login.getWarehouses(organisationKNPair);
+            // Cargar como default el almacén relacionado en la info
+            MOrgInfo oi = MOrgInfo.get(Env.getCtx(), organisationKNPair.getKey());
+            ComboItem warehousePreference = null;
+            ComboItem warehouseOrgInfo = null;
+            ComboItem ciDefault = null;
             if(warehouseKNPairs != null && warehouseKNPairs.length > 0)
             {
                 for(int i = 0; i < warehouseKNPairs.length; i++)
                 {
                 	ComboItem ci = new ComboItem(warehouseKNPairs[i].getName(), warehouseKNPairs[i].getID());
                 	lstWarehouse.appendChild(ci);
-                    if(warehouseKNPairs[i].getID().equals(initDefault))
-                    	lstWarehouse.setSelectedItem(ci);
+                	if(oi.getM_Warehouse_ID() > 0 && warehouseKNPairs[ i ].getKey() == oi.getM_Warehouse_ID()){
+                		warehouseOrgInfo = ci;
+                	}
+                	
+                	if(warehouseKNPairs[i].getID().equals(initDefault))
+                		warehousePreference = ci;
+                }
+                ciDefault = warehouseOrgInfo != null?warehouseOrgInfo:warehousePreference;
+                
+                if(ciDefault != null){
+                	lstWarehouse.setSelectedItem(ciDefault);
                 }
                 if (lstWarehouse.getSelectedIndex() == -1 && lstWarehouse.getItemCount() > 0)
                 	lstWarehouse.setSelectedIndex(0);
