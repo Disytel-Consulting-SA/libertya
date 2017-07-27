@@ -137,7 +137,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		
 		MLetraComprobante mletra = MLetraComprobante.buscarLetraComprobante(clientID, letra, null);
 		
-		if (mletra.getID() > 0) {
+		if (mletra != null && mletra.getID() > 0) {
 			hm.put("C_Letra_Comprobante_ID", mletra.getID());
 			hm.put("PuntoDeVenta", Integer.parseInt(puntoDeVenta));
 			hm.put("NumeroComprobante", Integer.parseInt(numeroComprobante));
