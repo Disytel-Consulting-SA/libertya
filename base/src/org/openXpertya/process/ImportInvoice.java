@@ -773,6 +773,9 @@ public class ImportInvoice extends SvrProcess {
 						invoice.setIsPrinted(imp.isPrinted());
 					}		
 					
+					invoice.setCAI(imp.getCAI());
+					invoice.setDateCAI(imp.getDateCAI());
+					
 					invoice.setSkipLastFiscalDocumentNoValidation(true);
 					
 					// Divido el nro de documento en letra, pto de venta y

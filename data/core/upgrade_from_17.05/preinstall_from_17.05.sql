@@ -205,3 +205,7 @@ ALTER TABLE c_bpartner_cai ALTER COLUMN cai TYPE character varying(30);
 
 --20170724-2012 Incorporación de nueva columna de estado de cadena de autorización a la importación de comprobantes
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','authorizationchainstatus','character(1)'));
+
+--20170728-1312 Incorporación de nuevas columnas para registrar datos de CAI
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','cai','character varying(30)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','datecai','timestamp without time zone'));

@@ -6335,6 +6335,18 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Retencion_InvoiceCustomer);
 	}
 	
+	/**
+	 * @return true si el tipo de documento es de alguno de los tipo de
+	 *         documento de saldo, false caso contrario
+	 */
+	public boolean isBalanceDocType(){
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+		return docType.getDocTypeKey().equals(MDocType.DOCTYPE_Saldo_Inicial_Cliente)
+				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Saldo_Inicial_Cliente_Credito)
+				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Saldo_Inicial_Proveedor)
+				|| docType.getDocTypeKey().equals(MDocType.DOCTYPE_Saldo_Inicial_Proveedor_Credito);
+	}
+	
 } // MInvoice
 
 /*
