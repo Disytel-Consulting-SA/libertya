@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-07-24 19:57:29.802 */
+ *  @version  - 2017-07-28 13:21:45.139 */
 public class X_I_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -185,6 +185,21 @@ public int getC_Activity_ID()
 Integer ii = (Integer)get_Value("C_Activity_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set CAI */
+public void setCAI (String CAI)
+{
+if (CAI != null && CAI.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+CAI = CAI.substring(0,30);
+}
+set_Value ("CAI", CAI);
+}
+/** Get CAI */
+public String getCAI() 
+{
+return (String)get_Value("CAI");
 }
 /** Set Business Partner .
 Identifies a Business Partner */
@@ -475,6 +490,16 @@ Accounting Date */
 public Timestamp getDateAcct() 
 {
 return (Timestamp)get_Value("DateAcct");
+}
+/** Set CAI Date */
+public void setDateCAI (Timestamp DateCAI)
+{
+set_Value ("DateCAI", DateCAI);
+}
+/** Get CAI Date */
+public Timestamp getDateCAI() 
+{
+return (Timestamp)get_Value("DateCAI");
 }
 /** Set Date Invoiced.
 Date printed on Invoice */
