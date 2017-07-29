@@ -32,12 +32,14 @@ public class CalloutCreditCardSettlement extends CalloutEngine {
 			StringBuffer sql = new StringBuffer();
 			String trxName = null;
 
-			sql.append("SELECT ");
-			sql.append("	AD_Org_ID ");
-			sql.append("FROM ");
-			sql.append("	" + X_C_BPartner.Table_Name + " ");
-			sql.append("WHERE ");
+			sql.append("SELECT");
+			sql.append("	AD_Org_ID");
+			sql.append(" FROM");
+			sql.append("	" + MEntidadFinanciera.Table_Name);
+			sql.append(" WHERE ");
 			sql.append("	C_BPartner_ID = " + C_BPartner_ID);
+			sql.append(" ORDER BY updated DESC");
+			sql.append(" LIMIT 1");
 
 			int AD_Org_ID = DB.getSQLValue(trxName, sql.toString());
 

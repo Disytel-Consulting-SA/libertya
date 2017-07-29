@@ -435,8 +435,8 @@ public class ExportProcess extends SvrProcess {
 	 * @return
 	 */
 	protected String fillField(String data, String fillCharacter, String alignment, Integer fieldLength, String negativePosition){
-		String newData = data;
-		int dataLength = data.length();
+		String newData = data != null ? data : "";
+		int dataLength = newData.length();
 		StringBuffer filling = new StringBuffer();
 		while ((dataLength+filling.length()) < fieldLength) {
 			filling.append(fillCharacter);
@@ -453,7 +453,7 @@ public class ExportProcess extends SvrProcess {
 				newData = newData.replaceFirst(fillCharacter, "-");
 			}
 		}
-		return newData;
+		return newData.substring(0, fieldLength);
 	}
 	
 	/**
