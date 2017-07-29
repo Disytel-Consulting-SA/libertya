@@ -209,3 +209,7 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','authoriza
 --20170728-1312 Incorporación de nuevas columnas para registrar datos de CAI
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','cai','character varying(30)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','datecai','timestamp without time zone'));
+
+--20170729-1225 Por defecto se setean a N las columnas Cliente y Cliente Potencial
+ALTER TABLE C_BPARTNER ALTER COLUMN iscustomer SET DEFAULT 'N'::bpchar;
+ALTER TABLE C_BPARTNER ALTER COLUMN isprospect SET DEFAULT 'N'::bpchar;
