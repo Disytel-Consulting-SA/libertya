@@ -252,7 +252,7 @@ public class ExportListaGalicia extends ExportBankList {
 		// Número recibo a requerir. Completar si se conoce.
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 15, null));
 		// CUIT del beneficiario
-		row.append(fillField(cuit, " ", MExpFormatRow.ALIGNMENT_Right, 10, null));
+		row.append(fillField(cuit, " ", MExpFormatRow.ALIGNMENT_Right, 11, null));
 		// Tipo de Documento a requerir
 		row.append("03");
 		// Teléfono del Beneficiario
@@ -558,8 +558,9 @@ public class ExportListaGalicia extends ExportBankList {
 	private void writeRetencion(ResultSet rs, ResultSet rsre) throws Exception {
 		StringBuffer re = new StringBuffer("C1");
 		re.append(rsre.getString("tipo"));
+		re.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 20, null));
 		re.append(rsre.getString("impuesto"));
-		re.append(provincias.get(rsre.getString("provincia")));
+		re.append(provincias.get(rsre.getString("provincia"))); 
 		re.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
 		re.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 4, null));
 		if (rsre.getString("documentno").length() <= 10) {
@@ -569,10 +570,10 @@ public class ExportListaGalicia extends ExportBankList {
 		}
 		re.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 20, null));
 		re.append("01");
-		re.append(rsre.getString("iibb"));
+		re.append(fillField(rsre.getString("iibb"), " ", MExpFormatRow.ALIGNMENT_Left, 20, null));
 		re.append("02");
 		String tmp = rs.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), "");
-		re.append(fillField(tmp, "0", MExpFormatRow.ALIGNMENT_Right, 30, null));
+		re.append(fillField(tmp, " ", MExpFormatRow.ALIGNMENT_Left, 35, null));
 		re.append(dateFormat_ddMMyyyy.format(rs.getTimestamp("allocationdate")));
 
 		Integer total = rsre.getBigDecimal("grandtotal").abs().multiply(Env.ONEHUNDRED).intValue();
@@ -591,7 +592,7 @@ public class ExportListaGalicia extends ExportBankList {
 			rp.append(rsre.getString("documentno").substring(0, 10));
 		}
 		if (rsre.getString("esquema").length() <= 30) {
-			rp.append(fillField(rsre.getString("esquema"), " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
+			rp.append(fillField(rsre.getString("esquema"), " ", MExpFormatRow.ALIGNMENT_Left, 30, null));
 		} else {
 			rp.append(rsre.getString("esquema").substring(0, 30));
 		}
@@ -603,7 +604,7 @@ public class ExportListaGalicia extends ExportBankList {
 		rp.append("03");
 		rp.append("1");
 		rp.append(fillField(String.valueOf(retencion_base), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
-		rp.append("02");
+		rp.append("01");
 		rp.append("1");
 		rp.append(fillField(String.valueOf(noimponible), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 		rp.append("07");
@@ -619,7 +620,7 @@ public class ExportListaGalicia extends ExportBankList {
 		rp.append("  ");
 		rp.append(" ");
 		rp.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
-		rp.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 134, null));
+		rp.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 154, null));
 		write(rp.toString());
 	}
 
