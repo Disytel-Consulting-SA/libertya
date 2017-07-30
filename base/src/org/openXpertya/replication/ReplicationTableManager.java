@@ -22,10 +22,12 @@ public class ReplicationTableManager {
 	protected static String recordsForReplicationQuery = null;
 	/** filtrar replicacion de una tabla especifica */
 	public static String filterTable = null;
-	/** filtrar replicacion de una tabla especifica */
+	/** filtro avanzado de tablas de replicación */
 	public static String advancedFilterTable = null;
 	/** filtrar replicacion de un registro especifico */
 	public static String filterRecord = null;
+	/** filtro avanzado de registros a replicar */
+	public static String advancedFilterRecord = null;
 	/** filtrar replicacion solo hacia un host */
 	public static HashSet<Integer> filterHost = null;
 	/** omitir registros con antiguedad menor al tiempo especificado (segundos) */
@@ -192,7 +194,7 @@ public class ReplicationTableManager {
 							// Incluir eventual filtro por nombre de tabla
 							(filterTable!=null&&filterTable.length()>0?"  AND LOWER(t.tablename) = '"+filterTable.toLowerCase()+"'" : "") +
 							// Incluir eventual filtro de tabla avanzado
-							(advancedFilterTable!=null&&advancedFilterTable.length()>0?"  AND "+advancedFilterTable.toLowerCase() : "") +
+							(advancedFilterTable!=null&&advancedFilterTable.length()>0?("  AND ("+advancedFilterTable.toLowerCase()+")"): "") +
 							" ) ";
 			if (includeDeletions)
 				query += " UNION SELECT '" + ReplicationConstants.DELETIONS_TABLE + "' AS table_name ";
@@ -237,6 +239,8 @@ public class ReplicationTableManager {
 				// Incluir eventual filtro por nombre de registro
 				if (filterRecord!=null && filterRecord.length()>0)
 					query.append(" AND retrieveUID = '" + filterRecord + "'");
+				if (advancedFilterRecord!=null && advancedFilterRecord.length()>0) 
+					query.append(" AND (").append(advancedFilterRecord).append(")");
 				// Contemplar los registros con cierta antiguedad segun el argumento recibido (segundos). LAS TABLAS INVOLUCRADAS DEBEN CONTENER ESTE CAMPO!
 				if (delayRecords != null) {
 					query.append(" AND age(NOW(), created) > '" + delayRecords + " seconds' ");
