@@ -744,6 +744,9 @@ public class ImportInvoice extends SvrProcess {
 					
 					if(!Util.isEmpty(imp.getAuthorizationChainStatus(), true)){
 						invoice.setAuthorizationChainStatus(imp.getAuthorizationChainStatus());
+						if(MInvoice.AUTHORIZATIONCHAINSTATUS_Authorized.equals(imp.getAuthorizationChainStatus())){
+							invoice.setSkipAuthorizationChain(true);
+						}
 					}
 
 					//
