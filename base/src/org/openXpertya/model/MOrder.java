@@ -2031,7 +2031,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
         
         // Controlar las cantidades minimas pedidas
-        if (!isSOTrx()
+        if (!isMigrationFlag()
+        		&& !isSOTrx()
 				&& dt.getDocTypeKey()
 						.equals(MDocType.DOCTYPE_PurchaseOrder)
 				&& getDocStatus().equals(MInOut.DOCSTATUS_Drafted)) {
@@ -2043,7 +2044,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         }
         
         // Si el tipo de documento está marcado que sólo permita artículos del proveedor
-        if(dt.isOnlyVendorProducts()){
+        if(!isMigrationFlag() && dt.isOnlyVendorProducts()){
         	CallResult result = controlVendorProducts();
         	if(result.isError()){
         		setProcessMsg(result.getMsg());
@@ -2063,7 +2064,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         
         // Validación de productos "Comprados" en las líneas del pedido si el documento
         // es un pedido a proveedor.
-        if (dt.isDocType(MDocType.DOCTYPE_PurchaseOrder)) {
+        if (!isMigrationFlag() && dt.isDocType(MDocType.DOCTYPE_PurchaseOrder)) {
         	List<String> notPurchasedProducts = getNotPurchasedProducts();
         	if (!notPurchasedProducts.isEmpty()) {
         		m_processMsg = "@NotPurchasedProductsError@ " + notPurchasedProducts.toString();
@@ -5080,6 +5081,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
 	public void setSkipAuthorizationChain(boolean skipAuthorizationChain) {
 		this.skipAuthorizationChain = skipAuthorizationChain;
+	}
+	
+	public boolean isMigrationFlag(){
+		return isSelfService();
 	}
 	
 }    // MOrder
