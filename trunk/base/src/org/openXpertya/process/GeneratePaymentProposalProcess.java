@@ -102,6 +102,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 		String sql = "SELECT ps.* " + 
 					 "FROM C_InvoicePaySchedule ps " +
 					 "INNER JOIN C_Invoice i ON ps.C_Invoice_ID = i.C_Invoice_ID " +
+					 "INNER JOIN C_DocType dt ON i.C_DocType_ID = dt.C_DocType_ID " +
 					 "INNER JOIN C_BPartner bp ON i.C_BPartner_ID = bp.C_BPartner_ID " +
 					 "WHERE " + 
 					  " ps.duedate::date <= ?::date " +
@@ -110,6 +111,8 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 					  + MInvoice.AUTHORIZATIONCHAINSTATUS_Authorized + "') " +
 					  " AND bp.batch_payment_rule IS NOT NULL " +
 					  " AND bp.C_BankAccount_ID IS NOT NULL " +
+					  " AND dt.signo_issotrx = -1 " +
+					  " AND dt.DocBaseType = 'API' " +
 					  " AND invoiceopen(i.C_Invoice_ID, ps.c_InvoicePaySchedule_ID) > 0 ";
 		
 		if(!Util.isEmpty(getOrgID(), true)){
