@@ -84,6 +84,12 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("	ahb.documentno, ");
 		sql.append("	bp.name, ");
 		sql.append("	p.datetrx, ");
+		sql.append("	p.c_payment_id, ");
+		sql.append("	p.duedate as paymentduedate, ");
+		sql.append("	CASE ");
+		sql.append("		WHEN (p.duedate > current_date) THEN p.duedate ");
+		sql.append("		ELSE current_date + CAST('1 days' AS INTERVAL) ");
+		sql.append("	END as duedate, ");
 		sql.append("	p.dateacct, ");
 		sql.append("	p.payamt, ");
 		sql.append("	c.iso_code, ");
@@ -167,7 +173,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Motivo del pago
 		row.append(fillField(invoices, " ", MExpFormatRow.ALIGNMENT_Right, 105, null));
 		// Fecha de ejecución de la orden
-		row.append(dateFormat_yyyyMMdd.format(rs.getTimestamp("datetrx")));
+		row.append(dateFormat_yyyyMMdd.format(getNextWorkingDay(rs.getTimestamp("duedate")).getTime()));
 		// Tipo de pago o medio de ejecución para concretarlo
 		row.append("002");
 		// Importe a pagar
