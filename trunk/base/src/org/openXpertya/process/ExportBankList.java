@@ -1,18 +1,24 @@
 package org.openXpertya.process;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MExpFormat;
+import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_BankList_Config;
+import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
@@ -89,8 +95,28 @@ public abstract class ExportBankList extends ExportProcess {
 		write(getFileHeader());
 		// Separador de líneas
 		writeRowSeparator();
-		// Exportar las líneas del archivo
-		super.fillDocument();
+		// Exportar las líneas del archivo y actualizar los payments
+			// Ejecutar la query
+			PreparedStatement ps = DB.prepareStatement(getQuery(), get_TrxName(), true);
+			// Agregar los parámetros
+			setWhereClauseParams(ps);
+			ResultSet rs = ps.executeQuery();
+			// Iterar por los resultados
+			while(rs.next()){
+				//Si la fecha del payment es anterior a la del vencimiento (hoy + 1), actualizo el payment
+				Calendar duedate = Calendar.getInstance();
+				duedate.setTime(rs.getTimestamp("duedate"));
+				if (rs.getTimestamp("duedate").compareTo(rs.getTimestamp("paymentduedate")) > 0 ||
+						getNextWorkingDay(rs.getTimestamp("duedate")).compareTo(duedate) > 0) {
+					MPayment payment = new MPayment(getCtx(), rs.getInt("c_payment_id"), get_TrxName());
+					payment.setDueDate(new Timestamp(getNextWorkingDay(rs.getTimestamp("duedate")).getTimeInMillis()));
+					if (!payment.save()) {
+						throw new Exception(CLogger.retrieveErrorAsString());
+					}
+				}
+				// Escribe al línea en el archivo
+				writeLine(rs);
+			}
 		// Exportar líneas totalizadoras
 		write(getFileFooter());
 	}
@@ -166,5 +192,18 @@ public abstract class ExportBankList extends ExportProcess {
 
 	protected void setOpSuffix(String opSuffix) {
 		this.opSuffix = opSuffix;
+	}
+	
+	protected Calendar getNextWorkingDay(Timestamp date) {
+		Calendar calendarDateTrx = Calendar.getInstance();
+		calendarDateTrx.setTime(date);
+		int deltaDate = 0;
+		if (calendarDateTrx.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
+			deltaDate = 2;
+		} else if (calendarDateTrx.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY) {
+			deltaDate = 1;
+		}
+		calendarDateTrx.add(Calendar.DATE, deltaDate);
+		return calendarDateTrx;
 	}
 }

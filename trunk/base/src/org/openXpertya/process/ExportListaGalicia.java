@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -68,9 +67,6 @@ public class ExportListaGalicia extends ExportBankList {
 	/** Contador de Cheques */
 	private int checkCount = 0;
 
-	/** Fecha de acreditación */
-	private Date dateEmission;
-
 	public ExportListaGalicia(Properties ctx, MBankList bankList, String trxName) {
 		super(ctx, bankList, trxName);
 	}
@@ -103,9 +99,13 @@ public class ExportListaGalicia extends ExportBankList {
 
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT ");
-		sql.append("	COUNT(*) ");
+		sql.append("	COUNT(DISTINCT p.payamt) ");
 		sql.append("FROM ");
-		sql.append("	" + X_C_BankListLine.Table_Name + " ");
+		sql.append("	" + X_C_BankListLine.Table_Name + " AS bll ");
+		sql.append("	INNER JOIN " + X_C_AllocationLine.Table_Name + " AS al ");
+		sql.append("		ON bll.C_AllocationHdr_ID = al.C_AllocationHdr_ID ");
+		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " AS p ");
+		sql.append("		ON p.c_payment_id = al.c_payment_id ");
 		sql.append("WHERE ");
 		sql.append("	c_banklist_id = ?");
 
@@ -113,7 +113,7 @@ public class ExportListaGalicia extends ExportBankList {
 
 		sql = new StringBuffer();
 		sql.append("SELECT ");
-		sql.append("	SUM(p.payamt) ");
+		sql.append("	SUM(DISTINCT p.payamt) ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_BankListLine.Table_Name + " AS bll ");
 		sql.append("	INNER JOIN " + X_C_AllocationLine.Table_Name + " AS al ");
@@ -136,7 +136,6 @@ public class ExportListaGalicia extends ExportBankList {
 		header.append("GOF");
 		header.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 123, null));
 		calendarDateTrx.add(Calendar.DATE, 1);
-		dateEmission = calendarDateTrx.getTime();
 		return header.toString();
 	}
 
@@ -146,6 +145,7 @@ public class ExportListaGalicia extends ExportBankList {
 
 		sql.append("SELECT DISTINCT ");
 		sql.append("	ah.c_allocationhdr_id, ");
+		sql.append("	p.c_payment_id, ");
 		sql.append("	lgp.c_bpartner_id, ");
 		sql.append("	lgp.payamt, ");
 		sql.append("	COALESCE(p.a_name, bp.name) AS name, ");
@@ -191,7 +191,11 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("	ah.c_allocationhdr_id, ");
 		sql.append("	ah.documentno, ");
 		sql.append("	ah.datetrx AS allocationdate, ");
-		sql.append("	p.duedate, ");
+		sql.append("	p.duedate as paymentduedate, ");
+		sql.append("	CASE ");
+		sql.append("		WHEN (p.duedate > current_date) THEN p.duedate ");
+		sql.append("		ELSE current_date + CAST('1 days' AS INTERVAL) ");
+		sql.append("	END as duedate, ");
 		sql.append("	ba.sucursal ");
 		sql.append("FROM ");
 		sql.append("	c_electronic_payments lgp"); // Vista
@@ -277,7 +281,7 @@ public class ExportListaGalicia extends ExportBankList {
 		// Moneda
 		row.append("001");
 		// Fecha de disposición de fondos
-		row.append(dateFormat_ddMMyyyy.format(dateEmission));
+		row.append(dateFormat_ddMMyyyy.format(getNextWorkingDay(rs.getTimestamp("duedate")).getTime()));
 		// Código de Provincia del Beneficiario
 		row.append("01");
 		// Información Compra
