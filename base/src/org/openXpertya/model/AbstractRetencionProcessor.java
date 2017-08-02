@@ -1295,16 +1295,18 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 *         por defecto si no encuentra ninguno
 	 */
 	protected BigDecimal getPorcentajePadron(List<String> padronTypes, BigDecimal defaultPorcentaje){
-		BigDecimal porcentaje = BigDecimal.ZERO;
-		for (int i = 0; i < padronTypes.size()
-				&& Util.isEmpty(porcentaje, true); i++) {
+		BigDecimal porcentaje = null;
+		for (int i = 0; i < padronTypes.size() && porcentaje == null; i++) {
 			porcentaje = MBPartnerPadronBsAs.getBPartnerPerc("retencion",
 					getBPartner().getTaxID(), Env.getDate(), padronTypes.get(i),
 					getTrxName());
 		}
 		// Si no lo encuentra, entonces el valor por defecto parámetro
-		if(Util.isEmpty(porcentaje, true)){
+		if(porcentaje == null){
 			porcentaje = defaultPorcentaje;
+		}
+		if(porcentaje == null){
+			porcentaje = BigDecimal.ZERO;
 		}
 		return porcentaje;
 	}
