@@ -1345,7 +1345,7 @@ public class ImportSettlements extends SvrProcess {
 				try {
 					String name = "Ret IVA";
 					int C_RetencionSchema_ID = getRetencionSchemaIDByValue(attributes.get(name).getName());
-					BigDecimal withholding = safeMultiply(rs.getString("ret_iva"), rs.getString("signo_30"));
+					BigDecimal withholding = safeMultiply(rs.getString("ret_iva"), "+");
 					if (withholding.compareTo(new BigDecimal(0)) != 0) {
 						MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
 						ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
