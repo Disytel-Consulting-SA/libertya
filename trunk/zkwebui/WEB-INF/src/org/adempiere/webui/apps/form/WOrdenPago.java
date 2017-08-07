@@ -1036,12 +1036,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		BigDecimal monto = null;
     		
     		try {
-    			if(txtTotalPagar1.getValue() instanceof String){
-    				monto = new BigDecimal(((String)txtTotalPagar1.getValue()).replace(",", "."));
-    			}
-    			else{
-    				monto = (BigDecimal)txtTotalPagar1.getValue();
-    			}
+    			
+    			monto = m_model.numberParse((String)txtTotalPagar1.getValue());
     			
     		} catch (Exception e) {
     			showError("@SaveErrorNotUnique@ \n\n" + txtTotalPagar1.getLabel().getValue());
