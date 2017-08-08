@@ -30,13 +30,23 @@ public class ExportListaPatagonia extends ExportBankList {
 	protected String getBankListExportFormatValue() {
 		return "LP";
 	}
+	
+	/**
+	 * Devuelve una secuencia de caracteres conformada por un dato con ceros delante.
+	 * @param data dato al final de la cadena.
+	 * @param length longitud de la cadena resultante.
+	 * @return Cadena de caracteres conformada por ceros y el dato ingresado, al final.
+	 */
+	private String zeroFill(String data, int length) {
+		return fillField(data, "0", MExpFormatRow.ALIGNMENT_Right, length, null);
+	}
 
 	@Override
 	protected String getFilePath() {
 		StringBuffer filepath = new StringBuffer(getExportFormat().getFileName());
 		// Armar el nombre del archivo
 		String filename = "PO";
-		filename += getBankListConfig().getRegisterNumber();
+		filename += zeroFill(getBankListConfig().getRegisterNumber(), 7);
 		filename += fillField(String.valueOf(getBankList().getDailySeqNo().intValue()), "0", MExpFormatRow.ALIGNMENT_Right, 3, null);
 		filepath.append(filename);
 		filepath.append(".").append(getFileExtension());

@@ -250,7 +250,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		head.append("0000001"); // Nro de Convenio. TODO ver de donde sale.
 		head.append(whiteSpace(29)); // Espacio en blanco.
 		head.append("ADH"); // Informante.
-		head.append(zeroFill(documentno, 7)); // Nro. de informante.
+		head.append(fillField(getBankListConfig().getRegisterNumber(), "0", MExpFormatRow.ALIGNMENT_Right, 7, null)); // Nro. de informante.
 		head.append(whiteSpace(80)); // Espacio en blanco.
 
 		return head.toString();
@@ -692,7 +692,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		}
 
 		String tmpStr = NumeroCastellano.numeroACastellano(importeDetermAmt);
-		tmpStr = tmpStr.replaceAll("PESOS CON", "......." + getRowSeparator() + commonMargin() + whiteSpace(12) + "CON");
+		//tmpStr = tmpStr.replaceAll("PESOS CON", "......." + getRowSeparator() + commonMargin() + whiteSpace(12) + "CON");
 
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + getRowSeparator());
@@ -707,6 +707,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + whiteSpace(27) + clientName + " - AdmCentral");
+		lineBreaks++;
 
 		return tmp.toString();
 	}
