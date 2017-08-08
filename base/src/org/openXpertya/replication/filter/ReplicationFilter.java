@@ -57,6 +57,25 @@ public abstract class ReplicationFilter {
 		// Si no está retornar null
 		return null;
 	}
+	
+	/**
+	 * Asigna un nuevo valor de un elemento (columna) del grupo 
+	 * @param group grupo de elementos 
+	 * @param columnName nombre del elemento a buscar
+	 * @param newValue nuevo valor a especificar 
+	 * @return true si la columna fue encontrada y actualizada o false en caso contrario
+	 */
+	protected boolean setNewValueForElement(ChangeLogGroupReplication group, String columnName, Object newValue) {
+		// Buscar la columna, actualizarla y retornar true
+		for (ChangeLogElement element : group.getElements()) {
+			if (columnName.equalsIgnoreCase(element.getColumnName())) {
+				element.setNewValue(newValue);
+				return true;
+			}
+		}
+		// Si no está retornar false
+		return false;
+	}
 
 	/**
 	 *	Retorna la posicion de un elemento en un changegroup a partir del columnname, o -1 si no lo encuentra 
