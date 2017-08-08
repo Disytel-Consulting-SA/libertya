@@ -88,6 +88,7 @@ public class MBankList extends X_C_BankList implements DocAction {
 				
 				// Número de documento de la lista
 				setDocumentNo(getDocumentNumber(docType));
+				setDailySeqNo(new BigDecimal(MBankList.getSeqNo(getCtx(), getC_DocType_ID(), getDateTrx(), get_TrxName()) + 1));
 			} catch (Exception e) { 
 				log.saveError("SaveError", e.getMessage());
 				return false;
