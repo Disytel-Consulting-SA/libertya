@@ -229,16 +229,7 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("TIPOORIGEN", "ORIGINAL" );
 			jasperwrapper.addParameter("TOTAL", order.getGrandTotal() );
 			jasperwrapper.addParameter("DESCRIPTION", order.getDescription());
-			jasperwrapper.addParameter(
-				"OBSERVACION",
-				JasperReportsUtil.getListName(getCtx(),
-						MOrder.PAYMENTRULE_AD_Reference_ID,
-						order.getPaymentRule())
-						+ " - "
-						+ (JasperReportsUtil.getPaymentTermName(getCtx(),
-								order.getC_PaymentTerm_ID(), get_TrxName())
-								+ " - " + JasperReportsUtil.coalesce(
-								order.getDescription(), "")));
+			jasperwrapper.addParameter("OBSERVACION", getObservacion(order));
 			jasperwrapper.addParameter("RESPONSABLE", getInitials(salesUserName));
 			if(!Util.isEmpty(order.getM_Shipper_ID(), true)){
 				jasperwrapper.addParameter(
@@ -525,6 +516,12 @@ public class LaunchOrder extends SvrProcess {
 			}
 		}
 		return initials;
+	}
+	
+	protected String getObservacion(MOrder order){
+		return JasperReportsUtil.getListName(getCtx(), MOrder.PAYMENTRULE_AD_Reference_ID, order.getPaymentRule())
+				+ " - " + (JasperReportsUtil.getPaymentTermName(getCtx(), order.getC_PaymentTerm_ID(), get_TrxName())
+						+ " - " + JasperReportsUtil.coalesce(order.getDescription(), ""));
 	}
 
 	public MJasperReport getJasperwrapper() {
