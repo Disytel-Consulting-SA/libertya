@@ -21,6 +21,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.M_Table;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
 /**
@@ -35,7 +36,7 @@ public class ImportDelete extends SvrProcess {
 
     /** Descripción de Campos */
 
-    private int p_AD_Table_ID = 0;
+    protected int p_AD_Table_ID = 0;
 
     /**
      * Descripción de Método
@@ -84,7 +85,8 @@ public class ImportDelete extends SvrProcess {
 
         // Delete
 
-        String sql = "DELETE FROM " + tableName + " WHERE AD_Client_ID=" + getAD_Client_ID();
+		String sql = "DELETE FROM " + tableName + " WHERE AD_Client_ID=" + getAD_Client_ID() + " AND CreatedBy = "
+				+ Env.getAD_User_ID(getCtx());
         int    no  = DB.executeUpdate( sql,get_TrxName());
         String msg = Msg.translate( getCtx(),tableName + "_ID" ) + " #" + no;
 
