@@ -15,11 +15,13 @@ import org.openXpertya.model.MExpFormatRow;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BPartner;
+import org.openXpertya.model.X_C_BPartner_BankList;
 import org.openXpertya.model.X_C_BPartner_Location;
 import org.openXpertya.model.X_C_BankAccount;
 import org.openXpertya.model.X_C_BankList;
 import org.openXpertya.model.X_C_BankListLine;
 import org.openXpertya.model.X_C_DocType;
+import org.openXpertya.model.X_C_ElectronicPaymentBranch;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Location;
 import org.openXpertya.model.X_C_Payment;
@@ -196,7 +198,8 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("		WHEN (p.duedate > current_date) THEN p.duedate ");
 		sql.append("		ELSE current_date + CAST('1 days' AS INTERVAL) ");
 		sql.append("	END as duedate, ");
-		sql.append("	ba.sucursal ");
+		sql.append("	ba.value as sucursal, ");
+		sql.append("	bpbl.nombre_retirante ");
 		sql.append("FROM ");
 		sql.append("	c_electronic_payments lgp"); // Vista
 		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " p ");
@@ -205,10 +208,10 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("		ON bp.c_bpartner_id = p.c_bpartner_id ");
 		sql.append("	INNER JOIN " + X_C_AllocationHdr.Table_Name + " ah ");
 		sql.append("		ON ah.c_allocationhdr_id = lgp.c_allocationhdr_id ");
-		sql.append("	INNER JOIN " + X_C_BankList.Table_Name + " bl ");
-		sql.append("		ON bl.c_banklist_id = lgp.c_banklist_id ");
-		sql.append("	INNER JOIN " + X_C_BankAccount.Table_Name + " AS ba ");
-		sql.append("		ON ba.c_bankaccount_id = bl.c_bankaccount_id ");
+		sql.append("	INNER JOIN " + X_C_BPartner_BankList.Table_Name + " bpbl ");
+		sql.append("		ON bpbl.c_bpartner_id = bp.c_bpartner_id ");
+		sql.append("	INNER JOIN " + X_C_ElectronicPaymentBranch.Table_Name + " AS ba ");
+		sql.append("		ON ba.c_electronicpaymentbranch_id = bpbl.c_electronicpaymentbranch_id ");
 		sql.append("WHERE ");
 		sql.append("	lgp.c_banklist_id = ? ");
 
@@ -262,7 +265,7 @@ public class ExportListaGalicia extends ExportBankList {
 		// Teléfono del Beneficiario
 		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 10, null));
 		// Nombre del Retirante
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
+		row.append(fillField(rs.getString("nombre_retirante"), " ", MExpFormatRow.ALIGNMENT_Left, 30, null));
 		// Tipo y Nro. de Documento del Retirante
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 11, null));
 		// Condición del cheque
