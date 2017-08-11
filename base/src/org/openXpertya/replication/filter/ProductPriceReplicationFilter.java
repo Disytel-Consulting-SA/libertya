@@ -13,6 +13,10 @@ public class ProductPriceReplicationFilter extends ReplicationFilter {
 		// Para las sucursales, PriceList debe ser igual que PriceSTD
 		if (X_M_ProductPrice.Table_Name.equalsIgnoreCase(group.getTableName()) || X_M_ProductPriceInstance.Table_Name.equalsIgnoreCase(group.getTableName()))
 			setNewValueForElement(group, "PriceList", getNewValueForElement(group, "PriceStd"));
+		
+		// Este filtro no debe realizar cambios sobre el reparray, llevar todo a cero y dejar que el OrgReplicationFilter se encargue
+		repArraySetValueAllPositions(group, '0');
+		
 	}
 
 }
