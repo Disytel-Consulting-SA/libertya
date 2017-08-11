@@ -51,16 +51,9 @@ class OtherPaymentsDataSource extends OPDataSource {
 				+ getOrdenPagoDataSource().getCashNameDescription()
 				+ "     AS CashName   , "
 				+ // redefinir
-				"        (SELECT ba.cc "
-				+ "                || ' - ' "
-				+ "                || b.Name "
-				+ "        FROM    C_Bank b "
-				+ "                INNER JOIN C_BankAccount ba "
-				+ "                ON (b.C_Bank_ID     = ba.C_Bank_ID) "
-				+ "        WHERE   ba.C_BankAccount_ID = p.C_BankAccount_ID "
-				+ "        ) AS BankAccount          , "
+				"        ba.description AS BankAccount , "
 				+ "        (CASE WHEN tendertype = 'A' THEN p.checkno ELSE p.creditcardnumber END)  as RoutingNo , "
-				+ "        p.DateAcct AS TransferDate, "
+				+ "        (CASE WHEN tendertype = 'A' THEN p.DateTrx ELSE p.DateAcct END) AS TransferDate, "
 				+ "        sum (currencyconvert(al.amount, ah.c_currency_id, p.c_currency_id, p.DateAcct::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id )) as Amount,"
 				+
 				// "        sum(al.amount) AS Amount,   " +
@@ -79,9 +72,10 @@ class OtherPaymentsDataSource extends OPDataSource {
 				+ "        JOIN c_payment p "
 				+ "        ON      al.c_payment_id = p.c_payment_id "
 				+ "  		 JOIN c_currency cu ON p.C_Currency_ID = cu.C_Currency_ID "
+				+ "			JOIN c_bankaccount ba ON ba.c_bankaccount_id = p.c_bankaccount_id "
 				+ "WHERE   p.tenderType IN ('A','C') "
 				+ "    AND ah.C_AllocationHdr_ID   = ? "
-				+ "GROUP BY p.C_Payment_ID, tendertype, CashName, BankAccount, p.checkno, p.creditcardnumber, p.dateAcct, PayAmt, Currency "
+				+ "GROUP BY p.C_Payment_ID, tendertype, CashName, ba.description, p.checkno, p.creditcardnumber, p.datetrx, p.dateAcct, PayAmt, Currency "
 				+
 				// "ORDER BY PaymentType, " +
 				// "        BankAccount " +
