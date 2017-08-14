@@ -281,3 +281,22 @@ $BODY$
   COST 100;
 ALTER FUNCTION paymentavailable(integer, timestamp without time zone)
   OWNER TO libertya;
+  
+--20170814-2015 Fixes a la view de retenciones emitidas de iibb bs as
+DROP VIEW rv_c_invoice_reten_iibb_bsas_emitidas ;
+
+CREATE OR REPLACE VIEW rv_c_invoice_reten_iibb_bsas_emitidas AS 
+ SELECT ri.ad_org_id, ri.ad_client_id, bp.taxid AS cuit, 0 AS importeretencion, ri.created AS date, ipagada.puntodeventa AS numerosucursal, ipagada.numerocomprobante AS numeroemision, 'A'::bpchar AS tipooperacion
+   FROM m_retencion_invoice ri
+   JOIN c_invoice i ON i.c_invoice_id = ri.c_invoice_id
+   JOIN c_allocationline al ON al.c_allocationhdr_id = ri.c_allocationhdr_id
+   JOIN c_invoice ipagada ON ipagada.c_invoice_id = al.c_invoice_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_retencionschema rs ON rs.c_retencionschema_id = ri.c_retencionschema_id
+   JOIN c_retenciontype rt ON rt.c_retenciontype_id = rs.c_retenciontype_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   JOIN ad_clientinfo ci ON ci.ad_client_id = ri.ad_client_id
+  WHERE rt.retentiontype = 'B'::bpchar AND (dt.docbasetype = ANY (ARRAY['API'::bpchar, 'APC'::bpchar, 'APP'::bpchar])) AND rs.c_region_id = 1000083;
+
+ALTER TABLE rv_c_invoice_reten_iibb_bsas_emitidas
+  OWNER TO libertya;
