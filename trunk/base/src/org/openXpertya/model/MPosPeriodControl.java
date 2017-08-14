@@ -33,7 +33,7 @@ public class MPosPeriodControl extends X_C_PosPeriodControl {
 	}
 	
 	protected boolean beforeSave( boolean newRecord ) {
-		if (!validateDuplicateDocType()) {
+		if (newRecord && !validateDuplicateDocType()) {
 			log.saveError("Error", Msg.getMsg(getCtx(), "Duplicated DocType Reference"));
 			return false;
 		}

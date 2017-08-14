@@ -34,6 +34,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.ITime;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
 
 /**
@@ -799,6 +800,222 @@ public class MPeriod extends X_C_Period implements ITime{
 	@Override
 	public int getDayField() {
 		return Calendar.DAY_OF_MONTH;
+	}
+	
+	public int changeStatus(String p_PeriodAction) throws Exception {
+		// Disytel - Franco Bonafine
+        // Se crean los controles de periodos para todos los tipos de documento base.
+        // Este método se encarga de "rellenar" los controles de períodos de todos los tipos
+        // de documento base. En caso de que un Tipo Doc. Base no tenga un control de período
+        // entonces será creado por este método.
+        createPeriodControls();
+        // -
+
+        StringBuffer sql = new StringBuffer( "UPDATE C_PeriodControl " );
+
+        sql.append( "SET PeriodStatus='" );
+
+        // Open
+
+        if( MPeriodControl.PERIODACTION_OpenPeriod.equals( p_PeriodAction )) {
+            sql.append( MPeriodControl.PERIODSTATUS_Open );
+
+            // Close
+
+        } else if( MPeriodControl.PERIODACTION_ClosePeriod.equals( p_PeriodAction )) {
+            sql.append( MPeriodControl.PERIODSTATUS_Closed );
+
+            // Close Permanently
+
+        } else if( MPeriodControl.PERIODACTION_PermanentlyClosePeriod.equals( p_PeriodAction )) {
+            sql.append( MPeriodControl.PERIODSTATUS_PermanentlyClosed );
+        } else {
+            return 0;
+        }
+
+        //
+
+        sql.append( "', PeriodAction='N', Updated=SysDate,UpdatedBy=" ).append( Env.getAD_User_ID(getCtx()));
+
+        // WHERE
+
+        sql.append( " WHERE C_Period_ID=" ).append( getC_Period_ID()).append( " AND PeriodStatus<>'P'" ).append( " AND PeriodStatus<>'" ).append( p_PeriodAction ).append( "'" );
+
+        int no = DB.executeUpdate( sql.toString(),get_TrxName());
+        
+        //Busco todos los tipos de documentos con la marca de "Apertura/Cirre por punto de venta" activa
+        List<MDocType> docTypes = getDocTypesWithOpenByPOSActive();
+        
+        for (MDocType docType : docTypes) {
+        	//Busco el Control de Período para el docbasetype y el período
+        	MPeriodControl pControl = getPeriodControl(docType.getDocBaseType(), getID());
+        	if (pControl != null) {
+        		//Activo el control por tipo de documento (solo si estoy abriendo)
+        		if (MPeriodControl.PERIODACTION_OpenPeriod.equals( p_PeriodAction )) {
+	        		pControl.setDocTypeControl(true);
+	        		if (!pControl.save()) {
+	        			throw new Exception(Msg.getMsg(getCtx(), "PeriodControlUpdateError"));
+	        		}
+	        	}
+        		
+        		//Obtengo la entrada en PosPeriodControl para el doctype si existe
+        		int posPeriodControlId = getPostPeriodControlId(pControl.getID(), docType.getID());
+        		MPosPeriodControl posPeriodControl = new MPosPeriodControl(getCtx(), posPeriodControlId, get_TrxName());
+        		
+        		//Si existe y estoy cerrando el período, debo cerrar también por docType
+        		if (posPeriodControlId != 0 && !MPeriodControl.PERIODACTION_OpenPeriod.equals( p_PeriodAction )) {
+        			if( MPeriodControl.PERIODACTION_ClosePeriod.equals( p_PeriodAction )) {
+        				posPeriodControl.setPeriodStatus(MPeriodControl.PERIODSTATUS_Closed);
+        	        } else if( MPeriodControl.PERIODACTION_PermanentlyClosePeriod.equals( p_PeriodAction )) {
+        	        	posPeriodControl.setPeriodStatus(MPeriodControl.PERIODSTATUS_PermanentlyClosed);
+        	        }
+        			if (!posPeriodControl.save()) {
+        				throw new Exception(Msg.getMsg(getCtx(), "PosPeriodControlUpdateError"));
+        			}
+        		}
+        		
+        		//Si estoy abriendo el período y existe la entrada en PosPeriodControl, no modifico nada
+        		//Si no existe, la tengo que crear, siempre en estado "Cerrado"
+        		if (posPeriodControlId == 0) {
+        			posPeriodControl.setC_PeriodControl_ID(pControl.getID());
+        			posPeriodControl.setC_DocType_ID(docType.getID());
+        			posPeriodControl.setPeriodStatus(MPeriodControl.PERIODSTATUS_Closed);
+        			posPeriodControl.setPeriodAction(MPeriodControl.PERIODACTION_OpenPeriod);
+        			posPeriodControl.setProcessing(false);
+        			if (!posPeriodControl.save()) {
+        				throw new Exception(Msg.getMsg(getCtx(), "PosPeriodControlCreateError"));
+        			}
+        		}
+        		
+        	} else {
+        		throw new Exception(Msg.getMsg(getCtx(), "PeriodControlNotFound"));
+        	}
+        }
+        return no;
+	}
+	
+	private List<MDocType> getDocTypesWithOpenByPOSActive() {
+		List<MDocType> docTypes = new ArrayList<MDocType>();
+		
+		//Construyo la query
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT  ");
+		sql.append("dt.* ");
+		sql.append("FROM c_doctype dt ");
+		sql.append("WHERE docbasetype IN ('ARI', 'ARC') ");
+		sql.append("AND ad_client_id = ? ");
+		sql.append("AND open_close_by_pos = 'Y' ");
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName());
+			
+			//Parámetros
+			ps.setInt(1, getAD_Client_ID());
+			
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				MDocType docType = new MDocType(getCtx(), rs, get_TrxName());
+				docTypes.add(docType);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return docTypes;
+	}
+    
+    private MPeriodControl getPeriodControl(String docBaseType, int periodId) {
+		//Construyo la query
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT  ");
+		sql.append("* ");
+		sql.append("FROM c_periodcontrol ");
+		sql.append("WHERE docbasetype = ? ");
+		sql.append("AND ad_client_id = ? ");
+		sql.append("AND c_period_id = ? ");
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName());
+			
+			//Parámetros
+			ps.setString(1, docBaseType);
+			ps.setInt(2, getAD_Client_ID());
+			ps.setInt(3, periodId);
+			
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				return new MPeriodControl(getCtx(), rs, get_TrxName());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return null;
+	}
+    
+    private int getPostPeriodControlId(int periodControlId, int docTypeId) {
+		//Construyo la query
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT  ");
+		sql.append("c_posperiodcontrol_id ");
+		sql.append("FROM c_posperiodcontrol ");
+		sql.append("WHERE c_periodcontrol_id = ? ");
+		sql.append("AND ad_client_id = ? ");
+		sql.append("AND c_doctype_id = ? ");
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName());
+			
+			//Parámetros
+			ps.setInt(1, periodControlId);
+			ps.setInt(2, getAD_Client_ID());
+			ps.setInt(3, docTypeId);
+			
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				return rs.getInt("c_posperiodcontrol_id");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return 0;
 	}
 }    // MPeriod
 

@@ -116,6 +116,7 @@ public class PosPeriodControlStatus extends SvrProcess {
 		sql.append("FROM c_doctype dt ");
 		sql.append("WHERE docbasetype = ? ");
 		sql.append("AND ad_client_id = ? ");
+		sql.append("AND open_close_by_pos = 'Y' ");
 		
 		if (pos > 0) {
 			sql.append("  AND POSITION(TRIM(BOTH FROM to_char(?, '0000')) IN doctypekey) > 0; ");
