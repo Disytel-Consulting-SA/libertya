@@ -16,12 +16,19 @@
 
 package org.openXpertya.process;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPeriod;
 import org.openXpertya.model.MPeriodControl;
+import org.openXpertya.model.MPosPeriodControl;
 import org.openXpertya.util.CacheMgt;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Msg;
 
 /**
  * Descripción de Clase
@@ -81,51 +88,20 @@ public class PeriodStatus extends SvrProcess {
         if( period.getID() == 0 ) {
             throw new IllegalArgumentException( "@NotFound@  @C_Period_ID@=" + p_C_Period_ID );
         }
-        // Disytel - Franco Bonafine
-        // Se crean los controles de periodos para todos los tipos de documento base.
-        // Este método se encarga de "rellenar" los controles de períodos de todos los tipos
-        // de documento base. En caso de que un Tipo Doc. Base no tenga un control de período
-        // entonces será creado por este método.
-        period.createPeriodControls();
-        // -
 
-        StringBuffer sql = new StringBuffer( "UPDATE C_PeriodControl " );
-
-        sql.append( "SET PeriodStatus='" );
-
-        // Open
-
-        if( MPeriodControl.PERIODACTION_OpenPeriod.equals( p_PeriodAction )) {
-            sql.append( MPeriodControl.PERIODSTATUS_Open );
-
-            // Close
-
-        } else if( MPeriodControl.PERIODACTION_ClosePeriod.equals( p_PeriodAction )) {
-            sql.append( MPeriodControl.PERIODSTATUS_Closed );
-
-            // Close Permanently
-
-        } else if( MPeriodControl.PERIODACTION_PermanentlyClosePeriod.equals( p_PeriodAction )) {
-            sql.append( MPeriodControl.PERIODSTATUS_PermanentlyClosed );
-        } else {
-            return "-";
-        }
-
-        //
-
-        sql.append( "', PeriodAction='N', Updated=SysDate,UpdatedBy=" ).append( getAD_User_ID());
-
-        // WHERE
-
-        sql.append( " WHERE C_Period_ID=" ).append( period.getC_Period_ID()).append( " AND PeriodStatus<>'P'" ).append( " AND PeriodStatus<>'" ).append( p_PeriodAction ).append( "'" );
-
-        int no = DB.executeUpdate( sql.toString(),get_TrxName());
-
+        /*Luis Ignacio Aita
+         * Pasé la lógica de apertura de períodos a la clase MPeriod, para poder invocarla
+         * desde otros procesos.
+         */
+        
+        int no = period.changeStatus(p_PeriodAction);
+        
         CacheMgt.get().reset( "C_PeriodControl",0 );
         CacheMgt.get().reset( "C_Period",p_C_Period_ID );
-
+        
         return "@Updated@ #" + no;
     }    // doIt
+    
 }    // PeriodStatus
 
 

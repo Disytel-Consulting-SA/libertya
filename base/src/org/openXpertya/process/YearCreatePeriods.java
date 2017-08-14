@@ -38,6 +38,7 @@ public class YearCreatePeriods extends SvrProcess {
     /** Descripci�n de Campos */
 
     private int p_C_Year_ID = 0;
+    private boolean open_periods = false;
 
     /**
      * Descripci�n de M�todo
@@ -46,6 +47,22 @@ public class YearCreatePeriods extends SvrProcess {
 
     protected void prepare() {
         p_C_Year_ID = getRecord_ID();
+        
+        
+        ProcessInfoParameter[] para = getParameter();
+
+        for( int i = 0;i < para.length;i++ ) {
+            String name = para[ i ].getParameterName();
+
+            if( para[ i ].getParameter() == null ) {
+                ;
+            } else if( name.equals( "open_periods" )) {
+            	open_periods = "Y".equals((String)para[ i ].getParameter());
+            } else {
+                log.log( Level.SEVERE,"Unknown Parameter: " + name );
+            }
+        }
+        
     }    // prepare
     
 
@@ -94,7 +111,7 @@ public class YearCreatePeriods extends SvrProcess {
 
         //
 
-        if( year.createStdPeriods( null )) {
+        if( year.createStdPeriods( null , open_periods)) {
             return "@OK@";
         }
 

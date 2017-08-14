@@ -1420,4 +1420,20 @@ if (oo != null)
 }
 return false;
 }
+/** Set open_close_by_pos */
+public void setopen_close_by_pos (boolean open_close_by_pos)
+{
+set_Value ("open_close_by_pos", new Boolean(open_close_by_pos));
+}
+/** Get open_close_by_pos */
+public boolean isopen_close_by_pos() 
+{
+Object oo = get_Value("open_close_by_pos");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 }

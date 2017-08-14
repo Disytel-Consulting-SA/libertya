@@ -207,8 +207,20 @@ public class MYear extends X_C_Year implements ITime{
      *
      * @return
      */
-
     public boolean createStdPeriods( Locale locale ) {
+    	return createStdPeriods(locale, false);
+    }
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param locale
+     * @param openPeriods: si está activo, los períodos creados se abren
+     *
+     * @return
+     */
+    public boolean createStdPeriods( Locale locale, boolean openPeriods ) {
         if( locale == null ) {
             MClient client = MClient.get( getCtx());
 
@@ -261,6 +273,14 @@ public class MYear extends X_C_Year implements ITime{
 
             if( !period.save( get_TrxName())) {    // Creates Period Control
                 return false;
+            }
+            
+            if (openPeriods) {
+            	try {
+            		period.changeStatus(MPeriodControl.PERIODACTION_OpenPeriod);
+            	} catch (Exception e) {
+            		return false;
+            	}
             }
         }
 

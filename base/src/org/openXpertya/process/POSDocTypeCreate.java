@@ -42,6 +42,10 @@ public class POSDocTypeCreate extends SvrProcess {
 	private List<DocTypeData> newDocTypes; 
 	/** Organización de los tipos de documento a crear */
 	private int orgID = 0;
+	/** Parámetro: indica si los tipos de documentos creados debe tener activa la marca
+	 *  de apertura/cierre por punto de venta
+	 */
+	private boolean openCloseByPos = false;
 
 	/**
 	 * CUIT de la organización carpeta parámetro o de la organización padre de
@@ -63,6 +67,8 @@ public class POSDocTypeCreate extends SvrProcess {
                 ;
             else if(name.equals("POSNumber"))
                 p_PosNumber = ((BigDecimal)para[i].getParameter()).intValue();
+			else if( name.equalsIgnoreCase( "open_close_by_pos" ))
+				openCloseByPos = "Y".equals((String)para[ i ].getParameter());
             else if(name.equals("AD_Org_ID"))
                 setOrgID(((BigDecimal)para[i].getParameter()).intValue());
 		}
@@ -291,6 +297,7 @@ public class POSDocTypeCreate extends SvrProcess {
         // Se indica que el tipo de documento es Fiscal (validaciones de localización)
         dt.setdocsubtypeinv(dt.DOCSUBTYPEINV_Fiscal);
         dt.setIsFiscalDocument(true);
+        dt.setopen_close_by_pos(openCloseByPos);
         // Se guarda el tipo de documento.
         if(!dt.save()) {
 			log.severe("DocType NOT created - " + dtd.getName());
