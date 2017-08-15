@@ -300,3 +300,6 @@ CREATE OR REPLACE VIEW rv_c_invoice_reten_iibb_bsas_emitidas AS
 
 ALTER TABLE rv_c_invoice_reten_iibb_bsas_emitidas
   OWNER TO libertya;
+  
+--20170815-121049 Merge de r2139  
+ALTER TABLE C_DocType ADD COLUMN open_close_by_pos character(1);
