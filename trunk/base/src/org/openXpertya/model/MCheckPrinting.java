@@ -113,6 +113,7 @@ public class MCheckPrinting extends X_C_CheckPrinting {
 		sql.append("	c_checkprinting_id = ? ");
 		sql.append("	AND print = 'Y' ");
 		sql.append("	AND printed = 'N' ");
+		sql.append("ORDER BY checkno ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
