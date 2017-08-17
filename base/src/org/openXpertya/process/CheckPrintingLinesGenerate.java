@@ -7,6 +7,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.MCheckPrinting;
 import org.openXpertya.model.MCheckPrintingLines;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
@@ -92,11 +93,15 @@ public class CheckPrintingLinesGenerate extends SvrProcess {
 		sql.append("		WHERE ");
 		sql.append("			c_checkprinting_id != 999 ");
 		sql.append("	) ");
+		// Filtrar los cheques de boletas de depósito
+		sql.append("	AND (c_doctype_id <> ?) ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		int lines = 0;
 
+		MDocType boletaDepositoDT = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_DepositReceipt, get_TrxName());
+		
 		try {
 			ps = DB.prepareStatement(sql.toString(), get_TrxName());
 
@@ -105,7 +110,8 @@ public class CheckPrintingLinesGenerate extends SvrProcess {
 			ps.setString(2, MPayment.TENDERTYPE_Check);
 			ps.setString(3, MPayment.DOCSTATUS_Completed);
 			ps.setString(4, MPayment.DOCSTATUS_Closed);
-
+			ps.setInt(5, boletaDepositoDT.getID());
+			
 			rs = ps.executeQuery();
 			MCheckPrintingLines printingLine;
 			while (rs.next()) {
