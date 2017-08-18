@@ -96,6 +96,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("	p.datetrx, ");
 		sql.append("	p.c_payment_id, ");
 		sql.append("	p.duedate as paymentduedate, ");
+		sql.append("	p.dateemissioncheck, ");
 		sql.append("	CASE ");
 		sql.append("		WHEN (p.duedate > current_date) THEN p.duedate ");
 		sql.append("		ELSE current_date + CAST('1 days' AS INTERVAL) ");
@@ -183,7 +184,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Motivo del pago
 		row.append(fillField(invoices, " ", MExpFormatRow.ALIGNMENT_Right, 105, null));
 		// Fecha de ejecución de la orden
-		row.append(dateFormat_yyyyMMdd.format(getNextWorkingDay(rs.getTimestamp("duedate")).getTime()));
+		row.append(dateFormat_yyyyMMdd.format(rs.getTimestamp("dateemissioncheck")));
 		// Tipo de pago o medio de ejecución para concretarlo
 		row.append("002");
 		// Importe a pagar
@@ -191,7 +192,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Moneda del pago (Codigo ISO de la divisa)
 		row.append(rs.getString("iso_code"));
 		// Fecha de vencimiento de CHPD
-		row.append(dateFormat_yyyyMMdd.format(rs.getTimestamp("dateacct")));
+		row.append(dateFormat_yyyyMMdd.format(getNextWorkingDay(rs.getTimestamp("duedate")).getTime()));
 		// Requerir Recibo oficial del Beneficiario en pagos con cheques
 		row.append("S");
 		// Cláusula No a la Orden
