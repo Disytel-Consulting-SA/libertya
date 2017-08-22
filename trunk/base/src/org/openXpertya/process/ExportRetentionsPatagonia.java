@@ -373,7 +373,8 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 	/** @return Registro total del archivo. */
 	protected String getFileFooter() {
 		StringBuffer total = new StringBuffer();
-
+		lineBreaks++;
+		
 		total.append("FT"); // Registro ID.
 		total.append(zeroFill(pcCount, 25)); // Total de líneas a imprimir de todos los comprobantes.
 		total.append(zeroFill(lineBreaks, 10)); // Total de registros del archivo.
@@ -707,7 +708,6 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + whiteSpace(27) + clientName + " - AdmCentral");
-		lineBreaks++;
 
 		return tmp.toString();
 	}
