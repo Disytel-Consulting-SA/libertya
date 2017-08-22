@@ -335,3 +335,19 @@ ALTER TABLE m_retencion_invoice_v
   
 --20170822-1240 Nueva columna para configurar el dato "A la orden" de los cheques a proveedores
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','a_name_check','character varying(60)'));
+
+--20170822-1350 Para cheques, la fecha de pago es la fecha de vencimiento del mismo
+CREATE OR REPLACE VIEW rv_unreconciled_payment AS 
+ SELECT p.ad_org_id, p.ad_client_id, (CASE WHEN p.tendertype = 'K' AND p.duedate IS NOT NULL THEN p.duedate ELSE p.datetrx END) as fechapago, p.dateemissioncheck AS fechaemision, p.documentno AS nrocheque, ( SELECT a.documentno
+           FROM c_allocationline al
+      JOIN c_allocationhdr a ON a.c_allocationhdr_id = al.c_allocationhdr_id
+     WHERE al.c_payment_id = p.c_payment_id AND (a.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+     ORDER BY a.datetrx
+    LIMIT 1) AS nroop, bp.name AS entidadcomercial, p.payamt AS monto, ba.c_bankaccount_id
+   FROM c_payment p
+   JOIN c_bpartner bp ON bp.c_bpartner_id = p.c_bpartner_id
+   JOIN c_bankaccount ba ON ba.c_bankaccount_id = p.c_bankaccount_id
+  WHERE p.isreconciled = 'N'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND p.tendertype = 'K'::bpchar AND p.isreceipt = 'N'::bpchar;
+
+ALTER TABLE rv_unreconciled_payment
+  OWNER TO libertya;
