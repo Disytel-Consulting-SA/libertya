@@ -1634,7 +1634,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 //			txtChequeALaOrden.setText(getModel().getBPartner().getName());
 		// -------------------------------------------------------------
 		else
-			txtChequeALaOrden.setValue(getModel().getBPartner().getName());
+			txtChequeALaOrden.setValue(getModel().getChequeALaOrden());
 		// -------------------------------------------------------------
 		txtChequeImporte.setValue("");
 		txtChequeNroCheque.setValue("");

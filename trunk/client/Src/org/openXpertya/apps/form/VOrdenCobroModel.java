@@ -1833,4 +1833,9 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	public boolean isAllowAdvanced(){
 		return true;
 	}
+
+	@Override
+	public String getChequeALaOrden(){
+		return getBPartner().getName();
+	}
 }

@@ -140,7 +140,7 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				pay.setCheckNo(String.valueOf(chequera.getCurrentNext())); // Numero de cheque
 				pay.setDateEmissionCheck(getBatchDate()); // Fecha de Emision del Cheque
 				pay.setMicr(bankAccount.getSucursal() + ";" + bankAccount.getAccountNo() + ";" + pay.getCheckNo()); // Sucursal; cta; No. cheque
-				pay.setA_Name(bPartner.getName()); // Nombre
+				pay.setA_Name(bPartner.getA_Name_Check()); // Nombre
 				pay.setTenderType(MPayment.TENDERTYPE_Check);
 				pay.setBankAccountDetails(bankAccount.getID());
 				pay.setAmount(getC_Currency_ID(), importe);

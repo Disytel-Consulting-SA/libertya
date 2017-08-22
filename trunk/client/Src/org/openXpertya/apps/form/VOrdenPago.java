@@ -2733,7 +2733,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 //			txtChequeALaOrden.setText(getModel().getBPartner().getName());
 		// -------------------------------------------------------------
 		else
-			txtChequeALaOrden.setText(getModel().getBPartner().getName());
+			txtChequeALaOrden.setText(getModel().getChequeALaOrden());
 		// -------------------------------------------------------------
 		txtChequeImporte.setText("");
 		txtChequeNroCheque.setText("");
