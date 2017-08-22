@@ -107,7 +107,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("	p.payamt, ");
 		sql.append("	c.iso_code, ");
 		sql.append("	Translate(bp.taxid, '-', '') AS taxid, ");
-		sql.append("	ba.sucursal, ");
+		sql.append("	ba.value as sucursal, ");
 		sql.append("	COALESCE( ");
 		sql.append("		(SELECT accountno ");
 		sql.append("		FROM c_bp_bankaccount AS bpa ");
