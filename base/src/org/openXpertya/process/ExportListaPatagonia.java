@@ -9,9 +9,11 @@ import org.openXpertya.model.MExpFormatRow;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BPartner;
+import org.openXpertya.model.X_C_BPartner_BankList;
 import org.openXpertya.model.X_C_BankAccount;
 import org.openXpertya.model.X_C_Currency;
 import org.openXpertya.model.X_C_DocType;
+import org.openXpertya.model.X_C_ElectronicPaymentBranch;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.util.Env;
@@ -161,8 +163,10 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("		ON p.c_payment_id = lpp.c_payment_id ");
 		sql.append("	INNER JOIN " + X_C_Currency.Table_Name + " AS c ");
 		sql.append("		ON c.c_currency_id = p.c_currency_id ");
-		sql.append("	INNER JOIN " + X_C_BankAccount.Table_Name + " AS ba ");
-		sql.append("		ON ba.c_bankaccount_id = p.c_bankaccount_id ");
+		sql.append("	INNER JOIN " + X_C_BPartner_BankList.Table_Name + " bpbl ");
+		sql.append("		ON bpbl.c_bpartner_id = bp.c_bpartner_id ");
+		sql.append("	INNER JOIN " + X_C_ElectronicPaymentBranch.Table_Name + " AS ba ");
+		sql.append("		ON ba.c_electronicpaymentbranch_id = bpbl.c_electronicpaymentbranch_id ");
 		sql.append("WHERE ");
 		sql.append("	lpp.c_banklist_id = ? ");
 
