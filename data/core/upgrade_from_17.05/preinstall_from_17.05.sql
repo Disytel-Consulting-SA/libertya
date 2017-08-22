@@ -332,3 +332,6 @@ CREATE OR REPLACE VIEW m_retencion_invoice_v AS
 
 ALTER TABLE m_retencion_invoice_v
   OWNER TO libertya;
+  
+--20170822-1240 Nueva columna para configurar el dato "A la orden" de los cheques a proveedores
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','a_name_check','character varying(60)'));

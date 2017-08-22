@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-07-05 12:13:05.962 */
+ *  @version  - 2017-08-22 12:40:10.347 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -181,6 +181,21 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Check to */
+public void setA_Name_Check (String A_Name_Check)
+{
+if (A_Name_Check != null && A_Name_Check.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+A_Name_Check = A_Name_Check.substring(0,60);
+}
+set_Value ("A_Name_Check", A_Name_Check);
+}
+/** Get Check to */
+public String getA_Name_Check() 
+{
+return (String)get_Value("A_Name_Check");
 }
 /** Set Automatic Credit Notes */
 public void setAutomaticCreditNotes (boolean AutomaticCreditNotes)

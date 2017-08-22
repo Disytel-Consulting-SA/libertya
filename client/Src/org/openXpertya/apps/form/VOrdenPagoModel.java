@@ -3848,4 +3848,8 @@ public class VOrdenPagoModel {
 	public String nextDocumentNo() throws Exception{
 		return getPoGenerator().getDocumentNo();
 	}
+	
+	public String getChequeALaOrden(){
+		return getBPartner().getA_Name_Check();
+	}
 }
