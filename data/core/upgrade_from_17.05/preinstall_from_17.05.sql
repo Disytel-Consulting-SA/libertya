@@ -351,3 +351,6 @@ CREATE OR REPLACE VIEW rv_unreconciled_payment AS
 
 ALTER TABLE rv_unreconciled_payment
   OWNER TO libertya;
+  
+--20170823-1615 Nueva configuración de tipo de documento para indicar el tipo de transacción frente al LIVA
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','transactiontypefrontliva','character(1)'));

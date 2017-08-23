@@ -165,23 +165,33 @@ public class LibroIVANewDataSource implements JRDataSource {
 
 						+ "		FROM ( SELECT c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.isactive, c_invoice.created, c_invoice.createdby, c_invoice.updated, c_invoice.updatedby, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctype_id, c_invoice.nombrecli, c_invoice.nroidentificcliente, c_invoice.puntodeventa, c_invoice.fiscalalreadyprinted "
 						+ "     	   FROM c_invoice "
-						+ "     	   WHERE ad_client_id = ? "
-						+ "				 AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) AND c_invoice.isactive = 'Y'::bpchar "
-						+ " 		     AND (dateacct::date between ? ::date and ? ::date) "
-						+ getOrgCheck());// '2012/06/01' and '2012/08/31')
+						+ "				INNER JOIN c_doctype ON c_invoice.c_doctypetarget_id = c_doctype.c_doctype_id "
+						+ "     	   WHERE c_invoice.ad_client_id = ? "
+						+ "				 AND c_invoice.isactive = 'Y'::bpchar "
+						+ " 		     AND (c_invoice.dateacct::date between ? ::date and ? ::date) "
+						+ getOrgCheck("c_invoice"));// '2012/06/01' and '2012/08/31')
 											// "+getOrgCheck())
 
+		String docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
 		// Si no es ambos
 		if (!p_transactionType.equals("B")) {
 			// Si es transacción de ventas, C = Customer(Cliente)
 			if (p_transactionType.equals("C")) {
-				query.append(" AND (issotrx = 'Y')");
+				query.append(
+						" AND ((c_invoice.issotrx = 'Y' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
+								+ MDocType.TRANSACTIONTYPEFRONTLIVA_Sales + "') ");
 			}
 			// Si es transacción de compra
 			else {
-				query.append(" AND (issotrx = 'N') ");
+				query.append(
+						" AND ((c_invoice.issotrx = 'N' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
+								+ MDocType.TRANSACTIONTYPEFRONTLIVA_Purchases + "') ");
+				docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
 			}
 		}
+			
+		query.append(docStatusClause);
+		
 		query.append(" ) inv "
 				+ " 	INNER JOIN ( SELECT c_invoicetax.c_tax_id, c_invoicetax.c_invoice_id, c_invoicetax.taxamt AS importe, "
 				+ " 				   	CASE "
@@ -617,12 +627,14 @@ public class LibroIVANewDataSource implements JRDataSource {
 			return defValue;
 		return object;
 	}
-
+	
 	/**
 	 * Validacion por organización
 	 */
-	protected String getOrgCheck() {
-		return (p_orgID > 0 ? " AND AD_Org_ID = " + p_orgID : "") + " ";
+	protected String getOrgCheck(String alias)
+	{
+		alias = Util.isEmpty(alias)?"":alias+".";
+		return (p_orgID > 0 ? " AND "+alias+"AD_Org_ID = " + p_orgID : "") + " ";
 	}
 
 	public boolean next() throws JRException {

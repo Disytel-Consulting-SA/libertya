@@ -6,11 +6,13 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.X_T_LibroIva;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 
@@ -100,22 +102,33 @@ public class GenerateLibroIva extends SvrProcess {
          	"       cdt.signo," +
          	"       cit.AD_Client_ID, " +
          	"       cbp.iibb " +
-         	" from (select c_invoice_id, ad_client_id, ad_org_id, c_currency_id, c_conversiontype_id, documentno, c_bpartner_id, dateacct, dateinvoiced, totallines, grandtotal, issotrx, c_doctypetarget_id, fiscalalreadyprinted, netamount  " +
-         	"       from c_Invoice " +
-         	"       where ad_client_id = ? " + getOrgCheck() + " AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO' OR docstatus = '??') AND (isactive = 'Y')" +
-         	"		AND (dateacct::date between ?::date and ?::date) " );
+         	" from (select c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctypetarget_id, c_invoice.fiscalalreadyprinted, c_invoice.netamount  " +
+         	"       from c_invoice " +
+         	"		INNER JOIN c_doctype ON c_invoice.c_doctypetarget_id = c_doctype.c_doctype_id " +
+         	"       where c_invoice.ad_client_id = ? "+ 
+         	"			AND (c_invoice.isactive = 'Y') " +
+        	"			AND (c_invoice.dateacct::date between ?::date and ?::date) " 
+        	+ getOrgCheck("c_invoice"));
          
-         //Si no es ambos
-         if(!this.transaction.equals("B")){
-        	 //Si es transacción de compra, C = Customer(Cliente)
-        	 if(this.transaction.equals("C")){
-        		 sqlReal.append(" AND (issotrx = 'Y')");
-        	 }
-        	 else{
-        		//Si es transacción de compra
-        		 sqlReal.append(" AND (issotrx = 'N')");
-        	 }
-         }
+         String docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
+         if (!transaction.equals("B")) {
+ 			// Si es transacción de ventas, C = Customer(Cliente)
+ 			if (transaction.equals("C")) {
+ 				sqlReal.append(
+						" AND ((c_invoice.issotrx = 'Y' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
+								+ MDocType.TRANSACTIONTYPEFRONTLIVA_Sales + "') ");
+ 			}
+ 			// Si es transacción de compra
+ 			else {
+ 				sqlReal.append(
+						" AND ((c_invoice.issotrx = 'N' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
+								+ MDocType.TRANSACTIONTYPEFRONTLIVA_Purchases + "') ");
+ 				docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
+ 			}
+ 		 }
+         
+         sqlReal.append(docStatusClause);
+         
          String dateOrder = isPurchase() ? "inv.dateinvoiced" : "inv.dateacct";		
          sqlReal.append(") inv " +
          	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscal, isfiscaldocument " +
@@ -263,9 +276,10 @@ public class GenerateLibroIva extends SvrProcess {
 	/**
 	 * Validacion por organización
 	 */
-	protected String getOrgCheck()
+	protected String getOrgCheck(String alias)
 	{
-		return (orgID > 0 ? " AND AD_Org_ID = " + orgID : "") + " ";
+		alias = Util.isEmpty(alias)?"":alias+".";
+		return (orgID > 0 ? " AND "+alias+"AD_Org_ID = " + orgID : "") + " ";
 	}
 	
 	public boolean isPurchase() {

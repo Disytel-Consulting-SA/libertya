@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-16 12:25:56.993 */
+ *  @version  - 2017-08-23 16:10:17.236 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -51,6 +51,7 @@ setLinesCountMax (0);
 setLockSeq (false);
 setName (null);
 setOnlyVendorProducts (false);
+setopen_close_by_pos (false);	// N
 setPOSEnableDue (false);
 setPOSEnableDueDays (0);
 setPrintName (null);
@@ -1232,6 +1233,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set open_close_by_pos */
+public void setopen_close_by_pos (boolean open_close_by_pos)
+{
+set_Value ("open_close_by_pos", new Boolean(open_close_by_pos));
+}
+/** Get open_close_by_pos */
+public boolean isopen_close_by_pos() 
+{
+Object oo = get_Value("open_close_by_pos");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set POS Enable Due.
 Document enable in POS with due days */
 public void setPOSEnableDue (boolean POSEnableDue)
@@ -1372,6 +1389,32 @@ if (oo != null)
 }
 return false;
 }
+public static final int TRANSACTIONTYPEFRONTLIVA_AD_Reference_ID = MReference.getReferenceID("Transactions Application");
+/** Sales = S */
+public static final String TRANSACTIONTYPEFRONTLIVA_Sales = "S";
+/** Purchases = P */
+public static final String TRANSACTIONTYPEFRONTLIVA_Purchases = "P";
+/** Both = B */
+public static final String TRANSACTIONTYPEFRONTLIVA_Both = "B";
+/** Set Tipo Frente al Libro de IVA.
+Tipo de transacción frente al libro de iva */
+public void setTransactionTypeFrontLIva (String TransactionTypeFrontLIva)
+{
+if (TransactionTypeFrontLIva == null || TransactionTypeFrontLIva.equals("S") || TransactionTypeFrontLIva.equals("P") || TransactionTypeFrontLIva.equals("B") || ( refContainsValue("CORE-AD_Reference-1010304", TransactionTypeFrontLIva) ) );
+ else throw new IllegalArgumentException ("TransactionTypeFrontLIva Invalid value: " + TransactionTypeFrontLIva + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010304") );
+if (TransactionTypeFrontLIva != null && TransactionTypeFrontLIva.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+TransactionTypeFrontLIva = TransactionTypeFrontLIva.substring(0,1);
+}
+set_Value ("TransactionTypeFrontLIva", TransactionTypeFrontLIva);
+}
+/** Get Tipo Frente al Libro de IVA.
+Tipo de transacción frente al libro de iva */
+public String getTransactionTypeFrontLIva() 
+{
+return (String)get_Value("TransactionTypeFrontLIva");
+}
 /** Set Unique Documentno */
 public void setUniqueDocumentno (boolean UniqueDocumentno)
 {
@@ -1413,22 +1456,6 @@ set_Value ("ValidateSeqLength", new Boolean(ValidateSeqLength));
 public boolean isValidateSeqLength() 
 {
 Object oo = get_Value("ValidateSeqLength");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
-}
-/** Set open_close_by_pos */
-public void setopen_close_by_pos (boolean open_close_by_pos)
-{
-set_Value ("open_close_by_pos", new Boolean(open_close_by_pos));
-}
-/** Get open_close_by_pos */
-public boolean isopen_close_by_pos() 
-{
-Object oo = get_Value("open_close_by_pos");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
