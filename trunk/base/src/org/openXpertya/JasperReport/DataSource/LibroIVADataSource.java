@@ -12,11 +12,13 @@ import net.sf.jasperreports.engine.JRDataSource;
 
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 public class LibroIVADataSource extends QueryDataSource implements JRDataSource {
@@ -95,23 +97,31 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	"       cbp.iibb " +
              	" from (select c_invoice_id, ad_client_id, ad_org_id, c_currency_id, c_conversiontype_id, documentno, c_bpartner_id, dateacct, dateinvoiced, totallines,grandtotal, issotrx, c_doctype_id, fiscalalreadyprinted  " +
              	"       from c_Invoice " +
-             	" where ad_client_id = ? " + getOrgCheck() + "AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO' OR docstatus = '??') " +
+             	" where ad_client_id = ? " + getOrgCheck("c_invoice") + "AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO' OR docstatus = '??') " +
              	" AND (isactive = 'Y') "+
              	" AND (date_trunc('day', dateacct) between date_trunc('day',?::timestamp) and date_trunc('day',?::timestamp)) " );
              
-             //Si no es ambos
-             if(!p_transactionType.equals("B")){
-            	 //Si es transacción de compra, C = Customer(Cliente)
-            	 if(p_transactionType.equals("C")){
-            		 sqlReal.append(" AND (issotrx = 'Y')");
-            	 }
-            	 else{
-            		//Si es transacción de compra
-            		 sqlReal.append(" AND (issotrx = 'N') ");
-            	 }
-             }
-             	
-             sqlReal.append(") inv " +
+			String docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
+			// Si no es ambos
+			if (!p_transactionType.equals("B")) {
+				// Si es transacción de ventas, C = Customer(Cliente)
+				if (p_transactionType.equals("C")) {
+					sqlReal.append(
+							" AND ((c_invoice.issotrx = 'Y' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
+									+ MDocType.TRANSACTIONTYPEFRONTLIVA_Sales + "') ");
+				}
+				// Si es transacción de compra
+				else {
+					sqlReal.append(
+							" AND ((c_invoice.issotrx = 'N' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
+									+ MDocType.TRANSACTIONTYPEFRONTLIVA_Purchases + "') ");
+					docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
+				}
+			}
+			
+			sqlReal.append(docStatusClause);
+             
+            sqlReal.append(") inv " +
              	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscaldocument, isfiscal " +
              	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctype_id " +
              	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
@@ -259,8 +269,9 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
 	/**
 	 * Validacion por organización
 	 */
-	protected String getOrgCheck()
+	protected String getOrgCheck(String alias)
 	{
-		return (p_orgID > 0 ? " AND AD_Org_ID = " + p_orgID : "") + " ";
+		alias = Util.isEmpty(alias)?"":alias+".";
+		return (p_orgID > 0 ? " AND "+alias+"AD_Org_ID = " + p_orgID : "") + " ";
 	}
 }
