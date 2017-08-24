@@ -9,7 +9,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -26,6 +28,8 @@ import org.openXpertya.model.X_C_Categoria_Iva;
 import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Location;
 import org.openXpertya.model.X_C_Region;
+import org.openXpertya.model.X_C_RetencionSchema;
+import org.openXpertya.model.X_C_RetencionType;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.DB;
@@ -36,6 +40,37 @@ import org.openXpertya.util.Util;
  * @author Kevin Feuerschvenger - Sur Software S.H.
  */
 public class ExportRetentionsPatagonia extends ExportBankList {
+	
+	/** Provincias */
+	private static Map<String, String> provincias;
+	static {
+		provincias = new HashMap<String, String>();
+		provincias.put("0", "0000");
+		provincias.put("CORE-C_Region-1000082", "3");
+		provincias.put("CORE-C_Region-1000083", "4");
+		provincias.put("CORE-C_Region-1000084", "5");
+		provincias.put("CORE-C_Region-1000087", "6");
+		provincias.put("CORE-C_Region-1000088", "7");
+		provincias.put("CORE-C_Region-1000085", "8");
+		provincias.put("CORE-C_Region-1000086", "9");
+		provincias.put("CORE-C_Region-1000089", "10");
+		provincias.put("CORE-C_Region-1000090", "11");
+		provincias.put("CORE-C_Region-1000091", "12");
+		provincias.put("CORE-C_Region-1000092", "13");
+		provincias.put("CORE-C_Region-1000093", "14");
+		provincias.put("CORE-C_Region-1000094", "15");
+		provincias.put("CORE-C_Region-1000095", "16");
+		provincias.put("CORE-C_Region-1000096", "17");
+		provincias.put("CORE-C_Region-1000097", "18");
+		provincias.put("CORE-C_Region-1000098", "19");
+		provincias.put("CORE-C_Region-1000099", "20");
+		provincias.put("CORE-C_Region-1000100", "21");
+		provincias.put("CORE-C_Region-1000101", "22");
+		provincias.put("CORE-C_Region-1000102", "23");
+		provincias.put("CORE-C_Region-1000103", "24");
+		provincias.put("CORE-C_Region-1000105", "25");
+		provincias.put("CORE-C_Region-1000104", "26");
+	}
 
 	/** Formato de fechas yyyyMMdd */
 	private static final String DEFAULT_DATE_FORMAT = "yyyyMMdd";
@@ -99,11 +134,17 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	c_banklistline_id ");
+		sql.append("	bll.c_banklistline_id ");
 		sql.append("FROM ");
-		sql.append("	" + X_C_BankListLine.Table_Name + " ");
+		sql.append("	" + X_C_AllocationHdr.Table_Name + " a ");
+		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
+		sql.append("		ON bll.c_allocationhdr_id = a.c_allocationhdr_id ");
+		sql.append("	INNER JOIN " + X_C_BankList.Table_Name + " bl ");
+		sql.append("		ON bl.c_banklist_id = bll.c_banklist_id ");
+		sql.append("	INNER JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
+		sql.append("		ON ri.c_allocationhdr_id = a.c_allocationhdr_id ");
 		sql.append("WHERE ");
-		sql.append("	c_banklist_id = ?");
+		sql.append("	bll.c_banklist_id = ?");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -116,11 +157,10 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			write(getFileHeader());
 
 			while (rs.next()) {
-
+				lineSecNo++;
 				write(getLineHeader(rs.getInt(1)));
 				write(getLineDetail(rs.getInt(1)));
 				write(getLineFooter());
-				lineSecNo++;
 
 			}
 
@@ -209,7 +249,6 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 
-		String documentno = "";
 		int totalseqno = 1;
 
 		try {
@@ -217,7 +256,6 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			ps.setInt(1, getBankList().getC_BankList_ID());
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				documentno = rs.getString(1);
 				dailySecNo = rs.getInt(2);
 			}
 		} catch (Exception e) {
@@ -261,11 +299,13 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	bl.documentno, ");
+		sql.append("	a.documentno, ");
 		sql.append("	i.dateacct, ");
 		sql.append("	i.documentno AS withholdINgno, ");
 		sql.append("	i.c_invoice_id, ");
-		sql.append("	sucursaldefault ");
+		sql.append("	sucursaldefault, ");
+		sql.append("	rt.retentiontype, ");
+		sql.append("	COALESCE(r.ad_componentobjectuid,'0') AS provincia ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_AllocationHdr.Table_Name + " a ");
 		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
@@ -274,6 +314,12 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("		ON bl.c_banklist_id = bll.c_banklist_id ");
 		sql.append("	INNER JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
 		sql.append("		ON ri.c_allocationhdr_id = a.c_allocationhdr_id ");
+		sql.append("	INNER JOIN " + X_C_RetencionSchema.Table_Name + " rs ");
+		sql.append("		ON rs.c_retencionschema_id = ri.c_retencionschema_id ");
+		sql.append("	INNER JOIN " + X_C_RetencionType.Table_Name + " rt ");
+		sql.append("		ON rt.c_retenciontype_id = rs.c_retenciontype_id ");
+		sql.append("	LEFT JOIN " + X_C_Region.Table_Name + " r ");
+		sql.append("		ON r.c_region_id = rs.c_region_id ");
 		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
 		sql.append("		ON i.c_invoice_id = ri.c_invoice_id ");
 		sql.append("	INNER JOIN " + X_C_BankList_Config.Table_Name + " blc ");
@@ -286,6 +332,8 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 		String documentno = "";
 		String sucursaldefault = "";
+		String retentionType = "";
+		String provincia = "";
 
 		try {
 			ps = DB.prepareStatement(sql.toString());
@@ -294,6 +342,8 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			if (rs.next()) {
 				documentno = rs.getString(1);
 				sucursaldefault = rs.getString(5);
+				retentionType = rs.getString("retentiontype");
+				provincia = rs.getString("provincia");
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getFileHeader", e);
@@ -310,15 +360,28 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 		head.append("H1"); // Registro ID.
 		head.append(whiteSpace(25)); // Nro. de Beneficiario del pago.
-		head.append(zeroFill(documentno, 7)); // Referencia de la orden de pago.
+		head.append(zeroFill(documentno, 25)); // Referencia de la orden de pago.
 		head.append(zeroFill(String.valueOf(lineSecNo), 5)); // Nro de comprobante dentro del archivo.
-		head.append("22"); // Tipo de certificado de retención o comprobante adjunto.
+		head.append(zeroFill(getRentencionCode(retentionType, provincia), 3)); // Tipo de certificado de retención o comprobante adjunto.
 		head.append("S"); // Incluir firma al documento.
 		head.append("BCO"); // Canal de entrega de los comprobantes asociados a pagos electrónicos.
 		head.append(zeroFill(sucursaldefault, 0)); // Sucursal a la cual enviar los comprobantes asociados a pagos electrónicos.
 		head.append(whiteSpace(80)); // Espacio en blanco.
 
 		return head.toString();
+	}
+	
+	private String getRentencionCode(String retentionType, String provincia) {
+		if ("I".equals(retentionType)) 
+			return "1";
+		else if ("G".equals(retentionType)) 
+			return "2";
+		else if ("S".equals(retentionType) || "J".equals(retentionType)) 
+			return "3";
+		else if ("B".equals(retentionType))
+			return provincias.get(provincia);
+		else
+			return null;
 	}
 
 	private String commonMargin() {
@@ -349,7 +412,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		detail.append(getDocumentInfo(c_banklistline_id));
 		detail.append(getCompanyInfo(c_banklistline_id));
 		detail.append(getBPartnerInfo());
-		detail.append(getTextInfo());
+		detail.append(getTextInfo(c_banklistline_id));
 		detail.append(getInvoicesInfo(c_banklistline_id));
 
 		return detail.toString();
@@ -374,7 +437,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 	protected String getFileFooter() {
 		StringBuffer total = new StringBuffer();
 		lineBreaks++;
-		
+
 		total.append("FT"); // Registro ID.
 		total.append(zeroFill(pcCount, 25)); // Total de líneas a imprimir de todos los comprobantes.
 		total.append(zeroFill(lineBreaks, 10)); // Total de registros del archivo.
@@ -394,7 +457,11 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("	i.dateacct, ");
 		sql.append("	i.documentno AS withholdingno, ");
 		sql.append("	i.c_invoice_id, ");
-		sql.append("	INITCAP(cl.city) AS city ");
+		sql.append("	CASE ");
+		sql.append("	  WHEN cl.city IS NOT NULL AND cl.city != '' THEN cl.city ");
+		sql.append("	  WHEN r.name IS NOT NULL AND r.name != '' THEN r.name ");
+		sql.append("	  ELSE '' ");
+		sql.append("	END as city ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_AllocationHdr.Table_Name + " a ");
 		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
@@ -409,8 +476,10 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("		ON c.ad_client_id = a.ad_client_id ");
 		sql.append("	INNER JOIN " + X_AD_ClientInfo.Table_Name + " ci ");
 		sql.append("		ON c.ad_client_id = ci.ad_client_id ");
-		sql.append("	INNER JOIN " + X_C_Location.Table_Name + " cl ");
+		sql.append("	LEFT JOIN " + X_C_Location.Table_Name + " cl ");
 		sql.append("		ON cl.c_location_id = ci.c_location_id ");
+		sql.append("	LEFT JOIN " + X_C_Region.Table_Name + " r ");
+		sql.append("		ON cl.c_region_id = r.c_region_id  ");
 		sql.append("WHERE ");
 		sql.append("	bll.c_banklistline_id = ?");
 
@@ -576,24 +645,85 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		return tmp.toString();
 	}
 
-	private String getTextInfo() {
-		StringBuffer tmp = new StringBuffer();
+	private String getTextInfo(int c_banklistline_id) {
+		StringBuffer sql = new StringBuffer();
 
-		// TODO
-		Date cambiar = new Date();
+		sql.append("SELECT ");
+		sql.append("	CASE WHEN rt.retentiontype = 'I' THEN 'de IVA' ");
+		sql.append("		WHEN rt.retentiontype = 'G' THEN 'a las Ganancias' ");
+		sql.append("		WHEN rt.retentiontype = 'B' THEN 'a los Ingresos Brutos' ");
+		sql.append("		WHEN rt.retentiontype = 'S' THEN 'de S.U.S.S.' ");
+		sql.append("		WHEN rt.retentiontype = 'J' THEN 'de S.I.J.P.' ");
+		sql.append("	ELSE '0' END AS impuesto, ");
+		sql.append("	a.dateacct as fechaop, ");
+		sql.append("	i.dateacct as fecharet, ");
+		sql.append("	rs.name as concepto, ");
+		sql.append("	ri.baseimponible_amt ");
+		sql.append("FROM ");
+		sql.append("	" + X_C_AllocationHdr.Table_Name + " a ");
+		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
+		sql.append("		ON bll.c_allocationhdr_id = a.c_allocationhdr_id ");
+		sql.append("	INNER JOIN " + X_C_BankList.Table_Name + " bl ");
+		sql.append("		ON bl.c_banklist_id = bll.c_banklist_id ");
+		sql.append("	INNER JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
+		sql.append("		ON ri.c_allocationhdr_id = a.c_allocationhdr_id ");
+		sql.append("	INNER JOIN " + X_C_RetencionSchema.Table_Name + " rs ");
+		sql.append("		ON rs.c_retencionschema_id = ri.c_retencionschema_id ");
+		sql.append("	INNER JOIN " + X_C_RetencionType.Table_Name + " rt ");
+		sql.append("		ON rt.c_retenciontype_id = rs.c_retenciontype_id ");
+		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
+		sql.append("		ON i.c_invoice_id = ri.c_invoice_id ");
+		sql.append("WHERE ");
+		sql.append("	bll.c_banklistline_id = ?");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		String impuesto = "";
+		Date fechaop = null;
+		Date fecharet = null;
+		String concepto = "";
+		BigDecimal baseImponible = null;
+
+		try {
+			ps = DB.prepareStatement(sql.toString());
+			ps.setInt(1, c_banklistline_id);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				//Verifico tipo de retención, si falta configurar disparo error
+				if ("0".equals(rs.getString("impuesto"))) {
+					throw new Exception("Existen Tipos de Retenciones sin configurar");
+				}
+				impuesto = rs.getString("impuesto");
+				fechaop = new Date(rs.getTimestamp("fechaop").getTime());
+				fecharet = new Date(rs.getTimestamp("fecharet").getTime());
+				concepto = rs.getString("concepto");
+				baseImponible = rs.getBigDecimal("baseimponible_amt");
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "getFileHeader", e);
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
+
+		}
+		
+		StringBuffer tmp = new StringBuffer();
 		DateFormat fmt1 = new SimpleDateFormat("dd/MM/yyyy");
 		DateFormat fmt2 = new SimpleDateFormat("MMMM/yyyy", Locale.getDefault());
-
-		BigDecimal grandTotal = new BigDecimal(39627.45);
 
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + "                       Por la presente adjuntamos la siguiente nota:             " + getRowSeparator());
-		tmp.append(commonMargin() + "Retencion del impuesto a los Ingresos Brutos sobre el pago realizado el          " + getRowSeparator());
-		tmp.append(commonMargin() + fmt1.format(cambiar) + " en concepto de IBB SANTA CRUZ -Contribuyente Local                    " + getRowSeparator());
-		tmp.append(commonMargin() + "determinado sobre un importe de " + grandTotal.doubleValue() + " (RESOLUCION: 61/995) Comision arbitral." + getRowSeparator());
-		tmp.append(commonMargin() + "Esta retencion del mes de " + cap(fmt2.format(cambiar)) + " a ser depositado el mes de            " + getRowSeparator());
-		tmp.append(commonMargin() + cap(fmt2.format(cambiar)) + "                                                                     " + getRowSeparator());
+		tmp.append(commonMargin() + "Retencion del impuesto " + impuesto + " sobre el pago realizado el          " + getRowSeparator());
+		tmp.append(commonMargin() + fmt1.format(fechaop) + " en concepto de " + concepto + getRowSeparator());
+		tmp.append(commonMargin() + "determinado sobre un importe de " + baseImponible.doubleValue() + getRowSeparator());
+		tmp.append(commonMargin() + "Esta retencion del mes de " + cap(fmt2.format(fecharet)) + " a ser depositado el mes de            " + getRowSeparator());
+		tmp.append(commonMargin() + cap(fmt2.format(fecharet)) + "                                                                     " + getRowSeparator());
 		tmp.append(commonMargin() + "En el paquete de pago se encuentran los siguientes comprobantes                  " + getRowSeparator());
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + "FECHA EMISION                 COMPROBANTE                    IMPORTE             " + getRowSeparator());
@@ -651,7 +781,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		ResultSet rs = null;
 
 		BigDecimal total = BigDecimal.ZERO;
-		BigDecimal noImponible = BigDecimal.ZERO;
+		BigDecimal baseImponible = BigDecimal.ZERO;
 		BigDecimal basePercent = BigDecimal.ZERO;
 		BigDecimal noImponibleImp = BigDecimal.ZERO;
 		BigDecimal retencionPercent = BigDecimal.ZERO;
@@ -666,7 +796,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			while (rs.next()) {
 				total = total.add(rs.getBigDecimal("amount"));
 				noImponibleImp = rs.getBigDecimal(5);
-				noImponible = rs.getBigDecimal(7);
+				baseImponible = rs.getBigDecimal(7);
 				basePercent = rs.getBigDecimal(6);
 				retencionPercent = rs.getBigDecimal(8);
 				importeDetermAmt = rs.getBigDecimal(9);
@@ -700,7 +830,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		tmp.append(commonMargin() + "Este pago" + fillField(String.valueOf(total.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 58, null) + getRowSeparator());
 		tmp.append(commonMargin() + "Importe No Imponible" + fillField("" + noImponibleImp.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 47, null) + getRowSeparator());
 		tmp.append(commonMargin() + "Porcentaje Base Calculo %" + fillField("" + basePercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 42, null)  + getRowSeparator());
-		tmp.append(commonMargin() + "Base Imponible" + fillField(String.valueOf(total.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 53, null) + getRowSeparator());
+		tmp.append(commonMargin() + "Base Imponible" + fillField(String.valueOf(baseImponible.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 53, null) + getRowSeparator());
 		tmp.append(commonMargin() + "Alicuota %" + fillField("" + retencionPercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 57, null) +  getRowSeparator());
 		tmp.append(commonMargin() + getRowSeparator());
 		tmp.append(commonMargin() + "IMPORTE RETENIDO" + fillField("" + importeDetermAmt.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 51, null) +  getRowSeparator());
