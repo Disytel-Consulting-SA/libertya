@@ -93,7 +93,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("SELECT DISTINCT ");
 		sql.append("	ahb.c_allocationhdr_id, ");
 		sql.append("	ahb.documentno, ");
-		sql.append("	COALESCE(p.a_name, bp.name) as name, ");
+		sql.append("	(CASE WHEN p.a_name IS NOT NULL AND length(trim(p.a_name)) > 0 THEN p.a_name ELSE bp.name END) AS name, ");
 		sql.append("	p.datetrx, ");
 		sql.append("	p.c_payment_id, ");
 		sql.append("	p.duedate as paymentduedate, ");
