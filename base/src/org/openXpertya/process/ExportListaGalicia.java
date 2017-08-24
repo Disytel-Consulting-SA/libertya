@@ -17,8 +17,6 @@ import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_BPartner_BankList;
 import org.openXpertya.model.X_C_BPartner_Location;
-import org.openXpertya.model.X_C_BankAccount;
-import org.openXpertya.model.X_C_BankList;
 import org.openXpertya.model.X_C_BankListLine;
 import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.model.X_C_ElectronicPaymentBranch;
@@ -127,7 +125,7 @@ public class ExportListaGalicia extends ExportBankList {
 
 		BigDecimal res = DB.getSQLValueBD(get_TrxName(), sql.toString(), getBankList().getID());
 
-		header.append(fillField(String.valueOf(res.abs().multiply(Env.ONEHUNDRED).intValue()), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
+		header.append(fillField(String.valueOf(res.abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN)), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 
 		header.append(dateFormat_ddMMyyyy.format(calendarDateTrx.getTime()));
 		header.append(dateFormat_ddMMyyyy.format(calendarDateTrx.getTime()));
@@ -150,7 +148,7 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("	p.c_payment_id, ");
 		sql.append("	lgp.c_bpartner_id, ");
 		sql.append("	lgp.payamt, ");
-		sql.append("	COALESCE(p.a_name, bp.name) AS name, ");
+		sql.append("	(CASE WHEN p.a_name IS NOT NULL AND length(trim(p.a_name)) > 0 THEN p.a_name ELSE bp.name END) AS name, ");
 		sql.append("	Translate(COALESCE(bp.taxid, p.a_cuit), '-', '') AS cuit, ");
 		sql.append("	(SELECT ");
 		sql.append("		l.address1 ");
@@ -235,7 +233,7 @@ public class ExportListaGalicia extends ExportBankList {
 	}
 
 	protected void writeCheckLine(ResultSet rs) throws Exception {
-		Integer payAmt = rs.getBigDecimal("payamt").abs().multiply(Env.ONEHUNDRED).intValue();
+		BigDecimal payAmt = rs.getBigDecimal("payamt").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 		String address = Util.isEmpty(rs.getString("address"), true) ? "A" : rs.getString("address");
 		String city = Util.isEmpty(rs.getString("city"), true) ? "C" : rs.getString("city");
 		String postal = Util.isEmpty(rs.getString("postal"), true) ? "P" : rs.getString("postal");
@@ -333,9 +331,9 @@ public class ExportListaGalicia extends ExportBankList {
 				StringBuffer op = new StringBuffer("O1");
 				documentno = rsop.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), "");
 				op.append(fillField(documentno, "0", MExpFormatRow.ALIGNMENT_Right, 10, null));
-				Integer debitos = rsop.getBigDecimal("debitos").abs().multiply(Env.ONEHUNDRED).intValue();
-				Integer creditos = rsop.getBigDecimal("creditos").abs().multiply(Env.ONEHUNDRED).intValue();
-				Integer total = rsop.getBigDecimal("total").abs().multiply(Env.ONEHUNDRED).intValue();
+				BigDecimal debitos = rsop.getBigDecimal("debitos").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+				BigDecimal creditos = rsop.getBigDecimal("creditos").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+				BigDecimal total = rsop.getBigDecimal("total").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 				op.append(fillField(String.valueOf(debitos), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 				op.append(fillField(String.valueOf(debitos), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 				op.append(fillField(String.valueOf(creditos), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
@@ -445,9 +443,9 @@ public class ExportListaGalicia extends ExportBankList {
 				fc.append(fillField("Factura de Proveedor", " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
 				fc.append(dateFormat_ddMMyyyy.format(rsfc.getTimestamp("dateinvoiced")));
 
-				Integer total = rsfc.getBigDecimal("grandtotal").abs().multiply(Env.ONEHUNDRED).intValue();
-				Integer retencion = rsfc.getBigDecimal("retencion").abs().multiply(Env.ONEHUNDRED).intValue();
-				Integer retencion_base = rsfc.getBigDecimal("retencion_base").abs().multiply(Env.ONEHUNDRED).intValue();
+				BigDecimal total = rsfc.getBigDecimal("grandtotal").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+				BigDecimal retencion = rsfc.getBigDecimal("retencion").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+				BigDecimal retencion_base = rsfc.getBigDecimal("retencion_base").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 
 				fc.append(fillField(String.valueOf(total), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 				fc.append(fillField(String.valueOf(retencion), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
@@ -583,7 +581,7 @@ public class ExportListaGalicia extends ExportBankList {
 		re.append(fillField(tmp, " ", MExpFormatRow.ALIGNMENT_Left, 35, null));
 		re.append(dateFormat_ddMMyyyy.format(rs.getTimestamp("allocationdate")));
 
-		Integer total = rsre.getBigDecimal("grandtotal").abs().multiply(Env.ONEHUNDRED).intValue();
+		BigDecimal total = rsre.getBigDecimal("grandtotal").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 		re.append(fillField(String.valueOf(total), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 		re.append(dateFormat_MMyyyy.format(rs.getTimestamp("allocationdate")));
 		re.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 137, null));
@@ -603,10 +601,10 @@ public class ExportListaGalicia extends ExportBankList {
 		} else {
 			rp.append(rsre.getString("esquema").substring(0, 30));
 		}
-		Integer noimponible = rsre.getBigDecimal("noimponible").abs().multiply(Env.ONEHUNDRED).intValue();
-		Integer retencion = rsre.getBigDecimal("retencion").abs().multiply(Env.ONEHUNDRED).intValue();
-		Integer retencion_base = rsre.getBigDecimal("base").abs().multiply(Env.ONEHUNDRED).intValue();
-		Integer retencion_perc = rsre.getBigDecimal("perc").abs().multiply(Env.ONEHUNDRED).intValue();
+		BigDecimal noimponible = rsre.getBigDecimal("noimponible").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+		BigDecimal retencion = rsre.getBigDecimal("retencion").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+		BigDecimal retencion_base = rsre.getBigDecimal("base").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+		BigDecimal retencion_perc = rsre.getBigDecimal("perc").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 
 		rp.append("03");
 		rp.append("1");
