@@ -241,9 +241,12 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 
 	@Override
 	public String completeIt() {
-		// Se eliminan los cupones anulados del cierre actual
 		try {
+			// Se eliminan los cupones anulados del cierre actual
 			deleteVoidPayments();
+			
+			// Setear las líneas A Verificar
+			updatePayments(MPayment.AUDITSTATUS_ToVerify);
 		} catch (Exception e) {
 			setProcessMsg(e.getMessage());
 			return DOCSTATUS_Invalid;
@@ -269,6 +272,23 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 					+ "					FROM c_payment p "
 					+ "					WHERE p.c_payment_id = cccl.c_payment_id "
 					+ "						AND p.docstatus NOT IN ('CO','CL'))";
+		return DB.executeUpdate(sql, get_TrxName());
+	}
+	
+	/**
+	 * Actualiza el estado de auditoría de los pagos relacionados al cierre
+	 * 
+	 * @param auditStatus
+	 *            estado de auditoría a asignar a los pagos
+	 * @return cantidad de pagos actualizados
+	 */
+	protected int updatePayments(String auditStatus){
+		String sql = "update c_payment p "
+					+ "set auditstatus = '"+auditStatus+"' "
+					+ "where exists (select c_creditcard_closeline_id "
+					+ "					from c_creditcard_closeline cl "
+					+ "					where cl.c_creditcard_close_id = "+getID()
+					+" 							and p.c_payment_id = cl.c_payment_id)";
 		return DB.executeUpdate(sql, get_TrxName());
 	}
 
