@@ -392,7 +392,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 		common.append("PC"); // Registro ID.
 		common.append(zeroFill(String.valueOf(lineSecNo), 5)); // Nro. de comprobante dentro del archivo.
-		common.append(zeroFill(String.valueOf(dailySecNo), 3)); // Nro. de línea de impresión.
+		common.append(zeroFill(String.valueOf(registerPcCount), 3)); // Nro. de línea de impresión.
 		common.append("  "); // Línea de impresión.
 
 		return common.toString();
