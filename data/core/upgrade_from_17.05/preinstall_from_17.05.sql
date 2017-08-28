@@ -354,3 +354,7 @@ ALTER TABLE rv_unreconciled_payment
   
 --20170823-1615 Nueva configuración de tipo de documento para indicar el tipo de transacción frente al LIVA
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','transactiontypefrontliva','character(1)'));
+
+--20170828-1427 Nuevo indice para reduccion de tiempos en la importacion de padrones. 
+create index c_bpartner_padron_bsas_cuit on c_bpartner_padron_bsas(cuit);
+
