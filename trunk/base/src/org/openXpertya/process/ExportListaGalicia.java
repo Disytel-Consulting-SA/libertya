@@ -494,12 +494,11 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("		WHEN retentiontype = 'G' THEN '02' ");
 		sql.append("		WHEN retentiontype = 'B' THEN '03' ");
 		sql.append("		WHEN retentiontype = 'S' THEN '04' ");
+		sql.append("		WHEN retentiontype = 'J' THEN '04' ");
 		sql.append("	ELSE '00' END AS tipo, ");
-		sql.append("	CASE WHEN retentiontype = 'I' THEN '1' ");
-		sql.append("		WHEN retentiontype = 'G' THEN '2' ");
-		sql.append("		WHEN retentiontype = 'B' THEN '1' ");
-		sql.append("		WHEN retentiontype = 'S' THEN '1' ");
-		sql.append("	ELSE '0' END AS impuesto, ");
+		sql.append("	CASE WHEN rt.is_by_region = 'Y' THEN '2' ");
+		sql.append("	ELSE '1' END AS impuesto, ");
+		sql.append("	rt.is_by_region, ");
 		sql.append("	COALESCE(r.ad_componentobjectuid,'0') AS provincia, ");
 		sql.append("	i.documentno, ");
 		sql.append("	iibb, ");
@@ -565,7 +564,7 @@ public class ExportListaGalicia extends ExportBankList {
 		re.append(rsre.getString("tipo"));
 		re.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 20, null));
 		re.append(rsre.getString("impuesto"));
-		re.append(provincias.get(rsre.getString("provincia"))); 
+		re.append(rsre.getString("is_by_region").equals("Y") ? provincias.get(rsre.getString("provincia")) : "    "); 
 		re.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 30, null));
 		re.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 4, null));
 		if (rsre.getString("documentno").length() <= 10) {
