@@ -89,6 +89,9 @@ public class VOrdenPagoModel {
     public static final String ORG_DEFAULT_VALUE_PREFERENCE_NAME = "OP_AD_Org_ID";
     public static final String DOCTYPE_DEFAULT_VALUE_PREFERENCE_NAME = "OP_DocTypeKey";
     
+    public static final String FILTER_CASH_ORG_LOGIN_PREFERENCE_NAME = "OP_FilterCashOrgLogin";
+    public static final String CASHBOOKTYPE_PREFERENCE_NAME = "OP_CashBookType";
+    
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
 
 	public abstract class MedioPago {
@@ -1181,10 +1184,29 @@ public class VOrdenPagoModel {
 	}
 
 	public String getEfectivoLibroCajaSqlValidation() {
+		// Tipo de libro de caja
+		String cashBookTypeWhereClause = "";
+		String cashBookType = MPreference.searchCustomPreferenceValue(CASHBOOKTYPE_PREFERENCE_NAME,
+				Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()), Env.getAD_User_ID(getCtx()), true);
+		if(!Util.isEmpty(cashBookType, true)){
+			cashBookTypeWhereClause = " AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.cashbooktype = '"
+					+ cashBookType + "' AND isactive = 'Y')) ";
+		}
+		
+		// Filtro de organización de login
+		String filterOrgLoginWhereClause = "";
+		String filterOrgLogin = MPreference.searchCustomPreferenceValue(FILTER_CASH_ORG_LOGIN_PREFERENCE_NAME,
+				Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()), Env.getAD_User_ID(getCtx()), true);
+		if(!Util.isEmpty(filterOrgLogin, true) && filterOrgLogin.equals("Y")){
+			Integer orgIDLogin = Env.getAD_Org_ID(getCtx());
+			filterOrgLoginWhereClause = " AND (0 = " + orgIDLogin + " OR C_Cash.AD_Org_ID = " + orgIDLogin + ") ";
+		}
+		
 		// Se permite agregar efectivo de cualquier caja, sin importar la moneda
 		// Se agrega condición para agregar efectivo solo de cajas con misma fecha que la OP
 		//return " C_Cash.DocStatus = 'DR' AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.C_Currency_ID = @C_Currency_ID@ AND isactive = 'Y')) ";
-		return " C_Cash.DocStatus = 'DR' AND date_trunc('day', C_Cash.DateAcct) = date_trunc('day', '@Date@'::timestamp)";
+		return " C_Cash.DocStatus = 'DR' AND date_trunc('day', C_Cash.DateAcct) = date_trunc('day', '@Date@'::timestamp) "
+				+ cashBookTypeWhereClause + filterOrgLoginWhereClause;
 	}
 
 	public String getTransfCtaBancariaSqlValidation() {
