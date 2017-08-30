@@ -1838,4 +1838,12 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	public String getChequeALaOrden(){
 		return getBPartner().getName();
 	}
+	
+	@Override
+	public String getEfectivoLibroCajaSqlValidation() {
+		// Se permite agregar efectivo de cualquier caja, sin importar la moneda
+		// Se agrega condición para agregar efectivo solo de cajas con misma fecha que la OP
+		//return " C_Cash.DocStatus = 'DR' AND (C_Cash.C_Cashbook_ID IN (SELECT C_Cashbook_ID FROM C_Cashbook cb WHERE cb.C_Currency_ID = @C_Currency_ID@ AND isactive = 'Y')) ";
+		return " C_Cash.DocStatus = 'DR' AND date_trunc('day', C_Cash.DateAcct) = date_trunc('day', '@Date@'::timestamp)";
+	}
 }
