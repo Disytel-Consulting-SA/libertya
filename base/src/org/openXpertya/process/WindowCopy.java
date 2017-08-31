@@ -22,6 +22,7 @@ import org.openXpertya.model.M_Field;
 import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.M_Window;
 import org.openXpertya.util.ErrorUsuarioOXP;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -40,6 +41,8 @@ public class WindowCopy extends SvrProcess {
     /** Descripción de Campos */
 
     private int p_AD_WindowFrom_ID = 0;
+    
+    private int p_AD_Tab_ID = 0;
 
     /**
      * Descripción de Método
@@ -56,6 +59,8 @@ public class WindowCopy extends SvrProcess {
                 ;
             } else if( name.equals( "AD_Window_ID" )) {
                 p_AD_WindowFrom_ID = para[ i ].getParameterAsInt();
+            } else if( name.equals( "AD_Tab_ID" )) {
+            	p_AD_Tab_ID = para[ i ].getParameterAsInt();
             } else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
@@ -94,29 +99,33 @@ public class WindowCopy extends SvrProcess {
 
         for( int i = 0;i < oldTabs.length;i++ ) {
             M_Tab oldTab = oldTabs[ i ];
-            M_Tab newTab = new M_Tab( to,oldTab );
+			// Se copia la pestña siempre y cuando no se haya ingresado
+			// parámetro de pestaña o si la pestaña seleccionada es la actual
+            if(Util.isEmpty(p_AD_Tab_ID, true) || oldTab.getID() == p_AD_Tab_ID){
+                M_Tab newTab = new M_Tab( to,oldTab );
 
-            if( newTab.save()) {
-            	newTab.copyTranslation(oldTab);
-                tabCount++;
+                if( newTab.save()) {
+                	newTab.copyTranslation(oldTab);
+                    tabCount++;
 
-                // Copy Fields
+                    // Copy Fields
 
-                M_Field[] oldFields = oldTab.getFields( false,get_TrxName());
+                    M_Field[] oldFields = oldTab.getFields( false,get_TrxName());
 
-                for( int j = 0;j < oldFields.length;j++ ) {
-                    M_Field oldField = oldFields[ j ];
-                    M_Field newField = new M_Field( newTab,oldField );
+                    for( int j = 0;j < oldFields.length;j++ ) {
+                        M_Field oldField = oldFields[ j ];
+                        M_Field newField = new M_Field( newTab,oldField );
 
-                    if( newField.save()) {
-                    	newField.copyTranslation(oldField);
-                        fieldCount++;
-                    } else {
-                        throw new ErrorUsuarioOXP( "@Error@ @AD_Field_ID@" );
+                        if( newField.save()) {
+                        	newField.copyTranslation(oldField);
+                            fieldCount++;
+                        } else {
+                            throw new ErrorUsuarioOXP( "@Error@ @AD_Field_ID@" );
+                        }
                     }
+                } else {
+                    throw new ErrorUsuarioOXP( "@Error@ @AD_Tab_ID@" );
                 }
-            } else {
-                throw new ErrorUsuarioOXP( "@Error@ @AD_Tab_ID@" );
             }
         }
 
