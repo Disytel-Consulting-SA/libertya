@@ -564,3 +564,54 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
   OWNER TO libertya;
+  
+--20170904-0850 Bug fix: Incorporación de columna "aplicacion" faltante en view
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'F'::text
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'T'::character(1)
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'R'::character(1)
+            ELSE 'D'::character(1)
+        END AS doctypenameshort_aditional, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 1
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 102
+            ELSE 2
+        END AS tipo_de_documento_reg_neuquen, dt.docbasetype, i.c_invoice_id, i.documentno, date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, date_trunc('day'::text, i.dateacct) AS dateacct, date_trunc('day'::text, i.dateinvoiced) AS date, lc.letra, i.puntodeventa, i.numerocomprobante, i.grandtotal, bp.c_bpartner_id, bp.value AS bpartner_value, bp.name AS bpartner_name, replace(bp.taxid::text, '-'::text, ''::text) AS taxid, bp.iibb, 
+        CASE
+            WHEN length(bp.iibb::text) > 7 THEN 1
+            ELSE 0
+        END AS tipo_contribuyente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, COALESCE(i.nombrecli, bp.name) AS nombrecli, COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, ( SELECT l.address1
+           FROM c_bpartner_location bpl
+      JOIN c_location l ON l.c_location_id = bpl.c_location_id
+     WHERE bpl.c_bpartner_id = bp.c_bpartner_id
+     ORDER BY bpl.updated DESC
+    LIMIT 1) AS address1, t.c_tax_id, t.name AS percepcionname, it.taxbaseamt, it.taxamt, (it.taxbaseamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxbaseamt_with_sign, (it.taxamt * dt.signo_issotrx::numeric)::numeric(20,2) AS taxamt_with_sign, 
+        CASE
+            WHEN it.taxbaseamt <> 0::numeric THEN it.taxamt * 100::numeric / it.taxbaseamt
+            ELSE 0::numeric
+        END::numeric(20,2) AS alicuota, lo.city AS org_city, lo.postal AS org_postal_code, r.jurisdictioncode, translate(i.documentno::text, lc.letra::text, ''::text)::character varying(30) AS documentno_without_letter, (case when i.issotrx = 'Y' then 'E' else 'S' end) as aplicacion
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+   JOIN ad_orginfo oi ON oi.ad_org_id = i.ad_org_id
+   LEFT JOIN c_location lo ON lo.c_location_id = oi.c_location_id
+   LEFT JOIN c_region r ON r.c_region_id = lo.c_region_id
+  WHERE t.ispercepcion = 'Y'::bpchar AND i.issotrx = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR (i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE c_invoice_percepciones_v
+  OWNER TO libertya; 
