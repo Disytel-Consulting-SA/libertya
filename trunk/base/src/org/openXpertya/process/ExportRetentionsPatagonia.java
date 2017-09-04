@@ -133,8 +133,11 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 		StringBuffer sql = new StringBuffer();
 
-		sql.append("SELECT ");
-		sql.append("	bll.c_banklistline_id ");
+		sql.append("SELECT distinct ");
+		sql.append("	bll.c_banklistline_id, ");
+		sql.append("	bll.line, ");
+		sql.append("	ri.c_invoice_id, ");
+		sql.append("	i.documentno ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_AllocationHdr.Table_Name + " a ");
 		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
@@ -143,8 +146,11 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("		ON bl.c_banklist_id = bll.c_banklist_id ");
 		sql.append("	INNER JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
 		sql.append("		ON ri.c_allocationhdr_id = a.c_allocationhdr_id ");
+		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
+		sql.append("		ON ri.c_invoice_id = i.c_invoice_id ");
 		sql.append("WHERE ");
-		sql.append("	bll.c_banklist_id = ?");
+		sql.append("	bll.c_banklist_id = ? ");
+		sql.append("ORDER BY bll.line, i.documentno ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -158,10 +164,10 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 			while (rs.next()) {
 				lineSecNo++;
-				write(getLineHeader(rs.getInt(1)));
-				write(getLineDetail(rs.getInt(1)));
+				currentInvoiceId = rs.getInt("c_invoice_id");
+				write(getLineHeader(rs.getInt("c_banklistline_id")));
+				write(getLineDetail(rs.getInt("c_banklistline_id")));
 				write(getLineFooter());
-
 			}
 
 			write(getFileFooter());
@@ -481,7 +487,8 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("	LEFT JOIN " + X_C_Region.Table_Name + " r ");
 		sql.append("		ON cl.c_region_id = r.c_region_id  ");
 		sql.append("WHERE ");
-		sql.append("	bll.c_banklistline_id = ?");
+		sql.append("	bll.c_banklistline_id = ? ");
+		sql.append("	AND ri.c_invoice_id = ? ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -494,12 +501,12 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			ps = DB.prepareStatement(sql.toString());
 
 			ps.setInt(1, c_banklistline_id);
+			ps.setInt(2, currentInvoiceId);
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				withholdingno = rs.getString(5);
 				dateacct = new Date(rs.getTimestamp(4).getTime());
 				city = rs.getString(7);
-				currentInvoiceId = rs.getInt(6);
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getDocumentInfo", e);
@@ -674,7 +681,8 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
 		sql.append("		ON i.c_invoice_id = ri.c_invoice_id ");
 		sql.append("WHERE ");
-		sql.append("	bll.c_banklistline_id = ?");
+		sql.append("	bll.c_banklistline_id = ? ");
+		sql.append("	AND ri.c_invoice_id = ? ");
 
 		PreparedStatement ps = null;
 		ResultSet rs = null;
@@ -688,6 +696,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		try {
 			ps = DB.prepareStatement(sql.toString());
 			ps.setInt(1, c_banklistline_id);
+			ps.setInt(2, currentInvoiceId);
 			rs = ps.executeQuery();
 			if (rs.next()) {
 				//Verifico tipo de retención, si falta configurar disparo error
@@ -762,6 +771,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("		ON c.ad_client_id = i.ad_client_id ");
 		sql.append("WHERE ");
 		sql.append("	bll.c_banklistline_id = ? ");
+		sql.append("	AND ri.c_invoice_id = ? ");
 		sql.append("GROUP BY ");
 		sql.append("	i.c_invoice_id, ");
 		sql.append("	i.numerocomprobante, ");
@@ -792,6 +802,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			ps = DB.prepareStatement(sql.toString());
 
 			ps.setInt(1, c_banklistline_id);
+			ps.setInt(2, currentInvoiceId);
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				total = total.add(rs.getBigDecimal("amount"));
