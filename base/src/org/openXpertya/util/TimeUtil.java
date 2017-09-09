@@ -150,6 +150,24 @@ public class TimeUtil {
         return new Timestamp( cal.getTimeInMillis());
     }    // getNextDay
 
+    
+    public static Timestamp getNextMonth( Timestamp day ) {
+        if( day == null ) {
+            day = new Timestamp( System.currentTimeMillis());
+        }
+
+        GregorianCalendar cal = new GregorianCalendar( Language.getLoginLanguage().getLocale());
+
+        cal.setTimeInMillis( day.getTime());
+        cal.add( Calendar.MONTH, 1 );    // next
+        cal.set( Calendar.HOUR_OF_DAY,0 );
+        cal.set( Calendar.MINUTE,0 );
+        cal.set( Calendar.SECOND,0 );
+        cal.set( Calendar.MILLISECOND,0 );
+
+        return new Timestamp( cal.getTimeInMillis());
+    }    // getNextDay
+    
     /**
      * Descripción de Método
      *
@@ -181,6 +199,27 @@ public class TimeUtil {
         return new Timestamp( cal.getTimeInMillis());
     }    // getNextDay
 
+    public static Timestamp getMonthFirstDay( Timestamp day ) {
+        if( day == null ) {
+            day = new Timestamp( System.currentTimeMillis());
+        }
+
+        GregorianCalendar cal = new GregorianCalendar( Language.getLoginLanguage().getLocale());
+
+        cal.setTimeInMillis( day.getTime());
+        cal.set( Calendar.HOUR_OF_DAY,0 );
+        cal.set( Calendar.MINUTE,0 );
+        cal.set( Calendar.SECOND,0 );
+        cal.set( Calendar.MILLISECOND,0 );
+
+        cal.set( Calendar.DAY_OF_MONTH,1 );
+
+        return new Timestamp( cal.getTimeInMillis());
+    }    // getNextDay
+    
+    
+    
+    
     /**
      * Descripción de Método
      *
