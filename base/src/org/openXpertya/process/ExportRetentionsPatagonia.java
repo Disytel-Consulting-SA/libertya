@@ -766,7 +766,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
 		sql.append("		ON al.c_invoice_id = i.c_invoice_id ");
 		sql.append("	INNER JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
-		sql.append("		ON ri.c_allocationhdr_id = a.c_allocationhdr_id ");
+		sql.append("		ON (ri.c_allocationhdr_id = a.c_allocationhdr_id and ri.c_invoice_id = al.c_invoice_credit_id) ");
 		sql.append("	INNER JOIN " + X_AD_Client.Table_Name + " c ");
 		sql.append("		ON c.ad_client_id = i.ad_client_id ");
 		sql.append("WHERE ");
