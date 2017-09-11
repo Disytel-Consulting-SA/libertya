@@ -1056,16 +1056,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			MLetraAceptaIva laiva = darLetraAceptaIVA(ctx, isSOTrx ? categoria_Iva.getID() : clientCatIVA,
 					isSOTrx ? clientCatIVA : categoria_Iva.getID(), trxName);
 			C_Tax_ID = laiva != null?laiva.getC_Tax_ID():0;
-			// 2) Exento
-			if(C_Tax_ID <= 0){
-				if(categoria_Iva.getCodigo() == MCategoriaIva.EXENTO){
-					String sql ="SELECT t.C_TAX_ID FROM C_TAXCATEGORY tc INNER JOIN " +
-						"C_TAX t ON (tc.C_TAXCATEGORY_ID=t.C_TAXCATEGORY_ID) " +
-						"WHERE tc.NAME='Exento'";
-					C_Tax_ID = DB.getSQLValue(trxName, sql);
-				}
-			}
-			// 3) el impuesto de la categoría de iva
+			// 2) el impuesto de la categoría de iva
 			if(C_Tax_ID <= 0){
 				C_Tax_ID = categoria_Iva.getC_Tax_ID();
 			}
