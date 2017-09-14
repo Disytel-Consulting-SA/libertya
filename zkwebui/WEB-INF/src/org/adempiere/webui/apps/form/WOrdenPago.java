@@ -235,7 +235,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         
 		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Cash_ID", "C_Cash", DisplayType.TableDir, m_model.getEfectivoLibroCajaSqlValidation());
 		MLookup lookupLibroCaja = new MLookup(infoLibroCaja, 0);
-		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookupLibroCaja);
+		efectivoLibroCaja = new WTableDirEditor("C_Cash_ID", false, false, true, lookupLibroCaja);
 		addPopupMenu(efectivoLibroCaja, true, true, false);
         txtEfectivoImporte = new WStringEditor();
 
@@ -1256,7 +1256,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected Button cmdGrabar;
     protected Button cmdProcess;
  
-    protected WSearchEditor efectivoLibroCaja;    
+    protected WTableDirEditor efectivoLibroCaja;    
     
     protected WDateEditor invoiceDatePick;
     protected Grid jPanel1;
