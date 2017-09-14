@@ -233,7 +233,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         cmdGrabar = new Button();
 
         
-		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Cash_ID", "C_Cash", DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation());
+		MLookupInfo infoLibroCaja = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Cash_ID", "C_Cash", DisplayType.TableDir, m_model.getEfectivoLibroCajaSqlValidation());
 		MLookup lookupLibroCaja = new MLookup(infoLibroCaja, 0);
 		efectivoLibroCaja = new WSearchEditor("C_Cash_ID", false, false, true, lookupLibroCaja);
 		addPopupMenu(efectivoLibroCaja, true, true, false);
