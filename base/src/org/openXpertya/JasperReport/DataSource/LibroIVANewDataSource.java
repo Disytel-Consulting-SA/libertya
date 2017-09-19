@@ -296,6 +296,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 						.getString("nombrecli");
 				taxid = rs.getString("taxid");
 				ismanual = rs.getString("ismanual");
+				manualTax = ismanual.equals("Y");
 				if (Util.isEmpty(taxid, true)) {
 					String nroIdentificCliente = rs
 							.getString("nroidentificcliente");
@@ -305,7 +306,9 @@ public class LibroIVANewDataSource implements JRDataSource {
 				invoiceID = rs.getInt("c_invoice_id");
 				c_categoria_via_name = rs.getString("i_tipo_iva");
 				item = rs.getString("item");
-				if ((item.toLowerCase().indexOf("iva") > -1) && (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) )
+				if ((item.toLowerCase().indexOf("iva") > -1) 
+						&& (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) 
+						&& !manualTax )
 					item = "Exento";
 			/*	if (rs.getBigDecimal("rate").compareTo(BigDecimal.ZERO) == 0) {
 					item = "Exento";
@@ -386,7 +389,6 @@ public class LibroIVANewDataSource implements JRDataSource {
 						.add(total == null ? BigDecimal.ZERO : total);
 				totalIVA = totalIVA.add(importe);
 				categoriaIVA = rs.getString("c_categoria_iva_name");
-				manualTax = ismanual.equals("Y");
 				addTaxLine(categoriaIVA, item, allByCategoriaIVA, allTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
 						rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
 						rs.getString("taxtype"), manualTax);
