@@ -615,3 +615,10 @@ CREATE OR REPLACE VIEW c_invoice_percepciones_v AS
 
 ALTER TABLE c_invoice_percepciones_v
   OWNER TO libertya; 
+  
+  --20170922-1124 Tasas de conversion invalidas dado que son de cia System (se eliminan solo si las mismas no fueron modificadas)
+  delete from c_conversion_rate where c_conversion_rate_id = 117 and ad_client_id = 0 and updated = '2000-01-02 00:00:00';
+  delete from c_conversion_rate where c_conversion_rate_id = 119 and ad_client_id = 0 and updated = '2000-01-02 00:00:00';
+  delete from c_conversion_rate where c_conversion_rate_id = 120 and ad_client_id = 0 and updated = '2000-01-02 00:00:00';
+  
+  
