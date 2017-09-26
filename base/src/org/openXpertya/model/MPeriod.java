@@ -621,6 +621,23 @@ public class MPeriod extends X_C_Period implements ITime{
         return pc.isOpen();
     }    // isOpen
 
+    /**
+	 * @param DocBaseType
+	 *            tipo de documento base
+	 * @return true si el control de período se encuentra permanentemente
+	 *         abierto
+	 */
+    public boolean isPermanentlyOpen( String DocBaseType ) {
+    	MAcctSchema as = MClient.get( getCtx(),getAD_Client_ID()).getAcctSchema();
+    	boolean permanentlyOpen = false;
+    	if(as != null && !as.isAutoPeriodControl() && DocBaseType != null) {
+    		MPeriodControl pc = getPeriodControl( DocBaseType );
+            if( pc != null ) {
+            	permanentlyOpen = pc.isPermanentlyOpen();
+            }
+    	}
+    	return permanentlyOpen;
+    }
     
     /**
      * Período de control de cierres de depósito.

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_PeriodControl
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-31 11:05:26.279 */
+ *  @version  - 2017-09-26 09:32:26.825 */
 public class X_C_PeriodControl extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setC_Period_ID (0);
 setDocBaseType (null);
 setDocTypeControl (false);
 setPeriodAction (null);	// N
+setPermanentlyOpen (false);
 }
  */
 }
@@ -255,6 +256,24 @@ Current state of this period */
 public String getPeriodStatus() 
 {
 return (String)get_Value("PeriodStatus");
+}
+/** Set Accounting Permanently Open.
+Period control accounting is permanently open omitting any status */
+public void setPermanentlyOpen (boolean PermanentlyOpen)
+{
+set_Value ("PermanentlyOpen", new Boolean(PermanentlyOpen));
+}
+/** Get Accounting Permanently Open.
+Period control accounting is permanently open omitting any status */
+public boolean isPermanentlyOpen() 
+{
+Object oo = get_Value("PermanentlyOpen");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Process Now */
 public void setProcessing (boolean Processing)
