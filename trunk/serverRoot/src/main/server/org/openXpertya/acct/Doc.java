@@ -16,7 +16,6 @@
 
 package org.openXpertya.acct;
 
-import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -44,11 +43,9 @@ import org.openXpertya.model.MMatchInv;
 import org.openXpertya.model.MMatchPO;
 import org.openXpertya.model.MMovement;
 import org.openXpertya.model.MNote;
-import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPeriod;
 import org.openXpertya.model.MProjectIssue;
-import org.openXpertya.model.M_Table;
 import org.openXpertya.model.ModelValidationEngine;
 import org.openXpertya.model.ModelValidator;
 import org.openXpertya.model.PO;
@@ -73,46 +70,53 @@ public abstract class Doc {
 
     /** Descripción de Campos */
 
-    public static int[] documentsTableID = new int[] {
-        MInvoice.Table_ID,          // C_Invoice
-        MAllocationHdr.Table_ID,    // C_Allocation
-        MCash.Table_ID,             // C_Cash
-        MBankStatement.Table_ID,    // C_BankStatement
-        // Por ahora se comenta la contabilidad de los pedidos
-        // MOrder.Table_ID,            // C_Order
-        MPayment.Table_ID,          // C_Payment
-        MInOut.Table_ID,            // M_InOut
-        MInventory.Table_ID,        // M_Inventory
-        MMovement.Table_ID,         // M_Movement
-        X_M_Production.Table_ID,    // M_Production
-        MJournal.Table_ID,          // GL_Journal
-        MMatchInv.Table_ID,         // M_MatchInv
-        MMatchPO.Table_ID,          // M_MatchPO
-        MProjectIssue.Table_ID,     // C_ProjectIssue
-        MAmortization.Table_ID     // MAmortization        
-    };
+    public static int[] documentsTableID = null;
 
     /** Descripción de Campos */
 
-    public static String[] documentsTableName = new String[] {
-        MInvoice.Table_Name,          // C_Invoice
-        MAllocationHdr.Table_Name,    // C_Allocation
-        MCash.Table_Name,             // C_Cash
-        MBankStatement.Table_Name,    // C_BankStatement
-        // Por ahora se comenta la contabilidad de los pedidos
-        // MOrder.Table_Name,            // C_Order
-        MPayment.Table_Name,          // C_Payment
-        MInOut.Table_Name,            // M_InOut
-        MInventory.Table_Name,        // M_Inventory
-        MMovement.Table_Name,         // M_Movement
-        X_M_Production.Table_Name,    // M_Production
-        MJournal.Table_Name,          // GL_Journal
-        MMatchInv.Table_Name,         // M_MatchInv
-        MMatchPO.Table_Name,          // M_MatchPO
-        MProjectIssue.Table_Name,     // C_ProjectIssue
-        MAmortization.Table_Name	      // MAmortization
-    };
+    public static String[] documentsTableName = null;
 
+    static{
+    	documentsTableID = new int[] {
+    	        MInvoice.Table_ID,          // C_Invoice
+    	        MAllocationHdr.Table_ID,    // C_Allocation
+    	        MCash.Table_ID,             // C_Cash
+    	        MBankStatement.Table_ID,    // C_BankStatement
+    	        // Por ahora se comenta la contabilidad de los pedidos
+    	        // MOrder.Table_ID,            // C_Order
+    	        MPayment.Table_ID,          // C_Payment
+    	        MInOut.Table_ID,            // M_InOut
+    	        MInventory.Table_ID,        // M_Inventory
+    	        MMovement.Table_ID,         // M_Movement
+    	        X_M_Production.Table_ID,    // M_Production
+    	        MJournal.Table_ID,          // GL_Journal
+    	        MMatchInv.Table_ID,         // M_MatchInv
+    	        MMatchPO.Table_ID,          // M_MatchPO
+    	        MProjectIssue.Table_ID,     // C_ProjectIssue
+    	        MAmortization.Table_ID     // MAmortization        
+    	    };
+    	
+    	documentsTableName = new String[] {
+    	        MInvoice.Table_Name,          // C_Invoice
+    	        MAllocationHdr.Table_Name,    // C_Allocation
+    	        MCash.Table_Name,             // C_Cash
+    	        MBankStatement.Table_Name,    // C_BankStatement
+    	        // Por ahora se comenta la contabilidad de los pedidos
+    	        // MOrder.Table_Name,            // C_Order
+    	        MPayment.Table_Name,          // C_Payment
+    	        MInOut.Table_Name,            // M_InOut
+    	        MInventory.Table_Name,        // M_Inventory
+    	        MMovement.Table_Name,         // M_Movement
+    	        X_M_Production.Table_Name,    // M_Production
+    	        MJournal.Table_Name,          // GL_Journal
+    	        MMatchInv.Table_Name,         // M_MatchInv
+    	        MMatchPO.Table_Name,          // M_MatchPO
+    	        MProjectIssue.Table_Name,     // C_ProjectIssue
+    	        MAmortization.Table_Name	      // MAmortization
+    	    };
+
+    }
+    
     /** Descripción de Campos */
 
     public static final String DOCTYPE_ARInvoice = "ARI";
@@ -1779,7 +1783,7 @@ public abstract class Doc {
 
         // Is Period Open?
 
-        if( (period != null) && period.isOpen( p_vo.DocumentType )) {
+        if( (period != null) && (period.isOpen( p_vo.DocumentType ) || period.isPermanentlyOpen( p_vo.DocumentType ))) {
             p_vo.C_Period_ID = period.getC_Period_ID();
         } else {
             p_vo.C_Period_ID = -1;

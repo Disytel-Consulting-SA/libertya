@@ -621,4 +621,5 @@ ALTER TABLE c_invoice_percepciones_v
   delete from c_conversion_rate where c_conversion_rate_id = 119 and ad_client_id = 0 and updated = '2000-01-02 00:00:00';
   delete from c_conversion_rate where c_conversion_rate_id = 120 and ad_client_id = 0 and updated = '2000-01-02 00:00:00';
   
-  
+--20170926-0900 Nueva columna que permite mantener abierto un control de período aún si se encuentra cerrado
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_PeriodControl','permanentlyopen','character(1) NOT NULL DEFAULT ''N''::bpchar'));
