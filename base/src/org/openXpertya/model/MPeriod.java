@@ -176,7 +176,7 @@ public class MPeriod extends X_C_Period implements ITime{
 	    	//y el control de período tiene activa la marca "Control por tipo de documento" 
 	    	if (open && periodControl.isDocTypeControl()) {
 	    		X_C_PosPeriodControl posPeriodControl = periodControl.getByDoctype(docType.getC_DocType_ID());    	
-	    		open = posPeriodControl != null && posPeriodControl.getPeriodStatus().equals(MPeriodControl.PERIODSTATUS_Open);
+	    		open = (posPeriodControl == null) || (posPeriodControl != null && posPeriodControl.getPeriodStatus().equals(MPeriodControl.PERIODSTATUS_Open));
 	    	}
     	}
     	
