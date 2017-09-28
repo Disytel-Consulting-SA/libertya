@@ -171,7 +171,8 @@ public class LaunchInvoice extends SvrProcess {
 		}
 		
 		// Descuentos aplicados totales
-		jasperwrapper.addParameter("NROCOMPROBANTE", invoice.getNumeroDeDocumento().replace("<", "").replace(">", ""));
+		jasperwrapper.addParameter("NROCOMPROBANTE", (!Util.isEmpty(invoice.getNumeroDeDocumento(), true)
+				? invoice.getNumeroDeDocumento() : invoice.getDocumentNo()).replace("<", "").replace(">", ""));
 		jasperwrapper.addParameter("NROCOMPROBANTESMALL",
 				invoice.getPuntoDeVenta()
 						+ "00000000".substring(String.valueOf(invoice.getNumeroComprobante()).length())
