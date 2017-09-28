@@ -52,19 +52,26 @@ abstract class OPDataSource implements JRDataSource {
 
 		// ArrayList donde se guardan los datos del informe.
 		ArrayList<Object> list = new ArrayList<Object>();
-
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(getDataSQL());
+			pstmt = DB.prepareStatement(getDataSQL());
 			setQueryParameters(pstmt);
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				Object line = createRecord(rs);
 				list.add(line);
 			}
-
 		} catch (SQLException e) {
 			throw new RuntimeException(
 					"No se puede ejecutar la consulta para crear las lineas del informe.");
+		} finally{
+			try {
+				if(pstmt != null) pstmt.close();
+				if(rs != null) rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
 		}
 
 		// Se guarda la lista de líneas en el arreglo de líneas del reporte.

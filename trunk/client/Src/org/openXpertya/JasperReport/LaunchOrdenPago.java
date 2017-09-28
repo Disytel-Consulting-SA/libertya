@@ -2,30 +2,15 @@ package org.openXpertya.JasperReport;
 
 import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.JasperReport.DataSource.OrdenPagoDataSource;
 import org.openXpertya.model.MAllocationHdr;
-import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MBPartner;
-import org.openXpertya.model.MBPartnerLocation;
-import org.openXpertya.model.MClient;
-import org.openXpertya.model.MInvoice;
-import org.openXpertya.model.MLocation;
-import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
-import org.openXpertya.model.MRegion;
-import org.openXpertya.model.MRetencionSchema;
-import org.openXpertya.model.MRetencionType;
-import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
@@ -136,21 +121,10 @@ public class LaunchOrdenPago extends SvrProcess {
 		// Se agrega el informe compilado como parámetro.
 		jasperWrapper.addParameter("COMPILED_SUBREPORT_COMPROBANTE_RETENCION",
 				new ByteArrayInputStream(comprobanteRetencion.getBinaryData()));
-
-		// Se agrega el/los datasource del subreporte.
-		String sql = "select c_invoice_id from m_retencion_invoice r where r.c_allocationhdr_id="
-				+ +getAllocationHdrID() + "group by c_invoice_id";
-		PreparedStatement pstmt = DB.prepareStatement(sql);
-		ResultSet rs = pstmt.executeQuery();
-		int i = 1;
-		while (rs.next()) {
-			// Se agrega el datasource del subreporte.
-			jasperWrapper.addParameter(
-					"SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE_" + i,
-					opDataSource.getComprobanteRetenciones(rs
-							.getInt("c_invoice_id")));
-			i++;
-		}
+		// Se agrega el datasource del subreporte.
+		jasperWrapper.addParameter("SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE",
+				opDataSource.getComprobanteRetenciones());
+		
 		// Se cargan los parámetros del reporte.
 		loadReportParameters(jasperWrapper);
 
@@ -165,7 +139,7 @@ public class LaunchOrdenPago extends SvrProcess {
 
 	private MJasperReport getComprobanteRetencion() throws Exception {
 		// TODO Auto-generated method stub
-		return getJasperReport("Comprobante de Retención");
+		return getJasperReport("OrdenPago-Retenciones");
 	}
 
 	/**
@@ -212,7 +186,7 @@ public class LaunchOrdenPago extends SvrProcess {
 				get_TrxName());
 		return jasperReport;
 	}
-
+	
 	/**
 	 * @return FactoryMethod: Retorna el data source del reporte.
 	 */
@@ -265,145 +239,6 @@ public class LaunchOrdenPago extends SvrProcess {
 		jasperWrapper.addParameter("RETENCIONES_AMOUNT", retencionesAmount);
 		jasperWrapper.addParameter("URL_IMAGE_TITLE", this.getUrlReportImage(op.getAD_Client_ID(), op.getAD_Org_ID()));
 		jasperWrapper.addParameter("PRINT_RETENCIONES", printRetentions);
-		
-		String sql = "select c_invoice_id from m_retencion_invoice r where r.c_allocationhdr_id="
-				+ +getAllocationHdrID() + "group by c_invoice_id";
-
-		PreparedStatement pstmt = DB.prepareStatement(sql);
-		try {
-			ResultSet rs = pstmt.executeQuery();
-			int j = 0;
-			BigDecimal netOP = getPayNetAmt(getAllocationHdrID());
-			while (rs.next()) {
-
-				MInvoice invoice = new MInvoice(Env.getCtx(),
-						rs.getInt("c_invoice_id"), null);
-				MClient client = JasperReportsUtil.getClient(getCtx(),
-						invoice.getAD_Client_ID());
-				MBPartner bpartner = new MBPartner(getCtx(),
-						invoice.getC_BPartner_ID(), null);
-				MBPartnerLocation BPLocation = new MBPartnerLocation(getCtx(),
-						invoice.getC_BPartner_Location_ID(), null);
-				MLocation location = new MLocation(getCtx(),
-						BPLocation.getC_Location_ID(), null);
-
-				jasperWrapper.addParameter("FECHA_" + j,
-						invoice.getDateInvoiced());
-				jasperWrapper.addParameter("DOCUMENTNO_" + j,
-						invoice.getDocumentNo());
-				jasperWrapper.addParameter("RAZONSOCIAL_" + j, JasperReportsUtil
-						.coalesce(invoice.getNombreCli(), bpartner.getName()));
-				jasperWrapper.addParameter("DIRECCION_" + j, JasperReportsUtil
-						.coalesce(invoice.getInvoice_Adress(),
-								JasperReportsUtil.formatLocation(getCtx(),
-										location.getID(), false)));
-				jasperWrapper.addParameter("CUIT_" + j,
-						JasperReportsUtil.coalesce(bpartner.getTaxID(), ""));
-				if (!Util.isEmpty(invoice.getC_Order_ID(), true)) {
-					jasperWrapper.addParameter("NRO_OC_" + j, JasperReportsUtil
-							.coalesce(
-									(new MOrder(getCtx(), invoice
-											.getC_Order_ID(), get_TrxName()))
-											.getDocumentNo(), ""));
-				}
-
-				// Direccción de la Organización asociada a la Factura
-				MOrg org = MOrg.get(getCtx(), invoice.getAD_Org_ID());
-				MLocation locationOrg = new MLocation(getCtx(), org.getInfo()
-						.getC_Location_ID(), null);
-				MRegion regionOrg = null;
-				if (locationOrg.getC_Region_ID() > 0)
-					regionOrg = new MRegion(getCtx(),
-							locationOrg.getC_Region_ID(), null);
-				jasperWrapper.addParameter(
-						"DIRECCION_ORG_" + j,
-						JasperReportsUtil.coalesce(locationOrg.getAddress1(),
-								"")
-								+ ". "
-								+ JasperReportsUtil.coalesce(
-										locationOrg.getCity(), "")
-								+ ". ("
-								+ JasperReportsUtil.coalesce(
-										locationOrg.getPostal(), "")
-								+ "). "
-								+ JasperReportsUtil.coalesce(
-										regionOrg == null ? "" : regionOrg
-												.getName(), ""));
-
-				jasperWrapper.addParameter("CLIENT_" + j, client.getName());
-				jasperWrapper.addParameter("CLIENT_CUIT_" + j,
-						client.getCUIT(invoice.getAD_Org_ID()));
-				// Parámetros de la retención aplicada a la Factura
-				X_M_Retencion_Invoice retencion_invoice = getM_Retencion_Invoice(invoice);
-				if (retencion_invoice != null) {
-					MRetencionSchema retencionSchema = new MRetencionSchema(
-							getCtx(),
-							retencion_invoice.getC_RetencionSchema_ID(), null);
-					// Nombre del Esquema de Retención
-					jasperWrapper.addParameter("RET_SCHEMA_NAME_" + j,
-							(retencionSchema.getName()));
-					// Nombre del Tipo de Retención
-					jasperWrapper.addParameter(
-							"RET_RETENTION_TYPE_NAME_" + j,
-							(new MRetencionType(getCtx(), retencionSchema
-									.getC_RetencionType_ID(), null).getName()));
-					// Monto de la Retención
-					jasperWrapper.addParameter("RET_ALLOC_AMOUNT_" + j,netOP);
-							//invoice.getNetAmount());
-					// retencion_invoice.getamt_retenc());
-
-					MAllocationHdr allocation = new MAllocationHdr(getCtx(),
-							retencion_invoice.getC_AllocationHdr_ID(), null);
-					// Monto del Recibo
-					jasperWrapper.addParameter("RET_AMOUNT_" + j,
-							retencion_invoice.getamt_retenc());
-							//allocation.getGrandTotal());
-					// Comprobante/s que origina/n la retención. (Números de
-					// Documento de las facturas en el Recibo)
-					jasperWrapper.addParameter("RET_ALLOC_INVOICES_" + j,
-							get_Retencion_Invoices(allocation));
-					j++;
-				}
-			}
-
-		} catch (SQLException e) {
-			throw new RuntimeException(
-					"No se puede ejecutar la consulta para crear las lineas del informe.");
-		}
-	}
-
-	private BigDecimal getPayNetAmt(int c_AllocationHdr_ID) throws SQLException {
-		return getPayNetAmt(getCtx(), getAllocationHdr(), get_TrxName());
-	}
-
-	protected static BigDecimal getPayNetAmt(Properties ctx, MAllocationHdr allocationHdr, String trxName) throws SQLException {
-		BigDecimal netTotal = allocationHdr.getGrandTotal();
-		// Si es adelantado, entonces es el monto total del allocation
-		if (!("OPA".equals(allocationHdr.getAllocationType())
-				|| "RCA".equals(allocationHdr.getAllocationType()))) {
-			String sqlAllocationLine = " SELECT c_allocationline_id, al.c_invoice_id "
-					+ " FROM c_allocationline al "
-					+ " INNER JOIN c_invoice i ON (i.c_invoice_id = al.c_invoice_id) "
-					+ " WHERE al.c_allocationhdr_id= " + allocationHdr.getID();
-			netTotal = BigDecimal.ZERO;
-			PreparedStatement pstmtAllocationLine = DB
-					.prepareStatement(sqlAllocationLine);
-			ResultSet rsAllocationLine = pstmtAllocationLine.executeQuery();
-			BigDecimal totalLines, grandTotal;
-			while (rsAllocationLine.next()) {
-				MAllocationLine allocationline = new MAllocationLine(ctx,
-						rsAllocationLine.getInt("c_allocationline_id"),
-						trxName);
-				MInvoice invoiceOrig = new MInvoice(ctx,
-						rsAllocationLine.getInt("c_invoice_id"), trxName);
-				totalLines = invoiceOrig.getTotalLinesNet();
-				grandTotal = invoiceOrig.getGrandTotal();
-				netTotal = netTotal.add(totalLines.multiply(
-						allocationline.getAmount()).divide(grandTotal, 2,
-						BigDecimal.ROUND_HALF_EVEN));
-			}
-		}
-		return netTotal;
 	}
 	
 	protected int getAllocationHdrID() {
@@ -418,57 +253,6 @@ public class LaunchOrdenPago extends SvrProcess {
 			mAllocationHdr = new MAllocationHdr(ctx, p_C_AllocationHdr_ID,
 					get_TrxName());
 		return mAllocationHdr;
-	}
-
-	/*
-	 * El método retorna una Retencion_Invoice a partir del la factura
-	 */
-	private X_M_Retencion_Invoice getM_Retencion_Invoice(MInvoice invoice) {
-		try {
-			int m_Retencion_InvoiceID = 0;
-			PreparedStatement stmt = DB
-					.prepareStatement("SELECT m_retencion_invoice_id FROM M_Retencion_Invoice WHERE c_invoice_id = ? ORDER BY m_retencion_invoice_id DESC");
-			stmt.setInt(1, invoice.getC_Invoice_ID());
-			ResultSet rs = stmt.executeQuery();
-			if (!rs.next() || rs.getInt(1) == 0)
-				return null;
-
-			m_Retencion_InvoiceID = rs.getInt(1);
-			X_M_Retencion_Invoice m_Retencion_Invoice = new X_M_Retencion_Invoice(
-					getCtx(), m_Retencion_InvoiceID, null);
-			return m_Retencion_Invoice;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/*
-	 * El método retorna todos los DocumentNo. de las facturas asociadas al
-	 * recibo recibido por parámetro.
-	 */
-	private String get_Retencion_Invoices(MAllocationHdr allocation) {
-		// Si es OPA o RCA no posee comprobantes
-		if(allocation.getAllocationType().equals(MAllocationHdr.ALLOCATIONTYPE_AdvancedCustomerReceipt) 
-				|| allocation.getAllocationType().equals(MAllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder)){
-			return null;
-		}
-		try {
-			PreparedStatement stmt = DB
-					.prepareStatement("SELECT DISTINCT factura FROM C_Allocation_Detail_V WHERE C_AllocationHdr_ID = ? ORDER BY factura DESC");
-			stmt.setInt(1, allocation.getC_AllocationHdr_ID());
-			ResultSet rs = stmt.executeQuery();
-
-			String invoices = "- ";
-			while (rs.next()) {
-				invoices = invoices.concat(rs.getString(1).concat(" - "));
-			}
-
-			return invoices;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
-		}
 	}
 
 	/**

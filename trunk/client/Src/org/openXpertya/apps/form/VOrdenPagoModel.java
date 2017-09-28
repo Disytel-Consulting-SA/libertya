@@ -1801,28 +1801,26 @@ public class VOrdenPagoModel {
 
 		// HACK: Can't invoke Currency.convert directly !!
 
+		BigDecimal converted = null;
 		CPreparedStatement pp = DB
 				.prepareStatement(" SELECT currencyConvert(?, ?, ?, ?, ?, ?, ?) ");
+		pp.setBigDecimal(1, fromAmt);
+		pp.setInt(2, fromCurency);
+		pp.setInt(3, toCurrency);
+		pp.setTimestamp(4, convDate);
+		pp.setInt(5, 0);
+		pp.setInt(6, Env.getAD_Client_ID(m_ctx));
+		pp.setInt(7, Env.getAD_Org_ID(m_ctx));
 
-		try {
-			pp.setBigDecimal(1, fromAmt);
-			pp.setInt(2, fromCurency);
-			pp.setInt(3, toCurrency);
-			pp.setTimestamp(4, convDate);
-			pp.setInt(5, 0);
-			pp.setInt(6, Env.getAD_Client_ID(m_ctx));
-			pp.setInt(7, Env.getAD_Org_ID(m_ctx));
+		ResultSet rs = pp.executeQuery();
 
-			ResultSet rs = pp.executeQuery();
+		if (rs.next())
+			converted = rs.getBigDecimal(1);
 
-			if (rs.next())
-				return rs.getBigDecimal(1);
-
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "currencyConvert", e);
-		}
-
-		return null;
+		pp.close();
+		rs.close();
+		
+		return converted;
 	}
 
 	protected int compararMontos(BigDecimal a, BigDecimal b) {
@@ -2099,6 +2097,11 @@ public class VOrdenPagoModel {
 				} else if (mp.getTipoMP()
 						.equals(MedioPago.TIPOMEDIOPAGO_CHEQUE)) {
 					MedioPagoCheque mpc = (MedioPagoCheque) mp;
+					
+					// TODO Validar que no exista otro cheque con mismo número para
+					// la chequera
+					
+					
 					String sucursal = VModelHelper
 							.getSQLValueString(
 									null,
