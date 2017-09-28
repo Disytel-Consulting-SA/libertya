@@ -271,6 +271,48 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         return retValue;
     }    // getOfInvoice
 
+    /**
+	 * Obtiene el neto del allocation parámetro
+	 * 
+	 * @param ctx
+	 *            contexto
+	 * @param allocationHdr
+	 *            allocation
+	 * @param trxName
+	 *            nombre de trx
+	 * @return neto del allocation, total si es OPA o RCA
+	 * @throws SQLException
+	 */
+    public static BigDecimal getPayNetAmt(Properties ctx, MAllocationHdr allocationHdr, String trxName) throws SQLException {
+		BigDecimal netTotal = allocationHdr.getGrandTotal();
+		// Si es adelantado, entonces es el monto total del allocation
+		if (!(MAllocationHdr.ALLOCATIONTYPE_AdvancedCustomerReceipt.equals(allocationHdr.getAllocationType())
+				|| MAllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder.equals(allocationHdr.getAllocationType()))) {
+			String sqlAllocationLine = " SELECT c_allocationline_id, al.c_invoice_id "
+					+ " FROM c_allocationline al "
+					+ " INNER JOIN c_invoice i ON (i.c_invoice_id = al.c_invoice_id) "
+					+ " WHERE al.c_allocationhdr_id= " + allocationHdr.getID();
+			netTotal = BigDecimal.ZERO;
+			PreparedStatement pstmtAllocationLine = DB
+					.prepareStatement(sqlAllocationLine);
+			ResultSet rsAllocationLine = pstmtAllocationLine.executeQuery();
+			BigDecimal totalLines, grandTotal;
+			while (rsAllocationLine.next()) {
+				MAllocationLine allocationline = new MAllocationLine(ctx,
+						rsAllocationLine.getInt("c_allocationline_id"),
+						trxName);
+				MInvoice invoiceOrig = new MInvoice(ctx,
+						rsAllocationLine.getInt("c_invoice_id"), trxName);
+				totalLines = invoiceOrig.getTotalLinesNet();
+				grandTotal = invoiceOrig.getGrandTotal();
+				netTotal = netTotal.add(totalLines.multiply(
+						allocationline.getAmount()).divide(grandTotal, 2,
+						BigDecimal.ROUND_HALF_EVEN));
+			}
+		}
+		return netTotal;
+	}
+    
     /** Descripción de Campos */
 
     private static CLogger s_log = CLogger.getCLogger( MAllocationHdr.class );

@@ -63,6 +63,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String SETTLEMENT_LIST_DETAILED_JASPER_REPORT_UID = "RPRT2CORE-AD_Process-1010526-20170210194428";
 	protected final static String SETTLEMENT_LIST_DETAILED_REPORT_FILENAME = "SettlementListDetailed.jrxml";
 	
+	/** UID del reporte de Retenciones de la Orden de Pago */
+	protected final static String RETENCIONES_ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010231";
+	protected final static String RETENCIONES_ORDEN_PAGO_JASPER_REPORT_FILENAME = "OrdenPago_Retenciones.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -228,6 +232,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(SETTLEMENT_LIST_DETAILED_REPORT_FILENAME)));
+		
+		// Subreporte de Retenciones de Orden de Pago
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					RETENCIONES_ORDEN_PAGO_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(RETENCIONES_ORDEN_PAGO_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

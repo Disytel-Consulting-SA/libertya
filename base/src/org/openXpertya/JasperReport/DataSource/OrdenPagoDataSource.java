@@ -1,10 +1,9 @@
 package org.openXpertya.JasperReport.DataSource;
 
-import net.sf.jasperreports.engine.JRDataSource;
-
 import org.openXpertya.model.MAllocationHdr;
-import org.openXpertya.model.MInvoice;
 import org.openXpertya.util.Env;
+
+import net.sf.jasperreports.engine.JRDataSource;
 
 public class OrdenPagoDataSource {
 
@@ -49,9 +48,9 @@ public class OrdenPagoDataSource {
 		return ds;
 	}
 
-	public JRDataSource getComprobanteRetenciones(int invoiceid) {
-		MInvoice invoice = new MInvoice(Env.getCtx(), invoiceid, null);
-		InvoiceDataSource ds = new InvoiceDataSource(Env.getCtx(), invoice);
+	public JRDataSource getComprobanteRetenciones() {
+		RetencionesDataSource ds = new RetencionesDataSource(Env.getCtx(), paymentOrder);
+		ds.setOrdenPagoDataSource(this);
 		ds.loadData();
 		return ds;
 	}
@@ -90,7 +89,7 @@ public class OrdenPagoDataSource {
 	protected String getCashNameDescription() {
 		return " NULL::CHARACTER VARYING ";
 	}
-
+	
 	/**
 	 * @return the paymentOrder
 	 */
