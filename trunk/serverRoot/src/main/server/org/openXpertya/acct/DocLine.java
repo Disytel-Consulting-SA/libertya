@@ -940,6 +940,21 @@ public class DocLine {
 
         return sb.toString();
     }    // toString
+    
+    
+    /**
+	 * Obtiene la cuenta contable del artículo relacionado a la línea
+	 * 
+	 * @param AcctType
+	 *            tipo de cuenta
+	 * @param as
+	 *            esquema contable
+	 * @return cuenta contable
+	 */
+    public MAccount getProductInfoAccount( int AcctType,MAcctSchema as ) {
+        return p_productInfo.getAccount( AcctType,as );
+    }    // getAccount
+    
 }    // DocumentLine
 
 
