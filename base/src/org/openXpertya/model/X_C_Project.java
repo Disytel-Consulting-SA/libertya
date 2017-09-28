@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Project
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-10 10:07:11.333 */
+ *  @version  - 2017-09-26 10:29:15.307 */
 public class X_C_Project extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -317,10 +317,12 @@ public static final String CREATEDOCUMENT_BankList = "BLB";
 public static final String CREATEDOCUMENT_CheckPrinting = "CHP";
 /** AP Payment Batch = APB */
 public static final String CREATEDOCUMENT_APPaymentBatch = "APB";
+/** Credit Card Settlement = CCS */
+public static final String CREATEDOCUMENT_CreditCardSettlement = "CCS";
 /** Set CreateDocument */
 public void setCreateDocument (String CreateDocument)
 {
-if (CreateDocument == null || CreateDocument.equals("MMP") || CreateDocument.equals("MXI") || CreateDocument.equals("MXP") || CreateDocument.equals("ARF") || CreateDocument.equals("MMS") || CreateDocument.equals("MMR") || CreateDocument.equals("MMM") || CreateDocument.equals("POO") || CreateDocument.equals("POR") || CreateDocument.equals("MMI") || CreateDocument.equals("MOR") || CreateDocument.equals("MOU") || CreateDocument.equals("MOM") || CreateDocument.equals("MOV") || CreateDocument.equals("MOP") || CreateDocument.equals("MOF") || CreateDocument.equals("GLJ") || CreateDocument.equals("GLD") || CreateDocument.equals("API") || CreateDocument.equals("APP") || CreateDocument.equals("ARI") || CreateDocument.equals("ARR") || CreateDocument.equals("SOO") || CreateDocument.equals("MOI") || CreateDocument.equals("CMB") || CreateDocument.equals("CMC") || CreateDocument.equals("CMA") || CreateDocument.equals("APC") || CreateDocument.equals("ARC") || CreateDocument.equals("PJI") || CreateDocument.equals("AMO") || CreateDocument.equals("BLB") || CreateDocument.equals("CHP") || CreateDocument.equals("APB") || ( refContainsValue("CORE-AD_Reference-183", CreateDocument) ) );
+if (CreateDocument == null || CreateDocument.equals("MMP") || CreateDocument.equals("MXI") || CreateDocument.equals("MXP") || CreateDocument.equals("ARF") || CreateDocument.equals("MMS") || CreateDocument.equals("MMR") || CreateDocument.equals("MMM") || CreateDocument.equals("POO") || CreateDocument.equals("POR") || CreateDocument.equals("MMI") || CreateDocument.equals("MOR") || CreateDocument.equals("MOU") || CreateDocument.equals("MOM") || CreateDocument.equals("MOV") || CreateDocument.equals("MOP") || CreateDocument.equals("MOF") || CreateDocument.equals("GLJ") || CreateDocument.equals("GLD") || CreateDocument.equals("API") || CreateDocument.equals("APP") || CreateDocument.equals("ARI") || CreateDocument.equals("ARR") || CreateDocument.equals("SOO") || CreateDocument.equals("MOI") || CreateDocument.equals("CMB") || CreateDocument.equals("CMC") || CreateDocument.equals("CMA") || CreateDocument.equals("APC") || CreateDocument.equals("ARC") || CreateDocument.equals("PJI") || CreateDocument.equals("AMO") || CreateDocument.equals("BLB") || CreateDocument.equals("CHP") || CreateDocument.equals("APB") || CreateDocument.equals("CCS") || ( refContainsValue("CORE-AD_Reference-183", CreateDocument) ) );
  else throw new IllegalArgumentException ("CreateDocument Invalid value: " + CreateDocument + ".  Valid: " +  refValidOptions("CORE-AD_Reference-183") );
 if (CreateDocument != null && CreateDocument.length() > 1)
 {

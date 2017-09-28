@@ -35,6 +35,7 @@ import org.openXpertya.model.MAmortization;
 import org.openXpertya.model.MBankStatement;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MConversionRate;
+import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInventory;
 import org.openXpertya.model.MInvoice;
@@ -93,7 +94,8 @@ public abstract class Doc {
     	        MMatchInv.Table_ID,         // M_MatchInv
     	        MMatchPO.Table_ID,          // M_MatchPO
     	        MProjectIssue.Table_ID,     // C_ProjectIssue
-    	        MAmortization.Table_ID     // MAmortization        
+    	        MAmortization.Table_ID,     // MAmortization
+    	        MCreditCardSettlement.Table_ID // Credit Card Settlement
     	    };
     	
     	documentsTableName = new String[] {
@@ -112,7 +114,8 @@ public abstract class Doc {
     	        MMatchInv.Table_Name,         // M_MatchInv
     	        MMatchPO.Table_Name,          // M_MatchPO
     	        MProjectIssue.Table_Name,     // C_ProjectIssue
-    	        MAmortization.Table_Name	      // MAmortization
+    	        MAmortization.Table_Name, 		// MAmortization
+    	        MCreditCardSettlement.Table_Name // Credit Card Settlement
     	    };
 
     }
@@ -201,6 +204,8 @@ public abstract class Doc {
 
     public static final String DOCTYPE_ProjectIssue = "PJI";
 
+    public static final String DOCTYPE_CreditCardSettlement = "CCS";
+    
     // Posting Status - AD_Reference_ID=234     //
 
     /** Descripción de Campos */
@@ -279,7 +284,9 @@ public abstract class Doc {
             doc = new Doc_ProjectIssue( ass,AD_Table_ID,MProjectIssue.Table_Name );
        	else if (AD_Table_ID == MAmortization.Table_ID)
             doc = new Doc_Amortization( ass,AD_Table_ID,MAmortization.Table_Name );
-
+       	else if (AD_Table_ID == MCreditCardSettlement.Table_ID)
+            doc = new Doc_CreditCardSettlement( ass,AD_Table_ID,MCreditCardSettlement.Table_Name );
+        
         if( doc == null ) {
             s_log.log( Level.SEVERE,"get - Unknown AD_Table_ID=" + AD_Table_ID );
         }

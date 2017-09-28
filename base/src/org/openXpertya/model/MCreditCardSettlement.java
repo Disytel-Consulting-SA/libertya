@@ -163,20 +163,21 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 	/**
 	 * Para una entidad comercial de tipo "tarjeta" (Las que están asociadas a alguna
-	 * E. Financiera), recupera la cuenta de banco de la E.Financiera más reciente 
+	 * E. Financiera), recupera la cuenta bancaria de cupones de la E.Financiera más reciente 
 	 * @param tarjeta
 	 * @return
 	 */
-	private Integer getBankAccountId(MBPartner tarjeta) {
+	public Integer getBankAccountID(MBPartner tarjeta) {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT  ");
-		sql.append("	ef.C_BankAccount_Settlement_ID ");
+		sql.append("	ef.C_BankAccount._ID ");
 		sql.append("FROM  ");
 		sql.append("	" + MBPartner.Table_Name + " bp ");
 		sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ON ef.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("WHERE  ");
 		sql.append("	bp.c_bpartner_id = ? ");
+		sql.append("	AND ef.isactive = 'Y' ");
 		sql.append("ORDER BY ");
 		sql.append("	ef.updated DESC ");
 		sql.append("LIMIT 1; ");
@@ -206,6 +207,53 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		return null;
 	}
 
+	/**
+	 * Para una entidad comercial de tipo "tarjeta" (Las que están asociadas a alguna
+	 * E. Financiera), recupera la cuenta bancaria de cupones de la E.Financiera más reciente 
+	 * @param tarjeta
+	 * @return
+	 */
+	public Integer getBankAccountSettlementID(MBPartner tarjeta) {
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("SELECT  ");
+		sql.append("	ef.C_BankAccount_Settlement_ID ");
+		sql.append("FROM  ");
+		sql.append("	" + MBPartner.Table_Name + " bp ");
+		sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ON ef.c_bpartner_id = bp.c_bpartner_id ");
+		sql.append("WHERE  ");
+		sql.append("	bp.c_bpartner_id = ? ");
+		sql.append("	AND ef.isactive = 'Y' ");
+		sql.append("ORDER BY ");
+		sql.append("	ef.updated DESC ");
+		sql.append("LIMIT 1; ");
+
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			ps = DB.prepareStatement(sql.toString());
+			ps.setInt(1, tarjeta.getC_BPartner_ID());
+			rs = ps.executeQuery();
+
+			if (rs.next()) {
+				return rs.getInt(1);
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "getBankAccountId", e);
+		} finally {
+			try {
+				rs.close();
+				ps.close();
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
+		}
+
+		return null;
+	}
+
+	
 	private void makeIva() {
 		StringBuffer sql = new StringBuffer();
 
@@ -774,7 +822,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			// Tipo de Pago: Transferencia
 			payment.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 
-			Integer bankAccountID = getBankAccountId(bpartner);
+			Integer bankAccountID = getBankAccountSettlementID(bpartner);
 			if(Util.isEmpty(bankAccountID, true)){
 				m_processMsg = Msg.getMsg(getCtx(), "SettlementBankAccountNotConfigured");
 				return DocAction.STATUS_Invalid;

@@ -962,7 +962,7 @@ public final class FactLine extends X_Fact_Acct {
 
             // Revenue Recognition for AR Invoices
 
-            if( (m_docVO != null) && m_docVO.DocumentType.equals( Doc.DOCTYPE_ARInvoice ) && (m_docLine != null) && (m_docLine.getC_RevenueRecognition_ID() != 0) ) {
+            if( (m_docVO != null) && m_docVO.DocumentType != null && m_docVO.DocumentType.equals( Doc.DOCTYPE_ARInvoice ) && (m_docLine != null) && (m_docLine.getC_RevenueRecognition_ID() != 0) ) {
                 setAccount_ID( createRevenueRecognition( m_docLine.getC_RevenueRecognition_ID(),m_docLine.getTrxLine_ID(),getAD_Client_ID(),getAD_Org_ID(),0,getAccount_ID(),getM_Product_ID(),getC_BPartner_ID(),getAD_OrgTrx_ID(),getC_LocFrom_ID(),getC_LocTo_ID(),getC_SalesRegion_ID(),getC_Project_ID(),getC_Campaign_ID(),getC_Activity_ID(),getUser1_ID(),getUser2_ID()));
             }
         }
