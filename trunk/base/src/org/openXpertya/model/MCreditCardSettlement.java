@@ -171,7 +171,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT  ");
-		sql.append("	ef.C_BankAccount._ID ");
+		sql.append("	ef.C_BankAccount_ID ");
 		sql.append("FROM  ");
 		sql.append("	" + MBPartner.Table_Name + " bp ");
 		sql.append("	INNER JOIN " + MEntidadFinanciera.Table_Name + " ef ON ef.c_bpartner_id = bp.c_bpartner_id ");
