@@ -2566,7 +2566,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// se debe tener en cuenta en la validación
 		if (isSOTrx() && requireFiscalPrint() && isManualDocumentNo()) {
 			whereClause
-					.append(" AND (docStatus in ('CO', 'CL') OR (docStatus in ('VO', 'RE') AND fiscalalreadyprinted = 'Y')) ");
+					.append(" AND (docStatus in ('CO', 'CL', 'VO', 'RE') AND fiscalalreadyprinted = 'Y') ");
 		} else {
 			whereClause.append(" AND docStatus in ('CO', 'CL') ");
 		}
