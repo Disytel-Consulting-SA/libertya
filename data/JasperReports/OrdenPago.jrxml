@@ -578,7 +578,8 @@
 						y="402"
 						width="532"
 						height="26"
-						key="subreport-4">
+						key="subreport-4"
+						positionType="Float">
 							<printWhenExpression><![CDATA[new Boolean($P{PRINT_RETENCIONES} != null && $P{PRINT_RETENCIONES}.equals("Y") && $P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE} != null)]]></printWhenExpression>
 						</reportElement>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE}]]></dataSourceExpression>
