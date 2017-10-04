@@ -18,6 +18,7 @@ import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.LibroIVAUtils;
 import org.openXpertya.util.Util;
 
 
@@ -95,11 +96,12 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	"       cdt.signo," +
              	"       cit.AD_Client_ID, " +
              	"       cbp.iibb " +
-             	" from (select c_invoice_id, ad_client_id, ad_org_id, c_currency_id, c_conversiontype_id, documentno, c_bpartner_id, dateacct, dateinvoiced, totallines,grandtotal, issotrx, c_doctype_id, fiscalalreadyprinted  " +
+             	" from (select c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_doctype.c_doctype_id, c_invoice.fiscalalreadyprinted  " +
              	"       from c_Invoice " +
-             	" where ad_client_id = ? " + getOrgCheck("c_invoice") + "AND (docstatus = 'CO' or docstatus = 'CL' or docstatus = 'RE' or docstatus = 'VO' OR docstatus = '??') " +
-             	" AND (isactive = 'Y') "+
-             	" AND (date_trunc('day', dateacct) between date_trunc('day',?::timestamp) and date_trunc('day',?::timestamp)) " );
+             	"		INNER JOIN c_doctype ON c_invoice.c_doctypetarget_id = c_doctype.c_doctype_id " +
+             	" where c_invoice.ad_client_id = ? " + getOrgCheck("c_invoice") +
+             	" AND (c_invoice.isactive = 'Y') "+
+             	" AND (date_trunc('day', c_invoice.dateacct) between date_trunc('day',?::timestamp) and date_trunc('day',?::timestamp)) " );
              
 			String docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
 			// Si no es ambos
@@ -135,7 +137,7 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	" 				from c_bpartner) cbp on inv.c_bpartner_id = cbp.c_bpartner_id " +
              	"     left join (Select c_categoria_iva_id, name as c_categoria_via_name, codigo as codiva " +
              	"				from c_categoria_iva ) cci 	on cbp.c_categoria_iva_id = cci.c_categoria_iva_id " +
-             	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') and (cdt.isfiscaldocument = 'Y') AND (cdt.isfiscal is null OR cdt.isfiscal = 'N' OR (cdt.isfiscal = 'Y' AND inv.fiscalalreadyprinted = 'Y')) " +
+             	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') " + LibroIVAUtils.getDocTypeFilter("cdt", "inv") +
              	"     ORDER BY inv.dateinvoiced ASC, inv.c_doctype_id, inv.documentno ASC, c_tax_id,c_invoice_id");
              //System.out.println(sqlReal);
              return sqlReal.toString();
@@ -143,15 +145,17 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
 	
 	public void calculateTotals()
 	{
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try
 		{
 			int i = 1;
-			PreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE, getQuery(), null, true); 
+			pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY,ResultSet.CONCUR_UPDATABLE, getQuery(), null, true); 
 		
 			pstmt.setInt(i++, Env.getAD_Client_ID(p_ctx));
 			pstmt.setTimestamp(i++,new Timestamp(p_dateFrom.getTime()));
 			pstmt.setTimestamp(i++,new Timestamp(p_dateTo.getTime()));
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 						
 			int invoiceID = -1;
 			neto = new BigDecimal(0);
@@ -170,6 +174,13 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
 		catch (Exception e)
 		{
 			e.printStackTrace();
+		} finally {
+			try {
+				if(rs != null) rs.close();
+				if(pstmt != null) pstmt.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
 		}
 	}
 	
