@@ -67,6 +67,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String RETENCIONES_ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010231";
 	protected final static String RETENCIONES_ORDEN_PAGO_JASPER_REPORT_FILENAME = "OrdenPago_Retenciones.jasper";
 	
+	/** UID del Informe de Libro IVA Internacional */
+	protected final static String LIVA_INTER_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010232";
+	protected final static String LIVA_INTER_JASPER_REPORT_FILENAME = "InformeLibroIVAInt.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -243,6 +247,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(RETENCIONES_ORDEN_PAGO_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Libro IVA Internacional
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					LIVA_INTER_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(LIVA_INTER_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
