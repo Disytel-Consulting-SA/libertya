@@ -355,8 +355,12 @@ ALTER TABLE rv_unreconciled_payment
 --20170823-1615 Nueva configuración de tipo de documento para indicar el tipo de transacción frente al LIVA
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','transactiontypefrontliva','character(1)'));
 
---20170828-1427 Nuevo indice para reduccion de tiempos en la importacion de padrones. 
-create index c_bpartner_padron_bsas_cuit on c_bpartner_padron_bsas(cuit);
+--20170828-1427 Nuevo indice para reduccion de tiempos en la importacion de padrones.
+--COMENTADO 20171006: 
+--	Este indice ya existe.  Bajo 11.10 fue eliminado pero bajo 13.01 fue creado nuevamente. 
+--	No hay necesidad de que exista en el presente preinstall.
+--	En realidad la presencia de esta sentencia genera un error en instalación (no se puede usar IF NOT EXISTS por incompatibilidad con Postgres 8.4) 
+--create index c_bpartner_padron_bsas_cuit on c_bpartner_padron_bsas(cuit);
 
 --20170830-0044 En el caso de efectivo, si tenemos una condición parámetro, entonces siempre debe tener una factura/nc relacionada
 CREATE OR REPLACE FUNCTION v_documents_org_filtered(
