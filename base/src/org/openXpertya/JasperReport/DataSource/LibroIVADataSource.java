@@ -96,14 +96,13 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
              	"       cdt.signo," +
              	"       cit.AD_Client_ID, " +
              	"       cbp.iibb " +
-             	" from (select c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_doctype.c_doctype_id, c_invoice.fiscalalreadyprinted  " +
+             	" from (select c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_doctype.c_doctype_id, c_invoice.fiscalalreadyprinted, c_invoice.cae  " +
              	"       from c_Invoice " +
              	"		INNER JOIN c_doctype ON c_invoice.c_doctypetarget_id = c_doctype.c_doctype_id " +
              	" where c_invoice.ad_client_id = ? " + getOrgCheck("c_invoice") +
              	" AND (c_invoice.isactive = 'Y') "+
              	" AND (date_trunc('day', c_invoice.dateacct) between date_trunc('day',?::timestamp) and date_trunc('day',?::timestamp)) " );
              
-			String docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
 			// Si no es ambos
 			if (!p_transactionType.equals("B")) {
 				// Si es transacción de ventas, C = Customer(Cliente)
@@ -117,14 +116,13 @@ public class LibroIVADataSource extends QueryDataSource implements JRDataSource 
 					sqlReal.append(
 							" AND ((c_invoice.issotrx = 'N' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
 									+ MDocType.TRANSACTIONTYPEFRONTLIVA_Purchases + "') ");
-					docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
 				}
 			}
-			
-			sqlReal.append(docStatusClause);
+					
+			sqlReal.append(LibroIVAUtils.getDocStatusFilter(p_transactionType, "c_doctype", "c_invoice"));
              
             sqlReal.append(") inv " +
-             	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscaldocument, isfiscal " +
+             	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscaldocument, isfiscal, iselectronic " +
              	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctype_id " +
              	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
              	" 		        from c_invoicetax) cit 	on cit.c_invoice_id = inv.c_invoice_id " +
