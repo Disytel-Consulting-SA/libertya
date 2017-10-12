@@ -2334,12 +2334,25 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 		} 
 		
-		// Si la Tarifa de la Factura tiene activo el campo “Actualizar Precios con Factura de Compra” y 
-		// si la Moneda de la Factura de Proveedor es diferente a la moneda de la Tarifa seleccionada para la Factura
-		// El campo Fecha de TC para Actualizar Precios debe ser obligatorio
-		if (!isSOTrx() && getC_Currency_ID() != priceListCurrency && priceList.isActualizarPreciosConFacturaDeCompra() && getFechadeTCparaActualizarPrecios()==null) {
-			log.saveError("Error", Msg.translate(getCtx(), "FechadeTCparaActualizarPreciosMandatory"));
-			return false;
+		if (!isSOTrx()) {
+			// Si la Tarifa de la Factura tiene activo el campo “Actualizar Precios con Factura de Compra” y 
+			// si la Moneda de la Factura de Proveedor es diferente a la moneda de la Tarifa seleccionada para la Factura
+			// El campo Fecha de TC para Actualizar Precios debe ser obligatorio
+			if(getC_Currency_ID() != priceListCurrency && priceList.isActualizarPreciosConFacturaDeCompra() && getFechadeTCparaActualizarPrecios()==null){
+				log.saveError("Error", Msg.translate(getCtx(), "FechadeTCparaActualizarPreciosMandatory"));
+				return false;
+			}
+			
+			// Si se modificó el esquema de vencimientos y la factura se encuentra
+			// en un lote de pagos, entonces error
+			if(!newRecord && is_ValueChanged("C_PaymentTerm_ID")){
+				MPaymentBatchPO paymentBatch = MPaymentBatchPO.getFromInvoice(getCtx(), getID(), get_TrxName());
+				if(paymentBatch != null){
+					log.saveError("SaveError", Msg.getMsg(getCtx(), "InvoiceInPaymentBatchPO",
+							new Object[] { paymentBatch.getDocumentNo() }));
+					return false;
+				}
+			}
 		}
 		
 		return true;

@@ -23,6 +23,28 @@ import org.openXpertya.util.Util;
 
 public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 	
+	/**
+	 * @param ctx
+	 *            contexto actual
+	 * @param invoiceID
+	 *            id de factura
+	 * @param trxName
+	 *            transacción actual
+	 * @return el lote de pagos en el cual pertenece la factura parámetro
+	 */
+	public static MPaymentBatchPO getFromInvoice(Properties ctx, Integer invoiceID, String trxName){
+		MPaymentBatchPO paymentBatch = null;
+		String sql = "select pod.c_paymentbatchpo_id "
+					+ "from c_paymentbatchpodetail pod "
+					+ "inner join c_paymentbatchpoinvoices poi on poi.c_paymentbatchpodetail_id = pod.c_paymentbatchpodetail_id "
+					+ "where poi.c_invoice_id = ?";
+		Integer paymentBatchID = DB.getSQLValue(trxName, sql, invoiceID);
+		if(paymentBatchID != null && paymentBatchID > 0){
+			paymentBatch = new MPaymentBatchPO(ctx, paymentBatchID, trxName);
+		}
+		return paymentBatch;
+	}
+	
 	public MPaymentBatchPO(Properties ctx, ResultSet rs, String trxName) {
 		super(ctx, rs, trxName);
 		// TODO Auto-generated constructor stub

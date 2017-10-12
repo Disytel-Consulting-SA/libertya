@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -296,7 +297,12 @@ public class MPaymentTerm extends X_C_PaymentTerm {
      */
 
     private boolean applyNoSchedule( MInvoice invoice ) {
-        deleteInvoicePaySchedule( invoice.getC_Invoice_ID(),invoice.get_TrxName() );
+    	try{
+    		deleteInvoicePaySchedule( invoice.getC_Invoice_ID(),invoice.get_TrxName() );
+    	} catch(Exception e){
+    		log.saveError("Error", e);
+    		return false;
+    	}
 
         // updateInvoice
 
@@ -321,7 +327,12 @@ public class MPaymentTerm extends X_C_PaymentTerm {
      */
 
     private boolean applySchedule( MInvoice invoice ) {
-        deleteInvoicePaySchedule( invoice.getC_Invoice_ID(),invoice.get_TrxName());
+        try{
+        	deleteInvoicePaySchedule( invoice.getC_Invoice_ID(),invoice.get_TrxName());
+        } catch(Exception e){
+    		log.saveError("Error", e);
+    		return false;
+    	}
 
         // Create Schedule
 
@@ -331,7 +342,10 @@ public class MPaymentTerm extends X_C_PaymentTerm {
         for( int i = 0;i < m_schedule.length;i++ ) {
 //            ips = new MInvoicePaySchedule( invoice,m_schedule[ i ] );
         	ips = createInvoicePaySchedule(getCtx(), invoice, m_schedule[i], this, invoice.get_TrxName());
-            ips.save();
+            if(!ips.save()){
+            	log.saveError("SaveError", CLogger.retrieveErrorAsString());
+            	return false;
+            }
             remainder = remainder.subtract( ips.getDueAmt());
         }    // for all schedules
 
@@ -340,14 +354,20 @@ public class MPaymentTerm extends X_C_PaymentTerm {
 		// de facturas  
         if(m_schedule.length == 0){
         	ips = createInvoicePaySchedule(getCtx(), invoice, null, this, invoice.get_TrxName());
-        	ips.save();
+        	if(!ips.save()){
+            	log.saveError("SaveError", CLogger.retrieveErrorAsString());
+            	return false;
+            }
             remainder = BigDecimal.ZERO;
         }
         
         // Remainder - update last
         if( (remainder.compareTo( BigDecimal.ZERO ) != 0) && (ips != null) ) {
             ips.setDueAmt( ips.getDueAmt().add( remainder ));
-            ips.save( invoice.get_TrxName());
+            if(!ips.save( invoice.get_TrxName())){
+            	log.saveError("SaveError", CLogger.retrieveErrorAsString());
+            	return false;
+            }
             log.fine( "Remainder=" + remainder + " - " + ips );
         }
 
@@ -368,11 +388,21 @@ public class MPaymentTerm extends X_C_PaymentTerm {
      * @param trxName
      */
 
-    private void deleteInvoicePaySchedule( int C_Invoice_ID,String trxName ) {
+    private void deleteInvoicePaySchedule( int C_Invoice_ID,String trxName ) throws Exception{
         String sql = "DELETE FROM C_InvoicePaySchedule WHERE C_Invoice_ID=" + C_Invoice_ID;
-        int no = DB.executeUpdate( sql,trxName );
-
-        log.fine( "C_Invoice_ID=" + C_Invoice_ID + " - #" + no );
+        PreparedStatement ps = null;
+        try {
+			ps = DB.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, trxName);
+			ps.executeUpdate();
+		} catch (Exception e) {
+			throw e;
+		} finally{
+			try{
+				if(ps != null) ps.close();
+			} catch(Exception e2){
+				throw e2;
+			}			
+		}
     }    // deleteInvoicePaySchedule
 
     /**
