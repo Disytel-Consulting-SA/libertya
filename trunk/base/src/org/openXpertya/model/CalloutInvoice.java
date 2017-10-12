@@ -320,44 +320,6 @@ public class CalloutInvoice extends CalloutEngine {
      * @return
      */
 
-    public String paymentTerm( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
-        Integer C_PaymentTerm_ID = ( Integer )value;
-        int     C_Invoice_ID     = Env.getContextAsInt( ctx,WindowNo,"C_Invoice_ID" );
-
-        if( (C_PaymentTerm_ID == null) || (C_PaymentTerm_ID.intValue() == 0) || (C_Invoice_ID == 0) ) {    // not saved yet
-            return "";
-        }
-
-        //
-
-        MPaymentTerm pt = new MPaymentTerm( ctx,C_PaymentTerm_ID.intValue(),null );
-
-        if( pt.getID() == 0 ) {
-            return "PaymentTerm not found";
-        }
-
-        boolean valid = pt.apply( C_Invoice_ID );
-
-        mTab.setValue( "IsPayScheduleValid",valid
-                ?"Y"
-                :"N" );
-
-        return "";
-    }    // paymentTerm
-
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param ctx
-     * @param WindowNo
-     * @param mTab
-     * @param mField
-     * @param value
-     *
-     * @return
-     */
-
     public String product( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
         Integer M_Product_ID = mField.getColumnName().equals("M_Product_ID") ? ( Integer )value : (Integer)mTab.getValue("M_Product_ID") ;
 
