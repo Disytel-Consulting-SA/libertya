@@ -78,7 +78,13 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 	private static final String DEFAULT_HOUR_FORMAT = "HHmmss";
 	/** Formato de fecha dia_de_la_semana nro mes año */
 	private static final String FULL_DATE_FORMAT = "EEEE dd MMMM yyyy";
-
+	/**
+	 * Longitud de cada línea de detalle, registros PC. Siempre deben ser 2
+	 * caracteres menos ya que los primeros 2 se usan para el margen izquierdo.
+	 * En este caso, la longitud según el formato es de 132.
+	 */
+	private static final Integer PC_LINE_LENGTH = 130;
+	
 	// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 	/** Secuencia para nro. de archivo enviado en el dia. */
@@ -371,7 +377,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		head.append(zeroFill(getRentencionCode(retentionType, provincia), 3)); // Tipo de certificado de retención o comprobante adjunto.
 		head.append("S"); // Incluir firma al documento.
 		head.append("BCO"); // Canal de entrega de los comprobantes asociados a pagos electrónicos.
-		head.append(zeroFill(sucursaldefault, 0)); // Sucursal a la cual enviar los comprobantes asociados a pagos electrónicos.
+		head.append(zeroFill(sucursaldefault, 8)); // Sucursal a la cual enviar los comprobantes asociados a pagos electrónicos.
 		head.append(whiteSpace(80)); // Espacio en blanco.
 
 		return head.toString();
@@ -389,8 +395,32 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		else
 			return null;
 	}
+	
+	private String getPCLine(String data){
+		data = data != null?data:"";
+		return commonLeftMargin()+data+commonRightMargin(data);
+	}
+	
+	private String getLastPCLine(String data){
+		data = data != null?data:"";
+		return commonLeftMargin()+data+commonRightMarginNoRowSeparator(data);
+	}
+	
+	private String getBlankPCLine(){
+		return getPCLine(null);
+	}
 
-	private String commonMargin() {
+	private String commonRightMargin(String data) {
+		Integer dataLength = data.length();
+		return (dataLength >= PC_LINE_LENGTH?"":whiteSpace(PC_LINE_LENGTH - dataLength))+getRowSeparator();
+	}
+	
+	private String commonRightMarginNoRowSeparator(String data) {
+		Integer dataLength = data.length();
+		return (dataLength >= PC_LINE_LENGTH?"":whiteSpace(PC_LINE_LENGTH - dataLength));
+	}
+	
+	private String commonLeftMargin() {
 		pcCount++;
 		registerPcCount++;
 
@@ -431,7 +461,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		total.append("T1"); // Registro ID.
 		total.append(zeroFill(registerPcCount, 25)); // Total de líneas a imprimir para este comprobante.
 		total.append(zeroFill(registerLineBreaks, 10)); // Total de registros del archivo.
-		total.append(whiteSpace(80)); // Espacio en blanco.
+		total.append(whiteSpace(40)); // Espacio en blanco.
 
 		registerPcCount = 0;
 		registerLineBreaks = 0;
@@ -529,11 +559,11 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			strDate = strDate.replaceAll("(\\w+\\s\\d{2})\\s(\\w+)\\s(\\d{4})", "$1 de $2 de $3");
 		}
 		StringBuffer tmp = new StringBuffer();
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + city + ", " + strDate + getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + whiteSpace(37) + "Comprobante de Retencion Nro: " + zeroFill(withholdingno, 7) + getRowSeparator());
-		tmp.append(commonMargin() + asciiHr() + getRowSeparator());
+		tmp.append(getBlankPCLine());
+		tmp.append(getPCLine(city + ", " + strDate));
+		tmp.append(getBlankPCLine());
+		tmp.append(getPCLine(whiteSpace(37) + "Comprobante de Retencion Nro: " + zeroFill(withholdingno, 7)));
+		tmp.append(getPCLine(asciiHr()));
 		return tmp.toString();
 	}
 
@@ -575,13 +605,13 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			ps.setInt(1, c_banklistline_id);
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				tmp.append(fillField(commonMargin() + rs.getString(2), " ", MExpFormatRow.ALIGNMENT_Left, 65, null) + "ORDEN DE PAGO: " + rs.getString(1) + getRowSeparator());
-				tmp.append(commonMargin() + "Convenio Multilateral: " + rs.getString(3) + getRowSeparator());
-				tmp.append(commonMargin() + rs.getString(4) + getRowSeparator());
-				tmp.append(commonMargin() + rs.getString(5) + getRowSeparator());
-				tmp.append(commonMargin() + "C.U.I.T. : " + rs.getString(6).replaceAll("(\\d{2})(\\d{8})(\\d{1})", "$1-$2-$3 ") + rs.getString(7) + getRowSeparator());
-				tmp.append(commonMargin() + getRowSeparator());
-				tmp.append(commonMargin() + asciiHr() + getRowSeparator());
+				tmp.append(getPCLine(fillField(rs.getString(2), " ", MExpFormatRow.ALIGNMENT_Left, 53, null) + "ORDEN DE PAGO: " + rs.getString(1)));
+				tmp.append(getPCLine("Convenio Multilateral: " + rs.getString(3)));
+				tmp.append(getPCLine(rs.getString(4)));
+				tmp.append(getPCLine(rs.getString(5)));
+				tmp.append(getPCLine("C.U.I.T. : " + rs.getString(6).replaceAll("(\\d{2})(\\d{8})(\\d{1})", "$1-$2-$3 ") + rs.getString(7)));
+				tmp.append(getBlankPCLine());
+				tmp.append(getPCLine(asciiHr()));
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getCompanyInfo", e);
@@ -630,13 +660,13 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 			ps.setInt(1, currentInvoiceId);
 			rs = ps.executeQuery();
 			if (rs.next()) {
-				tmp.append(commonMargin() + "NUMERO DE CONTRIBUYENTE: " + rs.getString(1) + getRowSeparator());
-				tmp.append(commonMargin() + "NOMBRE O RAZON SOCIAL: " + rs.getString(2) + getRowSeparator());
-				tmp.append(commonMargin() + "DOMICILIO: " + (Util.isEmpty(rs.getString(3)) ? "" : rs.getString(3)) + getRowSeparator());
-				tmp.append(commonMargin() + "LOCALIDAD: " + (Util.isEmpty(rs.getString(4)) ? "" : rs.getString(4)) + getRowSeparator());
-				tmp.append(commonMargin() + "C.U.I.T. : " + rs.getString(5).replaceAll("(\\d{2})(\\d{8})(\\d{1})", "$1-$2-$3 ") + rs.getString(6) + getRowSeparator());
-				tmp.append(commonMargin() + getRowSeparator());
-				tmp.append(commonMargin() + asciiHr() + getRowSeparator());
+				tmp.append(getPCLine("NUMERO DE CONTRIBUYENTE: " + rs.getString(1)));
+				tmp.append(getPCLine("NOMBRE O RAZON SOCIAL: " + rs.getString(2)));
+				tmp.append(getPCLine("DOMICILIO: " + (Util.isEmpty(rs.getString(3)) ? "" : rs.getString(3))));
+				tmp.append(getPCLine("LOCALIDAD: " + (Util.isEmpty(rs.getString(4)) ? "" : rs.getString(4))));
+				tmp.append(getPCLine("C.U.I.T. : " + rs.getString(5).replaceAll("(\\d{2})(\\d{8})(\\d{1})", "$1-$2-$3 ") + rs.getString(6)));
+				tmp.append(getBlankPCLine());
+				tmp.append(getPCLine(asciiHr()));
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getBPartnerInfo", e);
@@ -725,18 +755,18 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		DateFormat fmt1 = new SimpleDateFormat("dd/MM/yyyy");
 		DateFormat fmt2 = new SimpleDateFormat("MMMM/yyyy", Locale.getDefault());
 
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + "                       Por la presente adjuntamos la siguiente nota:             " + getRowSeparator());
-		tmp.append(commonMargin() + "Retencion del impuesto " + impuesto + " sobre el pago realizado el          " + getRowSeparator());
-		tmp.append(commonMargin() + fmt1.format(fechaop) + " en concepto de " + concepto + getRowSeparator());
-		tmp.append(commonMargin() + "determinado sobre un importe de " + baseImponible.doubleValue() + getRowSeparator());
-		tmp.append(commonMargin() + "Esta retencion del mes de " + cap(fmt2.format(fecharet)) + " a ser depositado el mes de            " + getRowSeparator());
-		tmp.append(commonMargin() + cap(fmt2.format(fecharet)) + "                                                                     " + getRowSeparator());
-		tmp.append(commonMargin() + "En el paquete de pago se encuentran los siguientes comprobantes                  " + getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + "FECHA EMISION                 COMPROBANTE                    IMPORTE             " + getRowSeparator());
-		tmp.append(commonMargin() + asciiHr() + getRowSeparator());
+		tmp.append(getBlankPCLine());
+		tmp.append(getBlankPCLine());
+		tmp.append(getPCLine("                       Por la presente adjuntamos la siguiente nota:             "));
+		tmp.append(getPCLine("Retencion del impuesto " + impuesto + " sobre el pago realizado el          "));
+		tmp.append(getPCLine(fmt1.format(fechaop) + " en concepto de " + concepto));
+		tmp.append(getPCLine("determinado sobre un importe de " + baseImponible.doubleValue()));
+		tmp.append(getPCLine("Esta retencion del mes de " + cap(fmt2.format(fecharet)) + " a ser depositado el mes de            "));
+		tmp.append(getPCLine(cap(fmt2.format(fecharet)) + "                                                                     "));
+		tmp.append(getPCLine("En el paquete de pago se encuentran los siguientes comprobantes                  "));
+		tmp.append(getBlankPCLine());
+		tmp.append(getPCLine("FECHA EMISION                 COMPROBANTE                    IMPORTE             "));
+		tmp.append(getPCLine(asciiHr()));
 
 		return tmp.toString();
 	}
@@ -816,10 +846,9 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 				Date date = new Date(rs.getTimestamp(3).getTime());
 				DateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
 
-				tmp.append(fillField(commonMargin() + fmt.format(date), " ", MExpFormatRow.ALIGNMENT_Left, 43, null));
-				tmp.append("FAC " + fillField(String.valueOf(rs.getInt(2)), " ", MExpFormatRow.ALIGNMENT_Right, 8, null));
-				tmp.append(fillField(String.valueOf(rs.getBigDecimal("amount").doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 24, null));
-				tmp.append(getRowSeparator());
+				tmp.append(getPCLine(fillField(fmt.format(date), " ", MExpFormatRow.ALIGNMENT_Left, 31, null)
+							+"FAC " + fillField(String.valueOf(rs.getInt(2)), " ", MExpFormatRow.ALIGNMENT_Right, 8, null)
+							+fillField(String.valueOf(rs.getBigDecimal("amount").doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 24, null)));
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getCompanyInfo", e);
@@ -836,19 +865,19 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		String tmpStr = NumeroCastellano.numeroACastellano(importeDetermAmt);
 		//tmpStr = tmpStr.replaceAll("PESOS CON", "......." + getRowSeparator() + commonMargin() + whiteSpace(12) + "CON");
 
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + "Este pago" + fillField(String.valueOf(total.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 58, null) + getRowSeparator());
-		tmp.append(commonMargin() + "Importe No Imponible" + fillField("" + noImponibleImp.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 47, null) + getRowSeparator());
-		tmp.append(commonMargin() + "Porcentaje Base Calculo %" + fillField("" + basePercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 42, null)  + getRowSeparator());
-		tmp.append(commonMargin() + "Base Imponible" + fillField(String.valueOf(baseImponible.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 53, null) + getRowSeparator());
-		tmp.append(commonMargin() + "Alicuota %" + fillField("" + retencionPercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 57, null) +  getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + "IMPORTE RETENIDO" + fillField("" + importeDetermAmt.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 51, null) +  getRowSeparator());
-		tmp.append(commonMargin() + "SON PESOS:  " + tmpStr + getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + getRowSeparator());
-		tmp.append(commonMargin() + whiteSpace(27) + clientName + " - AdmCentral");
+		tmp.append(getBlankPCLine());
+		tmp.append(getBlankPCLine());
+		tmp.append(getPCLine("Este pago" + fillField(String.valueOf(total.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 58, null)));
+		tmp.append(getPCLine("Importe No Imponible" + fillField("" + noImponibleImp.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 47, null)));
+		tmp.append(getPCLine("Porcentaje Base Calculo %" + fillField("" + basePercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 42, null)));
+		tmp.append(getPCLine("Base Imponible" + fillField(String.valueOf(baseImponible.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 53, null)));
+		tmp.append(getPCLine("Alicuota %" + fillField("" + retencionPercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 57, null)));
+		tmp.append(getBlankPCLine());
+		tmp.append(getPCLine("IMPORTE RETENIDO" + fillField("" + importeDetermAmt.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 51, null)));
+		tmp.append(getPCLine("SON PESOS:  " + tmpStr));
+		tmp.append(getBlankPCLine());
+		tmp.append(getBlankPCLine());
+		tmp.append(getLastPCLine(whiteSpace(27) + clientName + " - AdmCentral"));
 
 		return tmp.toString();
 	}
