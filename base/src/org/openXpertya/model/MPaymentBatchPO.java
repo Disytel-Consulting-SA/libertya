@@ -208,7 +208,7 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		} catch (AllocationGeneratorException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			m_processMsg = e.getMessage();
+			m_processMsg = Msg.getMsg(getCtx(), "PaymentOrdenGenerationError") + " : " + e.getMessage();
 			return DocAction.STATUS_Invalid;
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -306,30 +306,35 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		//Valido que no haya datalles sin facturas
 		for (MPaymentBatchPODetail detail : getBatchDetails()) {
 			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName()); 
+			boolean subValid = true;
 			if (detail.getInvoices() == null || detail.getInvoices().size() <= 0) {
-				if (isValid)
-					m_processMsg = Msg.getMsg(getCtx(), "PaymentDetailsWithoutInvoices") + " " + bPartner.getName();
+				if (subValid)
+					m_processMsg = Msg.getMsg(getCtx(), "PaymentDetailsWithoutInvoices") + " \n " + bPartner.getName();
 				else 
-					m_processMsg += ", " + bPartner.getName();
+					m_processMsg += " \n " + bPartner.getName();
 				isValid = false;
+				subValid = false;
 			}
 		}
 		
 		//Valido que todos los proveedores sigan teniendo la forma de pago configurada y que coincida con la del detalle
 		for (MPaymentBatchPODetail detail : getBatchDetails()) {
-			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName()); 
+			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName());
+			boolean subValid = true;
 			if (bPartner.getBatch_Payment_Rule() == null || !bPartner.getBatch_Payment_Rule().equals(detail.getBatch_Payment_Rule())) {
-				if (isValid)
-					m_processMsg = Msg.getMsg(getCtx(), "PaymentRuleChange") + " " + bPartner.getName();
+				if (subValid)
+					m_processMsg = (isValid?"":" . \n ")+Msg.getMsg(getCtx(), "PaymentRuleChange") + " \n " + bPartner.getName();
 				else 
-					m_processMsg += ", " + bPartner.getName();
+					m_processMsg += " \n " + bPartner.getName();
 				isValid = false;
+				subValid = false;
 			}
 		}
 		
 		//Valido que los importes abiertos de las facturas del lote sigan siendo los mismos
 		for (MPaymentBatchPODetail detail : getBatchDetails()) {
 			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName());
+			boolean subValid = true;
 			for (MPaymentBatchPOInvoices detailInvoice : detail.getInvoices()) {
 				MInvoice invoice = new MInvoice(getCtx(), detailInvoice.getC_Invoice_ID(), get_TrxName());
 				MInvoicePaySchedule paySchedule = new MInvoicePaySchedule(getCtx(), detailInvoice.getC_InvoicePaySchedule_ID(), get_TrxName());
@@ -341,12 +346,13 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 					throw new IllegalArgumentException(Msg.getMsg(getCtx(), "ConvertionRateInvalid"));
 				}
 				
-				if (!detailInvoice.getOpenAmount().equals(convertedAmt)) {
-					if (isValid)
-						m_processMsg = Msg.getMsg(getCtx(), "InvoiceOpenAmountChange") + " " + bPartner.getName() + "-" + invoice.getDocumentNo();
+				if (detailInvoice.getOpenAmount().compareTo(convertedAmt) != 0) {
+					if (subValid)
+						m_processMsg = (isValid?"":" . \n ")+Msg.getMsg(getCtx(), "InvoiceOpenAmountChange") + " \n " + bPartner.getName() + "-" + invoice.getDocumentNo();
 					else 
-						m_processMsg += ", " + bPartner.getName() + "-" + invoice.getDocumentNo();
+						m_processMsg += " \n " + bPartner.getName() + "-" + invoice.getDocumentNo();
 					isValid = false;
+					subValid = false;
 				}
 			}
 		}
