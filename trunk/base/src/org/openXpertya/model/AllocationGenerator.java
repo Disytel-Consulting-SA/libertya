@@ -509,13 +509,15 @@ public class AllocationGenerator {
 		
 		for(Document doc : getDebits()){
 			if (!doc.validateAmount()){
-				throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError"));
+				throw new AllocationGeneratorException(getMsg("DebitAmountValidationError",
+						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
 			}
 		}
 		
 		for(Document doc : getCredits()){
 			if (!doc.validateAmount()){
-				throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError"));
+				throw new AllocationGeneratorException(getMsg("CreditAmountValidationError",
+						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
 			}
 		}
 		
@@ -527,7 +529,8 @@ public class AllocationGenerator {
 			// esta comparación.
 			if (getDebitsAmount().compareTo(getCreditsAmount() ) != 0) {
 				if ( Math.abs(  (getDebitsAmount().subtract(getCreditsAmount())).doubleValue() ) >  (Double.parseDouble(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) )
-				throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError"));
+					throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError",
+							new Object[] { getDebitsAmount(), getCreditsAmount() }));
 			}
 		}
 		
@@ -947,6 +950,7 @@ public class AllocationGenerator {
 		public Integer orgID;
 		private BigDecimal amountAllocated = BigDecimal.ZERO;
 		private boolean isAuthorized = true; 
+		private String documentNo;
 		
 		/**
 		 * @param id ID del documento
@@ -1056,6 +1060,18 @@ public class AllocationGenerator {
 		public void setAuthorized(boolean isAuthorized) {
 			this.isAuthorized = isAuthorized;
 		}
+
+		public String getDocumentNo() {
+			return documentNo;
+		}
+
+		public void setDocumentNo(String documentNo) {
+			this.documentNo = documentNo;
+		}
+		
+		public BigDecimal getOpenAmt(){
+			return getAvailableAmt();
+		}
 	}
 	
 	/**
@@ -1119,7 +1135,17 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true)).subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+		}
+		
+		@Override
+		public String getDocumentNo() {
+			return DB.getSQLValueString(getTrxName(), "SELECT documentno FROM C_Invoice WHERE c_invoice_id = "+ id);
+		}
+
+		@Override
+		public BigDecimal getOpenAmt(){
+			return DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true);
 		}
 	}
 
@@ -1164,7 +1190,17 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT abs(cashlineavailable(?))", id,true)).subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+		}
+		
+		@Override
+		public String getDocumentNo() {
+			return DB.getSQLValueString(getTrxName(), "SELECT c.name || ' # ' || cl.line FROM C_Cash c INNER JOIN C_CashLine cl ON c.C_Cash_ID = cl.C_Cash_ID WHERE C_CashLine_ID = "+ id);
+		}
+		
+		@Override
+		public BigDecimal getOpenAmt(){
+			return DB.getSQLValueBD(getTrxName(), "SELECT abs(cashlineavailable(?))", id,true);
 		}
 	}
 
@@ -1209,8 +1245,19 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return ( (DB.getSQLValueBD(getTrxName(), "SELECT paymentavailable(?)", id,true)).subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
 		}
+		
+		@Override
+		public String getDocumentNo() {
+			return DB.getSQLValueString(getTrxName(), "SELECT documentno FROM c_payment WHERE c_payment_id = "+ id);
+		}
+		
+		@Override
+		public BigDecimal getOpenAmt(){
+			return DB.getSQLValueBD(getTrxName(), "SELECT paymentavailable(?)", id,true);
+		}
+
 	}
 	
 	public static BigDecimal getExchangeDifference(HashMap<Integer, BigDecimal> facts, ArrayList<PaymentMediumInfo> pays, Properties ctx, String trxName, Date allocDate) {
