@@ -1873,56 +1873,57 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		boolean locale_ar = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 
-		// dREHER - Setea la letra correspondiente, luego se encarga la misma
-		// clase de verificar si corresponde
-		// con el tipo segun IVA Cliente E IVA Compa#ia
-		if (locale_ar && getC_Letra_Comprobante_ID() <= 0) {
-
-			// dREHER - Llamo pasando como parametro la organizacion del
-			// documento
-			Integer categoriaIvaClient = CalloutInvoiceExt
-					.darCategoriaIvaClient(getAD_Org_ID());
-
-			// TODO: despues eliminar comentario
-			log.fine("Trajo condicion IVA de organizacion como ="
-					+ categoriaIvaClient);
-
-			categoriaIvaClient = categoriaIvaClient == null ? 0
-					: categoriaIvaClient;
-			int categoriaIvaPartner = partner.getC_Categoria_Iva_ID();
-
-			// Algunas de las categorias de iva no esta asignada
-			if (categoriaIvaClient == 0 || categoriaIvaPartner == 0) {
-				String errorDesc = (categoriaIvaClient == 0 ? "@ClientWithoutIVAError@"
-						: "@BPartnerWithoutIVAError@");
-				log.saveError(
-						"InvalidInvoiceLetraSaveError",
-						Msg.parseTranslation(getCtx(), errorDesc
-								+ ". @CompleteBPandClientCateoriaIVA@"));
-				return false;
-			}
-
-			if (isSOTrx()) { // partner -> customer, empresa -> vendor
-				Integer letra = CalloutInvoiceExt.darLetraComprobante(
-						categoriaIvaPartner, categoriaIvaClient);
-				setC_Letra_Comprobante_ID(letra == null ? 0 : letra);
-
-				log.fine("Iva cliente=" + categoriaIvaPartner
-						+ " iva compa#ia=" + categoriaIvaClient);
-
-				// chequear aca que letra trae y que condiciones de iva envia
-
-			} else { // empresa -> customer, partner -> vendor
-				Integer letra = CalloutInvoiceExt.darLetraComprobante(
-						categoriaIvaClient, categoriaIvaPartner);
-				setC_Letra_Comprobante_ID(letra == null ? 0 : letra);
-			}
-		}
+		/*
+		 * Matias Cap - Disytel
+		 * ------------------------------------------------------------------
+		 * Se comenta este código porque para determinar letra y realizar
+		 * validaciones de categorías de iva, el tipo de documento debe ser
+		 * fiscal
+		 * ------------------------------------------------------------------
+		 * dREHER - Setea la letra correspondiente, luego se encarga la
+		 * misma // clase de verificar si corresponde // con el tipo segun IVA
+		 * Cliente E IVA Compa#ia if (locale_ar && getC_Letra_Comprobante_ID()
+		 * <= 0 && ) {
+		 * 
+		 * // dREHER - Llamo pasando como parametro la organizacion del //
+		 * documento Integer categoriaIvaClient = CalloutInvoiceExt
+		 * .darCategoriaIvaClient(getAD_Org_ID());
+		 * 
+		 * // TODO: despues eliminar comentario log.fine(
+		 * "Trajo condicion IVA de organizacion como =" + categoriaIvaClient);
+		 * 
+		 * categoriaIvaClient = categoriaIvaClient == null ? 0 :
+		 * categoriaIvaClient; int categoriaIvaPartner =
+		 * partner.getC_Categoria_Iva_ID();
+		 * 
+		 * // Algunas de las categorias de iva no esta asignada if
+		 * (categoriaIvaClient == 0 || categoriaIvaPartner == 0) { String
+		 * errorDesc = (categoriaIvaClient == 0 ? "@ClientWithoutIVAError@" :
+		 * "@BPartnerWithoutIVAError@"); log.saveError(
+		 * "InvalidInvoiceLetraSaveError", Msg.parseTranslation(getCtx(),
+		 * errorDesc + ". @CompleteBPandClientCateoriaIVA@")); return false; }
+		 * 
+		 * if (isSOTrx()) { // partner -> customer, empresa -> vendor Integer
+		 * letra = CalloutInvoiceExt.darLetraComprobante( categoriaIvaPartner,
+		 * categoriaIvaClient); setC_Letra_Comprobante_ID(letra == null ? 0 :
+		 * letra);
+		 * 
+		 * log.fine("Iva cliente=" + categoriaIvaPartner + " iva compa#ia=" +
+		 * categoriaIvaClient);
+		 * 
+		 * // chequear aca que letra trae y que condiciones de iva envia
+		 * 
+		 * } else { // empresa -> customer, partner -> vendor Integer letra =
+		 * CalloutInvoiceExt.darLetraComprobante( categoriaIvaClient,
+		 * categoriaIvaPartner); setC_Letra_Comprobante_ID(letra == null ? 0 :
+		 * letra); } }
+		 */
 
 		// Si el Tipo de Documento Destino es 0, se calcula a partir del Nro de
 		// Punto de Venta y el Tipo de Comprobante (FC, NC, ND)
-		if (locale_ar) {
-			if (getC_DocTypeTarget_ID() == 0) {
+		if (locale_ar && getC_DocTypeTarget_ID() == 0 && getPuntoDeVenta() > 0 && !Util.isEmpty(getLetra(), true)) {
+			String docTypeBaseKey = getDocTypeBaseKey(getTipoComprobante());
+			if (!Util.isEmpty(docTypeBaseKey, true)) {
 				MDocType docType = MDocType.getDocType(getCtx(),
 						getAD_Org_ID(),
 						getDocTypeBaseKey(getTipoComprobante()), getLetra(),
@@ -1935,11 +1936,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 					return false;
 				}
 			}
-		} else {
-			if (getC_DocTypeTarget_ID() == 0) {
-				setC_DocTypeTarget_ID(isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
-						: MDocType.DOCBASETYPE_APInvoice);
-			}
+		} else if(!locale_ar && getC_DocTypeTarget_ID() == 0){
+			setC_DocTypeTarget_ID(isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
+					: MDocType.DOCBASETYPE_APInvoice);
 		}
 
 		// Payment Term
@@ -2224,6 +2223,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			
 		}
 
+		// Quito punto de venta y letra en caso que el tipo de doc no sea fiscal
+		if(locale_ar && !docType.isFiscalDocument() && (getPuntoDeVenta() > 0 || getC_Letra_Comprobante_ID() > 0)){
+			setPuntoDeVenta(0);
+			setC_Letra_Comprobante_ID(0);
+		}
+		
 		// Si es un débito, se aplican las percepciones
 		if (isDebit && !isProcessed()) {
 			setApplyPercepcion(true);
