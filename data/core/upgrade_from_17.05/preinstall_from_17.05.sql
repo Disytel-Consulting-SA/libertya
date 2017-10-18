@@ -627,3 +627,44 @@ ALTER TABLE c_invoice_percepciones_v
   
 --20170926-0900 Nueva columna que permite mantener abierto un control de período aún si se encuentra cerrado
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_PeriodControl','permanentlyopen','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20171018-1353 Se tiene en cuenta la cantidad reservada (qtyreserved) para actualizar el reservado del storage
+CREATE OR REPLACE FUNCTION update_reserved(
+    clientid integer,
+    orgid integer,
+    productid integer)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad reservada de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades reservadas se obtienen de pedidos procesados. 
+IMPORTANTE: No funciona para artículos que no son ITEMS (Stockeables)
+*/
+BEGIN
+	update m_storage s
+	set qtyreserved = coalesce((select sum(ol.qtyreserved) as qtypending
+					from c_orderline ol
+					inner join c_order o on o.c_order_id = ol.c_order_id
+					inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+					inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+					where ol.qtyreserved <> 0
+						and o.processed = 'Y' 
+						and s.m_product_id = ol.m_product_id
+						and s.m_locator_id = l.m_locator_id
+						and o.issotrx = 'Y'),0)
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid)
+		and s.m_locator_id IN (select defaultLocator 
+					from (select m_warehouse_id, max(m_locator_id) as defaultLocator
+						from m_locator l
+						where l.isdefault = 'Y' and l.isactive = 'Y'
+						GROUP by m_warehouse_id) as dl);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_reserved(integer, integer, integer)
+  OWNER TO libertya;
