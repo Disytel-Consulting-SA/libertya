@@ -772,7 +772,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			sql += "			p.DateTrx::date <= ?::date AND ";
 		}
-		sql += "				EXISTS (SELECT c_payment_id "
+		sql += "				p.c_payment_id IN (SELECT c_payment_id "
 				+ "							FROM c_allocationhdr as ah "
 				+ "							INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
 				+ "							WHERE ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype <> 'OPA') AND "
