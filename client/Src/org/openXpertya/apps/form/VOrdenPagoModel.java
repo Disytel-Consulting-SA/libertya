@@ -2300,6 +2300,8 @@ public class VOrdenPagoModel {
 		}
 		trx.close();
 		trxName = null;
+		if (getPoGenerator()!=null)
+			getPoGenerator().setTrxName(null);
 		return errorNo;
 	}
 
@@ -2417,6 +2419,8 @@ public class VOrdenPagoModel {
 						.getC_AllocationHdr_ID();
 		}
 		trxName = null;
+		if (getPoGenerator()!=null) 
+				getPoGenerator().setTrxName(null);
 		if (saveOk) {
 			errorNo = PROCERROR_OK;
 		}
