@@ -668,3 +668,122 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_reserved(integer, integer, integer)
   OWNER TO libertya;
+
+--20171023-1530 Función que permite obtener la cantidad pendiente a fecha de corte
+CREATE OR REPLACE FUNCTION getqtyreserved(
+    clientid integer,
+    orgid integer,
+    locatorid integer,
+    productid integer,
+    dateto date)
+  RETURNS numeric AS
+$BODY$
+/***********
+Obtiene la cantidad reservada a fecha de corte. Si no hay fecha de corte, entonces se devuelven los pendientes actuales.
+La cantidad pendiente a una fecha de corte equivale a:
+1) Sumar la cantidad pedida a esa fecha
+2) Sumar las NC con la marca Actualizar Pedido luego de esa fecha.
+3) Restar los transaction de inouts con tipo de documento que gestionen cantidades reservadas de stock y pendientes a fecha de corte. Salidas son negativas y entradas positivas.
+4) Restar las cantidades transferidas a fecha de corte
+*/
+DECLARE
+	reserved numeric;
+BEGIN
+	reserved := 0;
+	--Si no hay fecha de corte o es mayor o igual a la fecha actual, entonces se suman las cantidades reservadas de los pedidos
+	if ( dateTo is null OR dateTo >= current_date ) THEN
+		SELECT INTO reserved coalesce(sum(ol.qtyreserved),0)
+		from c_orderline ol
+		inner join c_order o on o.c_order_id = ol.c_order_id
+		inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+		inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+		where ol.qtyreserved <> 0
+			and o.processed = 'Y' 
+			and ol.m_product_id = productid
+			and l.m_locator_id = locatorid
+			and o.issotrx = 'Y';
+	ELSE
+		SELECT INTO reserved coalesce(sum(qty),0)
+		from (
+		-- Cantidad pedida a fecha de corte
+		select coalesce(sum(ol.qtyordered),0) as qty
+			from c_orderline ol
+			inner join c_order o on o.c_order_id = ol.c_order_id
+			inner join c_doctype dt on dt.c_doctype_id = o.c_doctype_id
+			inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+			inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+			where o.ad_client_id = clientid
+				and o.ad_org_id = orgid
+				and o.processed = 'Y' 
+				and ol.m_product_id = productid
+				and l.m_locator_id = locatorid
+				and o.issotrx = 'Y'
+				and dt.doctypekey NOT IN ('SOSOTH','SOSOT')
+				and o.dateordered::date <= dateTo::date
+				and o.dateordered::date <= current_date
+		union all
+		-- Notas de crédito con el check Actualizar Cantidades de Pedido
+		select coalesce(sum(il.qtyinvoiced),0) as qty
+		from c_invoiceline il
+		inner join c_invoice i on i.c_invoice_id = il.c_invoice_id
+		inner join c_orderline ol on ol.c_orderline_id = il.c_orderline_id
+		inner join c_order o on o.c_order_id = ol.c_order_id
+		inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+		inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+		where o.ad_client_id = clientid
+			and o.ad_org_id = orgid
+			and o.processed = 'Y' 
+			and ol.m_product_id = productid
+			and l.m_locator_id = locatorid
+			and i.issotrx = 'Y'
+			and i.updateorderqty = 'Y'
+			and o.dateordered::date <= dateTo::date
+			and i.dateinvoiced::date > dateTo::date
+			and i.dateinvoiced::date <= current_date
+		union all
+		--En transaction las salidas son negativas y las entradas positivas
+		select coalesce(sum(t.movementqty),0) as qty
+		from m_transaction t
+		inner join m_inoutline iol on iol.m_inoutline_id = t.m_inoutline_id
+		inner join m_inout io on io.m_inout_id = iol.m_inout_id
+		inner join c_doctype dt on dt.c_doctype_id = io.c_doctype_id
+		inner join c_orderline ol on ol.c_orderline_id = iol.c_orderline_id
+		inner join c_order o on o.c_order_id = ol.c_order_id
+		where t.ad_client_id = clientid
+			and t.ad_org_id = orgid
+			and t.m_product_id = productid
+			and t.m_locator_id = locatorid
+			and dt.reservestockmanagment = 'Y'
+			and o.dateordered::date <= dateTo::date
+			and t.movementdate::date <= dateTo::date
+			and t.movementdate::date <= current_date
+		union all
+		--Cantidades transferidas
+		select coalesce(sum(ol.qtyordered * -1),0) as qty
+		from c_orderline ol
+		inner join c_order o on o.c_order_id = ol.c_order_id
+		inner join c_orderline rl on rl.c_orderline_id = ol.ref_orderline_id
+		inner join c_order r on r.c_order_id = rl.c_order_id
+		inner join c_doctype dt on dt.c_doctype_id = o.c_doctype_id
+		inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+		inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+		where o.ad_client_id = clientid
+			and o.ad_org_id = orgid
+			and o.processed = 'Y' 
+			and ol.m_product_id = productid
+			and l.m_locator_id = locatorid
+			and o.issotrx = 'Y'
+			and dt.doctypekey IN ('SOSOT')
+			and r.dateordered::date <= dateTo::date
+			and o.dateordered::date <= dateTo::date
+			and o.dateordered::date <= current_date
+		) todo;
+	END IF;
+	
+	return reserved;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getqtyreserved(integer, integer, integer, integer, date)
+  OWNER TO libertya;
