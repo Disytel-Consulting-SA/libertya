@@ -9,11 +9,12 @@ package org.openXpertya.process;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 
+import org.openXpertya.electronicInvoice.ElectronicInvoiceInterface;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.util.Env;
 
-public class ProcessorWSFE {
+public class ProcessorWSFE implements ElectronicInvoiceInterface {
 	
 	private static ArrayList<String> exteriorDocumentTypes;	
 	static {
@@ -90,6 +91,11 @@ public class ProcessorWSFE {
 	
 	public String getMensaje(){
 		return this.wsfe.getMensaje();
+	}
+
+	@Override
+	public String getErrorMsg() {
+		return this.getWsfe().getMessageError();
 	}
 	
 }

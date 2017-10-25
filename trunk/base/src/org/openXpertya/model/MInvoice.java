@@ -34,6 +34,8 @@ import org.openXpertya.cc.CurrentAccountBalanceStrategy;
 import org.openXpertya.cc.CurrentAccountDocument;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
+import org.openXpertya.electronicInvoice.ElectronicInvoiceInterface;
+import org.openXpertya.electronicInvoice.ElectronicInvoiceProvider;
 import org.openXpertya.model.DiscountCalculator.ICreditDocument;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
@@ -4379,7 +4381,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			// === Lógica adicional para evitar doble notificación a AFIP. ===
 			// Si tiene CAE asignado, no debe generarlo nuevamente
 			if ((getcae() == null || getcae().length() == 0) && getcaecbte() != getNumeroComprobante()) {
-				ProcessorWSFE processor = new ProcessorWSFE(this);
+				// Se intenta obtener un proveedor de WSFE, en caso de no encontrarlo se utiliza la vieja version (via pyafipws) 
+				ElectronicInvoiceInterface processor = ElectronicInvoiceProvider.getImplementation(this);
+				if (processor==null) {
+					processor = new ProcessorWSFE(this);
+				} 
 				String errorMsg = processor.generateCAE();
 				if (Util.isEmpty(processor.getCAE())) {
 					setcaeerror(errorMsg);
