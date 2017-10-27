@@ -107,7 +107,7 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 		
 		// Se determina el importe a retener decrementando las retenciones anteriores
 		// IR = ID - RAA
-		importeRetenido = importeDeterminado.subtract(getRetencionesAnteriores());
+		importeRetenido = importeDeterminado.subtract(getRetencionesAnteriores()).setScale(2, BigDecimal.ROUND_HALF_EVEN);
 		
 		// Una vez calculado el importe a retener, se compara con el importe mínimo de
 		// retención. Si el IR es menor que el mínimo de retención, entonces no se 

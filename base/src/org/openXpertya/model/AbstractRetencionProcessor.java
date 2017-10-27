@@ -335,7 +335,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		// acorde a este porcentaje.
 		if (exceptionPercent.compareTo(Env.ZERO) > 0) {
 			BigDecimal rate = Env.ONE.subtract(exceptionPercent
-					.divide(Env.ONEHUNDRED));
+					.divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN));
 			newAmt = ammount.multiply(rate);
 		}
 

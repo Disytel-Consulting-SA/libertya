@@ -157,7 +157,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 //			porcentajeRetencion = this.
 		// Se calcula el importe determinado.
 		// ID = BI * T / 100
-		importeDeterminado = baseImponible.multiply(porcentajeRetencion).divide(Env.ONEHUNDRED);
+		importeDeterminado = baseImponible.multiply(porcentajeRetencion).divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
 		
 		importeRetenido = importeDeterminado;
 		

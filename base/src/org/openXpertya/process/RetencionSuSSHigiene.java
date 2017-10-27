@@ -131,7 +131,8 @@ public class RetencionSuSSHigiene extends AbstractRetencionProcessor {
 		
 		// Se calcula el importe retenido
 		// IR = T * P / 100 
-		importeDeterminado = baseImponible.multiply(getPorcentajeRetencion()).divide(Env.ONEHUNDRED);
+		importeDeterminado = baseImponible.multiply(getPorcentajeRetencion()).divide(Env.ONEHUNDRED, 2,
+				BigDecimal.ROUND_HALF_EVEN);
 		importeRetenido = importeDeterminado; 
 		
 		
