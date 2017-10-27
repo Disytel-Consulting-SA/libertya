@@ -175,7 +175,7 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 	}
 
 	protected BigDecimal calculateImporteRetenido(BigDecimal importeDeterminado) {
-		return importeDeterminado.subtract(getRetencionesAnteriores());
+		return importeDeterminado.subtract(getRetencionesAnteriores()).setScale(2, BigDecimal.ROUND_HALF_EVEN);
 	}
 
 	protected BigDecimal calculateImporteDeterminado(BigDecimal baseImponible) {

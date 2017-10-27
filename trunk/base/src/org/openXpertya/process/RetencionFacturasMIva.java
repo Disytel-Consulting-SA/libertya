@@ -130,7 +130,7 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		
 		// Se calcula el importe determinado.
 		// ID = BI * T / 100
-		importeDeterminado = baseImponible.multiply(getPorcentajeRetencion()).divide(Env.ONEHUNDRED);
+		importeDeterminado = baseImponible.multiply(getPorcentajeRetencion()).divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
 		
 		// Se calcula el importe retenido.
 		importeRetenido = importeDeterminado;

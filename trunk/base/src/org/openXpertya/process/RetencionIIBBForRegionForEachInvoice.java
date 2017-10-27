@@ -78,14 +78,14 @@ public class RetencionIIBBForRegionForEachInvoice extends RetencionIIBBForRegion
 					e.printStackTrace();
 					retencionesAnteriores = BigDecimal.ZERO;
 				}
-				importeRetenido = importeDeterminado.subtract(retencionesAnteriores);
+				importeRetenido = importeDeterminado.subtract(retencionesAnteriores).setScale(2, BigDecimal.ROUND_HALF_EVEN);
 				
 				if (importeRetenido.compareTo(getImporteMinimoRetencion()) < 0)
 					importeRetenido = BigDecimal.ZERO;
 
 				// Excepción 
 				if (exceptionPercent.compareTo(BigDecimal.ZERO) > 0) {
-					BigDecimal rate = Env.ONE.subtract(exceptionPercent.divide(Env.ONEHUNDRED));
+					BigDecimal rate = Env.ONE.subtract(exceptionPercent.divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN));
 					importeRetenido = importeRetenido.multiply(rate);
 				}
 				// Crear el pojo para esta retención
