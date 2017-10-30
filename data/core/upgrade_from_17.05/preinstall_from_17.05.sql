@@ -1549,3 +1549,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION getqtyreserved(integer, integer, integer, integer, date)
   OWNER TO libertya;
+  
+--20171030-1300 Nueva columna de configuración por tipo de documento para aplicar percepciones automáticamente
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','applyperception','character(1) NOT NULL DEFAULT ''Y''::bpchar'));

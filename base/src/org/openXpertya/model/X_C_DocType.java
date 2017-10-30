@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-09-26 10:28:33.131 */
+ *  @version  - 2017-10-30 12:54:16.145 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setAllowChangePriceList (false);
 setAllowDeliveryReturned (false);
 setAllowOtherBatchPaymentDate (false);
 setAllowProposalDue (false);
+setApplyPerception (false);
 setC_DocType_ID (0);
 setDocBaseType (null);
 setDocTypeKey (null);
@@ -195,6 +196,24 @@ set_Value ("AllowProposalDue", new Boolean(AllowProposalDue));
 public boolean isAllowProposalDue() 
 {
 Object oo = get_Value("AllowProposalDue");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Apply Perceptions.
+Apply Perceptions Automatically when is sales transaction document type */
+public void setApplyPerception (boolean ApplyPerception)
+{
+set_Value ("ApplyPerception", new Boolean(ApplyPerception));
+}
+/** Get Apply Perceptions.
+Apply Perceptions Automatically when is sales transaction document type */
+public boolean isApplyPerception() 
+{
+Object oo = get_Value("ApplyPerception");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
