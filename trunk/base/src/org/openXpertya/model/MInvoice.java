@@ -2663,19 +2663,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		return sb.toString();
 	} // toString
 
-	private String getDocTypeKey() {
-		StringBuffer sql = new StringBuffer();
-
-		sql.append("SELECT ");
-		sql.append("	docbasetype ");
-		sql.append("FROM ");
-		sql.append("	" + X_C_DocType.Table_Name + " ");
-		sql.append("WHERE ");
-		sql.append("	c_doctype_id = ? ");
-
-		return DB.getSQLValueString(get_TrxName(), sql.toString(), getC_DocTypeTarget_ID());
-	}
-
 	/**
 	 * Descripción de Método
 	 * 
@@ -5947,11 +5934,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 	public void calculatePercepciones() throws Exception {
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
-
 		if (docType.isFiscalDocument()
-				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
-						get_TrxName()) && 
-						((getDocTypeKey().equals("ARC") && !MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) || !getDocTypeKey().equals("ARC") || isVoidProcess())) {
+				&& docType.isApplyPerception() 
+				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(), get_TrxName()) 
+				&& ((docType.getDocBaseType().equals("ARC") && !MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) 
+						|| !docType.getDocBaseType().equals("ARC") 
+						|| isVoidProcess())) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.calculatePercepciones(this);
@@ -5961,9 +5949,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	public void recalculatePercepciones() throws Exception {
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 		if (docType.isFiscalDocument()
-				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),
-						get_TrxName()) && 
-				((getDocTypeKey().equals("ARC") && !MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) || !getDocTypeKey().equals("ARC") || isVoidProcess())) {
+				&& docType.isApplyPerception()
+				&& MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),	get_TrxName()) 
+				&& ((docType.getDocBaseType().equals("ARC") && !MPreference.GetCustomPreferenceValueBool("SinPercepcionNCManual")) 
+						|| !docType.getDocBaseType().equals("ARC") 
+						|| isVoidProcess())) {
 			GeneratorPercepciones generator = new GeneratorPercepciones(
 					getCtx(), getDiscountableWrapper(), get_TrxName());
 			generator.recalculatePercepciones(this);
