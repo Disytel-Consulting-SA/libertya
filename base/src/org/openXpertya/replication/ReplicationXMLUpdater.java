@@ -11,8 +11,6 @@ package org.openXpertya.replication;
  * -------------------------------------------------------------------------
  */
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Vector;
 
 import org.openXpertya.model.MChangeLog;
@@ -20,15 +18,11 @@ import org.openXpertya.model.MTableReplication;
 import org.openXpertya.model.X_AD_Client;
 import org.openXpertya.model.X_AD_Sequence;
 import org.openXpertya.model.X_C_BPartner;
-import org.openXpertya.model.X_C_Cash;
-import org.openXpertya.model.X_C_CashLine;
-import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Order;
 import org.openXpertya.model.X_C_OrderLine;
 import org.openXpertya.model.X_M_Transfer;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
-import org.openXpertya.plugin.install.PluginXMLUpdater.ChangeGroup;
 import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
 
@@ -295,10 +289,17 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append( quotes + column.getNewValue() + quotes);
 			retValue = true;
 		}
-		/* A fin de que el procesador contable genere las entradas contables correspondientes, el Posted deben ser pasadas como false */
-		else if ("Posted".equals(column.getName()))
+		/* El campo Posted de cualquier registro no debe modificarse en el destino, dado que el procesador contable de dicho host debera realizar la contabilidad cuando se considere necesario */
+		else if ("posted".equalsIgnoreCase(column.getName()))
 		{
-			query.append( quotes + "N" + quotes);
+			// En el destino, al insertar el nuevo registro debería marcarse como no procesado contablemente, a fin de que el procesador del destino aplique la contabilidad si corresponde 
+			if (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation())) {
+				query.append(quotes + "N" + quotes);
+			} else {
+				// Si la operacion es de actualizacion, quizas el dato está llegando con un valor distinto al que posee en el destino, y eso es lo que hay que evitar.
+				// Por ejemplo: en el origen Posted es Y, pero en el destino Posted es N; con lo cual de replicarse el dato que llega, haría que se omita la aplicacion contable en el destino
+				query.append("posted");
+			}
 			retValue = true;
 		}
 		/* El created y updated también deberían copiarse como cualquier otro dato (no utilizar NOW() como lo hace la superclase) */
