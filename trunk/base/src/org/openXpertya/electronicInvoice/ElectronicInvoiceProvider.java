@@ -42,6 +42,7 @@ public class ElectronicInvoiceProvider {
 			}
 			return getProvider(inv, wsfeProviderClass);
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
