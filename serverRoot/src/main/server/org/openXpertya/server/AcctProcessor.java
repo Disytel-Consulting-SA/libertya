@@ -134,7 +134,11 @@ public class AcctProcessor extends ServidorOXP {
 
             StringBuffer sql = new StringBuffer( "SELECT " );
 
-            sql.append( doc.getTableName()).append( "_ID" ).append( " FROM " ).append( doc.getTableName()).append( " WHERE AD_Client_ID=?" ).append( " AND Processed='Y' AND Posted='N' AND IsActive='Y'" );
+            sql.append( doc.getTableName()).append( "_ID" );
+            sql.append( " FROM " ).append( doc.getTableName());
+            sql.append( " WHERE AD_Client_ID=?" );
+            sql.append( " AND (0 = ? OR AD_Org_ID = ?) " );
+            sql.append( " AND Processed='Y' AND Posted='N' AND IsActive='Y'" );
             sql.append( " ORDER BY Created" );
 
             //
@@ -145,8 +149,10 @@ public class AcctProcessor extends ServidorOXP {
             PreparedStatement pstmt      = null;
 
             try {
-                pstmt = DB.prepareStatement( sql.toString());
+            	pstmt = DB.prepareStatement( sql.toString());
                 pstmt.setInt( 1,m_model.getAD_Client_ID());
+                pstmt.setInt( 2,m_model.getAD_Org_ID());
+                pstmt.setInt( 3,m_model.getAD_Org_ID());
 
                 ResultSet rs = pstmt.executeQuery();
 
