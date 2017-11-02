@@ -289,19 +289,6 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			query.append( quotes + column.getNewValue() + quotes);
 			retValue = true;
 		}
-		/* El campo Posted de cualquier registro no debe modificarse en el destino, dado que el procesador contable de dicho host debera realizar la contabilidad cuando se considere necesario */
-		else if ("posted".equalsIgnoreCase(column.getName()))
-		{
-			// En el destino, al insertar el nuevo registro debería marcarse como no procesado contablemente, a fin de que el procesador del destino aplique la contabilidad si corresponde 
-			if (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation())) {
-				query.append(quotes + "N" + quotes);
-			} else {
-				// Si la operacion es de actualizacion, quizas el dato está llegando con un valor distinto al que posee en el destino, y eso es lo que hay que evitar.
-				// Por ejemplo: en el origen Posted es Y, pero en el destino Posted es N; con lo cual de replicarse el dato que llega, haría que se omita la aplicacion contable en el destino
-				query.append("posted");
-			}
-			retValue = true;
-		}
 		/* El created y updated también deberían copiarse como cualquier otro dato (no utilizar NOW() como lo hace la superclase) */
 		else if (("Created".equalsIgnoreCase(column.getName()) || "Updated".equalsIgnoreCase(column.getName())) && column.getNewValue()!=null && column.getNewValue().length() > 0 )
 		{
@@ -436,6 +423,12 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			 * No replicar el campo Ref_Order_ID para la tabla C_Order_ID
 			 */
 			else if (X_C_Order.Table_Name.equalsIgnoreCase(tableName) && "ref_order_id".equalsIgnoreCase(column.getName())) {
+				changeGroup.getColumns().remove(i);
+			}
+			/*
+			 * No replicar el campo posted. El campo Posted de cualquier registro no debe modificarse en el destino, dado que el procesador contable de dicho host debera realizar la contabilidad cuando se considere necesario
+			 */
+			else if ("posted".equalsIgnoreCase(column.getName())) {
 				changeGroup.getColumns().remove(i);
 			}
 		}
