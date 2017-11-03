@@ -29,8 +29,6 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
-
 import org.openXpertya.model.attribute.RecommendedAtributeInstance;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
@@ -41,6 +39,7 @@ import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.PurchasesUtil;
 import org.openXpertya.util.Util;
 
 /**
@@ -1572,6 +1571,16 @@ public class MInOut extends X_M_InOut implements DocAction {
         	m_processMsg = "@DeliveryWithOrderClose@";
         	
         	return DocAction.STATUS_Invalid;
+        }
+        
+        // Si el tipo de documento está marcado que sólo permita artículos del proveedor
+        if(!isSOTrx() && dt.isOnlyVendorProducts()){
+        	CallResult result = PurchasesUtil.controlVendorProducts(getCtx(), getID(), Table_Name + "_ID",
+					X_M_InOutLine.Table_Name, getC_BPartner_ID(), get_TrxName());
+        	if(result.isError()){
+        		setProcessMsg(result.getMsg());
+        		return DocAction.STATUS_Invalid; 
+        	}
         }
         
         // Mandatory Attributes
