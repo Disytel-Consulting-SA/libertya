@@ -1552,3 +1552,50 @@ ALTER FUNCTION getqtyreserved(integer, integer, integer, integer, date)
   
 --20171030-1300 Nueva columna de configuración por tipo de documento para aplicar percepciones automáticamente
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','applyperception','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20171108-1351 Soporte postgres 8.4 creacion de indices validando que no existan previamente
+CREATE OR REPLACE FUNCTION addindexifnotexists(
+    indexname character varying,
+    tablename character varying,
+    columnname character varying)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	existe integer;
+BEGIN
+	
+	  select into existe count(1)
+	from
+	    pg_class t,
+	    pg_class i,
+	    pg_index ix,
+	    pg_attribute a
+	where
+	    t.oid = ix.indrelid
+	    and i.oid = ix.indexrelid
+	    and a.attrelid = t.oid
+	    and a.attnum = ANY(ix.indkey)
+	    and t.relkind = 'r'
+	    and lower(i.relname) = lower(indexname)
+	    and lower(t.relname) = lower(tablename)
+	    and lower(a.attname) = lower(columnname);
+
+
+	IF (existe = 0) THEN
+		EXECUTE 'CREATE INDEX ' || indexname || 
+			' ON ' || tablename || 
+			' (' || columnname || ')';
+		RETURN 1;
+	END IF;
+
+	RETURN 0;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION addindexifnotexists(character varying, character varying, character varying)
+  OWNER TO libertya;
+
+
+--20171108-1355 Indicie para referencia a inoutline desde invoiceline
+update ad_system set dummy = (SELECT addindexifnotexists('invoiceline_inoutline','c_invoiceline','m_inoutline_id')); 
