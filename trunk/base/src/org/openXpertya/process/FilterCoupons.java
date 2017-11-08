@@ -80,9 +80,9 @@ public class FilterCoupons extends SvrProcess {
 		if (filter.getM_EntidadFinanciera_ID() > 0 || filter.getC_BPartner_ID() > 0) {
 			sql.append("	LEFT JOIN " + X_M_EntidadFinanciera.Table_Name + " ef ON efp.m_entidadfinanciera_id = ef.m_entidadfinanciera_id ");
 		}
-
-		sql.append("	LEFT JOIN " + X_C_AllocationLine.Table_Name + " al ON p.c_payment_id = al.c_payment_id ");
-		sql.append("	LEFT JOIN " + X_C_AllocationHdr.Table_Name + " ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
+// El join con AllocationHdr/Line es innecesario: no se recupera columna alguna de estas tablas, ni se utiliza en filtros.
+//		sql.append("	LEFT JOIN " + X_C_AllocationLine.Table_Name + " al ON p.c_payment_id = al.c_payment_id ");
+//		sql.append("	LEFT JOIN " + X_C_AllocationHdr.Table_Name + " ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
 		sql.append("WHERE ");
 		// Filtro cupones que ya esten en una liquidación.
 		sql.append("	p.c_payment_id NOT IN ( ");
