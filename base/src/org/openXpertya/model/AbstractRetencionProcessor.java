@@ -524,7 +524,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		for (int i = 0; i < invoices.size(); i++) {
 			MInvoiceLine[] lines = invoices.get(i).getLines();
 			for (int j = 0; j < lines.length; j++) {
-				amount = lines[j].getTaxAmt();
+				amount = amount.add(lines[j].getTaxAmt());
 			}
 		}
 		return amount;
