@@ -728,9 +728,7 @@ public class MOrderLine extends X_C_OrderLine {
             // Product
 
         } else    // Set/check Product Price
-        {
-        	MDocType docType = MDocType.get(getCtx(), o.getC_DocTypeTarget_ID());
-        	
+        {        	
         	if(isUpdatePriceInSave()){
 	        	// Validación de precios positivos.
 	        	if(getPriceActual().compareTo(BigDecimal.ZERO) < 0) {
@@ -746,7 +744,7 @@ public class MOrderLine extends X_C_OrderLine {
 	        	// Para pedidos a proveedor no se permite tener artículos repetidos
 	        	String whereClause = "c_order_id = ? AND m_product_id = ?";
 	        	whereClause += newRecord?"":" AND c_orderline_id <> "+getC_OrderLine_ID();
-				if (MDocType.DOCTYPE_PurchaseOrder.equals(docType.getDocTypeKey())
+				if (MDocType.DOCTYPE_PurchaseOrder.equals(orderDocType.getDocTypeKey())
 						&& PO.existRecordFor(getCtx(), get_TableName(),
 								whereClause, new Object[] { getC_Order_ID(), getM_Product_ID() },
 								get_TrxName())) {
@@ -775,7 +773,7 @@ public class MOrderLine extends X_C_OrderLine {
             
             // Verificación de restricción del lugar de retiro del artículo según lo indicado
             // por el tipo de documento.
-            if(docType.isCheckoutPlaceRestricted()
+            if(orderDocType.isCheckoutPlaceRestricted()
             		&& !o.isProcessed() 
             		&& MProduct.CHECKOUTPLACE_PointOfSale.equals(getProduct().getCheckoutPlace())) {
                     
@@ -904,12 +902,11 @@ public class MOrderLine extends X_C_OrderLine {
         
 		// Controlar que la cantidad no sea menor a la mínima de compra y que la
 		// cantidad sea múltiplo a ordenar 
-        if(!isAllowAnyQty()
-        		&& !o.isSOTrx()
+        if(!o.isSOTrx()
 				&& orderDocType.getDocTypeKey().equals(MDocType.DOCTYPE_PurchaseOrder)
 				&& o.getDocStatus().equals(MInOut.DOCSTATUS_Drafted)){
 			MProductPO ppo = MProductPO.get(getCtx(), getM_Product_ID(), o.getC_BPartner_ID(), get_TrxName());
-			if (ppo != null && ppo.isActive()) {
+			if (!isAllowAnyQty() && ppo != null && ppo.isActive()) {
 				// Cantidad mínima
 				if(ppo.getOrder_Min().compareTo(getQtyEntered()) > 0){
 	        		MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
@@ -926,7 +923,15 @@ public class MOrderLine extends X_C_OrderLine {
 					return false;
 				}
         	}
-			
+			// Si el tipo de documento está marcado para que sólo permita
+			// artículos del proveedor y el artículo no corresponde con el
+			// proveedor del pedido, entonces error
+			if(orderDocType.isOnlyVendorProducts() && (ppo == null || !ppo.isActive())){
+				MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
+				log.saveError("SaveError",
+						Msg.getMsg(getCtx(), "OnlyVendorProducts") + " " + prod.getValue() + " - " + prod.getName());
+				return false;
+			}
         }
         
         return true;
