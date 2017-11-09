@@ -3387,6 +3387,12 @@ public class MInOut extends X_M_InOut implements DocAction {
 		return getInvoiceOrderFilter(inout, true);
 	}
 	
+	
+	@Override
+	public void copyInstanceValues(PO to){
+		super.copyInstanceValues(to);
+		((MInOut)to).setReversal(isReversal());
+	}
 }    // MInOut
 
 
