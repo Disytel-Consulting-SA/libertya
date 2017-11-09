@@ -328,7 +328,11 @@ public class MDiscountSchema extends X_M_DiscountSchema {
             BPartnerFlatDiscount = Env.ZERO;
         }
 
-        //
+        // No se calcula descuento si el esquema mismo no es válido a la fecha parámetro
+    	if(!isValid(date)){
+    		log.info("Invalid Discount Schema "+getName());
+    		return Env.ZERO;
+    	}
 
         if( DISCOUNTTYPE_FlatPercent.equals( getDiscountType())) {
         	
@@ -524,19 +528,29 @@ public class MDiscountSchema extends X_M_DiscountSchema {
 	 * @throws IllegalArgumentException
 	 *             si <code>inDate</code> es <code>null</code>
 	 */
-    public boolean isValid(Date inDate) {
+    
+    public boolean isValid(Timestamp inDate) {
     	if (inDate == null) {
-    		throw new IllegalArgumentException("inDate can't be null");
-    	}
-    	// Previene el ClassCastException en le método compareTo que se utiliza luego
-    	if (!(inDate instanceof Timestamp)) {
-    		inDate = new Timestamp(inDate.getTime());
+    		inDate = Env.getDate();
     	}
     	return isActive() 
     				&& (getValidFrom().compareTo(inDate) <= 0)
-    				&& (getValidTo() == null || inDate.compareTo(getValidTo()) <= 0);
+					&& (getValidTo() == null
+									|| inDate.compareTo(getValidTo()) <= 0 
+									|| TimeUtil.isSameDay(getValidTo(), inDate));
     }
-
+    
+    public boolean isValid(Date inDate) {
+    	Timestamp forDate;
+    	if (inDate == null) {
+    		forDate = Env.getDate();
+    	}
+    	else{
+    		forDate = new Timestamp(inDate.getTime());
+    	}
+    	return isValid(forDate);
+    }
+    
     /**
 	 * Indica si el esquema es válido para la fecha actual
 	 * 
