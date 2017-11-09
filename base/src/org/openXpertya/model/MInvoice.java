@@ -4732,6 +4732,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		MDocType reversalDocType = docType;
 		boolean isCredit = docType.getDocBaseType().equals(
 				MDocType.DOCBASETYPE_ARCreditMemo);
+		
+		// Si el período está cerrado no se puede anular una factura de proveedor
+		if (!isSOTrx() && MDocType.DOCBASETYPE_APInvoice.equals(docType.getDocBaseType()) 
+				&& !MPeriod.isOpen(getCtx(), getDateAcct(), docType.getDocBaseType(), docType)) {
+			m_processMsg = "@PeriodClosed@";
+			return false;
+		}
+		
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
 		// Para la localización argentina es necesario contemplar el tipo
