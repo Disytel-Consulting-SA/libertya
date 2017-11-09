@@ -1641,3 +1641,67 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_reserved(integer, integer, integer)
   OWNER TO libertya;
+  
+--20171109-1344 Sobrecarga de funcion para gestion de indices que soporta whereclause
+CREATE OR REPLACE FUNCTION addindexifnotexists(
+    indexname character varying,
+    tablename character varying,
+    columnname character varying,
+    whereclause character varying)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	existe integer;
+BEGIN
+	
+	  select into existe count(1)
+	from
+	    pg_class t,
+	    pg_class i,
+	    pg_index ix,
+	    pg_attribute a
+	where
+	    t.oid = ix.indrelid
+	    and i.oid = ix.indexrelid
+	    and a.attrelid = t.oid
+	    and a.attnum = ANY(ix.indkey)
+	    and t.relkind = 'r'
+	    and lower(i.relname) = lower(indexname)
+	    and lower(t.relname) = lower(tablename)
+	    and lower(a.attname) = lower(columnname);
+
+
+	IF (existe = 0) THEN
+		EXECUTE 'CREATE INDEX ' || indexname || 
+			' ON ' || tablename || 
+			' (' || columnname || ') ' || 
+			whereclause;
+		RETURN 1;
+	END IF;
+
+	RETURN 0;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION addindexifnotexists(character varying, character varying, character varying, character varying)
+  OWNER TO libertya;
+
+--20171109-1344 La funcion con 3 argumentos llama a la completa
+CREATE OR REPLACE FUNCTION addindexifnotexists(
+    indexname character varying,
+    tablename character varying,
+    columnname character varying)
+  RETURNS numeric AS
+$BODY$
+BEGIN
+	RETURN addindexifnotexists(indexname, tablename, columnname, '');
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION addindexifnotexists(character varying, character varying, character varying)
+  OWNER TO libertya;
+
+--20171109-1344 Indice especial para gestion tarjetas
+update ad_system set dummy = (SELECT addindexifnotexists('payment_auditstatus','c_payment','auditstatus','WHERE auditstatus=''TV'''));
