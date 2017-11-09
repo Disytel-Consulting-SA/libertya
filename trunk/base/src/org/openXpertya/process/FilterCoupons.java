@@ -85,12 +85,7 @@ public class FilterCoupons extends SvrProcess {
 //		sql.append("	LEFT JOIN " + X_C_AllocationHdr.Table_Name + " ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id ");
 		sql.append("WHERE ");
 		// Filtro cupones que ya esten en una liquidación.
-		sql.append("	p.c_payment_id NOT IN ( ");
-		sql.append("		SELECT ");
-		sql.append("			c_payment_id ");
-		sql.append("		FROM ");
-		sql.append("			" + MCouponsSettlements.Table_Name + " ");
-		sql.append("	) ");
+		sql.append("	NOT EXISTS ( SELECT null FROM " + MCouponsSettlements.Table_Name + " where c_payment_id = p.c_payment_id) ");
 		// Filtro cupones cuyo pago esté conciliado.
 		sql.append("	AND p.isreconciled = 'N' ");
 		// Filtro sólo pagos con tarjeta.
