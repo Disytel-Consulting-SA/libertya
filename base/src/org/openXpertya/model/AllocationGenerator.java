@@ -1135,7 +1135,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).setScale(2, RoundingMode.HALF_EVEN).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 		
 		@Override
@@ -1190,7 +1190,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).setScale(2, RoundingMode.HALF_EVEN).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 		
 		@Override
@@ -1245,7 +1245,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
-			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).compareTo(BigDecimal.ZERO) >= 0 );
+			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).setScale(2, RoundingMode.HALF_EVEN).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 		
 		@Override
