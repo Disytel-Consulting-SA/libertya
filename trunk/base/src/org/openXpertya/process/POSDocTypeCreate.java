@@ -30,7 +30,7 @@ public class POSDocTypeCreate extends SvrProcess {
 	/** Log de la aplicación */ 
 	private static CLogger	log	= CLogger.getCLogger(POSDocTypeCreate.class);
 	/** Letras de comprobantes */
-	private static String[] letters = {"A", "B", "C"};
+	private static String[] letters = {"A", "B", "C", "E"};
 	/** Contexto de la aplicación */
 	private Properties ctx = new Properties(Env.getCtx());
 	/** Transacción que se utiliza para realizar las creaciones mediante interfaz estática
