@@ -754,7 +754,7 @@ public abstract class Doc {
 		if (!force)
 			sql.append(" AND (Processing='N' OR Processing IS NULL)");
 		if (!repost)
-			sql.append(" AND Posted='N'");
+			sql.append(" AND Posted<>'Y'");
 		if (DB.executeUpdate(sql.toString(), trxName) == 1)
 			log.info("Locked: " + get_TableName() + "_ID=" + get_ID());
 		else
@@ -1039,7 +1039,7 @@ public abstract class Doc {
         sql.append( p_TableName ).append( " SET Processing='Y' WHERE " ).append( p_TableName ).append( "_ID=" ).append( Record_ID ).append( " AND Processed='Y' AND IsActive='Y'" );
 
         if( !force ) {
-            sql.append( " AND (Processing='N' OR Processing IS NULL) AND Posted='N'" );
+            sql.append( " AND (Processing='N' OR Processing IS NULL) AND Posted<>'Y'" );
         }
 
         if( DB.executeUpdate( sql.toString(),trxName ) != 1 ) {
