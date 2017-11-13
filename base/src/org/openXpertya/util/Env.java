@@ -73,6 +73,10 @@ public final class Env {
     
     //Cache de imagenes para no leer siempre del disco
     private static CCache  s_cacheImg  = new CCache("imagenes",10,5);
+    
+    /** Formato de fechas: yyyy-MM-dd */
+    private static DateFormat dateFormat_yyyyMMdd = new SimpleDateFormat("yyyy-MM-dd");
+    
     /**
      * Descripción de Método
      *
@@ -1718,6 +1722,15 @@ public final class Env {
         DateFormat dateFormat = new SimpleDateFormat(format);
         Date date = new Date();
         return dateFormat.format(date);
+    }
+    
+    /**
+     * Retorna el formato yyyy-MM-dd para la fecha parámetro
+     * @param date
+     * @return
+     */
+    public static String getDateFormatted(Timestamp date) {
+        return dateFormat_yyyyMMdd.format(date);
     }
     
     
