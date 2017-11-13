@@ -4029,6 +4029,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				amt = MConversionRate.convert(getCtx(), amt,
 						getC_Currency_ID(), C_CurrencyTo_ID, getDateAcct(), 0,
 						getAD_Client_ID(), getAD_Org_ID());
+				// NO existe conversión entre la moneda original y la del proyecto
+				if(amt == null){
+					m_processMsg = Msg.getMsg(getCtx(), "NoCurrenciesConversion",
+							new Object[] { MCurrency.getISO_Code(getCtx(), getC_Currency_ID()),
+									MCurrency.getISO_Code(getCtx(), C_CurrencyTo_ID),
+									Env.getDateFormatted(getDateAcct()) });
+					return DocAction.STATUS_Invalid;
+				}
 			}
 
 			BigDecimal newAmt = project.getInvoicedAmt();
