@@ -138,7 +138,7 @@ public class AcctProcessor extends ServidorOXP {
             sql.append( " FROM " ).append( doc.getTableName());
             sql.append( " WHERE AD_Client_ID=?" );
             sql.append( " AND (0 = ? OR AD_Org_ID = ?) " );
-            sql.append( " AND Processed='Y' AND Posted='N' AND IsActive='Y'" );
+            sql.append( " AND Processed='Y' AND Posted<>'Y' AND IsActive='Y'" );
             sql.append( " ORDER BY Created" );
 
             //
