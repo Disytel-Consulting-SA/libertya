@@ -30,6 +30,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -260,6 +261,13 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
      */
 
     protected boolean beforeSave( boolean newRecord ) {
+    	
+    	// NO es posible guardar un extracto bancario para la org *
+    	if(Util.isEmpty(getAD_Org_ID(), true)){
+    		log.saveError("SaveError", Msg.getMsg(getCtx(), "InvalidOrg"));
+    		return false;
+    	}
+    	
         if( getBeginningBalance().compareTo( Env.ZERO ) == 0 ) {
             MBankAccount ba = MBankAccount.get( getCtx(),getC_BankAccount_ID());
 
