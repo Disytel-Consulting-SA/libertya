@@ -126,12 +126,8 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		baseImponible = estePago.subtract(getImporteNoImponible());
 		// Si la base imponible es menor que cero, entonces no hay retención que aplicar y
 		// se asigna la base imponible a cero.
-		baseImponible = (baseImponible.compareTo(Env.ZERO) < 0 ? Env.ZERO : getInvoicesTaxesAmount());
-		
-		// Se calcula el importe determinado.
-		// ID = BI * T / 100
-		importeDeterminado = baseImponible.multiply(getPorcentajeRetencion()).divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
-		
+		baseImponible = calculateImporteDeterminado(baseImponible, estePago);
+
 		// Se calcula el importe retenido.
 		importeRetenido = importeDeterminado;
 		
@@ -140,6 +136,15 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		setBaseImponible(baseImponible);
 
 		return importeRetenido;
+	}
+	
+	protected BigDecimal calculateImporteDeterminado(BigDecimal baseImponible, BigDecimal payNetAmt) {
+		if (baseImponible.compareTo(Env.ZERO) == 1) {
+			return getPayTotalAmount().subtract(payNetAmt)
+					.multiply(getPorcentajeRetencion())
+					.divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
+		} else
+			return Env.ZERO;
 	}
 	
 	public List<X_M_Retencion_Invoice> save(MAllocationHdr alloc, boolean save) throws Exception {
