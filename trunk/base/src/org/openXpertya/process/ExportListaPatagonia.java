@@ -173,7 +173,7 @@ public class ExportListaPatagonia extends ExportBankList {
 	@Override
 	protected void writeRow(ResultSet rs) throws Exception {
 		Integer payAmt = rs.getBigDecimal("payamt").abs().multiply(Env.ONEHUNDRED).intValue();
-		String documentno = rs.getString("documentno").replace(getOpPrefix(), "").replace(getOpSuffix(), "");
+		String documentno = rs.getString("documentno");
 		String invoices = "FACs:/" + rs.getString("invoices").replace("{", "").replace("}", "").replace(",", "/");
 		String cbu = Util.isEmpty(rs.getString("cbu"), true) ? "0" : rs.getString("cbu").trim();
 		String branch = Util.isEmpty(rs.getString("sucursal")) ? " " : rs.getString("sucursal");
