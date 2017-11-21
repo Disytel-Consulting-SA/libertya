@@ -271,7 +271,7 @@ public class BankBalancesReport extends SvrProcess {
 						p_DateOrder, tenderType,
 						rs.getString("Description"));
 				// Se calcula el saldo a partir de los datos de esta línea y el acumulado.
-				balance = balance.add(line.getCredit().subtract(line.getDebit()));
+				balance = balance.add(line.getDebit().subtract(line.getCredit()));
 				line.setBalance(balance);
 				if (!line.save()) 
 					log.warning("T_BankBalances line not saved");
@@ -302,7 +302,7 @@ public class BankBalancesReport extends SvrProcess {
 		if((dateFrom != null) && (p_DateOrder != null)){
 			// Obtengo el saldo inicial hasta la fecha_desde del reporte
 			StringBuffer sql = new StringBuffer();
-			sql.append(" SELECT C_BankAccount_ID, sum(credit) as credit, sum(debit) as debit, sum(credit-debit) as balance ");
+			sql.append(" SELECT C_BankAccount_ID, sum(credit) as credit, sum(debit) as debit, sum(debit-credit) as balance ");
 			sql.append(" FROM V_BankBalances as bb ");
 			sql.append(" WHERE ");
 			sql.append("       C_BankAccount_ID = ? AND ");
