@@ -477,6 +477,32 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 										: " AND c_invoice_id <> "
 												+ excludedInvoiceID), docTypeID);
 	}
+	
+	/**
+	 * Obtener la fecha de facturación del último comprobante emitido
+	 * electrónicamente
+	 * 
+	 * @param ctx
+	 * @param docTypeID
+	 * @param excludedInvoiceID
+	 * @param trxName
+	 * @return
+	 */
+	public static Timestamp getLastFEDateIssued(
+			Properties ctx, Integer docTypeID, Integer excludedInvoiceID,
+			String trxName) {
+		// La fecha del comprobante no puede ser mayor al último electrónico
+		String sql = "select max(i.dateinvoiced) "
+				+ "from c_invoice i "
+				+ "inner join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id "
+				+ "where i.c_doctypetarget_id = " + docTypeID
+				+ "			and dt.iselectronic = 'Y' "
+				+ "			and (i.docstatus in ('CO','CL') "
+				+ "				or (i.docstatus in ('VO','RE') and (i.cae is not null or length(trim(i.cae)) > 0))) "
+				+ (Util.isEmpty(excludedInvoiceID, true) ? "" : " AND i.c_invoice_id <> " + excludedInvoiceID);
+		
+		return DB.getSQLValueTimestamp( trxName,sql);
+	}
 
 	public void copyManualInvoiceTaxes(MInvoice from) throws Exception {
 		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from,
@@ -3320,6 +3346,24 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				&& !TimeUtil.isSameDay(getDateInvoiced(), getDateCAI())){
 			setProcessMsg("@InvoicedDateAfterCAIDate@");
 			return DocAction.STATUS_Invalid;
+		}
+		
+		// Si el tipo de doc es electrónico, las fechas de comprobante y
+		// contable no pueden diferir. 
+		if(dt.iselectronic()){
+			if(!TimeUtil.isSameDay(getDateAcct(), getDateInvoiced())){
+				setProcessMsg("@DateInvoicedDateAcctNE@");
+				return DocAction.STATUS_Invalid;
+			}
+			
+			// Controlar que la fecha de facturación sea mayor que la última emitida
+			Timestamp lastDateFE = getLastFEDateIssued(getCtx(), getC_DocTypeTarget_ID(), getID(), get_TrxName());
+			if (lastDateFE != null && lastDateFE.after(getDateInvoiced())
+					&& !TimeUtil.isSameDay(lastDateFE, getDateInvoiced())) {
+				setProcessMsg(
+						Msg.getMsg(getCtx(), "LastFEDateGreater", new Object[] { Env.getDateFormatted(lastDateFE) }));
+				return DocAction.STATUS_Invalid;
+			}
 		}
 		
 		return DocAction.STATUS_InProgress;
