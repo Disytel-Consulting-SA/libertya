@@ -497,8 +497,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				+ "inner join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id "
 				+ "where i.c_doctypetarget_id = " + docTypeID
 				+ "			and dt.iselectronic = 'Y' "
-				+ "			and (i.docstatus in ('CO','CL') "
-				+ "				or (i.docstatus in ('VO','RE') and (i.cae is not null or length(trim(i.cae)) > 0))) "
+				+ "			and i.docstatus in ('CO','CL','VO','RE') "
+				+ "			and i.cae is not null "
+				+ "			and length(trim(i.cae)) > 0 "
 				+ (Util.isEmpty(excludedInvoiceID, true) ? "" : " AND i.c_invoice_id <> " + excludedInvoiceID);
 		
 		return DB.getSQLValueTimestamp( trxName,sql);
@@ -3356,7 +3357,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return DocAction.STATUS_Invalid;
 			}
 			
-			// Controlar que la fecha de facturación sea mayor que la última emitida
+			// Controlar que la fecha de facturación sea mayor o igual que la última emitida
+			// Sino error
 			Timestamp lastDateFE = getLastFEDateIssued(getCtx(), getC_DocTypeTarget_ID(), getID(), get_TrxName());
 			if (lastDateFE != null && lastDateFE.after(getDateInvoiced())
 					&& !TimeUtil.isSameDay(lastDateFE, getDateInvoiced())) {
