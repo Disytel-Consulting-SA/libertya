@@ -1705,3 +1705,9 @@ ALTER FUNCTION addindexifnotexists(character varying, character varying, charact
 
 --20171109-1344 Indice especial para gestion tarjetas
 update ad_system set dummy = (SELECT addindexifnotexists('payment_auditstatus','c_payment','auditstatus','WHERE auditstatus=''TV'''));
+
+--20171125-1800 Habilitar número de cheque manual
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BankAccountDoc','allowmanualcheckno','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+update C_BankAccountDoc
+set allowmanualcheckno = 'Y';

@@ -142,7 +142,6 @@ public class VOrdenCobro extends VOrdenPago {
 	public VOrdenCobro() {
 		super();
 		setModel(new VOrdenCobroModel());
-		setActualizarNrosChequera(false);
 		setPaymentMediumItemListener(new PaymentMediumItemListener());
 	}
 

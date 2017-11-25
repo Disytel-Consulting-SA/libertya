@@ -123,7 +123,6 @@ public class WOrdenCobro extends WOrdenPago {
 	public WOrdenCobro() {
 		super();
 		setModel(new VOrdenCobroModel());
-		setActualizarNrosChequera(false);
 		setPaymentMediumItemListener(new PaymentMediumItemListener());
 	}
 

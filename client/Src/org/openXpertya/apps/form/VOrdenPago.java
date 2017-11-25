@@ -1659,37 +1659,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		mpc.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
 		mpc.setProject(getC_Project_ID() == null?0:getC_Project_ID());
 		
-		// Se actualiza la secuencia de nros de cheque de la chequera en caso de ser posible.
-		if (isActualizarNrosChequera()) {
-			String nroChequeStr = mpc.nroCheque.trim();
-			try {
-				int nroCheque = Integer.parseInt(nroChequeStr);
-				// El numero de cheque es numérico.
-				int C_BankAccountDoc_ID = mpc.chequera_ID;
-				// Se guarda el siguiente numero de cheque en la chequera.
-				X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(),C_BankAccountDoc_ID,null);
-				// Controlo que el número de cheque esté dentro del rango de numeración de inicio y fin
-				if (bankAccountDoc.getStartNo() > nroCheque
-						|| (bankAccountDoc.getEndNo() > 0 && bankAccountDoc.getEndNo() < nroCheque)) {
-					throw new Exception(getModel().getMsg("CheckNoOutOfRange",
-							new Object[] { bankAccountDoc.getStartNo(), bankAccountDoc.getEndNo(), nroCheque }));
-				}
-				// Se incrementa en 1 el numero de cheque;
-				nroCheque++;
-				bankAccountDoc.setCurrentNext(nroCheque);
-				if(!bankAccountDoc.save()){
-					throw new Exception(CLogger.retrieveErrorAsString());
-				}
-				bankAccountDoc = null;
-			} catch (NumberFormatException nfe) {
-				// El usuario modifico el numero de cheque agregandole caracteres que no son numericos.
-				// En este caso no se actualiza la secuencia de la chequera.
-			} catch (Exception e) {
-				// Para cualquier otro error, se propaga
-				throw e;
-			}
-		}
-		
 		return mpc;
     }
     
@@ -2211,8 +2180,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected VOrdenPagoModel m_model = new VOrdenPagoModel();
     protected Properties m_ctx = Env.getCtx();
     private String m_trxName = m_model.getTrxName();
-    
-    private boolean actualizarNrosChequera = true;
     
     private Map<String, KeyStroke> actionKeys;
     
@@ -3105,22 +3072,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(),C_BankAccountDoc_ID,null);
 			int nextNroCheque = bankAccountDoc.getCurrentNext();
 			txtChequeNroCheque.setText(String.valueOf(nextNroCheque));
-		} else
+			txtChequeNroCheque.setEditable(bankAccountDoc.isAllowManualCheckNo());
+		} else{
 			txtChequeNroCheque.setText("");
-	}
-
-	/**
-	 * @return the actualizarNrosChequera
-	 */
-	protected boolean isActualizarNrosChequera() {
-		return actualizarNrosChequera;
-	}
-
-	/**
-	 * @param actualizarNrosChequera the actualizarNrosChequera to set
-	 */
-	protected void setActualizarNrosChequera(boolean actualizarNrosChequera) {
-		this.actualizarNrosChequera = actualizarNrosChequera;
+			txtChequeNroCheque.setEditable(true);
+		}
 	}
 	
 	/**
