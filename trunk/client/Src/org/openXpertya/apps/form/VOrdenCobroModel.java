@@ -118,6 +118,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		getMsgMap().put("AdvancedPayment", "AdvancedCustomerPayment");
 		getMsgMap().put("Payment","CustomerPayment");
 		reciboDeCliente = new ReciboDeCliente(getCtx(),getTrxName());
+		setActualizarNrosChequera(false);
 	}
 
 	@Override

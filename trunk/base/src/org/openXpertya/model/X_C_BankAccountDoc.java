@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankAccountDoc
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-23 11:16:35.416 */
+ *  @version  - 2017-11-25 18:23:37.033 */
 public class X_C_BankAccountDoc extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_C_BankAccountDoc (Properties ctx, int C_BankAccountDoc_ID, String trxNa
 super (ctx, C_BankAccountDoc_ID, trxName);
 /** if (C_BankAccountDoc_ID == 0)
 {
+setAllowManualCheckNo (false);
 setC_BankAccountDoc_ID (0);
 setC_BankAccount_ID (0);
 setCurrentNext (0);
@@ -64,6 +65,22 @@ set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
 public String getAD_ComponentObjectUID() 
 {
 return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Allow Manual Check No */
+public void setAllowManualCheckNo (boolean AllowManualCheckNo)
+{
+set_Value ("AllowManualCheckNo", new Boolean(AllowManualCheckNo));
+}
+/** Get Allow Manual Check No */
+public boolean isAllowManualCheckNo() 
+{
+Object oo = get_Value("AllowManualCheckNo");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Bank Account Document.
 Checks, Transfers, etc. */
