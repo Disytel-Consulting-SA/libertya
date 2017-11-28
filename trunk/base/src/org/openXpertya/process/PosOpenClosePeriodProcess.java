@@ -76,7 +76,7 @@ public class PosOpenClosePeriodProcess extends SvrProcess {
 
         // Reset Cache
 
-        CacheMgt.get().reset( "C_PeriodControl",pc.getC_Posperiodcontrol_ID() );
+        CacheMgt.get().reset( "C_PeriodControl",pc.getC_PeriodControl_ID() );
         CacheMgt.get().reset( "C_PosPeriodControl",pc.getC_Posperiodcontrol_ID());
 
         if( !ok ) {

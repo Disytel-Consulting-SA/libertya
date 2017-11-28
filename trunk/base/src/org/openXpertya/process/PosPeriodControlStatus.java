@@ -91,7 +91,7 @@ public class PosPeriodControlStatus extends SvrProcess {
 			
 			// Reset Cache
 
-	        CacheMgt.get().reset( "C_PeriodControl",ppc.getC_Posperiodcontrol_ID() );
+	        CacheMgt.get().reset( "C_PeriodControl",ppc.getC_PeriodControl_ID() );
 	        CacheMgt.get().reset( "C_PosPeriodControl",ppc.getC_Posperiodcontrol_ID());
 		}
 
