@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Calendar
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:28.796 */
-public class X_C_Calendar extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-11-29 09:11:19.139 */
+public class X_C_Calendar extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Calendar (Properties ctx, int C_Calendar_ID, String trxName)
@@ -15,6 +16,7 @@ public X_C_Calendar (Properties ctx, int C_Calendar_ID, String trxName)
 super (ctx, C_Calendar_ID, trxName);
 /** if (C_Calendar_ID == 0)
 {
+setCacheEnabled (false);
 setC_Calendar_ID (0);
 setName (null);
 }
@@ -25,13 +27,13 @@ public X_C_Calendar (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=139 */
-public static final int Table_ID=139;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_Calendar");
 
 /** TableName=C_Calendar */
 public static final String Table_Name="C_Calendar";
 
-protected static KeyNamePair Model = new KeyNamePair(139,"C_Calendar");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_Calendar");
 protected static BigDecimal AccessLevel = new BigDecimal(2);
 
 /** Load Meta Data */
@@ -44,6 +46,24 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_Calendar[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Cache Enabled.
+Enable cache allows to access more quickly to the information but changes are available after reboot the application.  */
+public void setCacheEnabled (boolean CacheEnabled)
+{
+set_Value ("CacheEnabled", new Boolean(CacheEnabled));
+}
+/** Get Cache Enabled.
+Enable cache allows to access more quickly to the information but changes are available after reboot the application.  */
+public boolean isCacheEnabled() 
+{
+Object oo = get_Value("CacheEnabled");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Calendar.
 Accounting Calendar Name */
@@ -66,7 +86,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -84,7 +104,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }

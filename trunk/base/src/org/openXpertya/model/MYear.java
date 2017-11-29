@@ -30,6 +30,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.util.CCache;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.ITime;
@@ -46,6 +47,25 @@ import org.openXpertya.util.Msg;
 
 public class MYear extends X_C_Year implements ITime{
 
+	private static CCache s_cache = new CCache( "C_Year",10 );
+	
+	public static MYear get(Properties ctx, Integer yearID){
+		MYear retValue = ( MYear )s_cache.get( yearID );
+		MCalendar cal = MCalendar.getDefault(ctx);
+		
+        if( retValue != null && cal.isCacheEnabled()) {
+            return retValue;
+        }
+       
+        retValue = new MYear(ctx, yearID, null);
+        
+        if( retValue != null && cal.isCacheEnabled()) {
+            s_cache.put(yearID, retValue);
+        }
+        
+        return retValue;
+	}
+	
 	/**
 	 * @param ctx
 	 *            contexto
@@ -340,7 +360,8 @@ public class MYear extends X_C_Year implements ITime{
      * @return Lista de <code>MPeriod</code>
      */
     public List<MPeriod> getPeriods() {
-    	return getPeriods(false);
+    	MCalendar calendar = MCalendar.get(getCtx(), getC_Calendar_ID());
+    	return getPeriods(!calendar.isCacheEnabled());
     }
 
 	@Override

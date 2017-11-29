@@ -47,6 +47,12 @@ import org.openXpertya.util.TimeUtil;
 
 public class MPeriod extends X_C_Period implements ITime{
 
+	public static boolean isCacheEnabled(Properties ctx, Integer yearID){
+    	MYear year = MYear.get(ctx, yearID);
+        MCalendar calendar = MCalendar.get(ctx, year.getC_Calendar_ID());
+        return calendar.isCacheEnabled();
+    }
+	
     /**
      * Descripción de Método
      *
@@ -93,15 +99,16 @@ public class MPeriod extends X_C_Period implements ITime{
         }
 
         // Search in Cache first
-
-        Iterator it = s_cache.values().iterator();
-
-        while( it.hasNext()) {
-            MPeriod period = ( MPeriod )it.next();
-
-            if( period.isStandardPeriod() && period.isInPeriod( DateAcct )) {
-                return period;
-            }
+        MCalendar cal = MCalendar.getDefault(ctx);
+        if(cal.isCacheEnabled()){        
+	        Iterator it = s_cache.values().iterator();
+	        while( it.hasNext()) {
+	            MPeriod period = ( MPeriod )it.next();
+	
+	            if( period.isStandardPeriod() && period.isInPeriod( DateAcct )) {
+	                return period;
+	            }
+	        }
         }
 
         // Get it from DB
@@ -122,7 +129,9 @@ public class MPeriod extends X_C_Period implements ITime{
                 MPeriod period = new MPeriod( ctx,rs,null );
                 Integer key    = new Integer( period.getC_Period_ID());
 
-                s_cache.put( key,period );
+                if(cal.isCacheEnabled()){
+                	s_cache.put( key,period );
+                }
 
                 if( period.isStandardPeriod()) {
                     retValue = period;
@@ -441,7 +450,7 @@ public class MPeriod extends X_C_Period implements ITime{
             return null;
         }
 
-        getPeriodControls( false );
+        getPeriodControls( !isCacheEnabled(getCtx(), getC_Year_ID()) );
 
         for( int i = 0;i < m_controls.length;i++ ) {
 
@@ -733,9 +742,6 @@ public class MPeriod extends X_C_Period implements ITime{
 
     protected boolean afterSave( boolean newRecord,boolean success ) {
         if( newRecord ) {
-
-            // SELECT Value FROM AD_Ref_List WHERE AD_Reference_ID=183
-        	
         	createPeriodControls();
         }
 

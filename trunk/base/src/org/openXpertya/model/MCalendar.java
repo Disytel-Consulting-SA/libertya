@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Properties;
 
 import org.openXpertya.util.CCache;
+import org.openXpertya.util.CacheMgt;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
@@ -45,20 +46,7 @@ public class MCalendar extends X_C_Calendar {
      */
 
     public static MCalendar get( Properties ctx,int C_Calendar_ID ) {
-        Integer   key      = new Integer( C_Calendar_ID );
-        MCalendar retValue = ( MCalendar )s_cache.get( key );
-
-        if( retValue != null ) {
-            return retValue;
-        }
-
-        retValue = new MCalendar( ctx,C_Calendar_ID,null );
-
-        if( retValue.getID() != 0 ) {
-            s_cache.put( key,retValue );
-        }
-
-        return retValue;
+        return new MCalendar( ctx,C_Calendar_ID,null );
     }    // get
 
     /**
@@ -89,10 +77,6 @@ public class MCalendar extends X_C_Calendar {
     public static MCalendar getDefault( Properties ctx ) {
         return getDefault( ctx,Env.getAD_Client_ID( ctx ));
     }    // getDefault
-
-    /** Descripción de Campos */
-
-    private static CCache s_cache = new CCache( "C_Calendar",20 );
 
     /**
      * Constructor de la clase ...
@@ -157,6 +141,10 @@ public class MCalendar extends X_C_Calendar {
 
         return year;
     }    // createYear
+    
+    protected boolean afterSave(boolean newRecord, boolean success) {
+       return true;
+   }
 }    // MCalendar
 
 
