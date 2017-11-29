@@ -1714,3 +1714,6 @@ set allowmanualcheckno = 'Y';
 
 --20171129-0900 Habilitar cache en periodos y derivados
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Calendar','cacheenabled','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20171129-1245 Cláusula where en el procesador contable
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_AcctProcessor','whereclause','character varying(2000)'));

@@ -236,6 +236,15 @@ public class MAcctProcessor extends X_C_AcctProcessor implements ProcesadorOXP {
 	public void setClientOrg(int AD_Client_ID, int AD_Org_ID) {
 		super.setClientOrg(AD_Client_ID, AD_Org_ID);
 	} // setClientOrg
+	
+	@Override
+	protected boolean beforeSave(boolean newRecord) {
+		// Cláusula where sólo si hay una tabla configurada
+		if(Util.isEmpty(getAD_Table_ID(), true)){
+			setWhereClause(null);
+		}
+		return true;
+	}
     
 }    // MAcctProcessor
 
