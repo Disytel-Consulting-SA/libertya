@@ -1711,3 +1711,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_BankAccountDoc','al
 
 update C_BankAccountDoc
 set allowmanualcheckno = 'Y';
+
+--20171129-0900 Habilitar cache en periodos y derivados
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Calendar','cacheenabled','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
