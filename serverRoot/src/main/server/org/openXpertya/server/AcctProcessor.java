@@ -28,6 +28,7 @@ import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MClient;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.TimeUtil;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -139,6 +140,7 @@ public class AcctProcessor extends ServidorOXP {
             sql.append( " WHERE AD_Client_ID=?" );
             sql.append( " AND (0 = ? OR AD_Org_ID = ?) " );
             sql.append( " AND Processed='Y' AND Posted<>'Y' AND IsActive='Y'" );
+            sql.append(Util.isEmpty(m_model.getWhereClause(), true)?"":" AND "+m_model.getWhereClause());
             sql.append( " ORDER BY Created" );
 
             //

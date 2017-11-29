@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctProcessor
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-06-10 15:40:18.549 */
+ *  @version  - 2017-11-29 12:53:59.651 */
 public class X_C_AcctProcessor extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -179,8 +179,8 @@ public static final String FREQUENCYTYPE_Seconds = "S";
 Frequency of event */
 public void setFrequencyType (String FrequencyType)
 {
-if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D") || FrequencyType.equals("S"));
- else throw new IllegalArgumentException ("FrequencyType Invalid value - Reference = FREQUENCYTYPE_AD_Reference_ID - M - H - D - S");
+if (FrequencyType.equals("M") || FrequencyType.equals("H") || FrequencyType.equals("D") || FrequencyType.equals("S") || ( refContainsValue("CORE-AD_Reference-221", FrequencyType) ) );
+ else throw new IllegalArgumentException ("FrequencyType Invalid value: " + FrequencyType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-221") );
 if (FrequencyType == null) throw new IllegalArgumentException ("FrequencyType is mandatory");
 if (FrequencyType.length() > 1)
 {
@@ -261,5 +261,22 @@ public int getSupervisor_ID()
 Integer ii = (Integer)get_Value("Supervisor_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Sql WHERE.
+Fully qualified SQL WHERE clause */
+public void setWhereClause (String WhereClause)
+{
+if (WhereClause != null && WhereClause.length() > 2000)
+{
+log.warning("Length > 2000 - truncated");
+WhereClause = WhereClause.substring(0,2000);
+}
+set_Value ("WhereClause", WhereClause);
+}
+/** Get Sql WHERE.
+Fully qualified SQL WHERE clause */
+public String getWhereClause() 
+{
+return (String)get_Value("WhereClause");
 }
 }
