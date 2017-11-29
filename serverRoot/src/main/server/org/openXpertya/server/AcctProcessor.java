@@ -151,7 +151,7 @@ public class AcctProcessor extends ServidorOXP {
             PreparedStatement pstmt      = null;
 
             try {
-            	pstmt = DB.prepareStatement( sql.toString());
+            	pstmt = DB.prepareStatement( sql.toString(), null, true);
                 pstmt.setInt( 1,m_model.getAD_Client_ID());
                 pstmt.setInt( 2,m_model.getAD_Org_ID());
                 pstmt.setInt( 3,m_model.getAD_Org_ID());
