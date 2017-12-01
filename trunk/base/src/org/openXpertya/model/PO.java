@@ -3930,6 +3930,49 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	}
 
 	/**
+	 * Obtiene el primer registro de la tabla con nombre tableName que cumplen
+	 * con las condiciones dadas en la cláusula where parámetro. Esta cláusula
+	 * puede tener parámetros (notación ?) que luego serán cargados al Prepared
+	 * Statement. Estos parámetros (whereParams) que llevará el where deben
+	 * pasarse en el orden de aparición en la cláusula. Por ejemplo, el primer
+	 * parámetro dentro de la cláusula, debe ser el primer elemento dentro del
+	 * array de objetos whereParams, y así sucesivamente. <strong>NOTA:</strong>
+	 * No agregar WHERE a la cláusula parámetro, se agrega automáticamente.
+	 * 
+	 * @param ctx
+	 *            contexto utilizado para la creación del PO.
+	 * @param tableName
+	 *            nombre de la tabla utilizada.
+	 * @param whereClause
+	 *            cláusula where, en el caso de haber condiciones.
+	 * @param whereParams
+	 *            parámetros de la cláusula where, en el caso que hubiere.
+	 * @param orderByColumns
+	 *            nombre de las columnas por las cuales ordenar la búsqueda
+	 *            resultante.
+	 * @param noConvert
+	 *            no convierte el sql
+	 * @param trxName
+	 *            nombre de la transacción actual.
+	 * @return la primer tupla encontrada de la tabla y las condiciones
+	 *         indicadas como parámetro, null en caso de no existir resultados.
+	 *         versión 1.0
+	 */
+	public static PO findFirst(Properties ctx, String tableName,
+			String whereClause, Object[] whereParams, String[] orderByColumns,
+			String trxName, boolean noConvert) {
+		PO po = null;
+		// Busco los registros a partir de los datos parámetro
+		List<PO> findList = PO.find(ctx, tableName, whereClause, whereParams,
+				orderByColumns, trxName, noConvert);
+		// Si se encontraron registros, agarro el primero de ellos
+		if (findList.size() > 0) {
+			po = findList.get(0);
+		}
+		return po;
+	}
+	
+	/**
 	 * @return Returns the docActionStatusListeners.
 	 */
 	public List<DocActionStatusListener> getDocActionStatusListeners() {
