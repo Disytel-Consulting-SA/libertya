@@ -22,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -66,6 +67,11 @@ public class MCash extends X_C_Cash implements DocAction {
 	/** ID del libro de caja reverso */
 	private int reverseCashID = 0;
 	
+    /** Descripción de Campos */
+
+    private static CLogger s_log = CLogger.getCLogger( MCash.class );
+    
+    
     /**
      * Descripción de Método
      *
@@ -216,10 +222,51 @@ public class MCash extends X_C_Cash implements DocAction {
         return retValue;
     }    // get
 
-    /** Descripción de Campos */
-
-    private static CLogger s_log = CLogger.getCLogger( MCash.class );
+    /**
+	 * Obtiene un libro de caja sin procesar para la organización, configuración de libro de
+	 * caja y fecha parametro
+	 * 
+	 * @param ctx
+	 *            contexto actual
+	 * @param AD_Org_ID
+	 *            organización, recibir el valor 0 indica buscar para
+	 *            organización *. En el caso que no se desee filtrar por
+	 *            organización, el parámetro debe ser null.
+	 * @param C_CashBook_ID
+	 *            configuración del libro de caja
+	 * @param dateAcct
+	 *            fecha
+	 * @param trxName
+	 *            transacción actual
+	 * @return libro de caja con las condiciones dadas, si se encuentran más de
+	 *         uno, entonces se ordena por fecha de creación descendentemente y
+	 *         se queda con el primero.
+	 */
+    public static MCash get( Properties ctx, Integer AD_Org_ID, Integer C_CashBook_ID, Timestamp dateAcct,String trxName ) {
+    	String whereClause = "ad_client_id = ? and processed = 'N' ";
+    	List<Object> params = new ArrayList<Object>();
+    	params.add(Env.getAD_Client_ID(ctx));
+    	// Organización
+    	if(AD_Org_ID != null){
+    		whereClause += " AND AD_Org_ID = ? ";
+    		params.add(AD_Org_ID);
+    	}
+    	// Config de libro de caja
+    	if(!Util.isEmpty(C_CashBook_ID, true)){
+    		whereClause += " AND C_CashBook_ID = ? ";
+    		params.add(C_CashBook_ID);
+    	}
+    	// Fecha
+    	if(dateAcct != null){
+        	whereClause += " AND dateacct::date = ?::date ";
+        	params.add(dateAcct);
+    	}
+		return (MCash) PO.findFirst(ctx, Table_Name, whereClause, params.toArray(),
+				new String[] { "dateacct desc, created desc" }, trxName, true);
+    }
     
+    
+
 	/**
 	 * @param fromCashID
 	 * @param toCashID
