@@ -1138,7 +1138,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         // Can we delete posting
 
         if( !MPeriod.isOpen( getCtx(),getDateTrx(),MPeriodControl.DOCBASETYPE_PaymentAllocation )) {
-            throw new IllegalStateException( "@PeriodClosed@" );
+            setProcessMsg("@PeriodClosed@");
+            return false;
         }
 
         // No se puede anular una asignación si es parte de una lista de banco
@@ -1288,7 +1289,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         MAllocationLine[] lines = getLines(false);
         Set<Integer> cashLineIDs = new HashSet<Integer>();
         List<MCashLine> cashLines = new ArrayList<MCashLine>();
-
+        Map<Integer, MCash> reverseCashes = new HashMap<Integer, MCash>();
+        
         // Si el libro de caja al que pertenece la línea está procesado
         // no es posible anular.
         for (int i = 0; i < lines.length; i++ ) {
@@ -1306,12 +1308,40 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         		cashLine = new MCashLine(getCtx(), C_CashLine_ID, get_TrxName());
         		cashLines.add(cashLine);
         		String cashStatus = cashLine.getCash().getDocStatus();
-        		// No es posible anular líneas de caja cuyo libro se encuentre
-        		// procesado.
+        		
+				// Si el libro de caja esta procesado, entonces determino si hay
+				// un libro de caja con las mismas condiciones para la fecha
+				// actual. Las condiciones son:
+        		// Organización y Config de Libro de Caja 
         		if (STATUS_Completed.equals(cashStatus)
         				|| STATUS_Closed.equals(cashStatus)
-        				|| cashLine.getCash().isProcessed()) 
-        			throw new Exception("@CashProcessedError@");
+        				|| cashLine.getCash().isProcessed()){
+					// Primero verifico si ya encontré un libro de caja
+					// correspondiente a la caja de la línea actual
+					MCash reverseCash = reverseCashes.get(cashLine.getCash().getID());
+					// Si no, busco una para las condiciones necesarias
+					if(reverseCash == null){
+						reverseCash = MCash.get(getCtx(), cashLine.getCash().getAD_Org_ID(),
+							cashLine.getCash().getC_CashBook_ID(), Env.getDate(), get_TrxName());
+					}
+					// Si encontramos una, la asociamos como libro de caja para la anulación 
+					if(reverseCash != null){
+						cashLine.setReverseCashID(reverseCash.getID());
+						reverseCashes.put(cashLine.getCash().getID(), reverseCash);
+					}
+					// Si no encontramos ninguna, entonces error
+					else{
+						String msg = "@NoReverseCashForCashLine@: @Line@ # "+cashLine.getLine()+" ($ "
+						+ cashLine.getAmount() + "). @C_Cash_ID@ "+cashLine.getCash().getName()+"\n";
+						msg += "@ConditionsNeeded@ \n";
+						MOrg org = MOrg.get(getCtx(), cashLine.getAD_Org_ID());
+						msg += "- @AD_Org_ID@: "+org.getName()+"\n";
+						MCashBook cb = MCashBook.get(getCtx(), cashLine.getCash().getC_CashBook_ID());
+						msg += "- @C_CashBook_ID@: "+cb.getName()+"\n";
+						
+						throw new Exception(msg);
+					}
+        		}
         	}
         }
         
