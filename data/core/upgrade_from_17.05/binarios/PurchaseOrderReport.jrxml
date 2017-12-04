@@ -49,10 +49,9 @@ INNER JOIN (select ot.c_order_id, SUM(taxbaseamt) as taxbaseamt
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = o.c_bpartner_id)
 LEFT JOIN AD_User u ON (o.salesrep_id = u.ad_user_id)
 LEFT JOIN c_bpartner bpu ON (bpu.c_bpartner_id = u.c_bpartner_id)
-LEFT JOIN (select acd.c_order_id, acd.authorizationdate, bpus.name as bpname
+LEFT JOIN (select acd.c_order_id, acd.authorizationdate, us.name as bpname
 		from m_authorizationchaindocument acd
 		inner join ad_user us on (us.ad_user_id = acd.ad_user_id)
-		INNER JOIN c_bpartner bpus ON (bpus.c_bpartner_id = us.c_bpartner_id)
 		order by authorizationdate desc) as aut ON (aut.c_order_id =  o.c_order_id)
 INNER JOIN (select arl.name as nom, arlt.name as nomt, arl.value, arlt.ad_language from ad_ref_list arl
 		left join ad_ref_list_trl arlt on arlt.ad_ref_list_id = arl.ad_ref_list_id
