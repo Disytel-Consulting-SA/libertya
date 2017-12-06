@@ -54,7 +54,7 @@ public class CalloutCash extends CalloutEngine {
 	protected String getSql(){
 		return new String("select dateacct,endingbalance "+
 				"from c_cash "+
-				"where (isactive = 'Y') and (c_cashbook_id = ?) and (ad_org_id = ?) "+
+				"where (isactive = 'Y') and (c_cashbook_id = ?) and (ad_org_id = ?) and docstatus IN ('CO','CL') "+
 				"order by dateacct desc");
 	}
 	
