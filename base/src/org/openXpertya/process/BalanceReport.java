@@ -94,8 +94,6 @@ public class BalanceReport extends SvrProcess {
         isSOtrx = p_AccountType.equalsIgnoreCase("C")?"'Y'":"'N'";
      // Moneda de la compañía utilizada para conversión de montos de documentos.
         client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
-		setCurrentAccountQuery(
-				new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), null));
 	}
 
 	
@@ -107,109 +105,98 @@ public class BalanceReport extends SvrProcess {
 		// delete all rows in table with the given ad_pinstance_id
 		DB.executeUpdate("DELETE FROM T_BALANCEREPORT WHERE AD_PInstance_ID = " + getAD_PInstance_ID());
 
-		// calcular el estado de cuenta de cada E.C.
-		StringBuffer sqlDoc = new StringBuffer();
-		sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, coalesce(T.totalopenbalance,0.00) as actualbalance, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
-		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
-				.append(isSOtrx)
-				.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
-		sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
-				.append(isSOtrx);
-		if (!Util.isEmpty(p_AD_Org_ID, true)){
-			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
-		}
-		sqlDoc.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
-		sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id, " + getCurrentAccountQuery().getDateToInlineQuery() + "), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
-						"from c_invoice_v as i " +
-						"where i.duedate::date <= ?::date " +
-						"		and i.c_bpartner_id = T.c_bpartner_id " +
-						"		and i.docstatus not in ('DR','IN')");
-		if (!Util.isEmpty(p_AD_Org_ID, true)){
-			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
-		}
-		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
-		sqlDoc.append(") as duedebt, ");
-		sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
-						"from c_payment " +
-						"where duedate::date <= ?::date " +
-						"		and c_bpartner_id = T.c_bpartner_id " +
-						"		and docstatus not in ('DR','IN') " +
-						"		and tendertype = '"+MPayment.TENDERTYPE_Check+"'");
-		if (!Util.isEmpty(p_AD_Org_ID, true)){
-			sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
-		}
-		sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
-		sqlDoc.append(") as chequesencartera ");
-		sqlDoc.append(" FROM ");
-		if(!Util.isEmpty(valueFrom, true)){
-			sqlDoc.append(" (SELECT min(value) as minvalue " +
-						" FROM c_bpartner " +
-						" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
-						"		and (('"+valueFrom+"' is null OR length(trim('"+valueFrom+"'::character varying)) = 0) " +
-						"				OR (CASE WHEN position('%' in '"+valueFrom+"'::character varying) > 0	" +
-						"						THEN value ilike trim('"+valueFrom+"'::character varying) " +
-						"						ELSE upper(value) >= upper(trim('"+valueFrom+"'::character varying)) END))) min, ");
-		}
-		if(!Util.isEmpty(valueTo, true)){
-			sqlDoc.append(" (SELECT max(value) as maxvalue " +
-						" FROM c_bpartner " +
-						" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
-						"		AND (('"+valueTo+"' is null OR length(trim('"+valueTo+"'::character varying)) = 0) " +
-								"		OR (CASE WHEN position('%' in '"+valueTo+"'::character varying) > 0 " +
-								"				THEN value ilike trim('"+valueTo+"'::character varying) " +
-								"				ELSE upper(value) <= upper(trim('"+valueTo+"'::character varying)) END))) max, ");
-		}
-		sqlDoc.append(" ( ");
-		sqlDoc.append(" 	SELECT " ); 
-		sqlDoc.append(" 		d.c_bpartner_id, ");
-		sqlDoc.append(" 		bp.value, ");
-		sqlDoc.append(" 		bp.name, ");
-		sqlDoc.append(" 		bp.C_BP_Group_ID, ");
-		sqlDoc.append(" 		bp.so_description, "); 
-		sqlDoc.append(" 		bp.totalopenbalance, ");
-		sqlDoc.append(" 		d.debit, ");
-		sqlDoc.append(" 		d.credit ");
-		sqlDoc.append(" 	FROM ( ");
-		sqlDoc.append(getCurrentAccountQuery().getQuery());
-		sqlDoc.append(" 	) d ");
-		sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
-		sqlDoc.append(" 	WHERE bp.isactive = 'Y' ");
-		if(p_C_BP_Group_ID > 0){
-			sqlDoc.append(" AND bp.C_BP_Group_ID = ").append(p_C_BP_Group_ID);
-		}
-		if ("OO".equals(p_Scope))		// filtrar E.C.: solo las que adeudan, o listar todas
-		{
-			sqlDoc.append(" AND bp.C_BPartner_ID IN (");
-			sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
-			sqlDoc.append(
-					" 	WHERE invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0 AND issotrx = ")
-					.append(isSOtrx).append(" AND AD_Client_ID = ")
-					.append(getAD_Client_ID()).append(")");
-		}
-		sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
-				: " AND bp.isvendor = 'Y' ");
-		sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
-		sqlDoc.append(" ) AS T ");
-		sqlDoc.append(" WHERE (1=1) ");
-		if(!Util.isEmpty(valueFrom, true)){
-			sqlDoc.append(" AND T.value >= minvalue ");
-		}
-		if(!Util.isEmpty(valueTo, true)){
-			sqlDoc.append(" AND T.value <= maxvalue ");
-		}
-		sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description, T.totalopenbalance ");
-		sqlDoc.append(" ORDER BY ");
-		if ("BP".equals(p_Sort_Criteria))
-			sqlDoc.append("T.name");
-		if ("BL".equals(p_Sort_Criteria))
-			sqlDoc.append("balance");		
-		if ("OI".equals(p_Sort_Criteria))
-			sqlDoc.append("fecha_fact_antigua");		
+		// Obtener las ECs a incluir en el informe
+		PreparedStatement pstmtBP = DB.prepareStatement(getBPQuery());
+		ResultSet rsBP = pstmtBP.executeQuery();
 		
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
+		StringBuffer usql = new StringBuffer();
+		int subindice=0;
+		while (rsBP.next()) {
+			// Solo BPartner actual
+			setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), rsBP.getInt("c_bpartner_id")));
 		
-		try{
+			// calcular el estado de cuenta de cada E.C.
+			StringBuffer sqlDoc = new StringBuffer();
+			sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, coalesce(T.totalopenbalance,0.00) as actualbalance, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
+			sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
+					.append(isSOtrx)
+					.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
+			sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
+					.append(isSOtrx);
+			if (!Util.isEmpty(p_AD_Org_ID, true)){
+				sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
+			}
+			sqlDoc.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
+			sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id, " + getCurrentAccountQuery().getDateToInlineQuery() + "), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
+							"from c_invoice_v as i " +
+							"where i.duedate::date <= ?::date " +
+							"		and i.c_bpartner_id = T.c_bpartner_id " +
+							"		and i.docstatus not in ('DR','IN')");
+			if (!Util.isEmpty(p_AD_Org_ID, true)){
+				sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
+			}
+			sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
+			sqlDoc.append(") as duedebt, ");
+			sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
+							"from c_payment " +
+							"where duedate::date <= ?::date " +
+							"		and c_bpartner_id = T.c_bpartner_id " +
+							"		and docstatus not in ('DR','IN') " +
+							"		and tendertype = '"+MPayment.TENDERTYPE_Check+"'");
+			if (!Util.isEmpty(p_AD_Org_ID, true)){
+				sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
+			}
+			sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
+			sqlDoc.append(") as chequesencartera ");
+			sqlDoc.append(" FROM ");
+			if(!Util.isEmpty(valueFrom, true)){
+				sqlDoc.append(" (SELECT min(value) as minvalue " +
+							" FROM c_bpartner " +
+							" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
+							"		and (('"+valueFrom+"' is null OR length(trim('"+valueFrom+"'::character varying)) = 0) " +
+							"				OR (CASE WHEN position('%' in '"+valueFrom+"'::character varying) > 0	" +
+							"						THEN value ilike trim('"+valueFrom+"'::character varying) " +
+							"						ELSE upper(value) >= upper(trim('"+valueFrom+"'::character varying)) END))) min, ");
+			}
+			if(!Util.isEmpty(valueTo, true)){
+				sqlDoc.append(" (SELECT max(value) as maxvalue " +
+							" FROM c_bpartner " +
+							" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
+							"		AND (('"+valueTo+"' is null OR length(trim('"+valueTo+"'::character varying)) = 0) " +
+									"		OR (CASE WHEN position('%' in '"+valueTo+"'::character varying) > 0 " +
+									"				THEN value ilike trim('"+valueTo+"'::character varying) " +
+									"				ELSE upper(value) <= upper(trim('"+valueTo+"'::character varying)) END))) max, ");
+			}
+			sqlDoc.append(" ( ");
+			sqlDoc.append(" 	SELECT " ); 
+			sqlDoc.append(" 		d.c_bpartner_id, ");
+			sqlDoc.append(" 		bp.value, ");
+			sqlDoc.append(" 		bp.name, ");
+			sqlDoc.append(" 		bp.C_BP_Group_ID, ");
+			sqlDoc.append(" 		bp.so_description, "); 
+			sqlDoc.append(" 		bp.totalopenbalance, ");
+			sqlDoc.append(" 		d.debit, ");
+			sqlDoc.append(" 		d.credit ");
+			sqlDoc.append(" 	FROM ( ");
+			sqlDoc.append(getCurrentAccountQuery().getQuery());
+			sqlDoc.append(" 	) d ");
+			sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
+			sqlDoc.append(" 	WHERE bp.c_bpartner_id = " + rsBP.getInt("c_bpartner_id"));
+			sqlDoc.append(onlyCurentAccounts?" AND bp.socreditstatus <> 'X' ":"");
+			sqlDoc.append(" ) AS T ");
+			sqlDoc.append(" WHERE (1=1) ");
+			if(!Util.isEmpty(valueFrom, true)){
+				sqlDoc.append(" AND T.value >= minvalue ");
+			}
+			if(!Util.isEmpty(valueTo, true)){
+				sqlDoc.append(" AND T.value <= maxvalue ");
+			}
+			sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description, T.totalopenbalance ");
+			
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			
+	
 			// ejecutar la consulta y cargar la tabla temporal
 			pstmt = DB.prepareStatement(sqlDoc.toString(), get_TrxName(), true);
 			int i = 1;
@@ -225,11 +212,10 @@ public class BalanceReport extends SvrProcess {
 			pstmt.setInt(i++, getAD_Client_ID());
 			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
 			// Parámetros para el filtro de fechas
+			i = pstmtSetParam(i, rsBP.getInt("c_bpartner_id"), pstmt);
 			i = pstmtSetParam(i, p_DateTrx_To, pstmt);
-
+	
 			rs = pstmt.executeQuery();
-			int subindice=0;
-			StringBuffer usql = new StringBuffer();
 			while (rs.next())
 			{
 				subindice++;
@@ -280,29 +266,46 @@ public class BalanceReport extends SvrProcess {
 				usql.append("'"+getCondition()+"'");
 				usql.append(" ); ");
 			}
-			
-			// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
-			if (subindice > 0){
-				int no = DB.executeUpdate(usql.toString(), get_TrxName());
-				if(no == 0){
-					throw new Exception("Error insertando datos en la tabla temporal");
-				}
+		}
+		
+		// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
+		if (subindice > 0){
+			int no = DB.executeUpdate(usql.toString(), get_TrxName());
+			if(no == 0){
+				throw new Exception("Error insertando datos en la tabla temporal");
 			}
-		} catch(Exception e){
-			throw e;
-		} finally {
-			try {
-				if(pstmt != null) pstmt.close();
-				if(rs != null) rs.close();
-			} catch (Exception e2) {
-				throw e2;
+
+			// Requiere un ordenamiento distinto al name de la EC? De ser asi se debe reorganizar la informacion almacenada en T_CuentaCorriente para el ad_pinstance en cuestion
+			// La manera mas directa es realizar un INSERT SELECT, pero reasignando el subindice (columna por la cual el informe realiza el ordenamiento a visualiar) 
+			if (!"BP".equals(p_Sort_Criteria)) {
+
+				// maximo numero de registro para esta ejecucion 
+				int maxSubIndice = DB.getSQLValue(get_TrxName(), "SELECT max(subindice) FROM t_balancereport WHERE AD_PInstance_ID = " + getAD_PInstance_ID());
+				
+				// Reinsertar, pero ordenando segun el criterio que corresponda, a partir de maxSubIndice+1.  Ordenar por el balance,  bien por fecha mas antigua... y sino queda como estaba
+				DB.executeUpdate(
+					" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition) " + 
+					" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition " +
+					" 	from t_balancereport " +
+					"	where ad_pinstance_id = " + getAD_PInstance_ID() +
+					"	order by " + getOrderBy() +
+					" ) ",
+					get_TrxName());
+
+				// Eliminar las entradas "viejas" no ordenadas, con subindice entre 1 y maxSubIndece 
+				DB.executeUpdate("DELETE FROM t_balancereport WHERE AD_PInstance_ID = " + getAD_PInstance_ID() + " AND subindice <= " + maxSubIndice, get_TrxName());
 			}
-		}		
+
+		}
 		
 		return "";
 		
 	}
 
+	protected String getOrderBy() {
+		return ("BL".equals(p_Sort_Criteria) ? "balance" : ("OI".equals(p_Sort_Criteria) ? "date_oldest_open_invoice" : "subindice"));
+	}
+	
 	public String getCondition() {
 		return condition;
 	}
@@ -333,4 +336,45 @@ public class BalanceReport extends SvrProcess {
 			pstmt.setObject(i++, value);
 		return i;
 	}
+	
+	/** Query para recuperar las ECs */
+	protected String getBPQuery() {
+		StringBuffer bpQuery = new StringBuffer();
+		bpQuery	.append(" SELECT C_BPartner_ID ")
+				.append(" FROM C_BPartner ")
+				.append(" WHERE AD_Client_ID = " + getAD_Client_ID())
+				.append(" AND isActive = 'Y' ")
+				.append(getBPGroupQuery())
+				.append(getAccountTypeQuery())
+				.append(getScopeQuery())
+				.append(" ORDER BY name ");
+		// TODO: deberia filtrar por valueFrom y valueTo tambien, a fin de reducir los tiempos de respuesta
+		return bpQuery.toString();
+	}
+	
+	/** Filtro de query para recuperar las ECs */
+	protected String getBPGroupQuery() {
+		return p_C_BP_Group_ID > 0 ? " AND c_bp_group_id = " + p_C_BP_Group_ID : "";
+	}
+	
+	/** Filtro de query para recuperar las ECs */
+	protected String getAccountTypeQuery() {
+		return p_AccountType.equalsIgnoreCase("C") ? " AND iscustomer = 'Y'" : " AND isvendor = 'Y' ";
+	}
+	
+	/** Filtro de query para recuperar las ECs */
+	protected String getScopeQuery() {
+		StringBuffer sqlDoc = new StringBuffer();
+		if ("OO".equals(p_Scope)) {
+			sqlDoc.append(" AND C_BPartner_ID IN (");
+			sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
+			sqlDoc.append(" 	WHERE invoiceopen(c_invoice_id, 0, " + " ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") + ")::timestamp(6) without time zone " + ") > 0 AND issotrx = ")
+					.append(isSOtrx).append(" AND AD_Client_ID = ")
+					.append(getAD_Client_ID()).append(")");
+		}
+		return sqlDoc.toString();
+	}
+	
+
+	
 }
