@@ -96,27 +96,27 @@ public abstract class ExportBankList extends ExportProcess {
 		// Separador de líneas
 		writeRowSeparator();
 		// Exportar las líneas del archivo y actualizar los payments
-			// Ejecutar la query
-			PreparedStatement ps = DB.prepareStatement(getQuery(), get_TrxName(), true);
-			// Agregar los parámetros
-			setWhereClauseParams(ps);
-			ResultSet rs = ps.executeQuery();
-			// Iterar por los resultados
-			while(rs.next()){
-				//Si la fecha del payment es anterior a la del vencimiento (hoy + 1), actualizo el payment
-				Calendar duedate = Calendar.getInstance();
-				duedate.setTime(rs.getTimestamp("duedate"));
-				if (rs.getTimestamp("duedate").compareTo(rs.getTimestamp("paymentduedate")) > 0 ||
-						getNextWorkingDay(rs.getTimestamp("duedate")).compareTo(duedate) > 0) {
-					MPayment payment = new MPayment(getCtx(), rs.getInt("c_payment_id"), get_TrxName());
-					payment.setDueDate(new Timestamp(getNextWorkingDay(rs.getTimestamp("duedate")).getTimeInMillis()));
-					if (!payment.save()) {
-						throw new Exception(CLogger.retrieveErrorAsString());
-					}
+		// Ejecutar la query
+		PreparedStatement ps = DB.prepareStatement(getQuery(), get_TrxName(), true);
+		// Agregar los parámetros
+		setWhereClauseParams(ps);
+		ResultSet rs = ps.executeQuery();
+		// Iterar por los resultados
+		while(rs.next()){
+			//Si la fecha del payment es anterior a la del vencimiento (hoy + 1), actualizo el payment
+			Calendar duedate = Calendar.getInstance();
+			duedate.setTime(rs.getTimestamp("duedate"));
+			if (rs.getTimestamp("duedate").compareTo(rs.getTimestamp("paymentduedate")) > 0 ||
+					getNextWorkingDay(rs.getTimestamp("duedate")).compareTo(duedate) > 0) {
+				MPayment payment = new MPayment(getCtx(), rs.getInt("c_payment_id"), get_TrxName());
+				payment.setDueDate(new Timestamp(getNextWorkingDay(rs.getTimestamp("duedate")).getTimeInMillis()));
+				if (!payment.save()) {
+					throw new Exception(CLogger.retrieveErrorAsString());
 				}
-				// Escribe al línea en el archivo
-				writeLine(rs);
 			}
+			// Escribe al línea en el archivo
+			writeLine(rs);
+		}
 		// Exportar líneas totalizadoras
 		write(getFileFooter());
 	}

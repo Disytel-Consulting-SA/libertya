@@ -237,6 +237,16 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 	 * @param length longitud de la cadena resultante.
 	 * @return Cadena de caracteres conformada por ceros y el dato ingresado, al final.
 	 */
+	private String zeroFill(String data, int length, String alignment) {
+		return fillField(data, "0", alignment, length, null);
+	}
+	
+	/**
+	 * Devuelve una secuencia de caracteres conformada por un dato con ceros delante.
+	 * @param data dato al final de la cadena.
+	 * @param length longitud de la cadena resultante.
+	 * @return Cadena de caracteres conformada por ceros y el dato ingresado, al final.
+	 */
 	private String zeroFill(int data, int length) {
 		return fillField(String.valueOf(data), "0", MExpFormatRow.ALIGNMENT_Right, length, null);
 	}
@@ -372,7 +382,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 		head.append("H1"); // Registro ID.
 		head.append(whiteSpace(25)); // Nro. de Beneficiario del pago.
-		head.append(zeroFill(documentno, 25)); // Referencia de la orden de pago.
+		head.append(zeroFill(documentno, 25, MExpFormatRow.ALIGNMENT_Left)); // Referencia de la orden de pago.
 		head.append(zeroFill(String.valueOf(lineSecNo), 5)); // Nro de comprobante dentro del archivo.
 		head.append(zeroFill(getRentencionCode(retentionType, provincia), 3)); // Tipo de certificado de retención o comprobante adjunto.
 		head.append("S"); // Incluir firma al documento.
