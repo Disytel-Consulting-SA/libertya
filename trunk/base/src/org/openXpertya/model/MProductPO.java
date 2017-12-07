@@ -339,7 +339,7 @@ public class MProductPO extends X_M_Product_PO {
         	String newRecordWhereClause = newRecord?"":" AND m_product_id <> "+getM_Product_ID();
 			int productID = DB.getSQLValue(get_TrxName(),
 					"SELECT m_product_id FROM " + get_TableName()
-							+ " WHERE c_bpartner_id = ? and trim(vendorproductno) = trim('" + getVendorProductNo()
+							+ " WHERE c_bpartner_id = ? and isactive = 'Y' and trim(vendorproductno) = trim('" + getVendorProductNo()
 							+ "') " + newRecordWhereClause,
 					getC_BPartner_ID());
 			if(productID > 0){
@@ -361,7 +361,7 @@ public class MProductPO extends X_M_Product_PO {
         	String newRecordWhereClause = newRecord?"":" AND m_product_id <> "+getM_Product_ID();
 			int productID = DB.getSQLValue(get_TrxName(),
 					"SELECT m_product_id FROM " + get_TableName()
-							+ " WHERE ad_client_id = ? and trim(upc) = trim('" + getUPC()
+							+ " WHERE ad_client_id = ? and isactive = 'Y' and trim(upc) = trim('" + getUPC()
 							+ "') " + newRecordWhereClause, 
 							getAD_Client_ID());
 			if(productID > 0){
