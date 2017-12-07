@@ -174,16 +174,16 @@ public class ExportListaPatagonia extends ExportBankList {
 	protected void writeRow(ResultSet rs) throws Exception {
 		Integer payAmt = rs.getBigDecimal("payamt").abs().multiply(Env.ONEHUNDRED).intValue();
 		String documentno = rs.getString("documentno");
-		String invoices = "FACs:/" + rs.getString("invoices").replace("{", "").replace("}", "").replace(",", "/");
+		String invoices = "FACs/" + rs.getString("invoices").replace("{", "").replace("}", "").replace(",", "/").replace("\"", "");
 		String cbu = Util.isEmpty(rs.getString("cbu"), true) ? "0" : rs.getString("cbu").trim();
 		String branch = Util.isEmpty(rs.getString("sucursal")) ? " " : rs.getString("sucursal");
 		
 		// Registro ID
 		StringBuffer row = new StringBuffer("PO");
 		// Referencia del cliente
-		row.append(fillField(documentno, " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		row.append(fillField(documentno, " ", MExpFormatRow.ALIGNMENT_Left, 25, null));
 		// Motivo del pago
-		row.append(fillField(invoices, " ", MExpFormatRow.ALIGNMENT_Right, 105, null));
+		row.append(fillField(invoices, " ", MExpFormatRow.ALIGNMENT_Left, 105, null));
 		// Fecha de ejecución de la orden
 		row.append(dateFormat_yyyyMMdd.format(rs.getTimestamp("dateemissioncheck")));
 		// Tipo de pago o medio de ejecución para concretarlo
@@ -251,7 +251,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		// CBU de la cuenta del adherente a ser debitada
 		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 22, null));
 		// Sistema de la cta. a debitar
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 2, null));
+		row.append("CC");
 		// Moneda de la cuenta a debitar. (Codigo ISO de la divisa)
 		row.append(rs.getString("iso_code"));
 		// Espacio en blanco.
