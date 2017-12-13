@@ -50,8 +50,15 @@ Ejemplos de cambios
 		<!-- ================================ -->
 		<!-- Nomina de cambios a continuación -->
 		<!-- ================================ -->
-	
-	
+		
+    	<!-- 20171213 - Ampliacion de los parametros de la heap --> 
+    	<copy file="${SOURCE_DIR}/repClient.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+    	
+    	<!-- 20171213 - Nuevas funcionalidades para saber el detalle de registros pendientes -->
+    	<copy file="${SOURCE_DIR}/showPendingRecordsDetailName.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/showPendingRecordsDetailCount.sh" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+    	
+    	
 		
     </target>
     
