@@ -21,8 +21,11 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.Properties;
 
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -338,6 +341,35 @@ public class MJournalLine extends X_GL_JournalLine {
             setLine( ii );
         }
         
+        if (Util.isEmpty(getC_ValidCombination_ID(), true) && Util.isEmpty(getC_ElementValue_ID(), true)) {
+        	log.saveError("SaveError", Msg.getMsg(getCtx(), "NoElementValue"));
+        	return false;
+        }
+        
+        // Si no tenemos valid combination, pero si elemento contable, creamos
+ 		// un nuevo valid combination nuevo y lo asignamos a la línea
+		if (Util.isEmpty(getC_ValidCombination_ID(), true) && !Util.isEmpty(getC_ElementValue_ID(), true)) {
+			MAcctSchema[] as = MAcctSchema.getClientAcctSchema(getCtx(), getAD_Client_ID());
+			if(as == null || as.length <= 0){
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "NotAcctSchema"));
+				return false;
+			}
+			int acctSchemaID = as[0].getC_AcctSchema_ID();
+			MAccount accountvc = MAccount.get(getCtx(), getAD_Client_ID(), 0,
+					acctSchemaID, getC_ElementValue_ID(), 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0);
+			if(accountvc == null){
+				accountvc = MAccount.get( getCtx(), 0, get_TrxName() );
+				accountvc.setAD_Org_ID(0);
+				accountvc.setAccount_ID(getC_ElementValue_ID());
+				if(!accountvc.save()){
+					log.saveError("SaveError", CLogger.retrieveErrorAsString());
+					return false;
+				}
+			}
+			setC_ValidCombination_ID(accountvc.getC_ValidCombination_ID());
+ 		}
+        
         return true;
     }    // beforeSave
 
@@ -423,9 +455,9 @@ public class MJournalLine extends X_GL_JournalLine {
         }
     	// end DMA - Dataware - BugNo: 242
 
-        no = DB.executeUpdate( sql,get_TrxName());
+        int noBatch = DB.executeUpdate( sql,get_TrxName());
 
-        if( no != 1 ) {
+        if( noBatch != 1 ) {
             log.warning( "afterSave - Update Batch #" + no );
         }
 

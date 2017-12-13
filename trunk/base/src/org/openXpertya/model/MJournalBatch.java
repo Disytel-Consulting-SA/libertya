@@ -321,7 +321,7 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 
             if( toJournal.save()) {
                 count++;
-                lineCount += toJournal.copyLinesFrom( fromJournals[ i ],getDateAcct(),'x' );
+                lineCount += toJournal.copyLinesFrom(fromJournals[ i ], getDateAcct(), "X");
             }
         }
 
@@ -691,6 +691,9 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 			}
 		}
 		
+		setProcessed(true);
+		setDocAction(DOCACTION_None);
+		
 		return true;
     }    // voidIt
 
@@ -758,6 +761,7 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 			m_processMsg = e.getMessage();
 			result = false;
 		}
+        setDocAction(DOCACTION_None);
         return result;
     }    // reverseCorrectionIt
 
@@ -777,6 +781,7 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 			m_processMsg = e.getMessage();
 			result = false;
 		}
+        setDocAction(DOCACTION_None);
         return result;
     }    // reverseAccrualIt
 
@@ -830,6 +835,8 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
         	throw new Exception(CLogger.retrieveErrorAsString());
         }
 
+        resultDocStatus = Util.isEmpty(resultDocStatus, true) ? DOCSTATUS_Reversed : resultDocStatus;
+        
         // Reverse Journals
 
         for( int i = 0;i < journals.length;i++ ) {
@@ -840,16 +847,20 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
             }
 
             if(REVERSEACCRUALIT_REVERSEACTION.equals(reverseAction)){
-            	if( journal.reverseAccrualIt( reverse.getGL_JournalBatch_ID()) == null ) {
+				if (journal.reverseAccrualIt(reverse.getGL_JournalBatch_ID(),
+						completeReverse ? resultDocStatus : null, false) == null) {
             		throw new Exception("Could not reverse " + journal);
                 }
             }
             else{
-                if( journal.reverseCorrectIt( reverse.getGL_JournalBatch_ID()) == null ) {
+				if (journal.reverseCorrectIt(reverse.getGL_JournalBatch_ID(),
+						completeReverse ? resultDocStatus : null, false) == null) {
                 	throw new Exception("Could not reverse " + journal);
                 }
             }
             
+			journal.setDocStatus(resultDocStatus);
+            journal.setDocAction(DOCACTION_None);
             if(!journal.save()){
             	throw new Exception(CLogger.retrieveErrorAsString());
             }
@@ -862,8 +873,9 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 	        if(!DocumentEngine.processAndSave(reverse, DOCACTION_Complete, false)){
 	        	throw new Exception(reverse.getProcessMsg());
 	        }
-	
-			reverse.setDocStatus(Util.isEmpty(resultDocStatus, true) ? DOCSTATUS_Reversed : resultDocStatus);
+	        
+			reverse.setDocStatus(resultDocStatus);
+			updateJournalsStatus(reverse.getID(), resultDocStatus);
 	        reverse.setDocAction(DOCACTION_None);
 	        if(!reverse.save()){
 	        	throw new Exception(CLogger.retrieveErrorAsString());
@@ -962,6 +974,15 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
     public BigDecimal getApprovalAmt() {
         return getTotalDr();
     }    // getApprovalAmt
+    
+    /**
+     * Actualización del estado de los diarios
+     * @param docStatus
+     */
+    protected void updateJournalsStatus(Integer journalBatchID, String docStatus){
+		DB.executeUpdate(" UPDATE " + X_GL_Journal.Table_Name + " SET docstatus = '" + docStatus
+				+ "' WHERE GL_JournalBatch_ID = "+journalBatchID, get_TrxName());
+    }
 }    // MJournalBatch
 
 

@@ -1936,3 +1936,6 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
   OWNER TO libertya;
+  
+--20171213-1535 Carga de diarios manuales
+update ad_system set dummy = (SELECT addcolumnifnotexists('GL_Journal','CopyFrom','character(1)'));
