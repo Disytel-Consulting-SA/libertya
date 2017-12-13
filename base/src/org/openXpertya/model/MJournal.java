@@ -21,7 +21,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -31,6 +34,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -42,6 +46,9 @@ import org.openXpertya.util.Msg;
 
 public class MJournal extends X_GL_Journal implements DocAction {
 
+	private static final String REVERSECORRECTIT_REVERSEACTION = "reverseAccrualIt";
+	private static final String REVERSEACCRUALIT_REVERSEACTION = "reverseCorrectIt";
+	
     /**
      * Constructor de la clase ...
      *
@@ -66,8 +73,8 @@ public class MJournal extends X_GL_Journal implements DocAction {
 
             // setC_ConversionType_ID(0);
 
-            setDateAcct( new Timestamp( System.currentTimeMillis()));
-            setDateDoc( new Timestamp( System.currentTimeMillis()));
+            setDateAcct(Env.getTimestamp());
+            setDateDoc(Env.getTimestamp());
 
             // setDescription (null);
 
@@ -256,7 +263,7 @@ public class MJournal extends X_GL_Journal implements DocAction {
      * @return
      */
 
-    public int copyLinesFrom( MJournal fromJournal,Timestamp dateAcct,char typeCR ) {
+    public int copyLinesFrom(MJournal fromJournal, Timestamp dateAcct, String typeCR) {
         if( isProcessed() || (fromJournal == null) ) {
             return 0;
         }
@@ -277,16 +284,10 @@ public class MJournal extends X_GL_Journal implements DocAction {
             }
 
             // Amounts
-
-            /*if( typeCR == 'C' )    // correct
-            {
-                toLine.setAmtSourceDr( fromLines[ i ].getAmtSourceDr().negate());
-                toLine.setAmtSourceCr( fromLines[ i ].getAmtSourceCr().negate());
-            } else if( typeCR == 'R' )    // reverse
-            {*/
+			if (typeCR.equals(REVERSEACCRUALIT_REVERSEACTION) || typeCR.equals(REVERSECORRECTIT_REVERSEACTION)) {
                 toLine.setAmtSourceDr( fromLines[ i ].getAmtSourceCr());
                 toLine.setAmtSourceCr( fromLines[ i ].getAmtSourceDr());
-            //}
+            }
 
             toLine.setIsGenerated( true );
             toLine.setProcessed( false );
@@ -371,29 +372,34 @@ public class MJournal extends X_GL_Journal implements DocAction {
      */
 
     private boolean updateBatch() {
-    	// begin DMA - Dataware - BugNo: 242
-    	String sql;
-    	
-    	if(DB.isPostgreSQL()) {
-    		sql = "UPDATE GL_JournalBatch " +
-    			  "SET TotalDr=(SELECT COALESCE(SUM(j.TotalDr),0) FROM GL_Journal j WHERE j.IsActive='Y' AND GL_JournalBatch.GL_JournalBatch_ID=j.GL_JournalBatch_ID), " +
-    			  "    TotalCr=(SELECT COALESCE(SUM(j.TotalCr),0) FROM GL_Journal j WHERE j.IsActive='Y' AND GL_JournalBatch.GL_JournalBatch_ID=j.GL_JournalBatch_ID) " +
-    			  "WHERE GL_JournalBatch_ID=" + getGL_JournalBatch_ID();
-    	} else {
-            sql = "UPDATE GL_JournalBatch jb" +
- 				  " SET (TotalDr, TotalCr) = (SELECT COALESCE(SUM(TotalDr),0), COALESCE(SUM(TotalCr),0)" +  
-				  " FROM GL_Journal j WHERE j.IsActive='Y' AND jb.GL_JournalBatch_ID=j.GL_JournalBatch_ID) " + 
-				 "WHERE GL_JournalBatch_ID=" + getGL_JournalBatch_ID();    		
+    	boolean success = true;
+    	if(!Util.isEmpty(getGL_JournalBatch_ID(), true)){
+	    	// begin DMA - Dataware - BugNo: 242
+	    	String sql;
+	    	
+	    	if(DB.isPostgreSQL()) {
+	    		sql = "UPDATE GL_JournalBatch " +
+	    			  "SET TotalDr=(SELECT COALESCE(SUM(j.TotalDr),0) FROM GL_Journal j WHERE j.IsActive='Y' AND GL_JournalBatch.GL_JournalBatch_ID=j.GL_JournalBatch_ID), " +
+	    			  "    TotalCr=(SELECT COALESCE(SUM(j.TotalCr),0) FROM GL_Journal j WHERE j.IsActive='Y' AND GL_JournalBatch.GL_JournalBatch_ID=j.GL_JournalBatch_ID) " +
+	    			  "WHERE GL_JournalBatch_ID=" + getGL_JournalBatch_ID();
+	    	} else {
+	            sql = "UPDATE GL_JournalBatch jb" +
+	 				  " SET (TotalDr, TotalCr) = (SELECT COALESCE(SUM(TotalDr),0), COALESCE(SUM(TotalCr),0)" +  
+					  " FROM GL_Journal j WHERE j.IsActive='Y' AND jb.GL_JournalBatch_ID=j.GL_JournalBatch_ID) " + 
+					 "WHERE GL_JournalBatch_ID=" + getGL_JournalBatch_ID();    		
+	    	}
+	    	// end DMA - Dataware - BugNo: 242
+	    	
+	        int no = DB.executeUpdate( sql,get_TrxName());
+	
+	        if( no != 1 ) {
+	            log.warning( "afterSave - Update Batch #" + no );
+	        }
+	        
+	        success = no == 1;
     	}
-    	// end DMA - Dataware - BugNo: 242
     	
-        int no = DB.executeUpdate( sql,get_TrxName());
-
-        if( no != 1 ) {
-            log.warning( "afterSave - Update Batch #" + no );
-        }
-
-        return no == 1;
+        return success;
     }    // updateBatch
 
     /**
@@ -542,7 +548,7 @@ public class MJournal extends X_GL_Journal implements DocAction {
         if( AmtSourceDr.compareTo( AmtSourceCr ) != 0 ) {
             MAcctSchemaGL gl = MAcctSchemaGL.get( getCtx(),getC_AcctSchema_ID());
 
-            if( (gl == null) ||!gl.isUseSuspenseBalancing()) {
+            if( (gl == null) || !gl.isUseSuspenseBalancing()) {
                 m_processMsg = "@UnbalancedJornal@";
 
                 return DocAction.STATUS_Invalid;
@@ -652,26 +658,58 @@ public class MJournal extends X_GL_Journal implements DocAction {
      */
 	public boolean voidIt() {
 		//	Not Processed
+		boolean nullear = false;
 		if (DOCSTATUS_Drafted.equals(getDocStatus())
 			|| DOCSTATUS_Invalid.equals(getDocStatus())
 			|| DOCSTATUS_InProgress.equals(getDocStatus())
 			|| DOCSTATUS_Approved.equals(getDocStatus())
-			|| DOCSTATUS_NotApproved.equals(getDocStatus()) )
+			|| DOCSTATUS_NotApproved.equals(getDocStatus()) ){
 			setPosted(true);
-		//	Std Period open?
-		else
-		{
-			if (MFactAcct.delete(Table_ID, getGL_Journal_ID(), get_TrxName()) < 0)
-			{
-				m_processMsg = "No se pudo eliminar la contabilidad generada";
-				return false;	//	could not delete
-        	}
+			nullear = true;
 		}
 		
-		// Dejar las líneas en 0
-		DB.executeUpdate("UPDATE " + MJournalLine.Table_Name
-				+ " SET amtsourcedr = 0, amtsourcecr = 0, amtacctdr = 0, amtacctcr = 0 " + "  WHERE gl_journal_id = "
-				+ getID(), get_TrxName());		
+		// Si el período es el actual, entonces eliminar las entradas fact del
+		// asiento manual actual
+		Timestamp actualDate = Env.getTimestamp();
+		int actualPeriodID = MPeriod.getC_Period_ID(getCtx(), actualDate);
+		DateFormat actualDateFormat = new SimpleDateFormat("dd-MM-yyyy");
+		String actualDateFormatted = actualDateFormat.format(new Date(actualDate.getTime()));
+		
+		// No existe período para la fecha actual
+		if(Util.isEmpty(actualPeriodID, true)){
+			m_processMsg = Msg.getMsg(getCtx(), "PeriodNotFoundForDate", new Object[]{actualDateFormatted});
+    		return false;
+		}
+
+		// El período actual es el período del asiento actual? 
+		if(getC_Period_ID() == actualPeriodID){
+			if (isPosted()) {
+				MFactAcct.delete(Table_ID, getGL_Journal_ID(), get_TrxName());
+        	}
+			nullear = true;
+		}
+		// Si no tiene lote, entonces se está anulando el propio diario sino se deja al lote que lo haga
+		else if(Util.isEmpty(getGL_JournalBatch_ID(), true)){
+			try {
+				// Se debe revertir a la fecha actual
+	        	reverseCorrectIt(0, DOCSTATUS_Voided, true, actualDate, actualDate);
+			} catch (Exception e) {
+				m_processMsg = e.getMessage();
+				return false;
+			}
+		} else{
+			nullear = true;
+		}
+		
+		if(nullear){
+			// Dejar las líneas en 0
+			DB.executeUpdate("UPDATE " + MJournalLine.Table_Name
+					+ " SET amtsourcedr = 0, amtsourcecr = 0, amtacctdr = 0, amtacctcr = 0 " + "  WHERE gl_journal_id = "
+					+ getID(), get_TrxName());
+			
+			setTotalCr(BigDecimal.ZERO);
+			setTotalDr(BigDecimal.ZERO);
+		}
 		
 		setProcessed(true);
 		setDocStatus(DOCSTATUS_Voided);
@@ -699,124 +737,85 @@ public class MJournal extends X_GL_Journal implements DocAction {
         return false;
     }    // closeIt
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @return
-     */
+    public MJournal reverse(int GL_JournalBatch_ID, String resultDocStatus, Timestamp dateDoc, Timestamp dateAcct, String reverseType, boolean completeReverse){
+    	dateAcct = dateAcct == null?Env.getTimestamp():dateAcct;
+        dateDoc = dateDoc == null?Env.getTimestamp():dateDoc;
+    
+        // Cabecera de revertido
+        MJournal reverse = new MJournal( this );
+        reverse.setGL_JournalBatch_ID( GL_JournalBatch_ID );
+        reverse.setDateDoc(dateDoc);
+        reverse.setC_Period_ID(0);
+        reverse.setDateAcct(dateAcct);
+        
+		String description = (reverse.getDescription() == null ? "" : reverse.getDescription() + " ") + "** "
+				+ getDocumentNo() + " **";
+        reverse.setDescription( description );
+
+        if(!reverse.save()) {
+        	setProcessMsg(CLogger.retrieveErrorAsString());
+            return null;
+        }
+        
+        // Lineas de revertido
+        reverse.copyLinesFrom(this, dateAcct, reverseType);
+
+        if(completeReverse){
+        	if(!DocumentEngine.processAndSave(reverse, DOCACTION_Complete, true)){
+            	setProcessMsg(reverse.getProcessMsg());
+            	return null;
+        	}
+        	reverse.setProcessed( true );
+        	if(!Util.isEmpty(resultDocStatus, true)){
+            	reverse.setDocStatus(resultDocStatus);
+            }
+            reverse.setDocAction( DOCACTION_None );
+            if(!reverse.save()){
+            	setProcessMsg(CLogger.retrieveErrorAsString());
+            	return null;
+            }
+        }        
+
+        return reverse;
+    }
 
     public boolean reverseCorrectIt() {
-        return reverseCorrectIt( getGL_JournalBatch_ID()) != null;
-    }    // reverseCorrectIt
-
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param GL_JournalBatch_ID
-     *
-     * @return
-     */
-
-    public MJournal reverseCorrectIt( int GL_JournalBatch_ID ) {
-        log.info( "reverseCorrectIt - " + toString());
-
-        // Journal
-
-        MJournal reverse = new MJournal( this );
-
-        reverse.setGL_JournalBatch_ID( GL_JournalBatch_ID );
-        reverse.setDateDoc( getDateDoc());
-        reverse.setC_Period_ID( getC_Period_ID());
-        reverse.setDateAcct( getDateAcct());
-
-        // Reverse indicator
-
-        String description = reverse.getDescription();
-
-        if( description == null ) {
-            description = "** " + getDocumentNo() + " **";
-        } else {
-            description += " ** " + getDocumentNo() + " **";
-        }
-
-        reverse.setDescription( description );
-
-        if( !reverse.save()) {
-            return null;
-        }
-
-        // Lines
-
-        reverse.copyLinesFrom( this,null,'C' );
-
-        //
-
-        setProcessed( true );
+    	if(reverseCorrectIt( getGL_JournalBatch_ID(), DOCSTATUS_Reversed, true) == null){
+    		return false;
+    	}
+    	
+    	setProcessed( true );
+    	setDocStatus(DOCSTATUS_Reversed);
         setDocAction( DOCACTION_None );
+        
+        return true;
+    }
 
-        return reverse;
+    public MJournal reverseCorrectIt( int GL_JournalBatch_ID, String resultDocStatus, boolean completeReverse) {
+    	return reverseCorrectIt(GL_JournalBatch_ID, resultDocStatus, completeReverse, null, null);
+    }
+    
+    public MJournal reverseCorrectIt( int GL_JournalBatch_ID, String resultDocStatus, boolean completeReverse, Timestamp dateDoc, Timestamp dateAcct ) {
+    	return reverse(GL_JournalBatch_ID, resultDocStatus, dateDoc, dateAcct, REVERSECORRECTIT_REVERSEACTION, completeReverse);
     }    // reverseCorrectionIt
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @return
-     */
-
     public boolean reverseAccrualIt() {
-        return reverseAccrualIt( getGL_JournalBatch_ID()) != null;
+    	if(reverseAccrualIt( getGL_JournalBatch_ID(), null, false) == null){
+    		return false;
+    	}
+    	
+    	setProcessed( true );
+        setDocAction( DOCACTION_None );
+        
+        return true;
     }    // reverseAccrualIt
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param GL_JournalBatch_ID
-     *
-     * @return
-     */
-
-    public MJournal reverseAccrualIt( int GL_JournalBatch_ID ) {
-        log.info( "reverseAccrualIt - " + toString());
-
-        // Journal
-
-        MJournal reverse = new MJournal( this );
-
-        reverse.setGL_JournalBatch_ID( GL_JournalBatch_ID );
-        reverse.setC_Period_ID( 0 );
-        reverse.setDateDoc( new Timestamp( System.currentTimeMillis()));
-        reverse.setDateAcct( reverse.getDateDoc());
-
-        // Reverse indicator
-
-        String description = reverse.getDescription();
-
-        if( description == null ) {
-            description = "** " + getDocumentNo() + " **";
-        } else {
-            description += " ** " + getDocumentNo() + " **";
-        }
-
-        reverse.setDescription( description );
-
-        if( !reverse.save()) {
-            return null;
-        }
-
-        // Lines
-
-        reverse.copyLinesFrom( this,reverse.getDateAcct(),'R' );
-
-        //
-
-        setProcessed( true );
-        setDocAction( DOCACTION_None );
-
-        return reverse;
+    public MJournal reverseAccrualIt( int GL_JournalBatch_ID, String resultDocStatus, boolean completeReverse) {
+    	return reverseAccrualIt( GL_JournalBatch_ID, resultDocStatus, completeReverse, null, null);
+    }
+    
+    public MJournal reverseAccrualIt( int GL_JournalBatch_ID, String resultDocStatus, boolean completeReverse, Timestamp dateDoc, Timestamp dateAcct ) {
+        return reverse(GL_JournalBatch_ID, resultDocStatus, dateDoc, dateAcct, REVERSEACCRUALIT_REVERSEACTION, completeReverse);
     }    // reverseAccrualIt
 
     /**
@@ -899,6 +898,15 @@ public class MJournal extends X_GL_Journal implements DocAction {
 		if (getControlAmt().compareTo(Env.ZERO) < 0) {
 			log.saveError("ControlAmtUnderZero", "");
 			return false;
+		}
+		
+		// Si no tenemos el período configurado entonces a partir de la fecha
+		// contable
+		if(Util.isEmpty(getC_Period_ID(), true) && getDateAcct() != null){
+			int periodID = MPeriod.getC_Period_ID(getCtx(), getDateAcct());
+			if(!Util.isEmpty(periodID, true)){
+				setC_Period_ID(periodID);
+			}
 		}
 		
 		return true;

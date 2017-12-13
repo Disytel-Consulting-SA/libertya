@@ -168,11 +168,6 @@ public class Doc_GLJournal extends Doc {
 						   rs.getInt("C_ElementValue_ID"),0,0,0,0,0,0,0,0,0,0,0);
 				docLine.setAccount (acct);
 				docLine.setDateAcct(rs.getTimestamp(11));
-                // --      Set Org from account    (x-org)
-				docLine.setAD_Org_ID (acct.getAD_Org_ID());
-
-//				docLine.setAD_Org_ID (rs.getInt(3));
-                //
 				list.add(docLine);
             }
 
@@ -249,6 +244,7 @@ public class Doc_GLJournal extends Doc {
 									p_vo.C_Currency_ID,
 									p_lines[i].getAmtSourceDr (),
 									p_lines[i].getAmtSourceCr ());
+					line.setAD_Org_ID(p_lines[i].getAD_Org_ID());
                 }
             }    // for all lines
 		}

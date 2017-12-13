@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por GL_Journal
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:34.281 */
-public class X_GL_Journal extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2017-12-13 16:39:47.123 */
+public class X_GL_Journal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_GL_Journal (Properties ctx, int GL_Journal_ID, String trxName)
@@ -43,13 +44,13 @@ public X_GL_Journal (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=224 */
-public static final int Table_ID=224;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("GL_Journal");
 
 /** TableName=GL_Journal */
 public static final String Table_Name="GL_Journal";
 
-protected static KeyNamePair Model = new KeyNamePair(224,"GL_Journal");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"GL_Journal");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -119,21 +120,6 @@ Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_PERIOD_ID_AD_Reference_ID=275;
-/** Set Period.
-Period of the Calendar */
-public void setC_Period_ID (int C_Period_ID)
-{
-set_Value ("C_Period_ID", new Integer(C_Period_ID));
-}
-/** Get Period.
-Period of the Calendar */
-public int getC_Period_ID() 
-{
-Integer ii = (Integer)get_Value("C_Period_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Control Amount.
 If not zero, the Debit amount of the document must be equal this amount */
 public void setControlAmt (BigDecimal ControlAmt)
@@ -147,6 +133,38 @@ public BigDecimal getControlAmt()
 BigDecimal bd = (BigDecimal)get_Value("ControlAmt");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Copy From.
+Copy From Record */
+public void setCopyFrom (String CopyFrom)
+{
+if (CopyFrom != null && CopyFrom.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CopyFrom = CopyFrom.substring(0,1);
+}
+set_Value ("CopyFrom", CopyFrom);
+}
+/** Get Copy From.
+Copy From Record */
+public String getCopyFrom() 
+{
+return (String)get_Value("CopyFrom");
+}
+public static final int C_PERIOD_ID_AD_Reference_ID = MReference.getReferenceID("C_Period (all)");
+/** Set Period.
+Period of the Calendar */
+public void setC_Period_ID (int C_Period_ID)
+{
+set_Value ("C_Period_ID", new Integer(C_Period_ID));
+}
+/** Get Period.
+Period of the Calendar */
+public int getC_Period_ID() 
+{
+Integer ii = (Integer)get_Value("C_Period_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Rate.
 Currency Conversion Rate */
@@ -197,7 +215,7 @@ if (Description == null) throw new IllegalArgumentException ("Description is man
 if (Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -207,7 +225,7 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
-public static final int DOCACTION_AD_Reference_ID=135;
+public static final int DOCACTION_AD_Reference_ID = MReference.getReferenceID("_Document Action");
 /** Approve = AP */
 public static final String DOCACTION_Approve = "AP";
 /** Close = CL */
@@ -240,13 +258,13 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference_ID=135 - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
 log.warning("Length > 2 - truncated");
-DocAction = DocAction.substring(0,1);
+DocAction = DocAction.substring(0,2);
 }
 set_Value ("DocAction", DocAction);
 }
@@ -256,9 +274,7 @@ public String getDocAction()
 {
 return (String)get_Value("DocAction");
 }
-public static final int DOCSTATUS_AD_Reference_ID=131;
-/** Reversed = RE */
-public static final String DOCSTATUS_Reversed = "RE";
+public static final int DOCSTATUS_AD_Reference_ID = MReference.getReferenceID("_Document Status");
 /** Voided = VO */
 public static final String DOCSTATUS_Voided = "VO";
 /** Not Approved = NA */
@@ -281,17 +297,19 @@ public static final String DOCSTATUS_Unknown = "??";
 public static final String DOCSTATUS_Drafted = "DR";
 /** Invalid = IN */
 public static final String DOCSTATUS_Invalid = "IN";
+/** Reversed = RE */
+public static final String DOCSTATUS_Reversed = "RE";
 /** Set Document Status.
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("RE") || DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference_ID=131 - RE - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
 log.warning("Length > 2 - truncated");
-DocStatus = DocStatus.substring(0,1);
+DocStatus = DocStatus.substring(0,2);
 }
 set_Value ("DocStatus", DocStatus);
 }
@@ -309,7 +327,7 @@ if (DocumentNo == null) throw new IllegalArgumentException ("DocumentNo is manda
 if (DocumentNo.length() > 30)
 {
 log.warning("Length > 30 - truncated");
-DocumentNo = DocumentNo.substring(0,29);
+DocumentNo = DocumentNo.substring(0,30);
 }
 set_ValueNoCheck ("DocumentNo", DocumentNo);
 }
@@ -437,26 +455,26 @@ if (oo != null)
 }
 return false;
 }
-public static final int POSTINGTYPE_AD_Reference_ID=125;
-/** Actual = A */
-public static final String POSTINGTYPE_Actual = "A";
+public static final int POSTINGTYPE_AD_Reference_ID = MReference.getReferenceID("_Posting Type");
 /** Presupuestaria = B */
 public static final String POSTINGTYPE_Presupuestaria = "B";
 /** Pendientes = E */
 public static final String POSTINGTYPE_Pendientes = "E";
 /** Estadisticos = S */
 public static final String POSTINGTYPE_Estadisticos = "S";
+/** Actual = A */
+public static final String POSTINGTYPE_Actual = "A";
 /** Set PostingType.
 The type of amount that this journal updated */
 public void setPostingType (String PostingType)
 {
-if (PostingType.equals("A") || PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S"));
- else throw new IllegalArgumentException ("PostingType Invalid value - Reference_ID=125 - A - B - E - S");
+if (PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A") || ( refContainsValue("CORE-AD_Reference-125", PostingType) ) );
+ else throw new IllegalArgumentException ("PostingType Invalid value: " + PostingType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-125") );
 if (PostingType == null) throw new IllegalArgumentException ("PostingType is mandatory");
 if (PostingType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-PostingType = PostingType.substring(0,0);
+PostingType = PostingType.substring(0,1);
 }
 set_Value ("PostingType", PostingType);
 }
