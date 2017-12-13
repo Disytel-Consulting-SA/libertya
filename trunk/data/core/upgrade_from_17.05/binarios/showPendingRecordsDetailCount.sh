@@ -1,0 +1,1 @@
+./query.sh "SELECT tablename, reparray, count(1) FROM replication_record_status(1010016, 'includeinreplication=''Y''') group by tablename, reparray union SELECT tablename, reparray, count(1) FROM replication_record_status(0, 'includeinreplication=''Y''') group by tablename, reparray order by count desc, tablename asc"
