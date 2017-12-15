@@ -21,6 +21,10 @@ import org.openXpertya.util.Env;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import fexv1.dif.afip.gov.ar.ClsFEXAuthRequest;
+import fexv1.dif.afip.gov.ar.ClsFEXGetCMP;
+import fexv1.dif.afip.gov.ar.FEXGetCMPResponse;
+
 import FEV1.dif.afip.gov.ar.Err;
 import FEV1.dif.afip.gov.ar.FEAuthRequest;
 import FEV1.dif.afip.gov.ar.FECompConsultaReq;
@@ -60,8 +64,11 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 	/** Nombre del archivo TA para servicio WSFEX */
 	public static final String TA_WSFEX_FILENAME 		= "TA-wsfex.xml";
 
-	/** Preferencia URL AFIP sobre la cual realizar la consulta */
+	/** Preferencia URL AFIP sobre la cual realizar la consulta (WSFE) */
 	public static final String PREFERENCE_WSFECC_URL 	= "WSFECC_URL";
+	/** Preferencia URL AFIP sobre la cual realizar la consulta (WSFEX) */
+	public static final String PREFERENCE_WSFEXCC_URL 	= "WSFEXCC_URL";
+
 
 	
 	
@@ -277,6 +284,102 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		return retValues; 
 	}
 	
+	
+	/** Genera la consulta al WS de AFIP por el comprobante dado */
+	public HashMap<String, String> consultarCAEX(long cbteNro, int cbteTipo, String cbeTipoDesc, int ptoVta) {
+		
+		// Valores minimos a retornar, bien sea error o no (numero de documento, tipo de comprobante y punto de venta)
+		HashMap<String, String> retValues = new HashMap<String, String>(); 
+		retValues.put("DocNro", 	"" + cbteNro);
+		retValues.put("CbteTipo", 	"" + cbteTipo);
+		retValues.put("PtoVta", 	"" + ptoVta);
+		
+		// Recuperar el servicio
+		fexv1.dif.afip.gov.ar.ServiceLocator locator = new fexv1.dif.afip.gov.ar.ServiceLocator();
+ 		// Se intenta recuperar preferencia indicando URL de consulta. En caso de no existir se toma valor por defecto (URL actual de producción)
+		String afipURL = MPreference.GetCustomPreferenceValue(PREFERENCE_WSFEXCC_URL, clientID);
+		if (afipURL == null || afipURL.length() == 0)
+			afipURL = "https://servicios1.afip.gov.ar/wsfexv1/service.asmx";
+		locator.setServiceSoapEndpointAddress(afipURL);
+		fexv1.dif.afip.gov.ar.ServiceSoap service = null;
+		try {
+			service = locator.getServiceSoap();
+		} catch (Exception e) {
+			retValues.put("Resultado", "Error acceso WSFEX: " + e.toString());
+			log.saveError("[WSFEXCC] Error acceso WSFEX: ", e.toString());
+			return retValues;
+		}
+		
+		ClsFEXAuthRequest auth = new ClsFEXAuthRequest();
+		ClsFEXGetCMP consulta = new ClsFEXGetCMP();
+		
+		auth.setCuit(cuit);
+		auth.setSign(sign);
+		auth.setToken(token);
+		
+		consulta.setCbte_nro(cbteNro);
+		consulta.setCbte_tipo((short)cbteTipo);
+		consulta.setPunto_vta((short)ptoVta);
+
+		// Invocacion a la operacion
+		FEXGetCMPResponse response = null;
+		int tryNo = 0;
+		boolean endLoop = false;
+		while (!endLoop) {
+			try {
+				tryNo++;
+				response = service.FEXGetCMP(auth, consulta);
+				response.toString();	// <-- NPE check
+				endLoop = true;
+			} catch (Exception e) {
+				// Al capturar una excepción al RETRY_MAX intento, no continuar intentando
+				if (tryNo == RETRY_MAX) {
+					// Error al interactuar con WSFE de AFIP
+					retValues.put("Resultado", "Error de conexión: " + e.toString());
+					log.saveError("[WSFECC] Error de conexión: ", e.toString());
+					return retValues;
+				}
+			}
+		}
+		
+		// Error recibido desde WSFE de AFIP
+		if (response.getFEXErr() != null && !"OK".equalsIgnoreCase(response.getFEXErr().getErrMsg())) {
+			StringBuffer completeErrorStr = new StringBuffer();
+			completeErrorStr.append(response.getFEXErr().getErrCode()).append(". ").append(response.getFEXErr().getErrMsg());
+			retValues.put("Resultado", "Error: " + completeErrorStr.toString());
+			log.saveError("[WSFECC] Error para cbteNro " + cbteNro + ", cbteTipo " + cbteTipo + ", ptoVta " + ptoVta + ": ", completeErrorStr.toString());
+			return retValues;
+		}
+		
+		// En este punto se supone valores recibidos conformes a un comprobante encontrado
+		retValues.put("CbteDesde", 			"" + response.getFEXResultGet().getCbte_nro());
+		retValues.put("CbteFch", 			"" + response.getFEXResultGet().getFecha_cbte());
+		retValues.put("CbteHasta", 			"" + response.getFEXResultGet().getCbte_nro());
+		retValues.put("CbteTipo", 			"" + response.getFEXResultGet().getCbte_tipo());
+		retValues.put("CodAutorizacion", 	"" + response.getFEXResultGet().getCae());
+//		retValues.put("Concepto", 			"" + response.getFEXResultGet().getDst_cmp());
+		retValues.put("DocNro", 			"" + response.getFEXResultGet().getCbte_nro());
+		retValues.put("DocTipo", 			"" + response.getFEXResultGet().getTipo_expo());
+//		retValues.put("EmisionTipo", 		"" + response.getFEXResultGet().getEmisionTipo());
+//		retValues.put("FchProceso", 		"" + response.getFEXResultGet().getFecha_cbte_cae());
+//		retValues.put("FchServDesde", 		"" + response.getFEXResultGet().getFchServDesde());
+//		retValues.put("FchServHasta", 		"" + response.getFEXResultGet().getFchServHasta());
+		retValues.put("FchVto", 			"" + response.getFEXResultGet().getFch_venc_Cae());
+//		retValues.put("FchVtoPago", 		"" + response.getFEXResultGet().getFchVtoPago());
+//		retValues.put("ImpIVA", 			"" + response.getFEXResultGet().getImpIVA());
+//		retValues.put("ImpNeto", 			"" + response.getFEXResultGet().getImpNeto());
+//		retValues.put("ImpOpEx", 			"" + response.getFEXResultGet().getImpOpEx());
+		retValues.put("ImpTotal", 			"" + response.getFEXResultGet().getImp_total());
+//		retValues.put("ImpTotConc", 		"" + response.getFEXResultGet().getImpTotConc());
+//		retValues.put("ImpTrib", 			"" + response.getFEXResultGet().getImpTrib());
+		retValues.put("MonCotiz", 			"" + response.getFEXResultGet().getMoneda_ctz());
+		retValues.put("MonId", 				"" + response.getFEXResultGet().getMoneda_Id());
+		retValues.put("PtoVta", 			"" + response.getFEXResultGet().getPunto_vta());
+		retValues.put("Resultado", 			"" + response.getFEXResultGet().getResultado());
+		
+		return retValues; 
+	}
+	
 	/**
 	 * Retorna el tipo de comprobante segun la denominacion de AFIP a partir del doctype 
 	 */
@@ -334,8 +437,12 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 	/** Consultar cada una de los comprobantes */
 	protected void queryInvoices() throws Exception {
 		// Consultar cada comprobante e incorporar a la nómina de resultados
-		for (long i = cbteNroFrom; i <= cbteNroTo; i++)
-			retrievedDocuments.add(consultarCAE(i, cbteTipo, "", ptoVta));
+		for (long i = cbteNroFrom; i <= cbteNroTo; i++) {
+			if (!isExportacion(cbteTipo))
+				retrievedDocuments.add(consultarCAE(i, cbteTipo, "", ptoVta));
+			else
+				retrievedDocuments.add(consultarCAEX(i, cbteTipo, "", ptoVta));
+		}
 	}
 
 	
