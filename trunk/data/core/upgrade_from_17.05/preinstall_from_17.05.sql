@@ -1939,3 +1939,17 @@ ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp w
   
 --20171213-1535 Carga de diarios manuales
 update ad_system set dummy = (SELECT addcolumnifnotexists('GL_Journal','CopyFrom','character(1)'));
+
+
+-- 20171215-1003 Nuevo parametro UpdateBalances. Logica por defecto N
+insert into ad_process_para values ((select nextval('seq_ad_process_para')),0,0,'Y',now(),100,now(),100,'UpdateBalances',null,null,(select ad_process_id from ad_process where ad_componentobjectuid = 'CORE-AD_Process-1000174'),100,20,null,null,'UpdateBalances','Y',0,'Y','N','N',null,null,null,null,null,'U','CORE-AD_Process_Para-20171214083805',null,'N',null,null,'N','N',null,'N');
+
+-- Traducciones al parámetro
+insert into ad_process_para_trl values ((select ad_process_para_id from ad_process_para where ad_componentobjectuid = 'CORE-AD_Process_Para-20171214083805'), 'es_AR', 0, 0, 'Y', now(), 100, now(), 100, 'Act.Balance', null, null, 'Y', 'CORE_AD_Process_Para_Trl_20171214083805-es_AR', null);
+insert into ad_process_para_trl values ((select ad_process_para_id from ad_process_para where ad_componentobjectuid = 'CORE-AD_Process_Para-20171214083805'), 'es_ES', 0, 0, 'Y', now(), 100, now(), 100, 'Act.Balance', null, null, 'Y', 'CORE_AD_Process_Para_Trl_20171214083805-es_ES', null);
+insert into ad_process_para_trl values ((select ad_process_para_id from ad_process_para where ad_componentobjectuid = 'CORE-AD_Process_Para-20171214083805'), 'es_MX', 0, 0, 'Y', now(), 100, now(), 100, 'Act.Balance', null, null, 'Y', 'CORE_AD_Process_Para_Trl_20171214083805-es_MX', null);
+insert into ad_process_para_trl values ((select ad_process_para_id from ad_process_para where ad_componentobjectuid = 'CORE-AD_Process_Para-20171214083805'), 'es_PY', 0, 0, 'Y', now(), 100, now(), 100, 'Act.Balance', null, null, 'Y', 'CORE_AD_Process_Para_Trl_20171214083805-es_PY', null);
+
+-- Nueva columna updatebalances en tabla t (si no la incorporaba, no se visualizaba nada en el informe
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_detail','updatebalances','varchar(1) not null default ''N'''));
+
