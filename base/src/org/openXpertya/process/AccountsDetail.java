@@ -279,7 +279,7 @@ public class AccountsDetail extends SvrProcess {
     	
     	StringBuffer insertSQL = new StringBuffer( 
         		"INSERT INTO T_Acct_Detail " + 
-        		" (AD_Client_ID, AD_Org_ID, CreatedBy, UpdatedBy, " +
+        		" (UpdateBalances, AD_Client_ID, AD_Org_ID, CreatedBy, UpdatedBy, " +
         		"  AD_PInstance_ID, Fact_Acct_ID, " + 
         		"  DateAcct, C_ElementValue_ID, Acct_Code, Acct_Description, Description, " + 
         		"  AmtAcctDr, AmtAcctCr, Balance, C_BPartner_ID, M_Product_ID) ");
@@ -303,6 +303,7 @@ public class AccountsDetail extends SvrProcess {
     private void createBalanceLine(StringBuffer insertSQL) {
     	StringBuffer sb = new StringBuffer(insertSQL.toString());
         sb.append( " SELECT " );
+        sb.append(        (p_UpdateBalances?"'Y'":"'N'") + ",");
         sb.append(        getAD_Client_ID() + ",");
         sb.append(        p_AD_Org_ID + ", ");
         sb.append(        getAD_User_ID() + "," + getAD_User_ID() + ",");      
@@ -347,6 +348,7 @@ public class AccountsDetail extends SvrProcess {
         // Obtiene todos los asientos que cumplen con la condición generada a partir de 
         // los parámetros.
         sb.append( " SELECT " );
+        sb.append(        (p_UpdateBalances?"'Y'":"'N'") + ",");
         sb.append(        getAD_Client_ID() + ",");
         sb.append(        p_AD_Org_ID + ", ");
         sb.append(        getAD_User_ID() + "," + getAD_User_ID() + ",");      
