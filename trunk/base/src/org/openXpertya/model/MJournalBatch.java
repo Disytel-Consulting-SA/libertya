@@ -647,47 +647,33 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
      * @return
      */
 	public boolean voidIt() {
-		// Si el período es el actual, entonces eliminar las entradas fact del
-		// asiento manual actual
-		Timestamp actualDate = Env.getTimestamp();
-		int actualPeriodID = MPeriod.getC_Period_ID(getCtx(), actualDate);
-		DateFormat actualDateFormat = new SimpleDateFormat("dd-MM-yyyy");
-		String actualDateFormatted = actualDateFormat.format(new Date(actualDate.getTime()));
-		// No existe período para la fecha actual
-		if(Util.isEmpty(actualPeriodID, true)){
-			m_processMsg = Msg.getMsg(getCtx(), "PeriodNotFoundForDate", new Object[]{actualDateFormatted});
-    		return false;
+		// Processed
+		if (!(DOCSTATUS_Drafted.equals(getDocStatus())
+				|| DOCSTATUS_Invalid.equals(getDocStatus())
+				|| DOCSTATUS_InProgress.equals(getDocStatus())
+				|| DOCSTATUS_Approved.equals(getDocStatus())
+				|| DOCSTATUS_NotApproved.equals(getDocStatus()))){
+			// El período está abierto
+			MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
+	        if( !MPeriod.isOpen( getCtx(),getDateAcct(),dt.getDocBaseType())) {
+	            m_processMsg = "@PeriodClosed@";
+	            return false;
+	        }
 		}
-		// El período actual es el período del asiento actual? 
-		if(getC_Period_ID() == actualPeriodID){
-			MJournal[] journals = getJournals(true);
-			for (int i = 0; i < journals.length; i++)
-			{
-				MJournal journal = journals[i];
-				if (journal.voidIt()){
-					journal.setTotalCr(BigDecimal.ZERO);
-					journal.setTotalDr(BigDecimal.ZERO);
-					if(!journal.save()){
-						m_processMsg = CLogger.retrieveErrorAsString();
-		        		return false;
-					}
-				}
-				else
-				{
-					m_processMsg = journal.getProcessMsg();
+		
+		// Anular los journals
+		MJournal[] journals = getJournals(true);
+		for (int i = 0; i < journals.length; i++) {
+			MJournal journal = journals[i];
+			if (journal.voidIt()){
+				if(!journal.save()){
+					m_processMsg = CLogger.retrieveErrorAsString();
 	        		return false;
 				}
 			}
-			setProcessed(true);
-			setDocAction(DOCACTION_None);
-		}
-		// Se debe revertir a la fecha actual
-		else{
-	        try {
-				reverse(REVERSECORRECTIT_REVERSEACTION, actualPeriodID, actualDate, actualDate, DOCSTATUS_Voided, true);
-			} catch (Exception e) {
-				m_processMsg = e.getMessage();
-				return false;
+			else {
+				m_processMsg = journal.getProcessMsg();
+        		return false;
 			}
 		}
 		
