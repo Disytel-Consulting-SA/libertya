@@ -716,7 +716,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				sql.append("UPDATE ");
 				sql.append("	" + X_C_Payment.Table_Name + " ");
 				sql.append("SET ");
-				sql.append("	auditstatus = '" + status + "' ");
+				sql.append("	updated = now(), auditstatus = '" + status + "' ");
 				sql.append("WHERE ");
 				sql.append("	c_payment_id = " + rs.getInt(1));
 

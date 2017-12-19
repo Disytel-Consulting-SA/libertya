@@ -284,7 +284,7 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 	 */
 	protected int updatePayments(String auditStatus){
 		String sql = "update c_payment p "
-					+ "set auditstatus = '"+auditStatus+"' "
+					+ "set updated = now(), auditstatus = '"+auditStatus+"' "
 					+ "where exists (select c_creditcard_closeline_id "
 					+ "					from c_creditcard_closeline cl "
 					+ "					where cl.c_creditcard_close_id = "+getID()
