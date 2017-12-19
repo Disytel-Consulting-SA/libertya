@@ -21,10 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -658,58 +655,35 @@ public class MJournal extends X_GL_Journal implements DocAction {
      */
 	public boolean voidIt() {
 		//	Not Processed
-		boolean nullear = false;
 		if (DOCSTATUS_Drafted.equals(getDocStatus())
 			|| DOCSTATUS_Invalid.equals(getDocStatus())
 			|| DOCSTATUS_InProgress.equals(getDocStatus())
 			|| DOCSTATUS_Approved.equals(getDocStatus())
 			|| DOCSTATUS_NotApproved.equals(getDocStatus()) ){
 			setPosted(true);
-			nullear = true;
-		}
-		
-		// Si el período es el actual, entonces eliminar las entradas fact del
-		// asiento manual actual
-		Timestamp actualDate = Env.getTimestamp();
-		int actualPeriodID = MPeriod.getC_Period_ID(getCtx(), actualDate);
-		DateFormat actualDateFormat = new SimpleDateFormat("dd-MM-yyyy");
-		String actualDateFormatted = actualDateFormat.format(new Date(actualDate.getTime()));
-		
-		// No existe período para la fecha actual
-		if(Util.isEmpty(actualPeriodID, true)){
-			m_processMsg = Msg.getMsg(getCtx(), "PeriodNotFoundForDate", new Object[]{actualDateFormatted});
-    		return false;
-		}
-
-		// El período actual es el período del asiento actual? 
-		if(getC_Period_ID() == actualPeriodID){
+		} else{
+			// Controlar que el período esté abierto sólo si no tenemos lote
+			// asignado ya que sino lo controla el lote
+			if(Util.isEmpty(getGL_JournalBatch_ID(), true)){
+				// El período está abierto
+				MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
+		        if( !MPeriod.isOpen( getCtx(),getDateAcct(),dt.getDocBaseType())) {
+		            m_processMsg = "@PeriodClosed@";
+		            return false;
+		        }
+			}
+			// Si está contabilizado elimino la contabilidad 
 			if (isPosted()) {
 				MFactAcct.delete(Table_ID, getGL_Journal_ID(), get_TrxName());
-        	}
-			nullear = true;
-		}
-		// Si no tiene lote, entonces se está anulando el propio diario sino se deja al lote que lo haga
-		else if(Util.isEmpty(getGL_JournalBatch_ID(), true)){
-			try {
-				// Se debe revertir a la fecha actual
-	        	reverseCorrectIt(0, DOCSTATUS_Voided, true, actualDate, actualDate);
-			} catch (Exception e) {
-				m_processMsg = e.getMessage();
-				return false;
 			}
-		} else{
-			nullear = true;
 		}
 		
-		if(nullear){
-			// Dejar las líneas en 0
-			DB.executeUpdate("UPDATE " + MJournalLine.Table_Name
-					+ " SET amtsourcedr = 0, amtsourcecr = 0, amtacctdr = 0, amtacctcr = 0 " + "  WHERE gl_journal_id = "
-					+ getID(), get_TrxName());
-			
-			setTotalCr(BigDecimal.ZERO);
-			setTotalDr(BigDecimal.ZERO);
-		}
+		// Dejar las líneas en 0
+		DB.executeUpdate("UPDATE " + MJournalLine.Table_Name
+				+ " SET amtsourcedr = 0, amtsourcecr = 0, amtacctdr = 0, amtacctcr = 0 " + "  WHERE gl_journal_id = "
+				+ getID(), get_TrxName());
+		setTotalCr(BigDecimal.ZERO);
+		setTotalDr(BigDecimal.ZERO);
 		
 		setProcessed(true);
 		setDocStatus(DOCSTATUS_Voided);
