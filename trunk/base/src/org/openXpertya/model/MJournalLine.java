@@ -346,6 +346,15 @@ public class MJournalLine extends X_GL_JournalLine {
         	return false;
         }
         
+		// Si el valid combination es de una cuenta que no equivale a la cuenta
+		// contable asignada, entonces se debe resetear para que la busque
+        if(!Util.isEmpty(getC_ValidCombination_ID(), true) && !Util.isEmpty(getC_ElementValue_ID(), true)){
+        	MAccount account = MAccount.get(getCtx(), getC_ValidCombination_ID());
+        	if(account.getAccount_ID() != getC_ElementValue_ID()){
+        		setC_ValidCombination_ID(0);
+        	}
+        }
+        
         // Si no tenemos valid combination, pero si elemento contable, creamos
  		// un nuevo valid combination nuevo y lo asignamos a la línea
 		if (Util.isEmpty(getC_ValidCombination_ID(), true) && !Util.isEmpty(getC_ElementValue_ID(), true)) {
