@@ -15,11 +15,13 @@ package org.openXpertya.process;
 import java.sql.Timestamp;
 import java.util.logging.Level;
 
+import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MUser;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class ManageElectronicInvoiceProcess extends SvrProcess {
 
@@ -27,9 +29,10 @@ public class ManageElectronicInvoiceProcess extends SvrProcess {
 	protected boolean isRegistered = false;
 	/** CAE de la factura a asignar (en caso de que se encuentre registrada) */
 	protected String cae;
-	/** Vot CAE de la factura a asignar (en caso de que se encuentre registrada) */
+	/** Vto CAE de la factura a asignar (en caso de que se encuentre registrada) */
 	protected Timestamp vtoCae;
-	
+	/** DocumentNo de la factura a asignar (opcional) */
+	protected int numeroComprobante = -1;
 	
 	@Override
 	protected void prepare() {
@@ -46,6 +49,8 @@ public class ManageElectronicInvoiceProcess extends SvrProcess {
             	cae = (String)para[ i ].getParameter();
             } else if( name.equals( "VtoCAE" )) {
                 vtoCae = (( Timestamp )para[ i ].getParameter());
+            } else if( name.equals( "NumeroComprobante" )) {
+            	numeroComprobante = para[ i ].getParameterAsInt();
             } else {
                 log.log( Level.SEVERE,"Unknown Parameter: " + name );
             }
@@ -81,7 +86,13 @@ public class ManageElectronicInvoiceProcess extends SvrProcess {
 				throw new Exception("Vencimiento CAE requerido");
 			anInvoice.setcae(cae);
 			anInvoice.setvtocae(vtoCae);
-			anInvoice.setcaeerror("Factura elctronica editada manualmente por " + (MUser.get(getCtx(), Env.getAD_User_ID(getCtx()))).getName() );
+			if (numeroComprobante > 0) {
+				anInvoice.setNumeroComprobante(numeroComprobante);
+				String docNro = CalloutInvoiceExt.GenerarNumeroDeDocumento(anInvoice.getPuntoDeVenta(), numeroComprobante, anInvoice.getLetra(), anInvoice.isSOTrx(), false);
+				anInvoice.setDocumentNo(docNro);
+				anInvoice.setNumeroDeDocumento(docNro);
+			}
+			anInvoice.setcaeerror("Factura electronica editada manualmente por " + (MUser.get(getCtx(), Env.getAD_User_ID(getCtx()))).getName() );
 			returnMessage = "Gestion de factura satisfactoria.  CAE asignado manualmente. ";
 		}
 		

@@ -3339,6 +3339,41 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return DocAction.STATUS_Invalid;
 			}
 			
+			// Si en el CompleteIt ya tenemos CAE asignado, validar que sea único no permitiendo completar la factura si ya existe otra Completa / Cerrada con el mismo CAE
+			// Esta validación logicamente no aplica para facturas "nuevas" ya que previo al completeIt todavía no tienen CAE
+			if (!Util.isEmpty(getcae(), true)) {
+				String documentNo = DB.getSQLValueString(get_TrxName(), " SELECT documentNo " +
+																		" FROM C_Invoice " +
+																		" WHERE cae = '" + getcae() + "' " +
+																		" AND C_Invoice_ID <> " + getC_Invoice_ID() +
+																		" AND AD_Client_ID = " + getAD_Client_ID() +
+																		" AND DocStatus IN ('CO', 'CL') "
+														);
+				if (documentNo != null) {
+					m_processMsg = "Ya existe una factura con CAE " + getcae() + ", registrado en la factura " + documentNo;
+					log.log(Level.SEVERE, m_processMsg);
+					return DocAction.STATUS_Invalid;
+				}
+			}
+			
+			// Si el usuario utilizó "Gestionar Factura Electrónica", validar unicidad del Nro de Documento.
+			// Para el mismo Tipo de Documento no pueden existir 2 facturas Completas / Cerradas con el mismo DocumentNo.
+			if (!Util.isEmpty(getcaeerror()) && getcaeerror().startsWith("Factura electronica editada manualmente")) {
+				int count = DB.getSQLValue(get_TrxName(), 	" SELECT count(1) " +
+															" FROM C_Invoice " +
+															" WHERE documentno = '" + getDocumentNo() + "' " +
+															" AND C_Invoice_ID <> " + getC_Invoice_ID() +
+															" AND AD_Client_ID = " + getAD_Client_ID() +
+															" AND C_DocTypeTarget_ID = " + getC_DocTypeTarget_ID() +
+															" AND DocStatus IN ('CO', 'CL') "
+											);
+				if (count > 0) {
+					m_processMsg = "Ya existe una factura con el numero de documento " + getDocumentNo();
+					log.log(Level.SEVERE, m_processMsg);
+					return DocAction.STATUS_Invalid;
+				}
+			}
+			
 		}
 		
 		// Fecha del CAI > que fecha de facturacion
