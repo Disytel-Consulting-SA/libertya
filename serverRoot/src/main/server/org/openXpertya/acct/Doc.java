@@ -1141,13 +1141,13 @@ public abstract class Doc {
 
             String AD_MessageValue = "PostingError-" + p_vo.Status;
             int    AD_User_ID      = p_vo.UpdatedBy;
-            MNote  note            = new MNote( getCtx(),AD_MessageValue,AD_User_ID,p_vo.AD_Client_ID,p_vo.AD_Org_ID,null );
+//            MNote  note            = new MNote( getCtx(),AD_MessageValue,AD_User_ID,p_vo.AD_Client_ID,p_vo.AD_Org_ID,null );
 
-            note.setRecord( p_AD_Table_ID,p_Record_ID );
+//            note.setRecord( p_AD_Table_ID,p_Record_ID );
 
             // Reference
 
-            note.setReference( toString());    // Document
+//            note.setReference( toString());    // Document
 
             // Text
 
@@ -1160,8 +1160,8 @@ public abstract class Doc {
             String cn = getClass().getName();
 
             Text.append( " - " ).append( cn.substring( cn.lastIndexOf( '.' ))).append( " (" ).append( p_vo.DocumentType ).append( " - DocumentNo=" ).append( p_vo.DocumentNo ).append( ", DateAcct=" ).append( p_vo.DateAcct.toString().substring( 0,10 )).append( ", Amount=" ).append( getAmount()).append( ", Sta=" ).append( p_vo.Status ).append( " - PeriodOpen=" ).append( isPeriodOpen()).append( ", Balanced=" ).append( isBalanced());
-            note.setTextMsg( Text.toString());
-            note.save();
+ //           note.setTextMsg( Text.toString());
+ //           note.save();
         }
 
         // dispose facts
