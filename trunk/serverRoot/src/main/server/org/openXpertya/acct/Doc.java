@@ -867,11 +867,14 @@ public abstract class Doc {
 			//  Insert Note
 			String AD_MessageValue = "PostingError-" + p_Status;
 			int AD_User_ID = p_po.getUpdatedBy();
-			MNote note = new MNote (getCtx(), AD_MessageValue, AD_User_ID, 
-				getAD_Client_ID(), getAD_Org_ID(), null);
-			note.setRecord(p_po.get_Table_ID(), p_po.getID());
+// Workaround performance: comentada la generación/persistencia de ad_notes dado que el uso de las mismas
+//							es mínimo, la generación de registros es constante; generando alto volumen de 
+//							datos y por consiguiente considerable degradacion de performance, principalmente bajo LY Web.
+//			MNote note = new MNote (getCtx(), AD_MessageValue, AD_User_ID, 
+//				getAD_Client_ID(), getAD_Org_ID(), null);
+//			note.setRecord(p_po.get_Table_ID(), p_po.getID());
 			//  Reference
-			note.setReference(toString());	//	Document
+//			note.setReference(toString());	//	Document
 			//	Text
 			StringBuffer Text = new StringBuffer (Msg.getMsg(Env.getCtx(), AD_MessageValue));
 			if (p_Error != null)
@@ -885,8 +888,8 @@ public abstract class Doc {
 				.append(", Sta=").append(p_Status)
 				.append(" - PeriodOpen=").append(isPeriodOpen())
 				.append(", Balanced=").append(isBalanced());
-			note.setTextMsg(Text.toString());
-			note.save();
+//			note.setTextMsg(Text.toString());
+//			note.save();
 			p_Error = Text.toString();
 		}
 
