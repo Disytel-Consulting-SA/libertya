@@ -342,7 +342,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 //			"	LEFT JOIN c_bpartner bp2 ON i.c_bpartner_id = bp2.c_bpartner_id " +
 			"	) as d " + 
 //			FIN INLINE DE V_DOCUMENTS			
-//			"	  JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id " +  
+			"	  JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id " +  
 			"	  WHERE docstatus IN ('CO','CL', 'WC') " +
 			"	  AND d.AD_Client_ID = " + getAD_Client_ID() + 
 			(isShowByDate() ?
