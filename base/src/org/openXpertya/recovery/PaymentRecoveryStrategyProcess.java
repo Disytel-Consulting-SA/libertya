@@ -178,6 +178,23 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 	 *             en caso de error
 	 */
 	protected MInvoice createConfigInvoice(Integer docTypeID, Integer productID, BigDecimal total) throws Exception{
+		return createConfigInvoice(docTypeID, productID, total, null);
+	}
+	
+	/**
+	 * Crea el documento de recupero en base a los datos de configuración
+	 * parámetro
+	 * 
+	 * @param docTypeID
+	 *            ID del tipo de documento del comprobante
+	 * @param productID
+	 *            ID del artículo del comprobante
+	 * @param posJournalID
+	 *            ID de la caja diaria a asociar al comprobante
+	 * @throws Exception
+	 *             en caso de error
+	 */
+	protected MInvoice createConfigInvoice(Integer docTypeID, Integer productID, BigDecimal total, Integer posJournalID) throws Exception{
 		// Crea el comprobante
 		MInvoice invoice = new MInvoice(getCtx(), 0, getTrxName());
 		invoice.setC_BPartner_ID(getInvoice().getC_BPartner_ID());
@@ -207,6 +224,15 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 		if(!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Complete, false)){
 			throw new Exception(invoice.getProcessMsg());
 		}
+		// Seteo la caja diaria origen luego de completar para que no valide si
+		// se encuentra cerrada
+		if(!Util.isEmpty(posJournalID, true)){
+			invoice.setC_POSJournal_ID(posJournalID);
+			if(!invoice.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		
 		return invoice;
 	}
 	
