@@ -892,9 +892,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 	        // Acción específica de Allocations: Anular Pagos o Anular Pagos y Retenciones
 	        // Se deben anular los pagos involucrados en las líneas.
 	        if (ALLOCATIONACTION_VoidPayments.equals(getAllocationAction())
-	        		|| ALLOCATIONACTION_VoidPaymentsRetentions.equals(getAllocationAction())) 
+	        		|| ALLOCATIONACTION_VoidPaymentsRetentions.equals(getAllocationAction())) {
 	        	// Anulación de pagos
 	        	voidPayments();
+	        	voidDiffCambio();
+	        }
 	        
 		    // Acción específica de Allocations: Anular Pagos y Retenciones
 	        // Se deben anular las retenciones asociadas a esta asignación.
@@ -1423,6 +1425,49 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			errorMsg = CLogger.retrieveErrorAsString();
 		if (errorMsg != null) 
 			throw new Exception("@VoidRetentionError@ (" + invoice.getDocumentNo() + "): " + errorMsg);
+    }
+    
+    private void voidDiffCambio() throws Exception {
+    	// Se obtienen las ND o NC por diferencia de cambio
+    	String sql = 
+    			"SELECT distinct i.c_invoice_id  " +
+    			"FROM  " +
+    			"	c_allocationline al  " +
+    			"	INNER JOIN c_invoice i ON (al.c_invoice_id = i.c_invoice_id OR al.c_invoice_credit_id = i.c_invoice_id)  " +
+    			"	INNER JOIN c_invoiceline il ON il.c_invoice_id = i.c_invoice_id  " +
+    			"   INNER JOIN m_product p ON il.m_product_id = p.m_product_id " +
+    			"WHERE  " + 
+    			"	al.c_allocationhdr_id = ?  " +
+    			"	AND p.value IN (?, ?, ?)  ";
+
+        PreparedStatement pstmt = null; 
+        ResultSet rs = null;
+        String valueProductDiffCambio = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO");
+        String valueProductDiffCambioDeb = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO_DEB");
+        String valueProductDiffCambioCred = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_ARTICULO_CRED");
+        
+        try {
+        	pstmt = DB.prepareStatement(sql, get_TrxName());
+        	pstmt.setInt(1, getC_AllocationHdr_ID());
+        	pstmt.setString(2, valueProductDiffCambio);
+        	pstmt.setString(3, valueProductDiffCambioDeb);
+        	pstmt.setString(4, valueProductDiffCambioCred);
+        	rs = pstmt.executeQuery();
+        	// Por cada retención se anula tanto el crédito como el débito.
+        	while (rs.next()) {
+        		MInvoice invoice = new MInvoice(getCtx(), rs.getInt("C_Invoice_ID"), get_TrxName());
+        		// Se anula ND o NC emitida por diferencia de cambio
+        		voidRetentionInvoice(invoice); //La función que anula las facturas de retención es válida para anular diff de cambio
+        	}
+        } catch (SQLException e) {
+        	log.log(Level.SEVERE, "voidIt->voidDiffCambio", e);
+        	throw new Exception();
+        } finally {
+        	try {
+        		if (rs != null) rs.close();
+        		if (pstmt != null) pstmt.close();
+        	} catch (Exception e) {}
+        }
     }
     
     
