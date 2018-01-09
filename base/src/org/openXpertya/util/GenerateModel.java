@@ -973,7 +973,7 @@ public class GenerateModel {
     	
     	try 
     	{
-	    	PreparedStatement pstmt = DB.prepareStatement(" SELECT c.columnname, c.AD_Reference_ID FROM AD_Column c " +
+	    	PreparedStatement pstmt = DB.prepareStatement(" SELECT c.columnname, c.AD_Reference_ID, c.ismandatory FROM AD_Column c " +
                     										" INNER JOIN ad_componentversion cv on cv.ad_componentversion_id = c.ad_componentversion_id " +
                     										" INNER JOIN ad_component co on co.ad_component_id = cv.ad_component_id " +
 	    													" WHERE c.AD_Table_ID = " + AD_Table_ID + " AND c.ColumnSQL IS NULL " + 
@@ -982,6 +982,7 @@ public class GenerateModel {
 	    	ResultSet rs = pstmt.executeQuery();
 	    	while (rs.next())
 	    	{
+	    		boolean isMandatory = "Y".equalsIgnoreCase(rs.getString("ismandatory"));
 	    		boolean isValidColumn = false;
 	    		Class clazz = DisplayType.getClass( rs.getInt("AD_Reference_ID"), true );
 	            String dataType = clazz.getName();
@@ -1005,8 +1006,9 @@ public class GenerateModel {
 	            	columnSets.append("\t\t pstmt.setString(col++, " + columnName + "()?\"Y\":\"N\");" );
 	            	isValidColumn = true;
 	            } else if( dataType.equals( "Integer" )) {
-	            	columnSets.append("\t\t if (get" + columnName + "() != 0) pstmt.setInt(col++, get" + columnName + "());" );
-	            	columnNotNeeded.append("\t\t if (get" + columnName + "() == 0) sql = sql.replaceFirst(\"" + columnName + ",\",\"\").replaceFirst(\"\\\\?,\", \"\"); ");
+	            	columnSets.append("\t\t ").append( isMandatory ? "" : "if (get" + columnName + "() != 0) " ).append("pstmt.setInt(col++, get" + columnName + "());" );
+	            	if (!isMandatory)
+	            		columnNotNeeded.append("\t\t if (get" + columnName + "() == 0) sql = sql.replaceFirst(\"" + columnName + ",\",\"\").replaceFirst(\"\\\\?,\", \"\"); ");
 	            	isValidColumn = true;
             	} else if( dataType.equals( "String" )) {
             		columnSets.append("\t\t if (get" + columnName + "() != null) pstmt.setString(col++, get" + columnName + "());" );
