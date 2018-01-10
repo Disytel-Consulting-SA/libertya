@@ -48,7 +48,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	private HashMap<Integer, BigDecimal> saldosGeneralMultimoneda = new HashMap<Integer, BigDecimal>();
 	
 	PreparedStatement pstmt = null;
-	
+		
 	@Override
 	protected void prepare() {
 		
@@ -113,11 +113,33 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		validateParameters();
 		calculateDateConvert();
 		deleteOldEntries();
-		fillTable();
+		
+		// Performance: Consultar iterativamente por cada EC en lugar de una única query involucrando a todas las ECs 
+		PreparedStatement pstmt = DB.prepareStatement(getBPartnersSQL(), get_TrxName());
+		ResultSet rs = pstmt.executeQuery();
+		int iter=0;
+		while (rs.next())
+		{
+				iter++;
+				bPartnerID = rs.getInt("c_bpartner_id");
+				log.fine(Env.getDateTime("yyyy/MM/dd-HH:mm:ss.SSS") + " " + bPartnerID + " " + iter);
+				fillTable();
+		}
+		insertTotalGral(saldogral);
 		
 		return null;
 	}
-
+	
+	protected String getBPartnersSQL() {
+		return 	" Select distinct c_bpartner_id " +
+				" from c_bpartner " +
+				" where isactive = 'Y' " +
+				" and " + getAccountTypeClause() + " = 'Y' " +
+				" and ad_client_id = " + getAD_Client_ID() +
+				(bPartnerID!=0?" AND c_bpartner_id = " + bPartnerID:"") +
+				" order by c_bpartner_id ";	
+	}
+	
 	private void calculateDateConvert() {
 		/*
 		1)	Si es Saldo Pendiente, la fecha de conversión debe ser al día de generación.
@@ -135,11 +157,23 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		String	sql	= "DELETE FROM T_EstadoDeCuenta	 WHERE AD_Client_ID = "+ getAD_Client_ID()+" AND AD_PInstance_ID = " + getAD_PInstance_ID() + " OR CREATED < ('now'::text)::timestamp(6) - interval '3 days'";
         DB.executeUpdate(sql, get_TrxName());
 	}
+
+	int bPartner = -1;
+	
+	BigDecimal saldo = new BigDecimal(0);
+	BigDecimal subSaldo = new BigDecimal(0);
+	BigDecimal saldogral = new BigDecimal(0);
+
 	
 	private void fillTable() throws Exception
 	{
-		MClientInfo ci = MClient.get(getCtx()).getInfo();
-		currencyClient = ci.getC_Currency_ID();
+		if (currencyClient==null) {
+			MClientInfo ci = MClient.get(getCtx()).getInfo();
+			currencyClient = ci.getC_Currency_ID();
+			
+			saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
+			saldosGeneralMultimoneda.put(currencyClient, BigDecimal.ZERO);
+		}
 		StringBuffer query = new StringBuffer (
 			"     SELECT distinct dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner, i.issotrx, i.dateacct::date as dateacct, i.dateinvoiced::date as datedoc, p.netdays, i.dateinvoiced + (p.netdays::text || ' days'::text)::interval AS duedate, paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) AS daysdue, i.dateinvoiced + (p.discountdays::text || ' days'::text)::interval AS discountdate, round(i.grandtotal * p.discount * 0.01::numeric, 2) AS discountamt, " +
 			//"     i.grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, 0) AS openamt, " +
@@ -247,14 +281,18 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     currencyConvert(availableamt, p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS openamt, p.c_currency_id, p.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id " +
 			"	  FROM rv_payment p " +
 			"	  JOIN c_doctype dt on p.c_doctype_id = dt.c_doctype_id   " +
-			"	  JOIN c_bpartner bp on p.c_bpartner_id = bp.c_bpartner_id " + 
+			"	  JOIN c_bpartner bp on p.c_bpartner_id = bp.c_bpartner_id " + (bPartnerID!=0?" AND p.c_bpartner_id = " + bPartnerID:"") +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)? 
 					"": 
 					" LEFT JOIN (select i.c_invoice_id, al.c_payment_id, i.paymentrule "
 					+ "				from c_allocationline as al "
 					+ "				inner join c_allocationhdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id "
 					+ "				inner join c_invoice as i on i.c_invoice_id = al.c_invoice_id "
-					+ "				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')) as i on i.c_payment_id = p.c_payment_id ") +
+					+ "				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')" +
+					
+									(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + // Esto está bien?						
+					
+					") as i on i.c_payment_id = p.c_payment_id ") +
 			"	  WHERE 1 = 1  " +
 			"	  AND p.AD_Client_ID = " + getAD_Client_ID() + 
 			"	  AND p.docstatus IN ('CO', 'CL', 'RE', 'VO', 'WC') " +
@@ -325,7 +363,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"				from c_allocationline as al " + 
 			"				inner join c_allocationhdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id " + 
 			"				inner join c_invoice as i on i.c_invoice_id = al.c_invoice_id " + 
-			"				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')) as i on i.c_cashline_id = cl.c_cashline_id " +
+			"				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')" +
+
+							(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + // Esto está bien?
+			
+			" 		) as i on i.c_cashline_id = cl.c_cashline_id " +
 			" 	WHERE 1 = 1 " +
 			(bPartnerID!=0? "   AND ((cl.c_bpartner_id is not null AND cl.c_bpartner_id = " + bPartnerID + ") OR (i.c_bpartner_ID is not null and i.c_bpartner_id = " + bPartnerID + ")) " : "") +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
@@ -370,30 +412,14 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
 		ResultSet rs = pstmt.executeQuery();
 		
-		int bPartner = -1;
-		int bPartnerOld = -1;
+//		saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
+//		saldosGeneralMultimoneda.put(currencyClient, BigDecimal.ZERO);
 		
-		BigDecimal saldo = new BigDecimal(0);
-		BigDecimal subSaldo = new BigDecimal(0);
-		BigDecimal saldogral = new BigDecimal(0);
-
-		saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
-		saldosGeneralMultimoneda.put(currencyClient, BigDecimal.ZERO);
-		
+		bPartner=-1;
+		saldo = new BigDecimal(0);	
 		while (rs.next()) {
+			
 			bPartner = rs.getInt("c_bpartner_id");
-			if (bPartner != bPartnerOld)
-			{
-				if (bPartnerOld != -1){ 
-					insertTotalForBPartnerOld(bPartner, saldo);
-					insertTotalForBPartnerChecks(bPartner);
-				}
-				saldogral=saldogral.add(saldo);
-				bPartnerOld = bPartner;
-				saldo = new BigDecimal(0);
-				
-				incrementarSaldosGeneralMultimoneda();
-			}
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			
@@ -445,6 +471,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setSalesRep_ID(salesRepID);
 			ec.setDateToDays(dateToDays);
 			ec.setCondition(condition);
+			ec.setDirectInsert(true);
 			ec.save();
 			
 			subSaldo = ec.getOpenAmt();
@@ -453,17 +480,17 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			else
 				subSaldo = subSaldo.abs().multiply(new BigDecimal(ec.getsigno_issotrx()));					
 			saldo = saldo.add(subSaldo);
+
 		}
-		if (bPartner != -1)
-		{	insertTotalForBPartnerOld(bPartner, saldo);
+		if (bPartner>0) {
+			insertTotalForBPartnerOld(bPartner, saldo);
 			insertTotalForBPartnerChecks(bPartner);
-			
+				
 			incrementarSaldosGeneralMultimoneda();
-			
+				
 			saldogral=saldogral.add(saldo);
-			insertTotalGral(saldogral);
 		}
-		
+
 	}
 	
 	private void incrementarSaldosMultimoneda(X_T_EstadoDeCuenta ec, Integer c_Currency_ID){
@@ -519,6 +546,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				ec.setDateDoc(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
+			ec.setDirectInsert(true);
 			ec.save();
 		}
 
@@ -544,6 +572,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
 			} 
+			ec.setCondition(condition);
+			ec.setDirectInsert(true);
 			ec.save();
 		}
 	}
@@ -584,6 +614,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setDateDoc(dateTrxFrom);
 		} 
 		ec.setCondition(condition);
+		ec.setDirectInsert(true);
 		ec.save();
 	}
 	
@@ -618,6 +649,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				ec.setDateDoc(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
+			ec.setDirectInsert(true);
 			ec.save();
 		}
 		
@@ -643,6 +675,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
 			} 
+			ec.setCondition(condition);
+			ec.setDirectInsert(true);
 			ec.save();
 		}
 	}
