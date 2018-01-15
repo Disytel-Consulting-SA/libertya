@@ -3276,3 +3276,77 @@ CREATE OR REPLACE VIEW c_pos_declaracionvalores_voided AS
 
 ALTER TABLE c_pos_declaracionvalores_voided
   OWNER TO libertya;
+  
+  
+--20180115 Desactivacion de registros a replicar hacia un eventual host con problemas. Por ejemplo sin conectividad
+CREATE OR REPLACE FUNCTION delay_records_for_host(p_hostpos int , p_delayvalue varchar)
+  RETURNS INTEGER AS
+$BODY$
+DECLARE
+atable VARCHAR;
+query VARCHAR;
+BEGIN
+    FOR atable IN (    SELECT lower(t.tablename)
+            FROM ad_tablereplication tr
+            INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id
+            UNION
+            SELECT 'ad_changelog_replication' )
+    LOOP
+        raise notice 'Delay para tabla %', atable;
+        query =    ' UPDATE ' || atable ||
+            ' SET reparray = ';
+        if atable <> 'ad_changelog_replication' then
+            query = query || '''SET''||';
+        end if;
+       
+        query = query ||'reparray, includeinreplication = ''' || p_delayvalue || ''' ' ||
+                ' WHERE includeinreplication = ''Y'' ' ||
+                ' AND (    ( strpos(reparray, ''1'') = ' || p_hostpos || ' AND (CHAR_LENGTH(reparray) - CHAR_LENGTH(REPLACE(reparray, ''1'', ''''))) = 1 )' ||
+                '     OR ( strpos(reparray, ''3'') = ' || p_hostpos || ' AND (CHAR_LENGTH(reparray) - CHAR_LENGTH(REPLACE(reparray, ''3'', ''''))) = 1 )' ||
+                '     OR ( strpos(reparray, ''A'') = ' || p_hostpos || ' AND (CHAR_LENGTH(reparray) - CHAR_LENGTH(REPLACE(reparray, ''A'', ''''))) = 1 )' ||
+                '     OR ( strpos(reparray, ''a'') = ' || p_hostpos || ' AND (CHAR_LENGTH(reparray) - CHAR_LENGTH(REPLACE(reparray, ''a'', ''''))) = 1 ) ) ';
+        --raise notice '%', query;
+        EXECUTE query;
+    END LOOP;
+
+    return 0;
+
+END
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+  
+-- Reactivacion de registros desactivados
+CREATE OR REPLACE FUNCTION undelay_records_for_host(p_delayvalue varchar)
+  RETURNS INTEGER AS
+$BODY$
+DECLARE
+atable VARCHAR;
+query VARCHAR;
+BEGIN
+    FOR atable IN (    SELECT lower(t.tablename)
+            FROM ad_tablereplication tr
+            INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id
+            UNION
+            SELECT 'ad_changelog_replication' )
+    LOOP
+        raise notice 'Undelay para tabla %', atable;
+        query =    ' UPDATE ' || atable ||
+            ' SET reparray = ';
+        if atable <> 'ad_changelog_replication' then
+            query = query || '''SET''||';
+        end if;
+       
+        query = query ||'reparray, includeinreplication = ''Y'' ' ||
+                ' WHERE includeinreplication = ''' || p_delayvalue || ''' ';
+        --raise notice '%', query;
+        EXECUTE query;
+    END LOOP;
+
+    return 0;
+
+END
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+  
+
+  
