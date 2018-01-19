@@ -3348,5 +3348,6 @@ END
 $BODY$
   LANGUAGE 'plpgsql' VOLATILE;
   
+--20180119 Nuevo indice remito -> factura, el cual es necesario para agilizar los tiempos en la impresion de facturas
+update ad_system set dummy = (SELECT addindexifnotexists('m_inout_invoice','m_inout','c_invoice_id'));
 
-  
