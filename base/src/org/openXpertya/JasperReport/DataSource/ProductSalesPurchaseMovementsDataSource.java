@@ -41,7 +41,7 @@ public class ProductSalesPurchaseMovementsDataSource extends QueryDataSource {
 
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select i.dateinvoiced, dt.name as doctypename, i.c_invoice_id, i.documentno, o.documentno as order, coalesce(i.nombrecli,bp.name) as bpartner_name, sum(qtyinvoiced*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as qty, sum(linenetamount+taxamt) as linetotalamt " +
+		StringBuffer sql = new StringBuffer("select i.dateinvoiced, dt.name as doctypename, i.c_invoice_id, i.documentno, o.documentno as order, coalesce(i.nombrecli,bp.name) as bpartner_name, sum(qtyinvoiced*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as qty, sum(currencybase(linenetamount+taxamt, i.c_currency_id, i.dateacct, i.ad_client_id, i.ad_org_id)*(CASE WHEN i.issotrx = 'N' AND signo_issotrx = -1 THEN 1 WHEN i.issotrx = 'N' AND signo_issotrx = 1 THEN -1 ELSE signo_issotrx END)) as linetotalamt " +
 											"from c_invoiceline as il " +
 											"inner join c_invoice as i on il.c_invoice_id = i.c_invoice_id " +
 											"inner join c_doctype as dt on i.c_doctypetarget_id = dt.c_doctype_id " +
