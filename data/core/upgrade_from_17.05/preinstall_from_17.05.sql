@@ -3351,3 +3351,35 @@ $BODY$
 --20180119 Nuevo indice remito -> factura, el cual es necesario para agilizar los tiempos en la impresion de facturas
 update ad_system set dummy = (SELECT addindexifnotexists('m_inout_invoice','m_inout','c_invoice_id'));
 
+--20180124-0900 Constraints para la tabla de configuración de corrección de cobranza
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_doctype_recovery FOREIGN KEY (c_doctype_recovery_id)
+      REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_doctype_credit_recovery FOREIGN KEY (c_doctype_credit_recovery_id)
+      REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_doctype_rejected FOREIGN KEY (c_doctype_rejected_id)
+      REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_doctype_credit_rejected FOREIGN KEY (c_doctype_credit_rejected_id)
+      REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_product_recovery FOREIGN KEY (m_product_recovery_id)
+      REFERENCES m_product (m_product_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
+
+ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_product_rejected FOREIGN KEY (m_product_rejected_id)
+      REFERENCES m_product (m_product_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION;
