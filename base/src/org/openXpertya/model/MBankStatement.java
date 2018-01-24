@@ -466,6 +466,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
             if( line.getC_Payment_ID() != 0 ) {
                 MPayment payment = new MPayment( getCtx(),line.getC_Payment_ID(),get_TrxName());
                 payment.setIsReconciled( true );
+                payment.setUpdateBPBalance(false);
                 if(!payment.save()){
                 	setProcessMsg(CLogger.retrieveErrorAsString());
                 	return DOCSTATUS_Invalid;
