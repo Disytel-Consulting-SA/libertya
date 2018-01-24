@@ -3383,3 +3383,6 @@ ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_pro
 ALTER TABLE c_payment_recovery_config ADD CONSTRAINT payment_recovery_config_product_rejected FOREIGN KEY (m_product_rejected_id)
       REFERENCES m_product (m_product_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE NO ACTION;
+      
+--20180124-1056 Las preferencias DIF_CAMBIO_ARTICULO y DIF_CAMBIO_PTO_VENTA estaban con compañía System en lugar de Libertya
+update ad_preference set ad_client_id = 1010016 where ad_componentobjectuid in ('CORE-AD_Preference-1011156', 'CORE-AD_Preference-1011157');
