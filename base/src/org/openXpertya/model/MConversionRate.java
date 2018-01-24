@@ -330,7 +330,7 @@ public class MConversionRate extends X_C_Conversion_Rate {
 
         // Conversion Date
         if (ConvDate == null) {
-            ConvDate	= new Timestamp(System.currentTimeMillis());
+            ConvDate	= Env.getDate();
         }
 
         // Get Rate
