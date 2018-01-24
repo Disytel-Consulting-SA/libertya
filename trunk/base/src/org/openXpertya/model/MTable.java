@@ -2801,6 +2801,9 @@ public class MTable extends AbstractTableModel implements Serializable {
                 if ("AD_ComponentVersion_ID".equalsIgnoreCase(columnName) || "AD_ComponentObjectUID".equalsIgnoreCase(columnName) || 
                 	"RepArray".equalsIgnoreCase(columnName) || "RetrieveUID".equalsIgnoreCase(columnName) || "IncludeInReplication".equalsIgnoreCase(columnName))
                 	;
+                // Omitir copiar CAE, VtoCae, CaeError para Facturas
+                else if ("C_Invoice".equalsIgnoreCase(getTableName()) && ("cae".equalsIgnoreCase(columnName) || "vtocae".equalsIgnoreCase(columnName) || "caeerror".equalsIgnoreCase(columnName)))
+                	;
                 else if( field.isVirtualColumn()) {
                     ;
                 } else if( field.isKey() || columnName.equals( "AD_Client_ID" )
