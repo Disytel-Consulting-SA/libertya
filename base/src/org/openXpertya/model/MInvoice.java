@@ -1522,7 +1522,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		for (int i = 0; i < fromLines.length; i++) {
 			MInvoiceLine line = new MInvoiceLine(getCtx(), 0, get_TrxName());
 
-			PO.copyValues(fromLines[i], line, getAD_Client_ID(), getAD_Org_ID());
+			PO.copyValues(fromLines[i], line, line.getAD_Client_ID(), line.getAD_Org_ID());
 			line.setC_Invoice_ID(getC_Invoice_ID());
 			line.setInvoice(this);
 			line.setC_InvoiceLine_ID(0); // new
@@ -4892,8 +4892,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		setSkipExtraValidations(true);
 		
 		// Deep Copy
+		Timestamp dateDoc = isSOTrx()?Env.getDate():getDateAcct();
 
-		MInvoice reversal = copyFrom(this, Env.getDate(),
+		MInvoice reversal = copyFrom(this, dateDoc,
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
 				get_TrxName(), true, true, true, !isSOTrx());
 
@@ -4915,6 +4916,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			setAuthorizationChainStatus(null);
 			reversal.setM_AuthorizationChain_ID(0);
 			reversal.setAuthorizationChainStatus(null);
+		}
+		
+		if(!isSOTrx()){
+			reversal.setDateAcct(getDateAcct());
+			reversal.setDateInvoiced(getDateInvoiced());
 		}
 		
 		// Seteo la bandera que indica si se trata de una anulación.
