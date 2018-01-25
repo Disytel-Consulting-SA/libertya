@@ -75,7 +75,7 @@ public class ProductCategoryAcctCopy extends SvrProcess {
 
     protected String doIt() throws Exception {
         log.info( "C_AcctSchema_ID=" + p_C_AcctSchema_ID );
-
+        
         if( p_C_AcctSchema_ID == 0 ) {
             throw new ErrorOXPSystem( "C_AcctSchema_ID=0" );
         }
@@ -88,14 +88,31 @@ public class ProductCategoryAcctCopy extends SvrProcess {
 
         // Update
 
-        String sql = "UPDATE M_Product_Acct pa " + "SET (P_Revenue_Acct,P_Expense_Acct,P_Asset_Acct,P_COGS_Acct," + " P_PurchasePriceVariance_Acct,P_InvoicePriceVariance_Acct," + " P_TradeDiscountRec_Acct,P_TradeDiscountGrant_Acct)=" + " (SELECT P_Revenue_Acct,P_Expense_Acct,P_Asset_Acct,P_COGS_Acct," + " P_PurchasePriceVariance_Acct,P_InvoicePriceVariance_Acct," + " P_TradeDiscountRec_Acct,P_TradeDiscountGrant_Acct" + " FROM M_Product_Category_Acct pca" + " WHERE pca.M_Product_Category_ID=" + p_M_Product_Category_ID + " AND pca.C_AcctSchema_ID=" + p_C_AcctSchema_ID + "), Updated=SysDate, UpdatedBy=0 " + "WHERE pa.C_AcctSchema_ID=" + p_C_AcctSchema_ID + " AND EXISTS (SELECT * FROM M_Product p " + "WHERE p.M_Product_ID=pa.M_Product_ID" + " AND p.M_Product_Category_ID=" + p_M_Product_Category_ID + ")";
+        String sql = 	" UPDATE M_Product_Acct pa " + 
+        				" SET 	updated=now(), " +
+        				" 		updatedby = " + getAD_User_ID() + ", " +
+        				" 		P_Revenue_Acct = foo.P_Revenue_Acct, " +
+        				" 		P_Expense_Acct = foo.P_Expense_Acct, " +
+        				"		P_Asset_Acct = foo.P_Asset_Acct, " +
+        				"		P_COGS_Acct = foo.P_COGS_Acct, " + 
+        				" 		P_PurchasePriceVariance_Acct = foo.P_PurchasePriceVariance_Acct, " +
+        				"		P_InvoicePriceVariance_Acct = foo.P_InvoicePriceVariance_Acct, " + 
+        				" 		P_TradeDiscountRec_Acct = foo.P_TradeDiscountRec_Acct, " +
+        				"		P_TradeDiscountGrant_Acct = foo.P_TradeDiscountGrant_Acct" + 
+        				" FROM " +
+        				" 	(SELECT P_Revenue_Acct,P_Expense_Acct,P_Asset_Acct,P_COGS_Acct," + " P_PurchasePriceVariance_Acct,P_InvoicePriceVariance_Acct," + " P_TradeDiscountRec_Acct,P_TradeDiscountGrant_Acct" + " " +
+        				"	 FROM M_Product_Category_Acct pca" + 
+        				" 	 WHERE pca.M_Product_Category_ID=" + p_M_Product_Category_ID + 
+        				" 	 AND pca.C_AcctSchema_ID=" + p_C_AcctSchema_ID + ") as foo " +
+        				" WHERE pa.C_AcctSchema_ID=" + p_C_AcctSchema_ID + 
+        				" AND EXISTS (SELECT * FROM M_Product p " + "WHERE p.M_Product_ID=pa.M_Product_ID" + " AND p.M_Product_Category_ID=" + p_M_Product_Category_ID + ")";
         int updated = DB.executeUpdate( sql );
 
         addLog( 0,null,new BigDecimal( updated ),"@Updated@" );
 
         // Insert new Products
 
-        sql = "INSERT INTO M_Product_Acct " + "(M_Product_ID, C_AcctSchema_ID," + " AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy," + " P_Revenue_Acct, P_Expense_Acct, P_Asset_Acct, P_CoGs_Acct," + " P_PurchasePriceVariance_Acct, P_InvoicePriceVariance_Acct," + " P_TradeDiscountRec_Acct, P_TradeDiscountGrant_Acct) " + "SELECT p.M_Product_ID, acct.C_AcctSchema_ID," + " p.AD_Client_ID, p.AD_Org_ID, 'Y', SysDate, 0, SysDate, 0," + " acct.P_Revenue_Acct, acct.P_Expense_Acct, acct.P_Asset_Acct, acct.P_CoGs_Acct," + " acct.P_PurchasePriceVariance_Acct, acct.P_InvoicePriceVariance_Acct," + " acct.P_TradeDiscountRec_Acct, acct.P_TradeDiscountGrant_Acct " + "FROM M_Product p" + " INNER JOIN M_Product_Category_Acct acct ON (acct.M_Product_Category_ID=p.M_Product_Category_ID)" + "WHERE acct.C_AcctSchema_ID=" + p_C_AcctSchema_ID    // #
+        sql = "INSERT INTO M_Product_Acct " + "(M_Product_ID, C_AcctSchema_ID," + " AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy," + " P_Revenue_Acct, P_Expense_Acct, P_Asset_Acct, P_CoGs_Acct," + " P_PurchasePriceVariance_Acct, P_InvoicePriceVariance_Acct," + " P_TradeDiscountRec_Acct, P_TradeDiscountGrant_Acct, p_revenueexchange_acct) " + "SELECT p.M_Product_ID, acct.C_AcctSchema_ID," + " p.AD_Client_ID, p.AD_Org_ID, 'Y', now(), "+getAD_User_ID()+", now(), "+getAD_User_ID()+"," + " acct.P_Revenue_Acct, acct.P_Expense_Acct, acct.P_Asset_Acct, acct.P_CoGs_Acct," + " acct.P_PurchasePriceVariance_Acct, acct.P_InvoicePriceVariance_Acct," + " acct.P_TradeDiscountRec_Acct, acct.P_TradeDiscountGrant_Acct, acct.p_revenueexchange_acct " + "FROM M_Product p" + " INNER JOIN M_Product_Category_Acct acct ON (acct.M_Product_Category_ID=p.M_Product_Category_ID)" + "WHERE acct.C_AcctSchema_ID=" + p_C_AcctSchema_ID    // #
               + " AND p.M_Product_Category_ID=" + p_M_Product_Category_ID    // #
               + " AND NOT EXISTS (SELECT * FROM M_Product_Acct pa " + "WHERE pa.M_Product_ID=p.M_Product_ID" + " AND pa.C_AcctSchema_ID=acct.C_AcctSchema_ID)";
 
