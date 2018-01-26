@@ -2230,7 +2230,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 			
 			// Validar CAI Obligatorio
-			if(partner.isMandatoryCAI() && Util.isEmpty(getCAI())){
+			if(!isSOTrx() && partner.isMandatoryCAI() && Util.isEmpty(getCAI())){
 				log.saveError("MandatoryCAIValidationMsg", "");
 				return false;
 			}
