@@ -176,7 +176,10 @@ public class CalloutEngine implements Callout {
             return "";
         }
 
-        mTab.setValue( "DateAcct",value );
+		// Sólo se setea la fecha contable cuando el documento no está procesado, si es que existe dicho campo
+        if(!mTab.isProcessed()){
+            mTab.setValue( "DateAcct",value );
+        }
 
         // setCalloutActive(false);
 
