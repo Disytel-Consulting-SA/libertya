@@ -3540,3 +3540,13 @@ update c_country set countrycodefe = '337' where ad_componentobjectuid = 'CORE-C
 update c_country set countrycodefe = '348' where ad_componentobjectuid = 'CORE-C_Country-345';
 update c_country set countrycodefe = '144' where ad_componentobjectuid = 'CORE-C_Country-347';
 update c_country set countrycodefe = '132' where ad_componentobjectuid = 'CORE-C_Country-348';
+
+--20180131-1000 Codigos de monedas adicionales
+update c_currency set wsfecode = '014' where ad_componentobjectuid = 'CORE-C_Currency-241';
+update c_currency set wsfecode = '059' where ad_componentobjectuid = 'CORE-C_Currency-282';
+update c_currency set wsfecode = '023' where ad_componentobjectuid = 'CORE-C_Currency-205';
+update c_currency set wsfecode = '026' where ad_componentobjectuid = 'CORE-C_Currency-120';
+update c_currency set wsfecode = '031' where ad_componentobjectuid = 'CORE-C_Currency-146';
+update c_currency set wsfecode = '035' where ad_componentobjectuid = 'CORE-C_Currency-308';
+update c_currency set wsfecode = '042' where ad_componentobjectuid = 'CORE-C_Currency-298';
+update c_currency set wsfecode = '009' where ad_componentobjectuid = 'CORE-C_Currency-318';
