@@ -3550,3 +3550,47 @@ update c_currency set wsfecode = '031' where ad_componentobjectuid = 'CORE-C_Cur
 update c_currency set wsfecode = '035' where ad_componentobjectuid = 'CORE-C_Currency-308';
 update c_currency set wsfecode = '042' where ad_componentobjectuid = 'CORE-C_Currency-298';
 update c_currency set wsfecode = '009' where ad_componentobjectuid = 'CORE-C_Currency-318';
+
+--20180202-1207 Relacionados con merge r2303 y 2304
+
+-- Columna agregada para el Detalle de Cuentas (CORE)
+alter table T_Acct_Detail add column origin_tableName varchar(150);
+alter table T_Acct_Detail add column procedence_id integer;
+
+-- Agregado de columna para el campo cuenta contable (CORE)
+alter table C_Payment add column accounting_c_charge_id integer;
+alter table C_BankTransfer add column accounting_c_charge_id integer;
+alter table C_CreditCardSettlement add column accounting_c_charge_id integer;
+alter table C_CashLine add column accounting_c_charge_id integer;
+
+-- Actualizacion de las descripciones de registros contables
+-- Se modificarán para liquidaciones de tarj de crédito, facturas, OP/RC y extractos
+
+-- update description on c_creditCardSettlement
+update fact_acct fa set description = (
+    select settlementNo || ' ' || description from C_CreditCardSettlement ccs where ccs.C_CreditCardSettlement_ID = fa.record_id) 
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_CreditCardSettlement') ;
+
+-- update description on c_invoice
+update fact_acct fa set description = (
+    select i.documentNo || coalesce(' #' || to_char(l.line,'99999'), '') || coalesce(' (' || l.description || ')' ,'')
+    from C_Invoice i  
+    left join C_invoiceLine l on (i.c_invoice_id = l.c_invoice_id) 
+    where i.C_Invoice_ID = fa.record_id and l.c_invoiceLine_id = fa.line_id) 
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Invoice');
+
+-- update description on c_bankStatement
+update fact_acct fa set description = (
+    select bs.name || coalesce(' #' || to_char(bsl.line, '99999'), '') || coalesce(' (' || bsl.description || ')' ,'')
+    from c_bankStatement bs  
+    left join C_bankStatementLine bsl on (bs.c_bankStatement_id = bsl.c_bankStatement_id) 
+    where bs.c_bankStatement_ID = fa.record_id and bsl.c_bankStatement_id = fa.line_id)
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_BankStatement');
+
+-- update description on allocationHdr
+update fact_acct fa set description = (
+    select a.documentNo || coalesce(' #' || to_char(al.allocationNo, '99999'), '') || coalesce(' (' || al.line_description || ')','')
+    from c_allocationHdr a  
+    left join C_allocationLine al on (a.c_allocationHdr_id = al.c_allocationHdr_id)
+    where a.c_allocationHdr_ID = fa.record_id and al.c_allocationLine_id = fa.line_id)
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_AllocationHdr');

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CreditCardSettlement
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-02-09 12:25:48.771 */
+ *  @version  - 2018-01-30 10:24:41.946 */
 public class X_C_CreditCardSettlement extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -51,6 +51,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_CreditCardSettlement[").append(getID()).append("]");
 return sb.toString();
+}
+public static final int ACCOUNTING_C_CHARGE_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
+/** Set ACCOUNTING_C_Charge_ID */
+public void setACCOUNTING_C_Charge_ID (int ACCOUNTING_C_Charge_ID)
+{
+if (ACCOUNTING_C_Charge_ID <= 0) set_Value ("ACCOUNTING_C_Charge_ID", null);
+ else 
+set_Value ("ACCOUNTING_C_Charge_ID", new Integer(ACCOUNTING_C_Charge_ID));
+}
+/** Get ACCOUNTING_C_Charge_ID */
+public int getACCOUNTING_C_Charge_ID() 
+{
+Integer ii = (Integer)get_Value("ACCOUNTING_C_Charge_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Amount.
 Amount in a defined currency */
@@ -162,8 +177,8 @@ public static final String CREDITCARDTYPE_FIRSTDATA = "FD";
 Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
-if (CreditCardType == null || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA") || CreditCardType.equals("FD"));
- else throw new IllegalArgumentException ("CreditCardType Invalid value - " + CreditCardType + " - Reference = CREDITCARDTYPE_AD_Reference_ID - AM - VI - NA - FD");
+if (CreditCardType == null || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA") || CreditCardType.equals("FD") || ( refContainsValue("SAPI2CORE-AD_Reference-1010321-20170125094655", CreditCardType) ) );
+ else throw new IllegalArgumentException ("CreditCardType Invalid value: " + CreditCardType + ".  Valid: " +  refValidOptions("SAPI2CORE-AD_Reference-1010321-20170125094655") );
 if (CreditCardType != null && CreditCardType.length() > 2)
 {
 log.warning("Length > 2 - truncated");
@@ -210,8 +225,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - " + DocAction + " - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -255,8 +270,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - " + DocStatus + " - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {

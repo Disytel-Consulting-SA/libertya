@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-29 10:53:09.826 */
+ *  @version  - 2018-01-30 10:24:43.022 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -85,6 +85,21 @@ set_Value ("A_Bank", A_Bank);
 public String getA_Bank() 
 {
 return (String)get_Value("A_Bank");
+}
+public static final int ACCOUNTING_C_CHARGE_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
+/** Set ACCOUNTING_C_Charge_ID */
+public void setACCOUNTING_C_Charge_ID (int ACCOUNTING_C_Charge_ID)
+{
+if (ACCOUNTING_C_Charge_ID <= 0) set_Value ("ACCOUNTING_C_Charge_ID", null);
+ else 
+set_Value ("ACCOUNTING_C_Charge_ID", new Integer(ACCOUNTING_C_Charge_ID));
+}
+/** Get ACCOUNTING_C_Charge_ID */
+public int getACCOUNTING_C_Charge_ID() 
+{
+Integer ii = (Integer)get_Value("ACCOUNTING_C_Charge_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Account No.
 Account Number */

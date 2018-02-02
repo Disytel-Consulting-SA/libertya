@@ -73,6 +73,7 @@ public class InfoProduct extends Info implements ActionListener {
 	 */
 	private static final String WILCARD_PREFIX_PREFERENCE_NAME = "InfoProduct_PrefixWildcard";
 	private static final String WILCARD_SUFIX_PREFERENCE_NAME = "InfoProduct_SufixWildcard";
+	private static final String DEFAULT_USER_PRICELIST_ID = "M_PriceList_Version_ID";
 	
     /**
      * Constructor de la clase ...
@@ -645,7 +646,13 @@ public class InfoProduct extends Info implements ActionListener {
      */
 
     private int findPLV( int M_PriceList_ID ) {
-        Timestamp priceDate = null;
+    	int priceList_default = Integer.parseInt(MPreference.searchCustomPreferenceValue(
+    			DEFAULT_USER_PRICELIST_ID,
+				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()),
+				Env.getAD_User_ID(Env.getCtx()), true));
+    	return priceList_default;
+    	/**Timestamp priceDate = null;
 
         // Sales Order Date
 
@@ -701,7 +708,7 @@ public class InfoProduct extends Info implements ActionListener {
 
         Env.setContext( Env.getCtx(),p_WindowNo,"M_PriceList_Version_ID",retValue );
 
-        return retValue;
+        return retValue;**/
     }    // findPLV
 
     protected void instanceFound(int msi){

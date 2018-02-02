@@ -813,6 +813,13 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
         pay.setUpdateBPBalance(false);
         pay.setC_Project_ID(getC_Project_ID());
 
+        /*
+		 * Se carga la cuenta contable que debe utilizarse en la contabilidad 
+		 */
+		if(getACCOUNTING_C_Charge_ID() > 0) {
+			pay.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
+		}
+        
         if (!pay.save( get_TrxName())) {
         	throw new Exception("@PaymentError@: " + CLogger.retrieveErrorAsString());
         }

@@ -1490,6 +1490,10 @@ public abstract class Doc {
                 } else if( col.equalsIgnoreCase( "UpdatedBy" )) {
                     p_vo.UpdatedBy = rs.getInt( i );
                 }
+                
+                else if( col.equalsIgnoreCase( "Accounting_C_Charge_ID" )) {
+                    p_vo.Accounting_C_Charge_ID = rs.getInt( i );
+                }
             }    // for all columns
 
             p_vo.Status = STATUS_NotPosted;

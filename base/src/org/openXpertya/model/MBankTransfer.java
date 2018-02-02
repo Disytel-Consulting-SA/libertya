@@ -132,6 +132,14 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			 */
 			pagoOrigen.setChargeAmt(!anular && getcharge_amt_from()!=null?getcharge_amt_from().intValue():0);			
 			pagoOrigen.setC_Charge_ID(!anular && getcharge_from_ID()!=0?getcharge_from_ID():0); //zeroChargeID
+			
+			/*
+			 * Se carga la cuenta contable que debe utilizarse en la contabilidad 
+			 */
+			if(getACCOUNTING_C_Charge_ID() > 0) {
+				pagoOrigen.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
+			}
+			
 			if (!pagoOrigen.save()) 
 				return false;
 			
@@ -174,6 +182,13 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoDestino.setIsOverUnderPayment(false);
 			pagoDestino.setChargeAmt(0);
 			//pagoDestino.setC_Charge_ID(zeroChargeID); //(????)
+			
+			/*
+			 * Se carga la cuenta contable que debe utilizarse en la contabilidad 
+			 */
+			if(getACCOUNTING_C_Charge_ID() > 0) {
+				pagoDestino.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
+			}
 			
 			if (!pagoDestino.save())
 				return false;

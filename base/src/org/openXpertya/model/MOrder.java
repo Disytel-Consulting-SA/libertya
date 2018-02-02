@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
+import org.apache.http.client.utils.DateUtils;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.process.DocAction;
@@ -2078,6 +2080,20 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 				m_processMsg = Msg.getMsg(getCtx(),
 						"GrandTotalNotSurpassMinimumPurchaseAmt",
 						new Object[] { bpartner.getMinimumPurchasedAmt() });
+        		return DocAction.STATUS_Invalid;
+        	}
+        	
+        	// Chequeo de vencimiento de la fecha prometida
+        	Date today = new Date();
+        	Calendar cal = Calendar.getInstance();
+        	cal.setTime(today);
+        	cal.set(Calendar.HOUR_OF_DAY, 0);
+        	cal.set(Calendar.MINUTE, 0);
+        	cal.set(Calendar.SECOND, 0);
+        	cal.set(Calendar.MILLISECOND, 0);
+        	Timestamp todayts  = new Timestamp(cal.getTimeInMillis()); 
+        	if(getDatePromised().before(todayts)) {
+        		m_processMsg = "@DatePromisedExpired@";
         		return DocAction.STATUS_Invalid;
         	}
         }
