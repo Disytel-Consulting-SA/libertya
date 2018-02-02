@@ -25,6 +25,9 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MBankAccount;
+import org.openXpertya.model.MBankTransfer;
+import org.openXpertya.model.MCharge;
+import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPeriod;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -76,6 +79,10 @@ public class Doc_Bank extends Doc {
             if( p_vo.Amounts[ Doc.AMTTYPE_Gross ] == null ) {
                 p_vo.Amounts[ Doc.AMTTYPE_Gross ] = Env.ZERO;
             }
+            
+            //Agregado por Ibrian para setear el documentNo
+            p_vo.DocumentNo = rs.getString("name");
+            
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadDocumentDetails",e );
         }
@@ -224,9 +231,17 @@ public class Doc_Bank extends Doc {
             }
 
             // BankInTransit   DR      CR              (Payment)
-
-            fl = fact.createLine( line,getAccount( Doc.ACCTTYPE_BankInTransit,as ),line.getC_Currency_ID(),line.getTrxAmt().negate());
-
+            /*
+             * Utilizo para contabilizar la cuenta asociada al Payment
+             * Ya sea la cuenta por defecto o la cuenta de configuracion contable
+             */
+            MPayment payment = new MPayment(getCtx(), line.getC_Payment_ID(), getTrxName());
+            if(payment != null && payment.getACCOUNTING_C_Charge_ID() > 0) {
+            	fl = fact.createLine( line, MCharge.getAccount(p_vo.Accounting_C_Charge_ID, as, payment.isReceipt() ? new BigDecimal(-1) : null),line.getC_Currency_ID(),line.getTrxAmt().negate());
+            } else {
+            	fl = fact.createLine( line,getAccount( Doc.ACCTTYPE_BankInTransit,as ),line.getC_Currency_ID(),line.getTrxAmt().negate());
+            }
+                      
             if( fl != null ) {
                 if( C_BPartner_ID != 0 ) {
                     fl.setC_BPartner_ID( C_BPartner_ID );

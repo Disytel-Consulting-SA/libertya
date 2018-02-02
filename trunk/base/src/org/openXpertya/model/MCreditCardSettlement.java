@@ -158,6 +158,16 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			found = 1;
 		}
 		
+		/*
+		 * Si cambio la cuenta contable de la liquidación y tengo un pago
+		 * asociado, también actualizo la cuenta del pago
+		 */
+		if(getACCOUNTING_C_Charge_ID() != 0) {
+			MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
+			payment.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
+			payment.save();
+		}
+		
 		return found == 0;
 	}
 
@@ -831,6 +841,13 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 			boolean saveOk = true;
 
+			/*
+			 * Se carga la cuenta contable que debe utilizarse en la contabilidad 
+			 */
+			if(getACCOUNTING_C_Charge_ID() > 0) {
+				payment.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
+			}
+			
 			// Guarda el pago
 			if (!payment.save()) {
 				m_processMsg = CLogger.retrieveErrorAsString();

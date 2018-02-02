@@ -173,6 +173,10 @@ public class DocVO {
     /** Descripción de Campos */
 
     public int C_Charge_ID = 0;
+    
+    /** Descripción de Campos */
+
+    public int Accounting_C_Charge_ID = 0;
 
     /** Descripción de Campos */
 

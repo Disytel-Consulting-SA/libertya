@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CashLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-29 11:22:33.094 */
+ *  @version  - 2018-01-30 10:24:41.472 */
 public class X_C_CashLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -55,6 +55,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_CashLine[").append(getID()).append("]");
 return sb.toString();
+}
+public static final int ACCOUNTING_C_CHARGE_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
+/** Set ACCOUNTING_C_Charge_ID */
+public void setACCOUNTING_C_Charge_ID (int ACCOUNTING_C_Charge_ID)
+{
+if (ACCOUNTING_C_Charge_ID <= 0) set_Value ("ACCOUNTING_C_Charge_ID", null);
+ else 
+set_Value ("ACCOUNTING_C_Charge_ID", new Integer(ACCOUNTING_C_Charge_ID));
+}
+/** Get ACCOUNTING_C_Charge_ID */
+public int getACCOUNTING_C_Charge_ID() 
+{
+Integer ii = (Integer)get_Value("ACCOUNTING_C_Charge_ID");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Amount.
 Amount in a defined currency */
@@ -170,8 +185,8 @@ public static final String CASHTYPE_CashTransfer = "X";
 Source of Cash */
 public void setCashType (String CashType)
 {
-if (CashType.equals("P") || CashType.equals("T") || CashType.equals("I") || CashType.equals("E") || CashType.equals("R") || CashType.equals("C") || CashType.equals("D") || CashType.equals("X"));
- else throw new IllegalArgumentException ("CashType Invalid value - Reference = CASHTYPE_AD_Reference_ID - P - T - I - E - R - C - D - X");
+if (CashType.equals("P") || CashType.equals("T") || CashType.equals("I") || CashType.equals("E") || CashType.equals("R") || CashType.equals("C") || CashType.equals("D") || CashType.equals("X") || ( refContainsValue("CORE-AD_Reference-217", CashType) ) );
+ else throw new IllegalArgumentException ("CashType Invalid value: " + CashType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-217") );
 if (CashType == null) throw new IllegalArgumentException ("CashType is mandatory");
 if (CashType.length() > 1)
 {
@@ -443,8 +458,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -488,8 +503,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
