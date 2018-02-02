@@ -317,6 +317,8 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
         } else {
             reversal.setWriteOffAmt( getWriteOffAmt().negate());
         }
+        
+        reversal.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
 
         return reversal;
     }    // reverse
