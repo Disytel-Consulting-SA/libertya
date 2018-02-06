@@ -310,7 +310,8 @@ public class AccountsDetail extends SvrProcess {
         sb.append(        getAD_PInstance_ID() + ", 0, ");
         sb.append(        DB.TO_DATE( p_DateAcct_From,true )).append( ",0, '0'," );
         sb.append(        DB.TO_STRING( Msg.getMsg( Env.getCtx(),"BeginningBalance" )) + ", ");
-        sb.append( "      NULL, COALESCE(SUM(AmtAcctDr),0), COALESCE(SUM(AmtAcctCr),0), COALESCE(SUM(AmtAcctDr-AmtAcctCr),0), "); 
+        sb.append(        DB.TO_STRING( Msg.getMsg( Env.getCtx(),"BeginningBalance" )) + ", ");
+        sb.append( "      COALESCE(SUM(AmtAcctDr),0), COALESCE(SUM(AmtAcctCr),0), COALESCE(SUM(AmtAcctDr-AmtAcctCr),0), "); 
         sb.append(        (p_C_BPartner_ID == 0 ? "NULL":p_C_BPartner_ID) + ",");
         sb.append(        (p_M_Product_ID == 0 ? "NULL," :p_M_Product_ID + ","));
         sb.append( "	   NULL,"); //Origen

@@ -134,7 +134,7 @@ public class Doc_Payment extends Doc implements DocProjectSplitterInterface {
 
         // Publicar contabilidad en debe/haber dependiendo el signo del tipo de documento
         MDocType dt = MDocType.get(getCtx(), p_vo.C_DocType_ID, getTrxName());
-        
+                
         if( p_vo.DocumentType.equals( DOCTYPE_ARReceipt )) {
         	BigDecimal debitAmt = dt.getsigno_issotrx().equals(MDocType.SIGNO_ISSOTRX_1)?null:getAmount();
         	BigDecimal creditAmt = dt.getsigno_issotrx().equals(MDocType.SIGNO_ISSOTRX_1)?getAmount():null;
@@ -144,7 +144,7 @@ public class Doc_Payment extends Doc implements DocProjectSplitterInterface {
         	 * si no, uso la cuenta por defecto.
         	 */
         	if(p_vo.Accounting_C_Charge_ID > 0) {
-        		fact.createLine( null, MCharge.getAccount(p_vo.Accounting_C_Charge_ID, as, getAmount().negate()),p_vo.C_Currency_ID,debitAmt,creditAmt);
+        		fact.createLine( null, MCharge.getAccount(p_vo.Accounting_C_Charge_ID, as, new BigDecimal(-1)),p_vo.C_Currency_ID,debitAmt,creditAmt);
         	} else {
         		fact.createLine( null,getAccount( Doc.ACCTTYPE_BankInTransit,as ),p_vo.C_Currency_ID,debitAmt,creditAmt);
         	}
@@ -187,7 +187,7 @@ public class Doc_Payment extends Doc implements DocProjectSplitterInterface {
         	 * si no, uso la cuenta por defecto.
         	 */
         	if(p_vo.Accounting_C_Charge_ID > 0) {
-        		fact.createLine( null, MCharge.getAccount(p_vo.Accounting_C_Charge_ID, as, getAmount()),p_vo.C_Currency_ID,creditAmt, debitAmt);
+        		fact.createLine( null, MCharge.getAccount(p_vo.Accounting_C_Charge_ID, as, null),p_vo.C_Currency_ID,creditAmt, debitAmt);
         	} else {
         		fact.createLine( null,getAccount( Doc.ACCTTYPE_BankInTransit,as ),p_vo.C_Currency_ID,creditAmt, debitAmt);
         	}
