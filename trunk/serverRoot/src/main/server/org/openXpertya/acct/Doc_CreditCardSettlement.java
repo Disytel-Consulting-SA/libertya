@@ -70,6 +70,9 @@ public class Doc_CreditCardSettlement extends Doc {
 			p_vo.Amounts[ Doc.AMTTYPE_Gross ] = rs.getBigDecimal( "Amount" );
 			p_vo.Amounts[ Doc.AMTTYPE_Net ] = rs.getBigDecimal( "NetAmount" );
 			
+			/*Agregado para setear correctamente el documentNo*/
+			p_vo.DocumentNo = ccs.getSettlementNo();
+			
 			// Tipo de documento Liquidación de Tarjetas
 			p_vo.DocumentType = DOCTYPE_CreditCardSettlement;
 			loadDocumentType();
@@ -81,7 +84,7 @@ public class Doc_CreditCardSettlement extends Doc {
 			loadExpenses();
 			
 			/*Agregado por Ibrian para setear correctamente el documentNo*/
-			p_vo.DocumentNo = ccs.getSettlementNo();
+			//p_vo.DocumentNo = ccs.getSettlementNo();
 			
 		} catch (Exception e) {
 			log.severe(e.getMessage());
