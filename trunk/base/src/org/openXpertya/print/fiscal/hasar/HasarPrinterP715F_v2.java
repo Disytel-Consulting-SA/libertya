@@ -4,6 +4,14 @@ import java.math.BigDecimal;
 
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 
+/**
+ * Clase controladora de la impresora fiscal Hasar P715F versión 2 en adelante.
+ * Posee el mismo comportamiento que la P715F versión 1 a excepción de la
+ * precisión en decimales para el precio unitario.
+ * 
+ * @author Disytel
+ *
+ */
 public class HasarPrinterP715F_v2 extends HasarPrinterP715F {
 
 	public HasarPrinterP715F_v2() {
