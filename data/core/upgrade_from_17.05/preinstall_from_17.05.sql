@@ -3569,7 +3569,7 @@ alter table C_CashLine add column accounting_c_charge_id integer;
 -- update description on c_creditCardSettlement
 update fact_acct fa set description = (
     select settlementNo || ' ' || description from C_CreditCardSettlement ccs where ccs.C_CreditCardSettlement_ID = fa.record_id) 
-where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_CreditCardSettlement') ;
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_CreditCardSettlement') and ad_client_id = 1010016;
 
 -- update description on c_invoice
 update fact_acct fa set description = (
@@ -3577,7 +3577,7 @@ update fact_acct fa set description = (
     from C_Invoice i  
     left join C_invoiceLine l on (i.c_invoice_id = l.c_invoice_id) 
     where i.C_Invoice_ID = fa.record_id and l.c_invoiceLine_id = fa.line_id) 
-where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Invoice');
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Invoice') and ad_client_id = 1010016;
 
 -- update description on c_bankStatement
 update fact_acct fa set description = (
@@ -3585,7 +3585,7 @@ update fact_acct fa set description = (
     from c_bankStatement bs  
     left join C_bankStatementLine bsl on (bs.c_bankStatement_id = bsl.c_bankStatement_id) 
     where bs.c_bankStatement_ID = fa.record_id and bsl.c_bankStatement_id = fa.line_id)
-where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_BankStatement');
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_BankStatement') and ad_client_id = 1010016;
 
 -- update description on allocationHdr
 update fact_acct fa set description = (
@@ -3593,4 +3593,4 @@ update fact_acct fa set description = (
     from c_allocationHdr a  
     left join C_allocationLine al on (a.c_allocationHdr_id = al.c_allocationHdr_id)
     where a.c_allocationHdr_ID = fa.record_id and al.c_allocationLine_id = fa.line_id)
-where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_AllocationHdr');
+where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_AllocationHdr') and ad_client_id = 1010016;
