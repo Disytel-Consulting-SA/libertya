@@ -25,6 +25,8 @@ import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdater;
 import org.openXpertya.process.CreateReplicationTriggerProcess;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Util;
 
 
 public class ReplicationXMLUpdater extends PluginXMLUpdater {
@@ -328,6 +330,13 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 			}
 			else 
 				retValue = false;
+		}
+		/*
+		 * Logica para replicación de binarios. La información es recibida bajo encoding Base64, la cual hay que aplicar el decode correspondiente 
+		 */
+		else if (Integer.toString(DisplayType.Binary).equals(column.getType()) && !Util.isEmpty(column.getNewValue())) {
+			query.append("decode('").append(column.getNewValue()).append("', 'base64')");
+			retValue = true;
 		}
 		/* Si es una columna especial, concatenar la coma final */
 		if (retValue)

@@ -32,6 +32,7 @@ public class MChangelogReplication extends X_AD_Changelog_Replication {
 	public static final String XML_COL_ID_ATT = "id";
 	public static final String XML_VALUE_ATT = "value";
 	public static final String XML_NULL_ATT = "null";
+	public static final String XML_BINARY_ATT = "binary";
 	public static final String XML_NULL_Y_ATT = XML_NULL_ATT+"="+XML_DOBLE_QUOTE+"Y"+XML_DOBLE_QUOTE;
 	public static final String XML_HEADER_TAG = "<?xml version="+XML_DOBLE_QUOTE+"1.0"+XML_DOBLE_QUOTE+" encoding="+XML_DOBLE_QUOTE+"UTF-8"+XML_DOBLE_QUOTE+"?>";
 	public static final String XML_OPEN_TAG = "<columns>";

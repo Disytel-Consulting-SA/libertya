@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Util;
 
 public class ChangeLogElement {
 
@@ -36,8 +37,18 @@ public class ChangeLogElement {
 	
 	private int AD_Changelog_ID;
 	
- 	// Constructores
+	// Constructores
 	
+	
+	/** Constructor especifico para almacenar informacion bajo encoding Base64.  
+	 * Este constructor se incorpora para la replicación de binarios bajo dicho encoding. */
+	public ChangeLogElement(Integer ad_column_id, String newBase64EncodedValue, int changelogID){
+		setColumnData(ad_column_id);
+		setNewValue(newBase64EncodedValue);
+		setAD_Changelog_ID(changelogID);
+	}
+ 	
+	/** Constructor original.  Concebido originalmente para la gestión/instalacion de componentes */
 	public ChangeLogElement(Integer ad_column_id, String oldValue, String newValue, Object binaryValue, int changelogID){
 		setColumnData(ad_column_id);
 		setOldValue(valueFromColumnType(oldValue, AD_Reference_ID));
