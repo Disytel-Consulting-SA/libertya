@@ -159,6 +159,7 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 		Element aColumn = null;
 		String columnID = null;
 		boolean valueIsNull = false;
+		boolean valueIsBinary = false;
 		String value = null;
 
 		// Parsear el documento (si hay codificaciones no parseables, omitir e informar)
@@ -179,10 +180,15 @@ public class ChangeLogGroupListReplication extends ChangeLogGroupList {
 			aColumn = (Element)nodes.item(i);
 			columnID = aColumn.getAttribute(MChangelogReplication.XML_COL_ID_ATT);
 			valueIsNull = aColumn.hasAttribute(MChangelogReplication.XML_NULL_ATT);
+			valueIsBinary = aColumn.hasAttribute(MChangelogReplication.XML_BINARY_ATT);
 			value = valueIsNull?null:aColumn.getAttribute(MChangelogReplication.XML_VALUE_ATT);
 			
-			/* Incorporar al grupo */
-			ChangeLogElement element = new ChangeLogElement(Integer.parseInt(columnID), null, value, null, 0);	
+			/* Incorporar al grupo, en caso de ser dato binario, el mismo viaja en el XML mediante encoding Base64 (en newValue, no utiliza BinaryValue) */
+			ChangeLogElement element = null;
+			if (valueIsBinary)
+				element = new ChangeLogElement(Integer.parseInt(columnID), value, 0);
+			else
+				element = new ChangeLogElement(Integer.parseInt(columnID), null, value, null, 0);	
 			group.addElement(element);
 			
 			/* Ayudar al garbage collector */

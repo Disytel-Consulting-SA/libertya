@@ -6,6 +6,7 @@ import java.sql.ResultSetMetaData;
 import java.util.HashSet;
 import java.util.Vector;
 
+import org.apache.commons.codec.binary.Base64;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -13,6 +14,10 @@ public class ReplicationTableManager {
 
 	/** Modificador de nulls */
 	protected static final String NULL_Y = "null=\"Y\"";
+	
+	/** Columna binaria */
+	protected static final String BINARY_Y = "binary=\"Y\"";
+	
 	
 	/** Modificador especial en sentencia avanzada de filtrado de tablas para incluir tablas de eliminaciones */
 	public static final String DELETIONS_SQL_MODIFIER = "WITH DELETIONS";
@@ -101,8 +106,10 @@ public class ReplicationTableManager {
 			Integer columnId;
 			String columnValue;
 			String nullValue = "";
+			String binary = "";
 			for (int i = 1; i <= colCount; i++ )
 			{
+				binary = "";
 				// se omiten columnas especiales
 				columnName = recordMetaData.getColumnName(i).toLowerCase();
 				if (ReplicationConstants.COLUMN_RETRIEVEUID.equalsIgnoreCase(columnName) ||
@@ -116,12 +123,20 @@ public class ReplicationTableManager {
 				}
 				else
 				{
-					columnValue = recordRS.getObject(i).toString()
-															.replaceAll("&",  "&#x26;amp;")								
-															.replaceAll("<",  "&#x26;#x3C;")
-															.replaceAll(">",  "&#x26;#x3E;")
-															.replaceAll("\"", "&#x26;#x22;")
-															.replaceAll("'",  "&#x26;#x27;");
+					// Si la columna es de tipo binaria, a la información a replicar se le aplica un encoding Base64
+					// a fin de que los datos sean incluidos en el XML correctamente.  Luego se hace un decode en el destino
+					// Notar que estos datos viajaran en el newValue del ChangeLogElement, no en el BinaryValue
+					if (recordMetaData.getColumnType(i) == java.sql.Types.BINARY) {
+						columnValue = Base64.encodeBase64String((byte[])recordRS.getObject(i));
+						binary = BINARY_Y;
+					} else {
+						columnValue = recordRS.getObject(i).toString()
+																.replaceAll("&",  "&#x26;amp;")								
+																.replaceAll("<",  "&#x26;#x3C;")
+																.replaceAll(">",  "&#x26;#x3E;")
+																.replaceAll("\"", "&#x26;#x22;")
+																.replaceAll("'",  "&#x26;#x27;");
+					}
 					nullValue = "";
 				}
 
@@ -133,7 +148,7 @@ public class ReplicationTableManager {
 
 				// Armar la parte del XML
 				recordToReplicate.append("<column id=\"").append(columnId).append("\" value=\"")
-									.append(columnValue).append("\" ").append(nullValue).append("/>");
+									.append(columnValue).append("\" ").append(nullValue).append(" ").append(binary).append("/>");
 			}
 			// Si la tabla es de eliminacion, tomar la referencia a la tabla del registro a eliminar, dentro del contenido de recordRS
 			tableName = (ReplicationConstants.DELETIONS_TABLE.equalsIgnoreCase(rs.getString("tablename"))) ?
