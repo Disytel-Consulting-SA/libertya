@@ -3594,3 +3594,6 @@ update fact_acct fa set description = (
     left join C_allocationLine al on (a.c_allocationHdr_id = al.c_allocationHdr_id)
     where a.c_allocationHdr_ID = fa.record_id and al.c_allocationLine_id = fa.line_id)
 where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_AllocationHdr') and ad_client_id = 1010016;
+
+-- El campo Record_ID de la tabla AD_Attachment debe ser de tipo referencia (18), no un boton (28) 
+update ad_column set ad_reference_id = 18 where ad_componentobjectuid = 'CORE-AD_Column-2097';

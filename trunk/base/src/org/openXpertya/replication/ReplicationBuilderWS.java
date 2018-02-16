@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MChangeLog;
+import org.openXpertya.model.X_AD_Attachment;
 import org.openXpertya.model.X_C_Location;
 import org.openXpertya.model.X_C_ValidCombination;
 import org.openXpertya.model.X_M_AttributeSetInstance;
@@ -127,6 +128,17 @@ public class ReplicationBuilderWS extends ReplicationBuilder {
 						// Las columnas de tipo PAttribute referencia siempre a una entrada dentro de M_AttributeSetInstance
 						else if (DisplayType.PAttribute == element.getAD_Reference_ID()) {
 							tableName = X_M_AttributeSetInstance.Table_Name;
+						}
+						// Para el campo Record_ID de la tabla de adjuntos hay que resolverlo de manera especial, dado que no es una referencia explicita a una tabla
+						if (X_AD_Attachment.Table_Name.equalsIgnoreCase(group.getTableName()) && "Record_ID".equalsIgnoreCase(element.getColumnName())) {
+							int attRefTableID = -1;
+							for (ChangeLogElement e : group.getElements()) {
+								if (e.getColumnName().toLowerCase().equals("ad_table_id")) {
+									attRefTableID = Integer.parseInt((String)e.getNewValue());
+									break;
+								} 
+							}
+							tableName = DB.getSQLValueString(trxName, "SELECT tablename FROM AD_Table WHERE AD_Table_ID = ?", attRefTableID);
 						}
 						
 						/**
