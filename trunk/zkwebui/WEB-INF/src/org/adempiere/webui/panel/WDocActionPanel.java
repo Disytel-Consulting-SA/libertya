@@ -30,6 +30,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.window.FDialog;
+import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
@@ -321,9 +322,17 @@ public class WDocActionPanel extends Window implements EventListener
 	private void setValue()
 	{
 		int index = getSelectedIndex();
+		
+		// Logica similar a VDocAction.save para MAllocationHDR
+		String value = null;
+		if (m_AD_Table_ID == MAllocationHdr.Table_ID) {
+			value = translateAllocationAction(index);
+		} else
+			value = s_value[index];
+		
 		//	Save Selection
 		logger.config("DocAction=" + s_value[index]);
-		mTab.setValue("DocAction", s_value[index]);
+		mTab.setValue("DocAction", value);
 	}	//	save
 
 	 private void readReference()
@@ -332,7 +341,8 @@ public class WDocActionPanel extends Window implements EventListener
     		ArrayList<String> v_name = new ArrayList<String>();
     		ArrayList<String> v_description = new ArrayList<String>();
 
-    		DocumentEngine.readReferenceList(v_value, v_name, v_description);
+    		DocumentEngine.readReferenceList(org.openXpertya.process.DocAction.AD_REFERENCE_ID, v_value, v_name, v_description);
+    		DocumentEngine.readReferenceList(MAllocationHdr.ALLOCATIONACTION_AD_Reference_ID, v_value, v_name, v_description);
 
 	    	int size = v_value.size();
 			s_value = new String[size];
@@ -368,6 +378,13 @@ public class WDocActionPanel extends Window implements EventListener
 
 	public int getNumberOfOptions() {
 		return lstDocAction != null ? lstDocAction.getItemCount() : 0;
+	}
+	
+	// Similar a VDocAction.translateAllocationAction
+	private String translateAllocationAction(int actionIndex) {
+		String allocAction = s_value[actionIndex];
+		mTab.setValue("AllocationAction", allocAction);
+		return MAllocationHdr.getDocActionByAllocationAction(allocAction);
 	}
 
 }

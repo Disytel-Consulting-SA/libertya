@@ -1299,7 +1299,7 @@ public class DocumentEngine implements DocAction {
 	 * @param v_name
 	 * @param v_description
 	 */
-	public static void readReferenceList(ArrayList<String> v_value, ArrayList<String> v_name,
+	public static void readReferenceList(int referenceID, ArrayList<String> v_value, ArrayList<String> v_name,
 			ArrayList<String> v_description)
 	{
 		if (v_value == null) 
@@ -1323,7 +1323,7 @@ public class DocumentEngine implements DocAction {
 		try
 		{
 			PreparedStatement pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, DocAction.AD_REFERENCE_ID);
+			pstmt.setInt(1, referenceID);
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next())
 			{
