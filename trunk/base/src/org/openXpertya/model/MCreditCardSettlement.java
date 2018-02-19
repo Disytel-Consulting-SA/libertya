@@ -114,7 +114,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		int found = 0;
 
 		// Validación de unicidad mediante Entidad Comercial y número de liquidación.
-		if (newRecord) {
+		if (!Util.isEmpty(getC_BPartner_ID()) && !Util.isEmpty(getSettlementNo(), true)) {
 			StringBuffer sql = new StringBuffer();
 	
 			sql.append("SELECT ");
