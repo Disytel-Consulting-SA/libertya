@@ -242,7 +242,7 @@ public class MWarehouse extends X_M_Warehouse {
     public static MWarehouse[] getForOrg(Properties ctx, int AD_Org_ID, boolean onlyOne) {
 
         ArrayList	list	= new ArrayList();
-		String sql = "SELECT * FROM M_Warehouse WHERE AD_Org_ID=? AND isactive = 'Y' ORDER BY Created"
+		String sql = "SELECT * FROM M_Warehouse WHERE AD_Org_ID=? AND isactive = 'Y' ORDER BY isdefault desc, Created desc "
 				+ (onlyOne ? " LIMIT 1 " : "");
         PreparedStatement	pstmt	= null;
 
