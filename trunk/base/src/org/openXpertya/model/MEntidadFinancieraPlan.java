@@ -38,7 +38,7 @@ public class MEntidadFinancieraPlan extends X_M_EntidadFinancieraPlan {
 		// contenga la fecha actual.
 		StringBuffer sql = new StringBuffer("SELECT * "
 				+ "FROM M_EntidadFinancieraPlan " + "WHERE AD_Client_ID = ? "
-				+ "AND ? BETWEEN DateFrom AND DateTo " + "AND IsActive = 'Y' ");
+				+ "AND ?::date BETWEEN DateFrom::Date AND DateTo::date " + "AND IsActive = 'Y' ");
 		if(!Util.isEmpty(entidadFinancieraID, true)){
 			sql.append(" AND M_EntidadFinanciera_ID = "+entidadFinancieraID);
 		}
@@ -48,10 +48,10 @@ public class MEntidadFinancieraPlan extends X_M_EntidadFinancieraPlan {
 		List<MEntidadFinancieraPlan> planes = new ArrayList<MEntidadFinancieraPlan>();
 		
 		try {
-			pstmt = DB.prepareStatement(sql.toString(), trxName);
+			pstmt = DB.prepareStatement(sql.toString(), trxName, true);
 			int i = 1;
 			pstmt.setInt(i++, Env.getAD_Client_ID(ctx));
-			pstmt.setDate(i++, new Date(System.currentTimeMillis()));
+			pstmt.setTimestamp(i++, Env.getDate());
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
 				planes.add(new MEntidadFinancieraPlan(ctx, rs, trxName));
