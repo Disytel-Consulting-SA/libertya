@@ -534,7 +534,8 @@ public class MDiscountSchema extends X_M_DiscountSchema {
     		inDate = Env.getDate();
     	}
     	return isActive() 
-    				&& (getValidFrom().compareTo(inDate) <= 0)
+    				&& (getValidFrom() == null 
+    								|| getValidFrom().compareTo(inDate) <= 0)
 					&& (getValidTo() == null
 									|| inDate.compareTo(getValidTo()) <= 0 
 									|| TimeUtil.isSameDay(getValidTo(), inDate));
