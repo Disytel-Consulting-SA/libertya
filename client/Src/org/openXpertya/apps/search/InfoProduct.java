@@ -646,13 +646,25 @@ public class InfoProduct extends Info implements ActionListener {
      */
 
     private int findPLV( int M_PriceList_ID ) {
-    	int priceList_default = Integer.parseInt(MPreference.searchCustomPreferenceValue(
+    	String plv = MPreference.searchCustomPreferenceValue(
     			DEFAULT_USER_PRICELIST_ID,
 				Env.getAD_Client_ID(Env.getCtx()),
 				Env.getAD_Org_ID(Env.getCtx()),
-				Env.getAD_User_ID(Env.getCtx()), true));
-    	return priceList_default;
-    	/**Timestamp priceDate = null;
+				Env.getAD_User_ID(Env.getCtx()), true);
+    	
+    	if(!Util.isEmpty(plv, true)){
+    		int priceList_default = 0;
+    		try {
+    			priceList_default = Integer.parseInt(plv);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+    		if(priceList_default > 0){
+    			return priceList_default;
+    		}
+    	}
+    	
+    	Timestamp priceDate = null;
 
         // Sales Order Date
 
@@ -708,7 +720,7 @@ public class InfoProduct extends Info implements ActionListener {
 
         Env.setContext( Env.getCtx(),p_WindowNo,"M_PriceList_Version_ID",retValue );
 
-        return retValue;**/
+        return retValue;
     }    // findPLV
 
     protected void instanceFound(int msi){
