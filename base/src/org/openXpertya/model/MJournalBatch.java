@@ -875,9 +875,48 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 			return false;
 		}
 		
+		// Si no tenemos el período configurado entonces a partir de la fecha
+		// contable
+		if(Util.isEmpty(getC_Period_ID(), true) && getDateAcct() != null){
+			if(!setPeriodFrom(getDateAcct())){
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "PeriodNotFoundForDate",
+						new Object[] { Env.getDateFormatted(getDateAcct()) }));
+				return false;
+			}
+		}
+		
+		// Verificar si la fecha contable está incluída en el período del
+		// registro, sino asociar el período de la fecha contable
+		MPeriod p = MPeriod.get(getCtx(), getC_Period_ID(), get_TrxName());
+		if(!p.isIncludedInPeriod(getDateAcct())){
+			if(!setPeriodFrom(getDateAcct())){
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "PeriodNotFoundForDate",
+						new Object[] { Env.getDateFormatted(getDateAcct()) }));
+				return false;
+			}
+		}
+		
 		return true;
 	}
     
+	/**
+	 * Setea el período (C_Period_ID) en base a la fecha parámetro
+	 * 
+	 * @param date
+	 *            fecha base del período a asignar
+	 * @return true si pudo actualizar, false caso contrario
+	 */
+    public boolean setPeriodFrom(Timestamp date){
+    	boolean result = false;
+    	
+    	int periodID = MPeriod.getC_Period_ID(getCtx(), date);
+		if(!Util.isEmpty(periodID, true)){
+			setC_Period_ID(periodID);
+			result = true;
+		}
+		
+    	return result;
+    }
     
     /**
      * Descripción de Método
