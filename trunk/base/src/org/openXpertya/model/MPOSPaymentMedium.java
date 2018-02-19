@@ -120,7 +120,7 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		// Se buscan los medios de pago que sean válidos para la fecha actual.
 		StringBuffer sql = new StringBuffer("SELECT * "
 				+ "FROM C_POSPaymentMedium " + "WHERE AD_Client_ID = ? AND (AD_Org_ID = ? OR AD_Org_ID = 0) "
-				+ "AND ? BETWEEN DateFrom AND DateTo " + "AND IsActive = 'Y' ");
+				+ "AND ?::Date BETWEEN DateFrom::Date AND DateTo::date " + "AND IsActive = 'Y' ");
 		if(tenderType != null){
 			sql.append(" AND (tendertype = '"+tenderType+"') ");
 		}
@@ -141,11 +141,11 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		ResultSet rs = null;
 		
 		try {
-			pstmt = DB.prepareStatement(sql.toString(),trxName);
+			pstmt = DB.prepareStatement(sql.toString(),trxName, true);
 			int i = 1;
 			pstmt.setInt(i++, Env.getAD_Client_ID(ctx));
 			pstmt.setInt(i++, Env.getAD_Org_ID(ctx));
-			pstmt.setDate(i++, new Date(System.currentTimeMillis()));
+			pstmt.setTimestamp(i++, Env.getDate());
 			pstmt.setInt(i++, currencyId);
 			rs = pstmt.executeQuery();
 			while(rs.next()){
@@ -246,7 +246,7 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 	public static List<String> getAvailablesTenderTypesByContextOfUse(Properties ctx, String contextOfUse, boolean exclude, String trxName, int currencyId){
 		// Obtengo los tipos de pago diferentes que contienen como contexto de uso TPV
 		StringBuffer sql = new StringBuffer("SELECT distinct tendertype FROM C_POSPaymentMedium "
-				+ "WHERE AD_Client_ID = ? AND (AD_Org_ID = ? OR AD_Org_ID = 0) AND ? BETWEEN DateFrom AND DateTo "
+				+ "WHERE AD_Client_ID = ? AND (AD_Org_ID = ? OR AD_Org_ID = 0) AND ?::date BETWEEN DateFrom::Date AND DateTo::Date "
 				+ "AND IsActive = 'Y' ");
 		if(exclude){
 			sql.append(" AND (context <> ?) ");
@@ -258,14 +258,13 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 		
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		Date today = new Date(System.currentTimeMillis());
 		List<String> tenderTypes = new ArrayList<String>();
 		try{
-			 ps = DB.prepareStatement(sql.toString(), trxName);
+			 ps = DB.prepareStatement(sql.toString(), trxName, true);
 			 int i = 1;
 			 ps.setInt(i++, Env.getAD_Client_ID(ctx));
 			 ps.setInt(i++, Env.getAD_Org_ID(ctx));
-			 ps.setDate(i++, today);
+			 ps.setTimestamp(i++, Env.getDate());
 			 ps.setString(i++, contextOfUse);
 			 ps.setInt(i++, currencyId);
 			 rs = ps.executeQuery();
