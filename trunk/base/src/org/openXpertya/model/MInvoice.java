@@ -4827,9 +4827,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		boolean isCredit = docType.getDocBaseType().equals(
 				MDocType.DOCBASETYPE_ARCreditMemo);
 		
-		// Si el período está cerrado no se puede anular una factura de proveedor
-		if (!isSOTrx() && MDocType.DOCBASETYPE_APInvoice.equals(docType.getDocBaseType()) 
-				&& !MPeriod.isOpen(getCtx(), getDateAcct(), docType.getDocBaseType(), docType)) {
+		// Si el período está cerrado no se puede anular un comprobante de compras
+		if (!isSOTrx() && !MPeriod.isOpen(getCtx(), getDateAcct(), docType.getDocBaseType(), docType)) {
 			m_processMsg = "@PeriodClosed@";
 			return false;
 		}
