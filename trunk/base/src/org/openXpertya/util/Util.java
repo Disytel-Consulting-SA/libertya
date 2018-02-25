@@ -693,6 +693,10 @@ public class Util {
 		return discountAmt.divide(amt, scale, BigDecimal.ROUND_HALF_UP);
 	}
 	
+	public static BigDecimal getRatedAmt(BigDecimal amtToRate, BigDecimal dividendRatedAmt, BigDecimal divisorRatedAmt, Integer scale){
+		return amtToRate.multiply(dividendRatedAmt.divide(divisorRatedAmt, scale, BigDecimal.ROUND_HALF_EVEN));
+	}
+	
 	public static String cleanAmp (String in)
 	{
 		if (in == null || in.length() == 0)

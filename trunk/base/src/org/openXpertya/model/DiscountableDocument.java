@@ -52,6 +52,16 @@ public abstract class DiscountableDocument implements IDocument {
 		return totalAmt;
 	}
 
+	
+	@Override
+	public BigDecimal getLinesTotalAmt(boolean includeOtherTaxesAmt) {
+		BigDecimal totalAmt = BigDecimal.ZERO;
+		for (IDocumentLine line : getDocumentLines()) {
+			totalAmt = totalAmt.add(line.getTotalAmt());
+		}
+		return totalAmt;
+	}
+	
 	@Override
 	public List<IDocumentLine> getDocumentLines() {
 		// Lista de líneas a devolver

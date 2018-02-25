@@ -203,6 +203,9 @@ public class PoSOnline extends PoSConnectionState {
 	
 	private MDocType allocationDocType = null;
 	
+	/** Relación entre OrderLine ID y los objetos del modelo OrderProduct */
+	private Map<Integer, OrderProduct> orderLineProductIDs = null;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
@@ -295,6 +298,8 @@ public class PoSOnline extends PoSConnectionState {
 	
 			//ADER, iniciazliacion de caches
 			initCachesFromOrder(order);
+			
+			orderLineProductIDs = new HashMap<Integer, OrderProduct>();
 			
 			// Validaciones extra iniciales
 			getCompleteOrderPOSValidations().validateInitialCompleteOrder(this, order);
@@ -442,6 +447,7 @@ public class PoSOnline extends PoSConnectionState {
 			} catch (Exception e2) {}
 			throw new PosException(e);
 		} finally {
+			orderLineProductIDs = null;
 			trxName = null;
 			getGeneratorPercepciones().setTrxName(trxName);
 			try {
@@ -1250,7 +1256,7 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setPaymentRule(order.getPaymentRule());
 		
 		debug("Guardando el Pedido (Encabezado, sin líneas aún)");
-		throwIfFalse(mo.save());
+		throwIfFalse(mo.save(), mo);
 		
 		// obtener el total lineas a generar 
 		int currentProduct = 0;
@@ -1285,6 +1291,7 @@ public class PoSOnline extends PoSConnectionState {
 	        line.setLineNetAmt();
 	        line.setLineBonusAmt(op.getLineBonusAmt());
 	        line.setLineDiscountAmt(op.getLineDiscountAmt());
+	        line.setDocumentDiscountAmt(op.getTotalDocumentDiscount());
 			// Guarda el lugar de retiro de la línea para luego determinar si se
 			// reserva o no el stock en pedido según el lugar de retiro.
 	        // Los artículos retirados por almacén requieren que se haga la
@@ -1309,11 +1316,12 @@ public class PoSOnline extends PoSConnectionState {
 	        throwIfFalse(line.save());
 	        
 	        op.setOrderLineID(line.getC_OrderLine_ID());
+	        orderLineProductIDs.put(line.getC_OrderLine_ID(), op);
 	        // Guardar el id de descuento interno manual de la línea
 	        manualLinesDiscounts.put(line.getID(), op.getLineManualDiscountID());
 		}
 		debug("Guardando el Pedido (Encabezado, con líneas ya creadas)");
-		throwIfFalse(mo.save());
+		throwIfFalse(mo.save(), mo);
 		
 		// Descuentos: leer las líneas del pedido para ya tenerlas cacheadas y setear 
 		// 				el shouldUpdateHeader a false en todas menos la última
@@ -1326,6 +1334,9 @@ public class PoSOnline extends PoSConnectionState {
 			orderLine.setShouldUpdateHeader(currentProduct==productCount);
 		}
 		
+		// Cargar los impuestos adicionales en C_Order_Tax
+		createOXPOrderTaxes(mo, order);
+		
 		// Crea un calculador de descuentos a partir del calculador de
 		// descuentos asociado al pedido de TPV, asociando al nuevo calculador
 		// el pedido MOrder creado (wrapper). Luego aplica los descuentos.
@@ -1333,10 +1344,7 @@ public class PoSOnline extends PoSConnectionState {
 		debug("Aplicando descuentos al Pedido (DiscountCalculator)");
 		discountCalculator.applyDiscounts();
 		debug("Guardando el Pedido nuevamente (luego de aplicar descuentos)");
-		throwIfFalse(mo.save());
-		
-		// Cargar los impuestos adicionales en C_Order_Tax
-		createOXPOrderTaxes(mo, order);
+		throwIfFalse(mo.save(), mo);
 		
 		// Reload Order
 		
@@ -1351,7 +1359,7 @@ public class PoSOnline extends PoSConnectionState {
 		debug("Completando el pedido");
 		throwIfFalse(mo.processIt(DocAction.ACTION_Complete), mo);
 		debug("Guardando el pedido (luego de completar)");
-		throwIfFalse(mo.save());
+		throwIfFalse(mo.save(), mo);
 		
 		// Actualizo la instancia del documento del discount calculator, ya que
 		// son instancias diferentes
@@ -1373,7 +1381,7 @@ public class PoSOnline extends PoSConnectionState {
 			orderTax.setC_Tax_ID(tax.getId());
 			orderTax.setTaxAmt(totalNet.multiply(tax.getTaxRateMultiplier()));
 			orderTax.setTaxBaseAmt(totalNet);
-			throwIfFalse(orderTax.save());
+			throwIfFalse(orderTax.save(), mo);
 		}
 	}
 	
@@ -1418,9 +1426,9 @@ public class PoSOnline extends PoSConnectionState {
 		
 		inv.setPaymentRule(order.getPaymentRule());
 		
-		throwIfFalse(inv.save(), InvoiceCreateException.class);
+		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
-		MOrderLine[] moLines = morder.getLines(true);
+		MOrderLine[] moLines = morder.getLines();
 		int lineNumber = 10;
 		
 		// obtener el total lineas a generar 
@@ -1458,6 +1466,11 @@ public class PoSOnline extends PoSConnectionState {
 			debug("Guardando línea #" + invLine.getLine());
 			throwIfFalse(invLine.save(), InvoiceCreateException.class);
 			
+			line.setTpvGeneratedInvoiceLineID(invLine.getID());
+			orderLineProductIDs.get(line.getC_OrderLine_ID()).setInvoiceLineID(invLine.getID());
+			
+			discountCalculator.updateGeneratedInvoiceLineIDs(line.getC_OrderLine_ID(), invLine.getID());
+			
 			lineNumber += 10;
 		}
 		
@@ -1465,7 +1478,6 @@ public class PoSOnline extends PoSConnectionState {
 		createOXPInvoiceTaxes(inv, order);
 		
 		// Recargar la factura
-		
 		inv = new MInvoice(ctx, inv.getID(), getTrxName());
 		// Seteo el bypass de la factura para que no chequee el saldo del
 		// cliente porque ya lo chequea el tpv
@@ -1498,7 +1510,9 @@ public class PoSOnline extends PoSConnectionState {
 		inv.setIgnoreFiscalPrint(true);
 		inv.skipAfterAndBeforeSave = true;
 		throwIfFalse(inv.processIt(DocAction.ACTION_Complete), inv, InvoiceCreateException.class);
-		throwIfFalse(inv.save(), InvoiceCreateException.class);
+		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
+		
+		inv = new MInvoice(ctx, inv.getID(), getTrxName());
 		
 		order.setGeneratedInvoiceID(inv.getC_Invoice_ID());
 		morder.setTpvGeneratedInvoiceID(inv.getC_Invoice_ID());
@@ -1519,7 +1533,7 @@ public class PoSOnline extends PoSConnectionState {
 				invoiceTax.setC_Tax_ID(tax.getId());
 				invoiceTax.setTaxAmt(totalNet.multiply(tax.getTaxRateMultiplier()));
 				invoiceTax.setTaxBaseAmt(totalNet);
-				throwIfFalse(invoiceTax.save());
+				throwIfFalse(invoiceTax.save(), mi);
 			}
 		}
 	}
@@ -1611,7 +1625,7 @@ public class PoSOnline extends PoSConnectionState {
 				shipment.setC_DocType_ID(getPoSCOnfig().getInoutDocTypeID());
 			}
 			
-			throwIfFalse(shipment.save());
+			throwIfFalse(shipment.save(), shipment);
 			
 			//Ader: evitar que se reelean las MOrderLInes; esto evita 20 accesos
 			//y otros tantos potencialemten (al evitar acceer a la cache tradcionale
@@ -1828,7 +1842,7 @@ public class PoSOnline extends PoSConnectionState {
 			// que se realiza luego al finalizar las operaciones
 			p.setUpdateBPBalance(false);
 			throwIfFalse(p.processIt(DocAction.ACTION_Complete), p);
-			throwIfFalse(p.save());
+			throwIfFalse(p.save(), p);
 		}
 		// Ajustar el cambio a entregar al cliente dependiendo del remanente en
 		// efectivo existente y las devoluciones de efectivo de las NC
@@ -1891,9 +1905,9 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		cashLine.setIgnoreInvoiceOpen(true);
 		
-		throwIfFalse(cashLine.save()); // Necesario para que se asigne el C_CashLine_ID
+		throwIfFalse(cashLine.save(), cashLine); // Necesario para que se asigne el C_CashLine_ID
 		throwIfFalse(cashLine.processIt(MCashLine.ACTION_Complete),cashLine);
-		throwIfFalse(cashLine.save());
+		throwIfFalse(cashLine.save(), cashLine);
 
 		// Agrego el cashline para llevar su registro
 		if(addToCashLineList){
@@ -1927,7 +1941,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setDescription(p.getDescription());
 		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
-		throwIfFalse(pay.save());
+		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		MAllocationLine allocLine = createOxpMAllocationLine(p, pay);
 		
@@ -1966,7 +1980,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setPosnet(p.getPosnet());
 		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
-		throwIfFalse(pay.save());
+		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		createOxpMAllocationLine(p, pay);
 		
@@ -2001,7 +2015,8 @@ public class PoSOnline extends PoSConnectionState {
 		creditCardRetirementInvoice.setDocAction(MInvoice.DOCACTION_Complete);
 		creditCardRetirementInvoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
 		// Guardo la factura
-		throwIfFalse(creditCardRetirementInvoice.save(), InvoiceCreateException.class);
+		throwIfFalse(creditCardRetirementInvoice.save(),
+				creditCardRetirementInvoice, InvoiceCreateException.class);
 		// Crear la línea con un artículo en particular
 		MInvoiceLine creditCardRetirementInvoiceLine = new MInvoiceLine(creditCardRetirementInvoice);
 		
@@ -2050,7 +2065,7 @@ public class PoSOnline extends PoSConnectionState {
 				false);
 		// Asocio la línea de caja con el pago de tarjeta para futuras consultas
 		cashLine.setC_Payment_ID(pay.getID());
-		throwIfFalse(cashLine.save());
+		throwIfFalse(cashLine.save(), cashLine);
 		// Agregar al allocation de manera unidireccional
 		createOxpMAllocationLine(0, cashPayment, null, cashLine, null, null, true);
 	}
@@ -2102,7 +2117,7 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setCheckNo(p.getTransferNumber());
 		pay.setDescription(p.getDescription());
 		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
-		throwIfFalse(pay.save());
+		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		createOxpMAllocationLine(p, pay);
 	}
@@ -2132,7 +2147,7 @@ public class PoSOnline extends PoSConnectionState {
 		hdr.setDescription("TPV: ");
 		hdr.setIsManual(false);
 		
-		throwIfFalse(hdr.save());
+		throwIfFalse(hdr.save(), hdr);
 		
 		return hdr;
 	}
@@ -2153,7 +2168,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		if (allocLines.size() > 0) {
 			throwIfFalse(allocHdr.processIt(DocAction.ACTION_Complete), allocHdr);
-			throwIfFalse(allocHdr.save());
+			throwIfFalse(allocHdr.save(), allocHdr);
 		} else if (creditPayments.size() > 0) {
 			/*
 			 * Si el medio de pago es crédito no se crea ningún elemento de pago ya 
@@ -2163,7 +2178,7 @@ public class PoSOnline extends PoSConnectionState {
 			 * 
 			 */
 			throwIfFalse(allocHdr.processIt(DocAction.ACTION_Void), allocHdr);
-			throwIfFalse(allocHdr.save());
+			throwIfFalse(allocHdr.save(), allocHdr);
 		} else {
 			throw new PosException("doCompleteAllocation: allocLines.size() == 0 && creditPayments.size() == 0");
 		}
@@ -2213,7 +2228,7 @@ public class PoSOnline extends PoSConnectionState {
 			isPercepcionLiable = catIva.isPercepcionLiable();
 			MTax mTax = CalloutInvoiceExt.getTax(getCtx(), true, mBPartner.getID(), getTrxName());
 			if(mTax != null){
-				rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()));
+				rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax.getName(), mTax.isPercepcion()));
 			}
 		}
 		rBPartner.setIVACategory(codigoIVA);
@@ -2591,6 +2606,7 @@ public class PoSOnline extends PoSConnectionState {
 	public Tax getProductTax(int productId, int locationID) {
 		Timestamp now = Env.getDate();
 		BigDecimal taxRate;
+		String name = "";
 		
 		// Se obtiene el Tax del producto.
 		int taxId = org.openXpertya.model.Tax.get( ctx,productId, 0, now, now, Env.getAD_Org_ID(ctx),getPoSCOnfig().getWarehouseID(), locationID,locationID,true);
@@ -2599,11 +2615,13 @@ public class PoSOnline extends PoSConnectionState {
 		if(mTax != null){
 			taxRate = mTax.getRate();
 			isPercepcion = mTax.isPercepcion();
+			name = mTax.getName();
 		}
 		else{
 			taxRate = BigDecimal.ZERO;
+			name = Msg.translate(getCtx(), "C_Tax_ID")+" : "+taxRate;
 		}
-		return new org.openXpertya.pos.model.Tax(taxId, taxRate, isPercepcion);
+		return new org.openXpertya.pos.model.Tax(taxId, taxRate, name, isPercepcion);
 	}
 	
 	public Tax getProductTax(int productID) {
@@ -2698,7 +2716,7 @@ public class PoSOnline extends PoSConnectionState {
 		orderProduct = 
 			new OrderProduct(line.getQtyEntered(), 
 					         line.getDiscount(),
-					         new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()),
+					         new Tax(mTax.getID(), mTax.getRate(), mTax.getName(), mTax.isPercepcion()),
 					         product, checkoutPlace);
 		
 		orderProduct.setPrice(line.getPriceActual());
@@ -3795,7 +3813,8 @@ public class PoSOnline extends PoSConnectionState {
 		}
 		// Itero por los impuestos adicionales
 		for (MTax mTax : mOtherTaxes) {
-			otherTaxes.add(new Tax(mTax.getID(), mTax.getRate(), mTax.isPercepcion()));
+			otherTaxes.add(new Tax(mTax.getID(), mTax.getRate(),
+					mTax.getName(), mTax.isPercepcion()));
 		}
 		
 		return otherTaxes;
@@ -3805,12 +3824,14 @@ public class PoSOnline extends PoSConnectionState {
 	public Tax getTax(Integer taxID) {
 		MTax mTax = MTax.get(ctx,taxID,null);
 		boolean isPercepcion = false;
-		BigDecimal taxRate = BigDecimal.ZERO; 
+		BigDecimal taxRate = BigDecimal.ZERO;
+		String name = Msg.translate(getCtx(), "C_Tax_ID")+" : "+taxRate;
 		if(mTax != null){
 			taxRate = mTax.getRate();
 			isPercepcion = mTax.isPercepcion();
+			name = mTax.getName(); 
 		}
-		return new org.openXpertya.pos.model.Tax(taxID, taxRate, isPercepcion);
+		return new org.openXpertya.pos.model.Tax(taxID, taxRate, name, isPercepcion);
 	}
 
 	@Override
@@ -3870,6 +3891,7 @@ public class PoSOnline extends PoSConnectionState {
 
 	@Override
 	public List<Tax> loadBPOtherTaxes(BusinessPartner bp) {
+		getGeneratorPercepciones().setDocType(MDocType.get(getCtx(), getActualDocTypeID()));
 		getGeneratorPercepciones().loadBPartner(bp.getId());
 		return getOtherTaxes();
 	}

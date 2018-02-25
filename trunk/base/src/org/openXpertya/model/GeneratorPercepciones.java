@@ -168,6 +168,7 @@ public class GeneratorPercepciones {
 				&& getDocument().isApplyPercepcion()
 				&& CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& (getCategoriaIVA() != null && getCategoriaIVA().isPercepcionLiable())
+				&& getDocType() != null 
 				&& getDocType().isApplyPerception()
 				&& (isTPVInstance() || (getDocType() != null && (!MDocType.DOCTYPE_Retencion_InvoiceCustomer
 						.equals(getDocType().getDocTypeKey()) && !MDocType.DOCTYPE_Retencion_ReceiptCustomer

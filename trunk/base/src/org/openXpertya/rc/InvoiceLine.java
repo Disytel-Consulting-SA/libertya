@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountableDocumentLine;
 import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.util.Env;
@@ -323,5 +324,40 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 	public void setLineManualDiscountID(Integer lineManualDiscountID) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public void setDocumentReferences(MDocumentDiscount documentDiscount) {
+		documentDiscount.setC_InvoiceLine_ID(getRealInvoiceLine().getC_InvoiceLine_ID());
+	}
+
+	@Override
+	public BigDecimal getTemporalTotalDocumentDiscountAmt() {
+		// TODO Auto-generated method stub
+		return BigDecimal.ZERO;
+	}
+
+	@Override
+	public void setTemporalTotalDocumentDiscountAmt(
+			BigDecimal temporalTotalDocumentDiscount) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public BigDecimal getTaxedAmount(BigDecimal amount,
+			boolean includeOtherTaxes) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Integer getDocumentLineID() {
+		return getInvoiceLineID();
+	}
+
+	@Override
+	public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
+		// Este método no realiza nada aquí ya que las facturas ya están creadas
 	}
 }

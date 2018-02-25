@@ -126,6 +126,10 @@ public final class StringUtil {
 		}
     	return left?auxFiller.toString()+str:str+auxFiller.toString();
     }
+    
+    public static String valueOrDefault(Object value, String defaultValue){
+    	return (value != null)?value.toString():defaultValue;
+    }
 }
 
 

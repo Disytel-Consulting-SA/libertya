@@ -53,8 +53,10 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 
+import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CButton;
 import org.compiere.swing.CComboBox;
 import org.compiere.swing.CLabel;
@@ -78,6 +80,7 @@ import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.grid.ed.VPasswordSimple;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.minigrid.MiniTable;
+import org.openXpertya.minigrid.ROCellEditor;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.MPOSPaymentMedium;
@@ -119,6 +122,7 @@ import org.openXpertya.pos.model.User;
 import org.openXpertya.pos.view.table.PaymentTableModel;
 import org.openXpertya.pos.view.table.ProductTableModel;
 import org.openXpertya.pos.view.table.TableUtils;
+import org.openXpertya.pos.view.table.TaxesTableModel;
 import org.openXpertya.process.DocActionStatusEvent;
 import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.process.ProcessInfo;
@@ -195,6 +199,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private int windowNo = 0;
 	private TableUtils orderTableUtils;
 	private TableUtils paymentsTableUtils;
+	private TableUtils taxesTableUtils;
 	
 	private Map<String,KeyStroke> actionKeys;
 	private PoSComponentFactory componentFactory;
@@ -282,7 +287,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CPanel cPaymentBottomPanel = null;
 	private CPanel cPaymentFinishPanel = null;
 	private CPanel cPaymentTotalBorderPanel = null;
+	private CPanel cTaxesBorderPanel = null;
 	private CPanel cPaymentTotalPanel = null;
+	private CPanel cTaxesPanel = null;
 	private CLabel cToPayLabel = null;
 	private VNumber cToPayText = null;
 	private CLabel cPaidLabel = null;
@@ -294,7 +301,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CPanel cPaymentCommandPanel = null;
 	private CButton cFinishPayButton = null;
 	private CScrollPane cTenderTypesTableScrollPane = null;
+	private CScrollPane cTaxesTableScrollPane = null;
 	private VTable cPaymentsTable = null;
+	private VTable cTaxesTable = null;
 	private CButton cRemovePaymentButton = null;
 	private CPanel cTenderTypesTablePanel = null;
 	private CLabel cSelectedTenderTypesLabel = null;
@@ -498,6 +507,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_DUPLICATED_POS_INSTANCE;
 	private String MSG_CASH_RETIREMENT;
 	private String MSG_CASH_RETIREMENT_EXCEEDS_LIMIT;
+	private String MSG_TAXES;
+	private String MSG_TAX;
 	
 	/**
 	 * This method initializes 
@@ -805,6 +816,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_DUPLICATED_POS_INSTANCE = getMsg("DuplicatedPOSInstance");
 		MSG_CASH_RETIREMENT = getMsg("CashRetirement");
 		MSG_CASH_RETIREMENT_EXCEEDS_LIMIT = getMsg("CashRetirementExceedsLimit");
+		MSG_TAXES = getMsg("Taxes");
+		MSG_TAX = getMsg("Tax");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -2083,6 +2096,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					getOrder().updateDiscounts();
 					// Actualiza la tabla de pagos
 					updatePaymentsTable();
+					// Actualiza el monto convertido
+					updateConvertedAmount();
 					// Refrescar los medios de pago
 					refreshPaymentMediumInfo();
 					// Actualizar el estado de la factura
@@ -3588,6 +3603,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cPaymentFinishPanel = new CPanel();
 			cPaymentFinishPanel.setLayout(new BoxLayout(getCPaymentFinishPanel(), BoxLayout.X_AXIS));
 			cPaymentFinishPanel.add(getCPaymentTotalBorderPanel(), null);
+			cPaymentFinishPanel.add(getCTaxesBorderPanel(), null);
 			cPaymentFinishPanel.add(getCPaymentCommandPanel(), null);
 		}
 		return cPaymentFinishPanel;
@@ -3604,13 +3620,112 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			flowLayout3.setHgap(0);
 			flowLayout3.setVgap(0);
 			cPaymentTotalBorderPanel = new CPanel();
-			cPaymentTotalBorderPanel.setPreferredSize(new java.awt.Dimension(360,90));
+			cPaymentTotalBorderPanel.setPreferredSize(new java.awt.Dimension(600,90));
 			cPaymentTotalBorderPanel.setLayout(flowLayout3);
-			cPaymentTotalBorderPanel.setBorder(javax.swing.BorderFactory.createCompoundBorder(javax.swing.BorderFactory.createTitledBorder(javax.swing.BorderFactory.createLineBorder(java.awt.Color.gray,1), MSG_PAYMENTS_SUMMARY, javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION, javax.swing.border.TitledBorder.DEFAULT_POSITION, new java.awt.Font("Dialog", java.awt.Font.PLAIN, 12), new java.awt.Color(51,51,51)), javax.swing.BorderFactory.createEmptyBorder(0,10,1,10)));
+			cPaymentTotalBorderPanel
+					.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+							javax.swing.BorderFactory.createTitledBorder(
+									javax.swing.BorderFactory.createLineBorder(
+											java.awt.Color.gray, 1),
+									MSG_PAYMENTS_SUMMARY,
+									javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+									javax.swing.border.TitledBorder.DEFAULT_POSITION,
+									new java.awt.Font("Dialog",
+											java.awt.Font.PLAIN, 12),
+									new java.awt.Color(51, 51, 51)),
+							javax.swing.BorderFactory.createEmptyBorder(0, 10,
+									1, 10)));
 			cPaymentTotalBorderPanel.add(getCPaymentTotalPanel(), null);
 		}
 		return cPaymentTotalBorderPanel;
 	}
+	
+	private CScrollPane getCTaxesTableScrollPane() {
+		if (cTaxesTableScrollPane == null) {
+			cTaxesTableScrollPane = new CScrollPane();
+			//cTenderTypesTableScrollPane.setPreferredSize(new java.awt.Dimension(190,200));
+			cTaxesTableScrollPane.setPreferredSize(new java.awt.Dimension(260,55));
+			cTaxesTableScrollPane.setViewportView(getCTaxesTable());
+		}
+		return cTaxesTableScrollPane;
+	}
+	
+	private VTable getCTaxesTable() {
+		if (cTaxesTable == null) {
+			cTaxesTable = new VTable();
+			cTaxesTable.setRowSelectionAllowed(false);
+			cTaxesTable.setCellSelectionEnabled(false);
+			cTaxesTable.setColumnSelectionAllowed(false);
+			
+			// Creo el Modelo de la tabla.
+			TaxesTableModel taxesTableModel = new TaxesTableModel();
+			// Se vincula la lista de pagos en la orden con el table model
+			// para que se muestren en la tabla.
+			taxesTableModel.setTaxes(getOrder().getAllTaxes());
+			taxesTableModel.addColumName(MSG_TAX);
+			taxesTableModel.addColumName(MSG_AMOUNT);
+			cTaxesTable.setModel(taxesTableModel);
+						
+			// Configuracion del renderizado de la tabla.
+			cTaxesTable.setFocusable(false);
+			cTaxesTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
+			// Renderer de String centrado.
+			TableCellRenderer strCellRender = new DefaultTableCellRenderer() {
+
+				public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+					JLabel label = (JLabel)super.getTableCellRendererComponent(table,value,isSelected,hasFocus,row,col);
+					label.setHorizontalAlignment(JLabel.LEFT);
+					label.setBackground(CompierePLAF.getFieldBackground_Inactive());
+					return label;
+				}
+				
+			};
+			cTaxesTable.setDefaultRenderer(String.class, strCellRender);
+
+			TableCellEditor cellEditor = new ROCellEditor();
+			cTaxesTable.setCellEditor(cellEditor);
+			
+			// Renderer de importes.
+			TableCellRenderer numberCellRenderer = getNumberCellRendered(amountFormat, true);
+			cTaxesTable.setDefaultRenderer(Number.class, numberCellRenderer);
+			cTaxesTable.setTableHeader(null);
+			
+			ArrayList minWidth = new ArrayList();
+			minWidth.add(90);
+			minWidth.add(40);
+			// Se wrapea la tabla con funcionalidad extra.
+			setTaxesTableUtils(new TableUtils(minWidth,cTaxesTable));
+			getTaxesTableUtils().autoResizeTable();
+//			getTaxesTableUtils().removeSorting();
+		}
+		return cTaxesTable;
+	}
+	
+	private CPanel getCTaxesBorderPanel() {
+		if (cTaxesBorderPanel == null) {
+			FlowLayout flowLayout3 = new FlowLayout();
+			flowLayout3.setHgap(0);
+			flowLayout3.setVgap(0);
+			cTaxesBorderPanel = new CPanel();
+			cTaxesBorderPanel.setPreferredSize(new java.awt.Dimension(150,90));
+			cTaxesBorderPanel.setLayout(flowLayout3);
+			cTaxesBorderPanel
+					.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+							javax.swing.BorderFactory.createTitledBorder(
+									javax.swing.BorderFactory.createLineBorder(
+											java.awt.Color.gray, 1),
+									MSG_TAXES,
+									javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+									javax.swing.border.TitledBorder.DEFAULT_POSITION,
+									new java.awt.Font("Dialog",
+											java.awt.Font.PLAIN, 12),
+									new java.awt.Color(51, 51, 51)),
+							javax.swing.BorderFactory.createEmptyBorder(0, 10,
+									1, 10)));
+			cTaxesBorderPanel.add(getCTaxesPanel(), null);
+		}
+		return cTaxesBorderPanel;
+	} 
 
 	/**
 	 * This method initializes cPaymentTotalPanel	
@@ -3724,6 +3839,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cPaymentTotalPanel;
 	}
 
+	private CPanel getCTaxesPanel() {
+		if(cTaxesPanel == null){
+			cTaxesPanel = new CPanel();
+			cTaxesPanel.setLayout(new FlowLayout());
+			cTaxesPanel.add(getCTaxesTableScrollPane());
+		}
+		return cTaxesPanel;
+	}
+	
 	/**
 	 * This method initializes cToPayText	
 	 * 	
@@ -5102,6 +5226,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return ((ProductTableModel)getCOrderTable().getModel());
 	}
 	
+	private TaxesTableModel getTaxesTableModel(){
+		return ((TaxesTableModel)getCTaxesTable().getModel());
+	}
+	
 	private void removePayment() {
 		removePayment((Payment)getPaymentsTableUtils().getSelection());
 	}
@@ -5302,9 +5430,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	private void updatePaymentsStatus() {
 		getModel().balanceValidate();
-		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt();
+		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt(false, false,
+				false, false).add(getOrder().getTotalOtherTaxesAmt(false));
 		BigDecimal documentDiscountAmt = getOrder().getTotalDocumentDiscount().negate();
-		BigDecimal toPayAmt = getOrder().getTotalAmount();
+		BigDecimal toPayAmt = getOrder().getOrderProductsTotalAmt(true);
 		BigDecimal paidAmt = getOrder().getPaidAmount();
 		BigDecimal balance = getOrder().getBalance();
 		BigDecimal change = getOrder().getTotalChangeAmt();
@@ -5325,6 +5454,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCBalanceText().setValue(balance);
 		getCChangeText().setValue(change);
 		updateTotalAmount();
+		updateTaxes();
 		
 		getCFinishPayButton().setEnabled(getModel().balanceValidate());
 		updateStatusDB();
@@ -5519,12 +5649,19 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 	
 	protected TableCellRenderer getNumberCellRendered(final NumberFormat numberFormat) {
+		return getNumberCellRendered(numberFormat, false);
+	}
+	
+	protected TableCellRenderer getNumberCellRendered(final NumberFormat numberFormat, final boolean readOnly) {
 		TableCellRenderer amountRenderer = new DefaultTableCellRenderer() {
 			public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3, int arg4, int arg5) {
 				JLabel cmp = (JLabel)super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
 				BigDecimal amount = (BigDecimal)arg1;
 				cmp.setText(numberFormat.format(amount));
 				cmp.setHorizontalAlignment(JLabel.RIGHT);
+				if(readOnly){
+					cmp.setBackground(CompierePLAF.getFieldBackground_Inactive());
+				}
 				return cmp;
 			};
 		};
@@ -5554,6 +5691,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     	AEnv.positionCenterScreen(dialog);
 		dialog.setModal(true);
 		dialog.setVisible(true);
+    }
+    
+    private void updateTaxes(){
+    	getOrder().getOrderProductsTotalAmt(true);
+    	getTaxesTableModel().setTaxes(getOrder() != null?getOrder().getAllTaxes():null);
+    	getTaxesTableModel().fireTableDataChanged();
+		getTaxesTableUtils().refreshTable();
     }
     
   
@@ -6591,6 +6735,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return getModel().currencyConvert(getOrder().getOpenAmount(),
 				getCurrencyBaseID(),
 				((Integer) getCCurrencyCombo().getValue()).intValue());
+	}
+	
+	private TableUtils getTaxesTableUtils() {
+		return taxesTableUtils;
+	}
+
+	private void setTaxesTableUtils(TableUtils taxesTableUtils) {
+		this.taxesTableUtils = taxesTableUtils;
 	}
 	
 	private class SwingWorkerRePrintDocument extends SwingWorker{
