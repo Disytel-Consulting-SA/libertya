@@ -19,6 +19,7 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -62,6 +63,8 @@ public class MOrderLine extends X_C_OrderLine {
 	/** Bypass para no controlar las cantidades mínimas ni de empaquetado */
 	private boolean allowAnyQty = false;
 	
+	private Integer tpvGeneratedInvoiceLineID = 0; 
+		
 	/**
 	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
@@ -814,47 +817,9 @@ public class MOrderLine extends X_C_OrderLine {
             setLine( ii );
         }
         
-		// Fix descuentos a nivel de línea o documento en el caso que se hayan
-		// modificado la cantidad o el monto
-        if(!newRecord 
-        		&& (is_ValueChanged("QtyEntered") || is_ValueChanged("PriceEntered"))){
-			BigDecimal oldQty = is_ValueChanged("QtyEntered")
-					&& BigDecimal.ZERO
-							.compareTo((BigDecimal) get_ValueOld("QtyEntered")) != 0 ? (BigDecimal) get_ValueOld("QtyEntered")
-					: getQtyEntered();
-			BigDecimal oldPrice = is_ValueChanged("PriceEntered") 
-					&& BigDecimal.ZERO
-							.compareTo((BigDecimal) get_ValueOld("PriceEntered")) != 0 ? (BigDecimal) get_ValueOld("PriceEntered")
-					: getPriceEntered();
-			BigDecimal oldAmount = oldPrice.multiply(oldQty);
-			BigDecimal actualAmount = getPriceEntered().multiply(getQtyEntered());
-			Integer tmpPrecision = 10;
-			BigDecimal totalPriceList = getPriceList().multiply(getQtyEntered());
-			BigDecimal oldTotalPriceList = getPriceList().multiply(oldQty);
-        	if(!Util.isEmpty(getDocumentDiscountAmt(), true)){
-				BigDecimal documentDiscountRate = Util.getDiscountRate(
-						oldAmount, getDocumentDiscountAmt(), tmpPrecision);
-				setDocumentDiscountAmt((actualAmount
-						.multiply(documentDiscountRate)).setScale(2,
-						BigDecimal.ROUND_HALF_UP));
-				getOrder().setUpdateChargeAmt(true);
-        	}
-        	if(!Util.isEmpty(getLineDiscountAmt(), true)){
-				BigDecimal lineDiscountRate = Util.getDiscountRate(
-						oldTotalPriceList, getLineDiscountAmt(),
-						tmpPrecision);
-    			setLineDiscountAmt((totalPriceList.multiply(lineDiscountRate))
-    					.setScale(2,BigDecimal.ROUND_HALF_UP));
-        	}
-        	if(!Util.isEmpty(getLineBonusAmt(), true)){
-				BigDecimal bonusDiscountRate = Util.getDiscountRate(
-						oldTotalPriceList, getLineBonusAmt(),
-						tmpPrecision);
-    			setLineBonusAmt((totalPriceList.multiply(bonusDiscountRate))
-    					.setScale(2, BigDecimal.ROUND_HALF_UP));
-        	}
-        }
-
+        
+        updateDragOrderDiscounts();
+        
         // Calculations & Rounding
 
         setLineNetAmt();    // extended Amount with or without tax
@@ -937,6 +902,111 @@ public class MOrderLine extends X_C_OrderLine {
         return true;
     }    // beforeSave
 
+    
+    /**
+     * Actualiza los descuentos arrastrados del pedido a nivel de línea y documento 
+     */
+    public void updateDragOrderDiscounts(){
+		if ((is_ValueChanged("QtyEntered") || is_ValueChanged("PriceList"))
+			 && existRecordFor(getCtx(),
+							MDocumentDiscount.Table_Name, "c_order_id = ?", new Object[] { getC_Order_ID() }, get_TrxName())) {
+			BigDecimal totalPriceList = getPriceList().multiply(getQtyOrdered());
+			// Si es 0, el precio o la cantidad se modificaron a 0, entonces se
+			// debe eliminar los document discounts existentes y setear a 0 los
+			// importes de descuentos de la línea
+			if(totalPriceList.compareTo(BigDecimal.ZERO) == 0){
+				setLineDiscountAmt(BigDecimal.ZERO);
+				setLineBonusAmt(BigDecimal.ZERO);
+				setDocumentDiscountAmt(BigDecimal.ZERO);
+			}
+			// Importe base mayor a 0, se modifican los descuentos arrastrados
+			// del pedido, si no tenía antes, se crean
+			else{
+				Integer tmpPrecision = 10;
+				List<MDocumentDiscount> lineDiscounts = MDocumentDiscount.get(
+						"C_OrderLine_ID = ?",
+						new Object[] { getID() }, getCtx(), get_TrxName());
+				// Si existen líneas, se actualizan los importes de cada una de
+				// ellas, junto con los importes de la línea
+				if(lineDiscounts.size() > 0){
+					BigDecimal lineDiscountAmt = BigDecimal.ZERO;
+					BigDecimal bonusDiscountAmt = BigDecimal.ZERO;
+					BigDecimal documentDiscountAmt = BigDecimal.ZERO;
+					BigDecimal discountAmt;
+					for (MDocumentDiscount mDocumentDiscount : lineDiscounts) {
+						discountAmt = Util.getRatedAmt(totalPriceList, mDocumentDiscount.getDiscountAmt(),
+								mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision);
+						// Si es de documento, actualizo el de documento
+						if (MDocumentDiscount.CUMULATIVELEVEL_Document.equals(mDocumentDiscount.getCumulativeLevel())) {
+							documentDiscountAmt = documentDiscountAmt.add(discountAmt);
+							getOrder().setUpdateChargeAmt(true);
+						}
+						// Sino en el de línea
+						else if (MDocumentDiscount.DISCOUNTAPPLICATION_Bonus.equals(mDocumentDiscount.getDiscountApplication())) {
+							bonusDiscountAmt = bonusDiscountAmt.add(discountAmt);				
+						}
+						else{
+							lineDiscountAmt = lineDiscountAmt.add(discountAmt);
+						}
+					}
+					
+					setLineDiscountAmt(lineDiscountAmt);
+					setLineBonusAmt(bonusDiscountAmt);
+					setDocumentDiscountAmt(documentDiscountAmt);
+				}
+				// Si no existen entonces dejo la forma antigua
+				else{
+					updateDragOrderDiscountsOld();
+				}
+			}
+        }
+    }
+    
+    /**
+     * Actualiza los descuentos de la línea de la forma antigua.
+     * @deprecated
+     */
+    private void updateDragOrderDiscountsOld(){
+		BigDecimal oldQty = is_ValueChanged("QtyEntered")
+				&& BigDecimal.ZERO
+						.compareTo((BigDecimal) get_ValueOld("QtyEntered")) != 0 ? (BigDecimal) get_ValueOld("QtyEntered")
+				: getQtyEntered();
+		BigDecimal oldPrice = is_ValueChanged("PriceEntered") 
+				&& BigDecimal.ZERO
+						.compareTo((BigDecimal) get_ValueOld("PriceEntered")) != 0 ? (BigDecimal) get_ValueOld("PriceEntered")
+				: getPriceEntered();
+		BigDecimal oldAmount = oldPrice.multiply(oldQty);
+		BigDecimal actualAmount = getPriceEntered().multiply(getQtyEntered());
+		Integer tmpPrecision = 10;
+		BigDecimal totalPriceList = getPriceList().multiply(getQtyEntered());
+		BigDecimal oldTotalPriceList = getPriceList().multiply(oldQty);
+    	
+		if(!Util.isEmpty(getDocumentDiscountAmt(), true)){
+			BigDecimal documentDiscountRate = Util.getDiscountRate(
+					oldAmount, getDocumentDiscountAmt(), tmpPrecision);
+			setDocumentDiscountAmt((actualAmount
+					.multiply(documentDiscountRate)).setScale(2,
+					BigDecimal.ROUND_HALF_UP));
+			getOrder().setUpdateChargeAmt(true);
+    	}
+    	
+		if(!Util.isEmpty(getLineDiscountAmt(), true)){
+			BigDecimal lineDiscountRate = Util.getDiscountRate(
+					oldTotalPriceList, getLineDiscountAmt(),
+					tmpPrecision);
+			setLineDiscountAmt((totalPriceList.multiply(lineDiscountRate))
+					.setScale(2,BigDecimal.ROUND_HALF_UP));
+    	}
+    	
+		if(!Util.isEmpty(getLineBonusAmt(), true)){
+			BigDecimal bonusDiscountRate = Util.getDiscountRate(
+					oldTotalPriceList, getLineBonusAmt(),
+					tmpPrecision);
+			setLineBonusAmt((totalPriceList.multiply(bonusDiscountRate))
+					.setScale(2, BigDecimal.ROUND_HALF_UP));
+    	}
+    }
+    
     public boolean shouldSetAttrSetInstance() {
     	return shouldSetAttrSetInstance(null);
     }
@@ -1360,6 +1430,46 @@ public class MOrderLine extends X_C_OrderLine {
 		@Override
 		public void setLineManualDiscountID(Integer lineManualDiscountID) {	
 			MOrderLine.this.setLineManualDiscountID(lineManualDiscountID);
+		}
+
+		@Override
+		public void setDocumentReferences(MDocumentDiscount documentDiscount) {
+			documentDiscount.setC_OrderLine_ID(MOrderLine.this.getID());
+			documentDiscount.setC_InvoiceLine_ID(MOrderLine.this.getTpvGeneratedInvoiceLineID());
+		}
+
+		@Override
+		public BigDecimal getDocumentDiscountAmt() {
+			return MOrderLine.this.getDocumentDiscountAmt();
+		}
+
+		@Override
+		public BigDecimal getTemporalTotalDocumentDiscountAmt() {
+			// TODO Auto-generated method stub
+			return BigDecimal.ZERO;
+		}
+
+		@Override
+		public void setTemporalTotalDocumentDiscountAmt(
+				BigDecimal temporalTotalDocumentDiscount) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public BigDecimal getTaxedAmount(BigDecimal amount,
+				boolean includeOtherTaxes) {
+			return getTaxedAmount(amount);
+		}
+
+		@Override
+		public Integer getDocumentLineID() {
+			return MOrderLine.this.getID();
+		}
+
+		@Override
+		public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
+			MOrderLine.this.setTpvGeneratedInvoiceLineID(generatedInvoiceLineID);
 		}
     }
 
@@ -1862,6 +1972,14 @@ public class MOrderLine extends X_C_OrderLine {
 
 	public void setAllowAnyQty(boolean allowAnyQty) {
 		this.allowAnyQty = allowAnyQty;
+	}
+
+	public Integer getTpvGeneratedInvoiceLineID() {
+		return tpvGeneratedInvoiceLineID;
+	}
+
+	public void setTpvGeneratedInvoiceLineID(Integer tpvGeneratedInvoiceLineID) {
+		this.tpvGeneratedInvoiceLineID = tpvGeneratedInvoiceLineID;
 	}
 }    // MOrderLine
 

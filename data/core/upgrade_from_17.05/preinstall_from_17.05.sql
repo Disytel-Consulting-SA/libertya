@@ -3597,3 +3597,14 @@ where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Alloc
 
 -- El campo Record_ID de la tabla AD_Attachment debe ser de tipo referencia (18), no un boton (28) 
 update ad_column set ad_reference_id = 18 where ad_componentobjectuid = 'CORE-AD_Column-2097';
+
+--20180223-1830 Incorporación de líneas de factura y de pedido a la estructura de descuentos de comprobantes
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocumentDiscount','c_orderline_id','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocumentDiscount','c_invoiceline_id','integer'));
+
+ALTER TABLE C_DocumentDiscount ADD CONSTRAINT cinvoiceline_cdocumentdiscount FOREIGN KEY (c_invoiceline_id)
+  REFERENCES c_invoiceline (c_invoiceline_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE CASCADE;
+ALTER TABLE C_DocumentDiscount ADD CONSTRAINT corderline_cdocumentdiscount FOREIGN KEY (c_orderline_id)
+  REFERENCES c_orderline (c_orderline_id) MATCH SIMPLE
+  ON UPDATE NO ACTION ON DELETE CASCADE;

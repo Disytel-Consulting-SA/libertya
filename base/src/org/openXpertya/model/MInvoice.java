@@ -165,6 +165,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	private boolean skipLastFiscalDocumentNoValidation = false;
 	
 	/**
+	 * Anulación: Asociación entre las líneas del comprobante a anular y el
+	 * contra documento
+	 */
+	private Map<Integer, Integer> reversalInvoiceLinesAssociation = null;
+	
+	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -361,7 +367,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// Copiar los document discounts
 		if (copyDocumentDiscounts) {
 			try {
-				to.copyDocumentDiscounts(from, false);
+				to.copyDocumentDiscounts(from);
 			} catch (Exception e) {
 				throw new IllegalStateException(e.getMessage());
 			}
@@ -521,32 +527,52 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 	}
 
-	public void copyDocumentDiscounts(MInvoice from,
-			boolean onlyTotalizedDocumentDiscounts) throws Exception {
-		List<MDocumentDiscount> discounts = MDocumentDiscount.getOfInvoice(
-				onlyTotalizedDocumentDiscounts, from.getID(),
-				" TaxRate DESC, DiscountKind ", getCtx(), get_TrxName());
+	/**
+	 * Copia los descuentos arrastrados desde el pedido desde el comprobante
+	 * parámetro al actual
+	 * 
+	 * @param from
+	 * @throws Exception
+	 */
+	public void copyDocumentDiscounts(MInvoice from) throws Exception {
+		// Copio primero los descuentos padre para luego asignarselos a los
+		// restantes (de línea y por tasa) 
+		String filter = "C_Invoice_ID = ? AND C_DocumentDiscount_Parent_ID IS NULL";
+		List<MDocumentDiscount> discounts = MDocumentDiscount.get(filter, new Object[] { from.getID() },
+				"C_DocumentDiscount_Parent_ID", getCtx(), get_TrxName()); 
 		MDocumentDiscount newDocumentDiscount;
 		Map<Integer, Integer> parentsDocumentDiscounts = new HashMap<Integer, Integer>();
 		for (MDocumentDiscount mDocumentDiscount : discounts) {
-			newDocumentDiscount = new MDocumentDiscount(getCtx(), 0,
-					get_TrxName());
+			newDocumentDiscount = new MDocumentDiscount(getCtx(), 0, get_TrxName());
 			PO.copyValues(mDocumentDiscount, newDocumentDiscount);
 			newDocumentDiscount.setC_Invoice_ID(getID());
-			if (mDocumentDiscount.getC_DocumentDiscount_Parent_ID() != 0
-					&& parentsDocumentDiscounts.get(mDocumentDiscount
-							.getC_DocumentDiscount_Parent_ID()) != null) {
-				newDocumentDiscount
-						.setC_DocumentDiscount_Parent_ID(parentsDocumentDiscounts
-								.get(mDocumentDiscount
-										.getC_DocumentDiscount_Parent_ID()));
-			}
 			newDocumentDiscount.setC_Order_ID(0);
 			if (!newDocumentDiscount.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 			parentsDocumentDiscounts.put(mDocumentDiscount.getID(),
 					newDocumentDiscount.getID());
+		}
+		// Itero por los restantes document discount ya con los padres creados
+		// en la factura actual
+		filter = "C_Invoice_ID = ? AND C_DocumentDiscount_Parent_ID IS NOT NULL";
+		discounts = MDocumentDiscount.get(filter, new Object[] { from.getID() },
+				"TaxRate DESC", getCtx(), get_TrxName());
+		for (MDocumentDiscount mDocumentDiscount : discounts) {
+			newDocumentDiscount = new MDocumentDiscount(getCtx(), 0, get_TrxName());
+			PO.copyValues(mDocumentDiscount, newDocumentDiscount);
+			newDocumentDiscount.setC_Invoice_ID(getID());
+			newDocumentDiscount.setC_Order_ID(0);
+			newDocumentDiscount.setC_OrderLine_ID(0);
+			newDocumentDiscount.setC_InvoiceLine_ID(reversalInvoiceLinesAssociation != null
+					&& reversalInvoiceLinesAssociation.containsKey(mDocumentDiscount.getC_InvoiceLine_ID())
+							? reversalInvoiceLinesAssociation.get(mDocumentDiscount.getC_InvoiceLine_ID()) 
+									: 0);
+			newDocumentDiscount.setC_DocumentDiscount_Parent_ID(
+					parentsDocumentDiscounts.get(mDocumentDiscount.getC_DocumentDiscount_Parent_ID()));
+			if (!newDocumentDiscount.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
 		}
 	}
 
@@ -1518,7 +1544,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		MInvoiceLine[] fromLines = otherInvoice.getLines(false);
 		int count = 0;
-
+		reversalInvoiceLinesAssociation = new HashMap<Integer, Integer>();
+		
 		for (int i = 0; i < fromLines.length; i++) {
 			MInvoiceLine line = new MInvoiceLine(getCtx(), 0, get_TrxName());
 
@@ -1588,6 +1615,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				fromLines[i].setRef_InvoiceLine_ID(line.getC_InvoiceLine_ID());
 				fromLines[i].save(get_TrxName());
 			}
+			
+			// Asociación de las líneas del comprobante a anular con el contra
+			// documento
+			reversalInvoiceLinesAssociation.put(fromLines[i].getID(), line.getID());
 		}
 
 		if (fromLines.length != count) {
@@ -3892,9 +3923,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// un débito, entonces se debe reabrir el pedido, modificar la línea y
 		// completarlo
 		Map<Integer, BigDecimal> orderLinesToUpdate = new HashMap<Integer, BigDecimal>();
-		Map<Integer, BigDecimal> orderLinesDocumentDiscountToUpdate = new HashMap<Integer, BigDecimal>();
-		Map<Integer, BigDecimal> orderLinesLineDiscountToUpdate = new HashMap<Integer, BigDecimal>();
-		Map<Integer, BigDecimal> orderLinesBonusDiscountToUpdate = new HashMap<Integer, BigDecimal>();
 		BigDecimal orderLineToUpdateQty = null;
 		// Ader: mejoras de logica de documentos; por ahora solo se trata
 		// el caso de facturas de clientes normales; el codigo siguiente al else
@@ -3903,7 +3931,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// facturas creadas a partir de peidods N*6 accesos por solo 1 (N siendo
 		// la cantidad de lineas).
 		if (isSOTrx() && isDebit) {
-			boolean ok = updateOrderIsSOTrxDebit(lines, orderLinesToUpdate, orderLinesDocumentDiscountToUpdate, orderLinesLineDiscountToUpdate, orderLinesBonusDiscountToUpdate);
+			boolean ok = updateOrderIsSOTrxDebit(lines, orderLinesToUpdate);
 			if (!ok) {
 				m_processMsg = "Could not update Order Line";
 				return DocAction.STATUS_Invalid;
@@ -4009,22 +4037,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			for (Integer orderLineID : orderLinesToUpdate.keySet()) {
 				orderLineToUpdate = new MOrderLine(getCtx(), orderLineID, get_TrxName());
 				qtySign = orderLinesToUpdate.get(orderLineID).multiply(sign);
-				// Si es débito, la cantidad del pedido es 0 y se deben manejar
-				// los descuentos del pedido, entonces setearle el monto de
-				// descuentos que tiene este débito para que se pueda seguir
-				// arrastrando el descuento/recargo del pedido
-				if (isDebit
-						&& Util.isEmpty(orderLineToUpdate.getQtyEntered(), true)) {
-					orderLineToUpdate
-							.setDocumentDiscountAmt(orderLinesDocumentDiscountToUpdate
-									.get(orderLineID));
-					orderLineToUpdate
-							.setLineDiscountAmt(orderLinesLineDiscountToUpdate
-									.get(orderLineID));
-					orderLineToUpdate
-							.setLineBonusAmt(orderLinesBonusDiscountToUpdate
-									.get(orderLineID));
-				}
 				orderLineToUpdate.setQtyEntered(orderLineToUpdate
 						.getQtyEntered().add(qtySign));
 				orderLineToUpdate.setQtyOrdered(orderLineToUpdate
@@ -4166,7 +4178,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 					totalPriceListLines, manualGeneralDiscountAmt, null,
 					MDocumentDiscount.CUMULATIVELEVEL_Document,
 					MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-					MDocumentDiscount.DISCOUNTKIND_ManualGeneralDiscount, null);
+					MDocumentDiscount.DISCOUNTKIND_ManualGeneralDiscount, null, null);
 			// Si no se puede guardar aborta la operación
 			if (!documentDiscount.save()) {
 				m_processMsg = CLogger.retrieveErrorAsString();
@@ -4174,195 +4186,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 		}
 
-		// Crear los DocumentDiscount de los descuentos cuando se arrastran
-		// desde el pedido
-		MDocumentDiscount documentDiscount = null;
-		if (isManageDragOrderDiscounts()) {
-			// Suma de los descuentos a nivel de documento y de la base,
-			// separado por impuesto
-			Map<BigDecimal, BigDecimal> documentDiscountBaseAmtsByTaxRate = new HashMap<BigDecimal, BigDecimal>();
-			Map<BigDecimal, BigDecimal> documentDiscountAmtsByTaxRate = new HashMap<BigDecimal, BigDecimal>();
-
-			// Itero por todas las líneas del la factura y agrego un document
-			// discount por cada descuento de línea y bonificación
-			BigDecimal lineDiscountAmt, lineBonusAmt, baseAmt, documentDiscountBaseAmt, documentDiscountAmt, taxRate, manualGeneralAmt;
-			String discountDescription;
-			for (MInvoiceLine mInvoiceLine : lines) {
-				// Se debe crear un document discount por descuento de línea y
-				// bonificación
-				baseAmt = mInvoiceLine.getTotalPriceListWithTax();
-				discountDescription = mInvoiceLine.getProductName();
-				taxRate = mInvoiceLine.getTaxRate();
-				// Descuento por línea al precio
-				lineDiscountAmt = mInvoiceLine.getLineDiscountAmt();
-				if (lineDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
-					// TODO Decrementar el monto de descuento manual general que
-					// se
-					// guarda lineDocumentDiscount
-					if (lineDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
-						// Descuento de bonificación padre
-						MDocumentDiscount documentDiscountFather = createDocumentDiscount(
-								baseAmt,
-								mInvoiceLine
-										.amtByTax(lineDiscountAmt, mInvoiceLine
-												.getTaxAmt(lineDiscountAmt),
-												isTaxIncluded(), true),
-								null,
-								MDocumentDiscount.CUMULATIVELEVEL_Line,
-								MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-								MDocumentDiscount.DISCOUNTKIND_DiscountLine,
-								discountDescription);
-						// Si no se puede guardar aborta la operación
-						if (!documentDiscountFather.save()) {
-							m_processMsg = CLogger.retrieveErrorAsString();
-							return DocAction.STATUS_Invalid;
-						}
-						// Descuento de bonificación de iva
-						documentDiscount = createDocumentDiscount(
-								baseAmt,
-								mInvoiceLine
-										.amtByTax(lineDiscountAmt, mInvoiceLine
-												.getTaxAmt(lineDiscountAmt),
-												isTaxIncluded(), true),
-								taxRate,
-								MDocumentDiscount.CUMULATIVELEVEL_Line,
-								MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-								MDocumentDiscount.DISCOUNTKIND_DiscountLine,
-								discountDescription);
-						documentDiscount
-								.setC_DocumentDiscount_Parent_ID(documentDiscountFather
-										.getID());
-						// Si no se puede guardar aborta la operación
-						if (!documentDiscount.save()) {
-							m_processMsg = CLogger.retrieveErrorAsString();
-							return DocAction.STATUS_Invalid;
-						}
-					}
-				}
-				// Descuento de bonificación
-				lineBonusAmt = mInvoiceLine.getLineBonusAmt();
-				if (lineBonusAmt.compareTo(BigDecimal.ZERO) != 0) {
-					// Descuento de bonificación padre
-					MDocumentDiscount documentDiscountFather = createDocumentDiscount(
-							baseAmt, mInvoiceLine.amtByTax(lineBonusAmt,
-									mInvoiceLine.getTaxAmt(lineBonusAmt),
-									isTaxIncluded(), true), null,
-							MDocumentDiscount.CUMULATIVELEVEL_Line,
-							MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
-							MDocumentDiscount.DISCOUNTKIND_DiscountLine,
-							discountDescription);
-					// Si no se puede guardar aborta la operación
-					if (!documentDiscountFather.save()) {
-						m_processMsg = CLogger.retrieveErrorAsString();
-						return DocAction.STATUS_Invalid;
-					}
-					// Descuento de bonificación de iva
-					documentDiscount = createDocumentDiscount(baseAmt,
-							mInvoiceLine.amtByTax(lineBonusAmt,
-									mInvoiceLine.getTaxAmt(lineBonusAmt),
-									isTaxIncluded(), true), taxRate,
-							MDocumentDiscount.CUMULATIVELEVEL_Line,
-							MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
-							MDocumentDiscount.DISCOUNTKIND_DiscountLine,
-							discountDescription);
-					documentDiscount
-							.setC_DocumentDiscount_Parent_ID(documentDiscountFather
-									.getID());
-					// Si no se puede guardar aborta la operación
-					if (!documentDiscount.save()) {
-						m_processMsg = CLogger.retrieveErrorAsString();
-						return DocAction.STATUS_Invalid;
-					}
-				}
-				// Actualizar el monto base y de descuento de la map para los
-				// descuentos de documento
-				// Monto base
-				documentDiscountBaseAmt = documentDiscountBaseAmtsByTaxRate
-						.get(taxRate);
-				if (documentDiscountBaseAmt == null) {
-					documentDiscountBaseAmt = BigDecimal.ZERO;
-				}
-				documentDiscountBaseAmtsByTaxRate.put(taxRate,
-						documentDiscountBaseAmt.add(mInvoiceLine
-								.getTotalPriceEnteredWithTax()));
-				// Monto de descuento
-				documentDiscountAmt = documentDiscountAmtsByTaxRate
-						.get(taxRate);
-				if (documentDiscountAmt == null) {
-					documentDiscountAmt = BigDecimal.ZERO;
-				}
-				documentDiscountAmtsByTaxRate.put(taxRate, documentDiscountAmt
-						.add(mInvoiceLine.amtByTax(mInvoiceLine
-								.getDocumentDiscountAmt(), mInvoiceLine
-								.getTaxAmt(mInvoiceLine
-										.getDocumentDiscountAmt()),
-								isTaxIncluded(), true)));
-			}
-			// Itero por todas las tasas que posee esta factura y creo el
-			// descuento a nivel de documento en base a la suma de ellos
-			BigDecimal totalDocumentDiscountAmt = BigDecimal.ZERO;
-			BigDecimal totalDocumentDiscountBaseAmt = BigDecimal.ZERO;
-			BigDecimal discountAmt = BigDecimal.ZERO;
-			BigDecimal discountBaseAmt = BigDecimal.ZERO;
-			List<Integer> documentDiscounts = new ArrayList<Integer>();
-			MDocumentDiscount documentDiscountByTax = null;
-			String documentDiscountDescription = Msg.getMsg(getCtx(),
-					"DiscountChargeShort");
-			for (BigDecimal baseTaxRate : documentDiscountBaseAmtsByTaxRate
-					.keySet()) {
-				discountBaseAmt = documentDiscountBaseAmtsByTaxRate
-						.get(baseTaxRate);
-				discountAmt = documentDiscountAmtsByTaxRate.get(baseTaxRate);
-				if (discountAmt.compareTo(BigDecimal.ZERO) != 0) {
-					// Crear el descuento por impuesto
-					documentDiscountByTax = createDocumentDiscount(
-							discountBaseAmt,
-							discountAmt,
-							baseTaxRate,
-							MDocumentDiscount.CUMULATIVELEVEL_Document,
-							MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-							MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
-							documentDiscountDescription + " " + baseTaxRate);
-					// Si no se puede guardar aborta la operación
-					if (!documentDiscountByTax.save()) {
-						m_processMsg = CLogger.retrieveErrorAsString();
-						return DocAction.STATUS_Invalid;
-					}
-					documentDiscounts.add(documentDiscountByTax.getID());
-					totalDocumentDiscountBaseAmt = totalDocumentDiscountBaseAmt
-							.add(documentDiscountBaseAmtsByTaxRate
-									.get(baseTaxRate));
-					totalDocumentDiscountAmt = totalDocumentDiscountAmt
-							.add(documentDiscountAmtsByTaxRate.get(baseTaxRate));
-				}
-			}
-			// Creo el descuento de documento si hubo efectivamente uno
-			if (totalDocumentDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
-				documentDiscount = createDocumentDiscount(
-						totalDocumentDiscountBaseAmt, totalDocumentDiscountAmt,
-						null, MDocumentDiscount.CUMULATIVELEVEL_Document,
-						MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
-						"Total " + documentDiscountDescription);
-				// Si no se puede guardar aborta la operación
-				if (!documentDiscount.save()) {
-					m_processMsg = CLogger.retrieveErrorAsString();
-					return DocAction.STATUS_Invalid;
-				}
-			}
-
-			// Actualizar todos los descuentos de documento por tasa con el
-			// descuento padre
-			if (documentDiscounts.size() > 0 && documentDiscount != null
-					&& documentDiscount.getID() > 0) {
-				int du = DB.executeUpdate("UPDATE "
-						+ X_C_DocumentDiscount.Table_Name
-						+ " SET c_documentdiscount_parent_id = "
-						+ documentDiscount.getID()
-						+ " WHERE c_documentdiscount_id IN "
-						+ documentDiscounts.toString().replace("[", "(")
-								.replace("]", ")"), get_TrxName());
-			}
+		// Arrastre de descuentos del pedido
+		try{ 
+			saveDraggedDiscounts();
+		} catch(Exception e){
+			setProcessMsg(e.getMessage());
+			return DocAction.STATUS_Invalid; 
 		}
 
 		// Counter Documents
@@ -4545,19 +4374,21 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		return !Util.isEmpty(getOldGrandTotal(), true) && (!this.getGrandTotal().equals(this.getOldGrandTotal()));
 	}
 
-	private MDocumentDiscount createDocumentDiscount(BigDecimal baseAmt,
-			BigDecimal discountPerc, Integer scale, BigDecimal taxRate,
-			String cumulativeLevel, String discountApplication,
-			String discountKind, String description) {
-		BigDecimal totalDiscountAmt = baseAmt.multiply(discountPerc.divide(
-				new BigDecimal(100), scale, BigDecimal.ROUND_HALF_UP));
-		return createDocumentDiscount(baseAmt, totalDiscountAmt, taxRate,
-				cumulativeLevel, discountApplication, discountKind, description);
-	}
-
+	/**
+	 * Crea un document discount con los datos parámetro. No guarda el PO.
+	 * @param baseAmt
+	 * @param discountAmt
+	 * @param taxRate
+	 * @param cumulativeLevel
+	 * @param discountApplication
+	 * @param discountKind
+	 * @param description
+	 * @return 
+	 */
 	private MDocumentDiscount createDocumentDiscount(BigDecimal baseAmt,
 			BigDecimal discountAmt, BigDecimal taxRate, String cumulativeLevel,
-			String discountApplication, String discountKind, String description) {
+			String discountApplication, String discountKind, String description, 
+			Integer discountSchemaID) {
 		MDocumentDiscount documentDiscount = new MDocumentDiscount(getCtx(), 0,
 				get_TrxName());
 		// Asigna las referencias al documento
@@ -4570,9 +4401,335 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		documentDiscount.setTaxRate(taxRate);
 		documentDiscount.setDiscountKind(discountKind);
 		documentDiscount.setDescription(description);
+		documentDiscount.setM_DiscountSchema_ID(discountSchemaID);
 		return documentDiscount;
 	}
+	
+	/**
+	 * Este método guarda los descuentos a nivel de cabecera, por impuesto y los
+	 * asocia como padre a todos ellos. Posee soporte para versiones anteriores
+	 * de arrastre de descuentos (sin línea)
+	 * 
+	 * @throws Exception
+	 *             en caso de error
+	 */
+	private void saveDraggedDiscounts() throws Exception{
+		if(!isManageDragOrderDiscounts()){
+			return;
+		}
+		// Obtener los descuentos aplicados a cada línea de la factura 
+		String sql = "select dd.m_discountschema_id, dd.cumulativelevel, dd.discountapplication, dd.discountkind, t.rate, dd.discountbaseamt, dd.discountamt, dd.c_invoiceline_id, dd.c_documentdiscount_id, dd.description "
+					+ "from c_documentdiscount dd "
+					+ "join c_invoiceline il on il.c_invoiceline_id = dd.c_invoiceline_id "
+					+ "join c_tax t on t.c_tax_id = il.c_tax_id "
+					+ "where dd.c_invoice_id = ? "
+					+ "order by dd.m_discountschema_id, dd.cumulativelevel, dd.discountapplication, dd.discountkind, t.rate";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, get_TrxName());
+			ps.setInt(1, getID());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				String controlKey = null;
+				Map<String, MDocumentDiscount> documentDiscountParents = new HashMap<String, MDocumentDiscount>();
+				Map<String, List<Integer>> documentDiscountChildsIDs = new HashMap<String, List<Integer>>();
+				Map<String, Map<BigDecimal, MDocumentDiscount>> documentDiscountByTaxRate = new HashMap<String, Map<BigDecimal,MDocumentDiscount>>();
+				MDocumentDiscount dd;
+				String description, cumulativeLevel, discountApplication, discountKind;
+				BigDecimal discountBaseAmt, discountAmt, rate;
+				Integer documentDiscountID, discountSchemaID;
+				String keySeparator = "_";
+				do {
+					documentDiscountID = rs.getInt("c_documentdiscount_id");
+					description = rs.getString("description");
+					discountBaseAmt = rs.getBigDecimal("discountbaseamt");
+					discountAmt = rs.getBigDecimal("discountamt");
+					discountSchemaID = rs.getInt("m_discountschema_id");
+					cumulativeLevel = rs.getString("cumulativelevel");
+					discountApplication = rs.getString("discountapplication");
+					discountKind = rs.getString("discountkind");
+					rate = rs.getBigDecimal("rate");
+					controlKey = (StringUtil.valueOrDefault(discountSchemaID, "0") + keySeparator
+							+ StringUtil.valueOrDefault(cumulativeLevel, "") + keySeparator
+							+ StringUtil.valueOrDefault(discountApplication, "") + keySeparator
+							+ StringUtil.valueOrDefault(discountKind, ""));
+					
+					// Sumar descuentos al parent
+					dd = documentDiscountParents.get(controlKey);
+					if(dd == null){
+						dd = createDocumentDiscount(BigDecimal.ZERO, BigDecimal.ZERO, null, cumulativeLevel,
+								discountApplication, discountKind, description, discountSchemaID);
+					}
+					dd.setDiscountBaseAmt(dd.getDiscountBaseAmt().add(discountBaseAmt));
+					dd.setDiscountAmt(dd.getDiscountAmt().add(discountAmt));
+					documentDiscountParents.put(controlKey, dd);
+					
+					// Busco el documentdiscount de la tasa de impuesto actual
+					if(!documentDiscountByTaxRate.containsKey(controlKey)){
+						documentDiscountByTaxRate.put(controlKey, new HashMap<BigDecimal, MDocumentDiscount>());
+					}
+					dd = documentDiscountByTaxRate.get(controlKey).get(rate);
+					if(dd == null){
+						dd = createDocumentDiscount(BigDecimal.ZERO, BigDecimal.ZERO, rate, cumulativeLevel,
+								discountApplication, discountKind, description, discountSchemaID);
+					}
+					dd.setDiscountBaseAmt(dd.getDiscountBaseAmt().add(discountBaseAmt));
+					dd.setDiscountAmt(dd.getDiscountAmt().add(discountAmt));
+					documentDiscountByTaxRate.get(controlKey).put(rate, dd);
+					
+					// Agrego el id del document discount a actualizar luego con el padre
+					if(!documentDiscountChildsIDs.containsKey(controlKey)){
+						documentDiscountChildsIDs.put(controlKey, new ArrayList<Integer>());
+					}
+					documentDiscountChildsIDs.get(controlKey).add(documentDiscountID);
+				} while (rs.next());
+				
+				/*	// Sumar descuentos al parent
+					dd = documentDiscountParents.get(controlKey);
+					if(dd == null){
+						dd = createDocumentDiscount(BigDecimal.ZERO, BigDecimal.ZERO, null, cumulativeLevel,
+								discountApplication, discountKind, description, discountSchemaID);
+					}
+					dd.setDiscountBaseAmt(dd.getDiscountBaseAmt().add(discountBaseAmt));
+					dd.setDiscountAmt(dd.getDiscountAmt().add(discountAmt));
+					documentDiscountParents.put(controlKey, dd);
+					
+					// Busco el documentdiscount de la tasa de impuesto actual
+					if(!documentDiscountByTaxRate.containsKey(controlKey)){
+						documentDiscountByTaxRate.put(controlKey, new HashMap<BigDecimal, MDocumentDiscount>());
+					}
+					dd = documentDiscountByTaxRate.get(controlKey).get(rate);
+					if(dd == null){
+						dd = createDocumentDiscount(BigDecimal.ZERO, BigDecimal.ZERO, rate, cumulativeLevel,
+								discountApplication, discountKind, description, discountSchemaID);
+					}
+					dd.setDiscountBaseAmt(dd.getDiscountBaseAmt().add(discountBaseAmt));
+					dd.setDiscountAmt(dd.getDiscountAmt().add(discountAmt));
+					documentDiscountByTaxRate.get(controlKey).put(rate, dd);
+					
+					// Agrego el id del document discount a actualizar luego con el padre
+					if(!documentDiscountChildsIDs.containsKey(auxControlKey)){
+						documentDiscountChildsIDs.put(auxControlKey, new ArrayList<Integer>());
+					}
+					documentDiscountChildsIDs.get(auxControlKey).add(documentDiscountID);
+				}*/
+				
+				// Guardar todos los document discounts
+				MDocumentDiscount parent;
+				// 1) Descuentos de documento (padres)
+				for (String key : documentDiscountParents.keySet()) {
+					parent = documentDiscountParents.get(key);
+					if(!parent.save()){
+						throw new Exception(CLogger.retrieveErrorAsString());
+					}
+					// 2) Descuento por iva
+					for (BigDecimal taxRate : documentDiscountByTaxRate.get(key).keySet()) {
+						dd = documentDiscountByTaxRate.get(key).get(taxRate);
+						dd.setC_DocumentDiscount_Parent_ID(parent.getID());
+						if(!dd.save()){
+							throw new Exception(CLogger.retrieveErrorAsString());
+						}	
+					}
+					// 3) Asociar a las líneas de descuento els descuento padre
+					DB.executeUpdate(
+							"UPDATE " + MDocumentDiscount.Table_Name + " SET c_documentdiscount_parent_id = "
+									+ parent.getID() + " WHERE c_documentdiscount_id IN "
+									+ StringUtil.implodeForUnion(documentDiscountChildsIDs.get(key)),
+							get_TrxName());
+				}
+			}
+			// Si no se debe realizar con el nuevo método, debemos tener soporte
+			// para la forma anterior
+			else{
+				saveDraggedDiscountsOld();
+			}
+		} finally {
+			try {
+				if(ps != null) ps.close();
+				if(rs != null) rs.close();
+			} catch (Exception e) {
+				throw e;
+			}
+		}
+	}
 
+	/**
+	 * Método anterior de arrastre de descuentos de pedido basado en los
+	 * importes de descuentos de las líneas del comprobante
+	 * 
+	 * @deprecated
+	 * @throws Exception
+	 */
+	private void saveDraggedDiscountsOld() throws Exception{
+		if (!isManageDragOrderDiscounts()) {
+			return;
+		}
+		// Crear los DocumentDiscount de los descuentos cuando se arrastran
+		// desde el pedido
+		MDocumentDiscount documentDiscount = null;
+		MDocumentDiscount documentDiscountFather = null;
+		
+		// Crear los document discount en base a los descuentos de las líneas
+		// Cabecera e impuestos de cada descuento. 
+		
+		// Suma de los descuentos a nivel de documento y de la base,
+		// separado por impuesto
+		Map<BigDecimal, BigDecimal> documentDiscountBaseAmtsByTaxRate = new HashMap<BigDecimal, BigDecimal>();
+		Map<BigDecimal, BigDecimal> documentDiscountAmtsByTaxRate = new HashMap<BigDecimal, BigDecimal>();
+
+		// Itero por todas las líneas del la factura y agrego un document
+		// discount por cada descuento de línea y bonificación
+		BigDecimal lineDiscountAmt, lineBonusAmt, baseAmt, documentDiscountBaseAmt, documentDiscountAmt, taxRate, manualGeneralAmt;
+		String discountDescription;
+		for (MInvoiceLine mInvoiceLine : getLines()) {
+			// Se debe crear un document discount por descuento de línea y
+			// bonificación
+			baseAmt = mInvoiceLine.getTotalPriceListWithTax();
+			discountDescription = mInvoiceLine.getProductName();
+			taxRate = mInvoiceLine.getTaxRate();
+			// Descuento por línea al precio
+			lineDiscountAmt = mInvoiceLine.getLineDiscountAmt();
+			if (lineDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
+				if (lineDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
+					// Descuento de línea padre
+					documentDiscountFather = createDocumentDiscount(
+							baseAmt,
+							lineDiscountAmt,
+							null,
+							MDocumentDiscount.CUMULATIVELEVEL_Line,
+							MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+							MDocumentDiscount.DISCOUNTKIND_DiscountLine,
+							discountDescription, null);
+					// Si no se puede guardar aborta la operación
+					if (!documentDiscountFather.save()) {
+						throw new Exception(CLogger.retrieveErrorAsString()); 
+					}
+					// Descuento de bonificación de iva
+					documentDiscount = createDocumentDiscount(
+							baseAmt,
+							lineDiscountAmt,
+							taxRate,
+							MDocumentDiscount.CUMULATIVELEVEL_Line,
+							MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+							MDocumentDiscount.DISCOUNTKIND_DiscountLine,
+							discountDescription, null);
+					documentDiscount
+							.setC_DocumentDiscount_Parent_ID(documentDiscountFather
+									.getID());
+					// Si no se puede guardar aborta la operación
+					if (!documentDiscount.save()) {
+						throw new Exception(CLogger.retrieveErrorAsString());
+					}
+				}
+			}
+			// Descuento de bonificación
+			lineBonusAmt = mInvoiceLine.getLineBonusAmt();
+			if (lineBonusAmt.compareTo(BigDecimal.ZERO) != 0) {
+				// Descuento de bonificación padre
+				documentDiscountFather = createDocumentDiscount(
+						baseAmt, 
+						lineBonusAmt,
+						null,
+						MDocumentDiscount.CUMULATIVELEVEL_Line,
+						MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
+						MDocumentDiscount.DISCOUNTKIND_DiscountLine,
+						discountDescription, null);
+				// Si no se puede guardar aborta la operación
+				if (!documentDiscountFather.save()) {
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+				// Descuento de bonificación de iva
+				documentDiscount = createDocumentDiscount(baseAmt,
+						lineBonusAmt,
+						taxRate,
+						MDocumentDiscount.CUMULATIVELEVEL_Line,
+						MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
+						MDocumentDiscount.DISCOUNTKIND_DiscountLine,
+						discountDescription, null);
+				documentDiscount
+						.setC_DocumentDiscount_Parent_ID(documentDiscountFather
+								.getID());
+				// Si no se puede guardar aborta la operación
+				if (!documentDiscount.save()) {
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+			}
+			// Actualizar el monto base y de descuento de la map para los
+			// descuentos de documento
+			// Monto base
+			documentDiscountBaseAmt = documentDiscountBaseAmtsByTaxRate.get(taxRate);
+			if (documentDiscountBaseAmt == null) {
+				documentDiscountBaseAmt = BigDecimal.ZERO;
+			}
+			documentDiscountBaseAmtsByTaxRate.put(taxRate, documentDiscountBaseAmt.add(baseAmt));
+			// Monto de descuento
+			documentDiscountAmt = documentDiscountAmtsByTaxRate.get(taxRate);
+			if (documentDiscountAmt == null) {
+				documentDiscountAmt = BigDecimal.ZERO;
+			}
+			documentDiscountAmtsByTaxRate.put(taxRate, documentDiscountAmt.add(mInvoiceLine.getDocumentDiscountAmt()));
+		}
+		// Itero por todas las tasas que posee esta factura y creo el
+		// descuento a nivel de documento en base a la suma de ellos
+		BigDecimal totalDocumentDiscountAmt = BigDecimal.ZERO;
+		BigDecimal totalDocumentDiscountBaseAmt = BigDecimal.ZERO;
+		BigDecimal discountAmt = BigDecimal.ZERO;
+		BigDecimal discountBaseAmt = BigDecimal.ZERO;
+		List<Integer> documentDiscounts = new ArrayList<Integer>();
+		documentDiscount = null;
+		MDocumentDiscount documentDiscountByTax = null;
+		String documentDiscountDescription = Msg.getMsg(getCtx(),"DiscountChargeShort");
+		for (BigDecimal baseTaxRate : documentDiscountBaseAmtsByTaxRate.keySet()) {
+			discountBaseAmt = documentDiscountBaseAmtsByTaxRate.get(baseTaxRate);
+			discountAmt = documentDiscountAmtsByTaxRate.get(baseTaxRate);
+			if (discountAmt.compareTo(BigDecimal.ZERO) != 0) {
+				// Crear el descuento por impuesto
+				documentDiscountByTax = createDocumentDiscount(
+						discountBaseAmt,
+						discountAmt,
+						baseTaxRate,
+						MDocumentDiscount.CUMULATIVELEVEL_Document,
+						null,
+						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
+						documentDiscountDescription + " " + baseTaxRate, null);
+				// Si no se puede guardar aborta la operación
+				if (!documentDiscountByTax.save()) {
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+				documentDiscounts.add(documentDiscountByTax.getID());
+				totalDocumentDiscountBaseAmt = totalDocumentDiscountBaseAmt.add(discountBaseAmt);
+				totalDocumentDiscountAmt = totalDocumentDiscountAmt.add(discountAmt);
+			}
+		}
+		
+		// Creo el descuento de documento si hubo efectivamente uno
+		if (totalDocumentDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
+			documentDiscount = createDocumentDiscount(
+					totalDocumentDiscountBaseAmt, totalDocumentDiscountAmt,
+					null, MDocumentDiscount.CUMULATIVELEVEL_Document, null,
+					MDocumentDiscount.DISCOUNTKIND_DocumentDiscount,
+					"Total " + documentDiscountDescription, null);
+			// Si no se puede guardar aborta la operación
+			if (!documentDiscount.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+
+		// Actualizar todos los descuentos de documento por tasa con el
+		// descuento padre
+		if (documentDiscounts.size() > 0 && documentDiscount != null
+				&& documentDiscount.getID() > 0) {
+			DB.executeUpdate("UPDATE "
+					+ X_C_DocumentDiscount.Table_Name
+					+ " SET c_documentdiscount_parent_id = "
+					+ documentDiscount.getID()
+					+ " WHERE c_documentdiscount_id IN "
+					+ StringUtil.implodeForUnion(documentDiscounts), get_TrxName());
+		}
+	}
+	
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -5761,10 +5918,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 * @return false si no la actualizacion fallo por algun motivo
 	 */
 	private boolean updateOrderIsSOTrxDebit(MInvoiceLine[] lines,
-			Map<Integer, BigDecimal> orderLinesToUpdate,
-			Map<Integer, BigDecimal> orderLinesDocumentDiscountToUpdate,
-			Map<Integer, BigDecimal> orderLinesLineDiscountToUpdate,
-			Map<Integer, BigDecimal> orderLinesBonusDiscountToUpdate) {
+			Map<Integer, BigDecimal> orderLinesToUpdate) {
 		// Ok, teoricamente no deberia poder haber 2 MInvoiceLIne de la misma
 		// factura refiriendo a la misma MOrderLine; auqneu no parece
 		// ser un restricción muy importante, se va a permitir esto (el codigo
@@ -5800,22 +5954,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			if (isUpdateOrderQty()) {
 				// Cantidades
 				addToMap(qtyInvoiced, il.getC_OrderLine_ID(), orderLinesToUpdate);
-				// Descuento/Recargo a nivel documento
-				addToMap(
-						(Util.isEmpty(il.getDocumentDiscountAmt(), false) ? BigDecimal.ZERO
-								: il.getDocumentDiscountAmt()),
-						il.getC_OrderLine_ID(),
-						orderLinesDocumentDiscountToUpdate);
-				// Descuento/Recargo a nivel linea
-				addToMap(
-						(Util.isEmpty(il.getLineDiscountAmt(), false) ? BigDecimal.ZERO
-								: il.getLineDiscountAmt()),
-						il.getC_OrderLine_ID(), orderLinesLineDiscountToUpdate);
-				// Descuento/Recargo a nivel bonus
-				addToMap(
-						(Util.isEmpty(il.getLineBonusAmt(), false) ? BigDecimal.ZERO
-								: il.getLineBonusAmt()),
-						il.getC_OrderLine_ID(), orderLinesBonusDiscountToUpdate);
 			}
 
 		}
@@ -6243,6 +6381,18 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			return getDateInvoiced();
 		}
 
+		@Override
+		public BigDecimal getLinesTotalAmt(boolean includeOtherTaxesAmt) {
+			BigDecimal totalAmt = BigDecimal.ZERO;
+			for (IDocumentLine line : getDocumentLines()) {
+				totalAmt = totalAmt.add(line.getTotalAmt());
+			}
+			if(includeOtherTaxesAmt){
+				totalAmt = totalAmt.add(MInvoice.this.getPercepcionesTotalAmt());
+			}
+			return totalAmt;
+		}
+		
 		@Override
 		public void setTotalDocumentDiscount(BigDecimal discountAmount) {
 			// En la factura se invierte el signo del descuento ya que un valor

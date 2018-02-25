@@ -7,15 +7,18 @@ public class Tax {
 	private int id;
 	private BigDecimal rate;
 	private boolean isPercepcion = false;
+	private String name;
+	private BigDecimal amount;
 	
 	/**
 	 * @param id
 	 * @param rate
 	 */
-	public Tax(int id, BigDecimal rate, boolean isPercepcion) {
+	public Tax(int id, BigDecimal rate, String name, boolean isPercepcion) {
 		super();
 		this.id = id;
 		this.rate = rate;
+		setName(name);
 		this.setPercepcion(isPercepcion);
 	}
 
@@ -74,6 +77,22 @@ public class Tax {
 
 	public boolean isPercepcion() {
 		return isPercepcion;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
 	}
 	
 	

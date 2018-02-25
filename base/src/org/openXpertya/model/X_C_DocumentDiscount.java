@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocumentDiscount
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-06-10 15:34:28.89 */
+ *  @version  - 2018-02-23 18:31:00.712 */
 public class X_C_DocumentDiscount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -78,6 +78,7 @@ Integer ii = (Integer)get_Value("C_DocumentDiscount_Parent_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_INVOICE_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
 /** Set Invoice.
 Invoice Identifier */
 public void setC_Invoice_ID (int C_Invoice_ID)
@@ -91,6 +92,22 @@ Invoice Identifier */
 public int getC_Invoice_ID() 
 {
 Integer ii = (Integer)get_Value("C_Invoice_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Invoice Line.
+Invoice Detail Line */
+public void setC_InvoiceLine_ID (int C_InvoiceLine_ID)
+{
+if (C_InvoiceLine_ID <= 0) set_Value ("C_InvoiceLine_ID", null);
+ else 
+set_Value ("C_InvoiceLine_ID", new Integer(C_InvoiceLine_ID));
+}
+/** Get Invoice Line.
+Invoice Detail Line */
+public int getC_InvoiceLine_ID() 
+{
+Integer ii = (Integer)get_Value("C_InvoiceLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -110,6 +127,22 @@ Integer ii = (Integer)get_Value("C_Order_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Sales Order Line.
+Sales Order Line */
+public void setC_OrderLine_ID (int C_OrderLine_ID)
+{
+if (C_OrderLine_ID <= 0) set_Value ("C_OrderLine_ID", null);
+ else 
+set_Value ("C_OrderLine_ID", new Integer(C_OrderLine_ID));
+}
+/** Get Sales Order Line.
+Sales Order Line */
+public int getC_OrderLine_ID() 
+{
+Integer ii = (Integer)get_Value("C_OrderLine_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 public static final int CUMULATIVELEVEL_AD_Reference_ID = MReference.getReferenceID("M_Discount CumulativeLevel");
 /** Line = L */
 public static final String CUMULATIVELEVEL_Line = "L";
@@ -119,8 +152,8 @@ public static final String CUMULATIVELEVEL_Document = "D";
 Level for cumulative calculations */
 public void setCumulativeLevel (String CumulativeLevel)
 {
-if (CumulativeLevel == null || CumulativeLevel.equals("L") || CumulativeLevel.equals("D"));
- else throw new IllegalArgumentException ("CumulativeLevel Invalid value - Reference = CUMULATIVELEVEL_AD_Reference_ID - L - D");
+if (CumulativeLevel == null || CumulativeLevel.equals("L") || CumulativeLevel.equals("D") || ( refContainsValue("CORE-AD_Reference-246", CumulativeLevel) ) );
+ else throw new IllegalArgumentException ("CumulativeLevel Invalid value: " + CumulativeLevel + ".  Valid: " +  refValidOptions("CORE-AD_Reference-246") );
 if (CumulativeLevel != null && CumulativeLevel.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -175,8 +208,8 @@ public static final String DISCOUNTAPPLICATION_Bonus = "B";
 Discount Application */
 public void setDiscountApplication (String DiscountApplication)
 {
-if (DiscountApplication == null || DiscountApplication.equals("D") || DiscountApplication.equals("B"));
- else throw new IllegalArgumentException ("DiscountApplication Invalid value - Reference = DISCOUNTAPPLICATION_AD_Reference_ID - D - B");
+if (DiscountApplication == null || DiscountApplication.equals("D") || DiscountApplication.equals("B") || ( refContainsValue("CORE-AD_Reference-1010136", DiscountApplication) ) );
+ else throw new IllegalArgumentException ("DiscountApplication Invalid value: " + DiscountApplication + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010136") );
 if (DiscountApplication != null && DiscountApplication.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -228,8 +261,8 @@ public static final String DISCOUNTKIND_DocumentDiscount = "X";
 Discount Kind */
 public void setDiscountKind (String DiscountKind)
 {
-if (DiscountKind == null || DiscountKind.equals("G") || DiscountKind.equals("B") || DiscountKind.equals("C") || DiscountKind.equals("P") || DiscountKind.equals("M") || DiscountKind.equals("Z") || DiscountKind.equals("D") || DiscountKind.equals("L") || DiscountKind.equals("X"));
- else throw new IllegalArgumentException ("DiscountKind Invalid value - Reference = DISCOUNTKIND_AD_Reference_ID - G - B - C - P - M - Z - D - L - X");
+if (DiscountKind == null || DiscountKind.equals("G") || DiscountKind.equals("B") || DiscountKind.equals("C") || DiscountKind.equals("P") || DiscountKind.equals("M") || DiscountKind.equals("Z") || DiscountKind.equals("D") || DiscountKind.equals("L") || DiscountKind.equals("X") || ( refContainsValue("CORE-AD_Reference-1010140", DiscountKind) ) );
+ else throw new IllegalArgumentException ("DiscountKind Invalid value: " + DiscountKind + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010140") );
 if (DiscountKind != null && DiscountKind.length() > 1)
 {
 log.warning("Length > 1 - truncated");

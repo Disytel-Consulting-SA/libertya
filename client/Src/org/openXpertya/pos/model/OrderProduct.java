@@ -28,17 +28,24 @@ public class OrderProduct {
 	 * es <code>null</code> */
 	private Integer orderLineID = null;
 
+	/** ID de la línea de factura creada a partir de este artículo del pedido
+	 * TPV. Mientras no se haya creado la MInvoiceLine el valor de este atributo
+	 * es <code>null</code> */
+	private Integer invoiceLineID = null;
+	
 	private BigDecimal lineDiscountAmt = BigDecimal.ZERO;
 	
 	private BigDecimal lineBonusAmt = BigDecimal.ZERO;
-	
-	private List<Tax> otherTaxes = new ArrayList<Tax>();
 	
 	private DiscountApplication discountApplication;
 	
 	private Integer lineManualDiscountID;
 	
 	private String lineDescription;
+	
+	private BigDecimal totalDocumentDiscount = BigDecimal.ZERO;
+	
+	private BigDecimal temporalTotalDocumentDiscount = BigDecimal.ZERO;
 	
 	public OrderProduct() {
 		super();
@@ -140,9 +147,9 @@ public class OrderProduct {
 	 */
 	public BigDecimal getTaxRate() {
 		BigDecimal taxRate = getTax().getRate();
-		for (Tax otherTax : getOtherTaxes()) {
-			taxRate = taxRate.add(otherTax.getRate());
-		}
+//		for (Tax otherTax : getOrder().getOtherTaxes()) {
+//			taxRate = taxRate.add(otherTax.getRate());
+//		}
 		return taxRate;
 	}
 	
@@ -220,10 +227,10 @@ public class OrderProduct {
 			taxedPrice = price.add(price.multiply(getTax().getTaxRateMultiplier()));
 		}
 		
-		if (!getProduct().isPerceptionIncludedInPrice()){
-			// Sumo el monto con los otros impuestos
-			taxedPrice = taxedPrice.add(getOtherTaxesAmt(getNetPrice(taxedPrice)));	
-		}
+//		if (!getProduct().isPerceptionIncludedInPrice()){
+//			// Sumo el monto con los otros impuestos
+//			taxedPrice = taxedPrice.add(getOrder().getOtherTaxesAmt(getNetPrice(taxedPrice)));	
+//		}
 		
 		return scalePrice(taxedPrice);
 	}
@@ -238,7 +245,7 @@ public class OrderProduct {
 		BigDecimal price = taxedPrice;
 		
 		// Suma los multiplicadores de todos los impuestos
-		BigDecimal rateMultipliers = getSumOtherTaxesRateMultipliers();
+		BigDecimal rateMultipliers = getOrder().getSumOtherTaxesRateMultipliers();
 		
 		if (!getProduct().isTaxIncludedInPrice()){
 			rateMultipliers = rateMultipliers.add(getTax().getTaxRateMultiplier());
@@ -278,34 +285,10 @@ public class OrderProduct {
 	public BigDecimal getNetPriceAllTaxes(BigDecimal taxedPrice){
 		BigDecimal netPrice = taxedPrice.divide(
 				BigDecimal.ONE.add(getTax().getTaxRateMultiplier().add(
-						getSumOtherTaxesRateMultipliers())), 20,
+						getOrder().getSumOtherTaxesRateMultipliers())), 20,
 				BigDecimal.ROUND_HALF_UP);		
 		
 		return scalePrice(netPrice);
-	}
-	
-	public BigDecimal getOtherTaxesAmt(BigDecimal netPrice){
-		BigDecimal otherTaxesAmt = BigDecimal.ZERO;
-		for (Tax otherTax : getOtherTaxes()) {
-			otherTaxesAmt = otherTaxesAmt.add(netPrice.multiply(otherTax.getTaxRateMultiplier())); 
-		}
-		return scaleAmount(otherTaxesAmt);
-	}
-	
-	public BigDecimal getSumOtherTaxesRateMultipliers(){
-		BigDecimal otherTaxesrates = BigDecimal.ZERO;
-		for (Tax otherTax : getOtherTaxes()) {
-			otherTaxesrates = otherTaxesrates.add(otherTax.getTaxRateMultiplier());
-		}
-		return scaleAmount(otherTaxesrates);
-	}
-	
-	public BigDecimal getSumOtherTaxesRateDivisors(){
-		BigDecimal otherTaxesRates = BigDecimal.ZERO;
-		for (Tax otherTax : getOtherTaxes()) {
-			otherTaxesRates = otherTaxesRates.add(otherTax.getTaxRateDivisor());
-		}
-		return scaleAmount(otherTaxesRates);
 	}
 
 	/**
@@ -327,7 +310,7 @@ public class OrderProduct {
 	public BigDecimal getPriceWithoutOtherTaxesAmt(BigDecimal taxedPrice){
 		BigDecimal psia = BigDecimal.ZERO;
 		psia = taxedPrice.divide(
-				BigDecimal.ONE.add(getSumOtherTaxesRateMultipliers()), 20,
+				BigDecimal.ONE.add(getOrder().getSumOtherTaxesRateMultipliers()), 20,
 				BigDecimal.ROUND_HALF_UP);
 		return scaleAmount(psia);
 	}
@@ -506,8 +489,6 @@ public class OrderProduct {
 	 */
 	protected void setOrder(Order order) {
 		this.order = order;
-		// Actualiza los otros impuestos
-		updateOtherTaxes();
 	}
 
 	/**
@@ -555,25 +536,6 @@ public class OrderProduct {
 		}
 		return price;
 	}
-	
-	public void updateOtherTaxes(){
-		// Actualizar los impuestos adicionales
-		List<Tax> taxes = new ArrayList<Tax>();
-		if(getOrder() != null){
-			taxes = getOrder().getOtherTaxes();
-		}
-		setOtherTaxes(taxes);
-	}
-
-
-	public void setOtherTaxes(List<Tax> otherTaxes) {
-		this.otherTaxes = otherTaxes;
-	}
-
-
-	public List<Tax> getOtherTaxes() {
-		return otherTaxes;
-	}
 
 
 	public void setDiscountApplication(DiscountApplication discountApplication) {
@@ -603,5 +565,35 @@ public class OrderProduct {
 
 	public void setLineDescription(String lineDescription) {
 		this.lineDescription = lineDescription;
+	}
+
+
+	public Integer getInvoiceLineID() {
+		return invoiceLineID;
+	}
+
+
+	public void setInvoiceLineID(Integer invoiceLineID) {
+		this.invoiceLineID = invoiceLineID;
+	}
+
+public BigDecimal getTotalDocumentDiscount() {
+		return totalDocumentDiscount;
+	}
+
+
+	public void setTotalDocumentDiscount(BigDecimal totalDocumentDiscount) {
+		this.totalDocumentDiscount = totalDocumentDiscount;
+	}
+
+
+	public BigDecimal getTemporalTotalDocumentDiscount() {
+		return temporalTotalDocumentDiscount;
+	}
+
+
+	public void setTemporalTotalDocumentDiscount(
+			BigDecimal temporalTotalDocumentDiscount) {
+		this.temporalTotalDocumentDiscount = temporalTotalDocumentDiscount;
 	}
 }

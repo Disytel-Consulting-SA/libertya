@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.openXpertya.model.DiscountCalculator;
 import org.openXpertya.model.DiscountableDocumentLine;
+import org.openXpertya.model.MDocumentDiscount;
 
 /**
  * Wrapper de la línea de Pedido de TPV que permite calcular descuentos dentro
@@ -56,9 +57,7 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 	
 	@Override
 	public void setDocumentDiscountAmt(BigDecimal discountAmt) {
-		// En TPV no es necesario mantener el valor de descuento a nivel de
-		// documento por cada línea. Se mantiene directamente el total en la
-		// instancia del Pedido TPV.
+		getOrderProduct().setTotalDocumentDiscount(discountAmt);
 	}
 
 	@Override
@@ -89,6 +88,10 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 	@Override
 	public boolean isTaxIncluded() {
 		return getOrderProduct().getProduct().isTaxIncludedInPrice();
+	}
+	
+	public boolean isPerceptionIncluded() {
+		return getOrderProduct().getProduct().isPerceptionIncludedInPrice();
 	}
 
 	/**
@@ -134,9 +137,66 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 		}
 		if (isTaxIncluded()) {
 			BigDecimal netAmt = getOrderProduct().getNetPrice(amount);
-			return netAmt.add(netAmt.multiply(getTaxRateMultiplier()));
+			BigDecimal taxedAmt = netAmt.add(netAmt.multiply(getTaxRateMultiplier()));
+			return taxedAmt = ((amount.subtract(taxedAmt)).abs())
+					.compareTo(new BigDecimal(0.02)) <= 0 ? amount : taxedAmt;
 		} else {
 			return amount.add(amount.multiply(getTaxRateMultiplier()));
 		}
+	}
+	
+	@Override
+	public BigDecimal getTaxedAmount(BigDecimal amount, boolean includeOthertaxes) {
+		if (amount == null) {
+			return null;
+		}
+		if (isTaxIncluded()) {
+			BigDecimal netAmt = getOrderProduct().getNetPrice(amount);
+			BigDecimal taxedAmt = netAmt.add(netAmt.multiply(getTaxRateMultiplier()));
+			BigDecimal otherTaxedAmt = BigDecimal.ZERO;
+			if(includeOthertaxes && !isPerceptionIncluded()){
+				otherTaxedAmt = getOrderProduct().getOrder().getOtherTaxesAmt(netAmt);
+			}
+			// FIXME
+			taxedAmt = ((amount.subtract(taxedAmt)).abs())
+					.compareTo(new BigDecimal(0.02)) <= 0 ? amount : taxedAmt; 
+			return taxedAmt.add(otherTaxedAmt);
+		} else {
+			return amount.add(amount.multiply(getTaxRateMultiplier()));
+		}
+	}
+
+	@Override
+	public BigDecimal getDocumentDiscountAmt() {
+		return getOrderProduct().getTotalDocumentDiscount();
+	}
+
+	@Override
+	public BigDecimal getTemporalTotalDocumentDiscountAmt() {
+		return getOrderProduct().getTemporalTotalDocumentDiscount();
+	}
+
+	@Override
+	public void setTemporalTotalDocumentDiscountAmt(
+			BigDecimal temporalTotalDocumentDiscount) {
+		getOrderProduct().setTemporalTotalDocumentDiscount(temporalTotalDocumentDiscount);
+		
+	}
+
+	@Override
+	public void setDocumentReferences(MDocumentDiscount documentDiscount) {
+		documentDiscount.setC_OrderLine_ID(getOrderProduct().getOrderLineID());
+		documentDiscount.setC_InvoiceLine_ID(getOrderProduct().getInvoiceLineID());
+	}
+
+	@Override
+	public Integer getDocumentLineID() {
+		// Las líneas de pedido de tpv no poseen ID
+		return 0;
+	}
+
+	@Override
+	public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
+		getOrderProduct().setInvoiceLineID(generatedInvoiceLineID);
 	}
 }

@@ -93,7 +93,7 @@ public class PosMainFormEmulator extends PoSMainForm {
 			// Entidad Comercial
 			BusinessPartner aBP = new BusinessPartner(TPV_BPARTNER_CUSTOMER_ID, TPV_BPARTNER_CUSTOMER_LOCATION_ID, TPV_BPARTNER_TAX_ID, TPV_BPARTNER_NAME);
 			// Impuesto
-			Tax aTax = new Tax(1010085, Env.ZERO, false);
+			Tax aTax = new Tax(1010085, Env.ZERO, "Exento", false);
 			// Articulos
 			ArrayList<OrderProduct> productsList = new ArrayList<OrderProduct>();
 			for (int j = 0; j < TPV_LINES_PER_SIMULATION; j++)

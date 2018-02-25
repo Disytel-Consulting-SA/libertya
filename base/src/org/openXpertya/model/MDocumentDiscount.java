@@ -150,7 +150,7 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 * @return Lista con los descuentos encontrados, o lista vacía si no se
 	 *         encontraron descuentos con el filtro indicado
 	 */
-	private static List<MDocumentDiscount> get(String filter, Object[] parameters, Properties ctx, String trxName) {
+	public static List<MDocumentDiscount> get(String filter, Object[] parameters, Properties ctx, String trxName) {
 		return get(filter, parameters, "DiscountKind, TaxRate ASC", ctx, trxName);
 	}
 
@@ -168,7 +168,7 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 * @return Lista con los descuentos encontrados, o lista vacía si no se
 	 *         encontraron descuentos con el filtro indicado
 	 */
-	private static List<MDocumentDiscount> get(String filter, Object[] parameters, String orderBy, Properties ctx, String trxName) {
+	public static List<MDocumentDiscount> get(String filter, Object[] parameters, String orderBy, Properties ctx, String trxName) {
 		List<MDocumentDiscount> list = new ArrayList<MDocumentDiscount>();
 
 		String sql =
@@ -320,7 +320,7 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 */
 	public List<MDocumentDiscount> getDiscountsByTax() {
 		if (discountsByTax == null) {
-			discountsByTax = get("C_DocumentDiscount_Parent_ID = ?",
+			discountsByTax = get("C_DocumentDiscount_Parent_ID = ? AND TaxRate IS NOT NULL",
 					new Object[] { getC_DocumentDiscount_ID() }, getCtx(), get_TrxName());
 		}
 		return discountsByTax;
