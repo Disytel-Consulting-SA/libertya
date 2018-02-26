@@ -121,12 +121,17 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	}
 	
 	public static HashMap<String, Object> DividirDocumentNo(Integer clientID, String docNo) {
+		return DividirDocumentNo(clientID, docNo, 0, Env.getCtx());
+	}
+	
+	public static HashMap<String, Object> DividirDocumentNo(Integer clientID, String docNo, int docTypeId, Properties ctx) {
 		
 		HashMap<String, Object> hm = new HashMap<String, Object>();
+		MDocType docType = new MDocType(ctx, docTypeId, null);
 		
 		hm.put("C_Letra_Comprobante_ID", null);
-		hm.put("PuntoDeVenta", null);
-		hm.put("NumeroComprobante", null);
+		hm.put("PuntoDeVenta", docType.isFiscalDocument() ? null : 0);
+		hm.put("NumeroComprobante", docType.isFiscalDocument() ? null : 0);
 
 		if (docNo.startsWith("<"))
 			docNo = docNo.substring(1, docNo.length() - 1);
@@ -360,8 +365,9 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				// A000100000001
 				// 0123456789012
 				
+				Integer C_DocType_ID = ( Integer )value;
 				HashMap<String, Object> hm = DividirDocumentNo(
-						Env.getAD_Client_ID(Env.getCtx()), docNo);
+						Env.getAD_Client_ID(Env.getCtx()), docNo, C_DocType_ID, ctx);
 				Integer bPartnerID = (Integer)tab.getValue("C_BPartner_ID");
 				for (String k : hm.keySet()) { 
 					// Solo asigna la letra del comprobante si no se ha ingresado
