@@ -124,6 +124,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			sql.append("WHERE ");
 			sql.append("	C_BPartner_ID = ? ");
 			sql.append("	AND SettlementNo = ? ");
+			sql.append(newRecord?"":"	AND C_CreditCardSettlement_ID <> "+getID());
 	
 			found = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID(), getSettlementNo());
 	
@@ -879,9 +880,8 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			setPayment(payment.getDocumentNo(), currency.getCurSymbol(), payAmt.toString(), sdf.format(payment.getDateTrx()), sdf.format(payment.getDateAcct()));
 
 			if (!save()) {
-				CLogger.retrieveErrorAsString();
-				setDocAction(DOCACTION_Complete);
-				return DocAction.STATUS_Drafted;
+				m_processMsg = CLogger.retrieveErrorAsString();
+				return DocAction.STATUS_Invalid;
 			}
 		}
 		
