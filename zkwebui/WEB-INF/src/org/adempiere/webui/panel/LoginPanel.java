@@ -357,7 +357,8 @@ public class LoginPanel extends Window implements EventListener
     private void languageChanged(String langName)
     {
     	Language language = findLanguage(langName);
-
+    	Language.setLoginLanguage( language );
+    	
     	//	Locales
 		Locale loc = language.getLocale();
 		Locale.setDefault(loc);
