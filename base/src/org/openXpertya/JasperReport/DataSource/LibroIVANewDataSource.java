@@ -169,7 +169,12 @@ public class LibroIVANewDataSource implements JRDataSource {
 						+ "				INNER JOIN c_doctype ON c_invoice.c_doctypetarget_id = c_doctype.c_doctype_id "
 						+ "     	   WHERE c_invoice.ad_client_id = ? "
 						+ "				 AND c_invoice.isactive = 'Y'::bpchar "
-						+ " 		     AND (c_invoice.dateacct::date between ? ::date and ? ::date) "
+						+ (p_dateFrom==null?"":
+							" 		     AND c_invoice.dateacct::date >= ? "
+						)
+						+ (p_dateTo==null?"":
+							" 		     AND c_invoice.dateacct::date <= ? "
+						)
 						+ getOrgCheck("c_invoice"));// '2012/06/01' and '2012/08/31')
 											// "+getOrgCheck())
 		// Si no es ambos
@@ -242,8 +247,10 @@ public class LibroIVANewDataSource implements JRDataSource {
 			pstmt.setInt(j++, currencyID);
 			pstmt.setInt(j++, currencyID);
 			pstmt.setInt(j++, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setTimestamp(j++, new Timestamp(this.p_dateFrom.getTime()));
-			pstmt.setTimestamp(j++, new Timestamp(this.p_dateTo.getTime()));
+			if (p_dateFrom!=null)
+				pstmt.setTimestamp(j++, new Timestamp(this.p_dateFrom.getTime()));
+			if (p_dateTo!=null)
+				pstmt.setTimestamp(j++, new Timestamp(this.p_dateTo.getTime()));
 			rs = pstmt.executeQuery();
 
 			int invoiceID = 0;
