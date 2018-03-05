@@ -142,7 +142,7 @@ public class GenerateLibroIva extends SvrProcess {
          	"     left join (Select c_categoria_iva_id, name as c_categoria_via_name " +
          	"				from c_categoria_iva) cci 	on cbp.c_categoria_iva_id = cci.c_categoria_iva_id " +
          	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') AND isfiscaldocument = 'Y' AND (cdt.isfiscal is null OR cdt.isfiscal = 'N' OR (cdt.isfiscal = 'Y' AND inv.fiscalalreadyprinted = 'Y')) " +
-         	"     ORDER BY "+ dateOrder +", inv.c_invoice_id, cbp.taxid, inv.c_doctypetarget_id, inv.documentno ASC");
+         	"     ORDER BY "+ dateOrder +", inv.c_invoice_id, cbp.taxid, inv.c_doctypetarget_id, inv.documentno, cit.c_tax_id ASC"); 
         
  		PreparedStatement pstmt = null;
  		try
