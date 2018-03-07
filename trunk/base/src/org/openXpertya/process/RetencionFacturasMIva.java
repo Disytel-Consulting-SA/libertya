@@ -126,7 +126,7 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		baseImponible = estePago.subtract(getImporteNoImponible());
 		// Si la base imponible es menor que cero, entonces no hay retención que aplicar y
 		// se asigna la base imponible a cero.
-		baseImponible = calculateImporteDeterminado(baseImponible, estePago);
+		importeDeterminado = calculateImporteDeterminado(baseImponible, estePago);
 
 		// Se calcula el importe retenido.
 		importeRetenido = importeDeterminado;
