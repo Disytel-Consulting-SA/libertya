@@ -1207,7 +1207,7 @@ def main():
         var_msg = var_msg.replace(':','=')
 
         try:
-            salida = str(wsfev1.Resultado)+ ":" +str(wsfev1.CAE) + ":" + str(cbt_desde) +":" + var_msg + ":" + str(fecha_cbte)
+            salida = str(wsfev1.Resultado)+ ":" +str(wsfev1.CAE) + ":" + str(cbt_desde) +":" + var_msg + ":" + str(wsfev1.Vencimiento)
             logaction('FIN - InvoiceID: ' + var_invoiceid + ' - NroComp: ' + str(cbt_desde) + ' - CAE: ' + wsfev1.CAE + ' - Salida: ' + salida)
             print "salida: %s " %salida
             open("salida.txt","w").write(salida)
