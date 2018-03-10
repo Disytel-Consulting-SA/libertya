@@ -3608,3 +3608,6 @@ ALTER TABLE C_DocumentDiscount ADD CONSTRAINT cinvoiceline_cdocumentdiscount FOR
 ALTER TABLE C_DocumentDiscount ADD CONSTRAINT corderline_cdocumentdiscount FOREIGN KEY (c_orderline_id)
   REFERENCES c_orderline (c_orderline_id) MATCH SIMPLE
   ON UPDATE NO ACTION ON DELETE CASCADE;
+
+--20180310-2045 Nueva columna de configuración de descuento de corte por Línea de Artículo
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaBreak','m_product_lines_id','integer'));

@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -257,6 +258,22 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
 	}
 	
 	/**
+	 * Devuelve el ID de la Línea de un artículo determinado.
+	 * @param productID ID del artículo
+	 * @return ID de la línea a la que pertenece el artículo o <code>-1</code>
+	 * si el artículo no pertenece a ninguna.
+	 */
+	private int getProductLinesID(int productID) {
+		Integer productLineID = MProductLines.getLineFromProduct(getCtx(), productID, get_TrxName());
+		// Si no existe Línea para el artículo devuelve -1 para que la condición de Línea
+		// no se haga Verdadera en caso de que el corte no tenga una línea asociada
+		// (M_Product_Lines_ID = 0). Si pasara esto, la evaluación de la condición de Línea
+		// siempre daría Verdadero para artículos que no tienen ninguna línea asociada, lo
+		// cual no es semánticamente correcto.
+		return Util.isEmpty(productLineID, true) ? -1 : productLineID;
+	}
+	
+	/**
 	 * Evalua las condiciones formadas por las configuraciones de filtro del corte, 
 	 * teniendo en cuenta la política de evaluación de las mismas.
 	 * @param productID ID de artículo a consultar
@@ -269,6 +286,7 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         // Se evaluan el conjunto de condiciones del corte según el operador 
         // configurado como política de aplicación. Las condiciones evaluadas por
         // el operador son:
+		// 0. Línea 	 (M_Product_Lines_ID)
         // 1. Familia    (M_Product_Gamas_ID)
         // 2. Subfamilia (M_Product_Category_ID)
         // 3. Artículo   (M_Product_ID)
@@ -276,13 +294,18 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
 
         // Definimos las variables que contienen el resultado de la evaluación de
         // cada una de las condiciones.
-        boolean productGamasCondition;
+		boolean productLinesCondition;
+		boolean productGamasCondition;
         boolean productCategoryCondition;
         boolean productCondition;
         boolean vendorCondition;
         boolean allEmptyCondition;   // Indica si todas las entradas están vacías
         boolean result;              // Contiene el resultado final de la evaluación
-                
+        
+        // 0. Evaluación de condición de Línea de Artículo
+        // El artículo pertenece a la línea asociada al corte.
+        productLinesCondition = getM_Product_Lines_ID() == getProductLinesID(productID); 
+        
         // 1. Evaluación de condición de Familia.
         // El artículo pertene a la familia asociada al corte. 
         productGamasCondition = 
@@ -308,10 +331,11 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         	getProductCurrentVendorsIDs(productID).contains(getC_BPartner_ID());
         
         // 99. Todas las entradas vacías.
-        // Si el corte no contiene Familia, Subfamilia, Artículo o Proveedor (ninguna
+        // Si el corte no contiene Línea, Familia, Subfamilia, Artículo o Proveedor (ninguna
         // de ellas) entonces, independientemente del operador, el corte es aplicable.
         allEmptyCondition =
-        	getM_Product_Gamas_ID() == 0 
+        	   getM_Product_Lines_ID() == 0
+        	&& getM_Product_Gamas_ID() == 0 
         	&& getM_Product_Category_ID() == 0
         	&& getM_Product_ID() == 0
         	&& getC_BPartner_ID() == 0;
@@ -322,6 +346,7 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         	// Dado que se realiza una comparación por AND, las condiciones cuyas entradas
         	// sean vacías se convierten en verdaderas para que no surtan efecto en la 
         	// evaluación de la conjunción (e.d. se ignoran entradas vacías)
+        	productLinesCondition = (getM_Product_Lines_ID() == 0 ? true : productLinesCondition);
         	productGamasCondition = (getM_Product_Gamas_ID() == 0 ? true : productGamasCondition);
         	productCategoryCondition = (getM_Product_Category_ID() == 0 ? true : productCategoryCondition);
         	productCondition = (getM_Product_ID() == 0 ? true : productCondition);
@@ -331,7 +356,8 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         	// el resultado final.
         	result = 
         		allEmptyCondition
-        		|| (productGamasCondition
+        		|| (productLinesCondition 
+        			&& productGamasCondition
         			&& productCategoryCondition
         			&& productCondition
         			&& vendorCondition);
@@ -345,6 +371,7 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         	// en una comparación mediante OR el False no determina el resultado final.
         	result = 
         		allEmptyCondition
+        		|| productLinesCondition 
         		|| productGamasCondition
         		|| productCategoryCondition
         		|| productCondition
