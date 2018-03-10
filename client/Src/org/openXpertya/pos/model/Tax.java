@@ -8,7 +8,8 @@ public class Tax {
 	private BigDecimal rate;
 	private boolean isPercepcion = false;
 	private String name;
-	private BigDecimal amount;
+	private BigDecimal amount = BigDecimal.ZERO;
+	private BigDecimal taxBaseAmt = BigDecimal.ZERO;
 	
 	/**
 	 * @param id
@@ -55,7 +56,7 @@ public class Tax {
 	 * Ej. Si la tasa es 16 (16%), retorna 0.16
 	 */
 	public BigDecimal getTaxRateMultiplier() {
-		return getRate().divide(new BigDecimal(100),10,BigDecimal.ROUND_HALF_UP);
+		return getRate().divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_UP);
 	}
 	
 	/**
@@ -93,6 +94,14 @@ public class Tax {
 
 	public void setAmount(BigDecimal amount) {
 		this.amount = amount;
+	}
+
+	public BigDecimal getTaxBaseAmt() {
+		return taxBaseAmt;
+	}
+
+	public void setTaxBaseAmt(BigDecimal taxBaseAmt) {
+		this.taxBaseAmt = taxBaseAmt;
 	}
 	
 	

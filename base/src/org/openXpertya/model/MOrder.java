@@ -32,7 +32,6 @@ import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
-import org.apache.http.client.utils.DateUtils;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.process.DocAction;
@@ -43,7 +42,6 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
-import org.openXpertya.util.HTMLMsg.HTMLList;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.PurchasesUtil;
@@ -4780,7 +4778,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			return getDateOrdered();
 		}
 		
-		@Override
+		/*@Override
 		public BigDecimal getLinesTotalAmt(boolean includeOtherTaxesAmt) {
 			BigDecimal totalAmt = BigDecimal.ZERO;
 			for (IDocumentLine line : getDocumentLines()) {
@@ -4790,7 +4788,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 				totalAmt = totalAmt.add(MOrder.this.getPercepcionesTotalAmt());
 			}
 			return totalAmt;
-		}
+		}*/
 
 		@Override
 		public void setTotalDocumentDiscount(BigDecimal discountAmount) {
@@ -5084,6 +5082,15 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		return isSelfService();
 	}
 	
+	public BigDecimal getNetTaxBaseAmt(){
+		BigDecimal total = Env.ZERO;
+		for (MOrderLine orderLine : getLines()) {
+			// Total de líneas sin impuestos
+			total = total.add(orderLine.getNetTaxBaseAmt());
+		}
+		return total;
+	}
+    
 }    // MOrder
 
 

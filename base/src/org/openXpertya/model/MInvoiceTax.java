@@ -322,7 +322,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         // >> END
         boolean isSetTaxAmt = taxAmtFromLines.compareTo(BigDecimal.ZERO) != 0; 
         
-        String sql = "SELECT COALESCE(SUM("+(isPerceptionsIncluded() ? "LineNetAmount" : "LineNetAmt")+"-DocumentDiscountAmt),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
+        String sql = "SELECT COALESCE(SUM("+getSqlInvoiceLineCalcForTaxBaseAmt()+"),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
         PreparedStatement pstmt = null;
 
         try {
@@ -394,6 +394,16 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         return true;
     }    // calculateTaxFromLines
 
+    /**
+	 * Obtiene el cálculo del importe base de impuestos aplicado a las líneas
+	 * del pedido al realizar consultas SQL
+	 * 
+	 * @return
+	 */
+    public String getSqlInvoiceLineCalcForTaxBaseAmt(){
+    	return (isPerceptionsIncluded() ? "LineNetAmount" : "LineNetAmt")+"-DocumentDiscountAmt";
+    }
+    
     /**
      * Descripción de Método
      *

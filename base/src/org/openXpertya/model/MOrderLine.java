@@ -822,8 +822,10 @@ public class MOrderLine extends X_C_OrderLine {
         
         // Calculations & Rounding
 
-        setLineNetAmt();    // extended Amount with or without tax
-        setDiscount();
+        if(!getOrder().isTPVInstance()){
+	        setLineNetAmt();    // extended Amount with or without tax
+	        setDiscount();
+        }
         setLineTotalAmt();
 
         // M_AttributeSetInstance_ID
@@ -1164,18 +1166,18 @@ public class MOrderLine extends X_C_OrderLine {
      */
 
     private boolean updateHeader() {
-
         // Recalculate Tax for this Tax
+    	if(!getOrder().isTPVInstance()){
+        	MOrderTax tax = MOrderTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
 
-        MOrderTax tax = MOrderTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
-
-        if( !tax.calculateTaxFromLines()) {
-            return false;
-        }
-
-        if( !tax.save( get_TrxName())) {
-            return false;
-        }
+	        if( !tax.calculateTaxFromLines()) {
+	            return false;
+	        }
+	
+	        if( !tax.save( get_TrxName())) {
+	            return false;
+	        }
+    	}
         // Recalcula los importes del encabezado del pedido.
         if (getOrder().updateAmounts()) {
         	return getOrder().save(); 
@@ -1321,7 +1323,8 @@ public class MOrderLine extends X_C_OrderLine {
     	BigDecimal lineTaxAmt = BigDecimal.ZERO;
     	if (getC_Tax_ID() > 0) {
     		MTax tax = new MTax( getCtx(),getC_Tax_ID(),get_TrxName());
-    		lineTaxAmt = tax.calculateTax( getLineNetAmt(),isTaxIncluded(),getPrecision());
+			lineTaxAmt = tax.calculateTax(getTaxBaseAmtToEvaluateTax(), isTaxIncluded(),
+					getPrecision());
     	}
     	BigDecimal lineTotalAmt = getLineNetAmt().add(lineTaxAmt);
     	setLineTotalAmt(lineTotalAmt);
@@ -1335,7 +1338,7 @@ public class MOrderLine extends X_C_OrderLine {
     	BigDecimal lineTaxAmt = BigDecimal.ZERO;
     	if (getC_Tax_ID() > 0) {
     		MTax tax = new MTax( getCtx(),getC_Tax_ID(),get_TrxName());
-    		lineTaxAmt = tax.calculateTax( getTotalPriceEnteredNet(),isTaxIncluded(),getPrecision());
+    		lineTaxAmt = tax.calculateTax( getTaxBaseAmtToEvaluateTax(),isTaxIncluded(),getPrecision());
     	}
     	return lineTaxAmt;
     }
@@ -1981,6 +1984,28 @@ public class MOrderLine extends X_C_OrderLine {
 	public void setTpvGeneratedInvoiceLineID(Integer tpvGeneratedInvoiceLineID) {
 		this.tpvGeneratedInvoiceLineID = tpvGeneratedInvoiceLineID;
 	}
+	
+	/**
+	 * En este método se encapsula el importe base para el cálculo de impuestos.
+	 * Luego de esto se debe verificar si este importe contiene impuestos
+	 * incluídos o no
+	 * 
+	 * @return el importe base para el cálculo de impuestos para esta línea
+	 */
+    public BigDecimal getTaxBaseAmtToEvaluateTax(){
+    	return getLineNetAmt().subtract(getDocumentDiscountAmt());
+    }
+    
+    /**
+	 * En este método se encapsula el importe base para el cálculo de impuestos.
+	 * El importe devuelto es el neto real para aplicar directamente el
+	 * descuento
+	 * 
+	 * @return el importe base para el cálculo de impuestos para esta línea
+	 */
+    public BigDecimal getNetTaxBaseAmt(){
+    	return getTotalPriceEnteredNet().subtract(getTotalDocumentDiscountUnityAmtNet());
+    }
 }    // MOrderLine
 
 

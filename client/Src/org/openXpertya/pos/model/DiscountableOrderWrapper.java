@@ -55,7 +55,7 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	
 	@Override
 	public boolean isCalculateNetDiscount() {
-		return false;
+		return true;
 	}
 	
 	@Override
@@ -121,8 +121,8 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 		return true;
 	}
 
-	@Override
+	/*@Override
 	public BigDecimal getLinesTotalAmt(boolean includeOtherTaxesAmt) {
 		return getOrder().getOrderProductsTotalAmt(includeOtherTaxesAmt, false);
-	}
+	}*/
 }

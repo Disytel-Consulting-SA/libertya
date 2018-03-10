@@ -235,7 +235,7 @@ public class MOrderTax extends X_C_OrderTax {
 
         //
 
-        String sql = "SELECT COALESCE(SUM(LineNetAmt-DocumentDiscountAmt),0.0) FROM C_OrderLine WHERE C_Order_ID=? AND C_Tax_ID=?";
+        String sql = "SELECT COALESCE(SUM("+getSqlOrderLineCalcForTaxBaseAmt()+"),0.0) FROM C_OrderLine WHERE C_Order_ID=? AND C_Tax_ID=?";
         PreparedStatement pstmt = null;
 
         try {
@@ -302,6 +302,17 @@ public class MOrderTax extends X_C_OrderTax {
         return true;
     }    // calculateTaxFromLines
 
+    
+    /**
+	 * Obtiene el cálculo del importe base de impuestos aplicado a las líneas
+	 * del pedido al realizar consultas SQL
+	 * 
+	 * @return
+	 */
+    public String getSqlOrderLineCalcForTaxBaseAmt(){
+    	return "LineNetAmt-DocumentDiscountAmt";
+    }
+    
     /**
      * Descripción de Método
      *

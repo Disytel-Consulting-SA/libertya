@@ -361,6 +361,7 @@ public class CalloutInvoiceBatch extends CalloutEngine {
 
         boolean IsSOTrx = "Y".equals( Env.getContext( Env.getCtx(),WindowNo,"IsSOTrx" ));
         boolean IsTaxIncluded = "Y".equals( Env.getContext( Env.getCtx(),WindowNo,"IsTaxIncluded" ));
+        BigDecimal documentDiscountAmt = (BigDecimal)mTab.getValue( "DocumentDiscountAmt" );
         BigDecimal TaxAmt = null;
 
         if( mField.getColumnName().equals( "TaxAmt" )) {
@@ -372,7 +373,7 @@ public class CalloutInvoiceBatch extends CalloutEngine {
                 int  C_Tax_ID = taxID.intValue();
                 MTax tax      = new MTax( ctx,C_Tax_ID,null );
 
-                TaxAmt = tax.calculateTax( LineNetAmt,IsTaxIncluded,StdPrecision );
+                TaxAmt = tax.calculateTax( LineNetAmt.subtract(documentDiscountAmt),IsTaxIncluded,StdPrecision );
                 mTab.setValue( "TaxAmt",TaxAmt );
             }
         }
