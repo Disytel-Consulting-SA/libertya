@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_DiscountSchemaBreak
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-05-18 09:31:39.585 */
+ *  @version  - 2018-03-10 20:39:53.406 */
 public class X_M_DiscountSchemaBreak extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -83,8 +84,8 @@ public static final String APPLICATIONPOLICY_AnyTrue = "O";
 Break Application Policy */
 public void setApplicationPolicy (String ApplicationPolicy)
 {
-if (ApplicationPolicy.equals("A") || ApplicationPolicy.equals("O"));
- else throw new IllegalArgumentException ("ApplicationPolicy Invalid value - Reference = APPLICATIONPOLICY_AD_Reference_ID - A - O");
+if (ApplicationPolicy.equals("A") || ApplicationPolicy.equals("O") || ( refContainsValue("CORE-AD_Reference-1010130", ApplicationPolicy) ) );
+ else throw new IllegalArgumentException ("ApplicationPolicy Invalid value: " + ApplicationPolicy + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010130") );
 if (ApplicationPolicy == null) throw new IllegalArgumentException ("ApplicationPolicy is mandatory");
 if (ApplicationPolicy.length() > 1)
 {
@@ -394,6 +395,20 @@ Product, Service, Item */
 public int getM_Product_ID() 
 {
 Integer ii = (Integer)get_Value("M_Product_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Product Line */
+public void setM_Product_Lines_ID (int M_Product_Lines_ID)
+{
+if (M_Product_Lines_ID <= 0) set_Value ("M_Product_Lines_ID", null);
+ else 
+set_Value ("M_Product_Lines_ID", new Integer(M_Product_Lines_ID));
+}
+/** Get Product Line */
+public int getM_Product_Lines_ID() 
+{
+Integer ii = (Integer)get_Value("M_Product_Lines_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
