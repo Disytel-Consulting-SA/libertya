@@ -546,7 +546,7 @@ public class UpdateOrderProductDialog extends JDialog {
 			cPriceListText.setMandatory(false);
 			cPriceListText.setReadWrite(false);
 			cPriceListText.setDisplayType(DisplayType.CostPrice);
-			cPriceListText.setValue(getOrderProduct().getTaxedPriceList());
+			cPriceListText.setValue(getOrderProduct().getPriceList());
 		}
 		return cPriceListText;
 	}
@@ -576,7 +576,7 @@ public class UpdateOrderProductDialog extends JDialog {
 					if(taxedPrice != null) {
 						OrderProduct op = getOrderProduct(); 
 						// Se recalcula el descuento
-						BigDecimal price = op.getPrice(taxedPrice);
+						BigDecimal price = op.decomposePrice(taxedPrice);
 						BigDecimal discount = op.scalePrice(op.calculateDiscount(price));
 						
 						getCDiscountText().setValue(discount); 

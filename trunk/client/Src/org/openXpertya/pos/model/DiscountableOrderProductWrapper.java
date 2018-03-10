@@ -37,7 +37,7 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 
 	@Override
 	public BigDecimal getTotalAmt() {
-		return getOrderProduct().getTotalTaxedPrice();
+		return getOrderProduct().getTotalAmt();
 	}
 	
 	@Override
@@ -132,38 +132,19 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 
 	@Override
 	public BigDecimal getTaxedAmount(BigDecimal amount) {
-		if (amount == null) {
+		if (amount == null) 
 			return null;
-		}
-		if (isTaxIncluded()) {
-			BigDecimal netAmt = getOrderProduct().getNetPrice(amount);
-			BigDecimal taxedAmt = netAmt.add(netAmt.multiply(getTaxRateMultiplier()));
-			return taxedAmt = ((amount.subtract(taxedAmt)).abs())
-					.compareTo(new BigDecimal(0.02)) <= 0 ? amount : taxedAmt;
-		} else {
-			return amount.add(amount.multiply(getTaxRateMultiplier()));
-		}
+		
+		return getOrderProduct().getTaxedAmount(amount);
 	}
 	
 	@Override
 	public BigDecimal getTaxedAmount(BigDecimal amount, boolean includeOthertaxes) {
-		if (amount == null) {
+		if (amount == null)
 			return null;
-		}
-		if (isTaxIncluded()) {
-			BigDecimal netAmt = getOrderProduct().getNetPrice(amount);
-			BigDecimal taxedAmt = netAmt.add(netAmt.multiply(getTaxRateMultiplier()));
-			BigDecimal otherTaxedAmt = BigDecimal.ZERO;
-			if(includeOthertaxes && !isPerceptionIncluded()){
-				otherTaxedAmt = getOrderProduct().getOrder().getOtherTaxesAmt(netAmt);
-			}
-			// FIXME
-			taxedAmt = ((amount.subtract(taxedAmt)).abs())
-					.compareTo(new BigDecimal(0.02)) <= 0 ? amount : taxedAmt; 
-			return taxedAmt.add(otherTaxedAmt);
-		} else {
-			return amount.add(amount.multiply(getTaxRateMultiplier()));
-		}
+		
+		return getOrderProduct().getTaxedAmount(amount)
+				.add(getOrderProduct().getOtherTaxedAmount(getOrderProduct().getNetAmount(amount)));
 	}
 
 	@Override

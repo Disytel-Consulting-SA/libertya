@@ -213,10 +213,21 @@ public class MProductPricing implements Serializable{
         m_isSOTrx = isSOTrx;
     }    // MProductPricing
 
+    public MProductPricing( int M_Product_ID,int C_BPartner_ID,BigDecimal Qty,boolean isSOTrx, boolean applyBPDiscount ) {
+    	this( M_Product_ID,C_BPartner_ID,Qty,isSOTrx );
+    	setApplyBPDiscount(applyBPDiscount);
+    	
+    }    // MProductPricing
+    
     public MProductPricing( int M_Product_ID,int C_BPartner_ID,BigDecimal Qty,boolean isSOTrx,int M_AttributeSetInstance_ID ) {
         this(M_Product_ID, C_BPartner_ID, Qty, isSOTrx);
         
         this.m_M_AttributeSetInstance_ID = M_AttributeSetInstance_ID;
+    }    // MProductPricing
+
+    public MProductPricing( int M_Product_ID,int C_BPartner_ID,BigDecimal Qty,boolean isSOTrx,int M_AttributeSetInstance_ID, boolean applyBPDiscount ) {
+        this( M_Product_ID,C_BPartner_ID,Qty,isSOTrx,M_AttributeSetInstance_ID );
+        setApplyBPDiscount(applyBPDiscount);
     }    // MProductPricing
     
     /** Descripción de Campos */
@@ -231,6 +242,9 @@ public class MProductPricing implements Serializable{
 
     private int m_C_BPartner_ID;
 
+    /** Boolean que determina si se debe aplicar o no el descuento de entidad comercial */
+    private boolean applyBPDiscount = true;
+    
     /** Descripción de Campos */
 
     private BigDecimal m_Qty = Env.ONE;
@@ -692,7 +706,7 @@ public class MProductPricing implements Serializable{
     private void calculateDiscount() {
         m_discountSchema = false;
 
-        if( (m_C_BPartner_ID == 0) || (m_M_Product_ID == 0) ) {
+        if( (m_C_BPartner_ID == 0) || (m_M_Product_ID == 0) || !isApplyBPDiscount()) {
             return;
         }
         // Reemplazado código original por Calculador de Descuentos
@@ -972,6 +986,14 @@ public class MProductPricing implements Serializable{
 
 	public String getContext() {
 		return context;
+	}
+
+	public boolean isApplyBPDiscount() {
+		return applyBPDiscount;
+	}
+
+	public void setApplyBPDiscount(boolean applyBPDiscount) {
+		this.applyBPDiscount = applyBPDiscount;
 	}
 }    // MProductPrice
 

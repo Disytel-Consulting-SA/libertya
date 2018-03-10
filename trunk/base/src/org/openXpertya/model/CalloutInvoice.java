@@ -351,9 +351,12 @@ public class CalloutInvoice extends CalloutEngine {
         if (M_AttributeSetInstance_ID == null)
         	M_AttributeSetInstance_ID = new Integer(0);
         
-        MProductPricing pp  = new MProductPricing( M_Product_ID.intValue(),C_BPartner_ID,Qty,IsSOTrx,M_AttributeSetInstance_ID );
-
-        //
+        // Disytel: Conversion entre el precio de la tarifa y la moneda destino de la cabecera
+        String invoiceID = Env.getContext(ctx, WindowNo, 0, "C_Invoice_ID");
+        MInvoice invoice = new MInvoice(ctx, Integer.parseInt(invoiceID), null);
+        
+		MProductPricing pp = new MProductPricing(M_Product_ID.intValue(), C_BPartner_ID, Qty, IsSOTrx,
+				M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscounts());
 
         int M_PriceList_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_ID" );
 
@@ -366,10 +369,6 @@ public class CalloutInvoice extends CalloutEngine {
         Timestamp date = Env.getContextAsDate( ctx,WindowNo,"DateInvoiced" );
 
         pp.setPriceDate( date );
-
-        // Disytel: Conversion entre el precio de la tarifa y la moneda destino de la cabecera
-        String invoiceID = Env.getContext(ctx, WindowNo, 0, "C_Invoice_ID");
-        MInvoice invoice = new MInvoice(ctx, Integer.parseInt(invoiceID), null);
         
         int priceListCurrency = (new MPriceList(ctx, invoice.getM_PriceList_ID(), null)).getC_Currency_ID();
         int targetCurrency = invoice.getC_Currency_ID();
@@ -676,7 +675,8 @@ public class CalloutInvoice extends CalloutEngine {
 	            if (M_AttributeSetInstance_ID == null)
 	            	M_AttributeSetInstance_ID = new Integer(0);
 	            
-	            MProductPricing pp = new MProductPricing( M_Product_ID,C_BPartner_ID,QtyInvoiced,IsSOTrx,M_AttributeSetInstance_ID );
+				MProductPricing pp = new MProductPricing(M_Product_ID, C_BPartner_ID, QtyInvoiced, IsSOTrx,
+						M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscounts());
 	
 	            pp.setM_PriceList_ID( M_PriceList_ID );
 	
@@ -786,6 +786,8 @@ public class CalloutInvoice extends CalloutEngine {
         log.info( "amt = LineNetAmt=" + LineNetAmt );
         mTab.setValue( "LineNetAmt",LineNetAmt );
 
+        BigDecimal documentDiscountAmt = (BigDecimal)mTab.getValue( "DocumentDiscountAmt" );
+        
         // Calculate Tax Amount for PO
 
         // Modified by - Matías Cap - Disytel
@@ -803,7 +805,8 @@ public class CalloutInvoice extends CalloutEngine {
                 int  C_Tax_ID = taxID.intValue();
                 MTax tax      = new MTax( ctx,C_Tax_ID,null );
 
-                TaxAmt = tax.calculateTax( LineNetAmt,isTaxIncluded( WindowNo ),StdPrecision );
+				TaxAmt = tax.calculateTax(LineNetAmt.subtract(documentDiscountAmt), isTaxIncluded(WindowNo),
+						StdPrecision);
                 mTab.setValue( "TaxAmt",TaxAmt );
             }
         }

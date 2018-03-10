@@ -1,8 +1,6 @@
 package org.openXpertya.pos.model;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.MProduct;
@@ -46,6 +44,11 @@ public class OrderProduct {
 	private BigDecimal totalDocumentDiscount = BigDecimal.ZERO;
 	
 	private BigDecimal temporalTotalDocumentDiscount = BigDecimal.ZERO;
+	
+	/** Precio discriminado */
+	private BigDecimal netPrice = BigDecimal.ZERO;
+	private BigDecimal taxPrice = BigDecimal.ZERO;
+	private BigDecimal otherTaxPrice = BigDecimal.ZERO;
 	
 	public OrderProduct() {
 		super();
@@ -140,17 +143,14 @@ public class OrderProduct {
 	 */
 	public void setPrice(BigDecimal price) {
 		this.price = price;
+		decomposePrice(price);
 	}
 
 	/**
 	 * @return Devuelve taxAmount.
 	 */
 	public BigDecimal getTaxRate() {
-		BigDecimal taxRate = getTax().getRate();
-//		for (Tax otherTax : getOrder().getOtherTaxes()) {
-//			taxRate = taxRate.add(otherTax.getRate());
-//		}
-		return taxRate;
+		return getTax().getRate();
 	}
 	
 	/**
@@ -227,13 +227,41 @@ public class OrderProduct {
 			taxedPrice = price.add(price.multiply(getTax().getTaxRateMultiplier()));
 		}
 		
-//		if (!getProduct().isPerceptionIncludedInPrice()){
-//			// Sumo el monto con los otros impuestos
-//			taxedPrice = taxedPrice.add(getOrder().getOtherTaxesAmt(getNetPrice(taxedPrice)));	
-//		}
-		
 		return scalePrice(taxedPrice);
 	}
+
+	public BigDecimal getTaxedAmount(BigDecimal amount) {
+		BigDecimal taxedAmount = amount;
+
+		// Sino, se calcula el nuevo precio sumando el monto implicado por la tasa
+		// del impuesto del producto.
+		if (!getProduct().isTaxIncludedInPrice()){
+			taxedAmount = amount.add(amount.multiply(getTax().getTaxRateMultiplier()));
+		}
+		
+		return scaleAmount(taxedAmount);
+	}
+
+	public BigDecimal getOtherTaxedAmount(BigDecimal amount) {
+		BigDecimal otherTaxedAmount = amount;
+
+		if (!getProduct().isPerceptionIncludedInPrice()){
+			otherTaxedAmount = amount.add(amount.multiply(getOrder().getSumOtherTaxesRateMultipliers()));
+		}
+		
+		return scaleAmount(otherTaxedAmount);
+	}
+	
+	public BigDecimal getNetAmount(BigDecimal amount) {
+		BigDecimal netAmount = amount;
+
+		if (getProduct().isTaxIncludedInPrice()){
+			netAmount = amount.divide(getTax().getTaxRateDivisor(), 6, BigDecimal.ROUND_HALF_UP);
+		}
+		
+		return scaleAmount(netAmount);
+	}
+	
 	
 	/**
 	 * Calcula el precio a partir de un precio con impuestos.
@@ -241,8 +269,8 @@ public class OrderProduct {
 	 * el precio retornado es igual a <code>taxedPrice</code>.
 	 * Este método es el inverso a <code>getTaxedPrice(BigDecimal price)</code>
 	 */
-	public BigDecimal getPrice(BigDecimal taxedPrice) {
-		BigDecimal price = taxedPrice;
+	/*public BigDecimal getPrice(BigDecimal taxedPrice) {
+		BigDecimal price = decomposePrice(taxedPrice);
 		
 		// Suma los multiplicadores de todos los impuestos
 		BigDecimal rateMultipliers = getOrder().getSumOtherTaxesRateMultipliers();
@@ -262,19 +290,19 @@ public class OrderProduct {
 		}
 		
 		return scalePrice(price);
-	}
+	}*/
 
 	/**
 	 * @param price
 	 *            precio con impuesto, incluído en la tarifa o no
 	 * @return Precio neto
 	 */
-	public BigDecimal getNetPrice(BigDecimal taxedPrice){
+	/*public BigDecimal getNetPrice(BigDecimal taxedPrice){
 		BigDecimal netPrice = taxedPrice.divide(getTax().getTaxRateDivisor(),
 				20, BigDecimal.ROUND_HALF_UP);		
 		
 		return scalePrice(netPrice);
-	}
+	}*/
 	
 	/**
 	 * @param price
@@ -282,38 +310,14 @@ public class OrderProduct {
 	 *            con impuestos extras
 	 * @return Precio neto
 	 */
-	public BigDecimal getNetPriceAllTaxes(BigDecimal taxedPrice){
+	/*public BigDecimal getNetPriceAllTaxes(BigDecimal taxedPrice){
 		BigDecimal netPrice = taxedPrice.divide(
 				BigDecimal.ONE.add(getTax().getTaxRateMultiplier().add(
 						getOrder().getSumOtherTaxesRateMultipliers())), 20,
 				BigDecimal.ROUND_HALF_UP);		
 		
 		return scalePrice(netPrice);
-	}
-
-	/**
-	 * Determina los montos de impuestos adicionales que se agregaron en
-	 * principio al neto del precio con impuesto parámetro. El monto de
-	 * impuestos adicionales agregado al precio se determina en
-	 * base al siguiente cálculo: <br>
-	 * PSIA = PCIA / (1 + STIA)<br>
-	 * donde:
-	 * <ul>
-	 * <li>PSIA = Precio Sin Impuestos Adicionales</li>
-	 * <li>PCIA = Precio Con Impuestos Adicionales</li>
-	 * <li>STIA = Suma de las Tasas de Impuestos Adicionales</li>
-	 * </ul>
-	 * 
-	 * @param taxedPrice
-	 * @return PSIA
-	 */
-	public BigDecimal getPriceWithoutOtherTaxesAmt(BigDecimal taxedPrice){
-		BigDecimal psia = BigDecimal.ZERO;
-		psia = taxedPrice.divide(
-				BigDecimal.ONE.add(getOrder().getSumOtherTaxesRateMultipliers()), 20,
-				BigDecimal.ROUND_HALF_UP);
-		return scaleAmount(psia);
-	}
+	}*/
 	
 	/**
 	 * @return El importe total final de la línea incluyendo bonificaciones
@@ -324,7 +328,7 @@ public class OrderProduct {
 	}
 	
 	private void calculatePrice() {
-		price = calculatePrice(getDiscount());
+		price = calculatePrice(getDiscount(), true);
 	}
 	
 	private void calculateDiscount() {
@@ -344,14 +348,62 @@ public class OrderProduct {
 		return priceList.subtract(price);
 	}
 
-	public BigDecimal calculatePrice(BigDecimal discount) {
+	public BigDecimal calculatePrice(BigDecimal discount, boolean decompose) {
 		BigDecimal cPrice = getPriceList();
 		if(discount != null) {
-			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),10,BigDecimal.ROUND_HALF_UP)));
+			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_UP)));
+		}
+		if(decompose){
+			cPrice = decomposePrice(cPrice);
 		}
 		return cPrice;
 	}
 
+	/**
+	 * Descomponer el precio parámetro en importe neto, importe de impuesto
+	 * incluído, importe de percepciones incluídas.
+	 * 
+	 * @param basePrice
+	 *            precio base para la descomposición
+	 */
+	public BigDecimal decomposePrice(BigDecimal basePrice){
+		BigDecimal includedTaxesDivisors = getAllIncludedTaxesMultipliers();
+		
+		netPrice = basePrice.divide(BigDecimal.ONE.add(includedTaxesDivisors), basePrice.scale(),
+				BigDecimal.ROUND_HALF_UP);
+		if(getProduct().isTaxIncludedInPrice()){
+			taxPrice = netPrice.multiply(getTax().getTaxRateMultiplier()).setScale(basePrice.scale(),
+					BigDecimal.ROUND_HALF_UP);
+		}
+		if(getProduct().isPerceptionIncludedInPrice()){
+			otherTaxPrice = netPrice.multiply(getOrder().getSumOtherTaxesRateMultipliers()).setScale(basePrice.scale(),
+					BigDecimal.ROUND_HALF_UP);
+		}
+		
+		BigDecimal thePrice = netPrice.add(taxPrice).add(otherTaxPrice);
+		BigDecimal diff = basePrice.subtract(thePrice);
+		
+		netPrice = netPrice.add(diff);
+		
+		return netPrice.add(taxPrice).add(otherTaxPrice);
+	}
+	
+	/**
+	 * @return suma de todos los impuestos incluídos en el precio
+	 */
+	public BigDecimal getAllIncludedTaxesMultipliers(){
+		// Sumo las alícuotas de otros impuestos como percepciones incluídas
+		BigDecimal taxesToNet = BigDecimal.ZERO;
+		if(getProduct().isPerceptionIncludedInPrice()){
+			taxesToNet = taxesToNet.add(getOrder().getSumOtherTaxesRateMultipliers());
+		}
+		// Sumo el impuesto si es que está incluído
+		if(getProduct().isTaxIncludedInPrice()){
+			taxesToNet = taxesToNet.add(getTax().getTaxRateMultiplier());
+		}
+		return taxesToNet;
+	}
+	
 	/**
 	 * @return the checkoutPlace
 	 */
@@ -419,9 +471,7 @@ public class OrderProduct {
 	 * @return {@link BigDecimal} con el importe total de la línea.
 	 */
 	public BigDecimal getTotalTaxedPrice(boolean excludeBonus) {
-		//return scaleAmount(getTaxedPrice(excludeBonus).multiply(getQty()));
-		return scaleAmount(getTaxedPrice(
-				scaleAmount(getPrice(excludeBonus).multiply(getCount()))));
+		return scaleAmount(getTaxedPrice(getPrice(excludeBonus)).multiply(getCount()));
 	}
 
 	/**
@@ -577,7 +627,7 @@ public class OrderProduct {
 		this.invoiceLineID = invoiceLineID;
 	}
 
-public BigDecimal getTotalDocumentDiscount() {
+	public BigDecimal getTotalDocumentDiscount() {
 		return totalDocumentDiscount;
 	}
 
@@ -595,5 +645,67 @@ public BigDecimal getTotalDocumentDiscount() {
 	public void setTemporalTotalDocumentDiscount(
 			BigDecimal temporalTotalDocumentDiscount) {
 		this.temporalTotalDocumentDiscount = temporalTotalDocumentDiscount;
+	}
+	
+	private BigDecimal getRealDocumentDiscountAmt(boolean includeDocumentDiscount, boolean temporalDocumentDiscount){
+		return (includeDocumentDiscount ? getTotalDocumentDiscount() : BigDecimal.ZERO)
+				.add(temporalDocumentDiscount ? getTemporalTotalDocumentDiscount() : BigDecimal.ZERO);
+	}
+	
+	public BigDecimal getTotalNetAmt(){
+		return getTotalNetAmt(true, false);
+	}
+	
+	public BigDecimal getTotalNetAmt(boolean includeDocumentDiscount, boolean isTemporal){
+		BigDecimal net = netPrice.multiply(getCount());
+		if(includeDocumentDiscount){
+			net = net.subtract(getNetAmount(getRealDocumentDiscountAmt(includeDocumentDiscount, isTemporal)));
+		}
+		return scaleAmount(net);
+	}
+	
+	public BigDecimal getTotalTaxAmt(){
+		return getTotalTaxAmt(true, false);
+	}
+	
+	public BigDecimal getTotalTaxAmt(boolean includeDocumentDiscount, boolean isTemporal){
+		return scaleAmount(
+				getTaxBaseAmt(includeDocumentDiscount, isTemporal).multiply(getTax().getTaxRateMultiplier()));
+	}
+	
+	public BigDecimal getTotalOtherTaxAmt(){
+		return getTotalOtherTaxAmt(true, false);
+	}
+	
+	public BigDecimal getTotalOtherTaxAmt(boolean includeDocumentDiscount, boolean isTemporal){
+		return getTotalOtherTaxAmt(null, includeDocumentDiscount, isTemporal);
+	}
+	
+	public BigDecimal getTotalOtherTaxAmt(Tax otherTax, boolean includeDocumentDiscount, boolean isTemporal){
+		BigDecimal allMultipliers = getOrder().getSumOtherTaxesRateMultipliers();
+		
+		BigDecimal otherTaxMultiplier = otherTax == null? 
+				new BigDecimal(1)
+				: otherTax.getTaxRateMultiplier().divide(allMultipliers, 6, BigDecimal.ROUND_HALF_UP);
+		
+		return scaleAmount(
+				getTaxBaseAmt(includeDocumentDiscount, isTemporal).multiply(otherTax == null ? allMultipliers : otherTax.getTaxRateMultiplier()));
+	}
+	
+	public BigDecimal getTotalAmt(){
+		return scaleAmount(price.multiply(getCount()));
+	}
+	
+	public BigDecimal getAllTotalAmt(boolean includeTax, boolean includeOtherTax, boolean includeDocumentDiscount, boolean isTemporal){
+		return scaleAmount(getTotalNetAmt(includeDocumentDiscount, isTemporal)
+							.add(includeTax ? getTotalTaxAmt(includeDocumentDiscount, isTemporal) : BigDecimal.ZERO)
+							.add(includeOtherTax ? getTotalOtherTaxAmt(includeDocumentDiscount, isTemporal) : BigDecimal.ZERO));
+	}
+	
+	/**
+	 * @return Importe base para el cálculo de impuestos para la línea 
+	 */
+	public BigDecimal getTaxBaseAmt(boolean includeDocumentDiscount, boolean isTemporal){
+		return getTotalNetAmt(includeDocumentDiscount, isTemporal);
 	}
 }

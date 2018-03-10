@@ -664,7 +664,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		BigDecimal diff = sumaPagos.subtract(sumaProductos).abs();
 		
-		if (diff.compareTo(VModelHelper.GetRedondeoMoneda(ctx, getClientCurrencyID() )) < 0)
+		if (diff.compareTo(getRedondeo()) < 0)
 			return true;
 		
 		return false;
@@ -689,8 +689,8 @@ public class PoSOnline extends PoSConnectionState {
 			add(sumaCreditNotePayments).
 			add(sumaBankTransferPayments);
 		
-		BigDecimal redondeo = VModelHelper.GetRedondeoMoneda(ctx, getClientCurrencyID());
-
+		BigDecimal redondeo = getRedondeo();
+		
 		// Diff es la cantidad exacta que FALTA PAGAR para que la diferencia sea PRECISAMENTE CERO. 
 		BigDecimal diff = totalPagar.subtract(sumaPagos);
 
@@ -775,8 +775,8 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Si hay algun pago que no sea cheque, y están pagando de más, no permito que se efectue la operacion
 		
-		BigDecimal redondeo = VModelHelper.GetRedondeoMoneda(ctx, getClientCurrencyID());
-		boolean sobraPlata = sumaPagos.subtract(sumaProductos).compareTo(redondeo) >= 0;  
+		BigDecimal redondeo = getRedondeo();
+		boolean sobraPlata = sumaPagos.subtract(sumaProductos).compareTo(redondeo) > 0;  
 		
 		
 		if (sobraPlata) { // order.getOrderProducts().size() != checkPayments.size()) {
@@ -1287,8 +1287,8 @@ public class PoSOnline extends PoSConnectionState {
 	        line.setPriceList(op.getPriceList());
 	        
 	        line.setC_Tax_ID(op.getTax().getId());
-	        line.setDiscount();
-	        line.setLineNetAmt();
+	        line.setDiscount(op.getDiscount());
+	        line.setLineNetAmt(op.getTotalTaxedPrice());
 	        line.setLineBonusAmt(op.getLineBonusAmt());
 	        line.setLineDiscountAmt(op.getLineDiscountAmt());
 	        line.setDocumentDiscountAmt(op.getTotalDocumentDiscount());
@@ -1369,20 +1369,21 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private void createOXPOrderTaxes(MOrder mo, Order order) throws PosException{
-		BigDecimal totalNet = order.getOtherTaxes() != null
-				&& order.getOtherTaxes().size() > 0 ? mo.getTotalLinesNetWithoutDocumentDiscount()
-				: BigDecimal.ZERO;
+		//BigDecimal totalNet = mo.getNetTaxBaseAmt();
+		deleteTaxes(MOrderTax.Table_Name, "c_order_id", mo.getID());
 		MOrderTax orderTax;
-		for (Tax tax : order.getOtherTaxes()) {
-			// FIXME Cuando se pasen las percepciones a las M, se debe colocar
-			// bypass para aquellos impuestos que son percepciones
+		for (Tax tax : order.getAllTaxes()) {
 			orderTax = new MOrderTax(getCtx(), 0, getTrxName());
 			orderTax.setC_Order_ID(mo.getID());
 			orderTax.setC_Tax_ID(tax.getId());
-			orderTax.setTaxAmt(totalNet.multiply(tax.getTaxRateMultiplier()));
-			orderTax.setTaxBaseAmt(totalNet);
+			orderTax.setTaxAmt(tax.getAmount());
+			orderTax.setTaxBaseAmt(tax.getTaxBaseAmt());
 			throwIfFalse(orderTax.save(), mo);
 		}
+	}
+	
+	protected void deleteTaxes(String tablename, String documentColumnName, int documentID) throws PosException{
+		DB.executeUpdate("DELETE FROM "+tablename+" WHERE "+documentColumnName+" = "+documentID, getTrxName());
 	}
 	
 	private MInvoice createOxpInvoice(Order order) throws PosException {
@@ -1463,6 +1464,10 @@ public class PoSOnline extends PoSConnectionState {
 			// cabecera para la ventana de facturas 
 			invLine.setSkipManualGeneralDiscount(true);
 			
+			invLine.setLineNetAmount(orderLineProductIDs.get(line.getID()).getTotalNetAmt());
+			invLine.setTaxAmt(orderLineProductIDs.get(line.getID()).getTotalTaxAmt());
+			invLine.setLineTotalAmt(invLine.getLineNetAmt().add(invLine.getTaxAmt()));
+			
 			debug("Guardando línea #" + invLine.getLine());
 			throwIfFalse(invLine.save(), InvoiceCreateException.class);
 			
@@ -1521,20 +1526,16 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private void createOXPInvoiceTaxes(MInvoice mi, Order order) throws PosException{
-		BigDecimal totalNet = order.getOtherTaxes() != null
-				&& order.getOtherTaxes().size() > 0 ? mi.getTotalLinesNet()
-				: BigDecimal.ZERO;
+		//BigDecimal totalNet = mi.getNetTaxBaseAmt();
+		deleteTaxes(MInvoiceTax.Table_Name, "c_invoice_id", mi.getID());
 		MInvoiceTax invoiceTax;
-		for (Tax tax : order.getOtherTaxes()) {
-			// Se hace un bypass de las percepciones ya que ya se deberían haber creado
-			if(!tax.isPercepcion()){
-				invoiceTax = new MInvoiceTax(mi.getCtx(), 0, mi.get_TrxName());
-				invoiceTax.setC_Invoice_ID(mi.getID());
-				invoiceTax.setC_Tax_ID(tax.getId());
-				invoiceTax.setTaxAmt(totalNet.multiply(tax.getTaxRateMultiplier()));
-				invoiceTax.setTaxBaseAmt(totalNet);
-				throwIfFalse(invoiceTax.save(), mi);
-			}
+		for (Tax tax : order.getAllTaxes()) {
+			invoiceTax = new MInvoiceTax(mi.getCtx(), 0, mi.get_TrxName());
+			invoiceTax.setC_Invoice_ID(mi.getID());
+			invoiceTax.setC_Tax_ID(tax.getId());
+			invoiceTax.setTaxAmt(tax.getAmount());
+			invoiceTax.setTaxBaseAmt(tax.getTaxBaseAmt());
+			throwIfFalse(invoiceTax.save(), mi);
 		}
 	}
 	
@@ -2010,7 +2011,7 @@ public class PoSOnline extends PoSConnectionState {
 				.getCreditCardCashRetirementDocTypeID());
 		creditCardRetirementInvoice.setCreateCashLine(false);
 		creditCardRetirementInvoice.setSkipManualGeneralDiscount(true);
-		creditCardRetirementInvoice.setTPVInstance(true);
+		creditCardRetirementInvoice.setTPVInstance(false);
 		creditCardRetirementInvoice.setIsVoidable(true);
 		creditCardRetirementInvoice.setDocAction(MInvoice.DOCACTION_Complete);
 		creditCardRetirementInvoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
@@ -2238,7 +2239,10 @@ public class PoSOnline extends PoSConnectionState {
 		// Los datos pueden modificarse si la EC es CF y es distinta a la que está en la config
 		rBPartner.setCustomerName(mBPartner.getName());
 		rBPartner.setCustomerIdentification(mBPartner.getTaxID());
-		rBPartner.setCustomerAddress(getBPartnerLocations(bPartnerID).get(0).toString());
+		List<Location> bpLocations = getBPartnerLocations(bPartnerID);
+		if(bpLocations != null && bpLocations.size() > 0){
+			rBPartner.setCustomerAddress(getBPartnerLocations(bPartnerID).get(0).toString());
+		}
 		
 		// Indica que los datos del comprador se deben mantener sincronizados
 		// con los datos de la EC.
@@ -3992,5 +3996,9 @@ public class PoSOnline extends PoSConnectionState {
 			}	
 		}
 		return docTypeID;
+	}
+	
+	public BigDecimal getRedondeo(){
+		return VModelHelper.GetRedondeoMoneda(ctx, getClientCurrencyID()); 
 	}
 }

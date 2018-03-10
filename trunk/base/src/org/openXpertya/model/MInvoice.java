@@ -3541,7 +3541,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		// Delete Taxes
 
-		if (isSOTrx()) {
+		if (isSOTrx() && !isTPVInstance()) {
 			DB.executeUpdate(
 					"DELETE FROM C_InvoiceTax WHERE "
 							+ " C_Tax_ID IN (SELECT c_tax_id FROM C_Tax ct left join C_TaxCategory ctc on ct.c_taxcategory_id = ctc.c_taxcategory_Id WHERE ctc.isManual = 'N') AND"
@@ -3568,7 +3568,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 			Integer taxID = new Integer(line.getC_Tax_ID());
 
-			if (!taxList.contains(taxID)) {
+			if (!taxList.contains(taxID) && !isTPVInstance()) {
 
 				MInvoiceTax iTax = MInvoiceTax.get(line, getPrecision(), false,
 						get_TrxName()); // current Tax
@@ -3654,7 +3654,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		// Calcular las percepciones
 		try {
-			recalculatePercepciones();
+			if (!isTPVInstance()) {
+				recalculatePercepciones();
+			}
 		} catch (Exception e) {
 			log.severe("ERROR generating percepciones. " + e.getMessage());
 			e.printStackTrace();
@@ -6381,7 +6383,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			return getDateInvoiced();
 		}
 
-		@Override
+		/*@Override
 		public BigDecimal getLinesTotalAmt(boolean includeOtherTaxesAmt) {
 			BigDecimal totalAmt = BigDecimal.ZERO;
 			for (IDocumentLine line : getDocumentLines()) {
@@ -6391,7 +6393,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				totalAmt = totalAmt.add(MInvoice.this.getPercepcionesTotalAmt());
 			}
 			return totalAmt;
-		}
+		}*/
 		
 		@Override
 		public void setTotalDocumentDiscount(BigDecimal discountAmount) {
@@ -6631,6 +6633,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 							  + " '" + valueProductDiffCambioCred + "')");
 		
 		return count > 0;
+	}
+	
+	public BigDecimal getNetTaxBaseAmt(){
+		BigDecimal total = Env.ZERO;
+		for (MInvoiceLine invoiceLine : getLines()) {
+			// Total de líneas sin impuestos
+			total = total.add(invoiceLine.getNetTaxBaseAmt());
+		}
+		return total;
 	}
 } // MInvoice
 

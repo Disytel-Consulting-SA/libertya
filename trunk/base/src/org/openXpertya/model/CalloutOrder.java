@@ -1684,14 +1684,14 @@ public class CalloutOrder extends CalloutEngine {
 
         log.info( "LineNetAmt=" + LineNetAmt );
         mTab.setValue( "LineNetAmt",LineNetAmt );
-
+        BigDecimal documentDiscountAmt = (BigDecimal)mTab.getValue( "DocumentDiscountAmt" );
         // Calcula el Line Total Amt
         Integer taxID = (Integer)mTab.getValue("C_Tax_ID");
         BigDecimal lineTaxAmt = BigDecimal.ZERO;
         if (taxID != null && taxID > 0) {
             MPriceList priceList = MPriceList.get(ctx, M_PriceList_ID, null);
             MTax tax = MTax.get(ctx, taxID, null);
-			lineTaxAmt = tax.calculateTax(LineNetAmt,
+			lineTaxAmt = tax.calculateTax(LineNetAmt.subtract(documentDiscountAmt),
 					priceList.isTaxIncluded(),
 					MPriceList.getStandardPrecision(ctx, M_PriceList_ID));
         }

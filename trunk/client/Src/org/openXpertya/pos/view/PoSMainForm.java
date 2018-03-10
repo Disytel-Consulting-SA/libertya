@@ -4633,7 +4633,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	public void updateOrderProduct(OrderProduct orderProduct) {
 		//getModel().calculateOrderProductTax(orderProduct);
-		getOrder().setOtherTaxes(getModel().getOtherTaxes());
 		getOrder().updateOrderProduct();
 		getOrderTableUtils().refreshTable();
 		getOrderTableUtils().setSelection(orderProduct);
@@ -4642,7 +4641,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	protected void removeOrderProduct(OrderProduct orderProduct) {
 		getOrder().removeOrderProduct(orderProduct);
-		getOrder().setOtherTaxes(getModel().getOtherTaxes());
 		getOrderTableUtils().refreshTable();
 		getCProductNameDetailLabel().setText("");
 		updateTotalAmount();
@@ -5430,11 +5428,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	private void updatePaymentsStatus() {
 		getModel().balanceValidate();
-		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt(false, false,
-				false, false).add(getOrder().getTotalOtherTaxesAmt(false));
+		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt(true, false, false, false, false);
+		//BigDecimal taxAmt = getOrder().getTotalTaxAmt(false, true);
+		BigDecimal otherTaxesAmt = getOrder().getTotalOtherTaxesAmt(false, true);
+		totalAmt = totalAmt.add(otherTaxesAmt);
 		BigDecimal documentDiscountAmt = getOrder().getTotalDocumentDiscount().negate();
 		BigDecimal toPayAmt = getOrder().getOrderProductsTotalAmt(true);
 		BigDecimal paidAmt = getOrder().getPaidAmount();
+		//BigDecimal paidAmt = getOrder().getRealPaidAmount();
 		BigDecimal balance = getOrder().getBalance();
 		BigDecimal change = getOrder().getTotalChangeAmt();
 //		BigDecimal cashAmt = getOrder().getCashPaidAmount();

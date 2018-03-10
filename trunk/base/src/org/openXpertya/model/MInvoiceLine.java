@@ -630,10 +630,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             return;
         }
 
-        // FIXME: Para créditos es necesario realizar descuento/recargo?
-
         log.fine( "M_PriceList_ID=" + M_PriceList_ID );
-        m_productPricing = new MProductPricing( getM_Product_ID(),C_BPartner_ID,getQtyInvoiced(),m_IsSOTrx );
+		m_productPricing = new MProductPricing(getM_Product_ID(), C_BPartner_ID, getQtyInvoiced(), m_IsSOTrx,
+				!getInvoice().isManageDragOrderDiscounts());
         m_productPricing.setM_PriceList_ID( M_PriceList_ID );
         m_productPricing.setPriceDate( m_DateInvoiced );
 
@@ -748,7 +747,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 
             if((getTaxAmt() == null || (getTaxAmt() != null && getTaxAmt().compareTo(BigDecimal.ZERO) == 0))
             		&& tax.getRate().compareTo(BigDecimal.ZERO) > 0){
-            	TaxAmt = tax.calculateTax( getLineNetAmt().subtract(getDocumentDiscountAmt()),isTaxIncluded(),getPrecision());
+            	TaxAmt = tax.calculateTax(getTaxBaseAmtToEvaluateTax(),isTaxIncluded(),getPrecision());
             }
             else{
             	TaxAmt = getTaxAmt();
@@ -758,6 +757,28 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         super.setTaxAmt( TaxAmt );
     }    // setTaxAmt
 
+    /**
+	 * En este método se encapsula el importe base para el cálculo de impuestos.
+	 * Luego de esto se debe verificar si este importe contiene impuestos
+	 * incluídos o no
+	 * 
+	 * @return el importe base para el cálculo de impuestos para esta línea
+	 */
+    public BigDecimal getTaxBaseAmtToEvaluateTax(){
+    	return getLineNetAmt().subtract(getDocumentDiscountAmt());
+    }
+    
+    /**
+	 * En este método se encapsula el importe base para el cálculo de impuestos.
+	 * El importe devuelto es el neto real para aplicar directamente el
+	 * descuento
+	 * 
+	 * @return el importe base para el cálculo de impuestos para esta línea
+	 */
+    public BigDecimal getNetTaxBaseAmt(){
+    	return getTotalPriceEnteredNet().subtract(getTotalDocumentDiscountUnityAmtNet());
+    }
+    
     /**
      * Descripción de Método
      *
@@ -1076,32 +1097,23 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         
         // Calculations & Rounding
 
-        setLineNetAmt();
-       	setLineNetAmount();
-        
-       	// Si la Tarifa tiene impuesto incluido y percepciones incluidas, se actualiza el LineNetAmt y el TaxAmt
-       	if( isPerceptionsIncluded() && isTaxIncluded() ) {
-      		updateTaxAmt();
-       		updateLineNetAmt();
-       	}
-       			
-        // Comentado para poder calcular TaxAmt y LineTotalAmt en Facturas de Cliente
-        /*
-        if( !m_IsSOTrx    // AP Inv Tax Amt
-                && (getTaxAmt().compareTo( Env.ZERO ) == 0) ) {
+        if(!getInvoice().isTPVInstance()){
+        	setLineNetAmt();
+        	setLineNetAmount();
+        	// Si la Tarifa tiene impuesto incluido y percepciones incluidas, se actualiza el LineNetAmt y el TaxAmt
+           	if( isPerceptionsIncluded() && isTaxIncluded()) {
+          		updateTaxAmt();
+           		updateLineNetAmt();
+           	}
+            // Calculo TaxAmt y LineTotalAmt
+            // Recupero el impuesto aplicado a la línea
             setTaxAmt();
+            setLineTotalAmt(getLineNetAmt().add(getTaxAmt()));
         }
-		*/
-        //
 
         /* Si el project no está seteado, tomar el de la cabecera */
         if (getC_Project_ID() == 0)
         	setC_Project_ID(DB.getSQLValue(get_TrxName(), " SELECT C_Project_ID FROM C_Invoice WHERE C_Invoice_ID = " + getC_Invoice_ID()));
-        
-        // Calculo TaxAmt y LineTotalAmt
-        // Recupero el impuesto aplicado a la línea
-        setTaxAmt();
-        setLineTotalAmt(getLineNetAmount().add(getTaxAmt()));
         
     	// Controlar cantidades por unidad de medida
         if(!MUOM.isAllowedQty(getCtx(), getC_UOM_ID(), getQtyEntered(), get_TrxName())){
@@ -1370,18 +1382,19 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     private boolean updateHeaderTax() {
 
         // Recalculate Tax for this Tax
-
-        MInvoiceTax tax = MInvoiceTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
-
-        if( tax != null ) {
-            if( !tax.calculateTaxFromLines()) {
-                return false;
-            }
-
-            if( !tax.save( get_TrxName())) {
-                return false;
-            }
-        }
+    	if(!getInvoice().isTPVInstance()){
+	        MInvoiceTax tax = MInvoiceTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
+	
+	        if( tax != null ) {
+	            if( !tax.calculateTaxFromLines()) {
+	                return false;
+	            }
+	
+	            if( !tax.save( get_TrxName())) {
+	                return false;
+	            }
+	        }
+    	}
         
         // Update Invoice Header
         
@@ -1394,7 +1407,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 
         // Calcular las percepciones
         try{
-			getInvoice().calculatePercepciones();
+        	if (!getInvoice().isTPVInstance()) {
+    			getInvoice().calculatePercepciones();
+        	}
 		} catch(Exception e){
 			log.severe("ERROR generating percepciones. "+e.getMessage());
 			e.printStackTrace();
@@ -2148,9 +2163,11 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     }    // setLineNetAmt
     
     private void updateNetAmount() {
-		BigDecimal taxamt = DB.getSQLValueBD(get_TrxName(), "SELECT SUM(it.taxamt) FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?)", getC_Invoice_ID());
-		BigDecimal grandTotal = DB.getSQLValueBD(get_TrxName(), "SELECT i.grandtotal FROM C_Invoice i WHERE (i.C_Invoice_ID = ?)", getC_Invoice_ID());
-		BigDecimal taxbaseamt = DB.getSQLValueBD(get_TrxName(), "SELECT it.taxbaseamt FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?) ORDER BY it.Created DESC LIMIT 1", getC_Invoice_ID());
+		BigDecimal taxamt = DB.getSQLValueBD(get_TrxName(), "SELECT coalesce(SUM(it.taxamt),0) FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?)", getC_Invoice_ID());
+		taxamt = taxamt == null?BigDecimal.ZERO:taxamt;
+		BigDecimal grandTotal = DB.getSQLValueBD(get_TrxName(), "SELECT coalesce(i.grandtotal,0) FROM C_Invoice i WHERE (i.C_Invoice_ID = ?)", getC_Invoice_ID());
+		BigDecimal taxbaseamt = DB.getSQLValueBD(get_TrxName(), "SELECT coalesce(it.taxbaseamt,0) FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?) ORDER BY it.Created DESC LIMIT 1", getC_Invoice_ID());
+		taxbaseamt = taxbaseamt == null?BigDecimal.ZERO:taxbaseamt;
 		// Si existe un diferencia de hasta 0.02 se ajusta el neto.
 		if((Math.abs((grandTotal.subtract(taxamt).subtract(taxbaseamt)).doubleValue()) >= 0.01) && (Math.abs((grandTotal.subtract(taxamt).subtract(taxbaseamt)).doubleValue()) <= 0.02)){
 			String queryUpdate = "UPDATE C_Invoice SET NetAmount = " + (grandTotal.subtract(taxamt)) + " WHERE (C_Invoice_ID = " + getInvoice().getC_Invoice_ID() + ")";
