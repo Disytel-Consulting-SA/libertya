@@ -41,9 +41,10 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		sqlView.append(" LEFT JOIN Fact_Acct fa ON (fa.Account_ID = ev.C_ElementValue_ID) ");
 		sqlView.append(" INNER JOIN " + getReportTableName() + " tb ON (tb.C_ElementValue_ID = ev.C_ElementValue_ID AND tb.AD_PInstance_ID = ?) ");
 		sqlView.append(" WHERE ev.IsActive = 'Y' ");
+		sqlView.append("   AND fa.AD_Client_ID = ").append(getAD_Client_ID());
 		sqlAppend     ("   AND fa.AD_Org_ID = ? ", p_AD_Org_ID > 0, sqlView);
-		sqlAppend     ("   AND ? <= fa.DateAcct ", p_DateAcct_From, sqlView);
-		sqlAppend     ("   AND fa.DateAcct <= ? ", p_DateAcct_To, sqlView);
+		sqlAppend     ("   AND ?::date <= fa.DateAcct::date ", p_DateAcct_From, sqlView);
+		sqlAppend     ("   AND fa.DateAcct::date <= ?::date ", p_DateAcct_To, sqlView);
 		sqlView.append(" GROUP BY ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode ");
 		
 		StringBuffer sql = new StringBuffer();
@@ -78,7 +79,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		
 		try {
 			// Actualización de debe y haber de los registros existentes
-			pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
+			pstmt = DB.prepareStatement(sql.toString(), get_TrxName(), true);
 			Integer auxAD_Org_ID = p_AD_Org_ID == 0 ? null : p_AD_Org_ID;
 			int i = 1;
 			// Parametros del primer sqlView

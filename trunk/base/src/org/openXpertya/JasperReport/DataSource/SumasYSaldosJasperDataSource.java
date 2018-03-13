@@ -88,12 +88,12 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 
 		// Si solo queremos saldos acumulados, mostraremos el saldo antes de la fecha de inicio 
 		if (SaldosAcumulados)	{
-			sql.append(" AND fa.DateAcct < ").append(DB.TO_DATE(p_DateAcct_From));
+			sql.append(" AND fa.DateAcct::date < ").append(DB.TO_DATE(p_DateAcct_From));
 		}
 		
 		// Si no, nos basamos en las fechas de los parametros
 		else {
-			sql.append(" AND fa.DateAcct BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
+			sql.append(" AND fa.DateAcct::date BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
 		}
 		
 		// Obtenemos la clausula de las cuentas basandonos en el nombre.
@@ -125,7 +125,7 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		m_saldos = new HashMap();
 		
 		try	{
-			PreparedStatement pstmt = DB.prepareStatement(getSQLData(true));
+			PreparedStatement pstmt = DB.prepareStatement(getSQLData(true), null, true);
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next())	{
 				BigDecimal saldoAcumulado = rs.getBigDecimal("Debe").subtract(rs.getBigDecimal("Haber"));
@@ -156,7 +156,7 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		ArrayList list = new ArrayList();
 		
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(getSQLData(false));
+			PreparedStatement pstmt = DB.prepareStatement(getSQLData(false), null, true);
 			ResultSet rs = pstmt.executeQuery();
 			
 			BigDecimal saldo = Env.ZERO;
