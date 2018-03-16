@@ -68,9 +68,11 @@ import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
+import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.RetencionProcessor;
+import org.openXpertya.model.X_AD_Role;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
@@ -111,12 +113,15 @@ import org.zkoss.zul.Treerow;
 import org.zkoss.zul.impl.XulElement;
 
 
+
 /**
  *
  * @author  usuario
  */
 public class WOrdenPago extends ADForm implements ValueChangeListener, TableModelListener, EventListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
 
+	private BigDecimal maxPaymentAllowed = null;
+	
     /** Creates new form WOrdenPago */
     public WOrdenPago() {
 
@@ -1108,13 +1113,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
     		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
     		
-    		int status = m_model.doPostProcesar();
+    		int status = m_model.doPostProcesar(this.maxPaymentAllowed);
     		
     		switch (status) 
     		{
     		case VOrdenPagoModel.PROCERROR_OK:
     			break;
     		
+    		case VOrdenPagoModel.PROCERROR_PAYMENTS_AMT_MAX_ALLOWED:
+    			showError("@PaymentsAmtMaxAllowedExceeded@");
+    			break;
+    			
     		case VOrdenPagoModel.PROCERROR_PAYMENTS_AMT_MATCH:
     			showError("@PaymentsAmtMatchError@");
     			break;
@@ -2019,11 +2028,84 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 	
 	protected void updatePaymentsTabsState() {
-		((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(!m_model.isNormalPayment());
-		((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(!m_model.isNormalPayment());		
-		// Refrescar el monto de la pestaña con el total a pagar
-		updatePayAmt(getModel().getSaldoMediosPago());
-//		mpTabbox.setSelectedIndex(TAB_INDEX_EFECTIVO);
+		updatePayAmt(getModel().getSaldoMediosPago()); //Actualiza el campo importe en la pestaña pago
+		/*
+		 * Si el perfil tiene cargado un Unico medio de pago entonces se habilita solo ese.
+		 */
+		X_AD_Role role = new X_AD_Role(Env.getCtx(), Integer.parseInt((String)Env.getCtx().get("#AD_Role_ID")), null);
+		if(role.getpaymentmedium() == null) {
+			/* CODIGO QUE YA ESTABA*/
+			((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(!m_model.isNormalPayment());
+			((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(!m_model.isNormalPayment());		
+			// Refrescar el monto de la pestaña con el total a pagar
+			//updatePayAmt(getModel().getSaldoMediosPago());
+//			mpTabbox.setSelectedIndex(TAB_INDEX_EFECTIVO);
+		}
+		else {//Si tiene un medio de pago cargado		
+			String pm = role.getpaymentmedium();		 
+			if(pm.equals(X_AD_Role.PAYMENTMEDIUM_Efectivo)) {
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_EFECTIVO))).setDisabled(false);
+				mpTabbox.setSelectedIndex(TAB_INDEX_EFECTIVO);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_TRANSFERENCIA))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CHEQUE))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(true);
+				if (m_chequeTerceroTabIndex != -1) {((Tab)(mpTabs.getChildren().get(m_chequeTerceroTabIndex))).setDisabled(true);}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_Cheque)) {
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_EFECTIVO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_TRANSFERENCIA))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CHEQUE))).setDisabled(false);
+				mpTabbox.setSelectedIndex(TAB_INDEX_CHEQUE);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(true);
+				if (m_chequeTerceroTabIndex != -1) {((Tab)(mpTabs.getChildren().get(m_chequeTerceroTabIndex))).setDisabled(true);}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_Credito)) {
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_EFECTIVO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_TRANSFERENCIA))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CHEQUE))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(false);
+				mpTabbox.setSelectedIndex(TAB_INDEX_CREDITO);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(true);
+				if (m_chequeTerceroTabIndex != -1) {((Tab)(mpTabs.getChildren().get(m_chequeTerceroTabIndex))).setDisabled(true);}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_ChequeDeTerceros)) {
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_EFECTIVO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_TRANSFERENCIA))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CHEQUE))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(true);
+				if (m_chequeTerceroTabIndex != -1) {
+					((Tab)(mpTabs.getChildren().get(m_chequeTerceroTabIndex))).setDisabled(false);
+					mpTabbox.setSelectedIndex(this.m_chequeTerceroTabIndex);
+				}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_PagoAdelantado)) {
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_EFECTIVO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_TRANSFERENCIA))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CHEQUE))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(false);
+				mpTabbox.setSelectedIndex(TAB_INDEX_PAGO_ADELANTADO);
+				if (m_chequeTerceroTabIndex != -1) {((Tab)(mpTabs.getChildren().get(m_chequeTerceroTabIndex))).setDisabled(true);}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_TransferenciaBancaria)) {
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_EFECTIVO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_TRANSFERENCIA))).setDisabled(false);
+				mpTabbox.setSelectedIndex(TAB_INDEX_TRANSFERENCIA);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CHEQUE))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_CREDITO))).setDisabled(true);
+				((Tab)(mpTabs.getChildren().get(TAB_INDEX_PAGO_ADELANTADO))).setDisabled(true);
+				if (m_chequeTerceroTabIndex != -1) {((Tab)(mpTabs.getChildren().get(m_chequeTerceroTabIndex))).setDisabled(true);}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+		}
 	}
 	
 	protected void updatePagoAdelantadoTab() {

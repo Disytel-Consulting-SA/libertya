@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-03-10 10:03:12.911 */
+ *  @version  - 2018-03-16 16:17:42.267 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -917,6 +917,48 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int PAYMENTMEDIUM_AD_Reference_ID = MReference.getReferenceID("HT_PaymentMedium");
+/** Cheque = C */
+public static final String PAYMENTMEDIUM_Cheque = "C";
+/** Efectivo = E */
+public static final String PAYMENTMEDIUM_Efectivo = "E";
+/** Cheque de terceros = H */
+public static final String PAYMENTMEDIUM_ChequeDeTerceros = "H";
+/** Pago Adelantado = P */
+public static final String PAYMENTMEDIUM_PagoAdelantado = "P";
+/** Credito = R */
+public static final String PAYMENTMEDIUM_Credito = "R";
+/** Transferencia Bancaria = T */
+public static final String PAYMENTMEDIUM_TransferenciaBancaria = "T";
+/** Set paymentmedium */
+public void setpaymentmedium (String paymentmedium)
+{
+if (paymentmedium == null || paymentmedium.equals("C") || paymentmedium.equals("E") || paymentmedium.equals("H") || paymentmedium.equals("P") || paymentmedium.equals("R") || paymentmedium.equals("T") || ( refContainsValue("HTEP2CORE-AD_Reference-1010360-20180316154649", paymentmedium) ) );
+ else throw new IllegalArgumentException ("paymentmedium Invalid value: " + paymentmedium + ".  Valid: " +  refValidOptions("HTEP2CORE-AD_Reference-1010360-20180316154649") );
+if (paymentmedium != null && paymentmedium.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+paymentmedium = paymentmedium.substring(0,1);
+}
+set_Value ("paymentmedium", paymentmedium);
+}
+/** Get paymentmedium */
+public String getpaymentmedium() 
+{
+return (String)get_Value("paymentmedium");
+}
+/** Set paymentmediumlimit */
+public void setpaymentmediumlimit (BigDecimal paymentmediumlimit)
+{
+set_Value ("paymentmediumlimit", paymentmediumlimit);
+}
+/** Get paymentmediumlimit */
+public BigDecimal getpaymentmediumlimit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("paymentmediumlimit");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set POS Journal Supervisor */
 public void setPOSJournalSupervisor (boolean POSJournalSupervisor)
