@@ -24,6 +24,7 @@ import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +70,11 @@ import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AuthContainer;
+import org.openXpertya.apps.form.FormFrame;
+import org.openXpertya.apps.form.FormPanel;
+import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.apps.form.VModelHelper;
+import org.openXpertya.apps.form.VOrdenPagoModel;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
@@ -83,9 +89,11 @@ import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.RetencionProcessor;
+import org.openXpertya.model.X_AD_Role;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.pos.model.AuthOperation;
 import org.openXpertya.pos.model.User;
@@ -109,6 +117,8 @@ import org.openXpertya.util.ValueNamePair;
  */
 public class VOrdenPago extends CPanel implements FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess,AuthContainer {
     
+	private BigDecimal maxPaymentAllowed = null;
+	
 	public class DecimalEditor extends DefaultCellEditor {
 	    JFormattedTextField ftf;
 	    NumberFormat decFormat;
@@ -1960,13 +1970,17 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
     		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
     		
-    		int status = m_model.doPostProcesar();
+    		int status = m_model.doPostProcesar(maxPaymentAllowed);
     		
     		switch (status) 
     		{
     		case VOrdenPagoModel.PROCERROR_OK:
     			break;
     		
+    		case VOrdenPagoModel.PROCERROR_PAYMENTS_AMT_MAX_ALLOWED:
+    			showError("@PaymentsAmtMaxAllowedExceeded@");
+    			break;
+    			
     		case VOrdenPagoModel.PROCERROR_PAYMENTS_AMT_MATCH:
     			showError("@PaymentsAmtMatchError@");
     			break;
@@ -2344,7 +2358,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			
 			@Override
 			public void keyReleased(KeyEvent arg0) {
-				// TODO Auto-generated method stub
 				
 			}
 			
@@ -3167,12 +3180,85 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		return Msg.translate(m_ctx, name);
 	}
 	
-	protected void updatePaymentsTabsState() {
-		jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
-		jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
-		// Refrescar el monto de la pestaña con el total a pagar
-		updatePayAmt(getModel().getSaldoMediosPago());
-//		jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
+	protected void updatePaymentsTabsState() {		
+		updatePayAmt(getModel().getSaldoMediosPago()); //Refrescar el monto de la pestaña con el total a pagar
+		/*
+		 * Si el perfil tiene cargado un Unico medio de pago entonces se habilita solo ese.
+		 */
+		X_AD_Role role = new X_AD_Role(Env.getCtx(), Integer.parseInt((String)Env.getCtx().get("#AD_Role_ID")), null);
+		if(role.getpaymentmedium() == null) {
+			/*CODIGO QUE YA ESTABA*/
+			jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, m_model.isNormalPayment());
+			jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, m_model.isNormalPayment());
+			// Refrescar el monto de la pestaña con el total a pagar
+			//updatePayAmt(getModel().getSaldoMediosPago());
+//			jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
+		}
+		else {//Si tiene un medio de pago cargado		
+			String pm = role.getpaymentmedium();		 
+			if(pm.equals(X_AD_Role.PAYMENTMEDIUM_Efectivo)) {
+				jTabbedPane2.setEnabledAt(TAB_INDEX_EFECTIVO, true);
+				jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_TRANSFERENCIA, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CHEQUE, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, false);
+				if (m_chequeTerceroTabIndex != -1) jTabbedPane2.setEnabledAt(m_chequeTerceroTabIndex, false);// Tab de Cheque de terceros
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			} 
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_Cheque)) {
+				jTabbedPane2.setEnabledAt(TAB_INDEX_EFECTIVO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_TRANSFERENCIA, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CHEQUE, true);
+				jTabbedPane2.setSelectedIndex(TAB_INDEX_CHEQUE);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, false);
+				if (m_chequeTerceroTabIndex != -1) jTabbedPane2.setEnabledAt(m_chequeTerceroTabIndex, false);// Tab de Cheque de terceros
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_Credito)) {
+				jTabbedPane2.setEnabledAt(TAB_INDEX_EFECTIVO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_TRANSFERENCIA, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CHEQUE, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, true);
+				jTabbedPane2.setSelectedIndex(TAB_INDEX_CREDITO);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, false);
+				if (m_chequeTerceroTabIndex != -1) jTabbedPane2.setEnabledAt(m_chequeTerceroTabIndex, false);// Tab de Cheque de terceros
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_ChequeDeTerceros)) {
+				jTabbedPane2.setEnabledAt(TAB_INDEX_EFECTIVO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_TRANSFERENCIA, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CHEQUE, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, false);
+				if (m_chequeTerceroTabIndex != -1) {
+					jTabbedPane2.setEnabledAt(m_chequeTerceroTabIndex, true);// Tab de Cheque de terceros
+					jTabbedPane2.setSelectedIndex(m_chequeTerceroTabIndex);
+				}
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_PagoAdelantado)) {
+				jTabbedPane2.setEnabledAt(TAB_INDEX_EFECTIVO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_TRANSFERENCIA, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CHEQUE, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, true);
+				jTabbedPane2.setSelectedIndex(TAB_INDEX_PAGO_ADELANTADO);
+				if (m_chequeTerceroTabIndex != -1) jTabbedPane2.setEnabledAt(m_chequeTerceroTabIndex, false);// Tab de Cheque de terceros
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}
+			else if(pm.equals(X_AD_Role.PAYMENTMEDIUM_TransferenciaBancaria)) {
+				jTabbedPane2.setEnabledAt(TAB_INDEX_EFECTIVO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_TRANSFERENCIA, true);
+				jTabbedPane2.setSelectedIndex(TAB_INDEX_TRANSFERENCIA);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CHEQUE, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_CREDITO, false);
+				jTabbedPane2.setEnabledAt(TAB_INDEX_PAGO_ADELANTADO, false);
+				if (m_chequeTerceroTabIndex != -1) jTabbedPane2.setEnabledAt(m_chequeTerceroTabIndex, false);// Tab de Cheque de terceros
+				this.maxPaymentAllowed = role.getpaymentmediumlimit();
+			}		
+		}
 	}
 	
 	protected void updatePagoAdelantadoTab() {

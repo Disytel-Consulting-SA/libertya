@@ -22,6 +22,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.apps.ProcessCtl;
+import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
 import org.openXpertya.cc.CurrentAccountManager;
@@ -83,6 +84,7 @@ public class VOrdenPagoModel {
 	public static final int PROCERROR_BOTH_EXCHANGE_INVOICES = 8;
 	public static final int PROCERROR_DOCUMENTNO_INVALID = 9;
 	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD = 10;
+	public static final int PROCERROR_PAYMENTS_AMT_MAX_ALLOWED = 11;
 	public static final int PROCERROR_UNKNOWN = -1;
 
 	public static final String MIN_CHECK_DIFF_DAYS_PREFERENCE_NAME = "OP_MinCheckDays";
@@ -1007,7 +1009,7 @@ public class VOrdenPagoModel {
 
 	// Main
 	public Timestamp m_fechaFacturas = null;
-	protected Timestamp m_fechaTrx = Env.getTimestamp();
+	public Timestamp m_fechaTrx = Env.getTimestamp();
 	public boolean m_allInvoices = true;
 	public int C_BPartner_ID = 0;
 	public int AD_Org_ID = 0;
@@ -2177,9 +2179,31 @@ public class VOrdenPagoModel {
 	}
 
 	public int doPostProcesar() {
-
+		return doPostProcesar(new BigDecimal(0));
+	}
+	
+	/**
+	 * Originalmente el método no recibia parámetros.
+	 * Se le agregó el parámetro maxAllowedByRole para chequear el monto de pago
+	 * maximo que se le permite realizar al perfil de usuario.
+	 **/
+	public int doPostProcesar(BigDecimal maxAllowedByRole) {
+		
+		/*
+		 * Chequeo de que no se exceda el monto máximo permitido
+		 * configurado en el perfil 
+		 */
+		BigDecimal montoAPagar = getSumaMediosPago();
+		if (!retencionIncludedInMedioPago) {
+			montoAPagar = montoAPagar.subtract(getSumaRetenciones());
+		}
+		if(maxAllowedByRole != null && maxAllowedByRole.compareTo(new BigDecimal(0)) > 0) {
+			if(montoAPagar.compareTo(maxAllowedByRole) > 0) {
+				return PROCERROR_PAYMENTS_AMT_MAX_ALLOWED;
+			}
+		}
+		
 		BigDecimal saldoMediosPago = getSaldoMediosPago(); // Debe ser cero
-
 		if (saldoMediosPago.abs()
 				.compareTo(new BigDecimal(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) > 0)
 			return PROCERROR_PAYMENTS_AMT_MATCH;

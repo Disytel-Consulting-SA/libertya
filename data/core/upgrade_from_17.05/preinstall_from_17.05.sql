@@ -3611,3 +3611,25 @@ ALTER TABLE C_DocumentDiscount ADD CONSTRAINT corderline_cdocumentdiscount FOREI
 
 --20180310-2045 Nueva columna de configuración de descuento de corte por Línea de Artículo
 update ad_system set dummy = (SELECT addcolumnifnotexists('M_DiscountSchemaBreak','m_product_lines_id','integer'));
+
+--20180315-1403 Merge DT 728469
+DROP VIEW rv_orderline_pending;
+CREATE OR REPLACE VIEW rv_orderline_pending AS 
+ SELECT o.ad_client_id, o.ad_org_id, o.isactive, o.created, o.createdby, o.updated, o.updatedby, o.c_order_id, o.documentno, o.dateordered::date AS dateordered, o.datepromised::date AS datepromised, o.c_bpartner_id, o.issotrx, ol.c_orderline_id, ol.m_product_id, ol.qtyordered, ol.qtyinvoiced, ol.qtydelivered, ol.qtyordered - ol.qtyinvoiced AS pendinginvoice, ol.qtyordered - ol.qtydelivered AS pendingdeliver, 
+        CASE
+            WHEN ol.qtyordered <> ol.qtyinvoiced AND ol.qtyordered <> ol.qtydelivered THEN 'ID'::text
+            WHEN ol.qtyordered <> ol.qtyinvoiced AND ol.qtyordered = ol.qtydelivered THEN 'I'::text
+            WHEN ol.qtyordered <> ol.qtydelivered THEN 'D'::text
+            ELSE 'N'::text
+        END AS status
+   FROM c_order o
+   JOIN c_orderline ol ON o.c_order_id = ol.c_order_id AND (ol.qtyordered <> ol.qtydelivered OR ol.qtyordered <> ol.qtyinvoiced) AND (o.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND ol.m_product_id IS NOT NULL
+  ORDER BY o.c_order_id;
+
+ALTER TABLE rv_orderline_pending
+  OWNER TO libertya;
+
+--20180316-1200 Merge DT 728469. Adecuaciones necesarias a fin de corizar desarrollo y evitar pisado de clases OP
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','paymentmedium','character(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','paymentmediumlimit','numeric(20)'));
+
