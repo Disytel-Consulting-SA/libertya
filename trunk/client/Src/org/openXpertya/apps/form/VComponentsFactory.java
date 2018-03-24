@@ -52,6 +52,10 @@ public class VComponentsFactory {
 	}
 	
 	public static VLookup VLookupFactory(String ColumnName, String TableName, int WindowNo, int displayType, String whereClause, boolean mandatory, boolean addSecurityValidation) {
+		return VLookupFactory(ColumnName, TableName, WindowNo, displayType, whereClause, mandatory, true, false);
+	}
+	
+	public static VLookup VLookupFactory(String ColumnName, String TableName, int WindowNo, int displayType, String whereClause, boolean mandatory, boolean addSecurityValidation, boolean multiSelect) {
         // = 4917;    // C_BankStatement.C_BankAccount_ID, 
 		int AD_Column_ID = DarColID(ColumnName, TableName);
 		
@@ -68,7 +72,7 @@ public class VComponentsFactory {
         // String columnKeyName = lookup.getColumnName();
         // String columnName = columnKeyName.substring(columnKeyName.lastIndexOf(".") + 1);
         
-        VLookup vl = new VLookup( ColumnName, mandatory, false, true, lookup );
+        VLookup vl = new VLookup( ColumnName, mandatory, false, true, lookup, multiSelect );
         
         return vl;
 	}

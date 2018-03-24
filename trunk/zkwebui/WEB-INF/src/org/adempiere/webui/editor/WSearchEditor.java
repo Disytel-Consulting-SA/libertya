@@ -66,6 +66,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
     private Object              value;
     private InfoPanel			infoPanel = null;
     private Object				newValueOnChange = null;
+    protected boolean			m_multiSelect = false;
 
 	private static CLogger log = CLogger.getCLogger(WSearchEditor.class);
 
@@ -128,7 +129,12 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	}
 
 	public WSearchEditor(String columnName, boolean mandatory, boolean readonly, boolean updateable,
-    		Lookup lookup) 
+    		Lookup lookup) {
+		this(columnName, mandatory, readonly, updateable, lookup, false);
+	}
+	
+	public WSearchEditor(String columnName, boolean mandatory, boolean readonly, boolean updateable,
+    		Lookup lookup, boolean multiSelect) 
 	{
 		super(new Searchbox(), null, null, mandatory, readonly, updateable);
 
@@ -140,9 +146,12 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		this.lookup = lookup;
         this.columnName = columnName;
 		super.setColumnName(columnName);
+		m_multiSelect = multiSelect;
 		init();
 	}
 
+	
+	
 
 	/**
      * initialise editor
@@ -439,7 +448,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 		
 		//  is the value updated ?
 		boolean updated = false;
-		if (value instanceof Object[] && ((Object[])value).length > 0)
+		if (!m_multiSelect && value instanceof Object[] && ((Object[])value).length > 0)
 		{
 			value = ((Object[])value)[0];
 		}
@@ -539,7 +548,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	
 				//	Show Info
 				// InfoProductPanel ip = new InfoProductPanel (lookup.getWindowNo(), M_Warehouse_ID, M_PriceList_ID, true, queryValue, whereClause);
-				InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause, M_Warehouse_ID, M_PriceList_ID);
+				InfoPanel ip = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, m_multiSelect, whereClause, M_Warehouse_ID, M_PriceList_ID);
 	
 				ip.setVisible(true);
 				ip.setTitle("Product Info");
@@ -588,7 +597,7 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	            if (queryValue.length() == 0 && getComponent().getText().length() > 0)
 	                queryValue = getComponent().getText();
 	
-				InfoPanel ig = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, false, whereClause);
+				InfoPanel ig = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, m_multiSelect, whereClause);
 				ig.setVisible(true);
 				ig.setStyle("border: 2px");
 				ig.setClosable(true);

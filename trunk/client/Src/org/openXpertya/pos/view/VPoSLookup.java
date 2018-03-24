@@ -51,7 +51,7 @@ public class VPoSLookup extends VLookup {
         ip.requestFocusInWindow();
         ip.requestFocus();
         cancelled  = ip.isCancelled();
-        result     = ip.getSelectedKey();
+        result     = ip.getSelectedKeys();
         resetValue = true;
         if (ip instanceof InfoProductAttribute)
         	attributeSetInstanceID = ((InfoProductAttribute)ip).getAttributeSetInstanceID();

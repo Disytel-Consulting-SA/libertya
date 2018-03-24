@@ -279,6 +279,11 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         }    	
     }
 
+    /** Sobrecarga de constructor para compatibilidad */
+    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup) {
+    	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, false);
+    }
+    
     /**
      * Constructor de la clase ...
      *
@@ -290,14 +295,15 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
      * @param lookup
      */
 
-    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup ) {
+    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup, boolean multiSelect ) {
         super();
         super.setName( columnName );
         m_combo.setName( columnName );
         m_columnName = columnName;
         setMandatory( mandatory );
         m_lookup = lookup;
-
+        m_multiSelect = multiSelect;
+        
         //
 
         setLayout( new BorderLayout());
@@ -522,9 +528,11 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     private static CLogger log = CLogger.getCLogger( VLookup.class );
 
     protected Frame   frame     = null;
-    protected Object  result    = null;
+    protected Object[]  result    = null;
     protected boolean cancelled = false;
     protected boolean resetValue = false;
+    
+    protected boolean m_multiSelect = false;
     
     /**
      * Descripción de Método
@@ -1035,6 +1043,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         frame     = Env.getFrame( this );
         result    = null;
         cancelled = false;
+
         
         String col = m_lookup.getColumnName();    // fully qualified name
         if( col.indexOf( "." ) != -1 ) {
@@ -1112,18 +1121,20 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         }
         // Result
 
-        if( result != null) {
+        if( result != null && result.length > 0) {
             log.config( "Result = " + result.toString() + " (" + result.getClass().getName() + ")" );
 
             // make sure that value is in cache
 
-            m_lookup.getDirect( result,false,true );
+            m_lookup.getDirect( result[0],false,true );
 
             if( resetValue ) {
                 actionCombo( null );
             }
-
-            actionCombo( result );    // data binding
+			if (result.length > 1)
+				actionCombo (result);	//	data binding
+			else
+				actionCombo (result[0]);
         } else if( cancelled ) {
             log.config( "Result = null (cancelled)" );
             actionCombo( null );
@@ -1841,11 +1852,11 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         Info ip = PluginInfoUtils.getInfo("M_Product", frame, false, m_lookup.getWindowNo(), "", false, "", Env.getContextAsInt( Env.getCtx(),m_lookup.getWindowNo(),"M_Warehouse_ID" ), Env.getContextAsInt( Env.getCtx(),m_lookup.getWindowNo(),"M_PriceList_ID" ), null, null);
         
         if (ip==null)
-        	ip = Info.factoryProduct( frame,true,m_lookup.getWindowNo(),M_Warehouse_ID,M_PriceList_ID,queryValue,false,whereClause );
+        	ip = Info.factoryProduct( frame,true,m_lookup.getWindowNo(),M_Warehouse_ID,M_PriceList_ID,queryValue, m_multiSelect, whereClause );
         
         ip.setVisible(true);
         cancelled  = ip.isCancelled();
-        result     = ip.getSelectedKey();
+        result     = ip.getSelectedKeys();
 // Comentadas las siguientes dos líneas. Las mismas generaban el problema de 
 // que en modo grilla no se seteaba el valor en los campos de tipo busqueda
 // para columnas que referenciaban a artículos (relacionado con Google Code Issue 17). 
@@ -1870,11 +1881,11 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         Info ip = PluginInfoUtils.getInfo("C_BPartner", frame, false, m_lookup.getWindowNo(), "", false, "", null, null, isSOTrx, null);
         
         if (ip==null)
-        	ip = new InfoBPartner( frame,true,m_lookup.getWindowNo(),queryValue,isSOTrx,false,whereClause );
+        	ip = new InfoBPartner( frame,true,m_lookup.getWindowNo(),queryValue,isSOTrx, m_multiSelect, whereClause );
 
         ip.setVisible(true);
         cancelled = ip.isCancelled();
-        result    = ip.getSelectedKey();
+        result    = ip.getSelectedKeys();
     }
     
     protected void showGeneralInfo(int AD_Table_ID, String queryValue, String whereClause) {
@@ -1889,12 +1900,12 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             }
 
 			Info ig = Info.create(frame, true, m_lookup.getWindowNo(),
-					m_tableName, m_keyColumnName, queryValue, false,
+					m_tableName, m_keyColumnName, queryValue, m_multiSelect,
 					whereClause, m_lookup.addSecurityValidation());
 
             ig.setVisible(true);
             cancelled = ig.isCancelled();
-            result    = ig.getSelectedKey();
+            result    = ig.getSelectedKeys();
         // Inicio desarrollo Dataware S.L.
     	}
     	// Fin desarrollo Dataware S.L.
@@ -2066,4 +2077,3 @@ final class VLookup_mouseAdapter extends java.awt.event.MouseAdapter {
  *  Versión 2.1
  *
  */
-

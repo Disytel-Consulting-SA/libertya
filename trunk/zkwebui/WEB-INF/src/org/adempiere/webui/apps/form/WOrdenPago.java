@@ -281,7 +281,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
         MLookupInfo infoCreditInvoice = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Invoice_ID", "C_Invoice", DisplayType.Search, m_model.getCreditSqlValidation());
         MLookup lookupCreditInvoice = new MLookup(infoCreditInvoice, 0);
-		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookupCreditInvoice);
+		creditInvoice = new WSearchEditor("C_Invoice_ID", false, false, true, lookupCreditInvoice, true);
 		addPopupMenu(creditInvoice, true, true, false);
 		
         txtCreditAvailable = new WStringEditor();
@@ -662,7 +662,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	    		mp = saveCheckMedioPago();
 				break;
 	    	case 3: // Crédito
-	    		mp = saveCreditMedioPago();
+	    		ArrayList<VOrdenPagoModel.MedioPagoCredito> mps = saveCreditMedioPago();
+	    		for (VOrdenPagoModel.MedioPago unMP : mps)
+	    			cmdSavePMFinalize(unMP);
 	    		break;
 	    	case 4:
 				// Adelantado
@@ -673,15 +675,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	    		break;
 	    	}
 	    	
-	    	if(mp != null){
-	    		m_model.addMedioPago(mp);
-	    	}
-	    	updateTreeModel();
-	    	pagosTree.setModel(getMediosPagoTreeModel());
-	    	clearMediosPago();
-			// Actualizar componentes de interfaz gráfica necesarios luego de
-			// agregar el medio de pago 
-	    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_INSERT);
+	    	cmdSavePMFinalize(mp);
+
     	} catch (Exception e) {
     		String title = Msg.getMsg(m_ctx, "Error");
     		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + e.getMessage() /*"@SaveError@"*/ );
@@ -689,6 +684,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		showError(title + ": " + msg);
     	}
     }//GEN-LAST:event_cmdSavePMActionPerformed
+    
+    
+    protected void cmdSavePMFinalize(MedioPago mp) throws Exception {
+    	if(mp != null){
+    		m_model.addMedioPago(mp);
+    	}
+    	updateTreeModel();
+    	pagosTree.setModel(getMediosPagoTreeModel());
+    	clearMediosPago();
+		// Actualizar componentes de interfaz gráfica necesarios luego de
+		// agregar el medio de pago 
+    	updateCustomInfoAfterMedioPago(MEDIOPAGO_ACTION_INSERT);
+    }
     
     
     protected MedioPagoEfectivo saveCashMedioPago() throws Exception{
@@ -830,36 +838,75 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     }
     
     
-    protected MedioPagoCredito saveCreditMedioPago() throws Exception{
-    	MedioPagoCredito mpcm = m_model.getNuevoMedioPagoCredito();
+    protected ArrayList<MedioPagoCredito> saveCreditMedioPago() throws Exception{
+    	
+    	int count = 0;
+    	boolean isMultiSelect = false;
+    	double saldo = getModel().numberParse(txtSaldo.getValue().toString()).doubleValue();
+    	ArrayList<MedioPagoCredito> retValue = new ArrayList<MedioPagoCredito>();
     	try {
-			mpcm.monedaOriginalID = (Integer) cboCurrency.getValue();
-		} catch (Exception e) {
-			throw new Exception(cboCurrency.getValue().toString());
-		}
-		try {
-			mpcm.setC_invoice_ID((Integer)creditInvoice.getValue());
-		} catch (Exception ee) {
-			throw new Exception(creditInvoice.getLabel().getValue());
-		}
-		
-		try {
-			mpcm.setAvailableAmt(getModel().getCreditAvailableAmt(mpcm.getC_invoice_ID() ) );
-		} catch (Exception e) {
-			throw new Exception(txtCreditAvailable.getLabel().getValue());
-		}
-		
-		try {
-			mpcm.setImporte(numberParse(txtCreditImporte.getValue().toString()));
-		} catch (Exception e) {
-			throw new Exception(txtCreditImporte.getLabel().getValue());
-		}
-		
-		mpcm.validate();
+    		// Es multiSeleccion?
+    		count = ((Object[])creditInvoice.getValue()).length;
+    		isMultiSelect = true;
+    	} catch (Exception e) { 
+    		/* No es multiselect */
+    		count = 1;
+    	} 
 
-		mpcm.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
-		mpcm.setProject(getC_Project_ID() == null?0:getC_Project_ID());
-		return mpcm;
+		// Multiseleccion: Si ya no queda saldo por cancelar, entonces no es correcto intentar asignar mas NCs
+		if (isMultiSelect) {
+			double totalCreditsOpenAmt = getModel().numberParse(txtCreditAvailable.getValue().toString()).doubleValue();
+			if (totalCreditsOpenAmt > saldo)
+				throw new Exception("El monto de la multi selección ($" + totalCreditsOpenAmt + ") es mayor que el monto a cancelar ($" + saldo + ")" );
+		}
+		
+    	for (int i = 0; i < count; i++) { 	
+	    	MedioPagoCredito mpcm = m_model.getNuevoMedioPagoCredito();
+	    	try {
+				mpcm.monedaOriginalID = (Integer) cboCurrency.getValue();
+			} catch (Exception e) {
+				throw new Exception(cboCurrency.getValue().toString());
+			}
+			try {
+				if (isMultiSelect)
+					mpcm.setC_invoice_ID((Integer)((Object[])creditInvoice.getValue())[i]);
+				else
+					mpcm.setC_invoice_ID((Integer)creditInvoice.getValue());
+			} catch (Exception ee) {
+				throw new Exception(creditInvoice.getLabel().getValue());
+			}
+			
+			try {
+				mpcm.setAvailableAmt(getModel().getCreditAvailableAmt(mpcm.getC_invoice_ID() ) );
+			} catch (Exception e) {
+				throw new Exception(txtCreditAvailable.getLabel().getValue());
+			}
+			
+			try {
+				if (isMultiSelect) {
+					// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar
+					try {
+						double min = Math.min(	getModel().getCreditAvailableAmt(mpcm.getC_invoice_ID()).doubleValue(),
+												saldo);
+						mpcm.setImporte(BigDecimal.valueOf(min));
+						saldo=saldo-min;
+					} catch (Exception ex) { }
+				}
+				else {
+					mpcm.setImporte(numberParse(txtCreditImporte.getValue().toString()));
+				}
+			} catch (Exception e) {
+				throw new Exception(txtCreditImporte.getLabel().getValue());
+			}
+			
+			mpcm.validate();
+	
+			mpcm.setCampaign(getC_Campaign_ID() == null?0:getC_Campaign_ID());
+			mpcm.setProject(getC_Project_ID() == null?0:getC_Project_ID());
+			
+			retValue.add(mpcm);
+    	}
+		return retValue;
     }
     
 	protected MedioPago savePagoAdelantadoMedioPago() throws Exception {
@@ -1430,9 +1477,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         // importe disponible en el text correspondiente
         creditInvoice.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
+				// Para multiple seleccion de comprobantes, omitir logica de asignacion de pendiente
+				try {
+					if ( (creditInvoice.getNewValueOnChange() != null && ((Object[])creditInvoice.getNewValueOnChange()).length>1) /* ||
+						(creditInvoice.getValue() != null && ((Object[])creditInvoice.getValue()).length>1)*/ ) {
+						txtCreditImporte.setReadWrite(false);
+						txtCreditAvailable.setValue(getModel().numberFormat(BigDecimal.valueOf(getTotalCreditsOpenAmt())));
+						return;
+					}
+				} catch (Exception ex) { }
+				
 				Integer invoiceID = (Integer)creditInvoice.getNewValueOnChange();
 				if (invoiceID != null)
 					txtCreditAvailable.setValue(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
+				// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar 
+				try {
+					double min = Math.min(	getModel().numberParse(txtCreditAvailable.getValue().toString()).doubleValue(),
+											getModel().numberParse(txtSaldo.getValue().toString()).doubleValue() );
+					txtCreditImporte.setValue(getModel().numberFormat(BigDecimal.valueOf(min)));
+					txtCreditImporte.setReadWrite(true);
+				} catch (Exception ex) { }
 			}
 		});
         
@@ -1477,6 +1541,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         addCustomOperationAfterTabsDefinition();
         
 	}
+	
+	
+	protected double getTotalCreditsOpenAmt() {
+		double totalCreditsOpenAmt = 0;
+		for (int i = 0; i < ((Object[])creditInvoice.getNewValueOnChange()).length; i++) { 
+			totalCreditsOpenAmt = totalCreditsOpenAmt + getModel().getCreditAvailableAmt((Integer)((Object[])creditInvoice.getNewValueOnChange())[i]).doubleValue();	
+		}
+		return totalCreditsOpenAmt;
+	}
+	
 	
 	protected void initTranslations() {
 		String name;
@@ -1992,7 +2066,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		if (mp == null)
 			return;
-		
+		txtCreditImporte.setReadWrite(true);
 		if (tn.isMedioPago()) {
 			m_model.removeMedioPago(mp);
 			loadMedioPago(mp);
@@ -2357,7 +2431,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	private void setBPartnerContext() {
 		Integer value = 0;
 		if (BPartnerSel.getValue() != null)
-			value = (Integer)BPartnerSel.getValue(); 
+			value = (Integer)BPartnerSel.getValue();
+		if (value == 0 && BPartnerSel.getNewValueOnChange() != null)
+			value = (Integer)BPartnerSel.getNewValueOnChange();
 		setBPartnerContext(value);
 	}
 	

@@ -2397,16 +2397,18 @@ public class VOrdenCobro extends VOrdenPago {
 	}
 
 	@Override
-	protected MedioPagoCredito saveCreditMedioPago() throws Exception {
-		MedioPagoCredito mpc = super.saveCreditMedioPago();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditReceiptMedium
-				.getSelectedItem();
-		saveBasicValidation(paymentMedium, null);
-		mpc.setPaymentMedium(paymentMedium);
-		mpc.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
-		mpc.setMonedaOriginalID((Integer) cboCurrency.getValue());
+	protected ArrayList<MedioPagoCredito> saveCreditMedioPago() throws Exception {
+		ArrayList<MedioPagoCredito> mpcs = super.saveCreditMedioPago();
 		
-		return mpc;
+		for (MedioPagoCredito mpc : mpcs) {
+			MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditReceiptMedium
+					.getSelectedItem();
+			saveBasicValidation(paymentMedium, null);
+			mpc.setPaymentMedium(paymentMedium);
+			mpc.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
+			mpc.setMonedaOriginalID((Integer) cboCurrency.getValue());
+		}
+		return mpcs;
 	}
 
 	@Override

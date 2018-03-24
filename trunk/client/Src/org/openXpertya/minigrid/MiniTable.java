@@ -23,6 +23,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.logging.*;
 
 import javax.swing.DefaultCellEditor;
@@ -392,6 +393,8 @@ public class MiniTable extends CTable {
 
             if( m_multiSelection ) {
                 tc.setCellEditor( new IDColumnEditor());
+                setColumnReadOnly(index, false);
+                setRowSelectionAllowed(true);
             } else {
                 tc.setCellEditor( new ROCellEditor());
             }
@@ -665,6 +668,37 @@ public class MiniTable extends CTable {
         return null;
     }    // getSelectedRowKey
 
+    
+	/**
+	 * @return collection of selected IDs
+	 */
+	public Collection<Integer> getSelectedKeys()
+	{
+		if (m_layout == null)
+		{
+			throw new UnsupportedOperationException("Layout not defined");
+		}
+		if (p_keyColumnIndex < 0)
+		{
+			throw new UnsupportedOperationException("Key Column is not defined");
+		}
+		//
+		ArrayList<Integer> list = new ArrayList<Integer>();
+		for (int row = 0; row < getRowCount(); row++)
+		{
+			Object data = getModel().getValueAt(row, p_keyColumnIndex);
+			if (data instanceof IDColumn)
+			{
+				IDColumn record = (IDColumn)data;
+				if (record.isSelected())
+				{
+					list.add(record.getRecord_ID());
+				}
+			}
+		}
+		return list;
+	}
+    
     /**
      * Descripción de Método
      *

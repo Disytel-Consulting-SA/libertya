@@ -47,7 +47,7 @@ public class IDColumn {
     public IDColumn( Integer record_ID ) {
         super();
         setRecord_ID( record_ID );
-        setSelected( true );
+        setSelected( false );
     }    // IDColumn
 
     /** Descripción de Campos */

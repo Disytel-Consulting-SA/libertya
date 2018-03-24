@@ -584,6 +584,8 @@ public abstract class Info extends CDialog implements ListSelectionListener {
 		});
 		p_table.getInputMap(JComponent.WHEN_FOCUSED).put(
 				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "saveSelection");
+		
+		p_table.setMultiSelection(p_multiSelection);
     }    // jbInit
 
     /**
@@ -765,7 +767,15 @@ public abstract class Info extends CDialog implements ListSelectionListener {
 
         // Multi Selection
         
-        if( p_multiSelection ) {}
+        if( p_multiSelection ) {
+        	
+        	ArrayList<Integer> data = getSelectedRowsKey();
+            
+            if( data != null ) {
+                m_results.addAll(data);
+            }
+        	
+        }
         else    // singleSelection
         {
         	
@@ -794,9 +804,20 @@ public abstract class Info extends CDialog implements ListSelectionListener {
      * @return
      */
 
+    /**
+     * @return la clave de la fila seleccionada
+     */
     protected Integer getSelectedRowKey() {
+    	return getSelectedRowKey(null);
+    }
     
-        int row = p_table.getSelectedRow();
+    /**
+     * @return  el valor de la fila seleccionada (si no se indica rowNumber), 
+     * 			o el valor de la fila indicada mediante rowNumber 
+     */
+    protected Integer getSelectedRowKey(Integer rowNumber) {
+    
+        int row = (rowNumber != null ? rowNumber : p_table.getSelectedRow());
 
         if( (row != -1) && (m_keyColumnIndex != -1) ) {
             Object data = p_table.getModel().getValueAt( row,m_keyColumnIndex );
@@ -813,6 +834,59 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         return null;
     }    // getSelectedRowKey
 
+    
+    /** Filas seleccionadas bajo multiselección */
+    protected ArrayList<Integer> getSelectedRowsKey() {
+//    	ArrayList<Integer> retValue = new ArrayList<Integer>();
+//    	for (int row : p_table.getSelectedRows()) {
+//    		retValue.add(getSelectedRowKey(row));
+//    	}
+//    	return retValue;
+        ArrayList<Integer> selectedDataList = new ArrayList<Integer>();
+        
+        if (m_keyColumnIndex == -1)
+        {
+            return selectedDataList;
+        }
+        
+        if (p_multiSelection)
+        {
+        	int rows = p_table.getRowCount();
+            for (int row = 0; row < rows; row++)
+            {
+                Object data = p_table.getModel().getValueAt(row, m_keyColumnIndex);
+                if (data instanceof IDColumn)
+                {
+                    IDColumn dataColumn = (IDColumn)data;
+                    if (dataColumn.isSelected())
+                    {
+                        selectedDataList.add(dataColumn.getRecord_ID());
+                    }
+                }
+                else
+                {
+                    log.severe("For multiple selection, IDColumn should be key column for selection");
+                }
+            }
+        }
+        
+        if (selectedDataList.size() == 0)
+        {
+        	int row = p_table.getSelectedRow();
+    		if (row != -1 && m_keyColumnIndex != -1)
+    		{
+    			Object data = p_table.getModel().getValueAt(row, m_keyColumnIndex);
+    			if (data instanceof IDColumn)
+    				selectedDataList.add(((IDColumn)data).getRecord_ID());
+    			if (data instanceof Integer)
+    				selectedDataList.add((Integer)data);
+    		}
+        }
+      
+        return selectedDataList;
+    }
+    
+    
     /**
      * Descripción de Método
      *
@@ -824,7 +898,6 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         if( !m_ok || (m_results.size() == 0) ) {
             return null;
         }
-
         return m_results.toArray();
     }    // getSelectedKeys;
 
@@ -1292,7 +1365,20 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         // Double click with selected row => exit
 
         if( (e.getClickCount() > 1) && (p_table.getSelectedRow() != -1) ) {
-            dispose( true );    // double_click same as OK
+			if (p_multiSelection /*&& isDoubleClickTogglesSelection()*/)
+			{
+				if (m_keyColumnIndex >= 0)
+				{
+					Object data = p_table.getValueAt(p_table.getSelectedRow(), m_keyColumnIndex);
+					if (data instanceof IDColumn)
+					{
+						IDColumn id = (IDColumn)data;
+						id.setSelected(!id.isSelected());
+						p_table.setValueAt(data, p_table.getSelectedRow(), m_keyColumnIndex);
+					}
+				}
+			} else      	
+				dispose( true );    // double_click same as OK
         }
 
         // Right Click => start Calculator

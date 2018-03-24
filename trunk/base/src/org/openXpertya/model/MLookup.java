@@ -296,6 +296,15 @@ public final class MLookup extends Lookup implements Serializable {
             return null;
         }
 
+        try {
+        	// Si es multiselección
+        	int k = (Integer)((Object[])key)[0];
+            KeyNamePair	p = new KeyNamePair(666, "Multi Seleccion");
+            return p;
+        } catch (Exception e){
+        	// No es multi-seleccion
+        }
+        
         // try cache
         NamePair	retValue	= (NamePair) m_lookup.get(key);
 
@@ -346,7 +355,7 @@ public final class MLookup extends Lookup implements Serializable {
 
         // Try to get it directly
         boolean	cacheLocal	= m_info.IsValidated;
-
+       
         return getDirect(key, false, cacheLocal);	// do NOT cache
 
     }							// get
