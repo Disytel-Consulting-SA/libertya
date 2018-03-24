@@ -81,9 +81,9 @@ public class InfoGeneralPanel extends InfoPanel implements EventListener
 	private Borderlayout layout;
 	private Vbox southBody;
 	
-	public InfoGeneralPanel(String queryValue, int windowNo,String tableName,String keyColumn, boolean isSOTrx, String whereClause) 
+	public InfoGeneralPanel(String queryValue, int windowNo,String tableName,String keyColumn, boolean isSOTrx, boolean multiSelection, String whereClause) 
 	{
-		super(windowNo, tableName, keyColumn, false,whereClause);
+		super(windowNo, tableName, keyColumn, multiSelection, whereClause);
 				
 		setTitle(Msg.getMsg(Env.getCtx(), "Info"));
 

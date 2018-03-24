@@ -1104,17 +1104,19 @@ public class WOrdenCobro extends WOrdenPago {
 	}
 
 	@Override
-	protected MedioPagoCredito saveCreditMedioPago() throws Exception {
-		if (cboCreditReceiptMedium == null || cboCreditReceiptMedium.getSelectedIndex() < 0)
-			throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
-		MedioPagoCredito mpc = super.saveCreditMedioPago();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditReceiptMedium.getSelectedItem().getValue();
-		saveBasicValidation(paymentMedium, null);
-		mpc.setPaymentMedium(paymentMedium);
-		mpc.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
-		mpc.setMonedaOriginalID((Integer) cboCurrency.getValue());
+	protected ArrayList<MedioPagoCredito> saveCreditMedioPago() throws Exception {
+		ArrayList<MedioPagoCredito> mpcs = super.saveCreditMedioPago();
 		
-		return mpc;
+		for (MedioPagoCredito mpc : mpcs) {
+			if (cboCreditReceiptMedium == null || cboCreditReceiptMedium.getSelectedIndex() < 0)
+				throw new Exception("@Invalid@ @"+Msg.translate(m_ctx, "ReceiptMedium")+"@");
+			MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboCreditReceiptMedium.getSelectedItem().getValue();
+			saveBasicValidation(paymentMedium, null);
+			mpc.setPaymentMedium(paymentMedium);
+			mpc.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
+			mpc.setMonedaOriginalID((Integer) cboCurrency.getValue());
+		}
+		return mpcs;
 	}
 
 	@Override

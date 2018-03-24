@@ -132,7 +132,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
             else if (tableName.equals("C_AllocationHdr"))
             	info = new InfoAllocationHdrPanel(WindowNo,value,isSoTrx ,multiSelection, whereClause);
             else
-                info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, multiSelection, whereClause);
+                info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, isSoTrx, multiSelection, whereClause);
             //
             return info;
     
