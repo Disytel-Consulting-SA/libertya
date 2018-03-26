@@ -3620,7 +3620,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			flowLayout3.setHgap(0);
 			flowLayout3.setVgap(0);
 			cPaymentTotalBorderPanel = new CPanel();
-			cPaymentTotalBorderPanel.setPreferredSize(new java.awt.Dimension(600,90));
+			cPaymentTotalBorderPanel.setPreferredSize(new java.awt.Dimension(500,90));
 			cPaymentTotalBorderPanel.setLayout(flowLayout3);
 			cPaymentTotalBorderPanel
 					.setBorder(javax.swing.BorderFactory.createCompoundBorder(
@@ -3644,7 +3644,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (cTaxesTableScrollPane == null) {
 			cTaxesTableScrollPane = new CScrollPane();
 			//cTenderTypesTableScrollPane.setPreferredSize(new java.awt.Dimension(190,200));
-			cTaxesTableScrollPane.setPreferredSize(new java.awt.Dimension(260,55));
+			cTaxesTableScrollPane.setPreferredSize(new java.awt.Dimension(280,55));
 			cTaxesTableScrollPane.setViewportView(getCTaxesTable());
 		}
 		return cTaxesTableScrollPane;
@@ -3691,8 +3691,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cTaxesTable.setTableHeader(null);
 			
 			ArrayList minWidth = new ArrayList();
+			minWidth.add(150);
 			minWidth.add(90);
-			minWidth.add(40);
 			// Se wrapea la tabla con funcionalidad extra.
 			setTaxesTableUtils(new TableUtils(minWidth,cTaxesTable));
 			getTaxesTableUtils().autoResizeTable();
@@ -3707,7 +3707,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			flowLayout3.setHgap(0);
 			flowLayout3.setVgap(0);
 			cTaxesBorderPanel = new CPanel();
-			cTaxesBorderPanel.setPreferredSize(new java.awt.Dimension(150,90));
+			cTaxesBorderPanel.setPreferredSize(new java.awt.Dimension(250,90));
 			cTaxesBorderPanel.setLayout(flowLayout3);
 			cTaxesBorderPanel
 					.setBorder(javax.swing.BorderFactory.createCompoundBorder(
