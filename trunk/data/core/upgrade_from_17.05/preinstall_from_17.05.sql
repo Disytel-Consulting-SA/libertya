@@ -3633,3 +3633,5 @@ ALTER TABLE rv_orderline_pending
 update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','paymentmedium','character(1)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','paymentmediumlimit','numeric(20)'));
 
+--20180328-1156 Los procesadores contables de Wide Systems y WideFast-Track por defecto deben estar deshabilitados
+update c_acctprocessor set isactive = 'N' where ad_componentobjectuid in ('CORE-C_AcctProcessor-1000008', 'CORE-C_AcctProcessor-1000005');
