@@ -1066,4 +1066,35 @@ Integer ii = (Integer)get_Value("YearLife");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set marketingblocked*/
+public void setmarketingblocked(boolean marketingblocked)
+{
+set_Value ("marketingblocked", new Boolean(marketingblocked));
+}
+/** Get marketingblocked*/
+public boolean ismarketingblocked() 
+{
+Object oo = get_Value("marketingblocked");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set marketingblockeddescr */
+public void setmarketingblockeddescr (String marketingblockeddescr)
+{
+if (marketingblockeddescr != null && marketingblockeddescr.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+marketingblockeddescr = marketingblockeddescr.substring(0,255);
+}
+set_Value ("marketingblockeddescr", marketingblockeddescr);
+}
+/** Get marketingblockeddescr */
+public String getmarketingblockeddescr() 
+{
+return (String)get_Value("marketingblockeddescr");
+}
 }

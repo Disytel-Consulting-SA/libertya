@@ -2674,8 +2674,13 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         }
 
         // Auto Reconcile if not on Bank Statement
-
-        boolean reconciled = false;    // getC_BankStatementLine_ID() == 0;
+        
+        /* 
+         * Se coloca en estado "conciliado" para que el "Crear Desde" de Extractos bancarios
+         * no los muestre en el listado.
+         * Se pone en estado "conciliado" al documento original y al contradocumento.
+         */
+        boolean reconciled = true;    // getC_BankStatementLine_ID() == 0;
 
         // Create Reversal
 

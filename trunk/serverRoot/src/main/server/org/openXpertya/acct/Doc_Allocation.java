@@ -467,7 +467,7 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
         // reset line info
 
         p_vo.C_BPartner_ID = 0;
-
+        fact = fixFactLines(fact);
         return fact;
     }    // createFact
 
@@ -814,6 +814,37 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
 	protected String loadDocumentDetails() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	/**
+	 * Corrige las lineas de contabilidad que usan para debe y haber la misma cuenta contable.
+	 * Por ejemplo, las lineas de retenciones y NC.
+	 * La estrategia inicial es recorrer de a pares todas las lineas generadas y si encuentro dos lineas
+	 * consecutivas que utilizan la misma cuenta y tienen el mismo monto, las saco.
+	 */
+	protected Fact fixFactLines(Fact fact){
+		Fact corrected = new Fact(this, fact.getAcctSchema(), Fact.POST_Actual );
+		FactLine[] lines = fact.getLines();
+		//Chequeo si la cantidad de asientos es par, si no arrojo error.
+		if((lines.length % 2) != 0) {
+			p_vo.Error = "Error fixing fact. Odd number of lines";
+            log.log( Level.SEVERE,"fixingFact - " + p_vo.Error );
+            return null;
+        }
+		for(int i=0; i < lines.length; i+=2) {
+			//Si tienen la misma cuenta contable
+			if(lines[i].getAccount().getAccount_ID() == lines[i+1].getAccount().getAccount_ID()) {
+				//Además tienen el mismo monto una en debe y la otra en haber. Chequeo en ambas direcciones
+				if(lines[i].getDocLine().getAmtAcctDr().compareTo(lines[i+1].getDocLine().getAmtAcctCr()) == 0
+						|| lines[i].getDocLine().getAmtAcctCr().compareTo(lines[i+1].getDocLine().getAmtAcctDr()) == 0) {
+					continue;
+				}
+			} else {
+				corrected.add(lines[i]);
+				corrected.add(lines[i+1]);
+			}
+		}
+		return corrected;
 	}
 }    // Doc_Allocation
 

@@ -60,5 +60,25 @@ public class MRetencionType extends X_C_RetencionType {
 		
 		return list;
 	} 
+	
+	/**
+	 * Descripción de Método
+	 * 
+	 * 
+	 * @param newRecord
+	 * 
+	 * @return
+	 */
+	protected boolean beforeSave(boolean newRecord) {
+		// Chequeo del producto para determinar si está habilitado para comercializar
+        if(getM_Product_ID() != 0) {
+        	MProduct product = new MProduct(getCtx(), getM_Product_ID(),get_TrxName());
+        	if(product.ismarketingblocked()) {
+        		log.saveError("Error", product.getmarketingblockeddescr());
+    			return false;
+        	}
+        }
+		return true;
+	}
 
 }

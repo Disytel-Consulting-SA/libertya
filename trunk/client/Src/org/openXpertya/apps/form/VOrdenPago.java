@@ -657,7 +657,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         
         this.BPartnerSel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cmdBPartnerSelActionPerformed(evt);
+            	cmdBPartnerSelActionPerformed(evt);
             }
         });
         
@@ -2076,6 +2076,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
      * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el VLookUP
+     * Además chequea si la entidad comercial está habilitada para recibir pagos.
      * @param evt
      */
     
@@ -2084,7 +2085,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		this.cmdProcess.setEnabled(false);
     	}
     	else{
-    		this.cmdProcess.setEnabled(true);
+    		MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getValue(), m_trxName);
+	    	if(partner.ispaymentblocked()) { 
+	    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
+	    		showError(error_msg);
+	    		this.cmdProcess.setEnabled(false);//Bloqueo la continuacion del pago
+	    		this.BPartnerSel.setValue(null);
+	    	} else {
+	    		this.cmdProcess.setEnabled(true);
+	    	}
     	}
     }
     
