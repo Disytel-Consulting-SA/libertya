@@ -1985,7 +1985,14 @@ public class VOrdenPagoModel {
 
 				pay.setDescription(HdrDescription);
 				pay.setIsReceipt(false);
-				pay.setC_DocType_ID(isSOTrx());
+				pay.setC_DocType_ID(DB.getSQLValue(getTrxName(), 	" SELECT C_DocType_ID " +
+																	" FROM C_DocType " +
+																	" WHERE AD_Client_ID = " + Env.getAD_Client_ID(m_ctx) +
+																	" AND IsActive = 'Y' " +
+																	" AND DocTypeKey = '"+(isSOTrx()?"CR":"VP")+"'"));
+				// En caso de que no se encuentre el doctype, se busca a partir del tipo de transaccion (cobro/pago)
+				if (pay.getC_DocType_ID()==0)
+					pay.setC_DocType_ID(isSOTrx());
 				pay.setC_BPartner_ID(C_BPartner_ID);
 
 				// El amount y currency se lo asigno en la segunda vuelta
