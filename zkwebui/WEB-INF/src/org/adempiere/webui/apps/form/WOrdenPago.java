@@ -1245,7 +1245,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     /**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
-     * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el LookUP
+     * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el LookUP.
+     * Además chequea si la entidad comercial está habilitada para recibir pagos.
      * @param evt
      */
     private void cmdBPartnerSelActionPerformed(ValueChangeEvent evt){
@@ -1253,10 +1254,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		this.cmdProcess.setEnabled(false);
     	}
     	else{
-    		this.cmdProcess.setEnabled(true);
+    		MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getNewValueOnChange(), null);	    
+	    	if(partner.ispaymentblocked()) { 
+	    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
+	    		showError(error_msg);
+	    		this.cmdProcess.setEnabled(false); //Bloqueo la continuacion del pago
+	    		this.BPartnerSel.setNewValueOnChange(null);
+	    	} else {
+	    		this.cmdProcess.setEnabled(true);
+	    	}
     	}
-    }
-    
+    }   
     
     // Declaración de varibales -no modificar//GEN-BEGIN:variables
     

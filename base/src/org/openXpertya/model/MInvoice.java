@@ -3943,6 +3943,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			for (int i = 0; i < lines.length; i++) {
 				MInvoiceLine line = lines[i];
 
+				// Chequeo del producto para determinar si está habilitado para comercializar
+		        if(line.getM_Product_ID() != 0) {
+		        	MProduct product = new MProduct(getCtx(), line.getM_Product_ID(),get_TrxName());
+		        	if(product.ismarketingblocked()) {
+		        		m_processMsg = product.getmarketingblockeddescr() + " Product: "+product.getName();
+						return DocAction.STATUS_Invalid;		        		
+		        	}
+		        }
+		        
 				// Update Order Line
 
 				// performance: no instanciar los M, ejecutar UPDATE directo

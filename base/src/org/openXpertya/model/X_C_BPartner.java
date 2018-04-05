@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-08-22 12:40:10.347 */
+ *  @version  - 2018-03-21 12:06:03.4 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1234,6 +1234,37 @@ public int getNumberEmployees()
 Integer ii = (Integer)get_Value("NumberEmployees");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set paymentblocked */
+public void setpaymentblocked (boolean paymentblocked)
+{
+set_Value ("paymentblocked", new Boolean(paymentblocked));
+}
+/** Get paymentblocked */
+public boolean ispaymentblocked() 
+{
+Object oo = get_Value("paymentblocked");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set paymentblockeddescr */
+public void setpaymentblockeddescr (String paymentblockeddescr)
+{
+if (paymentblockeddescr != null && paymentblockeddescr.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+paymentblockeddescr = paymentblockeddescr.substring(0,255);
+}
+set_Value ("paymentblockeddescr", paymentblockeddescr);
+}
+/** Get paymentblockeddescr */
+public String getpaymentblockeddescr() 
+{
+return (String)get_Value("paymentblockeddescr");
 }
 public static final int PAYMENTRULE_AD_Reference_ID = MReference.getReferenceID("All_Payment Rule");
 /** Transfer = Tr */

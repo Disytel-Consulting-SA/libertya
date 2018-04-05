@@ -71,6 +71,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String LIVA_INTER_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010232";
 	protected final static String LIVA_INTER_JASPER_REPORT_FILENAME = "InformeLibroIVAInt.jasper";
 	
+	/** UID del Reporte de libro diario */
+	protected final static String LIBRO_DIARIO_REPORT_UID = "CORE-AD_Process-1010379";
+	protected final static String LIBRO_DIARIO_REPORT_FILENAME = "LibroDiario.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -258,6 +262,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(LIVA_INTER_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Libro Diario
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LIBRO_DIARIO_REPORT_UID,
+				LIBRO_DIARIO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LIBRO_DIARIO_REPORT_FILENAME)));
 		
 		return " ";
 	}

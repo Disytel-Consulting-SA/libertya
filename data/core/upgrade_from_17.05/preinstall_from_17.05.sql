@@ -3635,3 +3635,12 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('AD_Role','paymentmedi
 
 --20180328-1156 Los procesadores contables de Wide Systems y WideFast-Track por defecto deben estar deshabilitados
 update c_acctprocessor set isactive = 'N' where ad_componentobjectuid in ('CORE-C_AcctProcessor-1000008', 'CORE-C_AcctProcessor-1000005');
+
+--20180405-1040 Merge r2345 y r2348
+CREATE VIEW saldosOPA_v AS
+SELECT sb.ad_client_id, sb.ad_org_id, sb.documentno, sb.c_bpartner_id, sb.datetrx, sb.grandtotal, (sb.grandtotal - ((sb.cashlineavailable + sb.paymentavailable) + sb.invoiceopen)) AS imputado, ((sb.cashlineavailable + sb.paymentavailable) + sb.invoiceopen) AS saldo FROM (SELECT a.ad_client_id, a.ad_org_id, a.documentno, a.c_bpartner_id, (a.datetrx)::date AS datetrx, a.grandtotal, sum(CASE WHEN (al.c_cashline_id IS NOT NULL) THEN abs(cashlineavailable(al.c_cashline_id)) ELSE (0)::numeric END) AS cashlineavailable, sum(CASE WHEN (al.c_payment_id IS NOT NULL) THEN paymentavailable(al.c_payment_id) ELSE (0)::numeric END) AS paymentavailable, sum(CASE WHEN (al.c_invoice_credit_id IS NOT NULL) THEN invoiceopen(al.c_invoice_credit_id, 0) ELSE (0)::numeric END) AS invoiceopen FROM (c_allocationhdr a JOIN c_allocationline al ON ((al.c_allocationhdr_id = a.c_allocationhdr_id))) WHERE ((((a.allocationtype)::text = 'OPA'::text) AND (((cashlineavailable(al.c_cashline_id) < (0)::numeric) OR (paymentavailable(al.c_payment_id) > (0)::numeric)) OR (invoiceopen(al.c_invoice_credit_id, 0) > (0)::numeric))) AND (a.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar]))) GROUP BY a.ad_client_id, a.ad_org_id, a.documentno, a.c_bpartner_id, a.datetrx, a.grandtotal) sb ORDER BY sb.documentno;
+
+ALTER TABLE C_BPartner ADD COLUMN paymentblocked character(1);
+ALTER TABLE C_BPartner ADD COLUMN paymentblockeddescr character varying(255);
+ALTER TABLE M_Product ADD COLUMN marketingblocked character(1);
+ALTER TABLE M_Product ADD COLUMN marketingblockeddescr character varying(255);
