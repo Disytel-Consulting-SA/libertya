@@ -664,7 +664,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		BigDecimal diff = sumaPagos.subtract(sumaProductos).abs();
 		
-		if (diff.compareTo(getRedondeo()) < 0)
+		if (diff.abs().compareTo(getRedondeo()) <= 0)
 			return true;
 		
 		return false;
@@ -694,16 +694,12 @@ public class PoSOnline extends PoSConnectionState {
 		// Diff es la cantidad exacta que FALTA PAGAR para que la diferencia sea PRECISAMENTE CERO. 
 		BigDecimal diff = totalPagar.subtract(sumaPagos);
 
-		// Hay una diferencia menor o igual al redodeo estándar ? 
-		
-		if (diff.abs().compareTo(redondeo) <= 0) 
-		{
+		// Hay una diferencia menor o igual al redondeo estándar ? 
+		if (diff.compareTo(redondeo) <= 0){
 			faltantePorRedondeo = diff;
 			sumaPagos.add(diff);
 		}
-		else if (diff.compareTo(redondeo) >= 0) 
-		{
-			// Falta dinero 
+		else if (diff.compareTo(redondeo) > 0){
 			throw new InsufficientBalanceException();
 		}
 		
@@ -769,20 +765,20 @@ public class PoSOnline extends PoSConnectionState {
 		sumaPagos = sumaPagos.setScale(stdScale, BigDecimal.ROUND_HALF_UP);
 		
 		// Si no alcanzan los pagos para pagar los productos, no deja procesar.
-		
 		if (!VerificarSaldo(sumaProductos, sumaPagos))
 			throw new InsufficientBalanceException();
 		
-		// Si hay algun pago que no sea cheque, y están pagando de más, no permito que se efectue la operacion
-		
+		// Gestionar redondeo
 		BigDecimal redondeo = getRedondeo();
-		boolean sobraPlata = sumaPagos.subtract(sumaProductos).compareTo(redondeo) > 0;  
+		/*boolean haveRounding = sumaPagos.subtract(sumaProductos).abs().compareTo(redondeo) == 0;
+		if(haveRounding){
+			// Si la suma de productos es mayor a la suma de pagos, 
+			// entonces 
+		}*/
 		
-		
-		if (sobraPlata) { // order.getOrderProducts().size() != checkPayments.size()) {
-			
-			// if (sobraPlata)
-			//	throw new InvalidPaymentException();
+		// Gestionar el problema del vuelto cuando hay plata de mas
+		boolean sobraPlata = sumaPagos.subtract(sumaProductos).compareTo(redondeo) > 0;
+		if (sobraPlata) { 
 			
 			BigDecimal x = 
 				(sumaCreditPayments).
@@ -794,8 +790,7 @@ public class PoSOnline extends PoSConnectionState {
 			
 			if (x.subtract(sumaProductos).compareTo(redondeo) > 0)
 				invalidPayment = true;
-		
-			x = x.add(sumaCheckPayments);
+				x = x.add(sumaCheckPayments);
 			
 			// si x > sumaProductos , sobra por cheque -> OK
 			
@@ -1344,6 +1339,10 @@ public class PoSOnline extends PoSConnectionState {
 		debug("Aplicando descuentos al Pedido (DiscountCalculator)");
 		discountCalculator.applyDiscounts();
 		debug("Guardando el Pedido nuevamente (luego de aplicar descuentos)");
+		
+		// Actualizar los importes finales de cabecera
+		mo.calculateTotalAmounts();
+		
 		throwIfFalse(mo.save(), mo);
 		
 		// Reload Order
@@ -1369,7 +1368,6 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private void createOXPOrderTaxes(MOrder mo, Order order) throws PosException{
-		//BigDecimal totalNet = mo.getNetTaxBaseAmt();
 		deleteTaxes(MOrderTax.Table_Name, "c_order_id", mo.getID());
 		MOrderTax orderTax;
 		for (Tax tax : order.getAllTaxes()) {
@@ -1386,7 +1384,7 @@ public class PoSOnline extends PoSConnectionState {
 		DB.executeUpdate("DELETE FROM "+tablename+" WHERE "+documentColumnName+" = "+documentID, getTrxName());
 	}
 	
-	private MInvoice createOxpInvoice(Order order) throws PosException {
+	private MInvoice createOxpInvoice(Order order) throws PosException, Exception {
 
 		MInvoice inv;
 	
@@ -1484,6 +1482,10 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Recargar la factura
 		inv = new MInvoice(ctx, inv.getID(), getTrxName());
+		
+		// Actualizar los importes finales de cabecera
+		inv.calculateTotalAmounts();
+		
 		// Seteo el bypass de la factura para que no chequee el saldo del
 		// cliente porque ya lo chequea el tpv
 		inv.setCurrentAccountVerified(true);
@@ -1514,6 +1516,7 @@ public class PoSOnline extends PoSConnectionState {
 		// Ignora la impresión fiscal al completar. Se hace luego fuera de la transacción. 
 		inv.setIgnoreFiscalPrint(true);
 		inv.skipAfterAndBeforeSave = true;
+		
 		throwIfFalse(inv.processIt(DocAction.ACTION_Complete), inv, InvoiceCreateException.class);
 		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
 		
@@ -1526,7 +1529,6 @@ public class PoSOnline extends PoSConnectionState {
 	}
 	
 	private void createOXPInvoiceTaxes(MInvoice mi, Order order) throws PosException{
-		//BigDecimal totalNet = mi.getNetTaxBaseAmt();
 		deleteTaxes(MInvoiceTax.Table_Name, "c_invoice_id", mi.getID());
 		MInvoiceTax invoiceTax;
 		for (Tax tax : order.getAllTaxes()) {

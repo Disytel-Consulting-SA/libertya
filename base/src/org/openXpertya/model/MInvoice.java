@@ -52,6 +52,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.MeasurableTask;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.SalesUtil;
 import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.TimeStatsLogger;
 import org.openXpertya.util.TimeUtil;
@@ -245,6 +246,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				trxName, setOrder, setInOut, false, !isSOTrx);
 	} // copyFrom
 
+	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
+			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
+			String trxName, boolean setOrder, boolean setInOut, 
+			boolean copyDocumentDiscounts, boolean copyManualInvoiceTaxes) {
+		return copyFrom(from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter,
+				trxName, setOrder, setInOut, copyDocumentDiscounts, copyManualInvoiceTaxes, 
+				false);
+	}
+	
 	/**
 	 * 
 	 * @param from
@@ -260,13 +270,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
 			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
 			String trxName, boolean setOrder, boolean setInOut, 
-			boolean copyDocumentDiscounts, boolean copyManualInvoiceTaxes) {
+			boolean copyDocumentDiscounts, boolean copyManualInvoiceTaxes, 
+			boolean voidProcess) {
 		MInvoice to = new MInvoice(from.getCtx(), 0, trxName);
 
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
 		to.setC_Invoice_ID(0);
 		to.set_ValueNoCheck("DocumentNo", null);
 		to.setIsCopy(true);
+		to.setVoidProcess(voidProcess);
 
 		/*
 		* Ponger en null el cae y el vto cae del documento copiado para evitar errores
@@ -355,8 +367,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			throw new IllegalStateException("Could not create Invoice Lines");
 		}
 
-		// Descuentos manuales de la factura
-		if (copyManualInvoiceTaxes) {
+		
+		try {
+			to.copyAutomaticInvoiceTaxes(from);
+		} catch (Exception e) {
+			throw new IllegalStateException(e.getMessage());
+		}
+		
+		// Impuestos manuales de la factura
+		if (copyManualInvoiceTaxes || voidProcess) {
 			try {
 				to.copyManualInvoiceTaxes(from);
 			} catch (Exception e) {
@@ -371,6 +390,13 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			} catch (Exception e) {
 				throw new IllegalStateException(e.getMessage());
 			}
+		}
+		
+		// Calcular totales
+		try {
+			to.calculateTotalAmounts();
+		} catch (Exception e) {
+			throw new IllegalStateException(e.getMessage());
 		}
 
 		return to;
@@ -511,9 +537,23 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		return DB.getSQLValueTimestamp( trxName,sql);
 	}
 
+	public void copyAutomaticInvoiceTaxes(MInvoice from) throws Exception {
+		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, false);
+		MInvoiceTax newInvoiceTax;
+		for (MInvoiceTax mInvoiceTax : invoiceTaxes) {
+			newInvoiceTax = new MInvoiceTax(getCtx(), 0, get_TrxName());
+			newInvoiceTax.setC_Invoice_ID(getID());
+			newInvoiceTax.setC_Tax_ID(mInvoiceTax.getC_Tax_ID());
+			newInvoiceTax.setTaxAmt(mInvoiceTax.getTaxAmt());
+			newInvoiceTax.setTaxBaseAmt(mInvoiceTax.getTaxBaseAmt());
+			if (!newInvoiceTax.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+	}
+	
 	public void copyManualInvoiceTaxes(MInvoice from) throws Exception {
-		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from,
-				true);
+		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, true);
 		MInvoiceTax newInvoiceTax;
 		for (MInvoiceTax mInvoiceTax : invoiceTaxes) {
 			newInvoiceTax = new MInvoiceTax(getCtx(), 0, get_TrxName());
@@ -2758,9 +2798,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			log.fine("Lines -> #" + no);
 		}
 
-		if (is_ValueChanged("AD_Org_ID") || is_ValueChanged("C_BPartner_ID")
-				|| is_ValueChanged("ApplyPercepcion")
-				|| is_ValueChanged("C_Invoice_Orig_ID")) {
+		if (!isTPVInstance() && 
+				!isVoidProcess() && 
+				(is_ValueChanged("AD_Org_ID") 
+					|| is_ValueChanged("C_BPartner_ID")
+					|| is_ValueChanged("ApplyPercepcion")
+					|| is_ValueChanged("C_Invoice_Orig_ID"))) {
 			try {
 
 				recalculatePercepciones();
@@ -2777,7 +2820,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// actualizo el esquema de pagos de la factura
 		if (!isSkipApplyPaymentTerm()
 				&& (is_ValueChanged("C_PaymentTerm_ID")
-						|| is_ValueChanged("DateRecepted") || recalculateIPS)) {
+						|| is_ValueChanged("DateRecepted") 
+						|| recalculateIPS)) {
 			// Vuelvo a cargar la factura desde BD
 			MInvoice invoiceUpdated = new MInvoice(getCtx(), getID(),
 					get_TrxName());
@@ -3539,6 +3583,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	public boolean calculateTaxTotal() {
 		log.fine("");
 
+		if(isTPVInstance() || isVoidProcess()){
+			return true;
+		}
 		// Delete Taxes
 
 		if (isSOTrx() && !isTPVInstance()) {
@@ -3662,7 +3709,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			e.printStackTrace();
 		}
 
-		// setGrandTotal(totalLines.add(totalTax()));
 		return true;
 	} // calculateTaxTotal
 
@@ -5063,7 +5109,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		MInvoice reversal = copyFrom(this, dateDoc,
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
-				get_TrxName(), true, true, true, !isSOTrx());
+				get_TrxName(), true, true, true, !isSOTrx(), true);
 
 		if (reversal == null) {
 			m_processMsg = "Could not create Invoice Reversal";
@@ -6652,6 +6698,55 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 		return total;
 	}
+	
+	/**
+	 * Calcula y setea los importes totales del documento en base a
+	 * c_invoicetax: Neto, TotalLines, Grandtotal.
+	 */
+	public void calculateTotalAmounts() throws Exception{
+		// Obtener la suma de los impuestos automáticos y manuales para luego
+		// desde ahi setear los totales
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		BigDecimal taxBaseAmt = BigDecimal.ZERO;
+		BigDecimal automaticTaxesAmt = BigDecimal.ZERO;
+		BigDecimal manualTaxesAmt = BigDecimal.ZERO;
+		try {
+			// Impuestos automáticos
+			ps = DB.prepareStatement(
+					SalesUtil.getSQLTaxAmountsForTotals(X_C_InvoiceTax.Table_Name, "c_invoice_id", getID(), false),
+					get_TrxName());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				taxBaseAmt = rs.getBigDecimal("taxbaseamt");
+				automaticTaxesAmt = automaticTaxesAmt.add(rs.getBigDecimal("taxamt"));
+			}
+			
+			// Impuestos manuales
+			ps = DB.prepareStatement(
+					SalesUtil.getSQLTaxAmountsForTotals(X_C_InvoiceTax.Table_Name, "c_invoice_id", getID(), true),
+					get_TrxName());
+			rs = ps.executeQuery();
+			if(rs.next()){
+				manualTaxesAmt = manualTaxesAmt.add(rs.getBigDecimal("taxamt"));
+			}
+			
+			// Actualizar totales
+			setNetAmount(taxBaseAmt);
+			setTotalLines(taxBaseAmt.add(automaticTaxesAmt));
+			setGrandTotal(taxBaseAmt.add(automaticTaxesAmt).add(manualTaxesAmt));
+		} catch (Exception e) {
+			throw e;
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				throw e2;
+			}
+		}
+	}
+
 } // MInvoice
 
 /*

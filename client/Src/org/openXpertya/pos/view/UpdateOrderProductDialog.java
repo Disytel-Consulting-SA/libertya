@@ -1038,6 +1038,7 @@ public class UpdateOrderProductDialog extends JDialog {
 			
 			getPoS().updateOrderProduct(getOrderProduct());
 			setVisible(false);
+			getPoS().requestFocus();
 		}
 	}
 	

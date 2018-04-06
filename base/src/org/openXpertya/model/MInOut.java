@@ -363,6 +363,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 	public static BigDecimal getDCMovementQty(Integer orderLineID, String trxName) {
 		BigDecimal movementQty = BigDecimal.ZERO;
 		movementQty = DB.getSQLValueBD(trxName, MInOut.getDCMovementQtyQuery(), orderLineID);
+		movementQty = movementQty != null?movementQty:BigDecimal.ZERO;
 		return movementQty;
 	}
     /**

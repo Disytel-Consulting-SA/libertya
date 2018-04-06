@@ -1097,7 +1097,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         
         // Calculations & Rounding
 
-        if(!getInvoice().isTPVInstance()){
+        if(!getInvoice().isTPVInstance() && !getInvoice().isVoidProcess()){
         	setLineNetAmt();
         	setLineNetAmount();
         	// Si la Tarifa tiene impuesto incluido y percepciones incluidas, se actualiza el LineNetAmt y el TaxAmt
@@ -1306,7 +1306,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             return success;
         }
 
-        if( !newRecord && is_ValueChanged( "C_Tax_ID" )) {
+		if (!newRecord && is_ValueChanged("C_Tax_ID") && !getInvoice().isTPVInstance()
+				&& !getInvoice().isVoidProcess()) {
 
             // Recalculate Tax for old Tax
 
@@ -1390,21 +1391,22 @@ public class MInvoiceLine extends X_C_InvoiceLine {
      */
 
     private boolean updateHeaderTax() {
-
-        // Recalculate Tax for this Tax
-    	if(!getInvoice().isTPVInstance()){
-	        MInvoiceTax tax = MInvoiceTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
-	
-	        if( tax != null ) {
-	            if( !tax.calculateTaxFromLines()) {
-	                return false;
-	            }
-	
-	            if( !tax.save( get_TrxName())) {
-	                return false;
-	            }
-	        }
+    	if(getInvoice().isTPVInstance() || getInvoice().isVoidProcess()){
+    		return true;
     	}
+    	
+        // Recalculate Tax for this Tax
+        MInvoiceTax tax = MInvoiceTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
+
+        if( tax != null ) {
+            if( !tax.calculateTaxFromLines()) {
+                return false;
+            }
+
+            if( !tax.save( get_TrxName())) {
+                return false;
+            }
+        }
         
         // Update Invoice Header
         
