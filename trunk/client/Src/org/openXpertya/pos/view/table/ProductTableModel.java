@@ -10,7 +10,7 @@ import org.openXpertya.util.Util;
 public class ProductTableModel extends AbstractPoSTableModel {
 
 	private static final String OP_CHECKOUT_POS       = PoSMsgRepository.getInstance().getMsg("POS");
-	private static final String OP_CHECKOUT_WAREHOUSE = PoSMsgRepository.getInstance().getMsg("M_Warehouse_ID");
+	private static final String OP_CHECKOUT_WAREHOUSE = PoSMsgRepository.getInstance().getMsg("Warehouse");
 	
 	private List<OrderProduct> orderProducts;
 	

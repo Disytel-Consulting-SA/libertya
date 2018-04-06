@@ -64,7 +64,31 @@ public class MOrderLine extends X_C_OrderLine {
 	private boolean allowAnyQty = false;
 	
 	private Integer tpvGeneratedInvoiceLineID = 0; 
-		
+
+	/**
+	 * @param ctx
+	 * @param orderLineID
+	 * @param verifyDocType
+	 *            verifica primeramente si el tipo de documento Devolución de
+	 *            Cliente está configurado para no gestionar los reservados del
+	 *            stock y del pedido
+	 * @param trxName
+	 * @return cantidad correspondiente a devoluciones de cliente para la línea
+	 *         de pedido parámetro
+	 */
+    public static BigDecimal getReturnedQty(Properties ctx, Integer orderLineID, boolean verifyDocType, String trxName){
+    	boolean realReturnedQty = true;
+    	BigDecimal returnedQty = BigDecimal.ZERO;
+    	if(verifyDocType){
+    		MDocType docTypeDC = MDocType.getDocType(ctx, MDocType.DOCTYPE_CustomerReturn, trxName);
+    		realReturnedQty = docTypeDC != null && !docTypeDC.isReserveStockManagment();
+    	}
+    	if(realReturnedQty){
+    		returnedQty = MInOut.getDCMovementQty(orderLineID, trxName);
+    	}
+    	return returnedQty;
+    } 
+	
 	/**
 	 * Lugar de Retiro. Utilizado para evitar reserva de stock en pedidos que se
 	 * retiran por TPV. Por defecto el lugar de retiro es Almacén lo cual
@@ -1105,7 +1129,7 @@ public class MOrderLine extends X_C_OrderLine {
             return success;
         }
 
-        if( !newRecord && is_ValueChanged( "C_Tax_ID" )) {
+		if (!newRecord && !getOrder().isTPVInstance() && is_ValueChanged("C_Tax_ID")) {
 
             // Recalculate Tax for old Tax
 
@@ -1166,18 +1190,20 @@ public class MOrderLine extends X_C_OrderLine {
      */
 
     private boolean updateHeader() {
-        // Recalculate Tax for this Tax
-    	if(!getOrder().isTPVInstance()){
-        	MOrderTax tax = MOrderTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
-
-	        if( !tax.calculateTaxFromLines()) {
-	            return false;
-	        }
-	
-	        if( !tax.save( get_TrxName())) {
-	            return false;
-	        }
+    	if(getOrder().isTPVInstance()){
+    		return true;
     	}
+    	
+        // Recalculate Tax for this Tax
+    	MOrderTax tax = MOrderTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
+
+        if( !tax.calculateTaxFromLines()) {
+            return false;
+        }
+
+        if( !tax.save( get_TrxName())) {
+            return false;
+        }
         // Recalcula los importes del encabezado del pedido.
         if (getOrder().updateAmounts()) {
         	return getOrder().save(); 
@@ -1266,6 +1292,16 @@ public class MOrderLine extends X_C_OrderLine {
 	 */
     public BigDecimal getPendingDeliveredQty(){
     	return getQtyOrdered().subtract(getQtyDelivered()).subtract(getQtyTransferred());
+    }
+    
+    /**
+	 * @return la diferencia entre la cantidad pedida y la cantidad entregada.
+	 *         Se tiene en cuenta las cantidades devueltas en caso que el tipo
+	 *         de documento Devolución de Cliente así esté configurado.
+	 */
+    public BigDecimal getPendingDeliveredQtyForStorage(){
+    	BigDecimal returnedQty = getReturnedQty(getCtx(), getID(), true, get_TrxName());
+		return getQtyOrdered().subtract(getQtyDelivered().add(returnedQty)).subtract(getQtyTransferred());
     }
 
 	/**

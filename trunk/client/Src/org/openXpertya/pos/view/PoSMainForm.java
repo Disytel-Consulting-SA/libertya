@@ -5436,7 +5436,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		BigDecimal toPayAmt = getOrder().getOrderProductsTotalAmt(true);
 		BigDecimal paidAmt = getOrder().getPaidAmount();
 		//BigDecimal paidAmt = getOrder().getRealPaidAmount();
-		BigDecimal balance = getOrder().getBalance();
+		//BigDecimal balance = getOrder().getBalance();
+		BigDecimal balance = getOrder().getOpenAmount();
 		BigDecimal change = getOrder().getTotalChangeAmt();
 //		BigDecimal cashAmt = getOrder().getCashPaidAmount();
 //		

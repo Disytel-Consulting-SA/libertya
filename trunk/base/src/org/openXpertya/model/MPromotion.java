@@ -79,7 +79,7 @@ public class MPromotion extends X_C_Promotion {
 			"WHERE AD_Client_ID = ? " +
 			  "AND IsActive = 'Y' " +
 			  "AND PublishStatus = ? " +
-			  "AND ValidFrom <= ? AND (? <= ValidTo OR ValidTo IS NULL) " +
+			  "AND ValidFrom::date <= ?::date AND (ValidTo::date IS NULL OR ?::date <= ValidTo::date) " +
 			"ORDER BY ValidFrom ASC";
 		
 		if (!(date instanceof java.sql.Date)) {
@@ -90,7 +90,7 @@ public class MPromotion extends X_C_Promotion {
 		}
 		
 		try {
-			pstmt = DB.prepareStatement(sql, trxName);
+			pstmt = DB.prepareStatement(sql, trxName, true);
 			int i = 1;
 			pstmt.setInt(i++, Env.getAD_Client_ID(ctx));
 			pstmt.setString(i++, MCombo.PUBLISHSTATUS_Published);
