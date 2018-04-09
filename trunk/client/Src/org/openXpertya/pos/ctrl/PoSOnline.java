@@ -770,6 +770,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Gestionar redondeo
 		BigDecimal redondeo = getRedondeo();
+		BigDecimal diff = sumaPagos.subtract(sumaProductos);
 		/*boolean haveRounding = sumaPagos.subtract(sumaProductos).abs().compareTo(redondeo) == 0;
 		if(haveRounding){
 			// Si la suma de productos es mayor a la suma de pagos, 
@@ -777,7 +778,8 @@ public class PoSOnline extends PoSConnectionState {
 		}*/
 		
 		// Gestionar el problema del vuelto cuando hay plata de mas
-		boolean sobraPlata = sumaPagos.subtract(sumaProductos).compareTo(redondeo) > 0;
+		boolean sobraPlata = diff.compareTo(redondeo) > 0
+				&& diff.subtract(redondeo).compareTo(new BigDecimal(0.05)) > 0;
 		if (sobraPlata) { 
 			
 			BigDecimal x = 
@@ -788,9 +790,11 @@ public class PoSOnline extends PoSConnectionState {
 			
 			// si x > sumaProductos, sobra plata -> ERROR
 			
-			if (x.subtract(sumaProductos).compareTo(redondeo) > 0)
+			if (x.subtract(sumaProductos).compareTo(redondeo) > 0){
 				invalidPayment = true;
-				x = x.add(sumaCheckPayments);
+			}
+			
+			x = x.add(sumaCheckPayments);
 			
 			// si x > sumaProductos , sobra por cheque -> OK
 			
