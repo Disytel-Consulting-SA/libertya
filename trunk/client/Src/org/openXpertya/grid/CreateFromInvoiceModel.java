@@ -95,21 +95,31 @@ public class CreateFromInvoiceModel extends CreateFromModel {
     public void save(MOrder p_order, MInvoice invoice, MInOut m_inout, MDocType docType, List<? extends SourceEntity> selectedSourceEntities, String trxName, CreateFromPluginInterface handler) throws CreateFromSaveException {
 
     	// Actualiza el encabezado de la factura
-		invoice.setDragDocumentDiscountAmts(docType
-				.isDragOrderDocumentDiscounts());
+		invoice.setDragDocumentDiscountAmts(docType.isDragOrderDocumentDiscounts());
+		invoice.setDragDocumentSurchargesAmts(docType.isDragOrderDocumentSurcharges());
         log.config( invoice.toString());
         boolean isDebit = invoice.isDebit();
         // Asociación con el pedido
         if( p_order != null ) {
             invoice.setOrder( p_order, true );    // overwrite header values
+            
+            // Gestionar arrastre de descuentos del pedido 
 			boolean manageOrderDiscounts = (docType
 					.isDragOrderDocumentDiscounts() || docType
 					.isDragOrderLineDiscounts())
 					&& MOrder.isDiscountsApplied(p_order);
 			invoice.setManageDragOrderDiscounts(manageOrderDiscounts);
+
+			// Gestionar arrastre de recargos del pedido
+			boolean manageOrderSurcharges = (docType
+					.isDragOrderDocumentSurcharges() || docType
+					.isDragOrderLineSurcharges())
+					&& MOrder.isSurchargesApplied(p_order);
+			invoice.setManageDragOrderSurcharges(manageOrderSurcharges);
+			
 			// Si se deben arrastrar los descuentos del pedido, resetear el
 			// descuento de la cabecera
-			if(manageOrderDiscounts){
+			if(manageOrderDiscounts || manageOrderSurcharges){
 				invoice.setManualGeneralDiscount(BigDecimal.ZERO);
 				invoice.setSkipManualGeneralDiscountValidation(true);
 			}
@@ -164,6 +174,10 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 					.isDragOrderDocumentDiscounts());
 			invoiceLine.setDragLineDiscountAmts(docType
 					.isDragOrderLineDiscounts());
+			invoiceLine.setDragDocumentSurchargesAmts(docType
+					.isDragOrderDocumentSurcharges());
+			invoiceLine.setDragLineSurchargesAmts(docType
+					.isDragOrderLineSurcharges());
 			invoiceLine.setDragOrderPrice(docType.isDragOrderPrice());
 			
             // Info

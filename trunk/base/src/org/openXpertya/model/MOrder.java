@@ -165,11 +165,28 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
      * @return true si se aplicaron descuentos en este pedido parámetro
      */
     public static boolean isDiscountsApplied(MOrder order){
-    	BigDecimal totalDiscountsAmt = order.getTotalDiscountAmtFromLines(null);
-		List<MDocumentDiscount> discounts = MDocumentDiscount.getOfOrder(
-				order.getID(), order.getCtx(), order.get_TrxName());
-		return totalDiscountsAmt.compareTo(BigDecimal.ZERO) != 0
-				|| (discounts != null && discounts.size() > 0); 
+    	return isDocumentDiscountsApplied(order, 1);
+    }
+    
+    /**
+     * @param order
+     * @return true si se aplicaron recargos en este pedido parámetro
+     */
+    public static boolean isSurchargesApplied(MOrder order){
+    	return isDocumentDiscountsApplied(order, -1); 
+    }
+    
+    /**
+	 * 
+	 * @param order
+	 * @param sign
+	 * @return true si se aplicaron descuentos, recargos o ambos sobre el
+	 *         pedido, dependiendo del signo parámetro
+	 */
+    public static boolean isDocumentDiscountsApplied(MOrder order, int sign){
+    	List<MDocumentDiscount> discounts = MDocumentDiscount.getOfOrder(
+				order.getID(), sign, order.getCtx(), order.get_TrxName());
+		return !Util.isEmpty(discounts);
     }
     
     /**

@@ -653,7 +653,7 @@ public class OrderProduct {
 	}
 	
 	public BigDecimal getTotalNetAmt(){
-		return getTotalNetAmt(true, false);
+		return getTotalNetAmt(false, false);
 	}
 	
 	public BigDecimal getTotalNetAmt(boolean includeDocumentDiscount, boolean isTemporal){

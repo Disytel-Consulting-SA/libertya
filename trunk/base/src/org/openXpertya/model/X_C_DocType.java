@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-10-30 12:54:16.145 */
+ *  @version  - 2018-04-11 19:48:36.794 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -26,7 +26,9 @@ setDocBaseType (null);
 setDocTypeKey (null);
 setDocumentCopies (0);	// 1
 setDragOrderDocumentDiscounts (false);
+setDragOrderDocumentSurcharges (false);
 setDragOrderLineDiscounts (false);
+setDragOrderLineSurcharges (false);
 setDragOrderPrice (false);
 setEnabledInPOS (false);
 setEnableInCreateFromShipment (false);
@@ -696,6 +698,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Drag Order Document Surcharges */
+public void setDragOrderDocumentSurcharges (boolean DragOrderDocumentSurcharges)
+{
+set_Value ("DragOrderDocumentSurcharges", new Boolean(DragOrderDocumentSurcharges));
+}
+/** Get Drag Order Document Surcharges */
+public boolean isDragOrderDocumentSurcharges() 
+{
+Object oo = get_Value("DragOrderDocumentSurcharges");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Drag Order Line Discounts */
 public void setDragOrderLineDiscounts (boolean DragOrderLineDiscounts)
 {
@@ -705,6 +723,22 @@ set_Value ("DragOrderLineDiscounts", new Boolean(DragOrderLineDiscounts));
 public boolean isDragOrderLineDiscounts() 
 {
 Object oo = get_Value("DragOrderLineDiscounts");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Drag Order Line Surcharges */
+public void setDragOrderLineSurcharges (boolean DragOrderLineSurcharges)
+{
+set_Value ("DragOrderLineSurcharges", new Boolean(DragOrderLineSurcharges));
+}
+/** Get Drag Order Line Surcharges */
+public boolean isDragOrderLineSurcharges() 
+{
+Object oo = get_Value("DragOrderLineSurcharges");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
