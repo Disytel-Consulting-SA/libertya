@@ -105,10 +105,35 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 *         no tiene descuentos
 	 */
 	public static List<MDocumentDiscount> getOfOrder(int orderID, Properties ctx, String trxName) {
-		return get("C_Order_ID = ? AND C_DocumentDiscount_Parent_ID IS NULL",
-				new Object[] { orderID }, ctx, trxName);
+		return getOfOrder(orderID, 0, ctx, trxName);
 	}
 
+	/**
+	 * Busca en la BD y devuelve una lista descuentos asociados a un pedido
+	 * determinad. Solo devuelve los descuentos totalizados, no aquellos que
+	 * sean discriminación por tasa de impuesto.
+	 * 
+	 * @param orderID
+	 *            ID del pedido
+	 * @param sign
+	 *            signo para obtener descuentos, recargos o ambos. 0 = Ambos, 1
+	 *            = Descuentos, -1 = Recargos.
+	 * @param ctx
+	 *            Contexto para instanciación de objetos del modelo
+	 * @param trxName
+	 *            Transacción de BD
+	 * @return Lista con los descuentos asociados, o lista vacía si la factura
+	 *         no tiene descuentos
+	 */
+	public static List<MDocumentDiscount> getOfOrder(int orderID, int sign, Properties ctx, String trxName) {
+		String sqlSignWhere = "";
+		if(sign != 0){
+			sqlSignWhere = " AND DiscountAmt "+(sign > 0?">":"<")+" 0 ";
+		}		
+		return get("C_Order_ID = ? AND C_DocumentDiscount_Parent_ID IS NULL"+sqlSignWhere,
+				new Object[] { orderID }, ctx, trxName);
+	}
+	
 	/**
 	 * Busca en la BD y devuelve true si existe al menos un descuento aplicado
 	 * actualmente al documento y tipo de descuento parámetros.

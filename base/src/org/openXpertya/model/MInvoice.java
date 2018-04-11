@@ -92,6 +92,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	private boolean isTPVInstance = false;
 
 	private boolean dragDocumentDiscountAmts = false;
+	private boolean dragDocumentSurchargesAmts = false;
 
 	/**
 	 * Caja diaria a asignar al contra-documento que se genera al anular este
@@ -327,6 +328,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		to.setProcessed(false);
 
 		to.setManageDragOrderDiscounts(false);
+		to.setManageDragOrderSurcharges(false);
 
 		// delete references
 
@@ -1311,7 +1313,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		setUser1_ID(order.getUser1_ID());
 		setUser2_ID(order.getUser2_ID());
 
-		if (isDragDocumentDiscountAmts()) {
+		if (isDragDocumentDiscountAmts() || isDragDocumentSurchargesAmts()) {
 			setC_Charge_ID(order.getC_Charge_ID());
 			setChargeAmt(order.getChargeAmt());
 		}
@@ -2369,7 +2371,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// arrastra descuentos del pedido, siempre y cuando en el pedido se
 		// hayan aplicado descuentos
 		if (!newRecord && is_ValueChanged("ManualGeneralDiscount")) {
-			if (isManageDragOrderDiscounts()
+			if (isManageDragOrderDiscountsSurcharges(false)
 					&& !isSkipManualGeneralDiscountValidation()) {
 				log.saveError("ManualGeneralDiscountNotAllowed", "");
 				return false;
@@ -6745,6 +6747,26 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				throw e2;
 			}
 		}
+	}
+	
+	/**
+	 * @param bothMandatory
+	 *            true si se debe controlar ambas gestiones de descuentos y
+	 *            recargos
+	 * @return true si se debe gestionar descuentos y/o recargos, dependiendo
+	 *         del parámetro
+	 */
+	public boolean isManageDragOrderDiscountsSurcharges(boolean bothMandatory){
+		return bothMandatory?isManageDragOrderDiscounts() && isManageDragOrderSurcharges():
+			isManageDragOrderDiscounts() || isManageDragOrderSurcharges();
+	}
+
+	public boolean isDragDocumentSurchargesAmts() {
+		return dragDocumentSurchargesAmts;
+	}
+
+	public void setDragDocumentSurchargesAmts(boolean dragDocumentSurchargesAmts) {
+		this.dragDocumentSurchargesAmts = dragDocumentSurchargesAmts;
 	}
 
 } // MInvoice

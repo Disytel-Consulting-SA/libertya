@@ -356,7 +356,7 @@ public class CalloutInvoice extends CalloutEngine {
         MInvoice invoice = new MInvoice(ctx, Integer.parseInt(invoiceID), null);
         
 		MProductPricing pp = new MProductPricing(M_Product_ID.intValue(), C_BPartner_ID, Qty, IsSOTrx,
-				M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscounts());
+				M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscountsSurcharges(false));
 
         int M_PriceList_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_ID" );
 
@@ -668,7 +668,7 @@ public class CalloutInvoice extends CalloutEngine {
                 QtyInvoiced = QtyEntered;
             }
 
-            if(!invoice.isManageDragOrderDiscounts()){
+            if(!invoice.isManageDragOrderDiscountsSurcharges(false)){
 	            boolean IsSOTrx = Env.getContext( ctx,WindowNo,"IsSOTrx" ).equals( "Y" );
 	            
 	            Integer M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
@@ -676,7 +676,7 @@ public class CalloutInvoice extends CalloutEngine {
 	            	M_AttributeSetInstance_ID = new Integer(0);
 	            
 				MProductPricing pp = new MProductPricing(M_Product_ID, C_BPartner_ID, QtyInvoiced, IsSOTrx,
-						M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscounts());
+						M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscountsSurcharges(false));
 	
 	            pp.setM_PriceList_ID( M_PriceList_ID );
 	

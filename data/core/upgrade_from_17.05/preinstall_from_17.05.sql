@@ -3656,3 +3656,20 @@ ALTER TABLE C_BPartner ALTER COLUMN paymentBlocked SET NOT NULL;
 ALTER TABLE M_Product ALTER COLUMN marketingBlocked SET DEFAULT 'N';
 UPDATE M_Product SET marketingBlocked='N' WHERE marketingBlocked IS NULL;
 ALTER TABLE M_Product ALTER COLUMN marketingBlocked SET NOT NULL;
+
+--20180411-1910 Parametrización que permite discriminar el arrastre de descuentos y recargos
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','dragorderlinesurcharges','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','dragorderdocumentsurcharges','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','managedragordersurcharges','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+UPDATE C_DocType
+SET dragorderlinesurcharges = 'Y'
+WHERE dragorderlinediscounts = 'Y';
+
+UPDATE C_DocType
+SET dragorderdocumentsurcharges = 'Y'
+WHERE dragorderdocumentdiscounts = 'Y';
+
+UPDATE C_Invoice
+SET managedragordersurcharges = 'Y'
+WHERE managedragorderdiscounts = 'Y';
