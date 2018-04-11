@@ -1896,7 +1896,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     }
     
     private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
-
+    	
+    	//Chequeo si la Entidad Comercial está bloqueada para recibir pagos
+    	MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getValue(), m_trxName);
+    	if(partner.ispaymentblocked()) { 
+    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
+    		showError(error_msg);
+    		return;
+    	}
+    	
     	final int idx = jTabbedPane1.getSelectedIndex();
     	
     	if (idx == 0) {

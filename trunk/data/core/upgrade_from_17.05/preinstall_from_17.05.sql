@@ -3644,3 +3644,15 @@ ALTER TABLE C_BPartner ADD COLUMN paymentblocked character(1);
 ALTER TABLE C_BPartner ADD COLUMN paymentblockeddescr character varying(255);
 ALTER TABLE M_Product ADD COLUMN marketingblocked character(1);
 ALTER TABLE M_Product ADD COLUMN marketingblockeddescr character varying(255);
+
+--20180411-1408 Merge relacionado con r2354
+update ad_field set isreadonly = 'N' where ad_componentobjectuid = 'HTCA2CORE-AD_Field-1019910-20180405102350';
+update ad_field set isreadonly = 'N' where ad_componentobjectuid = 'HTCA2CORE-AD_Field-1019911-20180405102403';
+
+ALTER TABLE C_BPartner ALTER COLUMN paymentBlocked SET DEFAULT 'N';
+UPDATE C_BPartner SET paymentBlocked='N' WHERE paymentBlocked IS NULL;
+ALTER TABLE C_BPartner ALTER COLUMN paymentBlocked SET NOT NULL;
+
+ALTER TABLE M_Product ALTER COLUMN marketingBlocked SET DEFAULT 'N';
+UPDATE M_Product SET marketingBlocked='N' WHERE marketingBlocked IS NULL;
+ALTER TABLE M_Product ALTER COLUMN marketingBlocked SET NOT NULL;
