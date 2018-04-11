@@ -1309,7 +1309,12 @@ public class AllocationGenerator {
 		MInvoiceLine invoiceLine = null; 
 		boolean isCredit;
 		boolean createInvoice;
-		MTax tax = MTax.getTaxExemptRate(getCtx(),getTrxName());
+		MProduct diffChangeProduct = new MProduct(getCtx(), getDebitCreditExchangeDiffProduct(amt.compareTo(BigDecimal.ZERO) < 0), getTrxName());
+		// Tomar la categoria de impuesto especificada en el articulo
+		List<MTax> taxes = MTax.getOfTaxCategory(getCtx(), diffChangeProduct.getC_TaxCategory_ID(), getTrxName());
+		if (taxes==null || taxes.size()==0)
+			throw new Exception("No existe un impuesto para la categoria de impuesto definido en el artículo " + diffChangeProduct.getValue());
+		MTax tax = taxes.get(0); 
 		if(amt.compareTo(BigDecimal.ZERO) != 0){
 			isCredit = amt.compareTo(BigDecimal.ZERO) < 0;
 			createInvoice = isCredit?credit == null:debit==null;
@@ -1324,19 +1329,8 @@ public class AllocationGenerator {
 				Document doc = getDebits().get(getDebits().size() - 1);
 				MInvoice debInv = new MInvoice(ctx, doc.getId(), trxName);
 				
-				char issotrx='N';
-				if (debInv.isSOTrx())
-					issotrx = 'Y';
-				//Settear M_PriceList
-				int priceListID = DB.getSQLValue(trxName, "SELECT M_PriceList_ID FROM M_PriceList pl WHERE pl.issopricelist = '" + issotrx
-						+ "' AND (pl.AD_Org_ID = " + getAllocationHdr().getAD_Org_ID() + " OR pl.AD_Org_ID = 0) AND pl.C_Currency_ID = " + Env.getContextAsInt( getCtx(), "$C_Currency_ID" )
-						+ " AND pl.AD_Client_ID = " + getAllocationHdr().getAD_Client_ID() + " AND pl.isActive = 'Y'"
-						+ " ORDER BY pl.AD_Org_ID desc,pl.isDefault desc");
-				
-				if (priceListID <= 0) {
-					String iso_code =DB.getSQLValueString(trxName, "SELECT iso_Code FROM C_Currency WHERE C_Currency_ID = ?" , Env.getContextAsInt( getCtx(), "$C_Currency_ID" ));
-					throw new Exception(Msg.getMsg(getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((debInv.isSOTrx()?"Sales":"Purchase")), iso_code}));
-				}
+				//Settear M_PriceList. Buscar el pricelist especifico para estos casos.
+				int priceListID = getDebitCreditExchangeDiffPriceList(isCredit);
 				inv.setM_PriceList_ID(priceListID);
 					
 				inv.setC_Project_ID(debInv.getC_Project_ID());
@@ -1447,7 +1441,15 @@ public class AllocationGenerator {
 		invoiceLine.setC_Tax_ID(tax.getID());
 		invoiceLine.setLineNetAmt();
 		invoiceLine.setC_Project_ID(invoice.getC_Project_ID());
-		
+
+		invoiceLine.setM_Product_ID(getDebitCreditExchangeDiffProduct(isCredit));
+		return invoiceLine;
+	}
+	
+	/** 
+	 *	 Retorna el articulo configurado para diferencia de cambio 
+	 */
+	protected Integer getDebitCreditExchangeDiffProduct(boolean isCredit) throws Exception {
 		//SUR SOFTWARE -> Primero intento obtener de AD_Preference el tipo de artículo para diff de cambio crédito o débito diferenciado
 		String valueProduct = null;
 		if (isCredit)
@@ -1466,9 +1468,34 @@ public class AllocationGenerator {
 			throw new Exception(
 					"Falta configuracion de articulos para crear créditos/débitos para descuentos/recargos");
 		}
-		Integer productID = DB.getSQLValue(getTrxName(), "SELECT M_Product_ID FROM M_Product WHERE value = ?", valueProduct);
-		invoiceLine.setM_Product_ID(productID);
-		return invoiceLine;
+		return DB.getSQLValue(getTrxName(), "SELECT M_Product_ID FROM M_Product WHERE value = ?", valueProduct);
+	}
+	
+	/**
+	 * Retorna la lista de precio configurada para diferencia de cambio
+	 */
+	protected Integer getDebitCreditExchangeDiffPriceList(boolean isCredit) throws Exception {
+		String valuePriceList = null;
+		if (isCredit)
+			valuePriceList = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_TARIFA_CREDITO");
+		else
+			valuePriceList = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_TARIFA_DEBITO");
+		if(Util.isEmpty(valuePriceList,true)){
+			throw new Exception("Debe configurar las preferencias DIF_CAMBIO_TARIFA_CREDITO y DIF_CAMBIO_TARIFA_DEBITO, indicando el nombre de las tarifas por diferencia de cambio de compra y venta con impuestos y percepciones incluidas en el precio.");
+		}
+		
+		int priceList = DB.getSQLValue(getTrxName(), "SELECT M_PriceList_ID FROM M_PriceList WHERE name = ?", valuePriceList);
+		
+		if (priceList <= 0)
+			throw new Exception("Debe configurar las tarifas por diferencia de cambio de compra y venta con impuestos y percepciones incluidas en el precio.");			
+
+		X_M_PriceList pl = new X_M_PriceList(getCtx(), priceList, getTrxName());
+		if (!isCredit && !pl.isPerceptionsIncluded()) 
+			throw new Exception("La tarifa configurada " + pl.getName() + " para diferencia de cambio debe tener activado el check: percepciones incluidas en el precio.");
+		if (!pl.isTaxIncluded())
+			throw new Exception("La tarifa configurada " + pl.getName() + " para diferencia de cambio debe tener activado el check impuestos incluidos en el precio.");
+		
+		return priceList; 
 	}
 	
 	/**
@@ -1541,6 +1568,10 @@ public class AllocationGenerator {
 				}	
 			}
 		}
+		
+		// Para notas de credito NO DEBE aplicar percepcion
+		invoice.setApplyPercepcion(!credit);
+		
 		return invoice;
 	}
 	
