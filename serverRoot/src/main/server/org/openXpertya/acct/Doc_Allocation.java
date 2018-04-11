@@ -829,17 +829,18 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
 		if((lines.length % 2) != 0) {
 			p_vo.Error = "Error fixing fact. Odd number of lines";
             log.log( Level.SEVERE,"fixingFact - " + p_vo.Error );
-            return null;
+            return fact; //Si se produce error, retorno la original sin quitarle las lineas repetidas
         }
+		//Notar que se recorre de a 2
 		for(int i=0; i < lines.length; i+=2) {
-			//Si tienen la misma cuenta contable
+			//Si 2 lineas consecutivas tienen la misma cuenta contable
 			if(lines[i].getAccount().getAccount_ID() == lines[i+1].getAccount().getAccount_ID()) {
 				//Además tienen el mismo monto una en debe y la otra en haber. Chequeo en ambas direcciones
-				if(lines[i].getDocLine().getAmtAcctDr().compareTo(lines[i+1].getDocLine().getAmtAcctCr()) == 0
-						|| lines[i].getDocLine().getAmtAcctCr().compareTo(lines[i+1].getDocLine().getAmtAcctDr()) == 0) {
-					continue;
+				if(lines[i].getAmtAcctDr().compareTo(lines[i+1].getAmtAcctCr()) == 0
+						&& lines[i].getAmtAcctCr().compareTo(lines[i+1].getAmtAcctDr()) == 0) {
+					continue; //Las descarto
 				}
-			} else {
+			} else { //Las agrego al nuevo Fact reparado
 				corrected.add(lines[i]);
 				corrected.add(lines[i+1]);
 			}
