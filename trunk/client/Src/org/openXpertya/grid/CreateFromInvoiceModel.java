@@ -262,7 +262,7 @@ public class CreateFromInvoiceModel extends CreateFromModel {
         
 		// Actualización de la cabecera por totales de descuentos e impuestos
 		// siempre y cuando el tipo de documento lo permita
-        if(docType.isDragOrderDocumentDiscounts() && p_order != null){
+		if (p_order != null && (docType.isDragOrderDocumentDiscounts() || docType.isDragOrderDocumentSurcharges())) {
 			try{
 				invoice.updateTotalDocumentDiscount();	
 			} catch(Exception e){
