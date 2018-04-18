@@ -65,7 +65,10 @@ public class LibroIVAUtils {
 		if (!transactionType.equals("B")) {
 			// Si no es transacción de ventas, C = Customer(Cliente)
 			if (!transactionType.equals("C")) {
-				docStatusClause = " (" + invoiceTableAlias + ".docstatus = 'CO'::bpchar OR " + invoiceTableAlias + ".docstatus = 'CL'::bpchar OR " + invoiceTableAlias + ".docstatus = '??'::bpchar) ";
+				docStatusClause = " (CASE WHEN " + invoiceTableAlias + ".issotrx = 'N' "
+										+ " THEN (" + invoiceTableAlias + ".docstatus = 'CO'::bpchar OR " + invoiceTableAlias + ".docstatus = 'CL'::bpchar OR " + invoiceTableAlias + ".docstatus = '??'::bpchar OR " + invoiceTableAlias + ".docstatus = 'RE'::bpchar) "
+										+ " ELSE (" + invoiceTableAlias + ".docstatus = 'CO'::bpchar OR " + invoiceTableAlias + ".docstatus = 'CL'::bpchar OR " + invoiceTableAlias + ".docstatus = '??'::bpchar) "
+										+ " END) ";
 				if(CalloutInvoiceExt.ComprobantesFiscalesActivos()){
 					String docStatusClauseFiscalVoid = " OR (" + docTypeTableAlias + ".isfiscal = 'Y' AND " + invoiceTableAlias+ ".fiscalalreadyprinted = 'Y' AND " + invoiceTableAlias+ ".docstatus IN ('RE', 'VO') ) ";
 					String docStatusClauseElectronicVoid = " OR (" + docTypeTableAlias + ".iselectronic = 'Y' AND " + invoiceTableAlias+ ".cae is not null AND " + invoiceTableAlias+ ".docstatus IN ('RE', 'VO') ) ";
@@ -74,6 +77,12 @@ public class LibroIVAUtils {
 				}
 			}
 		}
-		return " AND "+docStatusClause;
+		// Para transacciones de compras se omiten los anulados
+		String purchaseOnlyRevertWhereClause = " ( CASE WHEN " + invoiceTableAlias + ".issotrx = 'N' THEN "
+				+ invoiceTableAlias + ".docstatus <> 'VO' ELSE 1=1 END ) ";
+		
+		docStatusClause = " AND "+docStatusClause;
+		docStatusClause += " AND "+purchaseOnlyRevertWhereClause; 
+		return docStatusClause;
 	}
 }

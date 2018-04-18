@@ -12,6 +12,7 @@ import org.openXpertya.model.X_T_LibroIva;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.LibroIVAUtils;
 import org.openXpertya.util.Util;
 
 
@@ -110,24 +111,23 @@ public class GenerateLibroIva extends SvrProcess {
         	"			AND (c_invoice.dateacct::date between ?::date and ?::date) " 
         	+ getOrgCheck("c_invoice"));
          
-         String docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = 'RE'::bpchar OR c_invoice.docstatus = 'VO'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
-         if (!transaction.equals("B")) {
- 			// Si es transacción de ventas, C = Customer(Cliente)
- 			if (transaction.equals("C")) {
- 				sqlReal.append(
+		// Si no es ambos
+		if (!transaction.equals("B")) {
+			// Si es transacción de ventas, C = Customer(Cliente)
+			if (transaction.equals("C")) {
+				sqlReal.append(
 						" AND ((c_invoice.issotrx = 'Y' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
 								+ MDocType.TRANSACTIONTYPEFRONTLIVA_Sales + "') ");
- 			}
- 			// Si es transacción de compra
- 			else {
- 				sqlReal.append(
+			}
+			// Si es transacción de compra
+			else {
+				sqlReal.append(
 						" AND ((c_invoice.issotrx = 'N' AND c_doctype.transactiontypefrontliva is null) OR c_doctype.transactiontypefrontliva = '"
 								+ MDocType.TRANSACTIONTYPEFRONTLIVA_Purchases + "') ");
- 				docStatusClause = " AND (c_invoice.docstatus = 'CO'::bpchar OR c_invoice.docstatus = 'CL'::bpchar OR c_invoice.docstatus = '??'::bpchar) ";
- 			}
- 		 }
-         
-         sqlReal.append(docStatusClause);
+			}
+		}
+				
+		sqlReal.append(LibroIVAUtils.getDocStatusFilter(transaction, "c_doctype", "c_invoice"));
          
          String dateOrder = isPurchase() ? "inv.dateinvoiced" : "inv.dateacct";		
          sqlReal.append(") inv " +
@@ -141,7 +141,8 @@ public class GenerateLibroIva extends SvrProcess {
          	" 				from c_bpartner) cbp on inv.c_bpartner_id = cbp.c_bpartner_id " +
          	"     left join (Select c_categoria_iva_id, name as c_categoria_via_name " +
          	"				from c_categoria_iva) cci 	on cbp.c_categoria_iva_id = cci.c_categoria_iva_id " +
-         	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') AND isfiscaldocument = 'Y' AND (cdt.isfiscal is null OR cdt.isfiscal = 'N' OR (cdt.isfiscal = 'Y' AND inv.fiscalalreadyprinted = 'Y')) " +
+         	"	  WHERE cdt.doctypekey not in ('RTR', 'RTI', 'RCR', 'RCI') "
+         	+ LibroIVAUtils.getDocTypeFilter("cdt", "inv") +
          	"     ORDER BY "+ dateOrder +", inv.c_invoice_id, cbp.taxid, inv.c_doctypetarget_id, inv.documentno, cit.c_tax_id ASC"); 
         
  		PreparedStatement pstmt = null;
@@ -169,6 +170,7 @@ public class GenerateLibroIva extends SvrProcess {
  				linea.setT_Libroiva_ID(DB.getNextID(getAD_Client_ID(), X_T_LibroIva.Table_Name, get_TrxName()));
  				
  				linea.setAD_PInstance_ID(getAD_PInstance_ID());
+ 				linea.setAD_Org_ID(getOrgID());
  				linea.setC_Invoice_ID(rs.getInt("c_invoice_id"));
  				linea.setDocumentNo(rs.getString("documentno"));
  				linea.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
@@ -273,13 +275,17 @@ public class GenerateLibroIva extends SvrProcess {
 		linea.save();
 	}
 	
+	protected Integer getOrgID(){
+		return Util.isEmpty(orgID)?0:orgID;
+	}
+	
 	/**
 	 * Validacion por organización
 	 */
 	protected String getOrgCheck(String alias)
 	{
 		alias = Util.isEmpty(alias)?"":alias+".";
-		return (orgID > 0 ? " AND "+alias+"AD_Org_ID = " + orgID : "") + " ";
+		return (getOrgID() > 0 ? " AND "+alias+"AD_Org_ID = " + orgID : "") + " ";
 	}
 	
 	public boolean isPurchase() {

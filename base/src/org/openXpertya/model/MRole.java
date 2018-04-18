@@ -2479,70 +2479,55 @@ public final class MRole extends X_AD_Role
 	 * @param options
 	 * @param maxIndex
 	 * @return number of valid actions in the String[] options
-	 * @see metas-2009_0021_AP1_G94
 	 */
-	public int checkActionAccess(int clientId, int docTypeId, String[] options, int maxIndex)
-	{
-// Logica simplificada: por el momento se omite el uso de AD_Document_Action_Access 
-//						a fin de igualar la logica con la solucion Swing
-//						Simplemente se bypassea las opciones que no son null
-		final Vector<String> validOptions = new Vector<String>();
-		for (String option : options) {
-			if (option != null)
-				validOptions.add(option);
-		}
-		validOptions.toArray(options);
-		return validOptions.size();
+	public int checkActionAccess(int clientId, int docTypeId, String[] options, int maxIndex){
+		if (maxIndex <= 0)
+			return maxIndex;
 		
-//		if (maxIndex <= 0)
-//			return maxIndex;
-//		//
-//		final Vector<String> validOptions = new Vector<String>();
-//		final List<Object> params = new ArrayList<Object>();
-//		params.add(clientId);
-//		params.add(docTypeId);
-//		//
-//		final StringBuffer sql_values = new StringBuffer();
-//		for (int i = 0; i < maxIndex; i++)
-//		{
-//			if (sql_values.length() > 0)
-//				sql_values.append(",");
-//			sql_values.append("?");
-//			params.add(options[i]);
-//		}
-//		//
-//		final String sql = "SELECT rl.Value FROM AD_Document_Action_Access a"
-//				+ " INNER JOIN AD_Ref_List rl ON (rl.AD_Reference_ID=135 and rl.AD_Ref_List_ID=a.AD_Ref_List_ID)"
-//				+ " WHERE a.IsActive='Y' AND a.AD_Client_ID=? AND a.C_DocType_ID=?" // #1,2
-//					+ " AND rl.Value IN ("+sql_values+")"
-//					+ " AND "+getIncludedRolesWhereClause("a.AD_Role_ID", params)
-//		;
-//		PreparedStatement pstmt = null;
-//		ResultSet rs = null;
-//		try
-//		{
-//			pstmt = DB.prepareStatement(sql, null);
-//			DB.setParameters(pstmt, params);
-//			rs = pstmt.executeQuery();
-//			while (rs.next())
-//			{
-//				String op = rs.getString(1);
-//				validOptions.add(op);
-//			}
-//			validOptions.toArray(options);
-//		}
-//		catch (SQLException e)
-//		{
-//			log.log(Level.SEVERE, sql, e);
-//		}
-//		finally
-//		{
-//			DB.close(rs, pstmt);
-//			rs = null; pstmt = null;
-//		}
-//		//
-//		int newMaxIndex = validOptions.size(); 
-//		return newMaxIndex;
+		Vector<String> validOptions = new Vector<String>();
+		int newMaxIndex = maxIndex;
+		StringBuffer sql_values = new StringBuffer();
+		for (int i = 0; i < maxIndex; i++)
+		{
+			if (sql_values.length() > 0)
+				sql_values.append(",");
+			sql_values.append("'"+options[i]+"'");
+		}
+		
+		String sql = "SELECT distinct rl.Value "
+				+ " FROM AD_Document_Action_Access a "
+				+ " INNER JOIN AD_Ref_List rl ON (rl.AD_Ref_List_ID=a.AD_Ref_List_ID) "
+				+ " WHERE a.IsActive='Y' AND rl.IsActive='Y' "
+				+ "			AND a.AD_Client_ID=? "
+				+ "			AND a.C_DocType_ID=? "
+				+ "			AND a.AD_Role_ID=?   "
+				+ " 		AND rl.Value IN ("+sql_values+") "
+				+ " ORDER BY rl.Value ";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+			pstmt = DB.prepareStatement(sql);
+			pstmt.setInt(1, clientId);
+			pstmt.setInt(2, docTypeId);
+			pstmt.setInt(3, getID());
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+				validOptions.add(rs.getString("value"));
+			}
+			// Redefinir los valores parámetro
+			if(validOptions.size() > 0){
+				options = validOptions.toArray(options);
+				newMaxIndex = validOptions.size();
+			}
+		}
+		catch (Exception e){
+			log.log(Level.SEVERE, sql, e);
+		} finally {
+			DB.close(rs, pstmt);
+			rs = null; pstmt = null;
+		}
+ 
+		return newMaxIndex;
 	}
 
 	
