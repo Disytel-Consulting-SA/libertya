@@ -73,6 +73,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 import org.openXpertya.wf.MWFActivity;
 
 /**
@@ -304,7 +305,7 @@ public class VDocAction extends JDialog implements ActionListener {
 			doctypeId = (Integer)m_mTab.getValue("C_DocTypeTarget_ID");
 		}
 		log.fine("get doctype: " + doctypeId);
-		if (doctypeId != null) {
+		if (!Util.isEmpty(doctypeId, true)) {
 			index = DocumentEngine.checkActionAccess(Env.getAD_Client_ID(Env.getCtx()),
 					Env.getAD_Role_ID(Env.getCtx()), 
 					doctypeId, options, index);

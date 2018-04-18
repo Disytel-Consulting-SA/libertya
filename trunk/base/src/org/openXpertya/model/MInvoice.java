@@ -4930,9 +4930,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 	public boolean voidIt() {
 		log.info(toString());
-
-		voidProcess = true;
-
+		boolean result = true;
+		
 		if (DOCSTATUS_Closed.equals(getDocStatus())
 				|| DOCSTATUS_Reversed.equals(getDocStatus())
 				|| DOCSTATUS_Voided.equals(getDocStatus())) {
@@ -4944,7 +4943,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		
 		// Not Processed
 
-		if (DOCSTATUS_Drafted.equals(getDocStatus())
+		if (!isSOTrx() 
+				|| DOCSTATUS_Drafted.equals(getDocStatus())
 				|| DOCSTATUS_Invalid.equals(getDocStatus())
 				|| DOCSTATUS_InProgress.equals(getDocStatus())
 				|| DOCSTATUS_Approved.equals(getDocStatus())
@@ -4956,14 +4956,34 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 			boolean isCredit = docType.getDocBaseType().equals(
 					MDocType.DOCBASETYPE_ARCreditMemo);
+			
+			// Controlar si existe en algún allocation 
+			if (isInAllocation(getVoiderAllocationID())) {
+				m_processMsg = "@FreeInvoiceNeededError@";
+				return false;
+			}
+			
+			// Si el período está cerrado no se puede anular un comprobante de compras
+			if (!isSOTrx() && !MPeriod.isOpen(getCtx(), getDateAcct(), docType.getDocBaseType(), docType)) {
+				m_processMsg = "@PeriodClosed@";
+				return false;
+			}
+			
+			// Si está contabilizado elimino la contabilidad 
+			if (isPosted()) {
+				MFactAcct.delete(Table_ID, getID(), get_TrxName());
+			}
+			
 			for (int i = 0; i < lines.length; i++) {
 				MInvoiceLine line = lines[i];
 				BigDecimal old = line.getQtyInvoiced();
 
 				if (old.compareTo(Env.ZERO) != 0) {
 					line.setQty(Env.ZERO);
+					line.setPrice(Env.ZERO);
 					line.setTaxAmt(Env.ZERO);
 					line.setLineNetAmt(Env.ZERO);
+					line.setLineNetAmount(Env.ZERO);
 					line.setLineTotalAmt(Env.ZERO);
 					line.addDescription(Msg.getMsg(getCtx(), "Voided") + " ("
 							+ old + ")");
@@ -4975,28 +4995,34 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 								line.getM_InOutLine_ID(), get_TrxName());
 
 						ioLine.setIsInvoiced(false);
-						ioLine.save(get_TrxName());
+						if(!ioLine.save(get_TrxName())){
+							setProcessMsg(CLogger.retrieveErrorAsString());
+							return false;
+						}
 						line.setM_InOutLine_ID(0);
 					}
 
-					line.save(get_TrxName());
+					if(!line.save(get_TrxName())){
+						setProcessMsg(CLogger.retrieveErrorAsString());
+						return false;
+					}
 				}
 			}
 
+			setTotalLines(BigDecimal.ZERO);
+			setGrandTotal(BigDecimal.ZERO);
 			addDescription(Msg.getMsg(getCtx(), "Voided"));
 			setIsPaid(true);
 			setC_Payment_ID(0);
 			setM_AuthorizationChain_ID(0);
 			setAuthorizationChainStatus(null);
-			setSkipAuthorizationChain(true);		
+			setSkipAuthorizationChain(true);
 		} else {
-			return reverseCorrectIt();
+			voidProcess = true;
+			result = reverseCorrectIt();
 		}
 
-		setProcessed(true);
-		setDocAction(DOCACTION_None);
-
-		return true;
+		return result;
 	} // voidIt
 
 	/**
@@ -5024,7 +5050,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	public boolean reverseCorrectIt() {
 		setAditionalWorkResult(new HashMap<PO, Object>());
 		log.info(toString());
-
+		
 		// Disytel - Franco Bonafine
 		// No es posible anular o revertir facturas que se encuentran en alguna
 		// asignación.
@@ -5042,12 +5068,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		MDocType reversalDocType = docType;
 		boolean isCredit = docType.getDocBaseType().equals(
 				MDocType.DOCBASETYPE_ARCreditMemo);
-		
-		// Si el período está cerrado no se puede anular un comprobante de compras
-		if (!isSOTrx() && !MPeriod.isOpen(getCtx(), getDateAcct(), docType.getDocBaseType(), docType)) {
-			m_processMsg = "@PeriodClosed@";
-			return false;
-		}
 		
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
@@ -5107,7 +5127,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		setSkipExtraValidations(true);
 		
 		// Deep Copy
-		Timestamp dateDoc = isSOTrx()?Env.getDate():getDateAcct();
+		Timestamp dateDoc = Env.getDate();
 
 		MInvoice reversal = copyFrom(this, dateDoc,
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
@@ -5131,11 +5151,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			setAuthorizationChainStatus(null);
 			reversal.setM_AuthorizationChain_ID(0);
 			reversal.setAuthorizationChainStatus(null);
-		}
-		
-		if(!isSOTrx()){
-			reversal.setDateAcct(getDateAcct());
-			reversal.setDateInvoiced(getDateInvoiced());
 		}
 		
 		// Seteo la bandera que indica si se trata de una anulación.
@@ -5176,6 +5191,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				rLine.setQtyEntered(rLine.getQtyEntered().negate());
 				rLine.setQtyInvoiced(rLine.getQtyInvoiced().negate());
 				rLine.setLineNetAmt(rLine.getLineNetAmt().negate());
+				rLine.setLineBonusAmt(rLine.getLineBonusAmt().negate());
+				rLine.setLineDiscountAmt(rLine.getLineDiscountAmt().negate());
+				rLine.setDocumentDiscountAmt(rLine.getDocumentDiscountAmt().negate());
 
 				if ((rLine.getTaxAmt() != null)
 						&& (rLine.getTaxAmt().compareTo(Env.ZERO) != 0)) {
@@ -5188,8 +5206,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				}
 
 				if (!rLine.save(get_TrxName())) {
-					m_processMsg = "Could not correct Invoice Reversal Line";
-
+					m_processMsg = CLogger.retrieveErrorAsString();
 					return false;
 				}
 			}
@@ -5256,12 +5273,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// documentos aparezcan
 		// en el mismo lugar
 		// reversal.setDocStatus( DOCSTATUS_Closed );
-		reversal.setDocStatus(DOCSTATUS_Voided);
+		reversal.setProcessed(true);
+		reversal.setDocStatus(isVoidProcess()?DOCSTATUS_Voided:DOCSTATUS_Reversed);
 
 		reversal.setDocAction(DOCACTION_None);
-		reversal.save(get_TrxName());
-
-		//
+		if(!reversal.save(get_TrxName())){
+			setProcessMsg(CLogger.retrieveErrorAsString());
+			return false;
+		}
 
 		addDescription("(" + reversal.getDocumentNo() + "<-)");
 
@@ -5281,12 +5300,18 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 							iLine.getM_InOutLine_ID(), get_TrxName());
 	
 					ioLine.setIsInvoiced(false);
-					ioLine.save(get_TrxName());
+					if(!ioLine.save(get_TrxName())){
+						setProcessMsg(CLogger.retrieveErrorAsString());
+						return false;
+					}
 	
 					// Reconsiliation
 	
 					iLine.setM_InOutLine_ID(0);
-					iLine.save(get_TrxName());
+					if(!iLine.save(get_TrxName())){
+						setProcessMsg(CLogger.retrieveErrorAsString());
+						return false;
+					}
 				}
 			}
 		}
@@ -5318,14 +5343,17 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 
 		setProcessed(true);
-		setDocStatus(DOCSTATUS_Reversed);
+		setDocStatus(isVoidProcess()?DOCSTATUS_Voided:DOCSTATUS_Reversed);
 		setDocAction(DOCACTION_None);
 
 		StringBuffer info = new StringBuffer(reversal.getDocumentNo());
 
 		// Reverse existing Allocations
 
-		save(); // for allocation reversal
+		if(!save()){
+			setProcessMsg(CLogger.retrieveErrorAsString());
+			return false;
+		}
 
 		// Disytel FB - Ya no se desasignan automáticamente los pagos. Se debe
 		// revertir la asignación manualmente.
@@ -5361,8 +5389,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			allocHdr.setC_POSJournal_ID(reversal.getC_POSJournal_ID());
 
 			if (!allocHdr.save()) {
-				m_processMsg = "Could not create reversal allocation header: "
-						+ CLogger.retrieveErrorAsString();
+				m_processMsg = CLogger.retrieveErrorAsString();
 				return false;
 			}
 			// Se crea la línea de imputación.
@@ -5376,13 +5403,16 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			allocLine.setC_BPartner_ID(getC_BPartner_ID());
 
 			if (!allocLine.save()) {
-				m_processMsg = "Could not create reversal allocation line";
+				m_processMsg = CLogger.retrieveErrorAsString();
 				return false;
 			}
 			allocHdr.setUpdateBPBalance(false);
 			// Se completa la imputación.
 			allocHdr.processIt(MAllocationHdr.ACTION_Complete);
-			allocHdr.save();
+			if(!allocHdr.save()){
+				m_processMsg = CLogger.retrieveErrorAsString();
+				return false;
+			}
 		}
 
 		// Imprimir fiscalmente el documento reverso si es que así lo requiere y
@@ -5394,7 +5424,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return false;
 			}
 		}
-
+		
 		return true;
 	} // reverseCorrectIt
 

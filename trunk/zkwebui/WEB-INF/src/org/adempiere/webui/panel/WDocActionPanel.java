@@ -40,6 +40,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 import org.openXpertya.wf.MWFActivity;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -168,7 +169,7 @@ public class WDocActionPanel extends Window implements EventListener
 			doctypeId = (Integer)mTab.getValue("C_DocTypeTarget_ID");
 		}
 		logger.fine("get doctype: " + doctypeId);
-		if (doctypeId != null) {
+		if (!Util.isEmpty(doctypeId, true)) {
 			index = DocumentEngine.checkActionAccess(Env.getAD_Client_ID(Env.getCtx()),
 					Env.getAD_Role_ID(Env.getCtx()),
 					doctypeId, options, index);

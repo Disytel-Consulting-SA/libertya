@@ -175,8 +175,8 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" 	d.c_invoicepayschedule_id, ");
 		sqlDoc.append(" 	d.c_allocationhdr_id ");
 		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ")  d ");
-		sqlDoc.append(" WHERE d.DocStatus IN ('CO','CL', 'RE', 'VO', 'WC') ");
-		sqlDoc.append("   AND d.AD_Client_ID = ? ");
+		sqlDoc.append(" WHERE d.AD_Client_ID = ? ");
+		sqlDoc.append(" AND "+getDocStatusWhereClause());
 		sqlAppend("   AND d.C_Bpartner_ID = ? ", bPartnerID, sqlDoc);
 		sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 		sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
@@ -242,29 +242,14 @@ public class CurrentAccountQuery {
 	}
 	
 	/**
-	 * @return cláusula where para quedarse solamente con los comprobantes en
-	 *         cuenta corriente
+	 * @return cláusula where para el estado de los documentos
 	 */
-	public static String getCurrentAccountWhereClause(){
-		return "  AND (d.initialcurrentaccountamt > 0 " +
-				" 	OR (d.documenttable = 'C_Invoice' AND "
-							+ "EXISTS (select ic.c_invoice_id "
-									+ "from c_invoice as ic "
-									+ "inner join c_doctype as dt on dt.c_doctype_id = ic.c_doctypetarget_id "
-									+ "where d.c_order_id = ic.c_order_id "
-									+ "		and d.document_id <> ic.c_invoice_id "
-									+ "		and ic.docstatus NOT IN ('DR','IP') "
-									+ "		and ic.initialcurrentaccountamt > 0 "
-									+ "		and dt.signo_issotrx = ? "
-									+ "		and dt.doctypekey not ilike 'CDN%')) " +
-				"	OR (d.documenttable = 'C_Invoice' AND "
-							+ "EXISTS (select ic.c_invoice_id "
-									+ "from c_invoice as ic "
-									+ "inner join c_allocationline as al on al.c_invoice_credit_id = ic.c_invoice_id "
-									+ "inner join c_allocationhdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id "
-									+ "where ah.allocationtype IN ('OP','OPA','RC','RCA') "
-									+ "		and d.document_id = ic.c_invoice_id "
-									+ "		and ic.docstatus NOT IN ('DR','IP')))) ";
+	protected String getDocStatusWhereClause(){
+		// Para documentos de compras, no se deben mostrar los anulados 
+		String whereClause = " (CASE WHEN d.documenttable = 'C_Invoice' AND d.issotrx = 'N' "
+							+ " THEN d.DocStatus IN ('CO', 'CL', 'RE', 'WC') "
+							+ " ELSE d.DocStatus IN ('CO','CL', 'RE', 'VO', 'WC') END) ";
+		return whereClause;
 	}
 
 	private void sqlAppend(String clause, Object value, StringBuffer sql) {

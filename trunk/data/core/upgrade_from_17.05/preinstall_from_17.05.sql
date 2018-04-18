@@ -3673,3 +3673,41 @@ WHERE dragorderdocumentdiscounts = 'Y';
 UPDATE C_Invoice
 SET managedragordersurcharges = 'Y'
 WHERE managedragorderdiscounts = 'Y';
+
+--20180418-1420 Acceso a acciones de documento por perfil
+CREATE TABLE AD_Document_Action_Access
+(
+ad_document_action_access_id integer NOT NULL,
+ad_role_id integer NOT NULL,
+c_doctype_id integer NOT NULL,
+ad_ref_list_id integer NOT NULL,
+ad_client_id integer NOT NULL,
+ad_org_id integer NOT NULL,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+createdby integer NOT NULL,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+updatedby integer NOT NULL,
+ad_componentobjectuid character varying(100),
+ad_componentversion_id integer,
+CONSTRAINT ad_document_action_access_key PRIMARY KEY (ad_document_action_access_id),
+CONSTRAINT ad_document_action_role_access_fk FOREIGN KEY (ad_role_id)
+REFERENCES ad_role (ad_role_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE CASCADE,
+CONSTRAINT ad_document_action_doctype_access_fk FOREIGN KEY (c_doctype_id)
+REFERENCES c_doctype (c_doctype_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE CASCADE,
+CONSTRAINT ad_document_action_reflist_access_fk FOREIGN KEY (ad_ref_list_id)
+REFERENCES ad_ref_list (ad_ref_list_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+OIDS=TRUE
+);
+ALTER TABLE AD_Document_Action_Access
+OWNER TO libertya;
+
+--Estado de documento Revertido para comprobantes de compras en estado anulado
+update c_invoice
+set docstatus = 'RE'
+where ad_client_id = 1010016 and issotrx = 'N' and docstatus = 'VO';

@@ -14,7 +14,6 @@ import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MConversionRate;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.X_T_EstadoDeCuenta;
-import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -188,9 +187,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  JOIN c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id " +
 			"	  JOIN c_doctype dt on i.c_doctype_id = dt.c_doctype_id    " +
 			"	  JOIN c_bpartner bp on i.c_bpartner_id = bp.c_bpartner_id    " +
-			"	  WHERE i.ispayschedulevalid <> 'Y'::bpchar AND i.docstatus NOT IN ('DR','IP') " +
+			"	  WHERE i.ispayschedulevalid <> 'Y'::bpchar " + 
+			"	  AND " +getDocStatusWhereClause("i") +
 			"	  AND i.AD_Client_ID = " + getAD_Client_ID() +
-			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO', 'WC') " +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND i.paymentrule = '"+condition+"' ") +
@@ -699,4 +698,14 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		DB.cancelStatement(pstmt);
 	}
 	
+	/**
+	 * @return cláusula where para el estado de los documentos
+	 */
+	protected String getDocStatusWhereClause(String tableAlias){
+		// Para documentos de compras, no se deben mostrar los anulados 
+		String whereClause = " (CASE WHEN "+tableAlias+".issotrx = 'N' "
+							+ " THEN "+tableAlias+".docstatus NOT IN ('DR','IP','VO') "
+							+ " ELSE "+tableAlias+".docStatus NOT IN ('DR','IP') END) ";
+		return whereClause;
+	}
 }
