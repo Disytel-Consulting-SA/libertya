@@ -2034,7 +2034,7 @@ ALTER FUNCTION c_pos_declaracionvalores_payments_filtered(anyarray)
   OWNER TO libertya; 
   
 --20180105-1030 Incorporación de currencyconverts en el informe Resumen de Ventas
-﻿CREATE OR REPLACE FUNCTION v_dailysales_current_account_filtered(
+CREATE OR REPLACE FUNCTION v_dailysales_current_account_filtered(
     orgid integer,
     posid integer,
     userid integer,
