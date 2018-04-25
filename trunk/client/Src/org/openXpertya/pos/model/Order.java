@@ -233,6 +233,19 @@ public class Order  {
 		for (OrderProduct orderProduct : getOrderProducts()) {
 			taxBaseAux = orderProduct.getTaxBaseAmt(withoutDocumentTotalAmtForOtherTaxes, false);
 			taxAmountAux = orderProduct.getTotalTaxAmt(withoutDocumentTotalAmtForOtherTaxes, false);
+			// Verifico si no hay un problema de centavos para este caso en comparación entre el neto + impuesto y el precio total
+			if(orderProduct.getProduct().isTaxIncludedInPrice()){
+				BigDecimal compare = taxBaseAux.add(taxAmountAux).subtract(orderProduct.getTotalTaxedPrice());
+				// Error de centavos,
+				// Si el importe calculado es mayor al importe total, decremento
+				// importe de impuesto
+				// Si el importe calculado es menor al importe total, aumento
+				// importe de impuesto
+				if(compare.compareTo(BigDecimal.ZERO) != 0){
+					taxAmountAux = taxAmountAux.subtract(compare);
+				}
+			}
+			
 			taxBaseAmount = taxBaseAmount.add(taxBaseAux);
 			taxAmount = taxAmount.add(taxAmountAux);
 			if(updateTaxes){
