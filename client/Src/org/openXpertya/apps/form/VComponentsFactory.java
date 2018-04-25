@@ -52,7 +52,7 @@ public class VComponentsFactory {
 	}
 	
 	public static VLookup VLookupFactory(String ColumnName, String TableName, int WindowNo, int displayType, String whereClause, boolean mandatory, boolean addSecurityValidation) {
-		return VLookupFactory(ColumnName, TableName, WindowNo, displayType, whereClause, mandatory, true, false);
+		return VLookupFactory(ColumnName, TableName, WindowNo, displayType, whereClause, mandatory, addSecurityValidation, false);
 	}
 	
 	public static VLookup VLookupFactory(String ColumnName, String TableName, int WindowNo, int displayType, String whereClause, boolean mandatory, boolean addSecurityValidation, boolean multiSelect) {
@@ -60,7 +60,7 @@ public class VComponentsFactory {
 		int AD_Column_ID = DarColID(ColumnName, TableName);
 		
 		int TabNo = 0;
-		
+
 		MLookupInfo info = MLookupInfoFactory( Env.getCtx(),WindowNo,TabNo,AD_Column_ID, displayType, whereClause, addSecurityValidation );
 		info.ZoomQuery = new MQuery();
 		
