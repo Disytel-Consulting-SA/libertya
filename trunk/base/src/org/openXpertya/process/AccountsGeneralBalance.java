@@ -201,7 +201,8 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		line.setC_ElementValue_ID(accountElement.elementValueID);
 		line.setAcct_Code(accountElement.code);
 		line.setAcct_Description(accountElement.description);
-		line.setAD_Org_ID(accountElement.orgID);
+		//line.setAD_Org_ID(accountElement.orgID);
+		line.setAD_Org_ID(p_AD_Org_ID);
 		line.setHierarchicalCode(accountElement.hierarchicalCode);
 		
 		// El Debe y Haber se calculan masivamente en el doIt. 

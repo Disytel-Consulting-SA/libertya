@@ -49,6 +49,8 @@ public class AccountsSumsAndBalances extends AccountsGeneralBalance {
 			line.setAcct_Code(accountElement.code);
 			line.setAcct_Description(accountElement.description);
 			line.setAD_Org_ID(accountElement.orgID);
+			//line.setAD_Org_ID(accountElement.orgID);
+			line.setAD_Org_ID(p_AD_Org_ID);
 			line.setHierarchicalCode(accountElement.hierarchicalCode);
 			line.setDateAcct(p_DateAcct_From);
 			// Debe, Haber, Saldo Deudor y Saldo Acreedor se calculan masivamente
