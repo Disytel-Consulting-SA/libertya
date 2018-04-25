@@ -3711,3 +3711,6 @@ OWNER TO libertya;
 update c_invoice
 set docstatus = 'RE'
 where ad_client_id = 1010016 and issotrx = 'N' and docstatus = 'VO';
+
+--20180425-1135 Merge relacionado con r2361 
+update ad_system set dummy = (SELECT addcolumnifnotexists('GL_JournalBatch', 'IsReActivated', 'character(1)'));  
