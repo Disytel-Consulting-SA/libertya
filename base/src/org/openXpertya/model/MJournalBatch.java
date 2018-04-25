@@ -24,11 +24,15 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.openXpertya.process.DocAction;
+import org.openXpertya.process.DocOptions;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -44,7 +48,7 @@ import org.openXpertya.util.Util;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
+public class MJournalBatch extends X_GL_JournalBatch implements DocAction, DocOptions {
 
 	private static CLogger s_log = CLogger.getCLogger(MJournalBatch.class);
 	
@@ -621,6 +625,15 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
         int no = DB.executeUpdate(sql2,get_TrxName());
         */
         // Fin Codigo comentado Antonio@Disytel
+        
+        if(isReActivated()) {
+        	if(!processRecursively()) {
+        		m_processMsg = "ERROR: No hay líneas cargadas en el libro";
+                return DocAction.STATUS_Invalid;
+        	}
+        	setIsReActivated(false);
+        }
+        
         setProcessed( true );
         setDocAction( DOCACTION_Close );
 
@@ -927,14 +940,40 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 
     public boolean reActivateIt() {
         log.info( "reActivateIt - " + toString());
-
+        
         // setProcessed(false);
 
+        /* CODIGO VIEJO QUE ESTA SIN UTILIZARSE
         if( reverseCorrectIt()) {
             return true;
         }
 
-        return false;
+        return false;*/
+        
+        setIsReActivated(true);
+        /*
+         * Borro los registros contables manuales que ya estaban aplicados
+         * y los coloco como "No Aplicado"
+         */
+        String sql="";
+        for(MJournal j: getJournals(true)) {
+        	j.setDocStatus(MJournal.DOCSTATUS_InProgress);
+        	if(j.isPosted()) {
+	        	j.setPosted(false);
+	        	sql="DELETE FROM Fact_acct "
+            	+ "WHERE AD_table_ID="+MJournal.Table_ID+" AND record_ID="+j.getGL_Journal_ID()+"\n";
+        	}
+        	j.save();
+        }
+        if(!sql.equals("")) {DB.executeUpdate(sql);}
+        /*
+         * Pongo las lineas de los asientos como NO procesadas para poder dejarlas editables.
+         */
+        sql="UPDATE gl_journalLine SET Processed = 'N' "
+        		+ "WHERE gl_journal_id IN "
+        		+ "(SELECT gl_journal_id FROM gl_journal WHERE gl_journalBatch_id = " +getID()+")";
+        DB.executeUpdate(sql);
+        return true;
     }    // reActivateIt
 
     /**
@@ -1008,6 +1047,42 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction {
 		DB.executeUpdate(" UPDATE " + X_GL_Journal.Table_Name + " SET docstatus = '" + docStatus
 				+ "' WHERE GL_JournalBatch_ID = "+journalBatchID, get_TrxName());
     }
+    
+    /**
+	 * Metodo implementado de DocOption
+	 * Agrega las opciones a realizar en los distintos estados del flujo de documentos
+	 **/
+	@Override
+	public int customizeValidActions(String docStatus, Object processing, String orderType, String isSOTrx,
+			int AD_Table_ID, String[] docAction, String[] options, int index) {
+		
+		if(AD_Table_ID == MJournalBatch.Table_ID) {
+			if(getDocStatus().equals(DocumentEngine.STATUS_Completed)) {
+				index = 0;
+				//Vacio el arreglo de opciones
+				Arrays.fill(options, null);
+		        options[ index++ ] = DocumentEngine.ACTION_Close;
+		        options[ index++ ] = DocumentEngine.ACTION_ReActivate;
+			}			
+		}
+		return index;
+	}
+	
+	/**
+	 * Coloca todos los Journals del Batch en procesados.
+	 * Esto se debe invocar cuando se pasa del estado Reactivado a Completo
+	 **/
+	public boolean processRecursively() {
+		MJournal[] journals = getJournals(true);
+		if(journals.length == 0) {
+			return false;
+		}
+		for(MJournal j: journals) {
+			j.setProcessed(true);
+		}
+		return true;
+	}
+	
 }    // MJournalBatch
 
 
