@@ -332,7 +332,7 @@ public class PoSOnline extends PoSConnectionState {
 				
 				invoice.addDocActionStatusListener(getDocActionStatusListener());
 				debug("Chequeando Factura");
-				checkInvoice();
+				checkInvoice(order);
 			}
 			
 			debug("Guardando los descuentos");
@@ -679,7 +679,7 @@ public class PoSOnline extends PoSConnectionState {
 		return VModelHelper.currencyConvert(amount, fromCurrency, toCurrency, invoiceDate);
 	}
 	
-	private void checkInvoice() throws PosException {
+	private void checkInvoice(Order order) throws PosException {
 
 		BigDecimal totalPagar = invoice.getGrandTotal().subtract(sumaCreditPayments);
 		BigDecimal sumaPagos = 
@@ -696,6 +696,10 @@ public class PoSOnline extends PoSConnectionState {
 
 		// Hay una diferencia menor o igual al redondeo estándar ? 
 		if (diff.compareTo(redondeo) <= 0){
+			BigDecimal cashChangeAmt = order.getTotalChangeCashAmt();
+			if(cashChangeAmt.compareTo(BigDecimal.ZERO) != 0){
+				diff = diff.add(cashChangeAmt);
+			}
 			faltantePorRedondeo = diff;
 			sumaPagos.add(diff);
 		}
