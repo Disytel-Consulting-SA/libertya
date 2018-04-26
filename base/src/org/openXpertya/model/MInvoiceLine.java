@@ -468,14 +468,15 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 							mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision);
 					// Determinar el ratio correspondiente a esta línea para
 					// saber cuanto es realmente el descuento
-					parent = parentDocumentDiscounts.get(mDocumentDiscount.getC_DocumentDiscount_Parent_ID());
+					/*parent = parentDocumentDiscounts.get(mDocumentDiscount.getC_DocumentDiscount_Parent_ID());
 					if (parent == null) {
 						parent = new MDocumentDiscount(getCtx(), mDocumentDiscount.getC_DocumentDiscount_Parent_ID(),
 								get_TrxName());
 						parentDocumentDiscounts.put(mDocumentDiscount.getC_DocumentDiscount_Parent_ID(), parent);
 					}
-					discountAmt = discountAmt.multiply(mDocumentDiscount.getDiscountBaseAmt()
-							.divide(totalPriceList, tmpPrecision, BigDecimal.ROUND_HALF_UP));
+					discountAmt = discountAmt.multiply(totalPriceList
+							.divide(mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision, BigDecimal.ROUND_HALF_UP));
+							*/
 					documentDiscountAmt = documentDiscountAmt.add(discountAmt.setScale(2, BigDecimal.ROUND_HALF_UP));
 					// Registro el descuento para luego guardar
 					createDocumentDiscountToSave(mDocumentDiscount, totalPriceList, discountAmt, true);
