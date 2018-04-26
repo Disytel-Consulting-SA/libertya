@@ -708,4 +708,8 @@ public class OrderProduct {
 	public BigDecimal getTaxBaseAmt(boolean includeDocumentDiscount, boolean isTemporal){
 		return getTotalNetAmt(includeDocumentDiscount, isTemporal);
 	}
+	
+	public BigDecimal getTotalTaxedPrice(boolean includeDocumentDiscount, boolean isTemporal) {
+		return getTotalTaxedPrice(false).subtract(getRealDocumentDiscountAmt(includeDocumentDiscount, isTemporal));
+	}
 }
