@@ -235,7 +235,8 @@ public class Order  {
 			taxAmountAux = orderProduct.getTotalTaxAmt(withoutDocumentTotalAmtForOtherTaxes, false);
 			// Verifico si no hay un problema de centavos para este caso en comparación entre el neto + impuesto y el precio total
 			if(orderProduct.getProduct().isTaxIncludedInPrice()){
-				BigDecimal compare = taxBaseAux.add(taxAmountAux).subtract(orderProduct.getTotalTaxedPrice());
+				BigDecimal compare = taxBaseAux.add(taxAmountAux)
+						.subtract(orderProduct.getTotalTaxedPrice(withoutDocumentTotalAmtForOtherTaxes, false));
 				// Error de centavos,
 				// Si el importe calculado es mayor al importe total, decremento
 				// importe de impuesto
