@@ -6331,13 +6331,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 	public void updateTotalDocumentDiscount() throws Exception {
 		BigDecimal linesTotalDocumentDiscount = getTotalDocumentDiscountAmtFromLines(false);
-		if (!Util.isEmpty(linesTotalDocumentDiscount, true)) {
-			getChargeAmt();
-			setChargeAmt(linesTotalDocumentDiscount.negate());
-			calculateTaxTotal();
-			if (!save()) {
-				throw new Exception(CLogger.retrieveErrorAsString());
-			}
+		getChargeAmt();
+		setChargeAmt(linesTotalDocumentDiscount.negate());
+		calculateTaxTotal();
+		if (!save()) {
+			throw new Exception(CLogger.retrieveErrorAsString());
 		}
 	}
 
