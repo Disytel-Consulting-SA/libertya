@@ -603,7 +603,8 @@ public class ExportListaGalicia extends ExportBankList {
 		BigDecimal noimponible = rsre.getBigDecimal("noimponible").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 		BigDecimal retencion = rsre.getBigDecimal("retencion").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 		BigDecimal retencion_base = rsre.getBigDecimal("base").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
-		BigDecimal retencion_perc = rsre.getBigDecimal("perc").abs().multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
+		BigDecimal retencion_perc = (rsre.getBigDecimal("perc") != null ? rsre.getBigDecimal("perc").abs()
+				: BigDecimal.ZERO).multiply(Env.ONEHUNDRED).setScale(0, BigDecimal.ROUND_DOWN);
 
 		rp.append("03");
 		rp.append("1");
