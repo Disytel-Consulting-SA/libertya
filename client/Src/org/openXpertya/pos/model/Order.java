@@ -229,6 +229,7 @@ public class Order  {
 		BigDecimal taxAmountAux = BigDecimal.ZERO;
 		BigDecimal taxBaseAmount = BigDecimal.ZERO;
 		BigDecimal taxBaseAux = BigDecimal.ZERO;
+		Tax oldTax = null;
 		// Suma el importe total con impuestos de cada artículo en el pedido
 		for (OrderProduct orderProduct : getOrderProducts()) {
 			taxBaseAux = orderProduct.getTaxBaseAmt(withoutDocumentTotalAmtForOtherTaxes, false);
@@ -250,8 +251,11 @@ public class Order  {
 			taxBaseAmount = taxBaseAmount.add(taxBaseAux);
 			taxAmount = taxAmount.add(taxAmountAux);
 			if(updateTaxes){
-				orderProduct.getTax().setAmount(taxAmountAux);
-				orderProduct.getTax().setTaxBaseAmt(taxBaseAux);
+				orderProduct.getTax()
+						.setAmount(oldTax == null || oldTax != orderProduct.getTax() ? taxAmountAux : taxAmount);
+				orderProduct.getTax()
+						.setTaxBaseAmt(oldTax == null || oldTax != orderProduct.getTax() ? taxBaseAux : taxBaseAmount);
+				oldTax = orderProduct.getTax();
 			}
 		}
 		
@@ -1339,9 +1343,12 @@ public class Order  {
 	public List<Tax> getAllTaxes(){
 		List<Tax> taxes = new ArrayList<Tax>();
 		Map<BigDecimal, Tax> auxTaxes = new HashMap<BigDecimal, Tax>();
-		Tax acumTax;
+		Tax acumTax, oldTax = null;
 		// IVA
 		for (OrderProduct op : getOrderProducts()) {
+			if(oldTax != null && oldTax == op.getTax()){
+				break;
+			}
 			acumTax = auxTaxes.get(op.getTaxRate());
 			if(acumTax == null){
 				acumTax = new Tax(op.getTax().getId(), op.getTaxRate(), op.getTax().getName(), false);
@@ -1351,6 +1358,7 @@ public class Order  {
 			acumTax.setAmount(acumTax.getAmount().add(op.getTax().getAmount()));
 			acumTax.setTaxBaseAmt(acumTax.getTaxBaseAmt().add(op.getTax().getTaxBaseAmt()));
 			auxTaxes.put(op.getTaxRate(), acumTax);
+			oldTax = op.getTax();
 		}
 		taxes.addAll(auxTaxes.values());
 		
