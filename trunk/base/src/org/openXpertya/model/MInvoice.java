@@ -5128,6 +5128,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		
 		// Deep Copy
 		Timestamp dateDoc = Env.getDate();
+		
+		reversalDocType = reversalDocType != null ? reversalDocType : docType;
 
 		MInvoice reversal = copyFrom(this, dateDoc,
 				reversalDocType.getC_DocType_ID(), isSOTrx(), false,
