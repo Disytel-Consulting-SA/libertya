@@ -3931,3 +3931,31 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
   OWNER TO libertya;
+  
+--20180507-1330 Nueva tabla que permite configurar cláusulas where por organización en un único procesador contable
+CREATE TABLE c_acctprocessortable
+(
+  c_acctprocessortable_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_acctprocessor_id integer NOT NULL,
+  ad_table_id integer NOT NULL,
+  whereclause character varying(2000),
+  CONSTRAINT c_acctprocessortable_key PRIMARY KEY (c_acctprocessortable_id),
+  CONSTRAINT c_acctprocessortable_acctprocessor FOREIGN KEY (c_acctprocessor_id)
+      REFERENCES c_acctprocessor (c_acctprocessor_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT c_acctprocessortable_table FOREIGN KEY (ad_table_id)
+      REFERENCES ad_table (ad_table_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_acctprocessortable
+  OWNER TO libertya;
