@@ -19,6 +19,8 @@ package org.openXpertya.server;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.openXpertya.acct.Doc;
@@ -26,6 +28,7 @@ import org.openXpertya.model.MAcctProcessor;
 import org.openXpertya.model.MAcctProcessorLog;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.X_C_AcctProcessorTable;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
@@ -68,6 +71,11 @@ public class AcctProcessor extends ServidorOXP {
     /** Descripción de Campos */
 
     private MAcctSchema[] m_ass = null;
+    
+    /**
+     * Configuración por tabla y organización
+     */
+    private Map<Integer, String> tablesConfig;
 
     /**
      * Descripción de Método
@@ -85,7 +93,7 @@ public class AcctProcessor extends ServidorOXP {
             m_ass = new MAcctSchema[]{ new MAcctSchema( getCtx(),m_model.getC_AcctSchema_ID(),null )};
         }
 
-        //
+        initTablesConfig();
 
         postSession();
 
@@ -103,6 +111,77 @@ public class AcctProcessor extends ServidorOXP {
         pLog.save();
     }    // doWork
 
+    /**
+     * Inicializa la configuración por tabla
+     */
+    protected void initTablesConfig(){
+		String sql = "SELECT * FROM " + X_C_AcctProcessorTable.Table_Name
+				+ " WHERE C_AcctProcessor_ID = ? AND isactive = 'Y'";
+		Map<Integer, Map<Integer, String>> ct = new HashMap<Integer, Map<Integer,String>>();
+		Map<Integer, String> whereClauses = new HashMap<Integer, String>();
+		Map<Integer, String> orgAux;
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	Integer tableID, orgID;
+    	String where;
+    	try {
+			ps = DB.prepareStatement(sql);
+			ps.setInt(1, m_model.getID());
+			rs = ps.executeQuery();
+			while(rs.next()){
+				tableID = rs.getInt("ad_table_id");
+				orgID = rs.getInt("ad_org_id");
+				where = rs.getString("whereclause");
+				// Por Tabla
+				orgAux = ct.get(tableID);
+				if(orgAux == null){
+					orgAux = new HashMap<Integer, String>();
+					ct.put(tableID, orgAux);
+				}
+				// Por Org
+				ct.get(tableID).put(orgID, where);
+			}
+			
+			rs.close();
+			ps.close();
+			
+			// Inicializo las cláusulas where por tabla y org
+			StringBuffer buildWhereClause = null;
+			String whereForAllOrg;
+			String whereClauseForTable;
+			String whereFor0;
+			for (Integer table : ct.keySet()) {
+				whereForAllOrg = " 1=1 ";
+				whereFor0 = null;
+				buildWhereClause = new StringBuffer(" ( CASE ad_org_id ");
+				for (Integer org : ct.get(table).keySet()) {
+					if(org.intValue() == 0){
+						whereFor0 = " ( "+ct.get(table).get(org)+" ) ";
+					}
+					else{
+						buildWhereClause.append(" WHEN ").append(org).append(" THEN ( ").append(ct.get(table).get(org))
+								.append(" ) ");
+					}
+				}
+				buildWhereClause.append(" ELSE ").append(Util.isEmpty(whereFor0, true) ? whereForAllOrg : whereFor0)
+						.append(" END ) ");
+				
+				// Si entra por esta condición, entonces el único where es por
+				// org *
+				whereClauseForTable = buildWhereClause.toString();
+				if(!Util.isEmpty(whereFor0, true) && ct.get(table).size() == 1){
+					whereClauseForTable = whereFor0;
+				}
+				
+				whereClauses.put(table, whereClauseForTable.toString());
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+    	setTablesConfig(whereClauses);
+    }
+    
     /**
      * Descripción de Método
      *
@@ -127,9 +206,14 @@ public class AcctProcessor extends ServidorOXP {
 
             if( doc == null ) {
                 log.severe( getName() + ": No Doc for " + TableName );
-
                 continue;
             }
+            
+			// Con respecto a cláusulas where, tenemos la posibilidad de agregar
+			// en el mismo procesador cuando está configurado por tabla y 
+            // en la tabla C_AcctProcessorTable. Se usan las
+			// dos para dar soporte a configuraciones anteriores
+            String whereTableConfig = getTablesConfig().get(AD_Table_ID);
 
             // Select id FROM table
 
@@ -140,7 +224,10 @@ public class AcctProcessor extends ServidorOXP {
             sql.append( " WHERE AD_Client_ID=?" );
             sql.append( " AND (0 = ? OR AD_Org_ID = ?) " );
             sql.append( " AND Processed='Y' AND Posted<>'Y' AND IsActive='Y'" );
+            
             sql.append(Util.isEmpty(m_model.getWhereClause(), true)?"":" AND "+m_model.getWhereClause());
+            sql.append(Util.isEmpty(whereTableConfig, true)?"":" AND "+whereTableConfig);
+            
             sql.append( " ORDER BY Created" );
 
             //
@@ -217,6 +304,16 @@ public class AcctProcessor extends ServidorOXP {
     public String getServerInfo() {
         return "#" + p_runCount + " - Last=" + m_summary.toString();
     }    // getServerInfo
+
+
+	public Map<Integer, String> getTablesConfig() {
+		return tablesConfig;
+	}
+
+
+	public void setTablesConfig(Map<Integer, String> tablesConfig) {
+		this.tablesConfig = tablesConfig;
+	}
 }    // AcctProcessor
 
 
