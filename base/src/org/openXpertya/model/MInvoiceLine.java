@@ -1418,6 +1418,19 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             return success;
         }
 
+		// Actualizar el importe de descuento de documento de la cabecera, antes
+		// de actualizar el impuesto
+        // Si debe manejar los descuentos arrastrados de la factura,
+     	// entonces actualizo el descuento de documento de la cabecera
+     	if(getInvoice().isManageDragOrderDiscountsSurcharges(false)){
+        	try{
+        		getInvoice().updateTotalDocumentDiscount();
+        	} catch(Exception e){
+        		log.saveError("", e.getMessage());
+        		return false;
+        	}
+        }
+        
         return !shouldUpdateHeader || updateHeaderTax();
     }    // afterDelete
 
