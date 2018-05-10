@@ -103,7 +103,7 @@ public class GenerateLibroIva extends SvrProcess {
          	"       cdt.signo," +
          	"       cit.AD_Client_ID, " +
          	"       cbp.iibb " +
-         	" from (select c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctypetarget_id, c_invoice.fiscalalreadyprinted, c_invoice.netamount  " +
+         	" from (select c_invoice.c_invoice_id, c_invoice.ad_client_id, c_invoice.ad_org_id, c_invoice.c_currency_id, c_invoice.c_conversiontype_id, c_invoice.documentno, c_invoice.c_bpartner_id, c_invoice.dateacct, c_invoice.dateinvoiced, c_invoice.totallines, c_invoice.grandtotal, c_invoice.issotrx, c_invoice.c_doctypetarget_id, c_invoice.fiscalalreadyprinted, c_invoice.netamount, c_invoice.cae  " +
          	"       from c_invoice " +
          	"		INNER JOIN c_doctype ON c_invoice.c_doctypetarget_id = c_doctype.c_doctype_id " +
          	"       where c_invoice.ad_client_id = ? "+ 
@@ -131,7 +131,7 @@ public class GenerateLibroIva extends SvrProcess {
          
          String dateOrder = isPurchase() ? "inv.dateinvoiced" : "inv.dateacct";		
          sqlReal.append(") inv " +
-         	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscal, isfiscaldocument " +
+         	"     left join (select c_doctype_id, name as c_doctype_name,docbasetype , signo_issotrx as signo, doctypekey, isfiscaldocument, isfiscal, iselectronic " +
          	"				from c_docType) cdt on cdt.c_doctype_id = inv.c_doctypetarget_id " +
          	"     left join (Select c_tax_id, c_invoice_id, taxamt as importe, ad_client_id " +
          	" 		        from c_invoicetax) cit 	on cit.c_invoice_id = inv.c_invoice_id " +
