@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_EstadoDeCuenta
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-01-09 15:07:23.327 */
+ *  @version  - 2018-05-10 23:23:19.435 */
 public class X_T_EstadoDeCuenta extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -105,6 +105,22 @@ Identifies a Business Partner */
 public int getC_BPartner_ID() 
 {
 Integer ii = (Integer)get_Value("C_BPartner_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Business Partner Group.
+Business Partner Group */
+public void setC_BP_Group_ID (int C_BP_Group_ID)
+{
+if (C_BP_Group_ID <= 0) set_Value ("C_BP_Group_ID", null);
+ else 
+set_Value ("C_BP_Group_ID", new Integer(C_BP_Group_ID));
+}
+/** Get Business Partner Group.
+Business Partner Group */
+public int getC_BP_Group_ID() 
+{
+Integer ii = (Integer)get_Value("C_BP_Group_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -526,132 +542,4 @@ public String gettipodoc()
 {
 return (String)get_Value("tipodoc");
 }
-
-public boolean insertDirect() 
-{
- 
-try 
-{
- 
- 		 String sql = " INSERT INTO T_EstadoDeCuenta(SalesRep_ID,ShowDocuments,DateAcct,DateToDays,AccountType,AD_Client_ID,AD_Org_ID,AD_PInstance_ID,bpartner,C_BPartner_ID,C_ConversionType_ID,C_Currency_ID,C_InvoicePaySchedule_ID,C_Order_ID,C_PaymentTerm_ID,Created,CreatedBy,DateDoc,DaysDue,DiscountAmt,DiscountDate,doc_id,DocumentNo,GrandTotal,IsActive,IsPayScheduleValid,IsSOTrx,NetDays,OpenAmt,PaidAmt,signo_issotrx,T_EstadoDeCuenta_ID,tipodoc,Updated,UpdatedBy,ConversionRate,GrandTotalMulticurrency,OpenAmtMulticurrency,PaidAmtMulticurrency,Condition" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
-
-		 if (getSalesRep_ID() == 0) sql = sql.replaceFirst("SalesRep_ID,","").replaceFirst("\\?,", "");
- 		 if (getShowDocuments() == null) sql = sql.replaceFirst("ShowDocuments,","").replaceFirst("\\?,", "");
- 		 if (getDateAcct() == null) sql = sql.replaceFirst("DateAcct,","").replaceFirst("\\?,", "");
- 		 if (getDateToDays() == null) sql = sql.replaceFirst("DateToDays,","").replaceFirst("\\?,", "");
- 		 if (getAccountType() == null) sql = sql.replaceFirst("AccountType,","").replaceFirst("\\?,", "");
- 		 if (getbpartner() == null) sql = sql.replaceFirst("bpartner,","").replaceFirst("\\?,", "");
- 		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_ConversionType_ID() == 0) sql = sql.replaceFirst("C_ConversionType_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Currency_ID() == 0) sql = sql.replaceFirst("C_Currency_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_InvoicePaySchedule_ID() == 0) sql = sql.replaceFirst("C_InvoicePaySchedule_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Order_ID() == 0) sql = sql.replaceFirst("C_Order_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_PaymentTerm_ID() == 0) sql = sql.replaceFirst("C_PaymentTerm_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getDateDoc() == null) sql = sql.replaceFirst("DateDoc,","").replaceFirst("\\?,", "");
- 		 if (getDaysDue() == 0) sql = sql.replaceFirst("DaysDue,","").replaceFirst("\\?,", "");
- 		 if (getDiscountAmt() == null) sql = sql.replaceFirst("DiscountAmt,","").replaceFirst("\\?,", "");
- 		 if (getDiscountDate() == null) sql = sql.replaceFirst("DiscountDate,","").replaceFirst("\\?,", "");
- 		 if (getdoc_id() == 0) sql = sql.replaceFirst("doc_id,","").replaceFirst("\\?,", "");
- 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
- 		 if (getGrandTotal() == null) sql = sql.replaceFirst("GrandTotal,","").replaceFirst("\\?,", "");
- 		 if (getNetDays() == null) sql = sql.replaceFirst("NetDays,","").replaceFirst("\\?,", "");
- 		 if (getOpenAmt() == null) sql = sql.replaceFirst("OpenAmt,","").replaceFirst("\\?,", "");
- 		 if (getPaidAmt() == null) sql = sql.replaceFirst("PaidAmt,","").replaceFirst("\\?,", "");
- 		 if (getsigno_issotrx() == 0) sql = sql.replaceFirst("signo_issotrx,","").replaceFirst("\\?,", "");
- 		 if (gettipodoc() == null) sql = sql.replaceFirst("tipodoc,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getConversionRate() == null) sql = sql.replaceFirst("ConversionRate,","").replaceFirst("\\?,", "");
- 		 if (getGrandTotalMulticurrency() == null) sql = sql.replaceFirst("GrandTotalMulticurrency,","").replaceFirst("\\?,", "");
- 		 if (getOpenAmtMulticurrency() == null) sql = sql.replaceFirst("OpenAmtMulticurrency,","").replaceFirst("\\?,", "");
- 		 if (getPaidAmtMulticurrency() == null) sql = sql.replaceFirst("PaidAmtMulticurrency,","").replaceFirst("\\?,", "");
- 		 if (getCondition() == null) sql = sql.replaceFirst("Condition,","").replaceFirst("\\?,", "");
- 		 skipAdditionalNullValues(sql);
- 
-
- 		 int col = 1;
- 
-		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
- 
-		 if (getSalesRep_ID() != 0)  pstmt.setInt(col++, getSalesRep_ID());
-		 if (getShowDocuments() != null) pstmt.setString(col++, getShowDocuments());
-		 if (getDateAcct() != null) pstmt.setTimestamp(col++, getDateAcct());
-		 if (getDateToDays() != null) pstmt.setTimestamp(col++, getDateToDays());
-		 if (getAccountType() != null) pstmt.setString(col++, getAccountType());
-		  pstmt.setInt(col++, getAD_Client_ID());
-		  pstmt.setInt(col++, getAD_Org_ID());
-		  pstmt.setInt(col++, getAD_PInstance_ID());
-		 if (getbpartner() != null) pstmt.setString(col++, getbpartner());
-		 if (getC_BPartner_ID() != 0)  pstmt.setInt(col++, getC_BPartner_ID());
-		 if (getC_ConversionType_ID() != 0)  pstmt.setInt(col++, getC_ConversionType_ID());
-		 if (getC_Currency_ID() != 0)  pstmt.setInt(col++, getC_Currency_ID());
-		 if (getC_InvoicePaySchedule_ID() != 0)  pstmt.setInt(col++, getC_InvoicePaySchedule_ID());
-		 if (getC_Order_ID() != 0)  pstmt.setInt(col++, getC_Order_ID());
-		 if (getC_PaymentTerm_ID() != 0)  pstmt.setInt(col++, getC_PaymentTerm_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		  pstmt.setInt(col++, getCreatedBy());
-		 if (getDateDoc() != null) pstmt.setTimestamp(col++, getDateDoc());
-		 if (getDaysDue() != 0)  pstmt.setInt(col++, getDaysDue());
-		 if (getDiscountAmt() != null) pstmt.setBigDecimal(col++, getDiscountAmt());
-		 if (getDiscountDate() != null) pstmt.setTimestamp(col++, getDiscountDate());
-		 if (getdoc_id() != 0)  pstmt.setInt(col++, getdoc_id());
-		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
-		 if (getGrandTotal() != null) pstmt.setBigDecimal(col++, getGrandTotal());
-		 pstmt.setString(col++, isActive()?"Y":"N");
-		 pstmt.setString(col++, isPayScheduleValid()?"Y":"N");
-		 pstmt.setString(col++, isSOTrx()?"Y":"N");
-		 if (getNetDays() != null) pstmt.setBigDecimal(col++, getNetDays());
-		 if (getOpenAmt() != null) pstmt.setBigDecimal(col++, getOpenAmt());
-		 if (getPaidAmt() != null) pstmt.setBigDecimal(col++, getPaidAmt());
-		 if (getsigno_issotrx() != 0)  pstmt.setInt(col++, getsigno_issotrx());
-		  pstmt.setInt(col++, getT_EstadoDeCuenta_ID());
-		 if (gettipodoc() != null) pstmt.setString(col++, gettipodoc());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		  pstmt.setInt(col++, getUpdatedBy());
-		 if (getConversionRate() != null) pstmt.setBigDecimal(col++, getConversionRate());
-		 if (getGrandTotalMulticurrency() != null) pstmt.setBigDecimal(col++, getGrandTotalMulticurrency());
-		 if (getOpenAmtMulticurrency() != null) pstmt.setBigDecimal(col++, getOpenAmtMulticurrency());
-		 if (getPaidAmtMulticurrency() != null) pstmt.setBigDecimal(col++, getPaidAmtMulticurrency());
-		 if (getCondition() != null) pstmt.setString(col++, getCondition());
-		 col = setAdditionalInsertValues(col, pstmt);
- 
-
-		pstmt.executeUpdate();
-
-		return true;
-
-	}
-catch (SQLException e) 
-{
-	log.log(Level.SEVERE, "insertDirect", e);
-	log.saveError("Error", DB.getErrorMsg(e) + " - " + e);
-	return false;
-	}
-catch (Exception e2) 
-{
-	log.log(Level.SEVERE, "insertDirect", e2);
-	return false;
-}
-
-}
-
-protected String getAdditionalParamNames() 
-{
- return "";
- }
- 
-protected String getAdditionalParamMarks() 
-{
- return "";
- }
- 
-protected void skipAdditionalNullValues(String sql) 
-{
-  }
- 
-protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
-{
- return col;
- }
- 
 }
