@@ -818,12 +818,22 @@ public class MJournal extends X_GL_Journal implements DocAction {
      * @return
      */
 
-    public boolean reActivateIt() {
-        log.info( "reActivateIt - " + toString());
+    public boolean reActivateIt() {    	
+    	// Si está contabilizado, lo elimino
+    	if(isPosted()){
+    		setPosted(false);
+			String sql = "DELETE FROM Fact_acct " + "WHERE AD_table_ID=" + Table_ID + " AND record_ID=" + getID();
+			DB.executeUpdate(sql, get_TrxName());
+    	}
 
-        return false;
+    	setDocAction( DOCACTION_Complete );
+    	setProcessed(false);
+    	
+        return true;
     }    // reActivateIt
 
+    
+    
     /**
      * Descripción de Método
      *

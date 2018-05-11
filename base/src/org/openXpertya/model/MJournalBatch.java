@@ -543,7 +543,10 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction, DocOp
                 journal.setProcessed( true );
                 journal.setDocStatus( DOCSTATUS_Voided );
                 journal.setDocAction( DOCACTION_None );
-                journal.save();
+                if(!journal.save()){
+                	m_processMsg = CLogger.retrieveErrorAsString();
+                    return DocAction.STATUS_Invalid;
+                }
 
                 continue;
             }
@@ -557,14 +560,19 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction, DocOp
 
                 if( !DocAction.STATUS_Completed.equals( status )) {
                     journal.setDocStatus( status );
-                    journal.save();
+                    if(!journal.save()){
+                    	m_processMsg = CLogger.retrieveErrorAsString();
+                        return DocAction.STATUS_Invalid;
+                    }
                     m_processMsg = journal.getProcessMsg();
-
                     return status;
                 }
 
                 journal.setDocStatus( DOCSTATUS_Completed );
-                journal.save();
+                if(!journal.save()){
+                	m_processMsg = CLogger.retrieveErrorAsString();
+                    return DocAction.STATUS_Invalid;
+                }
             }
 
             //
@@ -626,13 +634,7 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction, DocOp
         */
         // Fin Codigo comentado Antonio@Disytel
         
-        if(isReActivated()) {
-        	if(!processRecursively()) {
-        		m_processMsg = "ERROR: No hay líneas cargadas en el libro";
-                return DocAction.STATUS_Invalid;
-        	}
-        	setIsReActivated(false);
-        }
+        setIsReActivated(false);
         
         setProcessed( true );
         setDocAction( DOCACTION_Close );
@@ -640,6 +642,24 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction, DocOp
         return DocAction.STATUS_Completed;
     }    // completeIt
 
+
+    @Override
+    public void setProcessed( boolean processed ) {
+        super.setProcessed( processed );
+
+        if( getID() == 0 ) {
+            return;
+        }
+
+        for (MJournal journal : getJournals(false)) {
+			journal.setProcessed(processed);
+			if(!journal.save()){
+				log.saveError("SaveError", CLogger.retrieveErrorAsString());
+			}
+		}
+    }    // setProcessed
+
+    
     /**
      * Descripción de Método
      *
@@ -939,40 +959,23 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction, DocOp
      */
 
     public boolean reActivateIt() {
-        log.info( "reActivateIt - " + toString());
-        
-        // setProcessed(false);
-
-        /* CODIGO VIEJO QUE ESTA SIN UTILIZARSE
-        if( reverseCorrectIt()) {
-            return true;
-        }
-
-        return false;*/
-        
         setIsReActivated(true);
-        /*
-         * Borro los registros contables manuales que ya estaban aplicados
-         * y los coloco como "No Aplicado"
-         */
-        String sql="";
+        
+        // Reactivar cada journal
         for(MJournal j: getJournals(true)) {
-        	j.setDocStatus(MJournal.DOCSTATUS_InProgress);
-        	if(j.isPosted()) {
-	        	j.setPosted(false);
-	        	sql="DELETE FROM Fact_acct "
-            	+ "WHERE AD_table_ID="+MJournal.Table_ID+" AND record_ID="+j.getGL_Journal_ID()+"\n";
+        	if(!j.reActivateIt()){
+        		m_processMsg = j.getProcessMsg();
+        		return false;
         	}
-        	j.save();
+        	if(!j.save()){
+        		m_processMsg = CLogger.retrieveErrorAsString();
+        		return false;
+        	}
         }
-        if(!sql.equals("")) {DB.executeUpdate(sql);}
-        /*
-         * Pongo las lineas de los asientos como NO procesadas para poder dejarlas editables.
-         */
-        sql="UPDATE gl_journalLine SET Processed = 'N' "
-        		+ "WHERE gl_journal_id IN "
-        		+ "(SELECT gl_journal_id FROM gl_journal WHERE gl_journalBatch_id = " +getID()+")";
-        DB.executeUpdate(sql);
+        
+        setDocAction( DOCACTION_Complete );
+        setProcessed( false );
+        
         return true;
     }    // reActivateIt
 
