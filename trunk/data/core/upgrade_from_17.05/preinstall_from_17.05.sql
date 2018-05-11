@@ -3959,3 +3959,6 @@ WITH (
 );
 ALTER TABLE c_acctprocessortable
   OWNER TO libertya;
+  
+--20180510-2335 Nuevo parámetro de grupo de ec en el informe de estado de cuenta de ec
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_estadodecuenta', 'c_bp_group_id', 'integer'));

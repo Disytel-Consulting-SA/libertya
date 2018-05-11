@@ -30,6 +30,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	Timestamp dateToDays = null;
 	boolean useDaysDue = false;
 	int bPartnerID;
+	int bpGroupID;
 	int orgID;
 	String accountType;
 	String libroDeCaja = "Libro de Caja";
@@ -93,7 +94,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
             } else if( name.equalsIgnoreCase( "C_Currency_ID" )) {
             	currencyID = para[ i ].getParameterAsInt();
             } else if( name.equalsIgnoreCase( "Condition" )) {
-            	condition = (String)para[ i ].getParameter();            	
+            	condition = (String)para[ i ].getParameter();
+            } else if( name.equalsIgnoreCase( "C_BP_Group_ID" )) {
+            	bpGroupID = para[ i ].getParameterAsInt();
             } else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
@@ -136,6 +139,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				" and " + getAccountTypeClause() + " = 'Y' " +
 				" and ad_client_id = " + getAD_Client_ID() +
 				(bPartnerID!=0?" AND c_bpartner_id = " + bPartnerID:"") +
+				(bpGroupID!=0?" AND c_bp_group_id = " + bpGroupID:"") +
 				" order by c_bpartner_id ";	
 	}
 	
@@ -182,7 +186,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     currencybase(i.grandtotal,i.c_currency_id,i.dateacct, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
 			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
 			"     invoiceopen(i.c_invoice_id, 0,"+currencyClient+",i.c_conversiontype_id) AS openamt, " + 		
-			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, -1::integer AS c_invoicepayschedule_id, i.c_paymentterm_id " +
+			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, -1::integer AS c_invoicepayschedule_id, i.c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM rv_c_invoice i " +
 			"	  JOIN c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id " +
 			"	  JOIN c_doctype dt on i.c_doctype_id = dt.c_doctype_id    " +
@@ -203,7 +207,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			:"") +
 			"     AND bp." + getAccountTypeClause() + " = 'Y'" +
 			(orgID!=0?" AND i.ad_org_id = " + orgID:"") + 
-			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + 
+			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") +
+			(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			(salesRepID!=0?" AND i.salesrep_id = " + salesRepID : "") +
 			
 			"	UNION  " +
@@ -216,7 +221,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     currencybase(i.grandtotal,i.c_currency_id,i.dateacct, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
 			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
 			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id,"+currencyClient+",i.c_conversiontype_id) AS openamt, " +
-			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id " +
+			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM ( " + // Vista RV_C_Invoice original omitida 
 //			 INLINE DE rv_c_invoice con modificaciones ad-hoc a fin de reducir tiempos de ejecución
 			"	SELECT i.c_invoice_id, i.ad_client_id, i.ad_org_id, i.isactive, i.created, i.createdby, i.updated, i.updatedby, i.issotrx, i.documentno, i.docstatus, i.docaction, i.isprinted, i.isdiscountprinted, i.processing, i.processed, i.istransferred, i.ispaid, i.c_doctype_id, i.c_doctypetarget_id, i.c_order_id, i.description, i.isapproved, i.salesrep_id, i.dateinvoiced, i.dateprinted, i.dateacct, i.c_bpartner_id, i.c_bpartner_location_id, i.ad_user_id, i.poreference, i.dateordered, i.c_currency_id, i.c_conversiontype_id, i.paymentrule, i.c_paymentterm_id, i.m_pricelist_id, i.c_campaign_id, i.c_project_id, i.c_activity_id, i.ispayschedulevalid, " + // Columnas innecesarias 
@@ -239,13 +244,15 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 //			"	, getinoutsdocumentsnofrominvoice(i.c_invoice_id)::character varying(30) AS documentno_inout " + // Comentada funcion postgres.  No era requerida y consumia tiempo considerable
 			" FROM c_invoice i" +
 			" JOIN c_doctype d ON i.c_doctype_id = d.c_doctype_id " +
+			" JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id " +
 			" WHERE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar, 'WC'::bpchar]) " + 
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND i.paymentrule = '"+condition+"' ") +
 			" AND i.ispayschedulevalid = 'Y'::bpchar  " + // DE LA PPAL 
 			" AND i.AD_Client_ID = " + getAD_Client_ID() +	// DE LA PPAL
-			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + 
+			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") +
+			(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			" ) i " + 
 //			 FIN INLINE DE RV_C_INVOICE			
 			"	  JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id " +
@@ -267,6 +274,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     AND bp." + getAccountTypeClause() + " = 'Y'" +
 			(orgID!=0?" AND i.ad_org_id = " + orgID:"") +
 			(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") +
+			(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			(salesRepID!=0?" AND i.salesrep_id = " + salesRepID : "") +
 			
 			"	UNION " +
@@ -277,7 +285,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     availableamt AS openamtmulticurrency, " +
 			"     currencyConvert(ABS(p.payamt), p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS grandtotal, " +
 			"     currencyConvert(p.allocatedamt, p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS paidamt, " +
-			"     currencyConvert(availableamt, p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS openamt, p.c_currency_id, p.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id " +
+			"     currencyConvert(availableamt, p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS openamt, p.c_currency_id, p.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM rv_payment p " +
 			"	  JOIN c_doctype dt on p.c_doctype_id = dt.c_doctype_id   " +
 			"	  JOIN c_bpartner bp on p.c_bpartner_id = bp.c_bpartner_id " + (bPartnerID!=0?" AND p.c_bpartner_id = " + bPartnerID:"") +
@@ -287,10 +295,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					+ "				from c_allocationline as al "
 					+ "				inner join c_allocationhdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id "
 					+ "				inner join c_invoice as i on i.c_invoice_id = al.c_invoice_id "
+					+ "				inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id "
 					+ "				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')" +
 					
 									(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + // Esto está bien?						
-					
+									(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 					") as i on i.c_payment_id = p.c_payment_id ") +
 			"	  WHERE 1 = 1  " +
 			"	  AND p.AD_Client_ID = " + getAD_Client_ID() + 
@@ -312,6 +321,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     AND bp." + getAccountTypeClause() + " = 'Y'" +
 			(orgID!=0?" AND p.ad_org_id = " + orgID:"") +
 			(bPartnerID!=0?" AND p.c_bpartner_id = " + bPartnerID:"") +
+			(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			// Filtro por Vendedor:
 			(salesRepID!=0? " AND (" + 
 				// La EC pertenece al vendedor
@@ -336,7 +346,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     cashlineavailable(document_id) AS openamtmulticurrency, " +
 			"     currencyConvert(d.amount, d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS grandtotal, " +
 			"     currencyConvert((abs(d.amount) - abs(cashlineavailable(document_id))), d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS paidamt, " +
-			"     currencyConvert(cashlineavailable(document_id), d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS openamt, d.c_currency_id, d.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id " +
+			"     currencyConvert(cashlineavailable(document_id), d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS openamt, d.c_currency_id, d.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM ( " +  // Vista V_DOCUMENTS original  omitida. 
 //			 INLINE DE V_DOCUMENTS, omitiendo partes de la misma que no son necesarias en este caso.			
 			"       SELECT 'C_CashLine'::text AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, " +  
@@ -358,17 +368,19 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	JOIN c_cash c ON cl.c_cash_id = c.c_cash_id " +
 			"	JOIN ( SELECT d.ad_client_id, d.c_doctype_id, d.name, d.printname FROM c_doctype d WHERE d.doctypekey::text = 'CMC'::text AND d.ad_client_id = " + getAD_Client_ID() + ") dt ON cl.ad_client_id = dt.ad_client_id " +
 			"	LEFT JOIN c_bpartner bp ON " + (bPartnerID!=0?" cl.c_bpartner_id = " + bPartnerID + " AND ":"") + " cl.c_bpartner_id = bp.c_bpartner_id " +
-			"   LEFT JOIN (select i.c_invoice_id, al.c_cashline_id, i.paymentrule, i.c_bpartner_id " + 
+			"   LEFT JOIN (select i.c_invoice_id, al.c_cashline_id, i.paymentrule, i.c_bpartner_id, bp.c_bp_group_id " + 
 			"				from c_allocationline as al " + 
 			"				inner join c_allocationhdr as ah on ah.c_allocationhdr_id = al.c_allocationhdr_id " + 
-			"				inner join c_invoice as i on i.c_invoice_id = al.c_invoice_id " + 
+			"				inner join c_invoice as i on i.c_invoice_id = al.c_invoice_id " +
+			"				inner join c_bpartner as bp on bp.c_bpartner_id = i.c_bpartner_id " +
 			"				where ah.isactive = 'Y' and ah.docstatus in ('CO','CL')" +
 
 							(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + // Esto está bien?
-			
+							(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			" 		) as i on i.c_cashline_id = cl.c_cashline_id " +
 			" 	WHERE 1 = 1 " +
 			(bPartnerID!=0? "   AND ((cl.c_bpartner_id is not null AND cl.c_bpartner_id = " + bPartnerID + ") OR (i.c_bpartner_ID is not null and i.c_bpartner_id = " + bPartnerID + ")) " : "") +
+			(bpGroupID!=0? "   AND ((cl.c_bpartner_id is not null AND bp.c_bp_group_id = " + bpGroupID + ") OR (i.c_bp_group_id is not null and i.c_bp_group_id = " + bpGroupID + ")) " : "") +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND ("+ (condition.equals(X_T_EstadoDeCuenta.CONDITION_Cash)? 
@@ -392,6 +404,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			:"") +
 			(orgID!=0?" AND d.ad_org_id = " + orgID:"") +
 			(bPartnerID!=0?" AND d.c_bpartner_id = " + bPartnerID:"") +
+			(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			(salesRepID!=0? " AND (" + 
 				// La EC pertenece al vendedor
 				" COALESCE(bp.SalesRep_ID,0) = " + salesRepID + 
@@ -429,6 +442,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setDocumentNo(rs.getString("documentno"));
 			ec.setdoc_id(rs.getInt("doc_id"));
 			ec.setC_Order_ID(rs.getInt("c_order_id"));
+			ec.setC_BP_Group_ID(rs.getInt("c_bp_group_id"));
 			ec.setC_BPartner_ID(rs.getInt("c_bpartner_id"));
 			ec.setbpartner(rs.getString("bpartner"));
 			ec.setIsSOTrx(rs.getString("issotrx").equalsIgnoreCase("Y"));
@@ -527,6 +541,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
 			ec.setAD_Org_ID(orgID);
+			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(bPartner);
 			ec.setbpartner("             TOTAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
@@ -554,6 +569,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
 			ec.setAD_Org_ID(orgID);
+			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(bPartner);
 			ec.setbpartner("             TOTAL:");
 			ec.setOpenAmt(saldo);
@@ -581,6 +597,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 		ec.setAD_PInstance_ID(getAD_PInstance_ID());
 		ec.setAD_Org_ID(orgID);
+		ec.setC_BP_Group_ID(bpGroupID);
 		ec.setC_BPartner_ID(bPartner);
 		ec.setbpartner("             TOTAL CHEQUES CARTERA:");
 		
@@ -630,6 +647,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
 			ec.setAD_Org_ID(orgID);
+			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(0);
 			ec.setbpartner("             TOTAL GENERAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
@@ -657,6 +675,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			ec.setAD_PInstance_ID(getAD_PInstance_ID());
 			ec.setAD_Org_ID(orgID);
+			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(0);
 			ec.setbpartner("             TOTAL GENERAL:");
 			ec.setOpenAmt(saldo);
