@@ -71,7 +71,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L; 
 
 	private static final String VOID_FISCAL_DESCRIPTION_PREFERENCE_NAME = "FiscalDescription_VoidedDocument";
 
@@ -5182,7 +5182,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// docType. Invertir montos
 		// Ademas, para la localización argentina no hay que invertir las
 		// cantidades ni los montos (usa distinto doctype)
-		if (!localeARActive || (docType == reversalDocType)) {
+		if (!localeARActive || (docType.getID() == reversalDocType.getID())) {
 
 			// Reverse Line Qty
 			MInvoiceLine[] rLines = reversal.getLines(false);
