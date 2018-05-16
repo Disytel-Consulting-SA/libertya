@@ -646,7 +646,7 @@ public class MJournal extends X_GL_Journal implements DocAction {
         }
 
         //
-
+        setIsReActivated(false);
         setProcessed( true );
         setDocAction( DOCACTION_Close );
 
@@ -818,7 +818,9 @@ public class MJournal extends X_GL_Journal implements DocAction {
      * @return
      */
 
-    public boolean reActivateIt() {    	
+    public boolean reActivateIt() {
+    	setIsReActivated(true);
+    	
     	// Si está contabilizado, lo elimino
     	if(isPosted()){
     		setPosted(false);
