@@ -5193,6 +5193,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				rLine.setQtyEntered(rLine.getQtyEntered().negate());
 				rLine.setQtyInvoiced(rLine.getQtyInvoiced().negate());
 				rLine.setLineNetAmt(rLine.getLineNetAmt().negate());
+				rLine.setLineNetAmount(rLine.getLineNetAmount().negate());
 				rLine.setLineBonusAmt(rLine.getLineBonusAmt().negate());
 				rLine.setLineDiscountAmt(rLine.getLineDiscountAmt().negate());
 				rLine.setDocumentDiscountAmt(rLine.getDocumentDiscountAmt().negate());
