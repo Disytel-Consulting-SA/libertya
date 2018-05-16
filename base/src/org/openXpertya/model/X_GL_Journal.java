@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por GL_Journal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-12-13 16:39:47.123 */
+ *  @version  - 2018-05-16 15:04:32.054 */
 public class X_GL_Journal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -32,6 +32,7 @@ setGL_Category_ID (0);	// @GL_Category_ID@
 setGL_Journal_ID (0);
 setIsApproved (true);	// Y
 setIsPrinted (false);	// N
+setIsReActivated (false);
 setPosted (false);	// N
 setPostingType (null);	// @PostingType@
 setTotalCr (Env.ZERO);	// 0
@@ -430,6 +431,22 @@ Indicates if this document / line is printed */
 public boolean isPrinted() 
 {
 Object oo = get_Value("IsPrinted");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set IsReActivated */
+public void setIsReActivated (boolean IsReActivated)
+{
+set_Value ("IsReActivated", new Boolean(IsReActivated));
+}
+/** Get IsReActivated */
+public boolean isReActivated() 
+{
+Object oo = get_Value("IsReActivated");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

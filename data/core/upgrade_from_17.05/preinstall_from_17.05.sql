@@ -3962,3 +3962,6 @@ ALTER TABLE c_acctprocessortable
   
 --20180510-2335 Nuevo parámetro de grupo de ec en el informe de estado de cuenta de ec
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_estadodecuenta', 'c_bp_group_id', 'integer'));
+
+--20180516-1500 Nueva columna para indicar que el asiento fue reactivado
+update ad_system set dummy = (SELECT addcolumnifnotexists('GL_Journal', 'IsReActivated', 'character(1) NOT NULL DEFAULT ''N''::bpchar'));
