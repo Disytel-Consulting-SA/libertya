@@ -16,6 +16,7 @@ import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.X_T_EstadoDeCuenta;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 
@@ -101,6 +102,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
 		}
+		
+		// Si tiene asociado una EC, entonces el grupo va 0
+		if(!Util.isEmpty(bPartnerID, true)){
+			bpGroupID = 0;
+		}
 	}
 	
 	private void validateParameters() throws Exception {
@@ -109,10 +115,21 @@ public class EstadoDeCuentaProcess extends SvrProcess {
             throw new Exception("@UseDaysDueAndDateToDaysError@");
         }
 	}
+	
+	private void initialize(){
+		if (currencyClient==null) {
+			MClientInfo ci = MClient.get(getCtx()).getInfo();
+			currencyClient = ci.getC_Currency_ID();
+			
+			saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
+			saldosGeneralMultimoneda.put(currencyClient, BigDecimal.ZERO);
+		}
+	}
 
 	@Override
 	protected String doIt() throws Exception {
 		validateParameters();
+		initialize();
 		calculateDateConvert();
 		deleteOldEntries();
 		
@@ -170,13 +187,6 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	
 	private void fillTable() throws Exception
 	{
-		if (currencyClient==null) {
-			MClientInfo ci = MClient.get(getCtx()).getInfo();
-			currencyClient = ci.getC_Currency_ID();
-			
-			saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
-			saldosGeneralMultimoneda.put(currencyClient, BigDecimal.ZERO);
-		}
 		StringBuffer query = new StringBuffer (
 			"     SELECT distinct dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner, i.issotrx, i.dateacct::date as dateacct, i.dateinvoiced::date as datedoc, p.netdays, i.dateinvoiced + (p.netdays::text || ' days'::text)::interval AS duedate, paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) AS daysdue, i.dateinvoiced + (p.discountdays::text || ' days'::text)::interval AS discountdate, round(i.grandtotal * p.discount * 0.01::numeric, 2) AS discountamt, " +
 			//"     i.grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, 0) AS openamt, " +
