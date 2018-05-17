@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -48,9 +49,25 @@ public class BalanceReport extends SvrProcess {
 	/** Consulta de cuenta corriente centralizada */
 	private CurrentAccountQuery currentAccountQuery;
 	
+	/*
+	 *  Usar aproximación iterativa o global? Para casos donde hay poco volumen de
+	 *  información (ECs, documentos), la solución global (no iterativa) puede llegar
+	 *  a ser la ideal. Sin embargo cuando el volumen de información es demasido
+	 *  grande, el query generado abarca una cantidad tan grande de ECs y documentos
+	 *  que podría llegar a degradar considerablemente la performance general del equipo.
+	 */
+	protected boolean iterativeLogic = false;
+	/** Preferencia a definir segun la necesidad de ejecución */
+	public static final String BALANCE_REPORT_ITERATIVE_PREFERENCE = "BALANCE_REPORT_ITERATIVE";
+	
+	
 	@Override
 	protected void prepare() {
 
+		String logic = MPreference.GetCustomPreferenceValue(BALANCE_REPORT_ITERATIVE_PREFERENCE);
+		iterativeLogic = "Y".equalsIgnoreCase(logic);
+		System.out.println("Iterative " + logic);
+		
         ProcessInfoParameter[] para = getParameter();
         for( int i = 0;i < para.length;i++ ) {
             String name = para[ i ].getParameterName();
@@ -94,6 +111,10 @@ public class BalanceReport extends SvrProcess {
         isSOtrx = p_AccountType.equalsIgnoreCase("C")?"'Y'":"'N'";
      // Moneda de la compañía utilizada para conversión de montos de documentos.
         client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+        if (!iterativeLogic) {
+    		setCurrentAccountQuery(
+    				new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), null));
+        }
 	}
 
 	
@@ -104,7 +125,7 @@ public class BalanceReport extends SvrProcess {
 		DB.executeUpdate("DELETE FROM T_BALANCEREPORT WHERE DATECREATED < ('now'::text)::timestamp(6) - interval '7 days'");		
 		// delete all rows in table with the given ad_pinstance_id
 		DB.executeUpdate("DELETE FROM T_BALANCEREPORT WHERE AD_PInstance_ID = " + getAD_PInstance_ID());
-
+		
 		// Obtener las ECs a incluir en el informe
 		PreparedStatement pstmtBP = DB.prepareStatement(getBPQuery());
 		ResultSet rsBP = pstmtBP.executeQuery();
@@ -112,8 +133,11 @@ public class BalanceReport extends SvrProcess {
 		StringBuffer usql = new StringBuffer();
 		int subindice=0;
 		while (rsBP.next()) {
-			// Solo BPartner actual
-			setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), rsBP.getInt("c_bpartner_id")));
+			
+			if (iterativeLogic) {
+				// Solo BPartner actual
+				setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), rsBP.getInt("c_bpartner_id")));
+			}
 		
 			// calcular el estado de cuenta de cada E.C.
 			StringBuffer sqlDoc = new StringBuffer();
@@ -181,8 +205,31 @@ public class BalanceReport extends SvrProcess {
 			sqlDoc.append(getCurrentAccountQuery().getQuery());
 			sqlDoc.append(" 	) d ");
 			sqlDoc.append(" 	INNER JOIN c_bpartner bp on d.c_bpartner_id = bp.c_bpartner_id ");
-			sqlDoc.append(" 	WHERE bp.c_bpartner_id = " + rsBP.getInt("c_bpartner_id"));
-			sqlDoc.append(onlyCurentAccounts?" AND bp.socreditstatus <> 'X' ":"");
+			
+			// Logica query global
+			if (!iterativeLogic) {
+				sqlDoc.append(" 	WHERE bp.isactive = 'Y' ");
+				if(p_C_BP_Group_ID > 0){
+					sqlDoc.append(" AND bp.C_BP_Group_ID = ").append(p_C_BP_Group_ID);
+				}
+				if ("OO".equals(p_Scope))		// filtrar E.C.: solo las que adeudan, o listar todas
+				{
+					sqlDoc.append(" AND bp.C_BPartner_ID IN (");
+					sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
+					sqlDoc.append(
+							" 	WHERE invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0 AND issotrx = ")
+							.append(isSOtrx).append(" AND AD_Client_ID = ")
+							.append(getAD_Client_ID()).append(")");
+				}
+				sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
+						: " AND bp.isvendor = 'Y' ");
+				sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
+			} else {
+				// Logica iterativa
+				sqlDoc.append(" 	WHERE bp.c_bpartner_id = " + rsBP.getInt("c_bpartner_id"));
+				sqlDoc.append(onlyCurentAccounts?" AND bp.socreditstatus <> 'X' ":"");	
+			}
+			
 			sqlDoc.append(" ) AS T ");
 			sqlDoc.append(" WHERE (1=1) ");
 			if(!Util.isEmpty(valueFrom, true)){
@@ -192,6 +239,17 @@ public class BalanceReport extends SvrProcess {
 				sqlDoc.append(" AND T.value <= maxvalue ");
 			}
 			sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description, T.totalopenbalance ");
+			
+			// Logica query global
+			if (!iterativeLogic) {
+				sqlDoc.append(" ORDER BY ");
+				if ("BP".equals(p_Sort_Criteria))
+					sqlDoc.append("T.name");
+				if ("BL".equals(p_Sort_Criteria))
+					sqlDoc.append("balance");		
+				if ("OI".equals(p_Sort_Criteria))
+					sqlDoc.append("fecha_fact_antigua");
+			}
 			
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
@@ -210,7 +268,10 @@ public class BalanceReport extends SvrProcess {
 			pstmt.setInt(i++, credit_signo_issotrx);
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
-			i = pstmtSetParam(i, rsBP.getInt("c_bpartner_id"), pstmt);
+			// Logica iterativa unicamente
+			if (iterativeLogic) {
+				i = pstmtSetParam(i, rsBP.getInt("c_bpartner_id"), pstmt);
+			}
 			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
 			// Parámetros para el filtro de fechas
 			i = pstmtSetParam(i, p_DateTrx_To, pstmt);
@@ -275,25 +336,28 @@ public class BalanceReport extends SvrProcess {
 				throw new Exception("Error insertando datos en la tabla temporal");
 			}
 
-			// Requiere un ordenamiento distinto al name de la EC? De ser asi se debe reorganizar la informacion almacenada en T_CuentaCorriente para el ad_pinstance en cuestion
-			// La manera mas directa es realizar un INSERT SELECT, pero reasignando el subindice (columna por la cual el informe realiza el ordenamiento a visualiar) 
-			if (!"BP".equals(p_Sort_Criteria)) {
-
-				// maximo numero de registro para esta ejecucion 
-				int maxSubIndice = DB.getSQLValue(get_TrxName(), "SELECT max(subindice) FROM t_balancereport WHERE AD_PInstance_ID = " + getAD_PInstance_ID());
-				
-				// Reinsertar, pero ordenando segun el criterio que corresponda, a partir de maxSubIndice+1.  Ordenar por el balance,  bien por fecha mas antigua... y sino queda como estaba
-				DB.executeUpdate(
-					" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition) " + 
-					" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition " +
-					" 	from t_balancereport " +
-					"	where ad_pinstance_id = " + getAD_PInstance_ID() +
-					"	order by " + getOrderBy() +
-					" ) ",
-					get_TrxName());
-
-				// Eliminar las entradas "viejas" no ordenadas, con subindice entre 1 y maxSubIndece 
-				DB.executeUpdate("DELETE FROM t_balancereport WHERE AD_PInstance_ID = " + getAD_PInstance_ID() + " AND subindice <= " + maxSubIndice, get_TrxName());
+			// Logica iterativa
+			if (iterativeLogic) {
+				// Requiere un ordenamiento distinto al name de la EC? De ser asi se debe reorganizar la informacion almacenada en T_CuentaCorriente para el ad_pinstance en cuestion
+				// La manera mas directa es realizar un INSERT SELECT, pero reasignando el subindice (columna por la cual el informe realiza el ordenamiento a visualiar) 
+				if (!"BP".equals(p_Sort_Criteria)) {
+	
+					// maximo numero de registro para esta ejecucion 
+					int maxSubIndice = DB.getSQLValue(get_TrxName(), "SELECT max(subindice) FROM t_balancereport WHERE AD_PInstance_ID = " + getAD_PInstance_ID());
+					
+					// Reinsertar, pero ordenando segun el criterio que corresponda, a partir de maxSubIndice+1.  Ordenar por el balance,  bien por fecha mas antigua... y sino queda como estaba
+					DB.executeUpdate(
+						" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition) " + 
+						" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition " +
+						" 	from t_balancereport " +
+						"	where ad_pinstance_id = " + getAD_PInstance_ID() +
+						"	order by " + getOrderBy() +
+						" ) ",
+						get_TrxName());
+	
+					// Eliminar las entradas "viejas" no ordenadas, con subindice entre 1 y maxSubIndece 
+					DB.executeUpdate("DELETE FROM t_balancereport WHERE AD_PInstance_ID = " + getAD_PInstance_ID() + " AND subindice <= " + maxSubIndice, get_TrxName());
+				}
 			}
 
 		}
@@ -339,6 +403,9 @@ public class BalanceReport extends SvrProcess {
 	
 	/** Query para recuperar las ECs */
 	protected String getBPQuery() {
+		// Si NO es logica iterativa, devolverá solo un 1 para logra una única iteración
+		if (!iterativeLogic)
+			return "SELECT 1";
 		StringBuffer bpQuery = new StringBuffer();
 		bpQuery	.append(" SELECT C_BPartner_ID ")
 				.append(" FROM C_BPartner ")
