@@ -276,18 +276,23 @@ public class Doc_CreditCardSettlement extends Doc {
 	@Override
 	public Fact createFact(MAcctSchema as) {
 		Fact fact = new Fact(this, as, Fact.POST_Actual);
+		
 		// Bruto
 		// Se contabiliza sobre la cuenta bancaria del cargo contable 
 		// asociado al pago si es que existe, caso contrario:
 		// Se contabiliza sobre la cuenta bancaria de la EF asociada a
 		// la EC de la liquidación
 		
-    	if(p_vo.Accounting_C_Charge_ID > 0) {
+		// Por lo pronto, el cargo contable queda aplicado sólo al payment
+		// generado por la liquidación, no aplica a la contabilidad propia
+    	/*if(p_vo.Accounting_C_Charge_ID > 0) {
     		fact.createLine( null, MCharge.getAccount(p_vo.Accounting_C_Charge_ID, as, new BigDecimal(-1)),p_vo.C_Currency_ID, null, getAmount(Doc.AMTTYPE_Gross));
     	} else {
     		fact.createLine( null,getAccount( Doc.ACCTTYPE_BankInTransit,as ),p_vo.C_Currency_ID, null, getAmount(Doc.AMTTYPE_Gross));
-    	}
+    	}*/
 
+		fact.createLine( null,getAccount( Doc.ACCTTYPE_BankInTransit,as ),p_vo.C_Currency_ID, null, getAmount(Doc.AMTTYPE_Gross));
+		
 		// Neto
 		// Se contabiliza sobre la cuenta del payment generado por la
 		// liquidación. Se asume que es un Cobro ya que el payment de la
