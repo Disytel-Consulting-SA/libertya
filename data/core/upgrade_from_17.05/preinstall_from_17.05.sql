@@ -4131,3 +4131,35 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_reserved(integer, integer, integer)
   OWNER TO libertya;
+
+--20180524-1125 Fixes a la actualización de pendientes cuando los parámetros son 0
+CREATE OR REPLACE FUNCTION update_reserved(
+    clientid integer,
+    orgid integer,
+    productid integer)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad reservada de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades reservadas se obtienen de pedidos procesados. 
+IMPORTANTE: No funciona para artículos que no son ITEMS (Stockeables)
+*/
+BEGIN
+	update m_storage s
+	set qtyreserved = getqtyreserved(clientid, s.ad_org_id, s.m_locator_id, s.m_product_id, null::date)
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid)
+		and s.m_locator_id IN (select defaultLocator 
+					from (select m_warehouse_id, max(m_locator_id) as defaultLocator
+						from m_locator l
+						where l.isdefault = 'Y' and l.isactive = 'Y'
+						GROUP by m_warehouse_id) as dl);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_reserved(integer, integer, integer)
+  OWNER TO libertya;
