@@ -541,7 +541,7 @@ public class MProduct extends X_M_Product {
 
         // PRODUCTTYPE_Service, PRODUCTTYPE_Resource, PRODUCTTYPE_Online
 
-        return !isItem();    //
+        return !isItem() && !isAsset();    //
     }                        // isService
 
     /**
