@@ -277,8 +277,13 @@ public class BalanceReport extends SvrProcess {
 			i = pstmtSetParam(i, p_DateTrx_To, pstmt);
 	
 			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
+			BigDecimal balance = BigDecimal.ZERO;
+			while (rs.next()){
+				balance = rs.getBigDecimal("Balance");
+				if("OO".equals(p_Scope) && Util.isEmpty(balance, true)){
+					continue;
+				}
+					
 				subindice++;
 				usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
 				usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
@@ -291,7 +296,7 @@ public class BalanceReport extends SvrProcess {
 											.append(rs.getString("SO_DESCRIPTION")).append("', ")
 											.append(rs.getBigDecimal("Credit")).append(",")
 											.append(rs.getBigDecimal("Debit")).append(",")
-											.append(rs.getBigDecimal("Balance")).append(", ");
+											.append(balance).append(", ");
 				if (rs.getTimestamp("fecha_fact_antigua")!=null)
 					usql.append(" '").append(rs.getTimestamp("fecha_fact_antigua")).append("', ");
 				else
