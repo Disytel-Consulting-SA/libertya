@@ -668,6 +668,11 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 			sql.append("SELECT C_BPartner_ID FROM C_BPartner WHERE (UPPER(Value) LIKE ")
 				.append(DB.TO_STRING(text))
 				.append(" OR UPPER(Name) LIKE ").append(DB.TO_STRING(text)).append(")");
+			if(Env.getContext( Env.getCtx(),lookup.getWindowNo(),"IsSOTrx" ).equals( "Y" )){
+       		 sql.append( " AND C_BPartner.IsCustomer='Y' " );
+           } else {
+               sql.append( " AND C_BPartner.IsVendor='Y' " );
+           }
 		}
 		else if (m_columnName.equals("C_Order_ID"))
 		{
