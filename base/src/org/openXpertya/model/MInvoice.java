@@ -5008,7 +5008,23 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 					}
 				}
 			}
-
+			
+			// Impuestos manuales a 0
+			try {
+				List<MInvoiceTax> manualInvoiceTaxes = MInvoiceTax
+						.getTaxesFromInvoice(this, true);
+				for (MInvoiceTax mInvoiceTax : manualInvoiceTaxes) {
+					mInvoiceTax.setTaxBaseAmt(BigDecimal.ZERO);
+					mInvoiceTax.setTaxAmt(BigDecimal.ZERO);
+					if (!mInvoiceTax.save(get_TrxName())) {
+						throw new Exception(CLogger.retrieveErrorAsString());
+					}
+				}
+			} catch (Exception e) {
+				m_processMsg = e.getMessage();
+				return false;
+			}
+			
 			setTotalLines(BigDecimal.ZERO);
 			setGrandTotal(BigDecimal.ZERO);
 			addDescription(Msg.getMsg(getCtx(), "Voided"));
@@ -5228,7 +5244,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 						}
 					}
 				} catch (Exception e) {
-					m_processMsg = "Could not create Reversal Manual Invoice Taxes";
+					m_processMsg = e.getMessage();
 					return false;
 				}
 			}
