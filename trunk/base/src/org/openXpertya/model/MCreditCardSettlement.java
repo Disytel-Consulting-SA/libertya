@@ -680,6 +680,11 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			return DocAction.STATUS_Invalid;
 		}
 
+		if(Util.isEmpty(getSettlementNo(), true)){
+			m_processMsg = "@SettlementNumberMustBeNumeric@";
+			return DocAction.STATUS_Invalid;
+		}
+		
 		m_justPrepared = true;
 
 		if (!DOCACTION_Complete.equals(getDocAction())) {
@@ -910,10 +915,44 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		}
 		return input.negate();
 	}
+	
+	/**
+	 * Multiplica y setea los importes de la cabecera por el factor parámetro
+	 * sobre cada uno de ellos.
+	 * 
+	 * @param factor
+	 *            el factor a multiplicar
+	 */
+	protected void setAmountsByFactor(int factor){
+		BigDecimal factorbd = new BigDecimal(factor);
+		setAmount(getAmount().multiply(factorbd));
+		setNetAmount(getNetAmount().multiply(factorbd));
+		setWithholding(getWithholding().multiply(factorbd));
+		setPerception(getPerception().multiply(factorbd));
+		setExpenses(getExpenses().multiply(factorbd));
+		setIVAAmount(getIVAAmount().multiply(factorbd));
+		setCommissionAmount(getCommissionAmount().multiply(factorbd));
+	}
 
+	/**
+	 * Desvincular los cupones de la liquidación
+	 */
+	protected void unlinkCoupons(){
+		// Desvincula los cupones
+		StringBuffer sql = new StringBuffer();
+
+		sql.append("DELETE FROM ");
+		sql.append("	" + X_C_CouponsSettlements.Table_Name + " ");
+		sql.append("WHERE ");
+		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
+
+		DB.executeUpdate(sql.toString(), get_TrxName());
+	}
+	
 	@Override
 	public boolean voidIt() {
 		log.info("voidIt - " + toString());
+		
 		if (DOCSTATUS_Closed.equals(getDocStatus()) || 
 			DOCSTATUS_Reversed.equals(getDocStatus()) || 
 			DOCSTATUS_Voided.equals(getDocStatus())) {
@@ -928,82 +967,40 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			return false;
 		}
 		
-		// Se revierte el estado de los cupones a "A verificar".
-		changeCouponsAuditStatus(X_C_Payment.AUDITSTATUS_ToVerify);
-
-		MCreditCardSettlement copy = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
-		PO.copyValues(this, copy);
-
-		copy.setAD_Org_ID(getAD_Org_ID());
-		copy.setAmount(negativeValue(getAmount()));
-		copy.setNetAmount(negativeValue(getNetAmount()));
-		copy.setWithholding(negativeValue(getWithholding()));
-		copy.setPerception(negativeValue(getPerception()));
-		copy.setExpenses(negativeValue(getExpenses()));
-		copy.setCouponsTotalAmount(BigDecimal.ZERO);
-		copy.setSettlementNo(getSettlementNo()+"^");
-		copy.setIVAAmount(negativeValue(getIVAAmount()));
-		copy.setCommissionAmount(negativeValue(getCommissionAmount()));
-		copy.setC_Payment_ID(getC_Payment_ID());
-		copy.setDocStatus(DOCSTATUS_Voided);
-		copy.setDocAction(DOCACTION_None);
-		copy.setProcessed(true);
-
-		boolean saveOk = true;
-
-		try {
-			if(!copy.save()) {
-				m_processMsg = CLogger.retrieveErrorAsString();
-				saveOk = false;
-			}
-		} catch (Exception e) {
-			m_processMsg = e.getMessage();
-			saveOk = false;
+		// Elimnar la contabilidad
+		if(isPosted()){
+			MFactAcct.delete(get_Table_ID(), getID(), get_TrxName());
 		}
-
-		if (!saveOk) {
-			return false;
-		}
-
+		
 		//Anula el pago generado por la liquidación si es que existe
 		if(!Util.isEmpty(getC_Payment_ID(), true)){
 			MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
-
+			payment.setDateForReversalPayment(payment.getDateTrx());
+			
 			if (!payment.processIt(DocAction.ACTION_Void)) {
 				m_processMsg = payment.getProcessMsg();
-				saveOk = false;
-				// Guarda los cambios del procesamiento
-			} else if (!payment.save()) {
+				return false;
+			} 
+			
+			if (!payment.save()) {
 				m_processMsg = CLogger.retrieveErrorAsString();
-				saveOk = false;
-			}
-
-			if (!saveOk) {
 				return false;
 			}
 		}
-
-		// Desvincula los cupones
-		StringBuffer sql = new StringBuffer();
-
-		sql.append("DELETE FROM ");
-		sql.append("	" + X_C_CouponsSettlements.Table_Name + " ");
-		sql.append("WHERE ");
-		sql.append("	C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
-
-		DB.executeUpdate(sql.toString(), get_TrxName());
-
-		setSettlementNo("^" + getSettlementNo());
-		setCouponsTotalAmount(BigDecimal.ZERO);
-		if (!save()) {
-			m_processMsg = CLogger.retrieveErrorAsString();
-			return false;
-		}
 		
-		// Se replican todos los registros de las pestañas adicionales
-		// (Iva, comisiones, retenciones, percepciones, otros conceptos)
+		// Se revierte el estado de los cupones a "A verificar".
+		changeCouponsAuditStatus(X_C_Payment.AUDITSTATUS_ToVerify);
 
-		String[] toReplicate = new String[] {
+		setAmountsByFactor(0);
+		setCouponsTotalAmount(BigDecimal.ZERO);
+		setSettlementNo(getSettlementNo()+"^");
+		
+		// Desvincular los cupones
+		unlinkCoupons();
+		
+		// Se nullean todos los registros de las pestañas adicionales
+		// (Iva, comisiones, retenciones, percepciones, otros conceptos)
+		String[] toVoid = new String[] {
 				X_C_IVASettlements.Table_Name,
 				X_C_CommissionConcepts.Table_Name,
 				X_C_WithholdingSettlement.Table_Name,
@@ -1011,92 +1008,20 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				X_C_ExpenseConcepts.Table_Name
 		};
 
-		for (String tableName : toReplicate) {
-			sql = new StringBuffer();
+		for (String tableName : toVoid) {
+			StringBuffer sql = new StringBuffer();
+			
+			sql.append(" UPDATE ").append(tableName);
+			sql.append(" SET amount = 0 ");
+			sql.append(" WHERE C_CreditCardSettlement_ID = ").append(getID());
 
-			sql.append("SELECT ");
-			sql.append("	* ");
-			sql.append("FROM ");
-			sql.append("	" + tableName + " ");
-			sql.append("WHERE ");
-			sql.append("	C_CreditCardSettlement_ID = ? ");
-
-			PreparedStatement ps = null;
-			ResultSet rs = null;
-
-			try {
-				ps = DB.prepareStatement(sql.toString());
-				ps.setInt(1, getC_CreditCardSettlement_ID());
-				rs = ps.executeQuery();
-
-				while (rs.next()) {
-					PO to = null;
-
-					// IVA
-					if (tableName.equals(X_C_IVASettlements.Table_Name)) {
-						X_C_IVASettlements from = new X_C_IVASettlements(getCtx(), rs, get_TrxName());
-						to = new X_C_IVASettlements(getCtx(), 0, get_TrxName());
-						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
-						((X_C_IVASettlements)to).setC_IVASettlements_ID(0);
-						((X_C_IVASettlements)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
-						((X_C_IVASettlements)to).setAmount(negativeValue(from.getAmount()));
-						if (!to.save()) {
-							CLogger.retrieveErrorAsString();
-							return false;
-						}
-					}
-					// Comisiones
-					if (tableName.equals(X_C_CommissionConcepts.Table_Name)) {
-						X_C_CommissionConcepts from = new X_C_CommissionConcepts(getCtx(), rs, get_TrxName());
-						to = new X_C_CommissionConcepts(getCtx(), 0, get_TrxName());
-						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
-						((X_C_CommissionConcepts)to).setC_CommissionConcepts_ID(0);
-						((X_C_CommissionConcepts)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
-						((X_C_CommissionConcepts)to).setAmount(negativeValue(from.getAmount()));
-					}
-					// Retenciones
-					if (tableName.equals(X_C_WithholdingSettlement.Table_Name)) {
-						X_C_WithholdingSettlement from = new X_C_WithholdingSettlement(getCtx(), rs, get_TrxName());
-						to = new X_C_WithholdingSettlement(getCtx(), 0, get_TrxName());
-						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
-						((X_C_WithholdingSettlement)to).setC_WithholdingSettlement_ID(0);
-						((X_C_WithholdingSettlement)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
-						((X_C_WithholdingSettlement)to).setAmount(negativeValue(from.getAmount()));
-					}
-					// Percepciones
-					if (tableName.equals(X_C_PerceptionsSettlement.Table_Name)) {
-						X_C_PerceptionsSettlement from = new X_C_PerceptionsSettlement(getCtx(), rs, get_TrxName());
-						to = new X_C_PerceptionsSettlement(getCtx(), 0, get_TrxName());
-						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
-						((X_C_PerceptionsSettlement)to).setC_PerceptionsSettlement_ID(0);
-						((X_C_PerceptionsSettlement)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
-						((X_C_PerceptionsSettlement)to).setAmount(negativeValue(from.getAmount()));
-					}
-					// Otros conceptos
-					if (tableName.equals(X_C_ExpenseConcepts.Table_Name)) {
-						X_C_ExpenseConcepts from = new X_C_ExpenseConcepts(getCtx(), rs, get_TrxName());
-						to = new X_C_ExpenseConcepts(getCtx(), 0, get_TrxName());
-						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
-						((X_C_ExpenseConcepts)to).setC_ExpenseConcepts_ID(0);
-						((X_C_ExpenseConcepts)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
-						((X_C_ExpenseConcepts)to).setAmount(negativeValue(from.getAmount()));
-					}
-
-				}
-			} catch (Exception e) {
-				log.log(Level.SEVERE, "MCreditCardSettlement.voidIt", e);
-			} finally {
-				try {
-					rs.close();
-					ps.close();
-				} catch (SQLException e) {
-					log.log(Level.SEVERE, "Cannot close statement or resultset");
-				}
-			}
+			DB.executeUpdate(sql.toString(), get_TrxName());
 		}
-
+		
+		setDocStatus(DOCSTATUS_Voided);
 		setProcessed(true);
 		setDocAction(DOCACTION_None);
+		
 		return true;
 	}
 
@@ -1110,7 +1035,172 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 	@Override
 	public boolean reverseCorrectIt() {
-		return false;
+		if (DOCSTATUS_Closed.equals(getDocStatus()) || 
+			DOCSTATUS_Reversed.equals(getDocStatus()) || 
+			DOCSTATUS_Voided.equals(getDocStatus())) {
+
+			m_processMsg = "Document Closed: " + getDocStatus();
+			setDocAction(DOCACTION_None);
+			return false;
+		}
+		
+		if (!MPeriod.isOpen(getCtx(), Env.getDate(), MDocType.DOCBASETYPE_CreditCardSettlement)) {
+			m_processMsg = "@PeriodClosed@";
+			return false;
+		}
+		
+		// Se revierte el estado de los cupones a "A verificar".
+		changeCouponsAuditStatus(X_C_Payment.AUDITSTATUS_ToVerify);
+		
+		MCreditCardSettlement copy = new MCreditCardSettlement(getCtx(), 0, get_TrxName());
+		PO.copyValues(this, copy);
+
+		copy.setPaymentDate(Env.getDate());
+		copy.setAD_Org_ID(getAD_Org_ID());
+		copy.setAmountsByFactor(-1);
+		copy.setCouponsTotalAmount(BigDecimal.ZERO);
+		copy.setSettlementNo("^"+getSettlementNo());
+		copy.setC_Payment_ID(getC_Payment_ID());
+		copy.setDocStatus(DOCSTATUS_Reversed);
+		copy.setDocAction(DOCACTION_None);
+		copy.setProcessed(true);
+
+		if(!copy.save()) {
+			m_processMsg = CLogger.retrieveErrorAsString();
+			return false;
+		}
+		
+		// Anula el pago generado por la liquidación si es que existe
+		if(!Util.isEmpty(getC_Payment_ID(), true)){
+			MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
+			
+			if (!payment.processIt(DocAction.ACTION_Void)) {
+				m_processMsg = payment.getProcessMsg();
+				return false;
+			} 
+			
+			if (!payment.save()) {
+				m_processMsg = CLogger.retrieveErrorAsString();
+				return false;
+			}
+		}
+		
+		// Desvincular los cupones
+		unlinkCoupons();
+		
+		setSettlementNo(getSettlementNo()+"^");
+		setCouponsTotalAmount(BigDecimal.ZERO);
+		if (!save()) {
+			m_processMsg = CLogger.retrieveErrorAsString();
+			return false;
+		}
+		
+		// Se replican todos los registros de las pestañas adicionales
+		// (Iva, comisiones, retenciones, percepciones, otros conceptos)
+		String[] toReplicate = new String[] {
+				X_C_IVASettlements.Table_Name,
+				X_C_CommissionConcepts.Table_Name,
+				X_C_WithholdingSettlement.Table_Name,
+				X_C_PerceptionsSettlement.Table_Name,
+				X_C_ExpenseConcepts.Table_Name
+		};
+
+		for (String tableName : toReplicate) {
+			StringBuffer sqlFinalPart = new StringBuffer();
+			sqlFinalPart.append(" FROM ");
+			sqlFinalPart.append(tableName + " ");
+			sqlFinalPart.append(" WHERE ");
+			sqlFinalPart.append(" C_CreditCardSettlement_ID = ");
+			
+			String selectSQL = " SELECT * " + sqlFinalPart.toString() + getC_CreditCardSettlement_ID();
+			String deleteSQL = " DELETE " + sqlFinalPart.toString() + copy.getC_CreditCardSettlement_ID()
+					+ " AND amount = 0 ";
+
+			PreparedStatement ps = null;
+			ResultSet rs = null;
+
+			try {
+				ps = DB.prepareStatement(selectSQL, get_TrxName());
+				rs = ps.executeQuery();
+
+				while (rs.next()) {
+					PO to = null;
+
+					// IVA
+					if (tableName.equals(X_C_IVASettlements.Table_Name)) {
+						X_C_IVASettlements from = new X_C_IVASettlements(getCtx(), rs, get_TrxName());
+						to = new X_C_IVASettlements(getCtx(), 0, get_TrxName());
+						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
+						((X_C_IVASettlements)to).setC_IVASettlements_ID(0);
+						((X_C_IVASettlements)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
+						((X_C_IVASettlements)to).setAmount(negativeValue(from.getAmount()));
+					}
+					
+					// Comisiones
+					if (tableName.equals(X_C_CommissionConcepts.Table_Name)) {
+						X_C_CommissionConcepts from = new X_C_CommissionConcepts(getCtx(), rs, get_TrxName());
+						to = new X_C_CommissionConcepts(getCtx(), 0, get_TrxName());
+						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
+						((X_C_CommissionConcepts)to).setC_CommissionConcepts_ID(0);
+						((X_C_CommissionConcepts)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
+						((X_C_CommissionConcepts)to).setAmount(negativeValue(from.getAmount()));
+					}
+					
+					// Retenciones
+					if (tableName.equals(X_C_WithholdingSettlement.Table_Name)) {
+						X_C_WithholdingSettlement from = new X_C_WithholdingSettlement(getCtx(), rs, get_TrxName());
+						to = new X_C_WithholdingSettlement(getCtx(), 0, get_TrxName());
+						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
+						((X_C_WithholdingSettlement)to).setC_WithholdingSettlement_ID(0);
+						((X_C_WithholdingSettlement)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
+						((X_C_WithholdingSettlement)to).setAmount(negativeValue(from.getAmount()));
+					}
+					
+					// Percepciones
+					if (tableName.equals(X_C_PerceptionsSettlement.Table_Name)) {
+						X_C_PerceptionsSettlement from = new X_C_PerceptionsSettlement(getCtx(), rs, get_TrxName());
+						to = new X_C_PerceptionsSettlement(getCtx(), 0, get_TrxName());
+						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
+						((X_C_PerceptionsSettlement)to).setC_PerceptionsSettlement_ID(0);
+						((X_C_PerceptionsSettlement)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
+						((X_C_PerceptionsSettlement)to).setAmount(negativeValue(from.getAmount()));
+					}
+					
+					// Otros conceptos
+					if (tableName.equals(X_C_ExpenseConcepts.Table_Name)) {
+						X_C_ExpenseConcepts from = new X_C_ExpenseConcepts(getCtx(), rs, get_TrxName());
+						to = new X_C_ExpenseConcepts(getCtx(), 0, get_TrxName());
+						PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
+						((X_C_ExpenseConcepts)to).setC_ExpenseConcepts_ID(0);
+						((X_C_ExpenseConcepts)to).setC_CreditCardSettlement_ID(copy.getC_CreditCardSettlement_ID());
+						((X_C_ExpenseConcepts)to).setAmount(negativeValue(from.getAmount()));
+					}
+					
+					if (to != null && !to.save()) {
+						CLogger.retrieveErrorAsString();
+						return false;
+					}
+				}
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "MCreditCardSettlement.voidIt", e);
+			} finally {
+				try {
+					rs.close();
+					ps.close();
+				} catch (SQLException e) {
+					log.log(Level.SEVERE, "Cannot close statement or resultset");
+				}
+			}
+			
+			// Eliminar los registros que quedaron con importe 0
+			DB.executeUpdate(deleteSQL, get_TrxName());
+		}
+
+		setDocStatus(DOCSTATUS_Reversed);
+		setProcessed(true);
+		setDocAction(DOCACTION_None);
+
+		return true;
 	}
 
 	@Override

@@ -1273,13 +1273,14 @@ public class DocumentEngine implements DocAction {
             // Complete                    ..  CO
 
             if( docStatus.equals( DocumentEngine.STATUS_Completed )) {
-                options[ 0 ] = DocumentEngine.ACTION_ReActivate;
+                options[index++] = DocumentEngine.ACTION_ReActivate;
             }
 	    } else if (AD_Table_ID == MCreditCardSettlement.Table_ID) {
 
 			// Complete                    ..  CO
 			if (docStatus.equals(DocumentEngine.STATUS_Completed)) {
-				options[ 0 ] = DocumentEngine.ACTION_Void;
+				options[index++] = DocumentEngine.ACTION_Void;
+				options[index++] = DocumentEngine.ACTION_Reverse_Correct;
 			}
 	    }
 		return index;
