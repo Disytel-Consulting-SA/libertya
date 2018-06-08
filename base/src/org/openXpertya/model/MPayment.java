@@ -111,6 +111,12 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 	 */
 	private String reversedStatus = DOCSTATUS_Reversed;
 	
+	/**
+	 * Si es distinto de null, es la fecha que se setea al contra-payent
+	 * generado por anulación
+	 */
+	private Timestamp dateForReversalPayment = null;
+	
     /**
      * Descripción de Método
      *
@@ -2736,8 +2742,9 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         reversal.addDescription( "{->" + getDocumentNo() + ")" );
         
         // El contradocumento tiene que contener la fecha actual y NO la del documento original
-        reversal.setDateAcct(Env.getDate());
-        reversal.setDateTrx(Env.getDate());
+		Timestamp reversalDate = getDateForReversalPayment() != null ? getDateForReversalPayment() : Env.getDate();
+        reversal.setDateAcct(reversalDate);
+        reversal.setDateTrx(reversalDate);
         
         if(!reversal.save( get_TrxName())){
         	m_processMsg = CLogger.retrieveErrorAsString();
@@ -2761,10 +2768,8 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         }
 
         reversal.closeIt();
-        if (CounterAllocationManager.isCounterAllocationActive(getCtx())) {
-        	// Almaceno en la variable de instancia el ID del pago anulado
-        	this.setPayVoidID(reversal.getC_Payment_ID());
-        }
+    	setPayVoidID(reversal.getC_Payment_ID());
+    	
         // Me traigo el trabajo adicional de cuentas corrientes y lo confirmo
 		// después 
 		getAditionalWorkResult().put(reversal,
@@ -2815,7 +2820,10 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         //reversal.setDocStatus( DOCSTATUS_Closed );
         reversal.setDocStatus( getReversedStatus() );
         reversal.setDocAction( DOCACTION_None );
-        reversal.save( get_TrxName());
+        if(!reversal.save( get_TrxName())){
+        	m_processMsg = CLogger.retrieveErrorAsString();
+        	return false;
+        }
 
         // Disytel FB - Ya no se desasignan automáticamente los pagos. Se debe revertir la asignación manualmente.
         // Unlink & De-Allocate
@@ -3307,6 +3315,14 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 
 	public void setReversedStatus(String reversedStatus) {
 		this.reversedStatus = reversedStatus;
+	}
+
+	public Timestamp getDateForReversalPayment() {
+		return dateForReversalPayment;
+	}
+
+	public void setDateForReversalPayment(Timestamp dateForReversalPayment) {
+		this.dateForReversalPayment = dateForReversalPayment;
 	}
 	
 }   // MPayment
