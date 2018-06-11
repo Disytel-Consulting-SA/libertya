@@ -4163,3 +4163,16 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_reserved(integer, integer, integer)
   OWNER TO libertya;
+  
+--20180611-1600 Nueva view para detalle de transferencias entre almacenes
+CREATE OR REPLACE VIEW m_transfer_detailed_v AS 
+ SELECT t.ad_client_id, t.ad_org_id, t.m_transfer_id, t.documentno, t.datetrx::date as datetrx, t.duedate::date as duedate, 
+	t.description, t.docstatus, t.createdby, t.updatedby, t.movementtype, t.c_charge_id, t.c_doctype_id,
+	t.m_warehouse_id, t.m_warehouseto_id, t.c_bpartner_id, t.c_order_id, tl.m_product_id, tl.line, tl.qty
+FROM m_transfer t
+JOIN m_transferline tl ON tl.m_transfer_id = t.m_transfer_id
+WHERE t.transfertype = 'T' and t.docstatus IN ('CO','CL','VO','RE')
+ORDER BY t.datetrx, t.documentno, tl.line;
+
+ALTER TABLE m_transfer_detailed_v
+  OWNER TO libertya;
