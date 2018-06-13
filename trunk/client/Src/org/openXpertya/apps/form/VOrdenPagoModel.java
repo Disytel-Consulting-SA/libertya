@@ -1782,9 +1782,14 @@ public class VOrdenPagoModel {
 	}
 
 	protected String getAllocHdrDescription() {
-		String name = getAllocHdrDescriptionMsg();
-		return Msg.parseTranslation(getCtx(), name + " " + getInvoicesDate().toString().substring(0, 10) + " [" + name
-				+ " " + getHdrAllocationType() + "]");
+		String msg = getDescription();
+		// Descripción predefinida
+		if(Util.isEmpty(msg, true)){
+			String name = getAllocHdrDescriptionMsg();
+			msg = Msg.parseTranslation(getCtx(), name + " " + getInvoicesDate().toString().substring(0, 10) + " [" + name
+					+ " " + getHdrAllocationType() + "]");
+		}
+		return msg;
 	}
 
 	/**
