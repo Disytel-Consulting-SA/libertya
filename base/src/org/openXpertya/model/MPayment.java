@@ -2852,7 +2852,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 	        // Create automatic Allocation
 	        // 		El contradocumento tiene que contener la fecha actual y NO la del documento original 
 	        MAllocationHdr alloc = new MAllocationHdr( getCtx(),false, Env.getDate(), getC_Currency_ID(),Msg.translate( getCtx(),"C_Payment_ID" ) + ": " + reversal.getDocumentNo(),get_TrxName());
-	
+	        alloc.setAD_Org_ID(getAD_Org_ID());
 	        if(!alloc.save( get_TrxName())) {
 	        	m_processMsg = CLogger.retrieveErrorAsString();
     			return false;
