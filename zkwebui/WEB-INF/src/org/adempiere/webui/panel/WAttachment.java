@@ -209,7 +209,7 @@ public class WAttachment extends Window implements EventListener
 		cbContent.setRows(0);
 		cbContent.addEventListener(Events.ON_SELECT, this);
 		
-		if (MAttachment.isLocalAttachmentEnabled()) {
+		if (MAttachment.isLocalAttachmentEnabled() || Env.getAD_Client_ID(Env.getCtx()) == 0) {
 			toolBar.appendChild(bLoad);
 			toolBar.appendChild(bDelete);
 		}
