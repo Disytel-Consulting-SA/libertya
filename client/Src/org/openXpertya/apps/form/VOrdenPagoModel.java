@@ -1781,13 +1781,13 @@ public class VOrdenPagoModel {
 			return (MAllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder);
 	}
 
-	protected String getAllocHdrDescription() {
+	protected String getAllocHdrDescription(MAllocationHdr hdr) {
 		String msg = getDescription();
 		// Descripción predefinida
 		if(Util.isEmpty(msg, true)){
 			String name = getAllocHdrDescriptionMsg();
-			msg = Msg.parseTranslation(getCtx(), name + " " + getInvoicesDate().toString().substring(0, 10) + " [" + name
-					+ " " + getHdrAllocationType() + "]");
+			msg = Msg.parseTranslation(getCtx(), name + " " + hdr.getDocumentNo() + " | " + getBPartner().getValue()
+					+ " - " + getBPartner().getName());
 		}
 		return msg;
 	}
@@ -1818,7 +1818,7 @@ public class VOrdenPagoModel {
 	 */
 	private boolean generarPagosDesdeMediosPagos(List<MedioPago> pagos, MAllocationHdr hdr) throws Exception {
 
-		String HdrDescription = getAllocHdrDescription();
+		String HdrDescription = getAllocHdrDescription(hdr);
 		boolean saveOk = true;
 		String errorMsg = null;
 
@@ -2779,7 +2779,7 @@ public class VOrdenPagoModel {
 	 * Actualiza el AllocationHdr que representa el encabezado de una OP u OPA.
 	 */
 	private void updateAllocationHdr(MAllocationHdr hdr) {
-		String HdrDescription = getAllocHdrDescription();
+		String HdrDescription = getAllocHdrDescription(hdr);
 
 		hdr.setC_BPartner_ID(C_BPartner_ID);
 		hdr.setC_Currency_ID(C_Currency_ID);
