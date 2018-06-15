@@ -98,7 +98,11 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				poGenerator.createAllocationHdr(X_C_AllocationHdr.ALLOCATIONTYPE_PaymentOrder);
 				poGenerator.getAllocationHdr().setDateTrx(getBatchDate());
 				poGenerator.getAllocationHdr().setDateAcct(getBatchDate());
-				poGenerator.getAllocationHdr().setDescription(Msg.getMsg(getCtx(), "PaymentBatchPOAllocationDescription") + " " + getDocumentNo());
+				poGenerator.getAllocationHdr()
+						.setDescription(Msg.parseTranslation(Env.getCtx(),
+								"@C_PaymentBatch_ID@: " + getDocumentNo() + " | @PaymentOrder@: "
+										+ poGenerator.getAllocationHdr().getDocumentNo() + " | " + bPartner.getValue()
+										+ " - " + bPartner.getName()));
 				poGenerator.getAllocationHdr().setIsManual(false);
 				poGenerator.getAllocationHdr().setC_BPartner_ID(detail.getC_BPartner_ID());
 								
