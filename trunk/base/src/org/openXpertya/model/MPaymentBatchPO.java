@@ -358,6 +358,18 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 					isValid = false;
 					subValid = false;
 				}
+				
+				// El estado del documento debe ser completo o cerrado
+				if(!invoice.isInvoiceCompletedOrClosed()){
+					String msg = Msg.getMsg(getCtx(), "DocumentStatus", new Object[] { invoice.getDocumentNo(),
+							MRefList.getListName(getCtx(), DOCSTATUS_AD_Reference_ID, invoice.getDocStatus()) });
+					if (isValid)
+						m_processMsg = msg;
+					else
+						m_processMsg += " \n " + msg;
+					isValid = false;
+					subValid = false;
+				}
 			}
 		}
 		
