@@ -6813,6 +6813,14 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	public void setDragDocumentSurchargesAmts(boolean dragDocumentSurchargesAmts) {
 		this.dragDocumentSurchargesAmts = dragDocumentSurchargesAmts;
 	}
+	
+	/**
+	 * @return true si el estado es completo o cerrado, false caso contrario
+	 */
+	public boolean isInvoiceCompletedOrClosed(){
+		return MInvoice.DOCSTATUS_Closed.equals(getDocStatus())
+				|| MInvoice.DOCSTATUS_Completed.equals(getDocStatus());
+	}
 
 } // MInvoice
 
