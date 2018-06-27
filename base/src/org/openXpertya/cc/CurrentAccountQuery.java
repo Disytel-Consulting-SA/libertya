@@ -178,7 +178,7 @@ public class CurrentAccountQuery {
 		sqlDoc.append("  	d.document_id, ");
 		sqlDoc.append(" 	d.c_invoicepayschedule_id, ");
 		sqlDoc.append(" 	d.c_allocationhdr_id ");
-		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ", "+(orgID == null?0:orgID)+", "+getAccountType()+", true)  d ");
+		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ", "+(orgID == null?0:orgID)+", '"+getAccountType()+"', true)  d ");
 		sqlDoc.append(" WHERE d.AD_Client_ID = ? ");
 		sqlDoc.append(" AND "+getDocStatusWhereClause());
 		sqlAppend("   AND d.C_Bpartner_ID = ? ", bPartnerID, sqlDoc);
