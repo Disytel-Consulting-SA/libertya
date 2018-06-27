@@ -59,10 +59,13 @@ public class CurrentAccountQuery {
 	/** Condición de Comprobantes: Efectivo, Cta Cte, Todos */
 	private String condition;
 	
+	/** Tipo de Cuenta: C = Cliente, V = Proveedor, B = Ambos */
+	private String accountType;
+	
 	public CurrentAccountQuery(Properties ctx, Integer orgID,
 			Integer docTypeID, Boolean detailReceiptsPayments,
 			Timestamp dateFrom, Timestamp dateTo, String condition, 
-			Integer bPartnerID) {
+			Integer bPartnerID, String accountType) {
 		setCtx(ctx);
 		setOrgID(orgID);
 		setDocTypeID(docTypeID);
@@ -72,6 +75,7 @@ public class CurrentAccountQuery {
 		setCurrencyID(Env.getContextAsInt(getCtx(), "$C_Currency_ID"));
 		setCondition(condition);
 		setbPartnerID(bPartnerID);
+		setAccountType(Util.isEmpty(accountType, true)?"B":accountType);
 	}
 
 	/**
@@ -174,7 +178,7 @@ public class CurrentAccountQuery {
 		sqlDoc.append("  	d.document_id, ");
 		sqlDoc.append(" 	d.c_invoicepayschedule_id, ");
 		sqlDoc.append(" 	d.c_allocationhdr_id ");
-		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ")  d ");
+		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ", "+(orgID == null?0:orgID)+", "+getAccountType()+", true)  d ");
 		sqlDoc.append(" WHERE d.AD_Client_ID = ? ");
 		sqlDoc.append(" AND "+getDocStatusWhereClause());
 		sqlAppend("   AND d.C_Bpartner_ID = ? ", bPartnerID, sqlDoc);
@@ -342,5 +346,13 @@ public class CurrentAccountQuery {
 	
 	protected String getInvoiceOrgIDAllocatedQueryCondition(){
 		return Util.isEmpty(getOrgID(), true)?"":" AND (i.c_invoice_id IS NULL OR i.ad_org_id = "+getOrgID()+" ) ";
+	}
+
+	public String getAccountType() {
+		return accountType;
+	}
+
+	public void setAccountType(String accountType) {
+		this.accountType = accountType;
 	}
 }
