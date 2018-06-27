@@ -112,8 +112,8 @@ public class BalanceReport extends SvrProcess {
      // Moneda de la compañía utilizada para conversión de montos de documentos.
         client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
         if (!iterativeLogic) {
-    		setCurrentAccountQuery(
-    				new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), null));
+			setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
+					getCondition(), null, p_AccountType));
         }
 	}
 
@@ -136,7 +136,8 @@ public class BalanceReport extends SvrProcess {
 			
 			if (iterativeLogic) {
 				// Solo BPartner actual
-				setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To, getCondition(), rsBP.getInt("c_bpartner_id")));
+				setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
+						getCondition(), rsBP.getInt("c_bpartner_id"), p_AccountType));
 			}
 		
 			// calcular el estado de cuenta de cada E.C.

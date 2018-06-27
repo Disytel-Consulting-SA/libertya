@@ -17,8 +17,8 @@ public class OnCreditCurrentAccountBalanceData extends
 
 	@Override
 	public void loadBalanceData() {
-		CurrentAccountQuery caQuery = new CurrentAccountQuery(getBpartner()
-				.getCtx(), null, null, false, null, null, MInvoice.PAYMENTRULE_OnCredit, getBpartner().getID());
+		CurrentAccountQuery caQuery = new CurrentAccountQuery(getBpartner().getCtx(), null, null, false, null, null,
+				MInvoice.PAYMENTRULE_OnCredit, getBpartner().getID(), null);
 		
 		String sql = caQuery.getBalanceQuery();
 		
