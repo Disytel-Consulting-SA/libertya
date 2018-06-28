@@ -608,6 +608,16 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 						+ ". Si la diferencia es una diferencia de cambio debe primero generar una Nota de Débito o Crédito (según corresponda) e imputar el pago correspondiente a la diferencia ese documento.";
 				return STATUS_Invalid;
 			}
+			
+			// Validar que el estado del comprobante sea completo o cerrado, no
+			// se puede asociar una línea de caja a un comprobante en otro
+			// estado
+			MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+			if(!invoice.isInvoiceCompletedOrClosed()){
+				m_processMsg = Msg.getMsg(getCtx(), "DocumentStatus", new Object[] { invoice.getDocumentNo(),
+						MRefList.getListName(getCtx(), DOCSTATUS_AD_Reference_ID, invoice.getDocStatus()) });
+				return DocAction.STATUS_Invalid;
+			}
 		}
 		
 		// Si la moneda del documento es diferente a la de la compañia:
