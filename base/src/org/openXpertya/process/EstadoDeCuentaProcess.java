@@ -255,7 +255,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			" FROM c_invoice i" +
 			" JOIN c_doctype d ON i.c_doctype_id = d.c_doctype_id " +
 			" JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id " +
-			" WHERE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar, 'WC'::bpchar]) " + 
+			" WHERE "+getDocStatusWhereClause("i")+ 
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND i.paymentrule = '"+condition+"' ") +
@@ -313,7 +313,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					") as i on i.c_payment_id = p.c_payment_id ") +
 			"	  WHERE 1 = 1  " +
 			"	  AND p.AD_Client_ID = " + getAD_Client_ID() + 
-			"	  AND p.docstatus IN ('CO', 'CL', 'RE', 'VO', 'WC') " +
+			"	  AND " +getDocStatusWhereClause("p")+
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND ("+ (condition.equals(X_T_EstadoDeCuenta.CONDITION_Cash)? 
@@ -362,6 +362,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"       SELECT 'C_CashLine'::text AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, " +  
 			"        CASE  " +
 			"           WHEN cl.c_bpartner_id IS NOT NULL THEN cl.c_bpartner_id " +
+			"           WHEN ic.c_bpartner_id IS NOT NULL THEN ic.c_bpartner_id " +
 			"            ELSE i.c_bpartner_id " +
 			"        END AS c_bpartner_id, dt.c_doctype_id, " + 
 			"        CASE " +
@@ -388,9 +389,12 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 							(bPartnerID!=0?" AND i.c_bpartner_id = " + bPartnerID:"") + // Esto está bien?
 							(bpGroupID!=0?" AND bp.c_bp_group_id = " + bpGroupID:"") +
 			" 		) as i on i.c_cashline_id = cl.c_cashline_id " +
+		    " LEFT JOIN c_invoice ic on ic.c_invoice_id = cl.c_invoice_id "+
+		    " LEFT JOIN c_bpartner bic on bic.c_bpartner_id = ic.c_bpartner_id "+
 			" 	WHERE 1 = 1 " +
-			(bPartnerID!=0? "   AND ((cl.c_bpartner_id is not null AND cl.c_bpartner_id = " + bPartnerID + ") OR (i.c_bpartner_ID is not null and i.c_bpartner_id = " + bPartnerID + ")) " : "") +
-			(bpGroupID!=0? "   AND ((cl.c_bpartner_id is not null AND bp.c_bp_group_id = " + bpGroupID + ") OR (i.c_bp_group_id is not null and i.c_bp_group_id = " + bpGroupID + ")) " : "") +
+			" AND " +getDocStatusWhereClause("cl")+
+			(bPartnerID!=0? "   AND ((cl.c_bpartner_id is not null AND cl.c_bpartner_id = " + bPartnerID + ") OR (i.c_bpartner_ID is not null and i.c_bpartner_id = " + bPartnerID + ") OR (ic.c_bpartner_ID is not null and ic.c_bpartner_id = " + bPartnerID + ")) " : "") +
+			(bpGroupID!=0? "   AND ((cl.c_bpartner_id is not null AND bp.c_bp_group_id = " + bpGroupID + ") OR (i.c_bp_group_id is not null and i.c_bp_group_id = " + bpGroupID + ") OR (bic.c_bp_group_id is not null and bic.c_bp_group_id = " + bpGroupID + ")) " : "") +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND ("+ (condition.equals(X_T_EstadoDeCuenta.CONDITION_Cash)? 
@@ -731,10 +735,6 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	 * @return cláusula where para el estado de los documentos
 	 */
 	protected String getDocStatusWhereClause(String tableAlias){
-		// Para documentos de compras, no se deben mostrar los anulados 
-		String whereClause = " (CASE WHEN "+tableAlias+".issotrx = 'N' "
-							+ " THEN "+tableAlias+".docstatus NOT IN ('DR','IP','VO') "
-							+ " ELSE "+tableAlias+".docStatus NOT IN ('DR','IP') END) ";
-		return whereClause;
+		return tableAlias+".docstatus IN ('CO','CL','WC') ";
 	}
 }
