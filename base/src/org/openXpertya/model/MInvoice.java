@@ -312,6 +312,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		to.setIsApproved(false);
 		to.setC_Payment_ID(0);
 		to.setC_CashLine_ID(0);
+		to.setCreateCashLine(false);
 		to.setIsPaid(false);
 		to.setIsInDispute(false);
 
