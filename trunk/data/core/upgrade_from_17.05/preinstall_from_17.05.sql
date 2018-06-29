@@ -4465,3 +4465,17 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone)
   OWNER TO libertya;
+  
+--20180629-1224 Incremento de tamaño de la columna para registrar el último changelog id
+DROP VIEW ad_plugin_v;
+
+alter table ad_plugin alter column component_last_changelog type character varying(60);
+
+CREATE OR REPLACE VIEW ad_plugin_v AS 
+ SELECT cv.name, cv.ad_componentobjectuid, cv.version, p.created, p.updated, p.createdby, p.updatedby, p.component_export_date, p.component_last_changelog
+   FROM ad_componentversion cv
+   JOIN ad_plugin p ON p.ad_componentversion_id = cv.ad_componentversion_id
+  ORDER BY p.created;
+
+ALTER TABLE ad_plugin_v
+  OWNER TO libertya;
