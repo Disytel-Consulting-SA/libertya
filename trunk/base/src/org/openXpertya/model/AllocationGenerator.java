@@ -512,6 +512,11 @@ public class AllocationGenerator {
 				throw new AllocationGeneratorException(getMsg("DebitAmountValidationError",
 						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
 			}
+			if(!doc.validateDocStatus()){
+				throw new AllocationGeneratorException(getMsg("DocumentStatus",
+						new Object[] { doc.getDocumentNo(),
+								MRefList.getListName(getCtx(), MInvoice.DOCSTATUS_AD_Reference_ID, doc.getDocStatus()) }));
+			}
 		}
 		
 		for(Document doc : getCredits()){
@@ -519,6 +524,12 @@ public class AllocationGenerator {
 				throw new AllocationGeneratorException(getMsg("CreditAmountValidationError",
 						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
 			}
+			if(!doc.validateDocStatus()){
+				throw new AllocationGeneratorException(getMsg("DocumentStatus",
+						new Object[] { doc.getDocumentNo(),
+								MRefList.getListName(getCtx(), MInvoice.DOCSTATUS_AD_Reference_ID, doc.getDocStatus()) }));
+			}
+
 		}
 		
 		// Si hay al menos un débito y un crédito entonces la imputación no puede ser parcial
@@ -533,7 +544,7 @@ public class AllocationGenerator {
 							new Object[] { getDebitsAmount(), getCreditsAmount() }));
 			}
 		}
-		
+				
 		// Se invoca el método de validación específicas (destinado a las subclases)
 		customValidate();
 	}
@@ -967,6 +978,15 @@ public class AllocationGenerator {
 		public boolean validateAmount() {
 			return false;
 		}
+		
+		public boolean needFiscalPrint() {
+			return false;
+		}
+		
+		public boolean validateDocStatus() {
+			return MInvoice.DOCSTATUS_Closed.equals(getDocStatus())
+					|| MInvoice.DOCSTATUS_Completed.equals(getDocStatus());
+		}
 
 		/**
 		 * Se asigna este documento como un débito en la línea de asignación.
@@ -1010,6 +1030,7 @@ public class AllocationGenerator {
 		}
 		
 		public abstract Date getSqlDate();
+		public abstract String getDocStatus();
 
 		public BigDecimal getConvertedAmountToday(){
 			return MCurrency.currencyConvert(this.amount, this.currencyId, Env.getContextAsInt( getCtx(), "$C_Currency_ID" ), Env.getContextAsDate(getCtx(), "#Date"), Env.getAD_Org_ID(getCtx()), getCtx());
@@ -1147,6 +1168,26 @@ public class AllocationGenerator {
 		public BigDecimal getOpenAmt(){
 			return DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true);
 		}
+		
+		@Override
+		public String getDocStatus() {
+			return DB.getSQLValueString(getTrxName(), "SELECT docstatus FROM C_Invoice WHERE C_Invoice_ID = ?", id);
+		}
+		
+		public Integer getDocTypeID() {
+			return DB.getSQLValue(getTrxName(), "SELECT c_doctypetarget_id FROM C_Invoice WHERE C_Invoice_ID = ?", id);
+		}
+		
+		@Override
+		public boolean needFiscalPrint() {
+			return AllocationGenerator.this.needFiscalPrint(getDocTypeID());
+		}
+		
+		@Override
+		public boolean validateDocStatus() {
+			return super.validateDocStatus()
+					|| (MInvoice.DOCSTATUS_Drafted.equals(getDocStatus()) && needFiscalPrint());
+		}
 	}
 
 	/**
@@ -1201,6 +1242,11 @@ public class AllocationGenerator {
 		@Override
 		public BigDecimal getOpenAmt(){
 			return DB.getSQLValueBD(getTrxName(), "SELECT abs(cashlineavailable(?))", id,true);
+		}
+
+		@Override
+		public String getDocStatus() {
+			return DB.getSQLValueString(getTrxName(), "SELECT docstatus FROM C_CashLine WHERE C_CashLine_ID = ?", id);
 		}
 	}
 
@@ -1258,6 +1304,10 @@ public class AllocationGenerator {
 			return DB.getSQLValueBD(getTrxName(), "SELECT paymentavailable(?)", id,true);
 		}
 
+		@Override
+		public String getDocStatus() {
+			return DB.getSQLValueString(getTrxName(), "SELECT docstatus FROM C_Payment WHERE C_Payment_ID = ?", id);
+		}
 	}
 	
 	public static BigDecimal getExchangeDifference(HashMap<Integer, BigDecimal> facts, ArrayList<PaymentMediumInfo> pays, Properties ctx, String trxName, Date allocDate) {
@@ -1502,8 +1552,19 @@ public class AllocationGenerator {
 	 * Indica si la factura debe ser emitida mediante un controlador fiscal.
 	 * @param invoice Factura a evaluar.
 	 */
-	private boolean needFiscalPrint(MInvoice invoice) {
-		return MDocType.isFiscalDocType(invoice.getC_DocTypeTarget_ID())
+	protected boolean needFiscalPrint(MInvoice invoice) {
+		return needFiscalPrint(invoice.getC_DocTypeTarget_ID());
+	}
+	
+	/**
+	 * Indica si el tipo de documento parámetro debe ser emitida mediante
+	 * controlador fiscal
+	 * 
+	 * @param docTypeID
+	 *            id de tipo de documento
+	 */
+	protected boolean needFiscalPrint(Integer docTypeID) {
+		return MDocType.isFiscalDocType(docTypeID)
 				&& LOCALE_AR_ACTIVE;
 	}
 	
