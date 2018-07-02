@@ -580,7 +580,7 @@ public class CalloutInvoice extends CalloutEngine {
 			}
         }
         
-        if( C_Tax_ID == 0 ) {
+        if( C_Tax_ID == 0 && M_Warehouse_ID > 0) {
 			C_Tax_ID = Tax.get(ctx, M_Product_ID, C_Charge_ID, billDate, shipDate, AD_Org_ID, M_Warehouse_ID,
 					billC_BPartner_Location_ID, shipC_BPartner_Location_ID, isSOTrx);
         }

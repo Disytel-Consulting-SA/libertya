@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-04-11 19:48:36.794 */
+ *  @version  - 2018-06-25 16:36:43.02 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, C_DocType_ID, trxName);
 setAllowChangePriceList (false);
 setAllowDeliveryReturned (false);
 setAllowOtherBatchPaymentDate (false);
+setAllowOnlyProviders (false);
 setAllowProposalDue (false);
 setApplyPerception (false);
 setC_DocType_ID (0);
@@ -166,6 +167,22 @@ set_Value ("AllowDeliveryReturned", new Boolean(AllowDeliveryReturned));
 public boolean isAllowDeliveryReturned() 
 {
 Object oo = get_Value("AllowDeliveryReturned");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set AllowOnlyProviders */
+public void setAllowOnlyProviders (boolean AllowOnlyProviders)
+{
+set_Value ("AllowOnlyProviders", new Boolean(AllowOnlyProviders));
+}
+/** Get AllowOnlyProviders */
+public boolean isAllowOnlyProviders() 
+{
+Object oo = get_Value("AllowOnlyProviders");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
