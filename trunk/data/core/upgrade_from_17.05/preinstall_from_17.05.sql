@@ -4749,3 +4749,8 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone, integer, character, boolean)
   OWNER TO libertya;
+  
+--20180702-1112 Merge r2404
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','AllowOnlyProviders','character(1) NOT NULL DEFAULT ''N'''));
+
+
