@@ -2,6 +2,7 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
+import java.util.Date;
 import java.util.Properties;
 
 import org.openXpertya.process.DocAction;
@@ -160,7 +161,13 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoDestino.setAD_Org_ID(getAD_Org_ID());
 			pagoDestino.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 			pagoDestino.setC_BankAccount_ID(getC_bankaccount_to_ID());
-			pagoDestino.setAmount(getC_currency_to_ID(), getammount_to().multiply(anular?minusOne:BigDecimal.ONE));
+			
+			//Si son en distintas monedas, realizo la conversión
+			BigDecimal account_to_amount = getammount_to().multiply(anular?minusOne:BigDecimal.ONE); //Cantidad original, antes de la conversión
+			if(getC_currency_from_ID() != getC_currency_to_ID()) {
+				account_to_amount = MCurrency.currencyConvert(getammount_to(), getC_currency_from_ID(), getC_currency_to_ID(), new Date(), getAD_Org_ID(), getCtx());
+			} 
+			pagoDestino.setAmount(getC_currency_to_ID(), account_to_amount);
 			pagoDestino.setDateTrx(getDateTrx());
 			pagoDestino.setDateAcct(getDateTrx());
 			pagoDestino.setC_BPartner_ID(getC_BPartner_ID());
@@ -175,9 +182,9 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 				pagoDestino.setC_DocType_ID(pagoDestino.isReceipt());
 			
 			if(anular)
-				pagoDestino.setDescription("ANULACION - Transferencia " + /*MFecha.timestampToStringDDmmYYYY(*/getDateTrx()/*)*/ + " $" + getammount_to().multiply(minusOne));
+				pagoDestino.setDescription("ANULACION - Transferencia " + /*MFecha.timestampToStringDDmmYYYY(*/getDateTrx()/*)*/ + " $" + account_to_amount.multiply(minusOne));
 			else
-				pagoDestino.setDescription("Transferencia " + /*MFecha.timestampToStringDDmmYYYY(*/getDateTrx()/*)*/ + " $" + getammount_to());
+				pagoDestino.setDescription("Transferencia " + /*MFecha.timestampToStringDDmmYYYY(*/getDateTrx()/*)*/ + " $" + account_to_amount);
 			
 			pagoDestino.setDocumentNo("TRX " + getC_banktransfer_ID());
 			pagoDestino.setC_Currency_ID(getC_currency_to_ID());
