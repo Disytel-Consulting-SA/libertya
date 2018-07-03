@@ -11,7 +11,7 @@ public class CashPayment extends Payment {
 	}
 
 	public CashPayment(BigDecimal amount, String description) {
-		super(amount, description);
+		super(amount, description, TenderType.EFECTIVO);
 		// TODO Auto-generated constructor stub
 	}
 

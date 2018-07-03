@@ -61,7 +61,11 @@ public abstract class Document implements Serializable{
 	private List<DiscountLine> documentDiscounts = null;
 	/** Impuestos adicionales */
 	private List<Tax> otherTaxes = null;
-	
+	/**
+	 * El documento tiene el impuesto incluído? Esto se determina en base a la
+	 * tarifa asociada
+	 */
+	private boolean isTaxIncluded = false;
 	
 	public Document() {
 		super();
@@ -362,5 +366,13 @@ public abstract class Document implements Serializable{
 
 	public List<Tax> getOtherTaxes() {
 		return otherTaxes;
+	}
+
+	public boolean isTaxIncluded() {
+		return isTaxIncluded;
+	}
+
+	public void setTaxIncluded(boolean isTaxIncluded) {
+		this.isTaxIncluded = isTaxIncluded;
 	}
 }
