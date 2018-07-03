@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -71,6 +72,7 @@ import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.Query;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_AD_Role;
 import org.openXpertya.model.X_C_BankAccountDoc;
@@ -1270,6 +1272,28 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	    		this.BPartnerSel.setNewValueOnChange(null);
 	    	} else {
 	    		this.cmdProcess.setEnabled(true);
+	    	}
+	    	
+	    	/*
+	    	 * Chequea que si el campo "Admitir OP Solo EC Proveedores" (del Tipo de Documento) 
+	    	 * está activo, entonces la EC debe ser un "Proveedor".
+	    	 * Por cuestiones de performance, el chequeo de si la EC es Proveedor se hace primero
+	    	 */
+	    	if(!partner.isVendor()) {
+	    		List<Object> params = new ArrayList<Object>();
+	    		final StringBuffer whereClause = new StringBuffer();
+	    		whereClause.append("isPaymentOrderSeq=? AND AllowOnlyProviders=?");
+	    		params.add(new Boolean(true));
+	    		params.add(new Boolean(true));
+	    		Query q = new Query(m_ctx, MDocType.Table_Name, whereClause.toString(), null);
+	    		q.setParameters(params);
+	    		MDocType result = q.first();
+	    		if(result != null) {
+	    			String error_msg = Msg.translate(m_ctx, "OnlyAllowedProviders");
+		    		showError(error_msg);
+		    		this.cmdProcess.setEnabled(false);//Bloqueo la continuacion del pago
+		    		this.BPartnerSel.setNewValueOnChange(null);
+	    		}
 	    	}
     	}
     }   
