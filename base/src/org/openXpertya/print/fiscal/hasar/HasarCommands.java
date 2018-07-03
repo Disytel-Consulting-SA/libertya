@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 import org.openXpertya.print.fiscal.FiscalPacket;
+import org.openXpertya.print.fiscal.document.Tax;
 
 /**
  * Comandos que interpretan las impresoras fiscales Hasar.
@@ -54,6 +55,11 @@ public interface HasarCommands {
 	public int CMD_GET_FANTASY_NAME           = 0x92;
 	/** Cargar encabezamiento y pie de documentos. (0x5D) */
 	public int CMD_SET_HEADER_TRAILER         = 0x5D;
+	/**
+	 * Cargar encabezamiento y pie de documentos. Impresora Fiscal Hasar 2da
+	 * Generación. (0x9E)
+	 */
+	public int CMD_SET_HEADER_TRAILER_2G	  = 0x9E;
 	/** Consultar encabezamiento y pie de documentos. (0x5E) */
 	public int CMD_GET_HEADER_TRAILER         = 0x5E;
 	/** Cargar logotipo del cliente. (0x90) */
@@ -119,6 +125,8 @@ public interface HasarCommands {
 	public int CMD_CHARGE_NON_REGISTERED_TAX  = 0x61;
 	/** DF: Percepciones sobre el IVA. (0x60) */
 	public int CMD_PERCEPTIONS                = 0x60;
+	/** DF: Percepciones. Impresora Fiscal Hasar 2da Generación. (0x61) */
+	public int CMD_PERCEPTIONS_2G			  = 0x61;
 	/** DF: Consultar subtotal. (0x43) */
 	public int CMD_SUBTOTAL                   = 0x43;
 	/** DF: Definir líneas de texto en recibos. (0x97) */
@@ -375,13 +383,12 @@ public interface HasarCommands {
 
 	/**
 	 * Comando para generar percepciones.
-	 * @param description: Descripción.
-	 * @param amount: monto de la percepción.
-	 * @param alicuotaIVA: alícuota del IVA. Si no se indica ningun porcentaje 
-	 *                     (<code>null</code>) la percepción es general.
-	 * @return <code>FiscalPacket</code> que representa el comando para la impresora.
+	 * 
+	 * @param tributo
+	 * @return <code>FiscalPacket</code> que representa el comando para la
+	 *         impresora.
 	 */
-	public FiscalPacket cmdPerceptions(String description, BigDecimal amount, BigDecimal alicuotaIVA);
+	public FiscalPacket cmdPerceptions(Tax otherTax);
 
 	/**
 	 * Comando para calcular el subtotal del comprobante abierto.
@@ -628,6 +635,7 @@ public interface HasarCommands {
 	 */
 	public FiscalPacket cmdSetEmbarkNumber(int line, String text);
 
+	
 	/**
 	 * Comando para consultar información del remito o comprobante original.
 	 * @param line: número de línea a consultar.

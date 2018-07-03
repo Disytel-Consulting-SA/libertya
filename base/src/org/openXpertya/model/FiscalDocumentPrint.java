@@ -35,6 +35,7 @@ import org.openXpertya.print.fiscal.document.Invoice;
 import org.openXpertya.print.fiscal.document.NonFiscalDocument;
 import org.openXpertya.print.fiscal.document.Payment;
 import org.openXpertya.print.fiscal.document.Tax;
+import org.openXpertya.print.fiscal.document.Payment.TenderType;
 import org.openXpertya.print.fiscal.exception.DocumentException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
@@ -874,6 +875,10 @@ public class FiscalDocumentPrint {
 		} else if(getPrinterDocType().equals(MDocType.FISCALDOCUMENT_DebitNote)) {
 			document = createDebitNote(mInvoice);
 		}
+		
+		// Se setea la inclusión del impuesto en el precio
+		document.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
+		
 		return document;
 	}
 	
@@ -1001,6 +1006,9 @@ public class FiscalDocumentPrint {
 		
 		// Se asigna el número de factura original.
 		String origInvoiceNumber = null;
+		String origInvoiceLetter = null;
+		String origInvoicePOS = null;
+		String origInvoiceNo = null;
 		MInvoice mOriginalInvoice = originalInvoice;
 		// Si la factura parámetro es null y la factura oxp parámetro contiene
 		// una factura original seteada entonces la busco
@@ -1012,11 +1020,16 @@ public class FiscalDocumentPrint {
 		// original
 		if(mOriginalInvoice != null) {			
 			origInvoiceNumber = mOriginalInvoice.getDocumentNo();
+			origInvoiceLetter = mOriginalInvoice.getLetra();
 			// Si no cumple con el formato de comprobantes fiscales se envia
 			// el documentNo como número de factura original.
 			if(origInvoiceNumber.length() == 13) {
 				// El formato es: PPPP-NNNNNNNN, Ej: 0001-00000023
-				origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
+				origInvoiceLetter = Util.isEmpty(origInvoiceLetter, true) ? origInvoiceNumber.substring(0, 1)
+						: origInvoiceLetter;
+				origInvoicePOS = origInvoiceNumber.substring(1,5);
+				origInvoiceNo = origInvoiceNumber.substring(5,13);
+				origInvoiceNumber = origInvoicePOS + "-" + origInvoiceNo;
 			}
 		}
 		// Si no existe también se puede obtener del nro del pedido dependiendo
@@ -1048,12 +1061,21 @@ public class FiscalDocumentPrint {
 					if (!Util.isEmpty(origInvoiceNumber, true)
 							&& origInvoiceNumber.length() == 13) {
 						// El formato es: PPPP-NNNNNNNN, Ej: 0001-00000023
-						origInvoiceNumber = origInvoiceNumber.substring(1,5) + "-" + origInvoiceNumber.substring(5,13);
+						// El formato es: PPPP-NNNNNNNN, Ej: 0001-00000023
+						origInvoiceLetter = Util.isEmpty(origInvoiceLetter, true) ? origInvoiceNumber.substring(0, 1)
+								: origInvoiceLetter;
+						origInvoicePOS = origInvoiceNumber.substring(1,5);
+						origInvoiceNo = origInvoiceNumber.substring(5,13);
+						origInvoiceNumber = origInvoicePOS + "-" + origInvoiceNo;
 					}
 				}
 			}
 		}
+		// Número de comprobante original armado y desarmado
 		creditNote.setOriginalDocumentNo(origInvoiceNumber);
+		creditNote.setOriginalLetter(origInvoiceLetter);
+		creditNote.setOriginalPOS(Integer.parseInt(origInvoicePOS));
+		creditNote.setOriginalNo(Integer.parseInt(origInvoiceNo));
 		
 		// Reorganizar las leyendas al pie de la nc
 		reorderFooterObservation(creditNote);
@@ -1278,7 +1300,7 @@ public class FiscalDocumentPrint {
 					discountLine = new DiscountLine(
 							mDiscountByTax.getDescription(),
 							mDiscountByTax.getDiscountAmt().negate(), 
-							true, // Los importes en DocumentDiscount incluyen siempre el impuesto
+							document.isTaxIncluded(), // Los importes en DocumentDiscount incluyen siempre el impuesto
 							mDiscountByTax.getTaxRate());
 					// Si el descuento es manual, entonces le cambio la
 					// descripción a uno más corto
@@ -1300,13 +1322,39 @@ public class FiscalDocumentPrint {
 				new DiscountLine(
 					Msg.translate(Env.getCtx(), "FiscalTicketGeneralDiscount"), 
 					generalDiscountAmt, 
-					true // Incluye impuestos
+					document.isTaxIncluded() // Incluye impuestos
 				)
 			);
 		}
 		
 	}
 
+	/**
+	 * Parser entre el tender type del MPayment y el tendertype enumerador del
+	 * payment fiscal
+	 * 
+	 * @param paymentTenderType
+	 *            valor de la columna TenderType de C_Payment
+	 * @return el tipo de pago en base al tendertype parámetro, OTROS en caso
+	 *         que no se pueda parsear
+	 */
+	protected TenderType parseTenderType(String paymentTenderType){
+		TenderType tt = TenderType.OTROS;
+		if(MPayment.TENDERTYPE_Cash.equals(paymentTenderType)){
+			tt = TenderType.EFECTIVO;
+		} 
+		else if(MPayment.TENDERTYPE_Check.equals(paymentTenderType)){
+			tt = TenderType.CHEQUE;
+		}
+		else if(MPayment.TENDERTYPE_CreditCard.equals(paymentTenderType)){
+			tt = TenderType.TARJETA;
+		}
+		else if(MPayment.TENDERTYPE_DirectDeposit.equals(paymentTenderType)){
+			tt = TenderType.TRANSFERENCIA_BANCARIA;
+		}
+		return tt;
+	}
+	
 	/**
 	 * Carga los pagos en la factura a emitir a partir de las imputaciones que
 	 * tenga la factura en la BD.
@@ -1335,8 +1383,8 @@ public class FiscalDocumentPrint {
 		ResultSet rs = null;
 		
 		// Crea los pagos de Efectivo y Otros para acumular montos de sendos tipos.
-		Payment othersPayment = new Payment(BigDecimal.ZERO, OTHERS_DESC);
-		Payment cashPayment =new CashPayment(BigDecimal.ZERO, CASH_DESC);
+		Payment othersPayment = new Payment(BigDecimal.ZERO, OTHERS_DESC, TenderType.OTROS);
+		Payment cashPayment = new CashPayment(BigDecimal.ZERO, CASH_DESC);
 		
 		try {
 			pstmt = DB.prepareStatement(sql, getTrxName());
@@ -1349,6 +1397,7 @@ public class FiscalDocumentPrint {
 			BigDecimal paidAmt = null;
 			String description = null;
 			BigDecimal changeAmt = BigDecimal.ZERO;
+			TenderType tenderType = null;
 			// Pago que se crea en caso de que la imputación no entre en la clase
 			// Efectivo u Otros Pagos.
 			Payment payment = null;
@@ -1361,6 +1410,7 @@ public class FiscalDocumentPrint {
 				invoiceCreditID = rs.getInt("C_Invoice_Credit_ID");
 				paidAmt = rs.getBigDecimal("PaidAmount");
 				changeAmt = rs.getBigDecimal("ChangeAmt");
+				
 				description = null;
 				payment = null;
 				creditCardCashRetirementPayment = null;
@@ -1370,6 +1420,7 @@ public class FiscalDocumentPrint {
 					// Obtiene la descripción.
 					MPayment mPayment = new MPayment(mInvoice.getCtx(), paymentID, getTrxName());
 					description = getInvoicePaymentDescription(mPayment);
+					tenderType = parseTenderType(mPayment.getTenderType());
 					// Retiro de efectivo de tarjeta de crédito
 					if (MPayment.TENDERTYPE_CreditCard.equals(mPayment
 							.getTenderType()) && !Util.isEmpty(changeAmt, true)) {
@@ -1390,6 +1441,7 @@ public class FiscalDocumentPrint {
 					// Obtiene la descripción.
 					description = getInvoicePaymentDescription(new MInvoice(
 							ctx, invoiceCreditID, getTrxName()));
+					tenderType = TenderType.CREDITO;
 				}
 				
 				// Si es un tipo que entra dentro de "Otros Pagos", se suma el importe
@@ -1399,7 +1451,7 @@ public class FiscalDocumentPrint {
 				// Caso Contrario (Tarjeta, Cheque, Transferencia, NC, etc), se crea el pago
 				// con la descripción.
 				} else if (description != null) {
-					payment = new Payment(paidAmt.add(changeAmt), description);
+					payment = new Payment(paidAmt.add(changeAmt), description, tenderType);
 				}
 				
 				// Si se creó un nuevo pago se agrega a la lista ordenada de pagos
@@ -1445,7 +1497,7 @@ public class FiscalDocumentPrint {
 			paymentMedium = paymentMedium == null?MRefList.getListName(ctx,
 					MInvoice.PAYMENTRULE_AD_Reference_ID, paymentRule):paymentMedium;
 			invoice.addPayment(new Payment(mInvoice.getGrandTotal(),
-					paymentMedium));
+					paymentMedium, TenderType.CUENTA_CORRIENTE));
 		// Si hay pagos, se cargan a los pagos de la factura a emitir.
 		} else {
 			int paymentQty = 0;
@@ -1500,7 +1552,11 @@ public class FiscalDocumentPrint {
 	 * @param mInvoice
 	 */
 	private void loadOtherTaxes(Document doc, MInvoice mInvoice){
-		String sql = "SELECT t.c_tax_id, t.name, t.rate, it.taxbaseamt, it.taxamt, t.ispercepcion FROM c_invoicetax as it INNER JOIN c_tax as t ON it.c_tax_id = t.c_tax_id INNER JOIN c_taxcategory as tc ON t.c_taxcategory_id = tc.c_taxcategory_id WHERE (c_invoice_id = ?) AND (ismanual = 'Y')";
+		String sql = "SELECT t.c_tax_id, t.name, t.rate, it.taxbaseamt, it.taxamt, t.ispercepcion, t.PerceptionType "
+					+ "FROM c_invoicetax as it "
+					+ "INNER JOIN c_tax as t ON it.c_tax_id = t.c_tax_id "
+					+ "INNER JOIN c_taxcategory as tc ON t.c_taxcategory_id = tc.c_taxcategory_id "
+					+ "WHERE (c_invoice_id = ?) AND (ismanual = 'Y')";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		List<org.openXpertya.print.fiscal.document.Tax> otherTaxes = new ArrayList<Tax>();
@@ -1513,8 +1569,9 @@ public class FiscalDocumentPrint {
 				otherTax = new Tax(rs.getInt("c_tax_id"), rs.getString("name"),
 						rs.getBigDecimal("rate"),
 						rs.getBigDecimal("taxbaseamt"),
-						rs.getBigDecimal("taxamt"), rs
-								.getString("ispercepcion").equals("Y"));
+						rs.getBigDecimal("taxamt"), 
+						rs.getString("ispercepcion").equals("Y"), 
+						rs.getString("PerceptionType"));
 				otherTaxes.add(otherTax);
 			}
 		} catch (SQLException e) {

@@ -17,10 +17,23 @@ public class Payment implements Serializable{
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	public enum TenderType{
+		EFECTIVO,
+		CREDITO,
+		CUENTA_CORRIENTE,
+		TRANSFERENCIA_BANCARIA,
+		CHEQUE,
+		TARJETA,
+		OTROS
+	}
+	
 	/** Monto del pago */
 	private BigDecimal amount;
 	/** Descripción del medio de pago */
 	private String description;
+	/** Tipo */
+	private TenderType tenderType;
 	
 	public Payment() {
 		super();
@@ -30,10 +43,11 @@ public class Payment implements Serializable{
 	 * @param amount
 	 * @param description
 	 */
-	public Payment(BigDecimal amount, String description) {
+	public Payment(BigDecimal amount, String description, TenderType tenderType) {
 		super();
 		this.amount = amount;
 		this.description = description;
+		this.setTenderType(tenderType);
 	}
 	
 	/**
@@ -91,5 +105,13 @@ public class Payment implements Serializable{
 	 */
 	public boolean isCashRetirement(){
 		return false;
+	}
+
+	public TenderType getTenderType() {
+		return tenderType;
+	}
+
+	public void setTenderType(TenderType tenderType) {
+		this.tenderType = tenderType;
 	}
 }

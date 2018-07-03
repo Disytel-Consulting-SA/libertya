@@ -10,17 +10,19 @@ public class Tax {
 	private BigDecimal baseAmt;
 	private BigDecimal amt;
 	private boolean isPercepcion;
+	private String percepcionType;
 	
 	public Tax(){		
 	}
 	
-	public Tax(Integer id, String name, BigDecimal rate, BigDecimal baseAmt, BigDecimal amt, boolean isPercepcion){
+	public Tax(Integer id, String name, BigDecimal rate, BigDecimal baseAmt, BigDecimal amt, boolean isPercepcion, String percepcionType){
 		setId(id);
 		setName(name);
 		setRate(rate);
 		setBaseAmt(baseAmt);
 		setAmt(amt);
 		setPercepcion(isPercepcion);
+		setPercepcionType(percepcionType);
 	}
 
 	public void setId(Integer id) {
@@ -69,5 +71,13 @@ public class Tax {
 
 	public boolean isPercepcion() {
 		return isPercepcion;
+	}
+
+	public String getPercepcionType() {
+		return percepcionType;
+	}
+
+	public void setPercepcionType(String percepcionType) {
+		this.percepcionType = percepcionType;
 	}
 }

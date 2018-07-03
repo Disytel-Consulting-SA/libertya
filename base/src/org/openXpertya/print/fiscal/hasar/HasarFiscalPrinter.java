@@ -230,7 +230,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		cmd.setText(i++, description, 50, false);
 		cmd.setNumber(i++, amount, 9, 2, false);
 		cmd.setBoolean(i++, substract, "m", "M", false);
-		cmd.setNumber(i++, display, true);
+		cmd.setInt(i++, display == null?0:display);
 		cmd.setBoolean(i++, baseAmount, "x", "T", false);
 		return cmd;
 	}
@@ -304,15 +304,19 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		return cmd;
 	}
 
-	public FiscalPacket cmdPerceptions(String description, BigDecimal amount, BigDecimal alicuotaIVA) {
+	public FiscalPacket cmdPerceptions(Tax otherTax) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PERCEPTIONS);
 		int i = 1;
-		if(alicuotaIVA == null)
+		
+		// Alicuota de IVA - Por lo pronto no se prorratea por IVA
+		/*if(alicuotaIVA == null)
 			cmd.setText(i++, "**.**", false);
 		else
-			cmd.setNumber(i++, alicuotaIVA, 2, 2, false);
-		cmd.setText(i++, description, 20,false);
-		cmd.setAmount(i++, amount, false, false);
+			cmd.setNumber(i++, alicuotaIVA, 2, 2, false);*/
+		
+		cmd.setText(i++, "**.**", false);
+		cmd.setText(i++, otherTax.getName(), 20, false);
+		cmd.setAmount(i++, otherTax.getAmt(), false, false);
 		return cmd;
 	}
 
@@ -476,6 +480,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		cmd.setBoolean(i++, cancel, "C", "T");
 		cmd.setNumber(i++, display, true);
 		return cmd;
+	}
+	
+	public FiscalPacket cmdTotalTender(String description, BigDecimal amount, boolean cancel, Integer display, Payment payment) {
+		return cmdTotalTender(description, amount, cancel, display);
 	}
 
 	@Override
@@ -856,7 +864,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 						payment.getDescription(), 
 						payment.getAmount(), 
 						false, 
-						null)
+						null, 
+						payment)
 					);
 				}
 				else{
@@ -982,9 +991,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			//////////////////////////////////////////////////////////////
 			// Se setea el número de comprobante original.
 			// Comando: @SetEmbarkNumber
-			execute(cmdSetEmbarkNumber(
-				1, creditNote.getOriginalDocumentNo())
-			);
+			setEmbarkNumber(1, creditNote);
 
 			//////////////////////////////////////////////////////////////
 			// Se abre un documento no fiscal homologado.
@@ -1192,6 +1199,19 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	}
 
 	/**
+	 * Ejecuta la sentencia de carga del número del comprobante original
+	 * asociado a la Nota de Crédito
+	 * 
+	 * @param line
+	 *            número del línea dentro de la impresión
+	 * @param creditNote
+	 *            Nota de Crédito
+	 */
+	protected void setEmbarkNumber(Integer line, CreditNote creditNote) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		execute(cmdSetEmbarkNumber(1, creditNote.getOriginalDocumentNo()));
+	}
+	
+	/**
 	 * Realiza la conversión entre el entero que representa a la categoría
 	 * de IVA en las clases de documentos y el string que espera la impresora
 	 * fiscal. 
@@ -1236,20 +1256,25 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	 */
 	protected Map<Integer, String> getIvaResponsabilities() {
 		if(ivaResponsabilities == null) {
-			ivaResponsabilities = new HashMap<Integer,String>();
-			ivaResponsabilities.put(Customer.CONSUMIDOR_FINAL, CONSUMIDOR_FINAL);
-			ivaResponsabilities.put(Customer.EXENTO, EXENTO);
-			ivaResponsabilities.put(Customer.MONOTRIBUTISTA_SOCIAL, MONOTRIBUTISTA_SOCIAL);
-			ivaResponsabilities.put(Customer.NO_CATEGORIZADO, NO_CATEGORIZADO);
-			ivaResponsabilities.put(Customer.NO_RESPONSABLE, NO_RESPONSABLE);
-			ivaResponsabilities.put(Customer.PEQUENO_CONTRIBUYENTE_EVENTUAL, PEQUENO_CONTRIBUYENTE_EVENTUAL);
-			ivaResponsabilities.put(Customer.PEQUENO_CONTRIBUYENTE_EVENTUAL_SOCIAL, PEQUENO_CONTRIBUYENTE_EVENTUAL_SOCIAL);
-			ivaResponsabilities.put(Customer.RESPONSABLE_INSCRIPTO, RESPONSABLE_INSCRIPTO);
-			ivaResponsabilities.put(Customer.RESPONSABLE_MONOTRIBUTO, RESPONSABLE_MONOTRIBUTO);
-			ivaResponsabilities.put(Customer.RESPONSABLE_NO_INSCRIPTO, RESPONSABLE_NO_INSCRIPTO);
-			ivaResponsabilities.put(Customer.RESPONSABLE_NO_INSCRIPTO_BIENES_DE_USO, RESPONSABLE_NO_INSCRIPTO_BIENES_DE_USO);
+			ivaResponsabilities = getIvaResponsabilitiesCodes(); 
 		}
 		return ivaResponsabilities;
+	}
+	
+	protected Map<Integer, String> getIvaResponsabilitiesCodes(){
+		Map<Integer,String> ivaResponsabilitiesCodes = new HashMap<Integer,String>();
+		ivaResponsabilitiesCodes.put(Customer.CONSUMIDOR_FINAL, CONSUMIDOR_FINAL);
+		ivaResponsabilitiesCodes.put(Customer.EXENTO, EXENTO);
+		ivaResponsabilitiesCodes.put(Customer.MONOTRIBUTISTA_SOCIAL, MONOTRIBUTISTA_SOCIAL);
+		ivaResponsabilitiesCodes.put(Customer.NO_CATEGORIZADO, NO_CATEGORIZADO);
+		ivaResponsabilitiesCodes.put(Customer.NO_RESPONSABLE, NO_RESPONSABLE);
+		ivaResponsabilitiesCodes.put(Customer.PEQUENO_CONTRIBUYENTE_EVENTUAL, PEQUENO_CONTRIBUYENTE_EVENTUAL);
+		ivaResponsabilitiesCodes.put(Customer.PEQUENO_CONTRIBUYENTE_EVENTUAL_SOCIAL, PEQUENO_CONTRIBUYENTE_EVENTUAL_SOCIAL);
+		ivaResponsabilitiesCodes.put(Customer.RESPONSABLE_INSCRIPTO, RESPONSABLE_INSCRIPTO);
+		ivaResponsabilitiesCodes.put(Customer.RESPONSABLE_MONOTRIBUTO, RESPONSABLE_MONOTRIBUTO);
+		ivaResponsabilitiesCodes.put(Customer.RESPONSABLE_NO_INSCRIPTO, RESPONSABLE_NO_INSCRIPTO);
+		ivaResponsabilitiesCodes.put(Customer.RESPONSABLE_NO_INSCRIPTO_BIENES_DE_USO, RESPONSABLE_NO_INSCRIPTO_BIENES_DE_USO);
+		return ivaResponsabilitiesCodes;
 	}
 
 	/**
@@ -1275,18 +1300,26 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	 */
 	protected Map<String, String> getDocumentTypes() {
 		if(documentTypes == null) {
-			documentTypes = new HashMap<String, String>();
-			documentTypes.put(Document.DT_INVOICE + Document.DOC_LETTER_A, "A");
-			documentTypes.put(Document.DT_INVOICE + Document.DOC_LETTER_B, "B");
-			documentTypes.put(Document.DT_INVOICE + Document.DOC_LETTER_C, "B");
-			documentTypes.put(Document.DT_CREDIT_NOTE + Document.DOC_LETTER_A, "R");
-			documentTypes.put(Document.DT_CREDIT_NOTE + Document.DOC_LETTER_B, "S");
-			documentTypes.put(Document.DT_CREDIT_NOTE + Document.DOC_LETTER_C, "S");
-			documentTypes.put(Document.DT_DEBIT_NOTE + Document.DOC_LETTER_A, "D");
-			documentTypes.put(Document.DT_DEBIT_NOTE + Document.DOC_LETTER_B, "E");
-			documentTypes.put(Document.DT_DEBIT_NOTE + Document.DOC_LETTER_C, "E");
+			documentTypes = getDocumentTypesCodes();
 		}
 		return documentTypes;
+	}
+	
+	/**
+	 * @return los códigos para los tipos de documento básicos de impresión
+	 */
+	protected Map<String, String> getDocumentTypesCodes() {
+		Map<String, String> dtCodes = new HashMap<String, String>();
+		dtCodes.put(Document.DT_INVOICE + Document.DOC_LETTER_A, "A");
+		dtCodes.put(Document.DT_INVOICE + Document.DOC_LETTER_B, "B");
+		dtCodes.put(Document.DT_INVOICE + Document.DOC_LETTER_C, "B");
+		dtCodes.put(Document.DT_CREDIT_NOTE + Document.DOC_LETTER_A, "R");
+		dtCodes.put(Document.DT_CREDIT_NOTE + Document.DOC_LETTER_B, "S");
+		dtCodes.put(Document.DT_CREDIT_NOTE + Document.DOC_LETTER_C, "S");
+		dtCodes.put(Document.DT_DEBIT_NOTE + Document.DOC_LETTER_A, "D");
+		dtCodes.put(Document.DT_DEBIT_NOTE + Document.DOC_LETTER_B, "E");
+		dtCodes.put(Document.DT_DEBIT_NOTE + Document.DOC_LETTER_C, "E");
+		return dtCodes;
 	}
 	
 	/**
@@ -1439,8 +1472,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		for (Tax otherTax : document.getOtherTaxes()) {
 			// FIXME por ahora se imprimen solamente las percepciones
 			if(otherTax.isPercepcion()){
-				execute(cmdPerceptions(otherTax.getName(), otherTax.getAmt(),
-						null));
+				execute(cmdPerceptions(otherTax));
 			}
 		}
 	}
@@ -1476,7 +1508,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		return result.toString();
 	}
 	
-	private void checkTaxes(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+	protected void checkTaxes(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
 		//////////////////////////////////////////////////////////////
 		// Incia la transmisión de información de IVA
 		// Comando: @SendFirstIVA

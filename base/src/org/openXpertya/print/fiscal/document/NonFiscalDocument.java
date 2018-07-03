@@ -19,7 +19,7 @@ public class NonFiscalDocument {
 	private List<String> lines;
 
 	/** Cantidad de copias que se imprimen */
-	private int copies = 1;
+	private int copies = 0;
 	
 	/**
 	 * Constructor por defecto de la clase.
@@ -74,9 +74,6 @@ public class NonFiscalDocument {
 	 * @param copies the copies to set
 	 */
 	public void setCopies(int copies) {
-		if (copies <= 0) {
-			copies = 1;
-		}
 		this.copies = copies;
 	}
 	
