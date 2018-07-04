@@ -4753,4 +4753,97 @@ ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp w
 --20180702-1112 Merge r2404
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_DocType','AllowOnlyProviders','character(1) NOT NULL DEFAULT ''N'''));
 
+--20180704-1608 Importe imputado a un payment con fecha de corte
+CREATE OR REPLACE FUNCTION paymentallocated(
+    p_c_payment_id integer,
+    p_c_currency_id integer,
+    p_dateto timestamp without time zone)
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+ * The contents of this file are subject to the Compiere License.  You may
+ * obtain a copy of the License at    http://www.compiere.org/license.html
+ * Software is on an  "AS IS" basis,  WITHOUT WARRANTY OF ANY KIND, either
+ * express or implied. See the License for details. Code: Compiere ERP+CRM
+ * Copyright (C) 1999-2001 Jorg Janke, ComPiere, Inc. All Rights Reserved.
+ *
+ * converted to postgreSQL by Karsten Thiemann (Schaeffer AG), 
+ * kthiemann@adempiere.org
+ *************************************************************************
+ * Title:	Calculate Allocated Payment Amount in Payment Currency
+ * Description:
+    --
+    SELECT paymentAllocated(C_Payment_ID,C_Currency_ID), PayAmt, IsAllocated
+    FROM C_Payment_v 
+    WHERE C_Payment_ID<1000000;
+    --
+    UPDATE C_Payment_v 
+    SET IsAllocated=CASE WHEN paymentAllocated(C_Payment_ID, C_Currency_ID)=PayAmt THEN 'Y' ELSE 'N' END
+    WHERE C_Payment_ID>=1000000;
+ ****
+ *-Pasado a Liberya a partir en Adempiere 360LTS
+ *-ids son enteros
+ *-se asume que todos los montos son no negativos
+ *-no se utilza la vista C_Payment_V y no se corrige por AP/CM (de todas maneras
+ * Libertya actual no estaba usando esto y la vista siempre retorna 1 y multiplicaba
+ * por este monto)
+ *-no se utiliza multiplicadores: retorna siempre algo en el entorno [0..PayAmt]
+ *-la obtencion del si esta asociado a un cargo y la monto del pago es obtenido
+ *  en una sola setencia sql
+ *-se utiliza el redondeo por moneda en vez del redondeo a 2 (aunque esto
+ * ultimo tiene su sentido teniendo en cuenta que liberya maneja solo 2 decimales)
+ ************************************************************************/
+DECLARE
+	v_AllocatedAmt		NUMERIC := 0;
+    	v_PayAmt        	NUMERIC;
+    	r   			RECORD;
+BEGIN
+    --  Charge - nothing available
+    SELECT 
+      INTO v_PayAmt MAX(PayAmt) 
+    FROM C_Payment 
+    WHERE C_Payment_ID=p_C_Payment_ID AND C_Charge_ID > 0;
+    
+    IF (v_PayAmt IS NOT NULL) THEN
+        RETURN v_PayAmt;
+    END IF;
+    
+	--	Calculate Allocated Amount
+	FOR r IN
+		SELECT	a.AD_Client_ID, a.AD_Org_ID, al.Amount, a.C_Currency_ID, a.DateTrx
+			FROM	C_AllocationLine al
+	          INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+			WHERE	al.C_Payment_ID = p_C_Payment_ID
+          	AND   a.IsActive='Y'
+          	AND (p_dateto IS NULL OR a.dateacct::date <= p_dateto::date)
+	LOOP
+		v_AllocatedAmt := v_AllocatedAmt
+			+ currencyConvert(r.Amount, r.C_Currency_ID, 
+			p_C_Currency_ID, r.DateTrx, null, r.AD_Client_ID, r.AD_Org_ID);
+	END LOOP;
+	--  NO en libertya:	Round to penny
+	-- en vez se redondea usando la moneda
+	v_AllocatedAmt := currencyRound(COALESCE(v_AllocatedAmt,0),p_c_currency_id,NULL); 
+	RETURN	v_AllocatedAmt;
+END;
 
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION paymentallocated(integer, integer, timestamp without time zone)
+  OWNER TO libertya;
+
+CREATE OR REPLACE FUNCTION paymentallocated(
+    p_c_payment_id integer,
+    p_c_currency_id integer)
+  RETURNS numeric AS
+$BODY$
+BEGIN
+    RETURN paymentallocated(p_c_payment_id, p_c_currency_id, null::timestamp);
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION paymentallocated(integer, integer)
+  OWNER TO libertya; 

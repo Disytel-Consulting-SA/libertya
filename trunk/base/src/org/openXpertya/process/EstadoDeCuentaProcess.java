@@ -191,11 +191,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"     SELECT distinct dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner, i.issotrx, i.dateacct::date as dateacct, i.dateinvoiced::date as datedoc, p.netdays, i.dateinvoiced + (p.netdays::text || ' days'::text)::interval AS duedate, paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) AS daysdue, i.dateinvoiced + (p.discountdays::text || ' days'::text)::interval AS discountdate, round(i.grandtotal * p.discount * 0.01::numeric, 2) AS discountamt, " +
 			//"     i.grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamt, invoiceopen(i.c_invoice_id, 0) AS openamt, " +
 			"     i.grandtotal AS grandtotalmulticurrency, " +
-			"     invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamtmulticurrency, " +
-			"     invoiceopen(i.c_invoice_id, 0, i.c_currency_id,i.c_conversiontype_id) AS openamtmulticurrency, " +  
-			"     currencybase(i.grandtotal,i.c_currency_id,i.dateacct, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
-			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
-			"     invoiceopen(i.c_invoice_id, 0,"+currencyClient+",i.c_conversiontype_id) AS openamt, " + 		
+			"     getallocatedamt(i.c_invoice_id, i.c_currency_id, i.c_conversiontype_id, 1, "+getDateToInlineQuery()+") AS paidamtmulticurrency, " +
+			"     invoiceopen(i.c_invoice_id, 0, i.c_currency_id, i.c_conversiontype_id, "+getDateToInlineQuery()+") AS openamtmulticurrency, " +  
+			"     currencybase(i.grandtotal, i.c_currency_id, i.dateacct, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
+			"     getallocatedamt(i.c_invoice_id, "+currencyClient+", i.c_conversiontype_id, 1, "+getDateToInlineQuery()+") AS paidamt, " +
+			"     invoiceopen(i.c_invoice_id, 0,"+currencyClient+",i.c_conversiontype_id, "+getDateToInlineQuery()+") AS openamt, " + 		
 			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, -1::integer AS c_invoicepayschedule_id, i.c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM rv_c_invoice i " +
 			"	  JOIN c_paymentterm p ON i.c_paymentterm_id = p.c_paymentterm_id " +
@@ -209,7 +209,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					" AND i.paymentrule = '"+condition+"' ") +
 			(isShowOpenBalance() ?
 			"     AND paymenttermduedays(i.c_paymentterm_id, i.dateinvoiced::timestamp with time zone, now()) BETWEEN " + daysfrom + " AND " + daysto +
-			"     AND invoiceopen(i.c_invoice_id, 0) <> 0::numeric ": "") +
+			"     AND invoiceopen(i.c_invoice_id, 0, "+getDateToInlineQuery()+") <> 0::numeric ": "") +
 			// } isShowOpenBalance
 			(isShowByDate() ?
 				(dateTrxFrom != null ? " AND i.dateacct::date >= '" + dateTrxFrom + "'::date" : "" ) +
@@ -226,11 +226,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  SELECT distinct dt.signo_issotrx, dt.name as tipodoc, i.ad_org_id, i.ad_client_id, i.documentno, i.c_invoice_id as doc_id, i.c_order_id, i.c_bpartner_id, bp.name as bpartner,  i.issotrx, i.dateacct::date as dateacct, (CASE WHEN ips.duedate IS NOT NULL THEN ips.duedate ELSE i.dateacct END)::date as datedoc, to_days(ips.duedate::timestamp without time zone) - to_days(i.dateinvoiced::timestamp without time zone) AS netdays, ips.duedate, to_days(now()::timestamp without time zone) - to_days(ips.duedate::timestamp without time zone) AS daysdue, ips.discountdate, ips.discountamt, " +
 			//"     ips.dueamt * dt.signo_issotrx AS grandtotal, invoicepaid(i.c_invoice_id, i.c_currency_id, 1) * dt.signo_issotrx AS paidamt, invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) * dt.signo_issotrx AS openamt, " +
 			"     i.grandtotal AS grandtotalmulticurrency, " +
-			"     invoicepaid(i.c_invoice_id, i.c_currency_id, 1) AS paidamtmulticurrency, " +
-			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id ,i.c_currency_id,i.c_conversiontype_id) AS openamtmulticurrency, " +
+			"     getallocatedamt(i.c_invoice_id, i.c_currency_id, i.c_conversiontype_id, 1, "+getDateToInlineQuery()+", ips.c_invoicepayschedule_id) AS paidamtmulticurrency, " +
+			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id ,i.c_currency_id,i.c_conversiontype_id, "+getDateToInlineQuery()+") AS openamtmulticurrency, " +
 			"     currencybase(i.grandtotal,i.c_currency_id,i.dateacct, i.ad_client_id, i.ad_org_id) AS grandtotal, " +
-			"     invoicepaid(i.c_invoice_id, "+currencyClient+", 1) AS paidamt, " +
-			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id,"+currencyClient+",i.c_conversiontype_id) AS openamt, " +
+			"     getallocatedamt(i.c_invoice_id, "+currencyClient+", i.c_conversiontype_id, 1, "+getDateToInlineQuery()+", ips.c_invoicepayschedule_id) AS paidamt, " +
+			"     invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id,"+currencyClient+",i.c_conversiontype_id, "+getDateToInlineQuery()+") AS openamt, " +
 			"     i.c_currency_id, i.c_conversiontype_id, i.ispayschedulevalid, ips.c_invoicepayschedule_id, i.c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM ( " + // Vista RV_C_Invoice original omitida 
 //			 INLINE DE rv_c_invoice con modificaciones ad-hoc a fin de reducir tiempos de ejecución
@@ -274,8 +274,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 //			"	  AND i.docstatus IN ('CO', 'CL', 'RE', 'VO') " +	// ya en la consulta interna.  rv_c_invoice solo manejaba CO CL (omitia RE VO)		
 			(isShowOpenBalance() ?
 			"     AND to_days(now()::timestamp without time zone) - to_days(ips.duedate::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
-			"     AND invoiceopen(i.c_invoice_id, 0) <> 0::numeric " +
-			"	  AND invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id) <> 0 " : "" ) +
+			"     AND invoiceopen(i.c_invoice_id, 0, "+getDateToInlineQuery()+") <> 0::numeric " +
+			"	  AND invoiceopen(i.c_invoice_id, ips.c_invoicepayschedule_id, "+getDateToInlineQuery()+") <> 0 " : "" ) +
 			// } isShowOpenBalance
 			(isShowByDate() ?
 				(dateTrxFrom != null ? " AND i.dateacct::date >= '" + dateTrxFrom + "'::date" : "" ) +
@@ -291,12 +291,12 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			
 			"	  SELECT distinct dt.signo_issotrx, dt.name as tipodoc, p.ad_org_id, p.ad_client_id, p.documentno, p.c_payment_id as doc_id, null::integer as c_order_id, p.c_bpartner_id, bp.name as bpartner, p.isreceipt as issotrx, p.dateacct::date as dateacct, p.datetrx::date as datedoc, null::integer AS netdays, null::date as duedate, to_days(now()::timestamp without time zone) - to_days(p.datetrx::timestamp without time zone) AS daysdue, null::date as discountdate, null::numeric as discountamt, " +
 			"     ABS(p.payamt) AS grandtotalmulticurrency, " +
-			"     p.allocatedamt AS paidamtmulticurrency, " +
-			"     availableamt AS openamtmulticurrency, " +
+			"     paymentallocated(p.c_payment_id, p.c_currency_id, "+getDateToInlineQuery()+") AS paidamtmulticurrency, " +
+			"     paymentavailable(p.c_payment_id, "+getDateToInlineQuery()+") AS openamtmulticurrency, " +
 			"     currencyConvert(ABS(p.payamt), p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS grandtotal, " +
-			"     currencyConvert(p.allocatedamt, p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS paidamt, " +
-			"     currencyConvert(availableamt, p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS openamt, p.c_currency_id, p.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id, bp.c_bp_group_id " +
-			"	  FROM rv_payment p " +
+			"     currencyConvert(paymentallocated(p.c_payment_id, p.c_currency_id, "+getDateToInlineQuery()+"), p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS paidamt, " +
+			"     currencyConvert(paymentavailable(p.c_payment_id, "+getDateToInlineQuery()+"), p.c_currency_id, "+currencyClient+", p.dateacct, COALESCE(p.c_conversiontype_id,0), p.ad_client_id, p.ad_org_id ) AS openamt, p.c_currency_id, p.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id, bp.c_bp_group_id " +
+			"	  FROM c_payment p " +
 			"	  JOIN c_doctype dt on p.c_doctype_id = dt.c_doctype_id   " +
 			"	  JOIN c_bpartner bp on p.c_bpartner_id = bp.c_bpartner_id " + (bPartnerID!=0?" AND p.c_bpartner_id = " + bPartnerID:"") +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)? 
@@ -322,7 +322,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					+ " i.paymentrule = '"+condition+"') ") +
 			(isShowOpenBalance() ?
 			"     AND to_days(now()::timestamp without time zone) - to_days(p.datetrx::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
-			"     AND availableamt > 0 " : "" ) +
+			"     AND paymentavailable(p.c_payment_id, "+getDateToInlineQuery()+") > 0 " : "" ) +
 			// } isShowOpenBalance 
 			(isShowByDate() ?
 				(dateTrxFrom != null ? " AND p.dateacct::date >= '" + dateTrxFrom + "'::date" : "" ) +
@@ -352,11 +352,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			
 			"	  SELECT distinct d.signo_issotrx as signo_issotrx, '"+libroDeCaja+"' as tipodoc, d.ad_org_id, d.ad_client_id, d.documentno, d.document_id as doc_id, null::integer as c_order_id, d.c_bpartner_id, d.name as bpartner, '' as issotrx, d.dateacct::date as dateacct, d.datetrx::date as datedoc, null::integer AS netdays, null::date as duedate, to_days(now()::timestamp without time zone) - to_days(d.datetrx::timestamp without time zone) AS daysdue, null::date as discountdate, null::numeric as discountamt, " +
 			"     ABS(d.amount) AS grandtotalmulticurrency, " +
-			"     (abs(d.amount) - abs(cashlineavailable(document_id))) AS paidamtmulticurrency, " +
-			"     cashlineavailable(document_id) AS openamtmulticurrency, " +
+			"     (abs(d.amount) - abs(cashlineopen)) AS paidamtmulticurrency, " +
+			"     cashlineopen AS openamtmulticurrency, " +
 			"     currencyConvert(d.amount, d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS grandtotal, " +
-			"     currencyConvert((abs(d.amount) - abs(cashlineavailable(document_id))), d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS paidamt, " +
-			"     currencyConvert(cashlineavailable(document_id), d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS openamt, d.c_currency_id, d.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id, bp.c_bp_group_id " +
+			"     currencyConvert((abs(d.amount) - abs(cashlineopen)), d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS paidamt, " +
+			"     currencyConvert(cashlineopen, d.c_currency_id, "+currencyClient+", d.dateacct, COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ) AS openamt, d.c_currency_id, d.c_conversiontype_id, null::character(1) as ispayschedulevalid, null::integer as c_invoicepayschedule_id, null::integer as c_paymentterm_id, bp.c_bp_group_id " +
 			"	  FROM ( " +  // Vista V_DOCUMENTS original  omitida. 
 //			 INLINE DE V_DOCUMENTS, omitiendo partes de la misma que no son necesarias en este caso.			
 			"       SELECT 'C_CashLine'::text AS documenttable, cl.c_cashline_id AS document_id, cl.ad_client_id, cl.ad_org_id, cl.isactive, cl.created, cl.createdby, cl.updated, cl.updatedby, " +  
@@ -372,7 +372,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"        CASE " +
 			"            WHEN cl.amount < 0.0 THEN 'N'::bpchar " +
 			"            ELSE 'Y'::bpchar " +
-			"        END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, " + 
+			"        END AS issotrx, cl.docstatus, c.statementdate AS datetrx, c.dateacct, cl.c_currency_id, NULL::integer AS c_conversiontype_id, abs(cl.amount) AS amount, abs(cashlineavailable(cl.c_cashline_id, "+getDateToInlineQuery()+")) AS cashlineopen, " + 
 			"        NULL::integer AS c_invoicepayschedule_id, NULL::timestamp without time zone AS duedate, c.statementdate AS truedatetrx, bp.name  " +
 //			"        COALESCE(i.initialcurrentaccountamt, 0.00) AS initialcurrentaccountamt, COALESCE(bp.socreditstatus, bp2.socreditstatus) AS socreditstatus " +
 			"   FROM c_cashline cl " +
@@ -403,7 +403,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					+ " i.paymentrule = '"+condition+"') ") +
 			(isShowOpenBalance() ?
 			"     AND to_days(now()::timestamp without time zone) - to_days(c.statementdate::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
-			"     AND cashlineavailable(cl.c_cashline_id) <> 0 " : "" ) +
+			"     AND cashlineavailable(cl.c_cashline_id, "+getDateToInlineQuery()+") <> 0 " : "" ) +
 			// } isShowOpenBalance			
 			"     AND bp." + getAccountTypeClause() + " = 'Y'" +			
 //			"	LEFT JOIN c_bpartner bp2 ON i.c_bpartner_id = bp2.c_bpartner_id " +
@@ -436,6 +436,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	ORDER BY bpartner, dateacct  ");
 		
 		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
+		//System.out.println(query.toString());
 		ResultSet rs = pstmt.executeQuery();
 		
 //		saldosMultimoneda.put(currencyClient, BigDecimal.ZERO);
@@ -557,6 +558,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setAD_Org_ID(orgID);
 			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(bPartner);
+			ec.settipodoc("             TOTAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setbpartner("             TOTAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
 			if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
@@ -570,8 +572,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setC_Currency_ID(e.getKey());
 			if (dateTrxTo != null) {
 				ec.setDateDoc(dateTrxTo);
+				ec.setDateAcct(dateTrxTo);
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
+				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
 			ec.setDirectInsert(true);
@@ -585,6 +589,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setAD_Org_ID(orgID);
 			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(bPartner);
+			ec.settipodoc("             TOTAL:");
 			ec.setbpartner("             TOTAL:");
 			ec.setOpenAmt(saldo);
 			if (daysfrom != MAX_DUE_DAYS*-1 || daysto != MAX_DUE_DAYS) {
@@ -598,8 +603,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setC_Currency_ID(currencyClient);	
 			if (dateTrxTo != null) {
 				ec.setDateDoc(dateTrxTo);
+				ec.setDateAcct(dateTrxTo);
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
+				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
 			ec.setDirectInsert(true);
@@ -613,6 +620,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		ec.setAD_Org_ID(orgID);
 		ec.setC_BP_Group_ID(bpGroupID);
 		ec.setC_BPartner_ID(bPartner);
+		ec.settipodoc("             TOTAL CHEQUES CARTERA:");
 		ec.setbpartner("             TOTAL CHEQUES CARTERA:");
 		
 		String sql = "SELECT COALESCE(SUM(payamt),0) AS checkAmt " +
@@ -640,8 +648,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		ec.setC_Currency_ID(currencyClient);
 		if (dateTrxTo != null) {
 			ec.setDateDoc(dateTrxTo);
+			ec.setDateAcct(dateTrxTo);
 		} else if (dateTrxFrom != null) {
 			ec.setDateDoc(dateTrxFrom);
+			ec.setDateAcct(dateTrxFrom);
 		} 
 		ec.setCondition(condition);
 		ec.setDirectInsert(true);
@@ -663,6 +673,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setAD_Org_ID(orgID);
 			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(0);
+			ec.settipodoc("             TOTAL GENERAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setbpartner("             TOTAL GENERAL " + MCurrency.getISO_Code(getCtx(), e.getKey()) + ":");
 			ec.setOpenAmt(e.getValue());
 			if (daysfrom != MAX_DUE_DAYS*-1  || daysto != MAX_DUE_DAYS) {
@@ -676,8 +687,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setC_Currency_ID(e.getKey());
 			if (dateTrxTo != null) {
 				ec.setDateDoc(dateTrxTo);
+				ec.setDateAcct(dateTrxTo);
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
+				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
 			ec.setDirectInsert(true);
@@ -691,6 +704,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setAD_Org_ID(orgID);
 			ec.setC_BP_Group_ID(bpGroupID);
 			ec.setC_BPartner_ID(0);
+			ec.settipodoc("             TOTAL GENERAL:");             
 			ec.setbpartner("             TOTAL GENERAL:");
 			ec.setOpenAmt(saldo);
 			if (daysfrom != MAX_DUE_DAYS*-1  || daysto != MAX_DUE_DAYS) {
@@ -704,8 +718,10 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setC_Currency_ID(currencyClient);
 			if (dateTrxTo != null) {
 				ec.setDateDoc(dateTrxTo);
+				ec.setDateAcct(dateTrxTo);
 			} else if (dateTrxFrom != null) {
 				ec.setDateDoc(dateTrxFrom);
+				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
 			ec.setDirectInsert(true);
@@ -736,5 +752,13 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	 */
 	protected String getDocStatusWhereClause(String tableAlias){
 		return tableAlias+".docstatus IN ('CO','CL','WC') ";
+	}
+	
+	/**
+	 * @return fecha de corte sobre la fecha de fin del informe para las
+	 *         funciones de la consulta principal
+	 */
+	public String getDateToInlineQuery(){
+		return " ('"+ ((dateTrxTo != null) ? dateTrxTo + "'" : "now'::text") + ")::timestamp(6) without time zone ";
 	}
 }
