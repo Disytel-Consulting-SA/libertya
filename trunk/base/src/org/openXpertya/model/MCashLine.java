@@ -468,6 +468,12 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
         		log.saveError("SaveError", Msg.translate(getCtx(), "CashTransferInvalidCurrency"));
         		return false;
         	}
+        	
+        	// Se asegura de que el monto ingresado sea negativo
+        	if(getAmount().compareTo(BigDecimal.ZERO)>0) {
+        		log.saveError("SaveError", Msg.translate(getCtx(), "CashTransferInvalidAmount"));
+        		return false;
+        	} 
         }
 
         // Verify Currency
