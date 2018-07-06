@@ -2108,7 +2108,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         	cal.set(Calendar.SECOND, 0);
         	cal.set(Calendar.MILLISECOND, 0);
         	Timestamp todayts  = new Timestamp(cal.getTimeInMillis()); 
-        	if(getDatePromised().before(todayts)) {
+        	if(!isReActivated() && getDatePromised().before(todayts)) {
         		m_processMsg = "@DatePromisedExpired@";
         		return DocAction.STATUS_Invalid;
         	}
@@ -3681,6 +3681,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	    	}
     	}
 
+        setIsReActivated(false);
         setProcessed( true );
         m_processMsg = info.toString();
 
@@ -4425,6 +4426,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			}
 		}
         
+        setIsReActivated(true);
         setDocAction( DOCACTION_Complete );
         setProcessed( false );
 

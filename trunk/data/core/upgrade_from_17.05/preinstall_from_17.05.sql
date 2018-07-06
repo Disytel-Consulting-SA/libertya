@@ -4847,3 +4847,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION paymentallocated(integer, integer)
   OWNER TO libertya; 
+
+--20180706-1830 Flag que marca un pedido cuando fue reactivado
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Order','isreactivated','character(1) NOT NULL DEFAULT ''N''::bpchar'));
