@@ -75,6 +75,10 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 	protected final static String LIBRO_DIARIO_REPORT_UID = "CORE-AD_Process-1010379";
 	protected final static String LIBRO_DIARIO_REPORT_FILENAME = "LibroDiario.jrxml";
 	
+	/** UID del Reporte de Recargos en Ventas */
+	protected final static String SALES_RECHARGES_REPORT_UID = "CORE-AD_Process-1010607";
+	protected final static String SALES_RECHARGES_REPORT_FILENAME = "SalesRecharges.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -273,6 +277,17 @@ public class PostInstallUpgradeFrom1705 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(LIBRO_DIARIO_REPORT_FILENAME)));
+
+		// Reporte de Recargos en Ventas
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				SALES_RECHARGES_REPORT_UID,
+				SALES_RECHARGES_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(SALES_RECHARGES_REPORT_FILENAME)));
 		
 		return " ";
 	}
