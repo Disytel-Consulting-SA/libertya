@@ -4850,3 +4850,9 @@ ALTER FUNCTION paymentallocated(integer, integer)
 
 --20180706-1830 Flag que marca un pedido cuando fue reactivado
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Order','isreactivated','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20180710-0926 View especifica para el reporte de movimientos bancarios
+create or replace view c_payment_movements_v as
+select 	p.*, (case when dt.signo_issotrx = 1 then p.payamt else -1 * p.payamt end) as payamtsign
+from c_payment p
+inner join c_doctype dt on p.c_doctype_id = dt.c_doctype_id;
