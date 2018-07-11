@@ -4853,6 +4853,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_Order','isreactivat
 
 --20180710-0926 View especifica para el reporte de movimientos bancarios
 create or replace view c_payment_movements_v as
-select 	p.*, (case when dt.signo_issotrx = 1 then p.payamt else -1 * p.payamt end) as payamtsign
+select 	p.*, (p.payamt * dt.signo_issotrx * -1) as payamtsign
 from c_payment p
 inner join c_doctype dt on p.c_doctype_id = dt.c_doctype_id;
