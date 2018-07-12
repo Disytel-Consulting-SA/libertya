@@ -281,8 +281,14 @@ public class AllocationsReport extends SvrProcess {
 				}
 				// Si el documento es un débito, entonces se calculan las líneas de crédito
 				// asociadas al documento.
-				if (isDebit)
-					createCreditLines(new DebitDocument(rs, docAllocationCategory));
+				int count = 0;
+				if (isDebit) {
+					count = createCreditLines(new DebitDocument(rs, docAllocationCategory));
+				}
+				// Dado que el informe es de imputaciones, no se deben mostrar los créditos, solo los debitos imputados 
+				// Adicionalmente, para los debitos: si no hay credit lines, entonces directamente no mostrar el debito
+				if (count==0)
+					line.delete(true);
 			}
 	    	
 	    } catch (SQLException e) {
@@ -297,7 +303,7 @@ public class AllocationsReport extends SvrProcess {
 		return "";
 	}
 
-	private void createCreditLines(DebitDocument debitDocument) throws Exception, SQLException {
+	private int createCreditLines(DebitDocument debitDocument) throws Exception, SQLException {
 		// Aquí se guardan las líneas de crédito a partir del documento de débito. 
 		List<CreditLine> creditLines = new ArrayList<CreditLine>();
 		
@@ -374,6 +380,8 @@ public class AllocationsReport extends SvrProcess {
 				throw new Exception("@ProcessRunError@");
 			}
 		}
+		
+		return creditLines.size();		
 	}
 	
 	private void createInvoiceCreditLines(StringBuffer sql, DebitDocument debitInvoice, List<CreditLine> creditLines) throws SQLException {
