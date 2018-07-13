@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-04-06 14:25:34.578 */
+ *  @version  - 2018-07-12 21:29:43.635 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,6 +18,7 @@ super (ctx, AD_ClientInfo_ID, trxName);
 {
 setAcct2_Active (false);
 setAcct3_Active (false);
+setAllowDeliveryReturned (false);
 setCuitControlCheckLimit (Env.ZERO);
 setIsDiscountLineAmt (false);
 setIsPOSJournalActive (false);
@@ -227,6 +228,22 @@ public int getAD_Tree_SalesRegion_ID()
 Integer ii = (Integer)get_Value("AD_Tree_SalesRegion_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Allow delivery returneds */
+public void setAllowDeliveryReturned (boolean AllowDeliveryReturned)
+{
+set_Value ("AllowDeliveryReturned", new Boolean(AllowDeliveryReturned));
+}
+/** Get Allow delivery returneds */
+public boolean isAllowDeliveryReturned() 
+{
+Object oo = get_Value("AllowDeliveryReturned");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int C_ACCTSCHEMA1_ID_AD_Reference_ID = MReference.getReferenceID("C_AcctSchema");
 /** Set Primary Accounting Schema.

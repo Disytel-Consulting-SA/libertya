@@ -52,6 +52,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.MeasurableTask;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.SalesUtil;
 import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.TimeStatsLogger;
@@ -3375,13 +3376,17 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 					// crédito por mercadería no retirada ya que luego no
 					// concuerdan los movimientos de mercadería con lo facturado
 					BigDecimal dcNoNC = isUpdateOrderQty() ? MInOut
-							.getDCMovementQty(orderLine.getID(),
+							.getNotInvoicedQtyReturned(getCtx(), orderLine.getID(),
 									get_TrxName()) : null;
 					dcNoNC = dcNoNC != null && dcNoNC.compareTo(BigDecimal.ZERO) > 0?dcNoNC:BigDecimal.ZERO;
-					BigDecimal pending = orderLine.getPendingDeliveredQty().subtract(dcNoNC);
-					boolean reservedGreater = pending.compareTo(orderLine.getQtyInvoiced()) > 0;
-					BigDecimal qtyToCompare = reservedGreater ? orderLine
-							.getQtyInvoiced() : pending;
+					// Pendiente de entrega de mercadería
+					BigDecimal pending = ReservedUtil.getOrderLinePending(orderLine);
+					// La cantidad facturada sin lo pendiente a facturar que
+					// corresponde con las devoluciones no facturadas
+					BigDecimal pendingInvoiced = orderLine.getQtyInvoiced().subtract(dcNoNC);
+					// Obtener el menor de ambos para saber contra qué comparamos
+					boolean reservedGreater = pending.compareTo(pendingInvoiced) > 0;
+					BigDecimal qtyToCompare = reservedGreater ? pendingInvoiced : pending;
 					String lastMsgDescription = reservedGreater ? "Invoiced"
 							: "Reserved";
 					if (line.getQtyInvoiced().compareTo(qtyToCompare) > 0) {

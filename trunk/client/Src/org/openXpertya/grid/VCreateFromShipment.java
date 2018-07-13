@@ -93,9 +93,6 @@ public class VCreateFromShipment extends VCreateFrom {
 	private String bpDeliveryRule = null;
     
     private MBPartner bpartner = null;
-	
-    /** Se permite entregar más mercadería de lo devuelto? */
-    private Boolean isAllowDeliveryReturns = null;
     
     /** Tipo de Documento a crear */
     private MDocType docType;
@@ -111,7 +108,7 @@ public class VCreateFromShipment extends VCreateFrom {
 
 	protected boolean dynInit() throws Exception {
 		log.config("");
-		initAllowDeliveryReturns();
+		
 		setTitle(Msg.getElement(Env.getCtx(), "M_InOut_ID", false) + " .. "
 				+ Msg.translate(Env.getCtx(), "CreateFrom"));
 
@@ -290,16 +287,6 @@ public class VCreateFromShipment extends VCreateFrom {
     }
 	
 	/**
-	 * Se inicializa el valor que determina si se debe entregar más mercadería
-	 * que la devuelta
-	 */
-	protected void initAllowDeliveryReturns(){
-		MInOut inout = getInOut();
-		setDocType(MDocType.get(getCtx(), inout.getC_DocType_ID(), getTrxName()));
-		setIsAllowDeliveryReturns(getDocType().isAllowDeliveryReturned());
-	}
-	
-	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -382,14 +369,6 @@ public class VCreateFromShipment extends VCreateFrom {
 		}
 		statusBar.setStatusLine(String.valueOf(count));
 	} // info
-
-	@Override
-	protected boolean allowDeliveryReturned(){
-    	if(isAllowDeliveryReturns == null){
-    		initAllowDeliveryReturns();
-    	}
-    	return isAllowDeliveryReturns;
-    }
 	
 	/**
 	 * Descripción de Método
@@ -758,14 +737,6 @@ public class VCreateFromShipment extends VCreateFrom {
 	@Override
 	protected boolean lazyEvaluation() {
 		return false;
-	}
-
-	protected Boolean getIsAllowDeliveryReturns() {
-		return isAllowDeliveryReturns;
-	}
-
-	protected void setIsAllowDeliveryReturns(Boolean isAllowDeliveryReturns) {
-		this.isAllowDeliveryReturns = isAllowDeliveryReturns;
 	}
 
 	protected MDocType getDocType() {

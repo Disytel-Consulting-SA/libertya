@@ -11,6 +11,7 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MProduct;
+import org.openXpertya.util.ReservedUtil;
 
 public class WarehouseDeliverDocumentDataSource implements OXPJasperDataSource {
 
@@ -55,7 +56,7 @@ public class WarehouseDeliverDocumentDataSource implements OXPJasperDataSource {
 	public Object getFieldValue(JRField arg0) throws JRException {
 		Object value = null;
 		if(arg0.getName().equalsIgnoreCase("QTY")){
-			value = getCurrentOrderLine().getPendingDeliveredQty();
+			value = ReservedUtil.getOrderLinePending(getCurrentOrderLine());
 		}
 		else if(arg0.getName().equalsIgnoreCase("PRODUCT_NAME")){
 			value = getCurrentOrderLine().getProductName();

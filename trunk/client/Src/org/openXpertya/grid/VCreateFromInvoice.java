@@ -48,6 +48,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.ReservedUtil;
 
 /**
  * Descripción de Clase
@@ -261,19 +262,10 @@ public class VCreateFromInvoice extends VCreateFrom {
     protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
     	String sqlLine = super.getRemainingQtySQLLine(forInvoice, allowDeliveryReturns);
     	if(!forInvoice){
-    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered - l.QtyTransferred - coalesce((select sum(iol.movementqty) as movementqty " +
-    				"																	from m_inoutline as iol " +
-    				"																	inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
-    				"																	inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
-    				"																	where dt.doctypekey = 'DC' " +
-    				"																			and io.docstatus in ('CO','CL')" +
-    				"																			and iol.c_orderline_id = l.c_orderline_id),0)) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered- l.QtyTransferred - coalesce((select sum(iol.movementqty) as movementqty " +
-																																				    				"																	from m_inoutline as iol " +
-																																				    				"																	inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
-																																				    				"																	inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
-																																				    				"																	where dt.doctypekey = 'DC' " +
-																																				    				"																			and io.docstatus in ('CO','CL')" +
-																																				    				"																			and iol.c_orderline_id = l.c_orderline_id),0)) END) ";
+    		String sqlRealDeliveredColumns = ReservedUtil.getSQLPendingQtyByColumns(getCtx(), "l");
+    		sqlLine = " (CASE WHEN "+sqlRealDeliveredColumns+" > l.QtyInvoiced "
+    				+ "			THEN l.QtyInvoiced "
+    				+ "			ELSE "+sqlRealDeliveredColumns+" END) ";
     	}
     	return sqlLine;
     }

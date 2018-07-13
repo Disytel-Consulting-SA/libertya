@@ -79,9 +79,6 @@ public class WCreateFromShipment extends WCreateFrom {
 	private String bpDeliveryRule = null;
     
     private MBPartner bpartner = null;
-	
-    /** Se permite entregar más mercadería de lo devuelto? */
-    private Boolean isAllowDeliveryReturns = null;
     
     /** Tipo de Documento a crear */
     private MDocType docType;
@@ -102,7 +99,6 @@ public class WCreateFromShipment extends WCreateFrom {
 
 	protected boolean dynInit() throws Exception {
 		log.config("");
-		initAllowDeliveryReturns();
 
 		// Buscador de facturas
 		initInvoiceLookup();
@@ -230,16 +226,6 @@ public class WCreateFromShipment extends WCreateFrom {
     }
 	
 	/**
-	 * Se inicializa el valor que determina si se debe entregar más mercadería
-	 * que la devuelta
-	 */
-	protected void initAllowDeliveryReturns(){
-		MInOut inout = getInOut();
-		setDocType(MDocType.get(getCtx(), inout.getC_DocType_ID(), getTrxName()));
-		setIsAllowDeliveryReturns(getDocType().isAllowDeliveryReturned());
-	}
-	
-	/**
 	 * Descripción de Método
 	 * 
 	 * 
@@ -308,15 +294,6 @@ public class WCreateFromShipment extends WCreateFrom {
 	public String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
 		return ((CreateFromShipmentModel)getHelper()).getRemainingQtySQLLine(getInOut(), forInvoice, allowDeliveryReturns);
 	}
-	
-
-	@Override
-	protected boolean allowDeliveryReturned(){
-    	if(isAllowDeliveryReturns == null){
-    		initAllowDeliveryReturns();
-    	}
-    	return isAllowDeliveryReturns;
-    }
 	
 	/**
 	 * Descripción de Método
@@ -740,14 +717,6 @@ public class WCreateFromShipment extends WCreateFrom {
 	@Override
 	protected boolean lazyEvaluation() {
 		return false;
-	}
-
-	protected Boolean getIsAllowDeliveryReturns() {
-		return isAllowDeliveryReturns;
-	}
-
-	protected void setIsAllowDeliveryReturns(Boolean isAllowDeliveryReturns) {
-		this.isAllowDeliveryReturns = isAllowDeliveryReturns;
 	}
 
 	protected MDocType getDocType() {
