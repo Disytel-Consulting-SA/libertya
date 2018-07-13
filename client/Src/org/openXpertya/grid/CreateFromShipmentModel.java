@@ -17,6 +17,7 @@ import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.Util;
 
 public class CreateFromShipmentModel extends CreateFromModel {
@@ -103,10 +104,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& inout.getMovementType().endsWith("-");
 		String srcColumn = afterInvoicing ? "l.QtyInvoiced" : "l.QtyOrdered";
-		return srcColumn
-				+ " - (l.QtyDelivered+l.QtyTransferred)"
-				+ (allowDeliveryReturns ? ""
-						: " - coalesce(("+MInOut.getNotAllowedQtyReturnedSumQuery()+"),0)");
+		return srcColumn + " - "+ReservedUtil.getSQLRealDeliveredQtyByColumns(ctx, "l");
 	}
 	
 	/**

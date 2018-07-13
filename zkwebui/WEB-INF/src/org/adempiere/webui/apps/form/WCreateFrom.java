@@ -646,7 +646,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 	 *         método y devolver falso sea el caso
 	 */
     protected boolean allowDeliveryReturned(){
-    	return true;
+    	return Env.isAllowDeliveryReturn(getCtx());
     }
     
     /**

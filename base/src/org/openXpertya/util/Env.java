@@ -48,6 +48,7 @@ import javax.swing.JFrame;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.db.CConnection;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.MLookupCache;
 import org.openXpertya.model.MRole;
@@ -1068,6 +1069,14 @@ public final class Env {
         return MClient.get( ctx ).isMultiLingualDocument();
     }    // isMultiLingualDocument
 
+    /**
+	 * @return true si la configuración de la info de la compañía permite
+	 *         entregar devoluciones de mercadería
+	 */
+    public static boolean isAllowDeliveryReturn(Properties ctx){
+    	return MClientInfo.get(ctx).isAllowDeliveryReturned();
+    }
+    
     /**
      * Descripción de Método
      *

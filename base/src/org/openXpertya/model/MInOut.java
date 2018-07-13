@@ -40,6 +40,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.PurchasesUtil;
+import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.Util;
 
 /**
@@ -349,23 +350,36 @@ public class MInOut extends X_M_InOut implements DocAction {
 								+ (selfEmpty ? "" : " AND m_inout_id <> ?"),
 						selfEmpty ? transferParams1 : transferParams2);
 	}
-    
-	public static String getDCMovementQtyQuery(){
-		return "select sum(iol.movementqty) as movementqty " +
-				"from m_inoutline as iol " +
-				"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
-				"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
-				"where dt.doctypekey = 'DC'	" +
-				"		and io.docstatus in ('CO','CL') " +
-				"		and iol.c_orderline_id = ?";
-	}
 	
-	public static BigDecimal getDCMovementQty(Integer orderLineID, String trxName) {
-		BigDecimal movementQty = BigDecimal.ZERO;
-		movementQty = DB.getSQLValueBD(trxName, MInOut.getDCMovementQtyQuery(), orderLineID);
-		movementQty = movementQty != null?movementQty:BigDecimal.ZERO;
-		return movementQty;
-	}
+	/**
+	 * Obtiene la cantidad de devoluciones de cliente que no han sido
+	 * facturados. En realidad, cuando se realiza una devolución de cliente,
+	 * posteriormente se debe sacar por NC ya que es un crédito que le queda al
+	 * cliente de la venta original. Cuando nos referimos a Devoluciones
+	 * facturadas, hablamos de Devoluciones con NC. Este método retorna la
+	 * cantidad en devoluciones de cliente sin NC.
+	 * 
+	 * @param ctx
+	 * @param orderLineID
+	 * @param trxName
+	 * @return
+	 */
+    public static BigDecimal getNotInvoicedQtyReturned(Properties ctx, Integer orderLineID, String trxName){
+    	String sql = "select sum(movementqty - qtyinvoiced) as qty " +
+    			"from (select iol.m_inoutline_id, iol.movementqty, sum(coalesce(il.qtyinvoiced,0)) as qtyinvoiced " +
+    			"from c_orderline as ol " +
+    			"inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id " +
+    			"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+    			"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+    			"left join c_invoiceline as il on il.m_inoutline_id = iol.m_inoutline_id " +
+    			"left join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
+    			"where ol.c_orderline_id = ? AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') and (i.c_invoice_id is null OR i.docstatus IN ('CL','CO')) " +
+    			"group by iol.m_inoutline_id, iol.movementqty "+
+    			") as i";
+    	BigDecimal nir = DB.getSQLValueBD(trxName, sql, orderLineID);
+    	return nir != null && nir.compareTo(BigDecimal.ZERO) < 0?BigDecimal.ZERO:nir;
+    }
+	
     /**
      * Constructor de la clase ...
      *
@@ -423,25 +437,6 @@ public class MInOut extends X_M_InOut implements DocAction {
             setPosted( false );
         }
     }    // MInOut
-    
-    public static String getNotAllowedQtyReturnedSumQuery(){
-    	return getNotAllowedQtyReturnedSumQuery("l");
-    }
-    
-    
-    public static String getNotAllowedQtyReturnedSumQuery(String tableAlias){
-    	return "select sum(movementqty - (CASE WHEN qtyinvoiced > movementqty THEN movementqty ELSE qtyinvoiced END)) as qty " +
-    			"from (select iol.m_inoutline_id, iol.movementqty, sum(coalesce(il.qtyinvoiced,0)) as qtyinvoiced " +
-    			"from c_orderline as ol " +
-    			"inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id " +
-    			"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
-    			"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
-    			"left join c_invoiceline as il on il.m_inoutline_id = iol.m_inoutline_id " +
-    			"left join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
-    			"where ol.c_orderline_id = "+tableAlias+".c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') " +
-    			"group by iol.m_inoutline_id, iol.movementqty "+
-    			") as i";
-    }
 
     /**
      * Constructor de la clase ...
@@ -2109,6 +2104,8 @@ public class MInOut extends X_M_InOut implements DocAction {
     	
     	//
     	MDocType docType = MDocType.get(getCtx(), getC_DocType_ID(), get_TrxName());
+		boolean isReturn = docType.getsigno_issotrx()
+				.equals(isSOTrx() ? MDocType.SIGNO_ISSOTRX_1 : MDocType.SIGNO_ISSOTRX__1);
     	
     	for( int lineIndex2 = 0;lineIndex2 < lines2.length ;lineIndex2++ ) {
             MInOutLine sLine2   = lines2[ lineIndex2 ];
@@ -2220,7 +2217,7 @@ public class MInOut extends X_M_InOut implements DocAction {
              * TPV Performance: no actualizar las cantidades via modelo, usar UPDATEs directos 
              */
 //            MOrderLine ol = null;
-			BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null, ol_qtyReturned = null, ol_initialQtyReserved = null;
+            BigDecimal ol_qtyOrdered = null, ol_qtyReserved = null, ol_qtyDelivered = null, ol_qtyTransferred = null, ol_qtyInvoiced = null, ol_qtyReturned = null;
         	int ol_attsetinstanceID = -1;
         	boolean ol_ok = false;
         	Timestamp ol_dateDelivered = null;
@@ -2229,9 +2226,7 @@ public class MInOut extends X_M_InOut implements DocAction {
             if( sLine.getC_OrderLine_ID() != 0 ) {
                 
             	try    	{
-					String sql = " SELECT l.qtyOrdered, l.qtyReserved, l.qtyDelivered, l.M_AttributeSetInstance_ID, l.qtyTransferred, l.qtyInvoiced, coalesce(("
-							+ MInOut.getNotAllowedQtyReturnedSumQuery()
-							+ "),0) as ol_qtyReturned , o.m_warehouse_id "
+					String sql = " SELECT l.qtyOrdered, l.qtyReserved, l.qtyDelivered, l.M_AttributeSetInstance_ID, l.qtyTransferred, l.qtyInvoiced, l.qtyReturned, o.m_warehouse_id "
 							+ " FROM C_OrderLine l INNER JOIN C_Order o ON l.c_order_id = o.c_order_id WHERE l.C_OrderLine_ID = "
 							+ sLine.getC_OrderLine_ID();
 	                PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
@@ -2245,11 +2240,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 	                	ol_attsetinstanceID = rs.getInt(4);
 	                	ol_qtyTransferred = rs.getBigDecimal(5);
 	                	ol_qtyInvoiced = rs.getBigDecimal(6);
-						ol_qtyReturned = docType.isAllowDeliveryReturned() ? BigDecimal.ZERO
-								: rs.getBigDecimal(7);
+	                	ol_qtyReturned = rs.getBigDecimal(7);
 						ol_warehouseID = rs.getInt(8);
 	                }
-	                ol_initialQtyReserved = ol_qtyReserved;
+	                
             	}
             	catch (Exception e)	{
             		e.printStackTrace();
@@ -2257,13 +2251,17 @@ public class MInOut extends X_M_InOut implements DocAction {
                     return DocAction.STATUS_Invalid;
             	}
 
+            	BigDecimal realOrderLinePendingQty = ReservedUtil.getOrderLinePending(getCtx(), ol_qtyOrdered,
+						ol_qtyDelivered, ol_qtyTransferred, ol_qtyReturned);
                 if (isSOTrx()) {
                 	// Validar que no se remita de más en función del pedido de cliente
                     QtySO = sLine.getMovementQty();
-					if ((MovementType.endsWith("-") && QtySO.signum() >= 0) || (MovementType.endsWith("+") && QtySO.signum() < 0)) {
-	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(ol_qtyReturned).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
+					boolean withQtyReturned = ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0 && !Env.isAllowDeliveryReturn(getCtx());
+					if ((MovementType.endsWith("-") && QtySO.signum() >= 0) 
+							|| (MovementType.endsWith("+") && QtySO.signum() < 0)) {
+	                    if (realOrderLinePendingQty.subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
-	                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
+							if (withQtyReturned) {
 	                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
 	                    	}
 	                    	return DocAction.STATUS_Invalid;
@@ -2276,9 +2274,11 @@ public class MInOut extends X_M_InOut implements DocAction {
 								MInOut.DELIVERYRULE_AfterInvoicing)
 								|| getDeliveryRule().equals(
 										MInOut.DELIVERYRULE_Force_AfterInvoicing)) {
-							if(QtySO.add(ol_qtyDelivered).add(ol_qtyTransferred).add(ol_qtyReturned).compareTo(ol_qtyInvoiced) > 0){
+							BigDecimal realOrderLineDeliveredQty = ReservedUtil.getOrderLineRealDelivered(getCtx(),
+									ol_qtyDelivered, ol_qtyTransferred, ol_qtyReturned);
+							if(QtySO.add(realOrderLineDeliveredQty).compareTo(ol_qtyInvoiced) > 0){
 								m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanInvoiced");
-								if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
+								if(withQtyReturned){
 		                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
 		                    	}
 		                    	return DocAction.STATUS_Invalid;
@@ -2291,8 +2291,9 @@ public class MInOut extends X_M_InOut implements DocAction {
                 } else {
             		// Validar que no se remita de más en función del pedido de proveedor
             		QtyPO = sLine.getMovementQty();
-            		if ((MovementType.endsWith("+") && QtyPO.signum() >= 0) || (MovementType.endsWith("-") && QtyPO.signum() < 0)) {
-	                    if (ol_qtyOrdered.subtract(ol_qtyDelivered).subtract(ol_qtyTransferred).subtract(ol_qtyReturned).subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
+            		if ((MovementType.endsWith("+") && QtyPO.signum() >= 0) 
+            				|| (MovementType.endsWith("-") && QtyPO.signum() < 0)) {
+	                    if (realOrderLinePendingQty.subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
 	                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
 	                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
@@ -2371,11 +2372,13 @@ public class MInOut extends X_M_InOut implements DocAction {
     					QtySOMA = QtyMA.compareTo(BigDecimal.ZERO) >= 0 ? QtySOMA.abs()
     							: QtySOMA.abs().negate();
     					
-    					QtySOMA = docType.isReserveStockManagment()?QtySOMA:BigDecimal.ZERO;
+    					QtySOMA = isReturn && !Env.isAllowDeliveryReturn(getCtx())?BigDecimal.ZERO:QtySOMA;
+    					QtyPOMA = isReturn && !Env.isAllowDeliveryReturn(getCtx())?BigDecimal.ZERO:QtyPOMA;
+    					
+    					// QtySOMA = docType.isReserveStockManagment()?QtySOMA:BigDecimal.ZERO;
     					
 						// Las cantidades reservadas se actualizan en el almacén del
 						// pedido, si es que poseemos uno relacionado
-                        
 						if (!Util.isEmpty(sLine.getC_OrderLine_ID(), true)) {							
 							Integer orderLocatorID = MWarehouse.getDefaultLocatorID(
 									ol_warehouseID, get_TrxName());
@@ -2449,7 +2452,13 @@ public class MInOut extends X_M_InOut implements DocAction {
 					QtySO = Qty.compareTo(BigDecimal.ZERO) >= 0 ? QtySO.abs()
 							: QtySO.abs().negate();
 					
-					QtySO = docType.isReserveStockManagment()?QtySO:BigDecimal.ZERO;
+					//QtySO = docType.isReserveStockManagment()?QtySO:BigDecimal.ZERO;
+					
+					// Si es una devolución y no se permite entregar
+					// devoluciones, entonces no debemos sumarlo al stock
+					QtySO = isReturn && !Env.isAllowDeliveryReturn(getCtx())?BigDecimal.ZERO:QtySO;
+					QtyPO = isReturn && !Env.isAllowDeliveryReturn(getCtx())?BigDecimal.ZERO:QtyPO;
+					
 					// Acá tenemos dos situaciones: 1) El reservado y 2) El stock.
 					// 1) El reservado en stock se hace en el depósito del
 					// pedido por lo que es correcto que se decremente el
@@ -2553,30 +2562,36 @@ public class MInOut extends X_M_InOut implements DocAction {
             // Update Order Line
 
             if( ol_ok && isSOTrx()) {
-//                if( isSOTrx())                                  // PO is done by Matching
-//                {
-                    ol_qtyDelivered = ol_qtyDelivered.subtract( Qty );
-                    if(MovementType.endsWith("-")){
-                    	ol_dateDelivered = getMovementDate();    // overwrite=last
-                    }
-//                }
-				// Si el tipo de documento no maneja reservados, entonces el
-				// reservado es 0
-                if(!docType.isReserveStockManagment()){
-                	ol_qtyReserved = ol_initialQtyReserved;
+                ol_qtyDelivered = ol_qtyDelivered.subtract( Qty );
+                if(MovementType.endsWith("-")){
+                	ol_dateDelivered = getMovementDate();    // overwrite=last
                 }
                     
+                // Cantidades devueltas
+				ol_qtyReturned = ol_qtyReturned.add(isReturn ? Qty : BigDecimal.ZERO); 
+
+				// Si el tipo de documento no maneja reservados, entonces el
+				// reservado es 0
+                /*if(!docType.isReserveStockManagment()){
+                	ol_qtyReserved = ol_initialQtyReserved;
+                }*/
+                
+				// Determinar el pendiente
+				ol_qtyReserved = ReservedUtil.getOrderLinePending(getCtx(), ol_qtyOrdered, ol_qtyDelivered,
+						ol_qtyTransferred, ol_qtyReturned);
+				
                 try {
 	                String updateSQL = " UPDATE C_OrderLine " +
-	                					" SET qtyOrdered = ?, qtyReserved = ?, qtyDelivered = ?, M_AttributeSetInstance_ID = ?, dateDelivered = ? " +
+	                					" SET qtyOrdered = ?, qtyReserved = ?, qtyDelivered = ?, qtyReturned = ?, M_AttributeSetInstance_ID = ?, dateDelivered = ? " +
 	                					" WHERE C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
 	                PreparedStatement updateStmt = DB.prepareStatement( updateSQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, get_TrxName());
-	                
-	                updateStmt.setBigDecimal(1, ol_qtyOrdered);
-	                updateStmt.setBigDecimal(2, ol_qtyReserved);
-	                updateStmt.setBigDecimal(3, ol_qtyDelivered);
-	                updateStmt.setInt(4, ol_attsetinstanceID);
-	                updateStmt.setTimestamp(5, ol_dateDelivered);
+	                int i = 1;
+	                updateStmt.setBigDecimal(i++, ol_qtyOrdered);
+	                updateStmt.setBigDecimal(i++, ol_qtyReserved);
+	                updateStmt.setBigDecimal(i++, ol_qtyDelivered);
+	                updateStmt.setBigDecimal(i++, ol_qtyReturned);
+	                updateStmt.setInt(i++, ol_attsetinstanceID);
+	                updateStmt.setTimestamp(i++, ol_dateDelivered);
 	
 	                if( updateStmt.executeUpdate() != 1) {
 	                    m_processMsg = "Could not update Order Line";
@@ -3295,8 +3310,6 @@ public class MInOut extends X_M_InOut implements DocAction {
 				MInOut.DELIVERYRULE_AfterInvoicing) || inout.getDeliveryRule()
 				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& inout.getMovementType().endsWith("-");
-		MDocType docType = MDocType.get(inout.getCtx(),
-				inout.getC_DocType_ID(), inout.get_TrxName());
     	StringBuffer filter = new StringBuffer();
 		// Si es un remito de ventas, solo se pueden elegir pedidos
 		// que tengan al menos una línea cuya cantidad ordenada sea mayor
@@ -3316,11 +3329,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("WHERE C_Order.C_Order_ID = col.C_Order_ID AND ")
 				.append(afterInvoicing ? " col.QtyInvoiced > "
 						: " col.QtyOrdered > ")
-				.append(" col.QtyDelivered+col.QtyTransferred")
-					.append(docType.isAllowDeliveryReturned() ? ""
-							: "+coalesce(("
-									+ MInOut.getNotAllowedQtyReturnedSumQuery("col")
-									+ "),0)")
+				.append(ReservedUtil.getSQLRealDeliveredQtyByColumns(inout.getCtx(), "col"))
 				.append(") ")
 				.append("OR ")
 				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")

@@ -45,6 +45,7 @@ import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.MProductCache;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.PurchasesUtil;
+import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.SalesUtil;
 import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.TimeUtil;
@@ -755,6 +756,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             line.setQtyDelivered( Env.ZERO );
             line.setQtyInvoiced( Env.ZERO );
             line.setQtyReserved( Env.ZERO );
+            line.setQtyReturned( Env.ZERO );
             line.setDateDelivered( null );
             line.setDateInvoiced( null );
 
@@ -763,7 +765,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			// facturada es el total ya que no se puede facturar.
             // Se fuerza el seteo de la línea de pedido origen
             if(isOrderTransferred){
-            	line.setQty(fromLines[i].getPendingDeliveredQtyForStorage());
+            	line.setQty(ReservedUtil.getOrderLinePending(fromLines[i]));
             	line.setQtyInvoiced(line.getQtyOrdered());
             	line.setRef_OrderLine_ID(fromLines[i].getC_OrderLine_ID());
             }
@@ -2238,16 +2240,18 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         }
 
         // Binding
-
+		// Este flag permite determinar si se debe realizar la reserva de stock
+		// y actualización del pendiente en la línea del pedido
+        // Para presupuestos no se debe reservar
         boolean binding = !dt.isProposal();
 
         // Not binding - i.e. Target=0
 
-        if( DOCACTION_Void.equals( getDocAction())
-
-        // Closing Binding Quotation
-
-        || ( MDocType.DOCSUBTYPESO_Quotation.equals( dt.getDocSubTypeSO()) && DOCACTION_Close.equals( getDocAction())) || isDropShip()) {
+        if( ( MDocType.DOCSUBTYPESO_Quotation.equals( dt.getDocSubTypeSO()) 
+        				&& DOCACTION_Close.equals( getDocAction()))
+        		
+        		|| isDropShip()) {
+        	
             binding = false;
         }
 
@@ -2277,7 +2281,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
         		try    	{
         			String sql = " SELECT M_Warehouse_ID, AD_Org_ID, Line, M_Product_ID, M_AttributeSetInstance_ID, " +
-        							" QtyOrdered, QtyReserved, QtyDelivered, QtyTransferred FROM C_OrderLine WHERE C_OrderLine_ID = " + anOrderLineID;
+        							" QtyOrdered, QtyReserved, QtyDelivered, QtyTransferred, QtyReturned FROM C_OrderLine WHERE C_OrderLine_ID = " + anOrderLineID;
         			PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
         			ResultSet rs = stmt.executeQuery();
         			if (rs.next())
@@ -2292,7 +2296,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	                	ol_QtyReserved = rs.getBigDecimal(7);
 	                	ol_QtyDelivered = rs.getBigDecimal(8);
 	                	ol_QtyTransferred = rs.getBigDecimal(9);
-						ol_QtyReturned = MOrderLine.getReturnedQty(getCtx(), anOrderLineID, true, get_TrxName());
+						ol_QtyReturned = rs.getBigDecimal(10);
         			}
         			rs.close();
         			stmt.close();
@@ -2320,20 +2324,20 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             BigDecimal target     = binding
                                     ?ol_QtyOrdered
                                     :Env.ZERO;
-			BigDecimal difference = target.subtract(
-					ol_QtyReserved.add(ol_QtyReturned).subtract(ol_QtyTransferred)).subtract(
-					ol_QtyDelivered.add(ol_QtyTransferred));
-            
-			if (difference.compareTo(Env.ZERO) == 0
-					&& ol_QtyTransferred.compareTo(BigDecimal.ZERO) <= 0) {
-                continue;
-            }
+            // Pendiente del pedido
+			BigDecimal pending = ReservedUtil.getOrderLinePending(getCtx(), target, ol_QtyDelivered,
+					ol_QtyTransferred, ol_QtyReturned);
+			// Diferencia entre el pendiente actual con el que estaba registrado
+			// en la línea para hacer sólo un update al storage
+			BigDecimal difference = pending.subtract(ol_QtyReserved); 
+			
+			if(Util.isEmpty(difference, true)){
+				continue;
+			}
+			
+			// Check Product - Stocked and Item
 
-            log.fine( "Line=" + ol_Line + " - Target=" + target + ",Difference=" + difference + " - Ordered=" + ol_QtyOrdered + ",Reserved=" + ol_QtyReserved + ",Delivered=" + ol_QtyDelivered);
-
-            // Check Product - Stocked and Item
-
-            MProduct product = new MProduct(getCtx(), ol_M_Product_ID, get_TrxName());
+            MProduct product = MProduct.get(getCtx(), ol_M_Product_ID);
 
             if( (product != null) && product.isStocked()) {
                 BigDecimal ordered      = isSOTrx
@@ -2359,7 +2363,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
                 }
 
                 // Update Storage
-
+                
+				// Actualizamos por la diferencia entre lo pendiente actual y lo
+				// que ya estaba reservado anteriormente
+                
 				if ((reserved.compareTo(Env.ZERO) != 0 || ordered
 						.compareTo(Env.ZERO) != 0)
 						&& !MStorage.add(getCtx(), ol_M_Warehouse_ID,
@@ -2373,7 +2380,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
                 // update line
 
 				DB.executeUpdate(" UPDATE C_OrderLine SET QtyReserved = "
-						+ ol_QtyReserved.subtract(ol_QtyTransferred).add(difference) 
+						+ pending
 						+ " WHERE C_OrderLine_ID = "+ anOrderLineID, get_TrxName());
             }
         }    // reverse inventory
@@ -2604,11 +2611,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         // Binding
         boolean binding = !dt.isProposal();
         // Not binding - i.e. Target=0
-        if( //Voiding
-        	DOCACTION_Void.equals( getDocAction())
-        	//OR Closing Binding Quotation
-        	|| 
-        	( MDocType.DOCSUBTYPESO_Quotation.equals( dt.getDocSubTypeSO()) 
+        if(( MDocType.DOCSUBTYPESO_Quotation.equals( dt.getDocSubTypeSO()) 
         			&& DOCACTION_Close.equals( getDocAction())
         	)
         	//OR isDropShip
@@ -2655,22 +2658,25 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             BigDecimal target     = binding
             						?item.QtyOrdered
             						:Env.ZERO;
-			BigDecimal difference = target.subtract(item.QtyReserved.add(item.QtyReturned))
-											.subtract(item.QtyDelivered.add(item.QtyTransferred));
-
-            if( difference.compareTo( Env.ZERO ) == 0 ) 
-            	continue;
+			BigDecimal pending = ReservedUtil.getOrderLinePending(getCtx(), target, item.QtyDelivered,
+					item.QtyTransferred, item.QtyReturned);
+			// Diferencia entre el pendiente actual con el que estaba registrado
+			// en la línea para hacer sólo un update al storage
+			BigDecimal difference = pending.subtract(item.QtyReserved);
             
-            //saleo actulizacion de almacen si el producto asociao a la linea lleva stock
+			if(Util.isEmpty(difference, true)){
+				continue;
+			}
+			//saleo actulizacion de almacen si el producto asociao a la linea lleva stock
             if (!item.IsStocked)
             	continue;
             //EN ESTE PUNTO NO SE FUERZA Org y WH en Lineas, se hace mas tarde Y SOLO si es requerido
             
             //Pedidos de Cliente (IsSoTrx) solo afecta M_Storage.qtyReserved (se "reservan" para el pedido)
             //Pedidos a Proveedor (!IsSoTrx) solo afecta M_Storage.qtyOrdered
-            BigDecimal ordered      = isSOTrx ?Env.ZERO         :difference;
-            BigDecimal reserved     = isSOTrx ?difference    :Env.ZERO;
-            int        M_Locator_ID = 0;
+            BigDecimal ordered = isSOTrx?Env.ZERO:difference;
+            BigDecimal reserved = isSOTrx?difference:Env.ZERO;
+            int M_Locator_ID = 0;
 
             // Get Locator to reserve
             if( item.M_AttributeSetInstance_ID != 0 ) 
@@ -2691,7 +2697,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             
             // Update Storage
              ok = MStorage.add( getCtx(),
-            		item.M_Warehouse_ID,M_Locator_ID,
+            		item.M_Warehouse_ID,
+            		M_Locator_ID,
             		item.M_Product_ID,
             		item.M_AttributeSetInstance_ID,
             		item.M_AttributeSetInstance_ID,
@@ -2707,7 +2714,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             
             // NO update line ahora; solo se registra la diferencia que se tiene que aplicar
             item.differenceAppliedInStock = difference;
-
+            item.pendingQty = pending;
         }
         //Recien aca  se  fuerza Org. y WH en lineas  SOLO SI ES NECESARIO
         if (needEnforceWHandOrg)
@@ -2780,7 +2787,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
     		item.QtyReserved = ol.getQtyReserved();
     		item.QtyDelivered = ol.getQtyDelivered();
     		item.QtyTransferred = ol.getQtyTransferred();
-    		item.QtyReturned = MOrderLine.getReturnedQty(getCtx(), ol.getID(), true, get_TrxName());
+    		item.QtyReturned = ol.getQtyReturned();
     		item.IsStocked = false; //por defecto
     		item.M_Product_IsStocked = false;
     		item.M_Product_ProductType = "";
@@ -2963,16 +2970,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
     	for (int i = 0; i < data.length ; i ++)
     	{
     		DataReserveStock item = data[i];
-			if (item.differenceAppliedInStock.compareTo(BigDecimal.ZERO) == 0
-					&& item.QtyTransferred.compareTo(BigDecimal.ZERO) == 0)
+			if (item.differenceAppliedInStock.compareTo(BigDecimal.ZERO) == 0)
     			continue;
-			BigDecimal newQtyReserved = item.QtyReserved.add(
-					item.differenceAppliedInStock).add(item.QtyTransferred);
+			
     		int C_OrderLine_ID = item.C_OrderLine_ID;
     		
     		listIds.add(C_OrderLine_ID);
     		
-    		sb.append(" WHEN ").append(C_OrderLine_ID).append(" THEN ").append(newQtyReserved);
+    		sb.append(" WHEN ").append(C_OrderLine_ID).append(" THEN ").append(item.pendingQty);
     	}
     	
     	sb.append(" END ) WHERE C_OrderLine_ID IN ");
@@ -3019,6 +3024,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
     	 * Valor por defecto cero.
     	 */
     	BigDecimal differenceAppliedInStock = BigDecimal.ZERO;
+    	/** Esta variable permite registrar el pendiente real del objeto */
+    	BigDecimal pendingQty = BigDecimal.ZERO;
     }
     
     /**************** Manejo de cache de productos  *****************************************/
@@ -3640,7 +3647,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 					MOrderLine refOrderLine = new MOrderLine(getCtx(),
 							orderLine.getRef_OrderLine_ID(), get_TrxName());
 					if (orderLine.getQtyOrdered().compareTo(
-							refOrderLine.getPendingDeliveredQty()) > 0) {
+							ReservedUtil.getOrderLinePending(refOrderLine)) > 0) {
 						m_processMsg = "@QtyOrderedSurpassOrigLineQtyReserved@";
 						return DocAction.STATUS_Invalid;
 					}
@@ -4266,8 +4273,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	        for( int i = 0;i < lines.length;i++ ) {
 	            MOrderLine line = lines[ i ];
 	            BigDecimal old  = line.getQtyOrdered();
-				BigDecimal qtyDelivered = line.getQtyDelivered().add(line.getQtyTransferred())
-						.add(MOrderLine.getReturnedQty(getCtx(), line.getID(), true, get_TrxName()));
+				BigDecimal qtyDelivered = ReservedUtil.getOrderLineRealDelivered(line);
 				
 	            if( old.compareTo(qtyDelivered) != 0 ) {
 	
@@ -4385,11 +4391,12 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         Integer locatorID = MWarehouse.getDefaultLocatorID(getM_Warehouse_ID(), get_TrxName());
         MOrderLine[] lines = getLines(true,null);
         
-        BigDecimal qtyReserved, qtyOrdered;
+        BigDecimal qtyReserved, qtyOrdered, pending;
         int updated = 0;
         for (MOrderLine line : lines) {
-        	qtyReserved = (isSOTrx()?line.getPendingDeliveredQtyForStorage():BigDecimal.ZERO).negate();
-        	qtyOrdered = (isSOTrx()?BigDecimal.ZERO:line.getPendingDeliveredQty()).negate();
+        	pending = ReservedUtil.getOrderLinePending(line);
+        	qtyReserved = (isSOTrx()?pending:BigDecimal.ZERO).negate();
+        	qtyOrdered = (isSOTrx()?BigDecimal.ZERO:pending).negate();
         	// Si el pedido es transferible, se deben decrementar las cantidades
     		// transferidas del pedido original 
             if(isOrderTransferred){

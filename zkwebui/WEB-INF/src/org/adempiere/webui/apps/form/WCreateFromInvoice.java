@@ -37,6 +37,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.ReservedUtil;
 import org.zkoss.zk.ui.event.Event;
 
 public class WCreateFromInvoice extends WCreateFrom {
@@ -221,7 +222,10 @@ public class WCreateFromInvoice extends WCreateFrom {
     protected String getRemainingQtySQLLine(boolean forInvoice, boolean allowDeliveryReturns){
     	String sqlLine = super.getRemainingQtySQLLine(forInvoice, allowDeliveryReturns);
     	if(!forInvoice){
-    		sqlLine = " (CASE WHEN (l.QtyOrdered - l.QtyDelivered - l.QtyTransferred) > l.QtyInvoiced THEN l.QtyInvoiced ELSE (l.QtyOrdered - l.QtyDelivered- l.QtyTransferred) END) ";
+    		String sqlRealDeliveredColumns = ReservedUtil.getSQLPendingQtyByColumns(getCtx(), "l");
+    		sqlLine = " (CASE WHEN "+sqlRealDeliveredColumns+" > l.QtyInvoiced "
+    				+ "			THEN l.QtyInvoiced "
+    				+ "			ELSE "+sqlRealDeliveredColumns+" END) ";
     	}
     	return sqlLine;
     }

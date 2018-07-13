@@ -45,6 +45,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
 
@@ -542,7 +543,7 @@ public class FiscalDocumentPrint {
 			// Por cada línea, si tiene artículos pendientes de entrega
 			if (orderLine.isDeliverDocumentPrintable()) {
 				// Obtiene la cantidad que falta entregar
-				BigDecimal qtyToDeliver = orderLine.getPendingDeliveredQty();
+				BigDecimal qtyToDeliver = ReservedUtil.getOrderLinePending(orderLine);
 				MProduct product = orderLine.getProduct();
 				// Primera línea a imprimir: [cantidad] value del artículo 
 				line = 
@@ -1074,8 +1075,8 @@ public class FiscalDocumentPrint {
 		// Número de comprobante original armado y desarmado
 		creditNote.setOriginalDocumentNo(origInvoiceNumber);
 		creditNote.setOriginalLetter(origInvoiceLetter);
-		creditNote.setOriginalPOS(Integer.parseInt(origInvoicePOS));
-		creditNote.setOriginalNo(Integer.parseInt(origInvoiceNo));
+		creditNote.setOriginalPOS(origInvoicePOS != null?Integer.parseInt(origInvoicePOS):null);
+		creditNote.setOriginalNo(origInvoiceNo != null?Integer.parseInt(origInvoiceNo):null);
 		
 		// Reorganizar las leyendas al pie de la nc
 		reorderFooterObservation(creditNote);

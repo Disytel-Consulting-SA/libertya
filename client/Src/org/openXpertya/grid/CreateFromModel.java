@@ -9,13 +9,13 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MUOM;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.ReservedUtil;
 
 
 
@@ -81,10 +81,7 @@ public class CreateFromModel {
 		// Si no se puede entregar lo devuelto, entonces también se debe agregar
 		// esta condición para remitos
 		String compareColumn = forInvoice ? "l.QtyInvoiced"
-				: "(l.QtyDelivered+l.QtyTransferred)"
-						+ (allowDeliveryReturns ? "" : " + coalesce(("
-								+ MInOut.getNotAllowedQtyReturnedSumQuery()
-								+ "),0)");
+				: ReservedUtil.getSQLRealDeliveredQtyByColumns(ctx, "l");
     	return "l.QtyOrdered-"+compareColumn;
 	}
 	
@@ -207,7 +204,7 @@ public class CreateFromModel {
         if( isForInvoice ) {
             compareColumn = "ol.QtyInvoiced";
         } else { // InOut
-        	compareColumn = "ol.QtyDelivered+ol.QtyTransferred";
+        	compareColumn = ReservedUtil.getSQLRealDeliveredQtyByColumns(ctx, "ol");
         }
 
      	filter

@@ -867,7 +867,7 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
 	 *         método y devolver falso sea el caso
 	 */
     protected boolean allowDeliveryReturned(){
-    	return true;
+    	return Env.isAllowDeliveryReturn(getCtx());
     }
     
     /**
