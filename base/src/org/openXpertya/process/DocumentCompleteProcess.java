@@ -599,15 +599,15 @@ public class DocumentCompleteProcess extends SvrProcess {
 		
 	  	// Compañía
 	  	if(Util.isEmpty(clientFilter, true) && !Util.isEmpty(orgFilter, true)){
-	  		clientFilter = DB.getSQLValue(null, "SELECT ad_client_id FROM ad_client WHERE ad_org_id = ?", orgFilter);
+	  		clientFilter = DB.getSQLValue(null, "SELECT ad_client_id FROM ad_org WHERE ad_org_id = ?", orgFilter);
 	  	}
 	  	
 	  	// Configuracion
 	  	Env.setContext(Env.getCtx(), "#AD_Language", "es_AR");
 	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", clientFilter);
 	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", orgFilter);
-	  	if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null || Env.getContext(Env.getCtx(), "#AD_Client_ID") == null ||
-	  	    Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0 || Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0) {
+		if (Env.getContext(Env.getCtx(), "#AD_Client_ID") == null
+				|| Env.getContextAsInt(Env.getCtx(), "#AD_Client_ID") <= 0) {
 	  		System.err.println("Configuracion de Compañía faltante.");
 	  		return;
 	  	}
@@ -634,7 +634,6 @@ public class DocumentCompleteProcess extends SvrProcess {
 		try {
 			Trx.getTrx(trxName).start();
 			// Disparar el proceso
-			// TODO PROBAR - Crear sh
 			DocumentCompleteProcess dcp = new DocumentCompleteProcess(Env.getCtx(), orgFilter, docType,
 					docActionFilter, dateFromFilter, dateToFilter, null, trxName);
 			result = dcp.start();
