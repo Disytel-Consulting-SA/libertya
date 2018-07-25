@@ -25,6 +25,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	protected static final int MAX_DUE_DAYS = 999999;
 	protected static final String SHOW_DOCUMENTS_OPEN_BALANCE = "O";
 	protected static final String SHOW_DOCUMENTS_BY_DATE = "D";
+	protected static final String SHOW_DOCUMENTS_BY_DATE_ONLY_OPEN_DOCUMENTS = "X";
+	
 	
 	int daysfrom = (-1) * MAX_DUE_DAYS;
 	int daysto   = MAX_DUE_DAYS;
@@ -435,6 +437,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			")":"") +
 			"	ORDER BY bpartner, dateacct  ");
 		
+		// En caso de haber indicado mostrar solo documentos con balance abierto, filtrar solo dichos documentos.
+		if (isShowByDateOpenDocumentsOnly()) {
+			query.insert(0, " SELECT * FROM ( ").append(" ) AS FINALFOO WHERE OPENAMT <> 0 ");
+		}
+		
 		pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
 		//System.out.println(query.toString());
 		ResultSet rs = pstmt.executeQuery();
@@ -734,7 +741,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	}
 	
 	protected boolean isShowByDate() {
-		return SHOW_DOCUMENTS_BY_DATE.equals(showDocuments);
+		return SHOW_DOCUMENTS_BY_DATE.equals(showDocuments) || SHOW_DOCUMENTS_BY_DATE_ONLY_OPEN_DOCUMENTS.equals(showDocuments);
+	}
+	
+	protected boolean isShowByDateOpenDocumentsOnly() {
+		return SHOW_DOCUMENTS_BY_DATE_ONLY_OPEN_DOCUMENTS.equals(showDocuments);
 	}
 	
 	@Override
