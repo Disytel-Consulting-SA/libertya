@@ -15,8 +15,10 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.openXpertya.model.MExpFormat;
 import org.openXpertya.model.MExpFormatRow;
@@ -43,6 +45,7 @@ public class ExportProcess extends SvrProcess {
 	/** Extensión del archivo exportado */
 	protected static final String FILE_EXTENSION_CSV = "csv";
 	protected static final String FILE_EXTENSION_TXT = "txt";
+	
 	/** Formato de exportación */
 	private MExpFormat exportFormat;
 	/** Caracter separador de campos */
@@ -70,6 +73,8 @@ public class ExportProcess extends SvrProcess {
 	private int exportedLines = 0;
 	/** Campos de secuencia */
 	private Map<String, Integer> sequenceNumbers = new HashMap<String, Integer>();
+	/** Caracteres inválidos a elminar antes de escribir sobre el archivo */
+	private Set<String> invalidCaracters = null;
 	
 	@Override
 	protected void prepare() {
@@ -358,7 +363,7 @@ public class ExportProcess extends SvrProcess {
 	
 	protected void write(String line) throws Exception{
 		if(line != null) {
-			getFileWriter().write(line);
+			getFileWriter().write(cleanWrite(line));
 		}
 	}
 	
@@ -481,6 +486,24 @@ public class ExportProcess extends SvrProcess {
 				+ getExportedLines();
 	}
 	
+	/**
+	 * Limpia la línea a escribir de entrada de los caracteres inválidos
+	 * configurados
+	 * 
+	 * @param line
+	 *            línea a escribir en el archivo
+	 * @return línea de entrada sin los caracteres inválidos
+	 */
+	protected String cleanWrite(String line){
+		String lineCleaned = line;
+		if(line != null){
+			for (String ic : getInvalidCaracters()) {
+				lineCleaned = lineCleaned.replace(ic, "");
+			}
+		}
+		return lineCleaned;
+	}
+	
 	protected Map<String, Object> getParametersValues() {
 		return parametersValues;
 	}
@@ -575,5 +598,18 @@ public class ExportProcess extends SvrProcess {
 
 	protected void setSequenceNumbers(Map<String, Integer> sequenceNumbers) {
 		this.sequenceNumbers = sequenceNumbers;
+	}
+
+	protected Set<String> getInvalidCaracters() {
+		if(invalidCaracters == null){
+			invalidCaracters = initInvalidaCaracters();
+		}
+		return invalidCaracters;
+	}
+	
+	protected Set<String> initInvalidaCaracters(){
+		Set<String> invalids = new HashSet<String>();
+		invalids.add("\"");
+		return invalids;
 	}
 }

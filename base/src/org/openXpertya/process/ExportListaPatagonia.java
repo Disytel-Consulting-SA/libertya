@@ -160,9 +160,9 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("		ON p.c_payment_id = lpp.c_payment_id ");
 		sql.append("	INNER JOIN " + X_C_Currency.Table_Name + " AS c ");
 		sql.append("		ON c.c_currency_id = p.c_currency_id ");
-		sql.append("	LEFT JOIN " + X_C_BPartner_BankList.Table_Name + " bpbl ");
+		sql.append("	INNER JOIN " + X_C_BPartner_BankList.Table_Name + " bpbl ");
 		sql.append("		ON bpbl.c_bpartner_id = bp.c_bpartner_id ");
-		sql.append("	LEFT JOIN " + X_C_ElectronicPaymentBranch.Table_Name + " AS ba ");
+		sql.append("	INNER JOIN " + X_C_ElectronicPaymentBranch.Table_Name + " AS ba ");
 		sql.append("		ON ba.c_electronicpaymentbranch_id = bpbl.c_electronicpaymentbranch_id ");
 		sql.append("WHERE ");
 		sql.append("	lpp.c_banklist_id = ? ");
@@ -203,15 +203,15 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Acompañamiento de Comprobantes Adjuntos
 		row.append(rs.getInt("ret") > 0 ? "ICA" : "NEC");
 		// Texto referencial #1 asociado a la orden
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 80, null));
 		// Texto referencial #2 asociado a la orden
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 80, null));
 		// Texto referencial #3 asociado a la orden
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 80, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 80, null));
 		// Instrucciones para el Customer Service del Banco
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 160, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 160, null));
 		// Nro. de Beneficiario
-		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 24, null));
+		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Left, 24, null));
 		// Espacio en blanco
 		row.append(" ");
 		// Nombre del Beneficiario o proveedor
@@ -221,27 +221,27 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Nro. de CUIT/CUIL/CDI del Beneficiario, asignado por la AFIP
 		row.append(rs.getString("taxid"));
 		// Domicilio del Beneficiario. Actualmente no aplica.
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 120, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 120, null));
 		// Código postal del domicilio del Beneficiario. Actualmente no aplica.
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 15, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 15, null));
 		// Email del Beneficiario
 		row.append(fillField(rs.getString("email"), " ", MExpFormatRow.ALIGNMENT_Left, 70, null));
 		// Fax del Beneficiario
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 25, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 25, null));
 		// Medios de comunicación con el beneficiario
 		row.append(Util.isEmpty(rs.getString("email")) ? "   " : "EML");
 		// Espacio en cero
-		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Right, 5, null));
+		row.append(fillField("0", "0", MExpFormatRow.ALIGNMENT_Left, 5, null));
 		// Espacio en blanco
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 35, null));
 		// CBU de la cuenta del Beneficiario a acreditar
 		row.append(fillField(cbu, "0", MExpFormatRow.ALIGNMENT_Right, 22, null));
 		// Sistema de la cta. a acreditar
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 2, null));
+		row.append("CC");
 		// Moneda de la cuenta a acreditar en banco. (Codigo ISO de la divisa)
 		row.append(rs.getString("iso_code"));
 		// Espacio en blanco
-		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 35, null));
+		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Left, 35, null));
 		// Canal de entrega de pagos en cheques
 		row.append("BCO");
 		// Sucursal a la cual enviar cheque y sus comprobantes adjuntos
