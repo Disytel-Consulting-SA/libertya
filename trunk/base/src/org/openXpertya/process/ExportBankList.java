@@ -7,8 +7,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MDocType;
@@ -78,6 +80,15 @@ public abstract class ExportBankList extends ExportProcess {
 	
 	protected abstract void validate() throws Exception;
 
+	@Override
+	protected Set<String> initInvalidaCaracters(){
+		Set<String> invalids = super.initInvalidaCaracters();
+		invalids.add("(");
+		invalids.add(")");
+		invalids.add(":");
+		return invalids;
+	}
+	
 	protected MExpFormat getBankListExportFormat() {
 		String whereClause = "value = '" + getBankListExportFormatValue() + "'";
 		return (MExpFormat) MExpFormat.findFirst(getCtx(), MExpFormat.Table_Name, whereClause, null, null, get_TrxName());
