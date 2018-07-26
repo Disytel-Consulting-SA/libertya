@@ -19,6 +19,7 @@ package org.adempiere.webui.panel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JOptionPane;
 
@@ -34,6 +35,8 @@ import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
+import org.openXpertya.plugin.MPluginPO;
+import org.openXpertya.plugin.common.PluginPOUtils;
 import org.openXpertya.process.DocOptions;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
@@ -164,6 +167,16 @@ public class WDocActionPanel extends Window implements EventListener
 			index = ((DocOptions) po).customizeValidActions(DocStatus, Processing, OrderType, IsSOTrx,
 					m_AD_Table_ID, docActionHolder, options, index);
 
+		/** Logica de soporte de plugins sobre acciones del documento */
+		Vector<MPluginPO> plugins = PluginPOUtils.getPluginList(po);
+		for (MPluginPO aPlugin : plugins) {
+			if (aPlugin instanceof DocOptions) {
+				index = ((DocOptions) aPlugin).customizeValidActions(DocStatus, Processing, OrderType, IsSOTrx,
+						m_AD_Table_ID, docActionHolder, options, index);	
+			}
+		}
+		/** Fin Logica de soporte de plugins sobre acciones del documento */
+		
 		Integer doctypeId = (Integer)mTab.getValue("C_DocType_ID");
 		if(doctypeId==null || doctypeId.intValue()==0){
 			doctypeId = (Integer)mTab.getValue("C_DocTypeTarget_ID");
