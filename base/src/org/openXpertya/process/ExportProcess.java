@@ -498,7 +498,7 @@ public class ExportProcess extends SvrProcess {
 		String lineCleaned = line;
 		if(line != null){
 			for (String ic : getInvalidCaracters()) {
-				lineCleaned = lineCleaned.replace(ic, "");
+				lineCleaned = lineCleaned.replace(ic, " ");
 			}
 		}
 		return lineCleaned;
