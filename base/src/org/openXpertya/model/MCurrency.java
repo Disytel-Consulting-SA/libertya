@@ -205,6 +205,8 @@ public class MCurrency extends X_C_Currency {
     public static BigDecimal currencyConvert(BigDecimal amount, int currencyFrom, int currencyTo, Date date, int adOrg, Properties ctx )
     {
     	BigDecimal result = null;
+    	PreparedStatement pstmt = null;
+    	ResultSet rs = null;
     	try
     	{
     		StringBuffer sql = new StringBuffer("SELECT currencyconvert (?, ?, ?, ? ::timestamp, null, ?, ");
@@ -213,7 +215,7 @@ public class MCurrency extends X_C_Currency {
     		else
     			sql.append( "null )");
 
-    		PreparedStatement pstmt = DB.prepareStatement(sql.toString());
+    		pstmt = DB.prepareStatement(sql.toString());
     		pstmt.setBigDecimal(1, amount);
     		pstmt.setInt(2, currencyFrom);
     		pstmt.setInt(3, currencyTo);
@@ -226,13 +228,21 @@ public class MCurrency extends X_C_Currency {
     		if (adOrg > 0)
     			pstmt.setInt(6, adOrg );
     		
-    		ResultSet rs = pstmt.executeQuery();
+    		rs = pstmt.executeQuery();
     		if (rs.next())
     			result = rs.getBigDecimal(1);
     	}
     	catch (Exception e ) {
     		e.printStackTrace();
+    	} finally {
+    		try {
+				if(rs != null)rs.close();
+				if(pstmt != null)pstmt.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
     	}
+    	
 		return result;
     }    
     

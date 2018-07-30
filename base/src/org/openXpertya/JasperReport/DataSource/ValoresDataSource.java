@@ -68,6 +68,10 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		if(rs.next()){
 			total = rs.getBigDecimal(1);
 		}
+		
+		rs.close();
+		ps.close();
+		
 		return total;
 	}
 	
@@ -96,6 +100,7 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 		else if(field.getName().equalsIgnoreCase("CASH_REAL_VALUE")){
 			value = MPOSCashStatement.getCashValue((String) getCurrentRecord().get("CASHVALUE"));
 		}
+		
 		return value;
 	}
 	
