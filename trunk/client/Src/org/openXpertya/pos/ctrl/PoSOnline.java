@@ -535,21 +535,33 @@ public class PoSOnline extends PoSConnectionState {
 		
 		BigDecimal change = order.getTotalChangeCashAmt();
 		
-		for (int i = 0; i<cashPayments.size(); i++) {
+		for (int i = cashPayments.size()-1; i >= 0 && change.compareTo(BigDecimal.ZERO) > 0; i--) {
 			CashPayment p = cashPayments.get(i);
 			BigDecimal amt = currencyConvert(p.getAmount(), p.getCurrencyId());
 			
 			if (amt.compareTo(change) > 0) 
 			{
-				amt = amt.subtract(change);
-				p.setAmount(currencyConvert(amt, getPoSCOnfig().getCurrencyID(), p.getCurrencyId()));
-				p.setChangeAmt(change);
+				// Si el efectivo se encuentra en otra moneda que la base, no se
+				// puede modificar el importe del mismo ya que no se
+				// corresponderá el efectivo físico con lo registrado en
+				// el sistema
+				// En este caso se deja el importe real físico y el ajuste en
+				// negativo
+				if(getClientCurrencyID() == p.getCurrencyId()){
+					amt = amt.subtract(change);
+					p.setAmount(currencyConvert(amt, getPoSCOnfig().getCurrencyID(), p.getCurrencyId()));
+					p.setChangeAmt(change);
+				}
+				else{
+					p.setChangeAmt(change.negate());
+				}				
+				change = BigDecimal.ZERO;
 			} 
 			else 
 			{
 				change = change.subtract(amt);
 				cashPayments.remove(i);
-				--i;
+				++i;
 			}
 		}
 		
@@ -823,8 +835,8 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// El cambio de efectivo se debe agregar a los cobros de efectivo
 		BigDecimal changeAux, convertedAmt;
-		for (int c = 0; c < cashPayments.size()
-				&& cashChange.compareTo(BigDecimal.ZERO) > 0; c++) {
+		for (int c = cashPayments.size()-1; c >= 0
+				&& cashChange.compareTo(BigDecimal.ZERO) > 0; c--) {
 			convertedAmt = currencyConvert(cashPayments.get(c).getAmount(), cashPayments.get(c).getCurrencyId());
 			changeAux = convertedAmt.compareTo(cashChange) >= 0 ? cashChange
 					: convertedAmt;

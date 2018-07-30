@@ -35,6 +35,7 @@ public class VModelHelper {
 			return fromAmt;
 		
 		CPreparedStatement pp = DB.prepareStatement(" SELECT currencyConvert(?, ?, ?, ?, ?, ?, ?) ");
+		ResultSet rs = null;
 		
 		try {
 			pp.setBigDecimal(1, fromAmt);
@@ -45,13 +46,20 @@ public class VModelHelper {
 			pp.setInt(6, Env.getAD_Client_ID(Env.getCtx()));
 			pp.setInt(7, Env.getAD_Org_ID(Env.getCtx()));
 			
-			ResultSet rs = pp.executeQuery();
+			rs = pp.executeQuery();
 			
 			if (rs.next())
 				return rs.getBigDecimal(1);
 			
 		} catch (Exception e) {
 			s_log.log(Level.SEVERE, "currencyConvert", e);
+		} finally{
+			try {
+				if(rs != null)rs.close();
+				if(pp != null)pp.close();
+			} catch (Exception e2) {
+				s_log.log(Level.SEVERE, "currencyConvert", e2);
+			}
 		}
 		
 		return null;

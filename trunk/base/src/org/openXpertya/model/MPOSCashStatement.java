@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Properties;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
 public class MPOSCashStatement extends X_C_POSCashStatement {
@@ -82,8 +84,37 @@ public class MPOSCashStatement extends X_C_POSCashStatement {
 		} catch (NumberFormatException e) {
 			s_log.warning("Invalid Cash Value Format. Cannot parse BigDecimal. CashValue="
 					+ cashValue);
-			return BigDecimal.ZERO;
+			amount = BigDecimal.ZERO;
 		}
+		
+		return amount;
+	}
+	
+	/**
+	 * Obtiene el importe total convertido a la moneda parámetro
+	 * 
+	 * @param ctx
+	 *            contexto actual
+	 * @param cashValue
+	 *            valor de la lista de la denominación de la declaración
+	 * @param qty
+	 *            cantidad de la denominación
+	 * @param currencyID
+	 *            moneda de la declaración
+	 * @param date
+	 *            fecha de conversión
+	 * @return el importe total convertido
+	 */
+	public static BigDecimal getCashAmountConverted(Properties ctx, String cashValue, int qty, int currencyID, Timestamp date) {
+		// Obtener el importe real de la declaración
+		BigDecimal amount = getCashAmount(cashValue, qty);
+		
+		// Convertir en caso que la moneda sea distinta a la de la compañía
+		int clientCurrencyID = Env.getC_Currency_ID(ctx);
+		if(clientCurrencyID != currencyID){
+			amount = MCurrency.currencyConvert(amount, currencyID, clientCurrencyID, date, Env.getAD_Org_ID(ctx), ctx);
+		}
+		
 		return amount;
 	}
 

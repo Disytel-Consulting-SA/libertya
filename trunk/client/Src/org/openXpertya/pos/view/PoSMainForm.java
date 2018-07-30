@@ -4872,6 +4872,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		BigDecimal amount = (BigDecimal)getCPaymentToPayAmt().getValue();
 		BigDecimal realAmount = (BigDecimal)getCAmountText().getValue();
 		int currencyId = ((Integer)getCCurrencyCombo().getValue()).intValue();
+		String currencyDescr = ((String)getCCurrencyCombo().getDisplay());
 		PaymentMedium paymentMedium = getSelectedPaymentMedium(); 
 		CallResult extraValidationsResult = null; 
 		
@@ -5182,6 +5183,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		payment.setRealAmountConverted(getModel().currencyConvert(realAmount, currencyId, getCurrencyBaseID()));
 		// Se asocia el medio de pago con el pago concreto.
 		payment.setPaymentMedium(paymentMedium);
+		
+		// Si la moneda es distinta a la moneda base de la compañía entonces
+		// agrego esa descripción en el tipo de pago que se muestra en la tabla
+		// de cobros
+		payment.setTypeName(
+				payment.getTypeName() + (getCurrencyBaseID() != currencyId ? " (" + currencyDescr + ")" : ""));
 		
 		// Se agrega el pago a la orden actual.
 		getOrder().addPayment(payment);
@@ -6078,13 +6085,35 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     		return;
     	}
     	
+    	boolean allRemains = amt == null;
+    	int currencyComboId = ((Integer) getCCurrencyCombo().getValue()).intValue();
 		// Calcula el importe a pagar (aplicando descuentos / recargos del
 		// medio de pago actualmente seleccionad) y lo muestra en el
 		// componente.
 		BigDecimal oldPaymentToPayAmt = getOrder().getToPayAmount(
 				getSelectedPaymentMediumInfo(), amt);
-		BigDecimal paymentToPayAmt = amt == null?getModel().currencyConvert(oldPaymentToPayAmt, getCurrencyBaseID(),
-				((Integer) getCCurrencyCombo().getValue()).intValue()):oldPaymentToPayAmt;
+		BigDecimal paymentToPayAmt = amt == null
+				? getModel().currencyConvert(oldPaymentToPayAmt, getCurrencyBaseID(), currencyComboId)
+				: oldPaymentToPayAmt;
+		
+//		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
+//				getSelectedPaymentMediumInfo());
+//		getCAmountText().setValue(paymentRealAmt);
+		amt = amt == null?getCurrencyOrderOpenAmount():amt;
+		// Si lo que se calcula es sobre el resto del pedido y la moneda del
+		// pago es diferente a la moneda de la compañía, entonces el importe
+		// convertido debe ser igual o mayor al pendiente del pedido ya que por
+		// conversiones entre monedas y problemas de redondeo se puede dar que
+		// el importe convertido sea menor al pendiente. Soporte multimoneda.
+		if (allRemains && getCurrencyBaseID() != currencyComboId) {
+			BigDecimal openAmt = getOrder().getOpenAmount();
+			BigDecimal convertedAmt = getModel().currencyConvert(amt,currencyComboId);
+			while(convertedAmt != null && convertedAmt.compareTo(openAmt) < 0){
+				amt = amt.add(new BigDecimal(0.01));
+				convertedAmt = getModel().currencyConvert(amt,currencyComboId);
+			}
+			paymentToPayAmt = getOrder().getToPayAmount(getSelectedPaymentMediumInfo(), amt);
+		}
 		
 		paymentToPayAmt = paymentToPayAmt == null? oldPaymentToPayAmt : paymentToPayAmt;  
 		
@@ -6093,10 +6122,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 							? paymentToPayAmt
 							: null);
 		
-//		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
-//				getSelectedPaymentMediumInfo());
-//		getCAmountText().setValue(paymentRealAmt);
-		amt = amt == null?getCurrencyOrderOpenAmount():amt;
 		getCAmountText().setValue(amt);
 		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
@@ -6733,10 +6758,19 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return getModel().getPoSConfig().getCurrencyID();
 	}
 	
-	protected BigDecimal getCurrencyOrderOpenAmount(){
-		return getModel().currencyConvert(getOrder().getOpenAmount(),
-				getCurrencyBaseID(),
-				((Integer) getCCurrencyCombo().getValue()).intValue());
+	protected BigDecimal getCurrencyOrderOpenAmount(){		
+		int currencyComboId = ((Integer) getCCurrencyCombo().getValue()).intValue();
+		BigDecimal openAmt = getModel().currencyConvert(getOrder().getOpenAmount(), getCurrencyBaseID(),
+				currencyComboId);
+		if (getCurrencyBaseID() != currencyComboId) {
+			BigDecimal convertedAmt = getModel().currencyConvert(openAmt,currencyComboId);
+			BigDecimal openCurrencyBaseAmt = getOrder().getOpenAmount();
+			while(convertedAmt != null && convertedAmt.compareTo(openCurrencyBaseAmt) < 0){
+				openAmt = openAmt.add(new BigDecimal(0.01));
+				convertedAmt = getModel().currencyConvert(openAmt,currencyComboId);
+			}
+		}
+		return openAmt;
 	}
 	
 	private TableUtils getTaxesTableUtils() {
