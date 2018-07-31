@@ -3346,7 +3346,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		MOrderLine orderLine;
 		for (int i = 0; i < lines.length; i++) {
 			line = lines[i];
-			if (line.getC_OrderLine_ID() != 0) {
+			if (line.getC_OrderLine_ID() != 0 && line.getM_InOutLine_ID() == 0) {
 				// Ader: NO LEER cosas de manera innecesria...
 				// orderLine = new MOrderLine(getCtx(),
 				// line.getC_OrderLine_ID(), get_TrxName());
