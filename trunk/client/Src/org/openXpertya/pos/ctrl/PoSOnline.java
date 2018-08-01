@@ -1445,7 +1445,9 @@ public class PoSOnline extends PoSConnectionState {
 		
 		inv.setPaymentRule(order.getPaymentRule());
 		
-		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
+		debug("Guardando Factura");
+		
+		throwIfFalse(inv.save(), null, InvoiceCreateException.class);
 		
 		MOrderLine[] moLines = morder.getLines();
 		int lineNumber = 10;
@@ -2038,8 +2040,7 @@ public class PoSOnline extends PoSConnectionState {
 		creditCardRetirementInvoice.setDocAction(MInvoice.DOCACTION_Complete);
 		creditCardRetirementInvoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
 		// Guardo la factura
-		throwIfFalse(creditCardRetirementInvoice.save(),
-				creditCardRetirementInvoice, InvoiceCreateException.class);
+		throwIfFalse(creditCardRetirementInvoice.save(), null, InvoiceCreateException.class);
 		// Crear la línea con un artículo en particular
 		MInvoiceLine creditCardRetirementInvoiceLine = new MInvoiceLine(creditCardRetirementInvoice);
 		
