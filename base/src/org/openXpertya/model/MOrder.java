@@ -3652,12 +3652,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 					}
 					// Setear la cantidad transferida para que no se pueda remitir
 					orderLine.setQtyTransferred(orderLine.getQtyOrdered());
+					orderLine.setQtyReserved(ReservedUtil.getOrderLinePending(orderLine));
 					if(!orderLine.save()){
 						m_processMsg = CLogger.retrieveErrorAsString();
 						return DocAction.STATUS_Invalid;
 					}
 					// Setear la cantidad transferida a la línea original
 					refOrderLine.setQtyTransferred(orderLine.getQtyOrdered());
+					refOrderLine.setQtyReserved(ReservedUtil.getOrderLinePending(refOrderLine));
 					if(!refOrderLine.save()){
 						m_processMsg = CLogger.retrieveErrorAsString();
 						return DocAction.STATUS_Invalid;
