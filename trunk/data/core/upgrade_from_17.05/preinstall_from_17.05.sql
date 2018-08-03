@@ -5620,3 +5620,7 @@ WITH (
 );
 ALTER TABLE t_orderline_pending
   OWNER TO libertya;
+  
+--20180803-1147 El tipo de documento Nota de Debito de Proveedor se encontraba desactivado y no marcado como fiscal
+update c_doctype set isactive = 'Y' 		where ad_componentobjectuid = 'CORE-C_DocType-1010632' and isactive = 'N';
+update c_doctype set isfiscaldocument = 'Y' where ad_componentobjectuid = 'CORE-C_DocType-1010632' isfiscaldocument = 'N';
