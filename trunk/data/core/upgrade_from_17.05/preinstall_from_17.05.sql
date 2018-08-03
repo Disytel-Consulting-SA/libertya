@@ -5585,3 +5585,38 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp without time zone, integer, character, boolean)
   OWNER TO libertya;
+  
+--20180803-0030 Nueva tabla temporal para la mejora del informe de seguimiento de pedidos
+CREATE TABLE t_orderline_pending (
+  t_orderline_pending_id integer NOT NULL,
+  ad_pinstance_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_order_id integer,
+  issotrx character(1),
+  documentno character varying(30),
+  dateordered timestamp without time zone,
+  datepromised timestamp without time zone,
+  c_bpartner_id integer,
+  c_orderline_id integer,
+  m_product_id integer, 
+  qtyordered numeric(22,4), 
+  qtyinvoiced numeric(22,4), 
+  qtydelivered numeric(22,4), 
+  qtytransferred numeric(22,4), 
+  qtyreturned numeric(22,4), 
+  pendinginvoice numeric(22,4), 
+  pendingdeliver numeric(22,4), 
+  status character(1),
+  CONSTRAINT t_orderline_pending_key PRIMARY KEY (t_orderline_pending_id)
+) 
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE t_orderline_pending
+  OWNER TO libertya;
