@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -27,6 +27,7 @@
 	<parameter name="DateFrom" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="DateTo" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="M_DiscountSchema_ID" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<queryString><![CDATA[select o.ad_org_id, o.value as orgvalue, o.name as orgname, i.c_doctypetarget_id, dt.name as doctypename, 
 	i.documentno, i.dateacct, dd.m_discountschema_id, ds.name as discountschemaname, 
 	dd.description as discountdescription, dd.created, dd.taxrate, dd.discountapplication, dd.discountkind, 
@@ -36,7 +37,7 @@ join c_invoice i on i.c_invoice_id = dd.c_invoice_id
 join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id
 join ad_org o on o.ad_org_id = i.ad_org_id
 left join m_discountschema ds on ds.m_discountschema_id = dd.m_discountschema_id
-where i.ad_client_id = 1010016 and dd.discountamt < 0 
+where i.ad_client_id = $P{AD_CLIENT_ID} and dd.discountamt < 0 
 	and dd.taxrate is not null and i.docstatus in ('CO','CL') 
 	AND dateacct::date >= $P{DateFrom}::date
 	AND dateacct::date <= $P{DateTo}::date
@@ -183,7 +184,7 @@ order by o.value, dd.created]]></queryString>
 						width="439"
 						height="16"
 						key="textField-5">
-							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID} != null && $P{AD_Org_ID}.intValue() > 0) ]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID} != null && $P{AD_Org_ID}.intValue() > 0)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
@@ -199,7 +200,7 @@ order by o.value, dd.created]]></queryString>
 						height="16"
 						key="staticText-5"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID} != null && $P{AD_Org_ID}.intValue() > 0) ]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{AD_Org_ID} != null && $P{AD_Org_ID}.intValue() > 0)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
