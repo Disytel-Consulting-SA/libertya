@@ -5624,3 +5624,6 @@ ALTER TABLE t_orderline_pending
 --20180803-1147 El tipo de documento Nota de Debito de Proveedor se encontraba desactivado y no marcado como fiscal
 update c_doctype set isactive = 'Y' 		where ad_componentobjectuid = 'CORE-C_DocType-1010632' and isactive = 'N';
 update c_doctype set isfiscaldocument = 'Y' where ad_componentobjectuid = 'CORE-C_DocType-1010632' isfiscaldocument = 'N';
+
+--20180806-1605 Nueva columna en líneas de remito donde se registra el precio de costo a fecha de movimento
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_inoutline','costprice','numeric(20,2) NOT NULL DEFAULT 0'));
