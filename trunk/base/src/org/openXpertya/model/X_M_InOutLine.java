@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOutLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-30 19:21:30.944 */
+ *  @version  - 2018-08-06 16:28:40.756 */
 public class X_M_InOutLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_M_InOutLine (Properties ctx, int M_InOutLine_ID, String trxName)
 super (ctx, M_InOutLine_ID, trxName);
 /** if (M_InOutLine_ID == 0)
 {
+setCostPrice (Env.ZERO);
 setC_UOM_ID (0);	// @#C_UOM_ID@
 setIsDescription (false);	// N
 setIsInvoiced (false);
@@ -135,6 +136,19 @@ public int getC_OrderLine_ID()
 Integer ii = (Integer)get_Value("C_OrderLine_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Cost Price */
+public void setCostPrice (BigDecimal CostPrice)
+{
+if (CostPrice == null) throw new IllegalArgumentException ("CostPrice is mandatory");
+set_Value ("CostPrice", CostPrice);
+}
+/** Get Cost Price */
+public BigDecimal getCostPrice() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CostPrice");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Project.
 Financial Project */
@@ -448,64 +462,56 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_InOutLine(AD_Client_ID,AD_Org_ID,C_Charge_ID,C_Country_ID,C_InvoiceLine_ID,ConfirmedQty,C_OrderLine_ID,C_Project_ID,Created,CreatedBy,C_UOM_ID,declarationno,Description,IsActive,IsDescription,IsInvoiced,IsSelected,Line,M_AttributeSetInstance_ID,M_InOut_ID,M_InOutLine_ID,M_Locator_ID,MovementQty,M_Product_ID,PickedQty,Processed,QtyEntered,Ref_InOutLine_ID,ScrappedQty,TargetQty,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_InOutLine(C_Country_ID,C_Project_ID,declarationno,IsSelected,C_InvoiceLine_ID,AD_Client_ID,AD_Org_ID,C_Charge_ID,ConfirmedQty,C_OrderLine_ID,Created,CreatedBy,C_UOM_ID,Description,IsActive,IsDescription,IsInvoiced,Line,M_AttributeSetInstance_ID,M_InOut_ID,M_InOutLine_ID,M_Locator_ID,MovementQty,M_Product_ID,PickedQty,Processed,QtyEntered,Ref_InOutLine_ID,ScrappedQty,TargetQty,Updated,UpdatedBy,CostPrice" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Country_ID() == 0) sql = sql.replaceFirst("C_Country_ID,","").replaceFirst("\\?,", "");
+		 if (getC_Country_ID() == 0) sql = sql.replaceFirst("C_Country_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
+ 		 if (getdeclarationno() == null) sql = sql.replaceFirst("declarationno,","").replaceFirst("\\?,", "");
  		 if (getC_InvoiceLine_ID() == 0) sql = sql.replaceFirst("C_InvoiceLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
  		 if (getConfirmedQty() == null) sql = sql.replaceFirst("ConfirmedQty,","").replaceFirst("\\?,", "");
  		 if (getC_OrderLine_ID() == 0) sql = sql.replaceFirst("C_OrderLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
  		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getC_UOM_ID() == 0) sql = sql.replaceFirst("C_UOM_ID,","").replaceFirst("\\?,", "");
- 		 if (getdeclarationno() == null) sql = sql.replaceFirst("declarationno,","").replaceFirst("\\?,", "");
  		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getLine() == 0) sql = sql.replaceFirst("Line,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InOut_ID() == 0) sql = sql.replaceFirst("M_InOut_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InOutLine_ID() == 0) sql = sql.replaceFirst("M_InOutLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
  		 if (getMovementQty() == null) sql = sql.replaceFirst("MovementQty,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
  		 if (getPickedQty() == null) sql = sql.replaceFirst("PickedQty,","").replaceFirst("\\?,", "");
  		 if (getQtyEntered() == null) sql = sql.replaceFirst("QtyEntered,","").replaceFirst("\\?,", "");
  		 if (getRef_InOutLine_ID() == 0) sql = sql.replaceFirst("Ref_InOutLine_ID,","").replaceFirst("\\?,", "");
  		 if (getScrappedQty() == null) sql = sql.replaceFirst("ScrappedQty,","").replaceFirst("\\?,", "");
  		 if (getTargetQty() == null) sql = sql.replaceFirst("TargetQty,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getCostPrice() == null) sql = sql.replaceFirst("CostPrice,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
+
  		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
 		 if (getC_Country_ID() != 0) pstmt.setInt(col++, getC_Country_ID());
+		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
+		 if (getdeclarationno() != null) pstmt.setString(col++, getdeclarationno());
+		 pstmt.setString(col++, isSelected()?"Y":"N");
 		 if (getC_InvoiceLine_ID() != 0) pstmt.setInt(col++, getC_InvoiceLine_ID());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
 		 if (getConfirmedQty() != null) pstmt.setBigDecimal(col++, getConfirmedQty());
 		 if (getC_OrderLine_ID() != 0) pstmt.setInt(col++, getC_OrderLine_ID());
-		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
 		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getC_UOM_ID() != 0) pstmt.setInt(col++, getC_UOM_ID());
-		 if (getdeclarationno() != null) pstmt.setString(col++, getdeclarationno());
+		 pstmt.setInt(col++, getCreatedBy());
+		 pstmt.setInt(col++, getC_UOM_ID());
 		 if (getDescription() != null) pstmt.setString(col++, getDescription());
 		 pstmt.setString(col++, isActive()?"Y":"N");
 		 pstmt.setString(col++, isDescription()?"Y":"N");
 		 pstmt.setString(col++, isInvoiced()?"Y":"N");
-		 pstmt.setString(col++, isSelected()?"Y":"N");
-		 if (getLine() != 0) pstmt.setInt(col++, getLine());
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_InOut_ID() != 0) pstmt.setInt(col++, getM_InOut_ID());
-		 if (getM_InOutLine_ID() != 0) pstmt.setInt(col++, getM_InOutLine_ID());
-		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
+		 pstmt.setInt(col++, getLine());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 pstmt.setInt(col++, getM_InOut_ID());
+		 pstmt.setInt(col++, getM_InOutLine_ID());
+		 pstmt.setInt(col++, getM_Locator_ID());
 		 if (getMovementQty() != null) pstmt.setBigDecimal(col++, getMovementQty());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 pstmt.setInt(col++, getM_Product_ID());
 		 if (getPickedQty() != null) pstmt.setBigDecimal(col++, getPickedQty());
 		 pstmt.setString(col++, isProcessed()?"Y":"N");
 		 if (getQtyEntered() != null) pstmt.setBigDecimal(col++, getQtyEntered());
@@ -513,7 +519,10 @@ try
 		 if (getScrappedQty() != null) pstmt.setBigDecimal(col++, getScrappedQty());
 		 if (getTargetQty() != null) pstmt.setBigDecimal(col++, getTargetQty());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getCostPrice() != null) pstmt.setBigDecimal(col++, getCostPrice());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -534,4 +543,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

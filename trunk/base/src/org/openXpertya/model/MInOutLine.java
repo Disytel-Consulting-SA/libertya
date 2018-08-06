@@ -679,6 +679,24 @@ public class MInOutLine extends X_M_InOutLine {
 							getQtyEntered() }), "");
 			return false;
         }
+        
+        // Costo
+		if (product != null && Util.isEmpty(getCostPrice(), true)) {
+			Integer vendorID = inout.getC_BPartner_ID();
+			if(inout.isSOTrx()){
+	        	// Obtener el proveedor actual del artículo
+				MProductPO po = MProductPO.getOfOneProduct(getCtx(), getM_Product_ID(), get_TrxName());
+				vendorID = po != null?po.getC_BPartner_ID():0; 
+	        }
+	        // Seteo el precio de costo
+			// Los datos de impuestos parámetro del método se omiten ya que no
+			// se deben gestionar el impuesto en el precio 
+			setCostPrice(MProductPricing.getCostPrice(getCtx(), getAD_Org_ID(),
+					getM_Product_ID(), vendorID,
+					Env.getC_Currency_ID(getCtx()), inout.getMovementDate(), false, 
+					false, BigDecimal.ZERO, false,
+					get_TrxName()));
+        }
 
 		return true;
 	} // beforeSave
