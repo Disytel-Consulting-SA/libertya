@@ -4467,7 +4467,7 @@ ALTER FUNCTION v_documents_org_filtered(integer, boolean, character, timestamp w
   OWNER TO libertya;
   
 --20180629-1224 Incremento de tamaño de la columna para registrar el último changelog id
-DROP VIEW ad_plugin_v;
+DROP VIEW IF EXISTS ad_plugin_v;
 
 alter table ad_plugin alter column component_last_changelog type character varying(60);
 
@@ -5623,7 +5623,7 @@ ALTER TABLE t_orderline_pending
   
 --20180803-1147 El tipo de documento Nota de Debito de Proveedor se encontraba desactivado y no marcado como fiscal
 update c_doctype set isactive = 'Y' 		where ad_componentobjectuid = 'CORE-C_DocType-1010632' and isactive = 'N';
-update c_doctype set isfiscaldocument = 'Y' where ad_componentobjectuid = 'CORE-C_DocType-1010632' isfiscaldocument = 'N';
+update c_doctype set isfiscaldocument = 'Y' where ad_componentobjectuid = 'CORE-C_DocType-1010632' and isfiscaldocument = 'N';
 
 --20180806-1605 Nueva columna en líneas de remito donde se registra el precio de costo a fecha de movimento
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_inoutline','costprice','numeric(20,2) NOT NULL DEFAULT 0'));
