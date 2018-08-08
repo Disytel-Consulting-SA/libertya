@@ -69,15 +69,8 @@ public class PluginXMLUpdater {
 	
 	/** Indicador de actividad. Version optimizada para disfrutar la instalacion. */
 	protected String[] animation = {
-									"__________", "__________", "_____L____", "_____L____", "_N___L____", "_N___L____", "_N___L___G", "_N___L___G",
-									"_N_T_L___G", "_N_T_L___G", "IN_T_L___G", "IN_T_L___G", "IN_T_L_I_G", "IN_T_L_I_G", "IN_TAL_I_G", "IN_TAL_I_G",
-									"IN_TALLI_G", "IN_TALLI_G", "IN_TALLING", "IN_TALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
-									"*NSTALLING", "I*STALLING", "IN*TALLING", "INS*ALLING", "INST*LLING", "INSTA*LING", "INSTAL*ING", "INSTALL*NG",
-									"INSTALLI*G", "INSTALLIN*", "INSTALLI*G", "INSTALL*NG", "INSTAL*ING", "INSTA*LING", "INST*LLING", "INS*ALLING",
-									"IN*TALLING", "I*STALLING", "*NSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
-									"INSTALLING", "I_STALLING", "I_STALLING", "I_STALL_NG", "I_STALL_NG", "I_ST_LL_NG", "I_ST_LL_NG",
-									"I_ST_LL_N_", "I_ST_LL_N_", "I__T_LL_NG", "I__T_LL_NG", "I__T_LL_N_", "I__T_LL_N_", "I__T__L_N_", "I__T__L_N_",
-									"I__T__L___", "I__T__L___", "I_____L___", "I_____L___", "______L___", "______L___", "__________", "__________",   
+									"INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
+									"__________", "__________", "__________", "__________", "__________", "__________", "__________", "__________",
 									};
 	
 	/** Si esta activado, la instalacion de un componente implicará no solo impactar en las tablas, sino que tambien copiará 

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # $Id: Libertya.sh,v 2.0 $
-echo Cliente Libertya v17.05 $OXP_HOME
+echo Cliente Libertya v18.06 $OXP_HOME
 
 #	Establecer Directamente para Sobreescribir
 #OXP_HOME=/ServidorOXP

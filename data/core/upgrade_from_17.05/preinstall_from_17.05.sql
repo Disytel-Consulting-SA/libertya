@@ -5627,3 +5627,6 @@ update c_doctype set isfiscaldocument = 'Y' where ad_componentobjectuid = 'CORE-
 
 --20180806-1605 Nueva columna en líneas de remito donde se registra el precio de costo a fecha de movimento
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_inoutline','costprice','numeric(20,2) NOT NULL DEFAULT 0'));
+
+--20180807-1337 Versionado de BBDD para release
+UPDATE ad_system SET version = '30-06-2018' WHERE ad_system_id = 0;
