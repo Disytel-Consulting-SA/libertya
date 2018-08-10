@@ -292,6 +292,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 
 	/** Generalizacion de variable para documentos */
 	protected String m_processMsg = "";
+	protected String summary = "";
 	
 	private boolean isFromTab = false;
 	
@@ -4071,6 +4072,16 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 	/** Setter para permitir indicar en plugins */
 	public void setProcessMsg(String aMessage) {
 		m_processMsg = aMessage;
+	}
+	
+	/** Getter para implementar DocAction */
+	public String getSummary() {
+		return summary;
+	}
+
+	/** Setter para permitir indicar en plugins */
+	public void setSummary(String aSummary) {
+		summary = aSummary;
 	}
 
 	/**

@@ -44,6 +44,7 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 	     */
 		int nextStatus = MPluginStatus.STATE_TRUE_AND_CONTINUE;
 		MPluginStatusDocAction pluginStatusDocAction = null;
+		String summary = null;
 		for (int i=0; i < pluginList.size(); i++)
 		{
 			// obtener el LP_ correspondiente según el plugin
@@ -61,6 +62,11 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 				// El primer plugin en ejecucion define el nextStatus
 				if (i==0)
 					nextStatus = pluginStatusDocAction.getContinueStatus();
+				
+				// Mensaje resumen del procesamiento
+				if(!Util.isEmpty(pluginStatusDocAction.getSummary(), true)){
+					summary = (summary != null?"\n":"")+pluginStatusDocAction.getSummary();
+				} 
 				
 				// determinar proximo paso a seguir
 				if (pluginStatusDocAction.getContinueStatus() == MPluginStatus.STATE_FALSE)
@@ -82,6 +88,11 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 		{
 			// guardar el estado a fin de retornar al final del metodo si todo anda ok
 			actualActionStatus = processActualAction(document);
+			
+			// Mensaje resumen del procesamiento
+			if(!Util.isEmpty(pluginStatusDocAction.getSummary(), true)){
+				summary = (summary != null?"\n":"")+pluginStatusDocAction.getSummary();
+			}
 			
 			// en caso de ser inválido, detener la ejecución
 			if (actualActionStatus.equals(DocAction.STATUS_Invalid) || actualActionStatus.equals(FALSE))
@@ -106,6 +117,11 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 			
 			if (pluginStatusDocAction != null)
 			{
+				// Mensaje resumen del procesamiento
+				if(!Util.isEmpty(pluginStatusDocAction.getSummary(), true)){
+					summary = (summary != null?"\n":"")+pluginStatusDocAction.getSummary();
+				}
+				
 				// determinar proximo paso a seguir
 				if (pluginStatusDocAction.getContinueStatus() == MPluginStatus.STATE_FALSE)
 				{
@@ -114,6 +130,8 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 				}
 			}
 		}	
+		
+		((PO)document).setSummary(summary);
 
 		return actualActionStatus;
 	}

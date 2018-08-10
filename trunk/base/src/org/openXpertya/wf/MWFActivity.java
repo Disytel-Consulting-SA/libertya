@@ -1048,6 +1048,7 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
 
                 if( m_process != null ) {
                     m_process.setProcessMsg( processMsg );
+                    m_process.setSummary(doc.getSummary());
                 }
             } else {
                 throw new IllegalStateException( "Persistent Object not DocAction - " + m_po.getClass().getName() + " - AD_Table_ID=" + getAD_Table_ID() + ", Record_ID=" + getRecord_ID());
@@ -1060,6 +1061,9 @@ public class MWFActivity extends X_AD_WF_Activity implements Runnable {
                 String error = CLogger.retrieveErrorAsString();
 				processMsg = Util.isEmpty(error, true)
 						? (Util.isEmpty(m_po.getProcessMsg(), true) ? "SaveError" : m_po.getProcessMsg()) : error;
+				if( m_process != null ) {
+					m_process.setProcessMsg( processMsg );
+				}
             }
 
             if( !success ) {
