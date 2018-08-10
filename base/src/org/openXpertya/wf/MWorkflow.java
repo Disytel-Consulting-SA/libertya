@@ -46,6 +46,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -815,11 +816,9 @@ public class MWorkflow extends X_AD_Workflow {
             state = process.getState();
         }
 
-        String summary = process.getProcessMsg();
-
-        if( (summary == null) || (summary.trim().length() == 0) ) {
-            summary = Msg.translate(Env.getCtx(), state.toString());
-        }
+		String summary = !Util.isEmpty(process.getProcessMsg(), true) ? process.getProcessMsg()
+				: (!Util.isEmpty(process.getSummary(), true) ? process.getSummary()
+						: Msg.translate(Env.getCtx(), state.toString()));
 
         pi.setSummary( summary,state.isTerminated() || state.isAborted());
         log.fine( summary );
