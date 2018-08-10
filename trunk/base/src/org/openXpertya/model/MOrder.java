@@ -4450,6 +4450,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
      */
 
     public String getSummary() {
+    	if(!Util.isEmpty(super.getSummary(), true)){
+    		return super.getSummary();
+    	}
+    	
         StringBuffer sb = new StringBuffer();
 
         sb.append( getDocumentNo());
