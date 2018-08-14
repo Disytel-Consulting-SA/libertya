@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-03-21 12:06:03.4 */
+ *  @version  - 2018-08-14 11:33:51.239 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -43,6 +43,7 @@ setSecondaryCreditStatus (null);	// OK
 setSendEMail (false);
 setSO_CreditLimit (Env.ZERO);
 setSO_CreditUsed (Env.ZERO);
+setTrxEnabled (true);	// Y
 setValue (null);
 }
  */
@@ -1867,6 +1868,22 @@ public BigDecimal getTotalOpenBalance()
 BigDecimal bd = (BigDecimal)get_Value("TotalOpenBalance");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Enabled for transactions */
+public void setTrxEnabled (boolean TrxEnabled)
+{
+set_Value ("TrxEnabled", new Boolean(TrxEnabled));
+}
+/** Get Enabled for transactions */
+public boolean isTrxEnabled() 
+{
+Object oo = get_Value("TrxEnabled");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Update Balance */
 public void setUpdateBalance (String UpdateBalance)
