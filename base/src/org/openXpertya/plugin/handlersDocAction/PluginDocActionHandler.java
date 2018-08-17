@@ -90,7 +90,7 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 			actualActionStatus = processActualAction(document);
 			
 			// Mensaje resumen del procesamiento
-			if(!Util.isEmpty(pluginStatusDocAction.getSummary(), true)){
+			if (pluginStatusDocAction != null && !Util.isEmpty(pluginStatusDocAction.getSummary(), true)) {
 				summary = (summary != null?"\n":"")+pluginStatusDocAction.getSummary();
 			}
 			
