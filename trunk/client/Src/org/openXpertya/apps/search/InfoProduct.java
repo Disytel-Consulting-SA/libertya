@@ -659,9 +659,9 @@ public class InfoProduct extends Info implements ActionListener {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-    		if(priceList_default > 0){
-    			return priceList_default;
-    		}
+
+    		return priceList_default;
+
     	}
     	
     	Timestamp priceDate = null;
