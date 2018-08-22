@@ -1437,7 +1437,6 @@ public class MInOut extends X_M_InOut implements DocAction {
 		// modificar la fecha del comprobante
         if (dt.isWarehouseClosureControl()
         		&& MWarehouseClose.isWarehouseCloseControlActivated() 
-        		&& isSOTrx() 
         		&& getMovementDate().compareTo(Env.getDate()) < 0
 				&& !MWarehouseClose.existsWarehouseCloseInProgress(getCtx(),
 						getM_Warehouse_ID(), get_TrxName())) {
