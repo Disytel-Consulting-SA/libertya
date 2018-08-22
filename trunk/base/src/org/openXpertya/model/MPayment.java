@@ -2195,6 +2195,8 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
     private void createOneWayAllocation() throws Exception{
     	// Creación del generador de allocations
     	AllocationGenerator ag = new AllocationGenerator(getCtx(), get_TrxName());
+    	// No se valida el estado del payment en el allocation unilateral
+    	ag.setValidateDocStatus(false);
     	// Creación del allocation y setear datos
 		MAllocationHdr owa = ag.createAllocationHdr(MAllocationHdr.ALLOCATIONTYPE_Manual, getAD_Org_ID(),
 				getC_BPartner_ID());
