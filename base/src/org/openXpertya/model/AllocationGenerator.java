@@ -67,6 +67,11 @@ public class AllocationGenerator {
 	private String documentNo;
 	/** Bloqueo actual */
 	private MSequenceLock currentSeqLock;
+	/**
+	 * Flag que determina si se debe controlar el docstatus de los documentos
+	 * involucrados en el allocation
+	 */
+	private boolean isValidateDocStatus = true;
 	
 	/** Locale AR activo? */
 	public final boolean LOCALE_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
@@ -512,7 +517,7 @@ public class AllocationGenerator {
 				throw new AllocationGeneratorException(getMsg("DebitAmountValidationError",
 						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
 			}
-			if(!doc.validateDocStatus()){
+			if(isValidateDocStatus() && !doc.validateDocStatus()){
 				throw new AllocationGeneratorException(getMsg("DocumentStatus",
 						new Object[] { doc.getDocumentNo(),
 								MRefList.getListName(getCtx(), MInvoice.DOCSTATUS_AD_Reference_ID, doc.getDocStatus()) }));
@@ -524,7 +529,7 @@ public class AllocationGenerator {
 				throw new AllocationGeneratorException(getMsg("CreditAmountValidationError",
 						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
 			}
-			if(!doc.validateDocStatus()){
+			if(isValidateDocStatus() && !doc.validateDocStatus()){
 				throw new AllocationGeneratorException(getMsg("DocumentStatus",
 						new Object[] { doc.getDocumentNo(),
 								MRefList.getListName(getCtx(), MInvoice.DOCSTATUS_AD_Reference_ID, doc.getDocStatus()) }));
@@ -1871,6 +1876,14 @@ public class AllocationGenerator {
 
 	public void setCurrentSeqLock(MSequenceLock currentSeqLock) {
 		this.currentSeqLock = currentSeqLock;
+	}
+
+	public boolean isValidateDocStatus() {
+		return isValidateDocStatus;
+	}
+
+	public void setValidateDocStatus(boolean isValidateDocStatus) {
+		this.isValidateDocStatus = isValidateDocStatus;
 	}
 
 	public class PaymentMediumInfo{
