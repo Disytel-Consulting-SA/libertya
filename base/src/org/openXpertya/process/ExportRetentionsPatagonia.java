@@ -382,7 +382,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 
 		head.append("H1"); // Registro ID.
 		head.append(whiteSpace(25)); // Nro. de Beneficiario del pago.
-		head.append(zeroFill(documentno, 25, MExpFormatRow.ALIGNMENT_Left)); // Referencia de la orden de pago.
+		head.append(fillField(documentno, " ", MExpFormatRow.ALIGNMENT_Left, 25, null)); // Referencia de la orden de pago.
 		head.append(zeroFill(String.valueOf(lineSecNo), 5)); // Nro de comprobante dentro del archivo.
 		head.append(zeroFill(getRentencionCode(retentionType, provincia), 3)); // Tipo de certificado de retención o comprobante adjunto.
 		head.append("S"); // Incluir firma al documento.
