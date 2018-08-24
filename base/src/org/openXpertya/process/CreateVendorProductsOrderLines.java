@@ -98,10 +98,7 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
                 
                 // Se asignan los datos del artículo a la línea del pedido.
                 else {
-                	ol.setPriceList(pp.getPriceList());
-                	ol.setPriceLimit(pp.getPriceLimit());
-                	ol.setPriceActual(pp.getPriceList());
-                	ol.setPriceEntered(pp.getPriceList());
+                	setOrderLinePrice(ol, pp);
                 	ol.setC_Currency_ID(pp.getC_Currency_ID());
                 	ol.setDiscount(pp.getDiscount());
                 	ol.setC_UOM_ID(pp.getC_UOM_ID());
@@ -139,6 +136,14 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
 				" WHERE po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y' AND p.IsActive = 'Y' AND po.C_BPartner_ID = ? " +
 				" ORDER BY p.name ASC ";
 	}
+	
+	protected void setOrderLinePrice(MOrderLine ol, MProductPricing pp){
+		ol.setPriceList(pp.getPriceList());
+    	ol.setPriceLimit(pp.getPriceLimit());
+    	ol.setPriceActual(pp.getPriceList());
+    	ol.setPriceEntered(pp.getPriceList());
+	}
+	
 	
 	private void setOrderLineDescription(MOrderLine ol, BigDecimal qtyOrdered) {
 		int m_Product_ID = ol.getM_Product_ID();
