@@ -68,3 +68,177 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION c_posjournal_c_payment_v_filtered(anyarray)
   OWNER TO libertya;
+  
+--20180824-1900 Fixes a las funciones de pendientes de entrega
+CREATE OR REPLACE FUNCTION getqtyreserved(
+    clientid integer,
+    orgid integer,
+    locatorid integer,
+    productid integer,
+    dateto date)
+  RETURNS numeric AS
+$BODY$
+/***********
+Obtiene la cantidad reservada a fecha de corte. Si no hay fecha de corte, entonces se devuelven los pendientes actuales.
+Por lo pronto no se utiliza el pendiente a fecha de corte ya que primero deberíamos analizar e implementar 
+una forma en la que se determine cuando un pedido fue completo, anulado, etc.
+*/
+DECLARE
+reserved numeric;
+BEGIN
+reserved := 0;
+--Si no hay fecha de corte o es mayor o igual a la fecha actual, entonces se suman las cantidades reservadas de los pedidos
+--if ( dateTo is null OR dateTo >= current_date ) THEN
+SELECT INTO reserved coalesce(sum(ol.qtyreserved),0)
+from c_orderline ol
+inner join c_order o on o.c_order_id = ol.c_order_id
+inner join c_doctype dto on dto.c_doctype_id = o.c_doctypetarget_id
+inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+where o.ad_client_id = clientid
+and o.ad_org_id = orgid 
+and ol.qtyreserved <> 0
+and o.docstatus in ('CO','CL')
+and ol.m_product_id = productid
+and l.m_locator_id = locatorid
+and (dateto is null or o.dateordered::date <= dateto::date)
+and o.issotrx = 'Y'
+and dto.doctypekey <> 'SOSOT';
+/*ELSE
+SELECT INTO reserved coalesce(sum(qty),0)
+from (
+-- Cantidad pedida a fecha de corte
+select coalesce(sum(ol.qtyordered),0) as qty
+from c_orderline ol
+inner join c_order o on o.c_order_id = ol.c_order_id
+inner join c_doctype dt on dt.c_doctype_id = o.c_doctypetarget_id
+inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+where o.ad_client_id = clientid
+and o.ad_org_id = orgid
+and o.processed = 'Y' 
+and ol.m_product_id = productid
+and l.m_locator_id = locatorid
+and o.issotrx = 'Y'
+and dt.doctypekey NOT IN ('SOSOT')
+and o.dateordered::date <= dateTo::date
+and o.dateordered::date <= current_date
+union all
+-- Notas de crédito con (o sin) el check Actualizar Cantidades de Pedido
+select coalesce(sum(il.qtyinvoiced),0) as qty
+from c_invoiceline il
+inner join c_invoice i on i.c_invoice_id = il.c_invoice_id
+inner join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id
+inner join c_orderline ol on ol.c_orderline_id = il.c_orderline_id
+inner join c_order o on o.c_order_id = ol.c_order_id
+inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+where o.ad_client_id = clientid
+and o.ad_org_id = orgid
+and o.processed = 'Y' 
+and ol.m_product_id = productid
+and l.m_locator_id = locatorid
+and i.issotrx = 'Y'
+and il.m_inoutline_id is null
+and dt.signo_issotrx = '-1'
+and o.dateordered::date <= dateTo::date
+and i.dateinvoiced::date > dateTo::date
+and i.dateinvoiced::date <= current_date
+union all
+--En transaction las salidas son negativas y las entradas positivas
+select coalesce(sum(t.movementqty),0) as qty
+from m_transaction t
+inner join m_inoutline iol on iol.m_inoutline_id = t.m_inoutline_id
+inner join m_inout io on io.m_inout_id = iol.m_inout_id
+inner join c_doctype dt on dt.c_doctype_id = io.c_doctype_id
+inner join c_orderline ol on ol.c_orderline_id = iol.c_orderline_id
+inner join c_order o on o.c_order_id = ol.c_order_id
+where t.ad_client_id = clientid
+and t.ad_org_id = orgid
+and t.m_product_id = productid
+and t.m_locator_id = locatorid
+and dt.reservestockmanagment = 'Y'
+and o.dateordered::date <= dateTo::date
+and t.movementdate::date <= dateTo::date
+and t.movementdate::date <= current_date
+union all
+--Cantidades transferidas
+select coalesce(sum(ol.qtyordered * -1),0) as qty
+from c_orderline ol
+inner join c_order o on o.c_order_id = ol.c_order_id
+inner join c_orderline rl on rl.c_orderline_id = ol.ref_orderline_id
+inner join c_order r on r.c_order_id = rl.c_order_id
+inner join c_doctype dt on dt.c_doctype_id = o.c_doctype_id
+inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+where o.ad_client_id = clientid
+and o.ad_org_id = orgid
+and o.processed = 'Y' 
+and ol.m_product_id = productid
+and l.m_locator_id = locatorid
+and o.issotrx = 'Y'
+and dt.doctypekey IN ('SOSOT')
+and r.dateordered::date <= dateTo::date
+and o.dateordered::date <= dateTo::date
+and o.dateordered::date <= current_date
+) todo;
+END IF;*/
+
+return reserved;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getqtyreserved(integer, integer, integer, integer, date)
+  OWNER TO libertya;
+  
+ --Update reserved dateto
+CREATE OR REPLACE FUNCTION update_reserved(
+    clientid integer,
+    orgid integer,
+    productid integer,
+    dateto date)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad reservada de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades reservadas se obtienen de pedidos procesados. 
+IMPORTANTE: No funciona para artículos que no son ITEMS (Stockeables)
+*/
+BEGIN
+	update m_storage s
+	set qtyreserved = getqtyreserved(s.ad_client_id, s.ad_org_id, s.m_locator_id, s.m_product_id, dateto)
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_reserved(integer, integer, integer, date)
+  OWNER TO libertya;
+  
+-- Update reserved 
+CREATE OR REPLACE FUNCTION update_reserved(
+    clientid integer,
+    orgid integer,
+    productid integer)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad reservada de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades reservadas se obtienen de pedidos procesados. 
+IMPORTANTE: No funciona para artículos que no son ITEMS (Stockeables)
+*/
+BEGIN
+	perform update_reserved(clientid, orgid, productid, null::date);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_reserved(integer, integer, integer)
+  OWNER TO libertya;
