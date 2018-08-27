@@ -421,7 +421,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
     	boolean retValue = super.save();
     	if (!retValue)
     	{
-    		log.saveError("Error", Msg.translate(Env.getAD_Language(Env.getCtx()) , "InvoiceTaxSaveError"));
+    		log.saveError("Error", CLogger.retrieveErrorAsString());
      		return false;
     	}
     	if (this.getTax().isCategoriaManual())
@@ -431,6 +431,10 @@ public class MInvoiceTax extends X_C_InvoiceTax {
     		factura.setSkipModelValidations(true);
     		factura.calculateTotal();
     		retValue = factura.save();
+    		if(!retValue){
+    			log.saveError("Error", CLogger.retrieveErrorAsString());
+         		return false;
+    		}
     	}
     	return retValue;
     }  // save
@@ -441,7 +445,10 @@ public class MInvoiceTax extends X_C_InvoiceTax {
     	boolean retValue = super.delete(force);
    		MInvoice factura = new MInvoice(getCtx(),id , get_TrxName());
    		factura.calculateTotal();
-    	factura.save();    	
+    	if(!factura.save()){
+    		log.saveError("Error", CLogger.retrieveErrorAsString());
+    		return false;
+    	}    	
     	return retValue;
     } //delete
     
@@ -458,7 +465,7 @@ public class MInvoiceTax extends X_C_InvoiceTax {
             ResultSet rs = pstmt.executeQuery();
 
             if ( rs.next()) {
-            	taxAmt = rs.getBigDecimal( 1 );
+            	taxAmt = 	rs.getBigDecimal( 1 );
             }
 
             rs.close();
