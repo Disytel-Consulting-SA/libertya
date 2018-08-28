@@ -274,6 +274,16 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			String trxName, boolean setOrder, boolean setInOut, 
 			boolean copyDocumentDiscounts, boolean copyManualInvoiceTaxes, 
 			boolean voidProcess) {
+		return copyFrom(from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter,
+				trxName, setOrder, setInOut, copyDocumentDiscounts, copyManualInvoiceTaxes, 
+				voidProcess, true);
+	} // copyFrom
+
+	public static MInvoice copyFrom(MInvoice from, Timestamp dateDoc,
+			int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
+			String trxName, boolean setOrder, boolean setInOut, 
+			boolean copyDocumentDiscounts, boolean copyManualInvoiceTaxes, 
+			boolean voidProcess, boolean copyAutomaticInvoiceTaxes) {
 		MInvoice to = new MInvoice(from.getCtx(), 0, trxName);
 
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
@@ -373,7 +383,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		
 		try {
-			to.copyAutomaticInvoiceTaxes(from);
+			if(copyAutomaticInvoiceTaxes || voidProcess){
+				to.copyAutomaticInvoiceTaxes(from);
+			}
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage());
 		}
@@ -406,6 +418,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		return to;
 	} // copyFrom
 
+	
 	/**
 	 * @param ctx
 	 * @param bpartnerID

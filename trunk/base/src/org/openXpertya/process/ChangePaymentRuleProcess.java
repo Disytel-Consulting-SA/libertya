@@ -79,8 +79,8 @@ public class ChangePaymentRuleProcess extends AbstractSvrProcess {
 			}
 		}
 		// Copiar los valores del comprobante parámetro
-		MInvoice invoiceCopy = MInvoice.copyFrom(invoice, Env.getDate(), copyDocType.getID(),
-				invoice.isSOTrx(), false, get_TrxName(), true, true, true, !invoice.isSOTrx());
+		MInvoice invoiceCopy = MInvoice.copyFrom(invoice, Env.getDate(), copyDocType.getID(), invoice.isSOTrx(), false,
+				get_TrxName(), true, true, true, !invoice.isSOTrx(), false, false);
 		invoiceCopy.setPaymentRule((String)getParametersValues().get("PAYMENTRULE"));		
 		if(!invoiceCopy.save()){
 			throw new Exception(CLogger.retrieveErrorAsString());
