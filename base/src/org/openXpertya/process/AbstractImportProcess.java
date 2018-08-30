@@ -267,7 +267,7 @@ public abstract class AbstractImportProcess extends SvrProcess {
 		// Consulta por defecto. Solo filtra los registros no importados.
 		StringBuffer sql = new StringBuffer(
 			" SELECT * FROM " + getImportTableName() +
-			" WHERE I_IsImported <> 'Y' AND ").append(getSecuritySQLCheck());
+			" WHERE I_IsImported = 'N' AND ").append(getSecuritySQLCheck());
 
 		// Asignación de filtro personalizado en caso de existir.
 		if (whereClause != null && whereClause.length() > 0)
