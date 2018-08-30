@@ -14,6 +14,9 @@ import org.openXpertya.replication.ReplicationConstantsWS;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
+
+import com.sun.org.apache.xml.internal.serializer.utils.Utils;
 
 /**
  * Crea el SQL correspondiente a los triggers de replicación
@@ -26,12 +29,16 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	public static final String SCOPE_ALL_TABLES = "A";		// todas las tablas de la aplicación
 	public static final String SCOPE_CONFIGURED = "C";		// solo las tablas configuradas
 	public static final String SCOPE_THIS_RECORD = "R";		// solo este registro
+	public static final String SCOPE_TABLE_NAME = "T";		// nombre de una tabla en particular
 	
 	// Si el proceso es disparado desde el arbol de menú, se supone que se desea
 	// generar los triggers para TODAS las tablas de la base de datos
 	// (la insercion masiva es de utilidad para determinar que tablas se bitacorean en cada circuito)
 	protected String p_scope = "";
 
+	// Nombre de la tabla a procesar (caso SCOPE_TABLE_NAME)
+	protected String tableName;
+	
 	// Instancia de la tabla a ser procesada en un momento dado
 	protected M_Table table; 
 
@@ -51,8 +58,14 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		ProcessInfoParameter[] para = getParameter();
         for( int i = 0;i < para.length;i++ ) {
             String name = para[ i ].getParameterName();
-            if( name.equals( "Scope" ))
+            if( name.equals( "Scope" )) {
                 p_scope = (String)para[ i ].getParameter();
+                // Invocacion por terminal unicamente.  Se recibe por ejemplo TC_BPartner. Se convierte a scope T y table C_BPartner.
+                if (p_scope.startsWith(SCOPE_TABLE_NAME)) {
+                	tableName = p_scope.substring(1);
+                	p_scope = SCOPE_TABLE_NAME;
+                }
+            }
             if( name.equals( "ShouldUpdateRepArrays" ))
             	shouldUpdateRepArrays = "Y".equals((String)para[ i ].getParameter());
         }
@@ -60,7 +73,6 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		retValue = new StringBuffer(" - Resultados de la ejecucion - \n");
 		
 	}
-
 	
 	@Override
 	protected String doIt() throws Exception 
@@ -78,6 +90,11 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			table = new M_Table(getCtx(), tableReplication.getAD_Table_ID(), get_TrxName());
 			scopeClause = " AND lt.AD_Table_ID = " + table.getAD_Table_ID();
 		}
+		if (SCOPE_TABLE_NAME.equalsIgnoreCase(p_scope))
+		{
+			table = new M_Table(getCtx(), M_Table.getTableID(tableName), get_TrxName());
+			scopeClause = " AND lt.AD_Table_ID = " + table.getAD_Table_ID();
+		} 
 		
 		/* Recuperar los IDs de todas las tablas (sin contemplar tablas AD_ ya que las mismas son de metadatos para el caso allTables) */
 		PreparedStatement pstmt = DB.prepareStatement( 	" SELECT lt.ad_table_id " +
@@ -352,13 +369,15 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 	 * Elimina cualquier trigger previo relacionado con replicacion
 	 * @throws Exception
 	 */
-	public static void dropPreviousTriggers(String trxName) throws Exception
+	public static void dropPreviousTriggers(String trxName, String tableName) throws Exception
 	{
 		PreparedStatement pstmt = DB.prepareStatement( 	" SELECT lt.tablename " +
 														" FROM information_schema.tables pt " +
 														" INNER JOIN ad_table lt ON lower(pt.table_name) = lower(lt.tablename) " +
 														" WHERE pt.table_schema = 'libertya' " +
-														" AND pt.table_type = 'BASE TABLE' ", trxName);
+														" AND pt.table_type = 'BASE TABLE' " +
+														(Util.isEmpty(tableName)?"":" AND lower(lt.tablename) = '" + tableName.toLowerCase() + "'")
+													, trxName);
 		StringBuffer query = new StringBuffer("");
 		ResultSet rs = pstmt.executeQuery();
 		while (rs.next())
@@ -388,21 +407,27 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		if (repTriggerProc <= 0)
 			throw new Exception (" CreateReplicationTriggerProcess process not found!");
 
-		// Ejecutarlo únicamente para las tablas configuradas
+		// Ejecutarlo únicamente para las tablas configuradas (salvo override posterior)
 		HashMap<String, Object> params = new HashMap<String, Object>();
 		params.put("Scope", CreateReplicationTriggerProcess.SCOPE_CONFIGURED);
 		
 		// Eventual parametro ShouldUpdateRepArrays
+		String tableName = null;
 		if (args!=null) {
 			for (String arg : args) {
-				if (arg.toLowerCase().equalsIgnoreCase("Y"))
-					params.put("ShouldUpdateRepArrays", "Y");
+				if (arg.toLowerCase().startsWith(PARAM_UPDATE_REPARRAY))
+					params.put("ShouldUpdateRepArrays", arg.substring(2));
+				if (arg.toLowerCase().startsWith(PARAM_TABLE_SCOPE)) {
+					// Si se definio una tabla, entonces incorporar el nombre de la misma al parametro Scope (para evitar definir un nuevo parametro).
+					tableName = arg.substring(2);
+					params.put("Scope", SCOPE_TABLE_NAME+tableName);
+				}
 			}
 		}
 		
 		// Invocar a proceso de ampliación estructural en las tablas de replicación
 		System.out.print("\nDropping previous triggers...");
-		CreateReplicationTriggerProcess.dropPreviousTriggers(trxName);
+		CreateReplicationTriggerProcess.dropPreviousTriggers(trxName, tableName);
 		System.out.print("\nRegenerating replication structures...");
 		ProcessInfo pi = MProcess.execute(ctx, repTriggerProc, params, trxName);
 		System.out.print("\nDone!");
@@ -410,6 +435,9 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 			throw new Exception( " Error al ejecutar CreateReplicationTriggerProcess: " + pi.getSummary());
 	}
 
+	public static final String PARAM_UPDATE_REPARRAY 	= "-u";
+	public static final String PARAM_TABLE_SCOPE 		= "-t";
+	
 	
 	/**
 	 * Entrada principal desde terminal
@@ -420,7 +448,10 @@ public class CreateReplicationTriggerProcess extends SvrProcess {
 		if (args!=null) {
 			for (String arg : args) {
 				if (arg.toLowerCase().startsWith("-h")) {
-					System.out.println(" Recibe un unico parametro: ShouldUpdateRepArrays (Y/N). Por defecto es N.  Scope siempre es (C)onfigured. ");
+					System.out.println(	" Recibe dos parametros opcionales: \n" +
+										" 	" + PARAM_UPDATE_REPARRAY 	+ " ShouldUpdateRepArrays. Opciones: Y/N. Por defecto el valor utilizado es N. \n" +
+										" 	" + PARAM_TABLE_SCOPE 		+ " TableScope. Ejecutar con scope definido solo para una tabla en particular. Si no se especifica, utiliza scope (C)onfigured. \n " +
+										" Ejemplo: CreateReplicationTriggerProcess -uY -tC_BPartner");
 					System.exit(0);
 				}
 			}
