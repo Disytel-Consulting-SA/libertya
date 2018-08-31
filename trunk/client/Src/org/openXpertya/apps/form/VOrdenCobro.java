@@ -3157,4 +3157,8 @@ public class VOrdenCobro extends VOrdenPago {
 		return false;
 	}
 
+	@Override
+	protected void doBPartnerValidations(){
+		// Por lo pronto no existen validaciones de clientes
+	}
 }

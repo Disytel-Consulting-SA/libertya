@@ -2002,4 +2002,9 @@ public class WOrdenCobro extends WOrdenPago {
 	protected boolean isPrintRetentions(){
 		return false;
 	}
+    
+    @Override
+	protected void doBPartnerValidations(){
+		// Por lo pronto no existen validaciones de clientes
+	}
 }

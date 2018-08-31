@@ -1252,6 +1252,61 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				&& FDialog.ask(m_WindowNo, this, "PrintOPRetentions");
 	}
     
+	protected void validatePaymentBlocked(){
+		if(this.BPartnerSel.getNewValueOnChange() == null){
+			return;
+		}
+		MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getNewValueOnChange(), null);	    
+    	if(partner.ispaymentblocked()) { 
+    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
+    		showError(error_msg);
+    		this.cmdProcess.setEnabled(false); //Bloqueo la continuacion del pago
+    		this.BPartnerSel.setNewValueOnChange(null);
+    	} else {
+    		this.cmdProcess.setEnabled(true);
+    	}
+	}
+	
+	protected void validateOnlyAllowProviders(){
+		if(this.BPartnerSel.getNewValueOnChange() == null){
+			return;
+		}
+		
+		MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getNewValueOnChange(), null);
+		/*
+    	 * Chequea que si el campo "Admitir OP Solo EC Proveedores" (del Tipo de Documento) 
+    	 * está activo, entonces la EC debe ser un "Proveedor".
+    	 * Por cuestiones de performance, el chequeo de si la EC es Proveedor se hace primero
+    	 */
+    	if(!partner.isVendor()) {
+    		List<Object> params = new ArrayList<Object>();
+    		final StringBuffer whereClause = new StringBuffer();
+    		whereClause.append("isPaymentOrderSeq=? AND AllowOnlyProviders=?");
+    		params.add(new Boolean(true));
+    		params.add(new Boolean(true));
+    		Query q = new Query(m_ctx, MDocType.Table_Name, whereClause.toString(), null);
+    		q.setParameters(params);
+    		MDocType result = q.first();
+    		if(result != null) {
+    			String error_msg = Msg.translate(m_ctx, "OnlyAllowedProviders");
+	    		showError(error_msg);
+	    		this.cmdProcess.setEnabled(false);//Bloqueo la continuacion del pago
+	    		this.BPartnerSel.setNewValueOnChange(null);
+    		}
+    	}
+	}
+	
+	/**
+	 * Validaciones de Entidad Comercial
+	 */
+	protected void doBPartnerValidations(){
+		// Validar bloqueo de pagos
+		validatePaymentBlocked();
+		
+		// Validar sólo proveedor
+		validateOnlyAllowProviders();
+	}
+    
     /**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
@@ -1263,39 +1318,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	if((this.BPartnerSel.getNewValueOnChange() == null)){
     		this.cmdProcess.setEnabled(false);
     	}
-    	else{
-    		MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getNewValueOnChange(), null);	    
-	    	if(partner.ispaymentblocked()) { 
-	    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
-	    		showError(error_msg);
-	    		this.cmdProcess.setEnabled(false); //Bloqueo la continuacion del pago
-	    		this.BPartnerSel.setNewValueOnChange(null);
-	    	} else {
-	    		this.cmdProcess.setEnabled(true);
-	    	}
-	    	
-	    	/*
-	    	 * Chequea que si el campo "Admitir OP Solo EC Proveedores" (del Tipo de Documento) 
-	    	 * está activo, entonces la EC debe ser un "Proveedor".
-	    	 * Por cuestiones de performance, el chequeo de si la EC es Proveedor se hace primero
-	    	 */
-	    	if(!partner.isVendor()) {
-	    		List<Object> params = new ArrayList<Object>();
-	    		final StringBuffer whereClause = new StringBuffer();
-	    		whereClause.append("isPaymentOrderSeq=? AND AllowOnlyProviders=?");
-	    		params.add(new Boolean(true));
-	    		params.add(new Boolean(true));
-	    		Query q = new Query(m_ctx, MDocType.Table_Name, whereClause.toString(), null);
-	    		q.setParameters(params);
-	    		MDocType result = q.first();
-	    		if(result != null) {
-	    			String error_msg = Msg.translate(m_ctx, "OnlyAllowedProviders");
-		    		showError(error_msg);
-		    		this.cmdProcess.setEnabled(false);//Bloqueo la continuacion del pago
-		    		this.BPartnerSel.setNewValueOnChange(null);
-	    		}
-	    	}
-    	}
+    	// Validaciones de entidad comercial
+		doBPartnerValidations();
     }   
     
     // Declaración de varibales -no modificar//GEN-BEGIN:variables
