@@ -3565,34 +3565,35 @@ alter table C_CashLine add column accounting_c_charge_id integer;
 
 -- Actualizacion de las descripciones de registros contables
 -- Se modificarán para liquidaciones de tarj de crédito, facturas, OP/RC y extractos
+-- Adecuacion post-release 18.06. Las sentencias pueden arrojar un error si la longitud es mayor a 255. Se incorpora substr.
 
 -- update description on c_creditCardSettlement
-update fact_acct fa set description = (
-    select settlementNo || ' ' || description from C_CreditCardSettlement ccs where ccs.C_CreditCardSettlement_ID = fa.record_id) 
+update fact_acct fa set description = substr((
+    select settlementNo || ' ' || description from C_CreditCardSettlement ccs where ccs.C_CreditCardSettlement_ID = fa.record_id), 1, 254)
 where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_CreditCardSettlement') and ad_client_id = 1010016;
 
 -- update description on c_invoice
-update fact_acct fa set description = (
+update fact_acct fa set description = substr((
     select i.documentNo || coalesce(' #' || to_char(l.line,'99999'), '') || coalesce(' (' || l.description || ')' ,'')
     from C_Invoice i  
     left join C_invoiceLine l on (i.c_invoice_id = l.c_invoice_id) 
-    where i.C_Invoice_ID = fa.record_id and l.c_invoiceLine_id = fa.line_id) 
+    where i.C_Invoice_ID = fa.record_id and l.c_invoiceLine_id = fa.line_id), 1, 254)
 where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_Invoice') and ad_client_id = 1010016;
 
 -- update description on c_bankStatement
-update fact_acct fa set description = (
+update fact_acct fa set description = substr((
     select bs.name || coalesce(' #' || to_char(bsl.line, '99999'), '') || coalesce(' (' || bsl.description || ')' ,'')
     from c_bankStatement bs  
     left join C_bankStatementLine bsl on (bs.c_bankStatement_id = bsl.c_bankStatement_id) 
-    where bs.c_bankStatement_ID = fa.record_id and bsl.c_bankStatement_id = fa.line_id)
+    where bs.c_bankStatement_ID = fa.record_id and bsl.c_bankStatement_id = fa.line_id), 1, 254)
 where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_BankStatement') and ad_client_id = 1010016;
 
 -- update description on allocationHdr
-update fact_acct fa set description = (
+update fact_acct fa set description = substr((
     select a.documentNo || coalesce(' #' || to_char(al.allocationNo, '99999'), '') || coalesce(' (' || al.line_description || ')','')
     from c_allocationHdr a  
     left join C_allocationLine al on (a.c_allocationHdr_id = al.c_allocationHdr_id)
-    where a.c_allocationHdr_ID = fa.record_id and al.c_allocationLine_id = fa.line_id)
+    where a.c_allocationHdr_ID = fa.record_id and al.c_allocationLine_id = fa.line_id), 1, 254)
 where ad_table_id = (select ad_table_id from ad_table where tablename = 'C_AllocationHdr') and ad_client_id = 1010016;
 
 -- El campo Record_ID de la tabla AD_Attachment debe ser de tipo referencia (18), no un boton (28) 
@@ -5627,6 +5628,9 @@ update c_doctype set isfiscaldocument = 'Y' where ad_componentobjectuid = 'CORE-
 
 --20180806-1605 Nueva columna en líneas de remito donde se registra el precio de costo a fecha de movimento
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_inoutline','costprice','numeric(20,2) NOT NULL DEFAULT 0'));
+
+--Adecuacion post-release 18.06. El campo pedido en ventana pedido de clientes debe ser solo lectura. Se debe utilizar funcionalidad Crear Desde. 
+update ad_field set isreadonly = 'Y' where ad_componentobjectuid = 'CORE-AD_Field-2932';
 
 --20180807-1337 Versionado de BBDD para release
 UPDATE ad_system SET version = '30-06-2018' WHERE ad_system_id = 0;
