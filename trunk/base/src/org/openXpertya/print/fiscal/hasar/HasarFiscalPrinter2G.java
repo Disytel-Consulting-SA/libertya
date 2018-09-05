@@ -185,7 +185,7 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		cmd.setString(i++, "0");
 		// TODO Magnitud del impuesto interno, por lo pronto va 0 si el valor de
 		// los impuestos internos es 0
-		cmd.setNumber(i++, BigDecimal.ZERO, 9, 8, false);
+		cmd.setNumber(i++, BigDecimal.ZERO, false);
 		/*if(Util.isEmpty(internalTaxes, true)){
 			cmd.setNumber(i++, BigDecimal.ZERO, 9, 8, false);
 		}
@@ -247,7 +247,7 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		cmd.setString(i++, "0");
 		// TODO Magnitud del impuesto interno, por lo pronto va 0 si el valor de
 		// los impuestos internos es 0
-		cmd.setNumber(i++, BigDecimal.ZERO, 9, 8, false);
+		cmd.setNumber(i++, BigDecimal.ZERO, false);
 		/*if(Util.isEmpty(internalTaxes, true)){
 			cmd.setNumber(i++, BigDecimal.ZERO, 9, 8, false);
 		}
