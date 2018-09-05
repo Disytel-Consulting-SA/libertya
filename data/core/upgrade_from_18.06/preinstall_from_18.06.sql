@@ -242,3 +242,158 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_reserved(integer, integer, integer)
   OWNER TO libertya;
+  
+--20180905-1015 Mejoras a las funciones de pendientes de pago y factura para que tome el signo del importe original
+CREATE OR REPLACE FUNCTION paymentavailable(
+    p_c_payment_id integer,
+    dateto timestamp without time zone)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+v_Currency_ID INTEGER;
+v_AvailableAmt NUMERIC := 0;
+  v_IsReceipt CHARACTER(1);
+  v_Amt NUMERIC := 0;
+  v_PayAmt NUMERIC := 0;
+  r RECORD;
+v_Charge_ID INTEGER;
+v_ConversionType_ID INTEGER;
+v_allocatedAmt NUMERIC; -- candida alocada total convertida a la moneda de la linea
+v_DateAcct timestamp without time zone;
+BEGIN
+BEGIN
+
+SELECT C_Currency_ID, PayAmt, IsReceipt,
+C_Charge_ID,C_ConversionType_ID, DateAcct
+INTO STRICT
+v_Currency_ID, v_PayAmt, v_IsReceipt,
+v_Charge_ID,v_ConversionType_ID, v_DateAcct
+FROM C_Payment
+WHERE C_Payment_ID = p_C_Payment_ID;
+EXCEPTION
+WHEN OTHERS THEN
+  RAISE NOTICE 'PaymentAvailable - %', SQLERRM;
+RETURN NULL;
+END;
+
+IF (v_Charge_ID > 0 ) THEN
+RETURN 0;
+END IF;
+
+v_allocatedAmt := 0;
+FOR r IN
+SELECT a.AD_Client_ID, a.AD_Org_ID, al.Amount, a.C_Currency_ID, a.DateTrx
+FROM C_AllocationLine al
+INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID)
+WHERE al.C_Payment_ID = p_C_Payment_ID
+  AND a.IsActive='Y'
+  AND (dateTo IS NULL OR a.dateacct::date <= dateTo::date)
+LOOP
+v_Amt := currencyConvert(r.Amount, r.C_Currency_ID, v_Currency_ID,v_DateAcct, v_ConversionType_ID, r.AD_Client_ID, r.AD_Org_ID);
+v_allocatedAmt := v_allocatedAmt + v_Amt;
+END LOOP;
+
+-- esto supone que las alocaciones son siempre no negativas; si esto no pasa, se van a retornar valores que no van a tener sentido
+v_AvailableAmt := ABS(v_PayAmt) - abs(v_allocatedAmt);
+-- v_AvailableAmt aca DEBE ser NO Negativo si admeas, las suma de las alocaciones nunca superan el monto del pago
+-- de cualquiera manera, por "seguridad", si el valor es negativo, se corrige a cero
+IF (v_AvailableAmt < 0) THEN
+RAISE NOTICE 'Payment Available negative, correcting to zero - %',v_AvailableAmt ;
+v_AvailableAmt := 0;
+END IF;
+
+--  el resultado debe ser 0 o de lo contrario tener el mismo signo que el payment
+IF (v_PayAmt < 0) THEN
+	v_AvailableAmt := v_AvailableAmt * -1::numeric;
+END IF;
+
+v_AvailableAmt := currencyRound(v_AvailableAmt,v_Currency_ID,NULL);
+RETURN v_AvailableAmt;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION paymentavailable(integer, timestamp without time zone)
+  OWNER TO libertya;
+
+CREATE OR REPLACE FUNCTION invoiceopen(
+    p_c_invoice_id integer,
+    p_c_invoicepayschedule_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer,
+    p_dateto timestamp without time zone)
+  RETURNS numeric AS
+$BODY$ /*************************************************************************  * The contents of this file are subject to the Compiere License.  You may  * obtain a copy of the License at    http://www.compiere.org/license.html  * Software is on an  "AS IS" basis,  WITHOUT WARRANTY OF ANY KIND, either  * express or implied. See the License for details. Code: Compiere ERP+CRM  * Copyright (C) 1999-2001 Jorg Janke, ComPiere, Inc. All Rights Reserved.  *  * converted to postgreSQL by Karsten Thiemann (Schaeffer AG),   * kthiemann@adempiere.org  *************************************************************************  ***  * Title:	Calculate Open Item Amount in Invoice Currency  * Description:  *	Add up total amount open for C_Invoice_ID if no split payment.  *  Grand Total minus Sum of Allocations in Invoice Currency  *  *  For Split Payments:  *  Allocate Payments starting from first schedule.  *  Cannot be used for IsPaid as mutating  *  * Test:  * 	SELECT C_InvoicePaySchedule_ID, DueAmt FROM C_InvoicePaySchedule WHERE C_Invoice_ID=109 ORDER BY DueDate;  * 	SELECT invoiceOpen (109, null) FROM AD_System; - converted to default client currency  * 	SELECT invoiceOpen (109, 11) FROM AD_System; - converted to default client currency  * 	SELECT invoiceOpen (109, 102) FROM AD_System;  * 	SELECT invoiceOpen (109, 103) FROM AD_System;  ***  * Pasado a Libertya a partir de Adempiere 360LTS  * - ids son de tipo integer, no numeric  * - TODO : tema de las zonas en los timestamp  * - Excepciones en SELECT INTO requieren modificador STRICT bajo PostGreSQL o usar  * NOT FOUND  * - Por ahora, el "ignore rounding" se hace como en libertya (-0.01,0.01),  * en vez de usar la precisión de la moneda  * - Se toma el tipo de conversion de la factura, auqneu esto es dudosamente correcto  * ya que otras funciones , en particular currencyBase nunca tiene en cuenta  * este valor  * - Como en Libertya se tiene en cuenta tambien C_Invoice_Credit_ID para calcular  * la cantidad alocada a una factura (aunque esto es medio dudoso....)  * - No se soporta la fecha como 3er parametro (en realidad, tampoco se esta  * usando actualmente, y se deberia poder resolver de otra manera)  * - Libertya parece tener un bug al filtrar por C_InvoicePaySchedule_ID al calcular  * el granTotal (el granTotal SIEMPRE es el total de la factura, tomada directamente  * de C_Invoice.GranTotal o a partir de la suma de los DueAmt en C_InvoicePaySchedule);  * se usa la sentencia como esta en Adempeire (esto es, solo se filtra por C_Invoice_ID)  * - Nuevo enfoque: NO se usa ni la vista C_Invoice_V ni multiplicadores  * se asume todo positivo...  * - El resultado SIEMPRE deberia ser positivo y en el intervalo [0..GrandTotal]  * - 03 julio: se pasa a usar getAllocatedAmt para hacer esta funcion consistente  * con invoicePaid  * - 03 julio: se pasa de usar STRICT a NOT FOUND; es mas eficiente  ************************************************************************/ 
+DECLARE 	
+v_Currency_ID		INTEGER := p_c_currency_id; 	
+v_GrandTotal	  	NUMERIC := 0; 	
+v_TotalOpenAmt  	NUMERIC := 0; 	
+v_PaidAmt  	        NUMERIC := 0; 	
+v_Remaining	        NUMERIC := 0;    	
+v_Precision            	NUMERIC := 0;    	
+v_Min            	NUMERIC := 0.01;     	
+s			RECORD; 	
+v_ConversionType_ID INTEGER := p_c_conversiontype_id;  	
+v_Date timestamp with time zone := ('now'::text)::timestamp(6);                
+
+BEGIN 	 	
+
+SELECT	currencyConvert(GrandTotal, I.c_currency_id, v_Currency_ID, v_Date, v_ConversionType_ID, I.AD_Client_ID, I.AD_Org_ID) as GrandTotal, 	
+	(SELECT StdPrecision FROM C_Currency C WHERE C.C_Currency_ID = I.C_Currency_ID) AS StdPrecision  	
+	INTO v_TotalOpenAmt, v_Precision 	
+FROM	C_Invoice I 
+WHERE	I.C_Invoice_ID = p_C_Invoice_ID; 	
+
+IF NOT FOUND THEN  
+	RAISE NOTICE 'Invoice no econtrada - %', p_C_Invoice_ID; 		
+	RETURN NULL; 	
+END IF; 	      	 	 	 	
+
+v_GrandTotal := v_TotalOpenAmt;
+v_PaidAmt := getAllocatedAmt(p_C_Invoice_ID,v_Currency_ID,v_ConversionType_ID,1,p_dateto); 
+
+IF (p_C_InvoicePaySchedule_ID > 0) THEN 
+	v_Remaining := abs(v_PaidAmt);         
+	FOR s IN  SELECT  ips.C_InvoicePaySchedule_ID, currencyConvert(ips.DueAmt, i.c_currency_id, v_Currency_ID, v_Date, v_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) as DueAmt 	        
+		FROM    C_InvoicePaySchedule ips 	        
+		INNER JOIN C_Invoice i on (ips.C_Invoice_ID = i.C_Invoice_ID) 		
+		WHERE	ips.C_Invoice_ID = p_C_Invoice_ID AND   ips.IsValid='Y'         	
+		ORDER BY ips.DueDate         
+	LOOP             
+
+		IF (s.C_InvoicePaySchedule_ID = p_C_InvoicePaySchedule_ID) THEN                 
+			v_TotalOpenAmt := abs(s.DueAmt) - abs(v_Remaining);
+			IF (v_TotalOpenAmt < 0) THEN                     
+				v_TotalOpenAmt := 0;                  
+			END IF; 				
+			EXIT;              
+		ELSE                  
+			v_Remaining := abs(v_Remaining) - abs(s.DueAmt);     
+			IF (v_Remaining < 0) THEN         
+				v_Remaining := 0;                 
+			END IF;             
+		END IF;         
+	END LOOP;     
+ELSE         
+	v_TotalOpenAmt := abs(v_TotalOpenAmt) - abs(v_PaidAmt);     
+END IF; 	 	
+
+IF (v_TotalOpenAmt >= -v_Min AND v_TotalOpenAmt <= v_Min) THEN 		
+	v_TotalOpenAmt := 0; 	
+END IF; 	 	
+
+--  el resultado debe ser 0 o de lo contrario tener el mismo signo que el comprobante 
+IF (v_GrandTotal < 0) THEN
+	v_TotalOpenAmt := v_TotalOpenAmt * -1::numeric;
+END IF;
+
+v_TotalOpenAmt := ROUND(COALESCE(v_TotalOpenAmt,0), v_Precision);
+
+RETURN	v_TotalOpenAmt; 
+
+END; 
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION invoiceopen(integer, integer, integer, integer, timestamp without time zone)
+  OWNER TO libertya;

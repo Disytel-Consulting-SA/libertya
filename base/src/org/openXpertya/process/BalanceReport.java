@@ -111,10 +111,8 @@ public class BalanceReport extends SvrProcess {
         isSOtrx = p_AccountType.equalsIgnoreCase("C")?"'Y'":"'N'";
      // Moneda de la compañía utilizada para conversión de montos de documentos.
         client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
-        if (!iterativeLogic) {
-			setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
+        setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
 					getCondition(), null, p_AccountType));
-        }
 	}
 
 	
@@ -156,7 +154,7 @@ public class BalanceReport extends SvrProcess {
 							"from c_invoice_v as i " +
 							"where i.duedate::date <= ?::date " +
 							"		and i.c_bpartner_id = T.c_bpartner_id " +
-							"		and i.docstatus not in ('DR','IN')");
+							"		and i.docstatus not in ('CO','CL')");
 			if (!Util.isEmpty(p_AD_Org_ID, true)){
 				sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
 			}
@@ -166,7 +164,7 @@ public class BalanceReport extends SvrProcess {
 							"from c_payment " +
 							"where duedate::date <= ?::date " +
 							"		and c_bpartner_id = T.c_bpartner_id " +
-							"		and docstatus not in ('DR','IN') " +
+							"		and docstatus not in ('CO','CL') " +
 							"		and tendertype = '"+MPayment.TENDERTYPE_Check+"'");
 			if (!Util.isEmpty(p_AD_Org_ID, true)){
 				sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
@@ -174,23 +172,9 @@ public class BalanceReport extends SvrProcess {
 			sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
 			sqlDoc.append(") as chequesencartera ");
 			sqlDoc.append(" FROM ");
-			if(!Util.isEmpty(valueFrom, true)){
-				sqlDoc.append(" (SELECT min(value) as minvalue " +
-							" FROM c_bpartner " +
-							" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
-							"		and (('"+valueFrom+"' is null OR length(trim('"+valueFrom+"'::character varying)) = 0) " +
-							"				OR (CASE WHEN position('%' in '"+valueFrom+"'::character varying) > 0	" +
-							"						THEN value ilike trim('"+valueFrom+"'::character varying) " +
-							"						ELSE upper(value) >= upper(trim('"+valueFrom+"'::character varying)) END))) min, ");
-			}
-			if(!Util.isEmpty(valueTo, true)){
-				sqlDoc.append(" (SELECT max(value) as maxvalue " +
-							" FROM c_bpartner " +
-							" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
-							"		AND (('"+valueTo+"' is null OR length(trim('"+valueTo+"'::character varying)) = 0) " +
-									"		OR (CASE WHEN position('%' in '"+valueTo+"'::character varying) > 0 " +
-									"				THEN value ilike trim('"+valueTo+"'::character varying) " +
-									"				ELSE upper(value) <= upper(trim('"+valueTo+"'::character varying)) END))) max, ");
+			if (!iterativeLogic) {
+				sqlDoc.append(getValueFromQuery());
+				sqlDoc.append(getValueToQuery());
 			}
 			sqlDoc.append(" ( ");
 			sqlDoc.append(" 	SELECT " ); 
@@ -210,35 +194,16 @@ public class BalanceReport extends SvrProcess {
 			// Logica query global
 			if (!iterativeLogic) {
 				sqlDoc.append(" 	WHERE bp.isactive = 'Y' ");
-				if(p_C_BP_Group_ID > 0){
-					sqlDoc.append(" AND bp.C_BP_Group_ID = ").append(p_C_BP_Group_ID);
-				}
-				if ("OO".equals(p_Scope))		// filtrar E.C.: solo las que adeudan, o listar todas
-				{
-					sqlDoc.append(" AND bp.C_BPartner_ID IN (");
-					sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
-					sqlDoc.append(
-							" 	WHERE invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0 AND issotrx = ")
-							.append(isSOtrx).append(" AND AD_Client_ID = ")
-							.append(getAD_Client_ID()).append(")");
-				}
-				sqlDoc.append(p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y' "
-						: " AND bp.isvendor = 'Y' ");
-				sqlDoc.append(onlyCurentAccounts?" AND d.socreditstatus <> 'X' ":"");
+				sqlDoc.append(getBPGroupQuery());
+				sqlDoc.append(getAccountTypeQuery());
+				sqlDoc.append(getOnlyCurrentAccountsQuery());
+				sqlDoc.append(getScopeQuery());
 			} else {
 				// Logica iterativa
 				sqlDoc.append(" 	WHERE bp.c_bpartner_id = " + rsBP.getInt("c_bpartner_id"));
-				sqlDoc.append(onlyCurentAccounts?" AND bp.socreditstatus <> 'X' ":"");	
 			}
 			
 			sqlDoc.append(" ) AS T ");
-			sqlDoc.append(" WHERE (1=1) ");
-			if(!Util.isEmpty(valueFrom, true)){
-				sqlDoc.append(" AND T.value >= minvalue ");
-			}
-			if(!Util.isEmpty(valueTo, true)){
-				sqlDoc.append(" AND T.value <= maxvalue ");
-			}
 			sqlDoc.append(" GROUP BY T.c_bpartner_id, T.name, T.C_BP_Group_ID, T.so_description, T.totalopenbalance ");
 			
 			// Logica query global
@@ -413,41 +378,100 @@ public class BalanceReport extends SvrProcess {
 		if (!iterativeLogic)
 			return "SELECT 1";
 		StringBuffer bpQuery = new StringBuffer();
-		bpQuery	.append(" SELECT C_BPartner_ID ")
-				.append(" FROM C_BPartner ")
-				.append(" WHERE AD_Client_ID = " + getAD_Client_ID())
-				.append(" AND isActive = 'Y' ")
+		bpQuery	.append(" SELECT bp.C_BPartner_ID ")
+				.append(" FROM ")
+				.append(getValueFromQuery())
+				.append(getValueToQuery())
+				.append(" C_BPartner bp ")
+				.append(" WHERE bp.AD_Client_ID = " + getAD_Client_ID())
+				.append(" AND bp.isActive = 'Y' ")
 				.append(getBPGroupQuery())
 				.append(getAccountTypeQuery())
 				.append(getScopeQuery())
-				.append(" ORDER BY name ");
-		// TODO: deberia filtrar por valueFrom y valueTo tambien, a fin de reducir los tiempos de respuesta
+				.append(getOnlyCurrentAccountsQuery());
+		
+		if(!Util.isEmpty(valueFrom, true)){
+			bpQuery.append(" AND bp.value >= minvalue ");
+		}
+		if(!Util.isEmpty(valueTo, true)){
+			bpQuery.append(" AND bp.value <= maxvalue ");
+		}
+
+		bpQuery.append(" ORDER BY bp.name ");
 		return bpQuery.toString();
 	}
 	
 	/** Filtro de query para recuperar las ECs */
 	protected String getBPGroupQuery() {
-		return p_C_BP_Group_ID > 0 ? " AND c_bp_group_id = " + p_C_BP_Group_ID : "";
+		return p_C_BP_Group_ID > 0 ? " AND bp.c_bp_group_id = " + p_C_BP_Group_ID : "";
 	}
 	
 	/** Filtro de query para recuperar las ECs */
 	protected String getAccountTypeQuery() {
-		return p_AccountType.equalsIgnoreCase("C") ? " AND iscustomer = 'Y'" : " AND isvendor = 'Y' ";
+		return p_AccountType.equalsIgnoreCase("C") ? " AND bp.iscustomer = 'Y'" : " AND bp.isvendor = 'Y' ";
 	}
 	
 	/** Filtro de query para recuperar las ECs */
 	protected String getScopeQuery() {
 		StringBuffer sqlDoc = new StringBuffer();
 		if ("OO".equals(p_Scope)) {
-			sqlDoc.append(" AND C_BPartner_ID IN (");
-			sqlDoc.append(" 	SELECT DISTINCT c_bpartner_id FROM c_invoice ");
-			sqlDoc.append(" 	WHERE invoiceopen(c_invoice_id, 0, " + " ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") + ")::timestamp(6) without time zone " + ") > 0 AND issotrx = ")
-					.append(isSOtrx).append(" AND AD_Client_ID = ")
-					.append(getAD_Client_ID()).append(")");
+			sqlDoc.append(" AND ( ");
+			// Saldo de comprobantes
+			sqlDoc.append(" exists (SELECT DISTINCT i.c_bpartner_id  ");
+			sqlDoc.append(" FROM c_invoice i ");
+			sqlDoc.append(" WHERE i.c_bpartner_id = bp.c_bpartner_id AND docstatus in ('CO','CL') and invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") <> 0 ");
+			sqlDoc.append(" AND AD_Client_ID = ").append(getAD_Client_ID()).append(")");
+			sqlDoc.append(" OR ");
+			// Saldo de payments
+			sqlDoc.append(" exists (SELECT DISTINCT p.c_bpartner_id  ");
+			sqlDoc.append(" FROM c_payment p ");
+			sqlDoc.append(" WHERE p.c_bpartner_id = bp.c_bpartner_id AND docstatus in ('CO','CL') and paymentavailable(c_payment_id, " + getCurrentAccountQuery().getDateToInlineQuery() + ") <> 0 ");
+			sqlDoc.append(" AND AD_Client_ID = ").append(getAD_Client_ID()).append(")");
+			sqlDoc.append(" OR ");
+			// Saldo de cashlines
+			sqlDoc.append(" exists (SELECT DISTINCT cl.c_bpartner_id  ");
+			sqlDoc.append(" FROM c_cashline cl ");
+			sqlDoc.append(" WHERE cl.c_bpartner_id = bp.c_bpartner_id AND docstatus in ('CO','CL') and cashlineavailable(c_cashline_id, " + getCurrentAccountQuery().getDateToInlineQuery() + ") <> 0 ");
+			sqlDoc.append(" AND AD_Client_ID = ").append(getAD_Client_ID()).append(")");
+			sqlDoc.append(" ) ");
 		}
 		return sqlDoc.toString();
 	}
-	
 
+	/** Filtro para Sólo Cuenta Corrientes */
+	protected String getOnlyCurrentAccountsQuery() {
+		return onlyCurentAccounts?" AND bp.socreditstatus <> 'X' ":"";
+	}
+	
+	/** Query para Clave desde */
+	protected String getValueFromQuery() {
+		String sql = "";
+		if(!Util.isEmpty(valueFrom, true)){
+			sql = " (SELECT min(value) as minvalue " +
+						" FROM c_bpartner " +
+						" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
+						"		and (('"+valueFrom+"' is null OR length(trim('"+valueFrom+"'::character varying)) = 0) " +
+						"				OR (CASE WHEN position('%' in '"+valueFrom+"'::character varying) > 0	" +
+						"						THEN value ilike trim('"+valueFrom+"'::character varying) " +
+						"						ELSE upper(value) >= upper(trim('"+valueFrom+"'::character varying)) END))) min, ";
+		}
+		return sql;
+	}
+
+	/** Query para Clave hasta */
+	protected String getValueToQuery() {
+		String sql = "";
+		if(!Util.isEmpty(valueTo, true)){
+			sql = " (SELECT max(value) as maxvalue " +
+						" FROM c_bpartner " +
+						" WHERE ad_client_id = " + Env.getAD_Client_ID(getCtx()) +
+						"		AND (('"+valueTo+"' is null OR length(trim('"+valueTo+"'::character varying)) = 0) " +
+								"		OR (CASE WHEN position('%' in '"+valueTo+"'::character varying) > 0 " +
+								"				THEN value ilike trim('"+valueTo+"'::character varying) " +
+								"				ELSE upper(value) <= upper(trim('"+valueTo+"'::character varying)) END))) max, ";
+		}
+		return sql;
+	}
+		
 	
 }

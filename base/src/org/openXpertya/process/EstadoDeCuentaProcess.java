@@ -324,7 +324,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 					+ " i.paymentrule = '"+condition+"') ") +
 			(isShowOpenBalance() ?
 			"     AND to_days(now()::timestamp without time zone) - to_days(p.datetrx::timestamp without time zone) BETWEEN " + daysfrom + " AND " + daysto +
-			"     AND paymentavailable(p.c_payment_id, "+getDateToInlineQuery()+") > 0 " : "" ) +
+			"     AND paymentavailable(p.c_payment_id, "+getDateToInlineQuery()+") <> 0 " : "" ) +
 			// } isShowOpenBalance 
 			(isShowByDate() ?
 				(dateTrxFrom != null ? " AND p.dateacct::date >= '" + dateTrxFrom + "'::date" : "" ) +
@@ -451,9 +451,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		
 		bPartner=-1;
 		saldo = new BigDecimal(0);	
+		BigDecimal realSign;
 		while (rs.next()) {
 			
 			bPartner = rs.getInt("c_bpartner_id");
+			realSign = getAccountTypeSign().multiply(new BigDecimal(rs.getInt("signo_issotrx")));
 			
 			X_T_EstadoDeCuenta ec = new X_T_EstadoDeCuenta(getCtx(), 0, get_TrxName());
 			
@@ -473,14 +475,16 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setDaysDue(rs.getInt("daysdue"));
 			ec.setDateDoc(rs.getTimestamp("datedoc"));
 			ec.setDiscountDate(rs.getTimestamp("discountdate"));
-			ec.setDiscountAmt(MCurrency.currencyConvert(rs.getBigDecimal("discountamt"), rs.getInt("c_currency_id"), currencyClient, rs.getDate("datedoc"), Env.getAD_Org_ID(getCtx()), getCtx()));
-			ec.setGrandTotalMulticurrency(rs.getBigDecimal("grandtotalmulticurrency"));
-			ec.setPaidAmtMulticurrency(rs.getBigDecimal("paidamtmulticurrency"));
-			ec.setOpenAmtMulticurrency(rs.getBigDecimal("openamtmulticurrency"));
+			BigDecimal damt = MCurrency.currencyConvert(rs.getBigDecimal("discountamt"), rs.getInt("c_currency_id"),
+					currencyClient, rs.getDate("datedoc"), Env.getAD_Org_ID(getCtx()), getCtx());
+			ec.setDiscountAmt(damt != null?damt.multiply(realSign):BigDecimal.ZERO);
+			ec.setGrandTotalMulticurrency(rs.getBigDecimal("grandtotalmulticurrency").multiply(realSign));
+			ec.setPaidAmtMulticurrency(rs.getBigDecimal("paidamtmulticurrency").multiply(realSign));
+			ec.setOpenAmtMulticurrency(rs.getBigDecimal("openamtmulticurrency").multiply(realSign));
 			
-			ec.setGrandTotal(rs.getBigDecimal("grandtotal"));
-			ec.setPaidAmt(rs.getBigDecimal("paidamt"));
-			ec.setOpenAmt(rs.getBigDecimal("openamt"));
+			ec.setGrandTotal(rs.getBigDecimal("grandtotal").multiply(realSign));
+			ec.setPaidAmt(rs.getBigDecimal("paidamt").multiply(realSign));
+			ec.setOpenAmt(rs.getBigDecimal("openamt").multiply(realSign));
 			
 			BigDecimal rate = MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), 0);
 			this.incrementarSaldosMultimoneda(ec, rs.getInt("c_currency_id"));
@@ -492,7 +496,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				throw new Exception("@NoCurrencyConversion@ (" + fromISO + "->" + toISO + ")");
 			}
 			
-			ec.setOpenAmt(rs.getBigDecimal("openamtmulticurrency").multiply(rate));
+			ec.setOpenAmt(rs.getBigDecimal("openamtmulticurrency").multiply(rate).multiply(realSign));
 			ec.setGrandTotal(ec.getPaidAmt().add(ec.getOpenAmt()));
 			
 			ec.setC_Currency_ID(rs.getInt("c_currency_id"));
@@ -510,10 +514,6 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.save();
 			
 			subSaldo = ec.getOpenAmt();
-			if (!ec.gettipodoc().equalsIgnoreCase(libroDeCaja)) 
-				subSaldo = subSaldo.multiply(new BigDecimal(ec.getsigno_issotrx()));
-			else
-				subSaldo = subSaldo.abs().multiply(new BigDecimal(ec.getsigno_issotrx()));					
 			saldo = saldo.add(subSaldo);
 
 		}
@@ -532,11 +532,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 		if (!saldosMultimoneda.containsKey(c_Currency_ID)) {
 			saldosMultimoneda.put(c_Currency_ID, BigDecimal.ZERO);
 		}
-		BigDecimal saldoMultimoneda = ec.getOpenAmtMulticurrency();
-		if (!ec.gettipodoc().equalsIgnoreCase(libroDeCaja)) 
-			saldoMultimoneda = saldoMultimoneda.multiply(new BigDecimal(ec.getsigno_issotrx()));
-		else
-			saldoMultimoneda = saldoMultimoneda.abs().multiply(new BigDecimal(ec.getsigno_issotrx()));					
+		BigDecimal saldoMultimoneda = ec.getOpenAmtMulticurrency();					
 		saldosMultimoneda.put(c_Currency_ID, saldosMultimoneda.get(c_Currency_ID).add(saldoMultimoneda));
 	}
 	
@@ -669,6 +665,11 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	{
 		return accountType.equalsIgnoreCase("C")?"isCustomer":"isVendor";
 	}
+	
+	protected BigDecimal getAccountTypeSign(){
+		return accountType.equalsIgnoreCase("C")?BigDecimal.ONE:BigDecimal.ONE.negate();
+	}
+	
 	
 	private void insertTotalGral(BigDecimal saldo) {
 		Iterator it = saldosGeneralMultimoneda.entrySet().iterator();
