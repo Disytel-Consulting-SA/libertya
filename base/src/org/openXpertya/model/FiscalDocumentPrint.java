@@ -877,9 +877,6 @@ public class FiscalDocumentPrint {
 			document = createDebitNote(mInvoice);
 		}
 		
-		// Se setea la inclusión del impuesto en el precio
-		document.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
-		
 		return document;
 	}
 	
@@ -898,6 +895,9 @@ public class FiscalDocumentPrint {
 		invoice.setCustomer(getCustomer(mInvoice.getC_BPartner_ID()));
 		// Se asigna la letra de la factura.
 		invoice.setLetter(mInvoice.getLetra());
+		
+		// Se setea la inclusión del impuesto en el precio
+		invoice.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, invoice);
@@ -964,17 +964,21 @@ public class FiscalDocumentPrint {
 		// Se asigna la letra de la nota de débito.
 		debitNote.setLetter(mInvoice.getLetra());
 		
+		// Se setea la inclusión del impuesto en el precio
+		debitNote.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
+		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, debitNote);
 		
 		// Reorganizar las leyendas al pie de la nd
 		reorderFooterObservation(debitNote);
-		
-		// TODO: Se asigna el número de remito en caso de existir.
-		loadDocumentDiscounts(debitNote, mInvoice.getDiscounts());
-		
+				
 		// Se agregan las líneas de la nota de débito al documento.
 		loadDocumentLines(mInvoice, debitNote);
+		
+		// TODO: Se asigna el número de remito en caso de existir.
+		// Descuentos
+		loadDocumentDiscounts(debitNote, mInvoice.getDiscounts());
 		
 		// Cargar impuestos adicionales 
 		loadOtherTaxes(debitNote,mInvoice);
@@ -1001,6 +1005,9 @@ public class FiscalDocumentPrint {
 		creditNote.setCustomer(getCustomer(mInvoice.getC_BPartner_ID()));
 		// Se asigna la letra de la nota de crédito.
 		creditNote.setLetter(mInvoice.getLetra());
+		
+		// Se setea la inclusión del impuesto en el precio
+		creditNote.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, creditNote);
