@@ -392,13 +392,15 @@ public class ImportSettlements extends SvrProcess {
 			}
 			MEntidadFinanciera ef = new MEntidadFinanciera(getCtx(), M_EntidadFinanciera_ID, get_TrxName());
 			if (C_BPartner_ID > 0) {
-				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(rs.getString("numero_liquidacion"), C_BPartner_ID);
 				
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 				Date date = null;
 				if (rs.getString("fecha_vencimiento_clearing") != null && !rs.getString("fecha_vencimiento_clearing").trim().isEmpty()) {
 					date = sdf.parse(rs.getString("fecha_vencimiento_clearing"));
 				}
+				
+				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(rs.getString("numero_liquidacion"),
+						C_BPartner_ID, new Timestamp(date.getTime()));
 				
 				//Acumuladores para totales de impuestos, tasas, etc.
 				BigDecimal withholdingAmt = new BigDecimal(0);
@@ -703,7 +705,12 @@ public class ImportSettlements extends SvrProcess {
 			if (C_BPartner_ID > 0) {
 				String settlementNo = rs.getString("nro_liquidacion");
 				BigDecimal compraAmt = safeMultiply(rs.getString("compra"), "D".equals(rs.getString("tipo_mov")) ? "+" : "-");
-				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(settlementNo, C_BPartner_ID);
+				
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				Date date = sdf.parse(rs.getString("fecha_pago"));
+				
+				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(settlementNo, C_BPartner_ID,
+						new Timestamp(date.getTime()));
 				if (C_CreditCardSettlement_ID > 0) {
 					MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), C_CreditCardSettlement_ID, get_TrxName());
 					if (!settlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Drafted)) {
@@ -718,10 +725,7 @@ public class ImportSettlements extends SvrProcess {
 							markAsImported(tableName, rs.getInt(tableName + "_ID"));
 						}
 					}
-				} else {
-				
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-					Date date = sdf.parse(rs.getString("fecha_pago"));				
+				} else {				
 	
 					BigDecimal amt = safeMultiply(rs.getString("neto"), rs.getString("signo_neto"));
 					if (settlementNo == null || settlementNo.equals("null")) {
@@ -977,12 +981,13 @@ public class ImportSettlements extends SvrProcess {
 			MEntidadFinanciera ef = new MEntidadFinanciera(getCtx(), M_EntidadFinanciera_ID, get_TrxName());
 			if (C_BPartner_ID > 0) {
 				String settlementNo = rs.getString("num_sec_pago");
-				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(settlementNo, C_BPartner_ID);
-				
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 				SimpleDateFormat sdf_liq = new SimpleDateFormat("ddMMyy");
 				Date date = sdf.parse(rs.getString("fecha_pago"));
-
+				
+				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(settlementNo, C_BPartner_ID,
+						date != null ? new Timestamp(date.getTime()) : null);
+				
 				BigDecimal amt = safeNumber(rs.getString("imp_neto_ajuste"));
 
 				String codImp = rs.getString("cod_imp");
@@ -1287,7 +1292,11 @@ public class ImportSettlements extends SvrProcess {
 			}
 			MEntidadFinanciera ef = new MEntidadFinanciera(getCtx(), M_EntidadFinanciera_ID, get_TrxName());
 			if (C_BPartner_ID > 0) {
-				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(rs.getString("nroliq"), C_BPartner_ID);
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+				Date date = sdf.parse(rs.getString("fpag"));
+				
+				int C_CreditCardSettlement_ID = getSettlementIdFromNroAndBPartner(rs.getString("nroliq"), C_BPartner_ID,
+						new Timestamp(date.getTime()));
 				if (C_CreditCardSettlement_ID > 0) {
 					MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), C_CreditCardSettlement_ID, get_TrxName());
 					if (!settlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Drafted)) {
@@ -1295,8 +1304,6 @@ public class ImportSettlements extends SvrProcess {
 						return ERROR;
 					}
 				}
-				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-				Date date = sdf.parse(rs.getString("fpag"));
 
 				BigDecimal netAmt = safeMultiply(rs.getString("impneto"), rs.getString("signo_3"));
 				BigDecimal amt = safeMultiply(rs.getString("impbruto"), rs.getString("signo_1"));
@@ -1770,20 +1777,49 @@ public class ImportSettlements extends SvrProcess {
 	 * E.Comercial asociada.
 	 * @param nro_liq Nombre por el cual buscar el registro.
 	 * @param C_BPartner_ID ID Entidad Comercial.
+	 * @param paymentDate fecha de liquidación, si es null no compara por la misma
 	 * @return ID Liquidación o -1 si no existe.
 	 */
-	private int getSettlementIdFromNroAndBPartner(String nro_liq, int C_BPartner_ID) {
+	private int getSettlementIdFromNroAndBPartner(String nro_liq, int C_BPartner_ID, Timestamp paymentDate) {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append("SELECT ");
-		sql.append("	* ");
+		sql.append("	c_creditcardsettlement_id ");
 		sql.append("FROM ");
 		sql.append("	" + MCreditCardSettlement.Table_Name + " ");
 		sql.append("WHERE ");
 		sql.append("	c_bpartner_id = ? ");
-		sql.append("	AND settlementno = ? ");
-
-		return DB.getSQLValue(get_TrxName(), sql.toString(), C_BPartner_ID, nro_liq);
+		sql.append("	AND settlementno = '").append(nro_liq).append("'");
+		if(paymentDate != null) {
+			sql.append("	AND paymentdate::date = ?::date ");
+		}
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		int ccsID = -1;
+		try {
+			ps = DB.prepareStatement(sql.toString(), get_TrxName(), true);
+			ps.setInt(1, C_BPartner_ID);
+			if(paymentDate != null) {
+				ps.setTimestamp(2, paymentDate);
+			}
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				ccsID = rs.getInt("c_creditcardsettlement_id");
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch(Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		
+		return ccsID;
 	}
 	
 	private int getRetencionSchemaForBsAs() {
