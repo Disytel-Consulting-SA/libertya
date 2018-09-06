@@ -40,8 +40,7 @@ public class MProductUPC extends X_M_ProductUPC {
 		String sql = "SELECT M_Product_ID "
 					+ "FROM M_ProductUPC "
 					+ "WHERE AD_Client_ID =  " + Env.getAD_Client_ID(ctx)
-					+ "		AND UPC = '"+upc+"' "
-					+ "		AND isactive = 'Y' ";
+					+ "		AND UPC = '"+upc+"' ";
 		
 		if(excludeProductID != null && excludeProductID > 0){
 			sql += "	AND M_Product_ID <> "+excludeProductID;
