@@ -4790,13 +4790,13 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			// Validación de campo Value duplicado: no se permiten EC con el mismo código.
 			String sql = " SELECT COALESCE(COUNT("+columnKey+"),0) " +
 					     " FROM " + tableName +
-					     " WHERE "+columnName+" = ? " +
+					     " WHERE trim("+columnName+") = trim('"+value+"') " +
 					     "	 AND AD_Client_ID = ?";
 			if(!newRecord){
 				sql += "   AND "+columnKey+" <> " + getID();
 			}
 			Long existValue = (Long) DB.getSQLObject(get_TrxName(), sql,
-					new Object[] { value.trim(), getAD_Client_ID() }); 
+					new Object[] { getAD_Client_ID() }); 
 			if (existValue > 0) {
 				// Guardo el error en caso que se requiera
 				if(saveError){
