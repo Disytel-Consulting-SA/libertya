@@ -45,6 +45,8 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 	protected X_M_Retencion_Invoice retencion = null;
 	protected List<X_M_Retencion_Invoice> retenciones = null;
 	
+	private BigDecimal porcentajeRetencionDefault = Env.ZERO;
+	
 	public void loadConfig(MRetencionSchema retSchema) {
 		// Se asigna el esquema de retención a utilizar.
 		setRetencionSchema(retSchema);		
@@ -81,7 +83,10 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 			
 			// Obtiene los padrones de obtención del porcentaje ordenado por orden
 			setPadrones(getPadronTypesParamsValues());
-
+			
+			// Se obtiene el valor del parámetro Porcentaje a Retener por defecto
+			porcentajeRetencionDefault = getParamValueBigDecimal(MRetSchemaConfig.NAME_PorcentajeARetener, Env.ZERO);
+					
 		}
 	} //loadConfig
 
@@ -152,7 +157,13 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		
 		baseImponible = baseImponible.subtract(descuentoNeto);
 		
-		BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencion());
+		BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencionDefault());
+		
+		/*
+		 * Actualizacion de porcentaje de retención para que en
+		 * M_Retencion_Invoice se guarde el usado en el calculo y no el por defecto 
+		 */
+		setPorcentajeRetencion(porcentajeRetencion);
 		
 //			porcentajeRetencion = this.
 		// Se calcula el importe determinado.
@@ -508,4 +519,9 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 	protected String getMsg(String msg) {
 		return Msg.translate(Env.getCtx(), msg);
 	}
+	
+	public BigDecimal getPorcentajeRetencionDefault() {
+		return porcentajeRetencionDefault;
+	} //No se hace el setPorcentajeRetencionDefault()
+	
 }

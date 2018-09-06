@@ -38,6 +38,7 @@
 	<field name="RET_ALLOC_INVOICES" class="java.lang.String"/>
 	<field name="DIRECCION_ORG" class="java.lang.String"/>
 	<field name="DOCUMENTNO" class="java.lang.String"/>
+	<field name="RET_TAX_BASE" class="java.math.BigDecimal"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -70,7 +71,7 @@
 					<textElement verticalAlignment="Middle">
 						<font fontName="Times New Roman" size="13"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{RET_ALLOC_AMOUNT}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{RET_TAX_BASE}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
