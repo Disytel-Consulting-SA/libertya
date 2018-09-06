@@ -1885,6 +1885,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		ADialog.error(m_WindowNo, this, translatedMsg);
 		
     }
+    
+    protected boolean showAsk(String msg) {
+    	String translatedMsg = Msg.parseTranslation(m_ctx, msg);
+    	return ADialog.ask(m_WindowNo, this, translatedMsg);
+    }
 
 	/**
 	 * Mostrar una ventana dialog con el mensaje parámetro
@@ -1896,6 +1901,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		ADialog.info(m_WindowNo, this, msg);
     }
     
+    /* 
+     * Este método se utiliza en el botón "Siquiente (F8)" y "Emitir Pago (F8)".
+     * Dado que es el mismo botón pero con nombre cambiado según la pestaña.
+     * Pestaña "Seleccion de Pago (F2)" >> jTabbedPane1.getSelectedIndex() = 0
+     * Pestaña "Tipo de Pago" >> jTabbedPane1.getSelectedIndex() = 1
+     */
     private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
     	
     	//Chequeo si la Entidad Comercial está bloqueada para recibir pagos
@@ -1907,7 +1918,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	}
     	
     	final int idx = jTabbedPane1.getSelectedIndex();
-    	
+    	/*
+    	 * idx = 0, se encuentra en la pestaña Seleccion de Pago (F2). 
+    	 * El botón accionado es "Siguiente (F8)"
+    	 */
     	if (idx == 0) {
 
 			// Aviso si la OP tiene pagos parciales
@@ -2006,7 +2020,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		customUpdateBPartnerRelatedComponents(false);
     		m_model.setFechaOP(dateTrx.getTimestamp());
     		
-    	} else if (idx == 1) {
+    	} 
+    	/*
+    	 * idx = 1, se encuentra en la pestaña "Tipo de Pago". 
+    	 * El botón accionado es "Emitir Pago (F8)"
+    	 */	
+    	else if (idx == 1) {
     		
     		//Autorización para OP si existen pagos anticipados
     		CallResult res = validateDebitNote();
@@ -2025,7 +2044,21 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
     		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
     		
-    		int status = m_model.doPostProcesar(maxPaymentAllowed);
+    		/*
+    		 * Esta validacion se realiza primero porque no necesariamente bloquea el proceso
+    		 * si arroja error. 
+    		 * El usuario decide si desea continuar o no.
+    		 */
+    		int status = m_model.nonBlockingValidations();
+    		if(status == VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST) {
+	    		if(showAsk("PaymentsPartnerCheckWithoutBankList")) {
+	    			status = VOrdenPagoModel.PROCERROR_OK;
+	    		} else {
+	    			return;
+	    		}
+    		} 
+    		
+    		status = m_model.doPostProcesar(maxPaymentAllowed);
     		
     		switch (status) 
     		{

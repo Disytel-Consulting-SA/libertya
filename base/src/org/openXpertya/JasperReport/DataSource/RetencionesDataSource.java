@@ -104,6 +104,9 @@ public class RetencionesDataSource implements JRDataSource {
 		else if(name.equalsIgnoreCase("RET_ALLOC_INVOICES")){
 			value = currentRetencion.srcInvoices;
 		}
+		else if(name.equalsIgnoreCase("RET_TAX_BASE")){
+			value = currentRetencion.taxBase;
+		}
 		
 		return value;
 	}
@@ -120,7 +123,7 @@ public class RetencionesDataSource implements JRDataSource {
 
 	public void loadData() {
 		// Se agrega el/los datasource del subreporte
-		String sql = "select distinct m_retencion_invoice_id "
+		String sql = "select distinct m_retencion_invoice_id, baseImponible_amt "
 				+ " from m_retencion_invoice r "
 				+ " where r.c_allocationhdr_id=" +getAllocationHdr().getID()
 				+ " order by m_retencion_invoice_id ";
@@ -134,6 +137,7 @@ public class RetencionesDataSource implements JRDataSource {
 			RetencionDTO retencion;
 			while (rs.next()) {
 				retencion = new RetencionDTO();
+				retencion.taxBase = rs.getBigDecimal("baseImponible_amt");
 				retencion.retInvoice = new X_M_Retencion_Invoice(getCtx(), rs.getInt("m_retencion_invoice_id"), null);
 				
 				MClient client = JasperReportsUtil.getClient(getCtx(), retencion.retInvoice.getAD_Client_ID());
@@ -259,6 +263,7 @@ public class RetencionesDataSource implements JRDataSource {
 		protected MRetencionType retType;
 		protected String orgLocation;
 		protected String srcInvoices;
+		protected BigDecimal taxBase;
 	}
 	
 }

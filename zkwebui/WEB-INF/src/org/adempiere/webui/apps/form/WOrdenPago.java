@@ -1036,6 +1036,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		FDialog.error(m_WindowNo, this, translatedMsg);
 		
     }
+    
+    protected boolean showAsk(String msg) {
+    	String translatedMsg = Msg.parseTranslation(m_ctx, msg);
+    	return FDialog.ask(m_WindowNo, this, translatedMsg);
+    }
 	
 	/**
 	 * Mostrar una ventana dialog con el mensaje parámetro
@@ -1170,7 +1175,21 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
     		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
     		
-    		int status = m_model.doPostProcesar(this.maxPaymentAllowed);
+    		/*
+    		 * Esta validacion se realiza primero porque no necesariamente bloquea el proceso
+    		 * si arroja error. 
+    		 * El usuario decide si desea continuar o no.
+    		 */
+    		int status = m_model.nonBlockingValidations();
+    		if(status == VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST) {
+	    		if(showAsk("PaymentsPartnerCheckWithoutBankList")) {
+	    			status = VOrdenPagoModel.PROCERROR_OK;
+	    		} else {
+	    			return;
+	    		}
+    		} 
+    		
+    		status = m_model.doPostProcesar(this.maxPaymentAllowed);
     		
     		switch (status) 
     		{
@@ -1187,6 +1206,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     			
     		case VOrdenPagoModel.PROCERROR_PAYMENTS_GENERATION:
     			showError("@PaymentsGenerationError@ : "+ this.m_model.getMsgAMostrar());
+    			break;
+    			
+			/*
+    		 * Dado que en esta instancia, el usuario decidio
+    		 * no continuar con el pago por decision propia, no se muestra ningún mensaje
+    		 */
+    		case VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST:
     			break;
     			
     		default:

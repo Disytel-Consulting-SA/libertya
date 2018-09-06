@@ -32,6 +32,7 @@ import org.openXpertya.model.AllocationGenerator.PaymentMediumInfo;
 import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCurrency;
@@ -52,8 +53,10 @@ import org.openXpertya.model.MRole;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.POCRGenerator;
 import org.openXpertya.model.POCRGenerator.POCRType;
+import org.openXpertya.model.Query;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_AllocationHdr;
+import org.openXpertya.model.X_C_BPartner_BankList;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.process.DocAction;
@@ -85,6 +88,7 @@ public class VOrdenPagoModel {
 	public static final int PROCERROR_DOCUMENTNO_INVALID = 9;
 	public static final int PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD = 10;
 	public static final int PROCERROR_PAYMENTS_AMT_MAX_ALLOWED = 11;
+	public static final int PROCERROR_PARTNER_WITHOUT_BANKLIST = 12;
 	public static final int PROCERROR_UNKNOWN = -1;
 
 	public static final String MIN_CHECK_DIFF_DAYS_PREFERENCE_NAME = "OP_MinCheckDays";
@@ -2190,6 +2194,34 @@ public class VOrdenPagoModel {
 		return nroChequeStr;
 	}
 
+	public int nonBlockingValidations() {
+		/*
+		 * Si entre los medios de pago hay cheques, se verifica para cada cheque que, 
+		 * si la cuenta bancaria está marcada como "Cuenta de Pagos Electrónicos",
+		 * entonces, el proveedor debe tener asignada al menos una Sucursal de Pago Electrónico.
+		 */
+		Vector<MedioPago> mediosPago = getMediosPago();
+		for(MedioPago medio: mediosPago) {
+			if(medio.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_CHEQUE)) {
+				MBankAccount bAccount = new MBankAccount(getCtx(), medio.getBankAccountID(), getTrxName());
+				if(bAccount.isElectronicPaymentsAccount()) {
+					List<Object> params = new ArrayList<Object>();
+					StringBuffer whereClause = new StringBuffer();
+					whereClause.append("isActive='Y' AND C_BPartner_ID=?");
+					params.add(getBPartner().getID());
+					Query q = new Query(this.getCtx(), X_C_BPartner_BankList.Table_Name, whereClause.toString(), getTrxName());
+					q.setParameters(params);
+					X_C_BPartner_BankList firstBL = q.first();
+					if(firstBL == null) {
+						return PROCERROR_PARTNER_WITHOUT_BANKLIST;	                
+					}
+		                
+				}
+			}
+		}
+		return VOrdenPagoModel.PROCERROR_OK;
+	}
+	
 	public int doPostProcesar() {
 		return doPostProcesar(new BigDecimal(0));
 	}
@@ -2199,8 +2231,7 @@ public class VOrdenPagoModel {
 	 * Se le agregó el parámetro maxAllowedByRole para chequear el monto de pago
 	 * maximo que se le permite realizar al perfil de usuario.
 	 **/
-	public int doPostProcesar(BigDecimal maxAllowedByRole) {
-		
+	public int doPostProcesar(BigDecimal maxAllowedByRole) {	
 		/*
 		 * Chequeo de que no se exceda el monto máximo permitido
 		 * configurado en el perfil 

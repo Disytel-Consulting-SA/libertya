@@ -67,7 +67,7 @@ public class RetencionIIBBForRegionForEachInvoice extends RetencionIIBBForRegion
 				baseImponible = totalNet;
 				descuentoNeto = baseImponible.multiply(getDescuentoNeto()).divide(Env.ONEHUNDRED);
 				baseImponible = baseImponible.subtract(descuentoNeto);
-				BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencion());
+				BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencionDefault());
 				importeDeterminado = baseImponible.multiply(porcentajeRetencion).divide(Env.ONEHUNDRED);
 				// Resto las retenciones realizadas anteriormente
 				try{
