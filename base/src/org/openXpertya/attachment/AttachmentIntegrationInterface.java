@@ -1,6 +1,6 @@
 package org.openXpertya.attachment;
 
-import java.util.Properties;
+import java.io.File;
 
 public interface AttachmentIntegrationInterface {
 
@@ -13,5 +13,8 @@ public interface AttachmentIntegrationInterface {
 
 	/** Recupera una entrada remota a partir de su UID externo */
 	public byte[] retrieveEntry(String externalUID) throws Exception;
+	
+	/** Tamaño maximo permitido en adjuntos, especificado en bytes */
+	public Integer getMaxSizeAllowed();
 
 }

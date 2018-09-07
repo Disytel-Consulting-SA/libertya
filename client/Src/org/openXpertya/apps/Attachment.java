@@ -679,6 +679,12 @@ public final class Attachment extends JDialog implements ActionListener {
 
         File file = chooser.getSelectedFile();
 
+        // Validacion del tamaño del archivo a incorporar
+        if (handler!=null && file!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < file.length()) {
+        	ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes)");
+        	return;
+        }
+        
         if( m_attachment.addEntry( file, handler )) {
             cbContent.addItem( fileName );
             cbContent.setSelectedIndex( cbContent.getItemCount() - 1 );
