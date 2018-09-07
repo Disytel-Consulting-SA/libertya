@@ -524,7 +524,12 @@ public class WAttachment extends Window implements EventListener
 			if (media != null)
 			{
 //				pdfViewer.setContent(media);
-				;
+				
+		        // Validacion del tamaño del archivo a incorporar
+				if (handler!=null && media.getByteData()!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < media.getByteData().length) {
+					FDialog.error(m_WindowNo, "El tamaño del archivo ("+ media.getByteData().length + " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes)"); 
+					return;
+				}
 			}
 			else 
 			{

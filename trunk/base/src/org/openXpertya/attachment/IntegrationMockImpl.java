@@ -1,5 +1,6 @@
 package org.openXpertya.attachment;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -28,4 +29,9 @@ public class IntegrationMockImpl implements AttachmentIntegrationInterface {
 		return "MOCK".getBytes();
 	}
 
+	@Override
+	public Integer getMaxSizeAllowed() {
+		return 1024*1024;
+	}
+	
 }
