@@ -152,6 +152,7 @@ public class CWindowToolbar extends FToolbar implements EventListener
         btnLock = createButton("Lock", "Lock", "Lock"); // Elaine 2008/12/04
 		btnLock.setVisible(isPersonalLock);
 		btnZoomAcross = createButton("ZoomAcross", "ZoomAcross", "ZoomAcross");
+		btnZoomAcross.setVisible(false);	// Actualmente sin utilidad 
         btnActiveWorkflows = createButton("ActiveWorkflows", "WorkFlow", "WorkFlow");
         btnRequests = createButton("Requests", "Request", "Request");
         btnRequests.setVisible(false);	// Se oculta a fin de priorizar el uso de conversaciones
@@ -164,7 +165,7 @@ public class CWindowToolbar extends FToolbar implements EventListener
         // Help and Exit should always be enabled
         btnHelp.setDisabled(false);
         btnGridToggle.setDisabled(false);
-        btnZoomAcross.setDisabled(false);
+        //btnZoomAcross.setDisabled(false);
 
         btnActiveWorkflows.setDisabled(false); // Elaine 2008/07/17
         btnRequests.setDisabled(false); // Elaine 2008/07/22
