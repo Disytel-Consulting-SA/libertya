@@ -429,7 +429,7 @@ public final class Attachment extends JDialog implements ActionListener {
                 try {
                     graphPanel.getInsets();
 
-                    File f = entry.getFile();
+                    File f = entry.getFile(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + entry.getName());
 
                     PdfPanel pdfpanel = PdfPanel.loadPdf( f,graphPanel,false,false,true,true,true,true );
 
