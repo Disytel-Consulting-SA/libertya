@@ -75,6 +75,9 @@ public class PoSModel {
 	
 	private boolean isCopyRep;
 	
+	/** Descuento base para el pago actual */
+	private BigDecimal currentPaymentDiscountBaseAmount = BigDecimal.ZERO;
+
 	public PoSModel() {
 		super();
 		addedCustomerOrders = new HashMap<Integer, Order>();
@@ -841,5 +844,13 @@ public class PoSModel {
 	
 	public boolean addSecurityValidationToCN(){
 		return getConnectionState().addSecurityValidationToCN();
+	}
+
+	public BigDecimal getCurrentPaymentDiscountBaseAmount() {
+		return currentPaymentDiscountBaseAmount;
+	}
+
+	public void setCurrentPaymentDiscountBaseAmount(BigDecimal currentPaymentDiscountBaseAmount) {
+		this.currentPaymentDiscountBaseAmount = currentPaymentDiscountBaseAmount;
 	}
 }

@@ -29,8 +29,8 @@ public class PaymentTableModel extends AbstractPoSTableModel {
 			case 0: 
 				return payment.getTypeName();
 			case 1: 
-			return payment
-					.getRealAmount()
+			return (payment.getAmount().compareTo(payment.getRealAmount()) > 0 ? payment.getAmount()
+					: payment.getRealAmount())
 					.setScale(2, BigDecimal.ROUND_HALF_UP)
 					.add(payment.isCreditCardPayment() ? payment.getChangeAmt()
 							: BigDecimal.ZERO);

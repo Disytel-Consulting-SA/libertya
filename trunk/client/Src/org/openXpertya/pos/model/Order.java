@@ -299,6 +299,8 @@ public class Order  {
 				existentCashPayment.addRealAmount(payment.getRealAmount());
 				existentCashPayment.addRealAmountConverted(payment.getRealAmountConverted());
 				existentCashPayment.addConvertedAmount(payment.getConvertedAmount());
+				existentCashPayment.addDiscountBaseAmount(payment.getDiscountBaseAmt());
+				existentCashPayment.addDiscountBaseAmountConverted(payment.getDiscountBaseAmtConverted());
 				existentPayment = existentCashPayment;
 			}
 		// - Pago a Crédito:
@@ -308,6 +310,8 @@ public class Order  {
 				existentCreditPayment.addAmount(payment.getAmount());
 				existentCreditPayment.addRealAmount(payment.getRealAmount());
 				existentCreditPayment.addRealAmountConverted(payment.getRealAmountConverted());
+				existentCreditPayment.addDiscountBaseAmount(payment.getDiscountBaseAmt());
+				existentCreditPayment.addDiscountBaseAmountConverted(payment.getDiscountBaseAmtConverted());
 				existentPayment = existentCreditPayment;
 			}
 			// Asocio el paymentTerm al pedido
@@ -340,9 +344,9 @@ public class Order  {
 		// del descuento dentro del calculador se guarda y obtiene desde el
 		// medio de pago.
 		Integer discountID = payment.getPaymentMedium().getInternalID(payment);
-		BigDecimal discountBaseAmt = scaleAmount(payment.getRealAmount().multiply(getOtherTaxesRatio()));
+		BigDecimal discountBaseAmt = scaleAmount(payment.getDiscountBaseAmt().multiply(getOtherTaxesRatio()));
 		if (getDiscountCalculator().containsDiscount(discountID)) {
-			getDiscountCalculator().addDiscountBaseAmount(discountID, payment.getRealAmountConverted());
+			getDiscountCalculator().addDiscountBaseAmount(discountID, payment.getDiscountBaseAmtConverted());
 		} else {
 			discountID = getDiscountCalculator().addGeneralDiscount(
 					payment.getDiscountSchema(),
@@ -552,7 +556,7 @@ public class Order  {
 		paymentRemoved(payment);
 		Integer internalID = payment.getPaymentMedium().getInternalID(payment); 
 		getDiscountCalculator().subtractDiscountBaseAmount(internalID,
-				payment.getRealAmount());
+				payment.getDiscountBaseAmt());
 		if (getDiscountCalculator().getDiscountBaseAmt(internalID).compareTo(
 				BigDecimal.ZERO) <= 0) {
 			payment.getPaymentMedium().setInternalID(null, payment);

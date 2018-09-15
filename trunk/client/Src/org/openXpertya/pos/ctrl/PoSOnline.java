@@ -537,7 +537,9 @@ public class PoSOnline extends PoSConnectionState {
 		
 		for (int i = cashPayments.size()-1; i >= 0 && change.compareTo(BigDecimal.ZERO) > 0; i--) {
 			CashPayment p = cashPayments.get(i);
-			BigDecimal amt = currencyConvert(p.getAmount(), p.getCurrencyId());
+			BigDecimal amt = currencyConvert(
+					p.getAmount().compareTo(p.getRealAmount()) > 0 ? p.getAmount() : p.getRealAmount(),
+					p.getCurrencyId());
 			
 			if (amt.compareTo(change) > 0) 
 			{
@@ -647,6 +649,9 @@ public class PoSOnline extends PoSConnectionState {
 			BigDecimal amount = currencyConvert(p.getAmount(), p.getCurrencyId());
 			
 			if (p.isCashPayment()) {
+				amount = currencyConvert(
+						p.getAmount().compareTo(p.getRealAmount()) > 0 ? p.getAmount() : p.getRealAmount(),
+						p.getCurrencyId());
 				sumaCashPayments = sumaCashPayments.add(amount);
 				cashPayments.add((CashPayment)p);
 			} else if (p.isCheckPayment()) {
@@ -768,9 +773,12 @@ public class PoSOnline extends PoSConnectionState {
 		for (Payment p : order.getPayments()) {
 			int fromCurrency = p.getCurrencyId();
 			
-			BigDecimal amt = currencyConvert(p.getAmount(), fromCurrency);
+			BigDecimal payAmount = p.getAmount();
+			if(p.isCashPayment()){
+				payAmount = p.getAmount().compareTo(p.getRealAmount()) > 0 ? p.getAmount() : p.getRealAmount();
+			}
 			
-			sumaPagos = sumaPagos.add( amt );
+			sumaPagos = sumaPagos.add(currencyConvert(payAmount, fromCurrency));
 		}
 		
 		// Scalado de importes finales. Si hay descuento, puede suceder que

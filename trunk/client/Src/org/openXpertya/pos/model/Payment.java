@@ -20,6 +20,12 @@ public abstract class Payment {
 	/** Cambio de este pago */
 	private BigDecimal changeAmt = BigDecimal.ZERO;	
 	
+	/** Importe de descuento base */
+	private BigDecimal discountBaseAmt = BigDecimal.ZERO;
+	
+	/** Importe de descuento base convertido a moneda de la config */
+	private BigDecimal discountBaseAmtConverted = BigDecimal.ZERO;
+	
 	/**
 	 * @return Devuelve amount.
 	 */
@@ -154,6 +160,26 @@ public abstract class Payment {
 	}
 
 	/**
+	 * Suma un importe base de descuento a este pago
+	 * @param discountBaseAmount Importe a sumar
+	 * @return Devuelve el importe resultante de aplicar la suma.
+	 */
+	public BigDecimal addDiscountBaseAmount(BigDecimal discountBaseAmount) {
+		setDiscountBaseAmt(getDiscountBaseAmt().add(discountBaseAmount));
+		return getDiscountBaseAmt();
+	}
+	
+	/**
+	 * Suma un importe base de descuento convertido a este pago
+	 * @param discountBaseAmountConverted Importe a sumar
+	 * @return Devuelve el importe resultante de aplicar la suma.
+	 */
+	public BigDecimal addDiscountBaseAmountConverted(BigDecimal discountBaseAmountConverted) {
+		setDiscountBaseAmtConverted(getDiscountBaseAmtConverted().add(discountBaseAmountConverted));
+		return getDiscountBaseAmtConverted();
+	}
+	
+	/**
 	 * @return La instancia de {@link IPaymentMediumInfo} que representa la
 	 *         información del medio de pago de este pago.
 	 */
@@ -210,6 +236,22 @@ public abstract class Payment {
 
 	public void setRealAmountConverted(BigDecimal realAmountConverted) {
 		this.realAmountConverted = realAmountConverted;
+	}
+
+	public BigDecimal getDiscountBaseAmt() {
+		return discountBaseAmt;
+	}
+
+	public void setDiscountBaseAmt(BigDecimal discountBaseAmt) {
+		this.discountBaseAmt = discountBaseAmt;
+	}
+
+	public BigDecimal getDiscountBaseAmtConverted() {
+		return discountBaseAmtConverted;
+	}
+
+	public void setDiscountBaseAmtConverted(BigDecimal discountBaseAmtConverted) {
+		this.discountBaseAmtConverted = discountBaseAmtConverted;
 	}
 
 	
