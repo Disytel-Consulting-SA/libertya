@@ -2977,10 +2977,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
 					// Si el valor ingresado supera el pendiente del pedido,
 					// entonces se usa el pendiente
-					if (getCAmountText().getValue() == null) {
+					/*if (getCAmountText().getValue() == null) {
 						getCAmountText().setValue(getCurrencyOrderOpenAmount());
-					}
-					updateConvertedAmount();
+					}*/
+					//updateConvertedAmount();
 					refreshPaymentMediumInfo((BigDecimal) getCAmountText()
 							.getValue());
 				}
@@ -2991,9 +2991,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					KeyEvent.VK_ENTER, 0), new AbstractAction() {
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
-					if (getCAmountText().getValue() == null) {
-						getCAmountText().setValue(getCurrencyOrderOpenAmount());
-					}
+					refreshPaymentMediumInfo((BigDecimal) getCAmountText()
+							.getValue());
 				}
 			});
 			FocusUtils.addFocusHighlight(cAmountText);
@@ -5181,6 +5180,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		payment.setAmount(amount);
 		payment.setRealAmount(realAmount);
 		payment.setRealAmountConverted(getModel().currencyConvert(realAmount, currencyId, getCurrencyBaseID()));
+		payment.setDiscountBaseAmt(getModel().getCurrentPaymentDiscountBaseAmount());
+		payment.setDiscountBaseAmt(getModel().currencyConvert(getModel().getCurrentPaymentDiscountBaseAmount(),
+				currencyId, getCurrencyBaseID()));
 		// Se asocia el medio de pago con el pago concreto.
 		payment.setPaymentMedium(paymentMedium);
 		
@@ -5197,6 +5199,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// Se limpian los campos para ingresar un nuevo pago.
 		getCAmountText().setValue(null);
 		getCPaymentToPayAmt().setValue(null);
+		getModel().setCurrentPaymentDiscountBaseAmount(BigDecimal.ZERO);
 		
 		getCRemovePaymentButton().
 			setEnabled(getOrder().hasPayments());
@@ -6085,44 +6088,89 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     		return;
     	}
     	
-    	boolean allRemains = amt == null;
-    	int currencyComboId = ((Integer) getCCurrencyCombo().getValue()).intValue();
+    	// TODO Pasar esta lógica a Model
+    	
+    	// Este método lógicamente está dividido en dos partes:
+		
+    	// 1) Cuando el usuario no ingresa importe, donde se toma el total
+		// pendiente a pagar de la transacción actual
+    	
+		// 2) Cuando el usuario modifica el importe existente, se toma el
+		// importe ingresado siempre y cuando no sea suficiente para cubrir el
+		// resto, sino se toma el pendiente del pedido. 
+    	
+    	// Por estos motivos, siempre se calcula el importe a pagar del resto
+    	
 		// Calcula el importe a pagar (aplicando descuentos / recargos del
 		// medio de pago actualmente seleccionad) y lo muestra en el
 		// componente.
-		BigDecimal oldPaymentToPayAmt = getOrder().getToPayAmount(
-				getSelectedPaymentMediumInfo(), amt);
-		BigDecimal paymentToPayAmt = amt == null
-				? getModel().currencyConvert(oldPaymentToPayAmt, getCurrencyBaseID(), currencyComboId)
-				: oldPaymentToPayAmt;
-		
-//		BigDecimal paymentRealAmt = getOrder().getPaymentRealAmount(paymentToPayAmt,
-//				getSelectedPaymentMediumInfo());
-//		getCAmountText().setValue(paymentRealAmt);
-		amt = amt == null?getCurrencyOrderOpenAmount():amt;
-		// Si lo que se calcula es sobre el resto del pedido y la moneda del
-		// pago es diferente a la moneda de la compañía, entonces el importe
-		// convertido debe ser igual o mayor al pendiente del pedido ya que por
-		// conversiones entre monedas y problemas de redondeo se puede dar que
-		// el importe convertido sea menor al pendiente. Soporte multimoneda.
-		if (allRemains && getCurrencyBaseID() != currencyComboId) {
-			BigDecimal openAmt = getOrder().getOpenAmount();
-			BigDecimal convertedAmt = getModel().currencyConvert(amt,currencyComboId);
-			while(convertedAmt != null && convertedAmt.compareTo(openAmt) < 0){
-				amt = amt.add(new BigDecimal(0.01));
-				convertedAmt = getModel().currencyConvert(amt,currencyComboId);
+    	int currencyComboId = ((Integer) getCCurrencyCombo().getValue()).intValue();
+    	boolean allRemains = amt == null;
+    	
+    	BigDecimal orderOpenAmt = getOrder().getToPayAmount(
+				getSelectedPaymentMediumInfo(), null);
+    	
+    	BigDecimal orderPaymentToPayAmt = orderOpenAmt;
+		BigDecimal orderPaymentToPayAmtReal = getModel().currencyConvert(orderPaymentToPayAmt, getCurrencyBaseID(),
+				currencyComboId);
+		if(getCurrencyBaseID() != currencyComboId){
+			orderPaymentToPayAmt = getModel().currencyConvert(orderPaymentToPayAmtReal,currencyComboId);
+			while(orderPaymentToPayAmt != null && orderPaymentToPayAmt.compareTo(orderOpenAmt) < 0){
+				orderPaymentToPayAmtReal = orderPaymentToPayAmtReal.add(new BigDecimal(0.01));
+				orderPaymentToPayAmt = getModel().currencyConvert(orderPaymentToPayAmtReal, currencyComboId);
 			}
-			paymentToPayAmt = getOrder().getToPayAmount(getSelectedPaymentMediumInfo(), amt);
+		}	
+		
+		BigDecimal oldPaymentToPayAmt = orderPaymentToPayAmt;
+		BigDecimal paymentToPayAmt = orderPaymentToPayAmtReal;
+		
+		if(amt != null && amt.compareTo(paymentToPayAmt) < 0){
+			oldPaymentToPayAmt = getOrder().getToPayAmount(getSelectedPaymentMediumInfo(), amt);
+			paymentToPayAmt = oldPaymentToPayAmt;
 		}
 		
-		paymentToPayAmt = paymentToPayAmt == null? oldPaymentToPayAmt : paymentToPayAmt;  
+		amt = amt == null?getCurrencyOrderOpenAmount():amt;
+		BigDecimal discountBaseAmt = null;
 		
+		// Total del pedido
+    	if(allRemains){
+    		// Si lo que se calcula es sobre el resto del pedido y la moneda del
+    		// pago es diferente a la moneda de la compañía, entonces el importe
+    		// convertido debe ser igual o mayor al pendiente del pedido ya que por
+    		// conversiones entre monedas y problemas de redondeo se puede dar que
+    		// el importe convertido sea menor al pendiente. Soporte multimoneda.
+    		if (getCurrencyBaseID() != currencyComboId) {
+    			BigDecimal openAmt = getOrder().getOpenAmount();
+    			BigDecimal convertedAmt = getModel().currencyConvert(amt,currencyComboId);
+    			while(convertedAmt != null && convertedAmt.compareTo(openAmt) < 0){
+    				amt = amt.add(new BigDecimal(0.01));
+    				convertedAmt = getModel().currencyConvert(amt,currencyComboId);
+    			}
+    			paymentToPayAmt = getOrder().getToPayAmount(getSelectedPaymentMediumInfo(), amt);
+    		}
+    		paymentToPayAmt = paymentToPayAmt == null? oldPaymentToPayAmt : paymentToPayAmt;
+    	}
+		// Hay que ver si lo que ingresó con descuentos/recargos satisface el
+		// open con descuento/recargo
+    	else{
+    		if(paymentToPayAmt.compareTo(orderPaymentToPayAmtReal) >= 0){
+    			paymentToPayAmt = orderPaymentToPayAmtReal;
+    			discountBaseAmt = getOrder().getOpenAmount();
+    		}
+    	}
+		
+		// El pendiente a pagar con descuentos/recargos
 		getCPaymentToPayAmt()
 				.setValue(paymentToPayAmt.compareTo(BigDecimal.ZERO) > 0 
 							? paymentToPayAmt
 							: null);
 		
+		discountBaseAmt = discountBaseAmt == null?amt:discountBaseAmt; 
+		
+		// Importe ingresado o el resto pendiente
 		getCAmountText().setValue(amt);
+		// Importe de descuento base del payment actual
+		getModel().setCurrentPaymentDiscountBaseAmount(discountBaseAmt);
 		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
 		// de cada cuota.
