@@ -646,5 +646,10 @@ public class WCreateFromInvoice extends WCreateFrom {
 				return visibles;
 			}
 		}
+
+		@Override
+		protected boolean addSecurityValidation() {
+			return getRole().isAddSecurityValidation_CreateFromShipment();
+		}
 	
 }

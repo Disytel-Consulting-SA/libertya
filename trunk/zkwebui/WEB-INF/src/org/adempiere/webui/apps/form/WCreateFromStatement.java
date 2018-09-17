@@ -379,4 +379,9 @@ public class WCreateFromStatement  extends WCreateFrom {
 		
 		loadTable(paysWrapped);
 	}
+
+	@Override
+	protected boolean addSecurityValidation() {
+		return true;
+	}
 }
