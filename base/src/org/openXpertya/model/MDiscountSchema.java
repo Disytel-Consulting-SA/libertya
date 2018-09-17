@@ -365,6 +365,8 @@ public class MDiscountSchema extends X_M_DiscountSchema {
             log.finer( "Amt=" + Amt + ",M_Product_ID=" + M_Product_ID + ",M_Product_Category_ID=" + M_Product_Category_ID );
         }
 
+        BigDecimal discount = BigDecimal.ZERO;
+        
         for( int i = 0;i < m_breaks.length;i++ ) {
             MDiscountSchemaBreak br = m_breaks[ i ];
             
@@ -392,20 +394,22 @@ public class MDiscountSchema extends X_M_DiscountSchema {
 
             // Line applies
 
-            BigDecimal discount = null;
-
             if( br.isBPartnerFlatDiscount()) {
-                discount = BPartnerFlatDiscount;
+                discount = discount.add(BPartnerFlatDiscount);
             } else {
-                discount = br.getBreakDiscount();
+                discount = discount.add(br.getBreakDiscount());
             }
 
+            
             log.fine( "Discount=>" + discount );
-
-            return discount;
+            
+            if(br.isBreak()){
+            	break;
+            }
+            
         }    // for all breaks
 
-        return Env.ZERO;
+        return discount;
     }    // calculateDiscount
 
     /**
