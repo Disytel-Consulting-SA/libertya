@@ -579,7 +579,8 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     	String whereClause = getOrderFilter(); 
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 2161; 	// C_Order.C_Order_ID
-    	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(), p_WindowNo, p_mTab.getTabNo(), colID,
+				DisplayType.Search, whereClause, addSecurityValidation());
     	info.ZoomQuery = new MQuery();
     	MLookup lookup       = new MLookup(info, p_mTab.getTabNo());
     	if (whereClause != null && whereClause.length() > 0)
@@ -898,6 +899,8 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     
 	protected abstract boolean lazyEvaluation();
  
+	protected abstract boolean addSecurityValidation();
+	
 	public abstract void showWindow();
 	
 	public abstract void closeWindow();
