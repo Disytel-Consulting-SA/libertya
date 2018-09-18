@@ -791,30 +791,40 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 			}
 		}
         
+        //Para los pagos con tarjeta de credito, seteo en duedate la fecha de transacción sumando los días 
+		//de acreditación para el plan de financiación si es que tiene.
+		if (MPayment.TENDERTYPE_CreditCard.equals(getTenderType())){
+			// Para los cobros en tarjeta de crédito, el plan de EF debe ser
+			// obligatorio
+			if (isReceipt()) {
+				if(Util.isEmpty(getM_EntidadFinancieraPlan_ID(), true)){
+					log.saveError("MandatoryCreditCardPlan", "");
+					return false;
+				}
+			}
+			
+			MEntidadFinancieraPlan mentidadfinancieraplan = new MEntidadFinancieraPlan(getCtx(),
+					getM_EntidadFinancieraPlan_ID(), get_TrxName());
+			Calendar calendario = Calendar.getInstance();
+			calendario.setTimeInMillis(getDateAcct().getTime());
+			calendario.add(Calendar.DATE, mentidadfinancieraplan.getAccreditationDays());
+			setDueDate(new Timestamp(calendario.getTimeInMillis()));
+			
+			// Setear la cuenta bancaria de la entidad financiera
+			if (isReceipt()) {
+				MEntidadFinanciera ef = new MEntidadFinanciera(getCtx(),
+						mentidadfinancieraplan.getM_EntidadFinanciera_ID(), get_TrxName());
+				setC_BankAccount_ID(ef.getC_BankAccount_ID());
+				setCreditCardType(ef.getCreditCardType());
+			}
+			
+		}
+        
         int bankAccountCurrency = new MBankAccount(getCtx(), getC_BankAccount_ID(),null).getC_Currency_ID();
 		if (bankAccountCurrency != getC_Currency_ID()){
 			log.saveError("SaveError", Msg.translate(getCtx(), "InvalidPayBankCurrency"));
     		return false;
 		}
-		
-		// Para los cobros en tarjeta de crédito, el plan de EF debe ser
-		// obligatorio
-		if (isReceipt()
-				&& MPayment.TENDERTYPE_CreditCard.equals(getTenderType())
-				&& Util.isEmpty(getM_EntidadFinancieraPlan_ID(), true)) {
-			log.saveError("MandatoryCreditCardPlan", "");
-			return false;
-		}
-		
-		//Para los pagos con tarjeta de credito, seteo en duedate la fecha de transacción sumando los días 
-		//de acreditación para el plan de financiación si es que tiene.
-			if (getTenderType().equals("C")){
-				MEntidadFinancieraPlan mentidadfinancieraplan = new MEntidadFinancieraPlan(getCtx(), getM_EntidadFinancieraPlan_ID(), get_TrxName());
-				Calendar calendario = Calendar.getInstance();
-				calendario.setTimeInMillis(getDateAcct().getTime());
-				calendario.add(Calendar.DATE, mentidadfinancieraplan.getAccreditationDays());
-				setDueDate(new Timestamp(calendario.getTimeInMillis()));
-			}
                 
         return true;
     }    // beforeSave

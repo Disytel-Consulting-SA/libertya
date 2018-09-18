@@ -26,6 +26,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 /**
@@ -579,6 +580,21 @@ public class CalloutPayment extends CalloutEngine {
 
         return "";
     }    // amounts
+    
+    public String entidadfinancieraplan( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value,Object oldValue ) {
+    	// Setear la cuenta bancaria de cupones 
+    	Integer entidadFinancieraPlanID = value == null?0:(Integer)value;
+    	if(entidadFinancieraPlanID > 0){
+			MEntidadFinancieraPlan efPlan = new MEntidadFinancieraPlan(ctx, entidadFinancieraPlanID,
+					null);
+			MEntidadFinanciera ef = new MEntidadFinanciera(ctx, efPlan.getM_EntidadFinanciera_ID(),
+					null);
+			mTab.setValue("C_BankAccount_ID",ef.getC_BankAccount_ID());
+			mTab.setValue("CreditCardType",ef.getCreditCardType());
+    	}
+    	
+    	return "";
+    }
 }    // CalloutPayment
 
 
