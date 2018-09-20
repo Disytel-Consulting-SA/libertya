@@ -69,7 +69,6 @@ import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
-import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.Query;
@@ -1054,13 +1053,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     
     private void cmdProcessActionPerformed(Event evt) {
     	
-    	//Chequeo si la Entidad Comercial está bloqueada para recibir pagos
-    	MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getNewValueOnChange(), null);	    
-    	if(partner.ispaymentblocked()) { 
-    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
-    		showError(error_msg);
-    		return;
-    	}
+    	validatePaymentBlocked();
     	
     	final int idx = tabbox.getSelectedIndex();
     	
@@ -1341,9 +1334,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
      * @param evt
      */
     private void cmdBPartnerSelActionPerformed(ValueChangeEvent evt){
-    	if((this.BPartnerSel.getNewValueOnChange() == null)){
-    		this.cmdProcess.setEnabled(false);
-    	}
+    	cmdProcess.setEnabled(BPartnerSel.getNewValueOnChange() != null);
     	// Validaciones de entidad comercial
 		doBPartnerValidations();
     }   

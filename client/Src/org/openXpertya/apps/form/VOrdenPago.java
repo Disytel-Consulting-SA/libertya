@@ -70,11 +70,6 @@ import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AuthContainer;
-import org.openXpertya.apps.form.FormFrame;
-import org.openXpertya.apps.form.FormPanel;
-import org.openXpertya.apps.form.VComponentsFactory;
-import org.openXpertya.apps.form.VModelHelper;
-import org.openXpertya.apps.form.VOrdenPagoModel;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
@@ -89,7 +84,6 @@ import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
-import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.Query;
@@ -1909,13 +1903,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      */
     private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
     	
-    	//Chequeo si la Entidad Comercial está bloqueada para recibir pagos
-    	MBPartner partner = new MBPartner(m_ctx, (Integer)this.BPartnerSel.getValue(), m_trxName);
-    	if(partner.ispaymentblocked()) { 
-    		String error_msg = (Util.isEmpty(partner.getpaymentblockeddescr(), true)) ? Msg.getMsg(m_ctx, "PartnerPaymentAuthorizationFailed") : partner.getpaymentblockeddescr();
-    		showError(error_msg);
-    		return;
-    	}
+    	validatePaymentBlocked();
     	
     	final int idx = jTabbedPane1.getSelectedIndex();
     	/*
@@ -2178,9 +2166,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      */
     
     private void cmdBPartnerSelActionPerformed(java.awt.event.ActionEvent evt){
-    	if((this.BPartnerSel.getValue() == null)){
-    		this.cmdProcess.setEnabled(false);
-    	}    	
+    	cmdProcess.setEnabled(BPartnerSel.getValue() != null);
     	// Validaciones de entidad comercial
 		doBPartnerValidations();
     }
