@@ -282,6 +282,7 @@ public class MMatchPO extends X_M_MatchPO {
 				}
             }
 
+            orderLine.setUpdatePriceInSave(false);
             return orderLine.save( get_TrxName());
         }
 
