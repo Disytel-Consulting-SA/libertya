@@ -176,6 +176,8 @@ public class VCreateFromShipment extends VCreateFrom {
 				bPartnerField.setReadWrite(false);
 			}
 		}
+		
+		setDocType(new MDocType(getCtx(), getInOut().getC_DocType_ID(), getTrxName()));
 
 		return true;
 	} // dynInit

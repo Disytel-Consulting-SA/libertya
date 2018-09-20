@@ -160,6 +160,8 @@ public class WCreateFromShipment extends WCreateFrom {
 				bPartnerField.setReadWrite(false);
 			}
 		}
+		
+		setDocType(new MDocType(getCtx(), getInOut().getC_DocType_ID(), getTrxName()));
 
 		return true;
 	} // dynInit
