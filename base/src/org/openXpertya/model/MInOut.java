@@ -396,7 +396,7 @@ public class MInOut extends X_M_InOut implements DocAction {
     			"inner join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
     			"where ol.c_orderline_id = ? AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') and i.docstatus IN ('CL','CO') ";
     	BigDecimal ir = DB.getSQLValueBD(trxName, sql, orderLineID);
-    	return ir != null && ir.compareTo(BigDecimal.ZERO) < 0?BigDecimal.ZERO:ir;
+    	return ir == null?BigDecimal.ZERO:ir;
     }
     
     /**
