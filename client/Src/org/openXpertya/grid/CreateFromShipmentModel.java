@@ -17,7 +17,6 @@ import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.Util;
 
 public class CreateFromShipmentModel extends CreateFromModel {
@@ -103,8 +102,11 @@ public class CreateFromShipmentModel extends CreateFromModel {
 				MInOut.DELIVERYRULE_AfterInvoicing) || inout.getDeliveryRule()
 				.equals(MInOut.DELIVERYRULE_Force_AfterInvoicing))
 				&& inout.getMovementType().endsWith("-");
-		String srcColumn = afterInvoicing ? "l.QtyInvoiced" : "l.QtyOrdered";
-		return srcColumn + " - "+ReservedUtil.getSQLRealDeliveredQtyByColumns(ctx, "l");
+		String srcColumn = " calculateqtyreserved(l.c_orderline_id) ";
+		if(afterInvoicing){
+			srcColumn = "LEAST(l.QtyInvoiced,"+srcColumn+")";
+		}
+		return srcColumn;
 	}
 	
 	/**
