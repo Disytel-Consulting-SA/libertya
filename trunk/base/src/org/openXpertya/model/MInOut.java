@@ -381,6 +381,25 @@ public class MInOut extends X_M_InOut implements DocAction {
     }
 	
     /**
+     * @param ctx
+     * @param orderLineID
+     * @param trxName
+     * @return cantidad facturada en devoluciones asociadas a la línea de pedido parámetro
+     */
+    public static BigDecimal getInvoicedQtyReturned(Properties ctx, Integer orderLineID, String trxName){
+    	String sql = "select sum(il.qtyinvoiced) as qty " +
+    			"from c_orderline as ol " +
+    			"inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id " +
+    			"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+    			"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+    			"inner join c_invoiceline as il on il.m_inoutline_id = iol.m_inoutline_id " +
+    			"inner join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
+    			"where ol.c_orderline_id = ? AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') and i.docstatus IN ('CL','CO') ";
+    	BigDecimal ir = DB.getSQLValueBD(trxName, sql, orderLineID);
+    	return ir != null && ir.compareTo(BigDecimal.ZERO) < 0?BigDecimal.ZERO:ir;
+    }
+    
+    /**
      * Constructor de la clase ...
      *
      *
@@ -2275,7 +2294,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 										MInOut.DELIVERYRULE_Force_AfterInvoicing)) {
 							BigDecimal realOrderLineDeliveredQty = ReservedUtil.getOrderLineRealDelivered(getCtx(),
 									ol_qtyDelivered, ol_qtyTransferred, ol_qtyReturned);
-							if(QtySO.add(realOrderLineDeliveredQty).compareTo(ol_qtyInvoiced) > 0){
+							BigDecimal realQtyInvoiced = ol_qtyInvoiced
+									.add(getInvoicedQtyReturned(getCtx(), sLine.getC_OrderLine_ID(), get_TrxName()));
+							if(QtySO.add(realOrderLineDeliveredQty).compareTo(realQtyInvoiced) > 0){
 								m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanInvoiced");
 								if(withQtyReturned){
 		                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
