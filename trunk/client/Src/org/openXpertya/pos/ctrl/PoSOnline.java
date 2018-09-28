@@ -845,9 +845,12 @@ public class PoSOnline extends PoSConnectionState {
 		BigDecimal changeAux, convertedAmt;
 		for (int c = cashPayments.size()-1; c >= 0
 				&& cashChange.compareTo(BigDecimal.ZERO) > 0; c--) {
-			convertedAmt = currencyConvert(cashPayments.get(c).getAmount(), cashPayments.get(c).getCurrencyId());
+			BigDecimal auxAmt = cashPayments.get(c).getAmount().compareTo(cashPayments.get(c).getRealAmount()) > 0
+					? cashPayments.get(c).getAmount() : cashPayments.get(c).getRealAmount();
+			convertedAmt = currencyConvert(auxAmt, cashPayments.get(c).getCurrencyId());
 			changeAux = convertedAmt.compareTo(cashChange) >= 0 ? cashChange
 					: convertedAmt;
+			
 			cashPayments.get(c).setChangeAmt(changeAux);
 			cashChange = cashChange.subtract(changeAux); 
 		}
