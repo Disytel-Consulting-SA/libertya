@@ -4915,6 +4915,11 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			}
 			return documentTaxes;
 		}
+
+		@Override
+		public void setDocumentReferences(MPromotionCode promotionCode) {
+			promotionCode.setC_Invoice_ID(getTpvGeneratedInvoiceID());
+		}
 	}
 	
 	public Integer getWarehouseDeliveryProductsCount(){

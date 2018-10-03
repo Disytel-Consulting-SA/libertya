@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Promotion
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-07-22 16:07:08.849 */
+ *  @version  - 2018-10-03 12:02:42.041 */
 public class X_C_Promotion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,9 +18,11 @@ super (ctx, C_Promotion_ID, trxName);
 {
 setC_Promotion_ID (0);
 setDiscountApplication (null);	// D
+setMaxPromotionalCodes (0);
 setM_DiscountSchema_ID (0);
 setName (null);
 setProcessed (false);	// N
+setPromotionType (null);
 setPublishStatus (null);	// D
 setValidFrom (new Timestamp(System.currentTimeMillis()));	// @#Date@
 }
@@ -90,8 +93,8 @@ public static final String DISCOUNTAPPLICATION_Bonus = "B";
 Discount Application */
 public void setDiscountApplication (String DiscountApplication)
 {
-if (DiscountApplication.equals("D") || DiscountApplication.equals("B"));
- else throw new IllegalArgumentException ("DiscountApplication Invalid value - Reference = DISCOUNTAPPLICATION_AD_Reference_ID - D - B");
+if (DiscountApplication.equals("D") || DiscountApplication.equals("B") || ( refContainsValue("CORE-AD_Reference-1010136", DiscountApplication) ) );
+ else throw new IllegalArgumentException ("DiscountApplication Invalid value: " + DiscountApplication + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010136") );
 if (DiscountApplication == null) throw new IllegalArgumentException ("DiscountApplication is mandatory");
 if (DiscountApplication.length() > 1)
 {
@@ -105,6 +108,20 @@ Discount Application */
 public String getDiscountApplication() 
 {
 return (String)get_Value("DiscountApplication");
+}
+/** Set Max Promotional Codes.
+Maximum number of Promotional Codes to generate */
+public void setMaxPromotionalCodes (int MaxPromotionalCodes)
+{
+set_Value ("MaxPromotionalCodes", new Integer(MaxPromotionalCodes));
+}
+/** Get Max Promotional Codes.
+Maximum number of Promotional Codes to generate */
+public int getMaxPromotionalCodes() 
+{
+Integer ii = (Integer)get_Value("MaxPromotionalCodes");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Discount Schema.
 Schema to calculate the trade discount percentage */
@@ -160,6 +177,31 @@ if (oo != null)
 }
 return false;
 }
+public static final int PROMOTIONTYPE_AD_Reference_ID = MReference.getReferenceID("Promotion Types");
+/** Global = G */
+public static final String PROMOTIONTYPE_Global = "G";
+/** Promotional Code = C */
+public static final String PROMOTIONTYPE_PromotionalCode = "C";
+/** Set Promotion Type.
+Type of promotion */
+public void setPromotionType (String PromotionType)
+{
+if (PromotionType.equals("G") || PromotionType.equals("C") || ( refContainsValue("CORE-AD_Reference-1010407", PromotionType) ) );
+ else throw new IllegalArgumentException ("PromotionType Invalid value: " + PromotionType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010407") );
+if (PromotionType == null) throw new IllegalArgumentException ("PromotionType is mandatory");
+if (PromotionType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+PromotionType = PromotionType.substring(0,1);
+}
+set_Value ("PromotionType", PromotionType);
+}
+/** Get Promotion Type.
+Type of promotion */
+public String getPromotionType() 
+{
+return (String)get_Value("PromotionType");
+}
 public static final int PUBLISHSTATUS_AD_Reference_ID = MReference.getReferenceID("Discount Publish Status");
 /** Published = P */
 public static final String PUBLISHSTATUS_Published = "P";
@@ -169,8 +211,8 @@ public static final String PUBLISHSTATUS_Drafted = "D";
 Status of Publication */
 public void setPublishStatus (String PublishStatus)
 {
-if (PublishStatus.equals("P") || PublishStatus.equals("D"));
- else throw new IllegalArgumentException ("PublishStatus Invalid value - Reference = PUBLISHSTATUS_AD_Reference_ID - P - D");
+if (PublishStatus.equals("P") || PublishStatus.equals("D") || ( refContainsValue("CORE-AD_Reference-1010137", PublishStatus) ) );
+ else throw new IllegalArgumentException ("PublishStatus Invalid value: " + PublishStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010137") );
 if (PublishStatus == null) throw new IllegalArgumentException ("PublishStatus is mandatory");
 if (PublishStatus.length() > 1)
 {

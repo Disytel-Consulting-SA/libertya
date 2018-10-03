@@ -13,6 +13,7 @@ import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MPOSPaymentMedium;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -1370,5 +1371,37 @@ public class Order  {
 		taxes.addAll(getOtherTaxes());
 		
 		return taxes;
+	}
+	
+	/**
+	 * Validaciones de código promocional parámetro para determinar si es
+	 * posible agregar o no
+	 * 
+	 * @param code
+	 *            código promocional
+	 * @return resultado de la operación
+	 */
+	public CallResult isPromotionalCodeValid(String code){
+		return getDiscountCalculator().isPromotionalCodeValid(code);
+	}
+	
+	/**
+	 * Agrega un código promocional al calculador actual
+	 * 
+	 * @param code
+	 *            código promocional
+	 */
+	public void addPromotionalCode(String code){
+		getDiscountCalculator().addPromotionCode(code);
+	}
+	
+	/**
+	 * Agrega un código promocional al calculador actual
+	 * 
+	 * @param code
+	 *            código promocional
+	 */
+	public void removePromotionalCode(String code){
+		getDiscountCalculator().removePromotionCode(code);
 	}
 }

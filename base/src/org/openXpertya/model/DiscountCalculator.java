@@ -4,18 +4,22 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.apache.ecs.xhtml.code;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.ProductMatching.MatchingCompareType;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -136,6 +140,13 @@ public class DiscountCalculator {
 	/** Lista de combos de artículos válidos para la fecha del documento */
 	private List<MCombo> validCombos = null;
 
+	/**
+	 * Lista de promociones válidas para la fecha del documento y los códigos
+	 * promocionales existentes. Esta variable por lo pronto está creada para
+	 * llevar una caché de las promociones válidas cargadas. 
+	 */
+	private List<MPromotion> validPromos = null;
+	
 	/** Lista de descuentos por promociones válidas para la fecha del documento */
 	private List<Discount> promotionDiscounts = null;
 	
@@ -170,7 +181,16 @@ public class DiscountCalculator {
 	 * general agregado para realizar el cálculo de descuento.
 	 */
 	private boolean assumeGeneralDiscountAdded = false;
-		
+	
+	/** Lista de códigos promocionales a cargar */
+	private Set<String> promotionalCodes = null;
+	
+	/**
+	 * Flag que determina si las promociones se modificaron. En ese
+	 * caso se deben cargar nuevamente.
+	 */
+	private boolean promotionsChanged = false; 
+	
 	/**
 	 * Crea un nuevo calculador de descuentos vacío. Por defecto este calculador
 	 * no aplicará descuentos hasta que se cargue un descuento de Entidad
@@ -218,6 +238,10 @@ public class DiscountCalculator {
 		if(discountCalculator.getPromotionDiscounts() != null){
 			ndc.promotionDiscounts = new ArrayList<Discount>();
 			ndc.getPromotionDiscounts().addAll(discountCalculator.getPromotionDiscounts());
+		}
+		if(discountCalculator.getPromotionalCodes() != null){
+			ndc.promotionalCodes = new HashSet<String>();
+			ndc.getPromotionalCodes().addAll(discountCalculator.getPromotionalCodes());
 		}
 		return ndc;
 	}
@@ -305,6 +329,7 @@ public class DiscountCalculator {
 		this.promotionDiscounts = new ArrayList<Discount>();
 		this.comboDiscounts = new ArrayList<Discount>();
 		this.lineManualDiscounts = new HashMap<Integer, Discount>();
+		this.promotionalCodes = new HashSet<String>();
 		this.context = context;
 	}
 	
@@ -986,14 +1011,37 @@ public class DiscountCalculator {
 		// Si aún no se han cargado las promociones o cambió la fecha del documento
 		// entonces se recargan las promociones válidas para la fecha del documento.
 		if (getPromotionDiscounts() == null
-				|| getPromotionDiscounts().isEmpty() || documentDateChanged()) {
+				|| getPromotionDiscounts().isEmpty() 
+				|| documentDateChanged()
+				|| isPromotionsChanged()) {
 			loadPromotions();
 		}
 		
 		// Aplica los descuentos por promociones.
 		applyLineDiscounts(getPromotionDiscounts());
 	}
+	
+	/**
+	 * Agrega un código promocional para realizar una recarga de las promociones
+	 * 
+	 * @param promotionCode código promocional a agregar
+	 */
+	public void addPromotionCode(String promotionCode){
+		setPromotionsChanged(getPromotionalCodes().add(promotionCode));
+		applyDiscounts();
+	}
 
+	/**
+	 * Elimina un código promocional de la lista de códigos
+	 * 
+	 * @param promotionCode
+	 *            código promocional a eliminar
+	 */
+	public void removePromotionCode(String promotionCode){
+		setPromotionsChanged(getPromotionalCodes().remove(promotionCode));
+		applyDiscounts();
+	}
+	
 	/**
 	 * Aplica descuentos manuales a las líneas de los documentos que posean
 	 * descuento manual cargado
@@ -1978,6 +2026,8 @@ public class DiscountCalculator {
 		getGeneralDiscounts().clear();
 		setManualGeneralDiscount(null);
 		getLineManualDiscounts().clear();
+		getPromotionalCodes().clear();
+		setPromotionsChanged(true);
 	}
 
 	/**
@@ -2201,6 +2251,19 @@ public class DiscountCalculator {
 			}
 		}
 		
+		// Marcar los cupones promocionales cargados como usados
+		for (String promotionalCode : getPromotionalCodes()) {
+			MPromotionCode pc = MPromotionCode.getFromCode(getCtx(), promotionalCode, trxName);
+			if(pc != null){
+				pc.setUsed(true);
+				getDocument().setDocumentReferences(pc);
+				if(!pc.save(trxName)){
+					saveOk = false;
+					break;
+				}
+			}
+		}
+		
 		return saveOk;
 	}
 
@@ -2267,9 +2330,17 @@ public class DiscountCalculator {
 		// Obtiene las promociones válidas para la fecha del documento y actualiza la fecha
 		//guardada.
 		List<MPromotion> validPromos = MPromotion.getValidFor(getDocument()
-				.getDate(), getCtx(), getTrxName(), true);
-		this.documentDate = getDocument().getDate();
+				.getDate(), getCtx(), getTrxName(), true, MPromotion.PROMOTIONTYPE_Global);
 		
+		// Obtiene además las promociones correspondientes a los códigos
+		// promocionales cargados
+		validPromos.addAll(MPromotion.getValidFor(getDocument()
+				.getDate(), getCtx(), getTrxName(), true, getPromotionalCodes()));
+		
+		setValidPromos(validPromos);
+		
+		this.documentDate = getDocument().getDate();
+		setPromotionsChanged(false);
 		// Crea los descuentos por promoción para cada promoción. A partir de
 		// esta lista luego se aplicarán las promociones y se guardaran los
 		// importes de cada descuento para ser almacenado en la BD.
@@ -2443,6 +2514,74 @@ public class DiscountCalculator {
 	}
 
 	/**
+	 * Realiza las validaciones pertinentes para incorporar un código
+	 * promocional y aplicarlo
+	 * 
+	 * @param code
+	 *            código promocional
+	 * @return resultado de la operación
+	 */
+	public CallResult isPromotionalCodeValid(String code){
+		CallResult result = new CallResult();
+		// Verificar que no exista actualmente ese código ya ingresado en este
+		// calculador
+		if(getPromotionalCodes().contains(code)){
+			result.setMsg(Msg.getMsg(getCtx(), "PromotionalCodeAlreadyLoaded"), true);
+			return result;
+		}
+		// Verificar en la config de descuentos cuantos se pueden aplicar maximo
+		if(getDiscountConfig().getMaxPromotionalCoupons() <= getPromotionalCodes().size()){
+			result.setMsg(Msg.getMsg(getCtx(), "PromotionalCodeSurpassMaxConfig"), true);
+			return result;
+		}
+		// Verificar si el código existe y no fue usado, si es así, controlar
+		// que esté vigente
+		MPromotionCode pc = MPromotionCode.getValid(getCtx(), code,
+				getDocument().getDate() != null ? new Timestamp(getDocument().getDate().getTime()) : null,
+				getTrxName());
+		if(pc == null){
+			result.setMsg(Msg.getMsg(getCtx(), "PromotionalCodeInvalid"), true);
+			return result;
+		}
+		if(pc.isUsed()){
+			result.setMsg(Msg.getMsg(getCtx(), "PromotionalCodeUsed"), true);
+			return result;
+		}
+		// Verificar que no exista la promo relacionada ya ingresada en este calculador
+		for (MPromotion promo : getValidPromos()) {
+			if(promo.getID() == pc.getC_Promotion_ID()){
+				result.setMsg(Msg.getMsg(getCtx(), "PromotionAlreadyLoaded"), true);
+				return result;
+			}
+		}
+		return result;
+	}
+	
+	public Set<String> getPromotionalCodes() {
+		return promotionalCodes;
+	}
+
+	public void setPromotionalCodes(Set<String> promotionalCodes) {
+		this.promotionalCodes = promotionalCodes;
+	}
+
+	public boolean isPromotionsChanged() {
+		return promotionsChanged;
+	}
+
+	public void setPromotionsChanged(boolean promotionsChanged) {
+		this.promotionsChanged = promotionsChanged;
+	}
+
+	public List<MPromotion> getValidPromos() {
+		return validPromos;
+	}
+
+	private void setValidPromos(List<MPromotion> validPromos) {
+		this.validPromos = validPromos;
+	}
+
+	/**
 	 * Interfaz que debe implementar cualquier clase que requiera ser manipulada
 	 * por un calculador de descuentos. Esta interfaz representa el encabezado
 	 * del Documento. A su vez, las líneas del documento deben respetar la
@@ -2558,6 +2697,14 @@ public class DiscountCalculator {
 		 *            Descuento de documento creado por este calculador
 		 */
 		public void setDocumentReferences(MDocumentDiscount documentDiscount);
+		
+		/**
+		 * Setear las referencias del documento en las promociones
+		 * 
+		 * @param promotionCode
+		 *            código promocional
+		 */
+		public void setDocumentReferences(MPromotionCode promotionCode);
 		
 		/**
 		 * @return ID de la organización del documento

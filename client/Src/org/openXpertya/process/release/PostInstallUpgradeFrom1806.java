@@ -10,6 +10,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String RETENCIONES_ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010231";
 	protected final static String RETENCIONES_ORDEN_PAGO_JASPER_REPORT_FILENAME = "OrdenPago_Retenciones.jasper";
 	
+	/** UID de la impresión de codigos o cupones promocionales */
+	protected final static String PROMOTIONAL_CODES_BATCH_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010251";
+	protected final static String PROMOTIONAL_CODES_BATCH_JASPER_REPORT_FILENAME = "PromotionalCodeBatch.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -32,6 +36,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(RETENCIONES_ORDEN_PAGO_JASPER_REPORT_FILENAME)));
+
+		// Reporte de Códigos Promocionales
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					PROMOTIONAL_CODES_BATCH_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(PROMOTIONAL_CODES_BATCH_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

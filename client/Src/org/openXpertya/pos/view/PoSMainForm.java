@@ -192,6 +192,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private final String CHANGE_FOCUS_GENERAL_DISCOUNT = "changeFocusGeneralDiscount";
 	private final String CANCEL_ORDER = "cancelOrder";
 	private final String GOTO_INSERT_CARD = "gotoInsertCard";
+	private final String INSERT_PROMOTIONAL_CODE = "insertPromotionalCode";
 	
 	private PoSModel model;
 	
@@ -509,6 +510,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_CASH_RETIREMENT_EXCEEDS_LIMIT;
 	private String MSG_TAXES;
 	private String MSG_TAX;
+	private String MSG_PROMOTIONS;
 	
 	/**
 	 * This method initializes 
@@ -818,6 +820,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_CASH_RETIREMENT_EXCEEDS_LIMIT = getMsg("CashRetirementExceedsLimit");
 		MSG_TAXES = getMsg("Taxes");
 		MSG_TAX = getMsg("Tax");
+		MSG_PROMOTIONS = getMsg("Promotions");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -898,6 +901,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getActionKeys().put(CHANGE_FOCUS_GENERAL_DISCOUNT,KeyStroke.getKeyStroke(KeyEvent.VK_F5, 0));
 		getActionKeys().put(CANCEL_ORDER,KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
 		getActionKeys().put(GOTO_INSERT_CARD, KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0));
+		getActionKeys().put(INSERT_PROMOTIONAL_CODE, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
 		
 		// Accion: Abrir el dialogo para modificar el producto del pedido.
         getActionMap().put(UPDATE_ORDER_PRODUCT_ACTION,
@@ -1071,6 +1075,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 		});
 		
+		// Accion: Permite ingresar un código promocional
+		getActionMap().put(INSERT_PROMOTIONAL_CODE, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				if(!isProcessing()){
+					openPromotionsDialog();
+				}
+			}
+		});
+		
 		// Acciones habilitadas al inicio.
 		setActionEnabled(GOTO_INSERT_CARD, false);
 		setActionEnabled(UPDATE_ORDER_PRODUCT_ACTION,true);
@@ -1089,6 +1102,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		setActionEnabled(CHANGE_FOCUS_PRODUCT_ORDER, true);
 		setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, false);
 		setActionEnabled(CANCEL_ORDER, true);
+		setActionEnabled(INSERT_PROMOTIONAL_CODE, true);
 	}
 
 	private void setActionEnabled(String action, boolean enabled) {
@@ -1265,7 +1279,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CTextField	
 	 */
-	private CTextField getCProductCodeText() {
+	public CTextField getCProductCodeText() {
 		if (cProductCodeText == null) {
 			cProductCodeText = new CTextField();
 			cProductCodeText.setPreferredSize(new java.awt.Dimension(200,20));
@@ -1578,6 +1592,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			JLabel cCmdCancelOrderInfoLabel = new CLabel();
 			cCmdCancelOrderInfoLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(CANCEL_ORDER)) + " = " + MSG_CANCEL_ORDER);
 			
+			GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
+			gridBagConstraints6.gridx = 0;
+			gridBagConstraints6.weightx = 0.0D;
+			gridBagConstraints6.weighty = 0.0D;
+			gridBagConstraints6.gridy = 5;
+			gridBagConstraints6.anchor = GridBagConstraints.WEST;
+			JLabel cCmdPromotionsLabel = new CLabel();
+			cCmdPromotionsLabel
+					.setText(KeyUtils.getKeyStr(getActionKeys().get(INSERT_PROMOTIONAL_CODE)) + " = " + MSG_PROMOTIONS);			
 			
 			cCommandInfoPanel = new CPanel();
 			cCommandInfoPanel.setLayout(new GridBagLayout());
@@ -1585,10 +1608,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCommandInfoPanel.setPreferredSize(new java.awt.Dimension(180,500));
 			cCommandInfoPanel.setName("cCommandInfoPanel");
 			cCommandInfoPanel.add(cCmdChangeProductOrderLabel, gridBagConstraints1);
-			cCommandInfoPanel.add(cCmdUpdateOrderProductLabel, gridBagConstraints2);
-			cCommandInfoPanel.add(cCmdSetBpartnerInfoLabel, gridBagConstraints3);
-			cCommandInfoPanel.add(cCmdGotoPaymentsLabel, gridBagConstraints4);
-			cCommandInfoPanel.add(cCmdCancelOrderInfoLabel, gridBagConstraints5);
+			cCommandInfoPanel.add(cCmdPromotionsLabel, gridBagConstraints2);
+			cCommandInfoPanel.add(cCmdUpdateOrderProductLabel, gridBagConstraints3);
+			cCommandInfoPanel.add(cCmdSetBpartnerInfoLabel, gridBagConstraints4);
+			cCommandInfoPanel.add(cCmdGotoPaymentsLabel, gridBagConstraints5);
+			cCommandInfoPanel.add(cCmdCancelOrderInfoLabel, gridBagConstraints6);
 		}
 		return cCommandInfoPanel;
 	}
@@ -5503,6 +5527,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			setActionEnabled(REMOVE_PAYMENT_ACTION, false);
 			setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, false);
 			setActionEnabled(CANCEL_ORDER, true);
+			setActionEnabled(INSERT_PROMOTIONAL_CODE, true);
 			getStatusBar().setStatusLine(MSG_POS_ORDER_STATUS);
 			getCPosTab().setTitleAt(0, MSG_ORDER);
 			// Muestra el panel de total dentro del panel superior del pedido.
@@ -5524,6 +5549,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			setActionEnabled(MOVE_PAYMENT_FORWARD, true);
 			setActionEnabled(MOVE_PAYMENT_BACKWARD, true);
 			setActionEnabled(REMOVE_PAYMENT_ACTION, true);
+			setActionEnabled(INSERT_PROMOTIONAL_CODE, false);
 			setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, true);
 			setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, true);
 			setActionEnabled(CANCEL_ORDER, true);
@@ -5700,6 +5726,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     
     private void openBPInfoDialog(){
     	BPartnerDialog dialog = new BPartnerDialog(this, true);
+    	AEnv.positionCenterScreen(dialog);
+		dialog.setModal(true);
+		dialog.setVisible(true);
+    }
+    
+    private void openPromotionsDialog(){
+    	PromotionsDialog dialog = new PromotionsDialog(this);
     	AEnv.positionCenterScreen(dialog);
 		dialog.setModal(true);
 		dialog.setVisible(true);
