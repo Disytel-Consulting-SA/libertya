@@ -616,3 +616,85 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION c_posjournal_c_payment_v_filtered(anyarray)
   OWNER TO libertya;
+  
+--20181003-1245 Códigos o Cupones Promocionales 
+ALTER TABLE c_promotion ADD COLUMN promotiontype character(1);
+
+UPDATE c_promotion
+set promotiontype = 'G'
+where ad_client_id = 1010016;
+
+ALTER TABLE c_promotion ALTER COLUMN promotiontype SET NOT NULL;
+ALTER TABLE c_promotion ADD COLUMN maxpromotionalcodes integer NOT NULL DEFAULT 0;
+
+ALTER TABLE m_discountconfig ADD COLUMN maxpromotionalcoupons integer NOT NULL DEFAULT 0;
+
+CREATE TABLE c_promotion_code_batch
+(
+c_promotion_code_batch_id integer NOT NULL,
+ad_client_id integer NOT NULL,
+ad_org_id integer NOT NULL,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+createdby integer NOT NULL,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+updatedby integer NOT NULL,
+datetrx timestamp without time zone NOT NULL,
+description character varying(255),
+voidbatch character(1) NOT NULL DEFAULT 'N'::bpchar,
+processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+documentno character varying(30) NOT NULL,
+CONSTRAINT c_promotion_code_batch_key PRIMARY KEY (c_promotion_code_batch_id),
+CONSTRAINT client_promotion_code_batch FOREIGN KEY (ad_client_id)
+REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION,
+CONSTRAINT org_promotion_code_batch FOREIGN KEY (ad_org_id)
+REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+OIDS=FALSE
+);
+ALTER TABLE c_promotion_code_batch
+OWNER TO libertya;
+
+CREATE TABLE c_promotion_code
+(
+c_promotion_code_id integer NOT NULL,
+ad_client_id integer NOT NULL,
+ad_org_id integer NOT NULL,
+isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+createdby integer NOT NULL,
+updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+updatedby integer NOT NULL,
+c_promotion_id integer NOT NULL,
+code character varying(255) NOT NULL,
+validfrom timestamp without time zone NOT NULL,
+validto timestamp without time zone,
+c_promotion_code_batch_id integer NOT NULL,
+used character(1) NOT NULL DEFAULT 'N'::bpchar,
+processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+c_invoice_id integer,
+CONSTRAINT c_promotion_code_key PRIMARY KEY (c_promotion_code_id),
+CONSTRAINT c_promotion_code_invoice FOREIGN KEY (c_invoice_id)
+REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION,
+CONSTRAINT client_promotion_code FOREIGN KEY (ad_client_id)
+REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION,
+CONSTRAINT org_promotion_code FOREIGN KEY (ad_org_id)
+REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION,
+CONSTRAINT promotion_promotion_code FOREIGN KEY (c_promotion_id)
+REFERENCES c_promotion (c_promotion_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE NO ACTION,
+CONSTRAINT promotion_promotion_code_batch FOREIGN KEY (c_promotion_code_batch_id)
+REFERENCES c_promotion_code_batch (c_promotion_code_batch_id) MATCH SIMPLE
+ON UPDATE NO ACTION ON DELETE CASCADE
+)
+WITH (
+OIDS=FALSE
+);
+ALTER TABLE c_promotion_code
+OWNER TO libertya;

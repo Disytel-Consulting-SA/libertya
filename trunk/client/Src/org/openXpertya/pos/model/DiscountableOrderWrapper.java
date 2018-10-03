@@ -8,6 +8,7 @@ import org.openXpertya.model.DiscountCalculator;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountableDocument;
 import org.openXpertya.model.MDocumentDiscount;
+import org.openXpertya.model.MPromotionCode;
 import org.openXpertya.model.MTax;
 
 /**
@@ -119,6 +120,11 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	@Override
 	public boolean isApplyPercepcion() {
 		return true;
+	}
+
+	@Override
+	public void setDocumentReferences(MPromotionCode promotionCode) {
+		promotionCode.setC_Invoice_ID(getOrder().getGeneratedInvoiceID());
 	}
 
 	/*@Override

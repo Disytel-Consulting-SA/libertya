@@ -14,6 +14,7 @@ import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MProduct;
+import org.openXpertya.model.MPromotion;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
 import org.openXpertya.pos.exceptions.InvalidOrderException;
@@ -35,10 +36,12 @@ import org.openXpertya.pos.model.PriceList;
 import org.openXpertya.pos.model.PriceListVersion;
 import org.openXpertya.pos.model.Product;
 import org.openXpertya.pos.model.ProductList;
+import org.openXpertya.pos.model.Promotion;
 import org.openXpertya.pos.model.Tax;
 import org.openXpertya.pos.model.User;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -852,5 +855,45 @@ public class PoSModel {
 
 	public void setCurrentPaymentDiscountBaseAmount(BigDecimal currentPaymentDiscountBaseAmount) {
 		this.currentPaymentDiscountBaseAmount = currentPaymentDiscountBaseAmount;
+	}
+	
+	public List<Promotion> getPromotions(){
+		List<Promotion> promos = new ArrayList<Promotion>();
+		for (MPromotion promotion : getOrder().getDiscountCalculator().getValidPromos()) {
+			promos.add(new Promotion(promotion.getID(), promotion.getPromotionType(), promotion.getName(),
+					promotion.getPromotionalCode()));
+		}
+		return promos;
+	}
+	
+	/**
+	 * Realiza validaciones sobre el código promocional parámetro para controlar
+	 * si es posible agregarlo o no
+	 * 
+	 * @param code
+	 *            código promocional
+	 * @return resultado de las validaciones
+	 */
+	public CallResult isPromotionalCodeValid(String code){
+		return getOrder().isPromotionalCodeValid(code);
+	}
+	
+	/**
+	 * Agrega un código promocional para realizar una recarga de las promociones
+	 * 
+	 * @param promotionCode código promocional a agregar
+	 */
+	public void addPromotionalCode(String promotionCode){
+		getOrder().addPromotionalCode(promotionCode);
+	}
+
+	/**
+	 * Elimina un código promocional de la lista de códigos
+	 * 
+	 * @param promotionCode
+	 *            código promocional a eliminar
+	 */
+	public void removePromotionalCode(String promotionCode){
+		getOrder().removePromotionalCode(promotionCode);
 	}
 }

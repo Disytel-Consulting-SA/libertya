@@ -14,6 +14,8 @@
 
 package org.openXpertya.util;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -74,6 +76,17 @@ public final class StringUtil {
     	return result;
     }
     
+    /**
+	 * Equivalente a implode("(",",",")"); de utilidad tiíica para generar clausulas
+	 * sql UNION a partir de una lista de strings. Se agrega comilla simple a cada elemento.
+	 * 
+	 * @param list no puede ser null, no puede tener componentes null
+	 * @return las String vacia si list es vacia
+	 */
+	public static String implodeForUnion(Collection<String> list) {
+		return implode(list,"(",",",")");
+	}
+    
 	/**
 	 * Equivalente a implode("(",",",")"); de utilidad tiíica para generar clausulas
 	 * sql UNION a partir de una lista de enteros.
@@ -115,6 +128,23 @@ public final class StringUtil {
     	return bs.toString();
     }
     
+    public static String implode(Collection<String> list,String begin, String separator, String end) {
+    	if (list.size()<= 0)
+    		return "";
+    	StringBuffer bs = new StringBuffer();
+    	bs.append(begin);
+    	Iterator<String> it = list.iterator();
+    	String element;
+    	for (int i = 0; it.hasNext(); i++){
+    		element = "'"+it.next()+"'";
+    		if ( i > 0){
+    			bs.append(separator);
+    		}
+    		bs.append(element);
+    	}
+    	bs.append(end);
+    	return bs.toString();
+    }
     
     public static String pad(String str, String filler, Integer length, boolean left){
     	if(str.length() >= length){

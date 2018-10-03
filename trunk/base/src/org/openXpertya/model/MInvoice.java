@@ -6583,6 +6583,11 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		public List<DocumentTax> getAppliedPercepciones() {
 			return MInvoice.this.getDocumentAppliedPercepciones();
 		}
+
+		@Override
+		public void setDocumentReferences(MPromotionCode promotionCode) {
+			promotionCode.setC_Invoice_ID(getID());
+		}
 	}
 
 	private class DiscountableMInvoiceCreditWrapper extends
