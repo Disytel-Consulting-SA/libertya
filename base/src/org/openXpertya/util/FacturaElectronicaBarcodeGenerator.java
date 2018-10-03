@@ -1,11 +1,10 @@
 package org.openXpertya.util;
 
-import java.awt.Color;
-import java.awt.Image;
 import java.text.SimpleDateFormat;
 
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
+import org.openXpertya.print.pdf.text.pdf.Barcode;
 import org.openXpertya.print.pdf.text.pdf.BarcodeInter25;
 
 /**
@@ -48,7 +47,7 @@ import org.openXpertya.print.pdf.text.pdf.BarcodeInter25;
 * De esta manera se llega a que el número <strong>5</strong> es el dígito verificador módulo 10 para el código 01234567890.<br>
 * 
 */
-public class FacturaElectronicaBarcodeGenerator {
+public class FacturaElectronicaBarcodeGenerator extends BarcodeGenerator {
 
 	/**  */
 	private String clientCuit;
@@ -61,16 +60,8 @@ public class FacturaElectronicaBarcodeGenerator {
 	
 	private String caeDueDate;
 	
-	private String code;
-	
-	private BarcodeInter25 barcodeInter25;
-	
-	private CLogger log;
-	
 	public FacturaElectronicaBarcodeGenerator() {
-		setLog(CLogger.getCLogger(getClass().getName()));
-		setBarcodeInter25(new BarcodeInter25());
-		getBarcodeInter25().setBarHeight(50);
+		// TODO Auto-generated constructor stub
 	}
 
 	public FacturaElectronicaBarcodeGenerator(MInvoice invoice, MDocType docType, String clientCUIT) {
@@ -127,12 +118,13 @@ public class FacturaElectronicaBarcodeGenerator {
 		setCaeDueDate(new SimpleDateFormat("yyyyMMdd").format(invoice.getvtocae()));
 	}
 	
+	@Override
 	public String generateCode(){
 		if (Util.isEmpty(getClientCuit(), true)
 				|| Util.isEmpty(getDocTypeCodeFE(), true)
 				|| Util.isEmpty(getPuntoDeVenta(), true)
 				|| Util.isEmpty(getCae(), true) || getCaeDueDate() == null) {
-			log.severe("Alguno de los datos requeridos no existe");
+			getLog().severe("Alguno de los datos requeridos no existe");
 			return "";
 		}
 		// Generar el código del código de barras para calcular el dígito verificador
@@ -144,7 +136,7 @@ public class FacturaElectronicaBarcodeGenerator {
 		String digitoVerificador = getDigitoVerificador(code);
 		code += digitoVerificador;
 		setCode(code);
-		getBarcodeInter25().setCode(code);
+		getBarcode().setCode(code);
 		return code;
 	}
 	
@@ -252,34 +244,12 @@ public class FacturaElectronicaBarcodeGenerator {
 		return digito;
 	}
 	
-	public Image getBarcodeImage(boolean generateCode){
-		if (generateCode)
-			generateCode();
-		if(Util.isEmpty(getCode(), true)){
-			getLog().severe("El codigo no existe porque falta algun dato");
-			return null;
-		}
-		return getBarcodeInter25().createAwtImage(Color.BLACK, Color.WHITE);
-	}
-	
-	public Image getBarcodeImage(){
-		return getBarcodeImage(false);
-	}
-	
 	public String getClientCuit() {
 		return clientCuit;
 	}
 
 	public void setClientCuit(String clientCuit) {
 		this.clientCuit = clientCuit;
-	}
-
-	public String getCode() {
-		return code;
-	}
-
-	public void setCode(String code) {
-		this.code = code;
 	}
 
 	public String getDocTypeCodeFE() {
@@ -314,20 +284,9 @@ public class FacturaElectronicaBarcodeGenerator {
 		this.caeDueDate = caeDueDate;
 	}
 
-	public CLogger getLog() {
-		return log;
-	}
-
-	public void setLog(CLogger log) {
-		this.log = log;
-	}
-
-	public BarcodeInter25 getBarcodeInter25() {
-		return barcodeInter25;
-	}
-
-	public void setBarcodeInter25(BarcodeInter25 barcodeInter25) {
-		this.barcodeInter25 = barcodeInter25;
+	@Override
+	public Barcode createBarcode() {
+		return new BarcodeInter25();
 	}
 
 }
