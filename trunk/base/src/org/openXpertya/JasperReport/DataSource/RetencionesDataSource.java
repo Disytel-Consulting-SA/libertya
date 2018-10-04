@@ -123,7 +123,7 @@ public class RetencionesDataSource implements JRDataSource {
 
 	public void loadData() {
 		// Se agrega el/los datasource del subreporte
-		String sql = "select distinct m_retencion_invoice_id, baseImponible_amt "
+		String sql = "select distinct m_retencion_invoice_id, baseImponible_amt, pago_actual_amt "
 				+ " from m_retencion_invoice r "
 				+ " where r.c_allocationhdr_id=" +getAllocationHdr().getID()
 				+ " order by m_retencion_invoice_id ";
@@ -137,7 +137,7 @@ public class RetencionesDataSource implements JRDataSource {
 			RetencionDTO retencion;
 			while (rs.next()) {
 				retencion = new RetencionDTO();
-				retencion.taxBase = rs.getBigDecimal("baseImponible_amt");
+				retencion.taxBase = rs.getBigDecimal("pago_actual_amt");
 				retencion.retInvoice = new X_M_Retencion_Invoice(getCtx(), rs.getInt("m_retencion_invoice_id"), null);
 				
 				MClient client = JasperReportsUtil.getClient(getCtx(), retencion.retInvoice.getAD_Client_ID());
@@ -197,38 +197,15 @@ public class RetencionesDataSource implements JRDataSource {
 	 * recibo recibido por parámetro.
 	 */
 	private String get_Retencion_Invoices(MAllocationHdr allocation) {
-		String retencionInvoices = null;
-		// Si es OPA o RCA no posee comprobantes
-		if(!allocation.isAdvanced()){
-			PreparedStatement stmt = null;
-			ResultSet rs = null;
-			try {
-				stmt = DB.prepareStatement("SELECT DISTINCT factura "
-										+ "FROM C_Allocation_Detail_V "
-										+ "WHERE C_AllocationHdr_ID = ? "
-										+ "ORDER BY factura DESC");
-				stmt.setInt(1, allocation.getC_AllocationHdr_ID());
-				rs = stmt.executeQuery();
-	
-				retencionInvoices = "- ";
-				while (rs.next()) {
-					retencionInvoices = retencionInvoices.concat(rs.getString(1).concat(" - "));
-				}
-	
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally{
-				try {
-					if(stmt != null)stmt.close();
-					if(rs != null)rs.close();
-				} catch (Exception e2) {
-					e2.printStackTrace();
-				}
-			}
+		String separator = " - ";
+		StringBuffer retencionInvoices = new StringBuffer(separator);
+		for (MInvoice debit : allocation.getAllocationDebits()) {
+			retencionInvoices.append(debit.getDocumentNo()).append(separator);
 		}
-		return retencionInvoices;
+		return retencionInvoices.toString();
 	}
 
+	
 	protected MAllocationHdr getAllocationHdr() {
 		return allocationHdr;
 	}
