@@ -1844,6 +1844,39 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 		}
 		return skip;
 	}
+	
+	/**
+	 * @return lista con débitos incluídos en este allocation
+	 */
+	public List<MInvoice> getAllocationDebits(){
+		List<MInvoice> debits = new ArrayList<MInvoice>();
+		// Si es OPA o RCA no posee comprobantes
+		if(!isAdvanced()){
+			PreparedStatement stmt = null;
+			ResultSet rs = null;
+			try {
+				stmt = DB.prepareStatement("SELECT DISTINCT c_invoice_id, documentno "
+										+ "FROM C_Allocation_Detail_Debits_V "
+										+ "WHERE C_AllocationHdr_ID = ? "
+										+ "ORDER BY documentno ");
+				stmt.setInt(1, getID());
+				rs = stmt.executeQuery();
+				while (rs.next()) {
+					debits.add(new MInvoice(getCtx(), rs.getInt("c_invoice_id"), get_TrxName()));
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally{
+				try {
+					if(rs != null)rs.close();
+					if(stmt != null)stmt.close();
+				} catch (Exception e2) {
+					e2.printStackTrace();
+				}
+			}
+		}
+		return debits;
+	}
 }    // MAllocation
 
 

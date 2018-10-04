@@ -15,12 +15,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBankList;
+import org.openXpertya.model.MClient;
 import org.openXpertya.model.MExpFormatRow;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.X_AD_Client;
 import org.openXpertya.model.X_AD_ClientInfo;
 import org.openXpertya.model.X_C_AllocationHdr;
-import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BankList;
 import org.openXpertya.model.X_C_BankListLine;
 import org.openXpertya.model.X_C_BankList_Config;
@@ -705,7 +707,8 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		sql.append("	a.dateacct as fechaop, ");
 		sql.append("	i.dateacct as fecharet, ");
 		sql.append("	rs.name as concepto, ");
-		sql.append("	ri.baseimponible_amt ");
+		sql.append("	ri.baseimponible_amt, ");
+		sql.append("	ri.pago_actual_amt ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_AllocationHdr.Table_Name + " a ");
 		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
@@ -732,6 +735,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		Date fecharet = null;
 		String concepto = "";
 		BigDecimal baseImponible = null;
+		BigDecimal pagoActual = null;
 
 		try {
 			ps = DB.prepareStatement(sql.toString());
@@ -748,6 +752,7 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 				fecharet = new Date(rs.getTimestamp("fecharet").getTime());
 				concepto = rs.getString("concepto");
 				baseImponible = rs.getBigDecimal("baseimponible_amt");
+				pagoActual = rs.getBigDecimal("pago_actual_amt");
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "getFileHeader", e);
@@ -770,12 +775,12 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 		tmp.append(getPCLine("                       Por la presente adjuntamos la siguiente nota:             "));
 		tmp.append(getPCLine("Retencion del impuesto " + impuesto + " sobre el pago realizado el          "));
 		tmp.append(getPCLine(fmt1.format(fechaop) + " en concepto de " + concepto));
-		tmp.append(getPCLine("determinado sobre un importe de " + baseImponible.doubleValue()));
+		tmp.append(getPCLine("determinado sobre un importe de " + pagoActual.doubleValue()));
 		tmp.append(getPCLine("Esta retencion del mes de " + cap(fmt2.format(fecharet)) + " a ser depositado el mes de            "));
 		tmp.append(getPCLine(cap(fmt2.format(fecharet)) + "                                                                     "));
 		tmp.append(getPCLine("En el paquete de pago se encuentran los siguientes comprobantes                  "));
 		tmp.append(getBlankPCLine());
-		tmp.append(getPCLine("FECHA EMISION                 COMPROBANTE                    IMPORTE             "));
+		tmp.append(getPCLine("FECHA EMISION                                     COMPROBANTE                    "));
 		tmp.append(getPCLine(asciiHr()));
 
 		return tmp.toString();
@@ -784,110 +789,31 @@ public class ExportRetentionsPatagonia extends ExportBankList {
 	private String getInvoicesInfo(int c_banklistline_id) {
 		StringBuffer sql = new StringBuffer();
 
-		sql.append("SELECT DISTINCT ");
-		sql.append("	i.c_invoice_id, ");
-		sql.append("	COALESCE(i.numerocomprobante, 0) AS nro, ");
-		sql.append("	i.dateinvoiced, ");
-		sql.append("	SUM(al.amount) AS amount, ");
-		sql.append("	ri.importe_no_imponible_amt, ");
-		sql.append("	COALESCE(ri.base_calculo_percent, 100) AS base_percent, ");
-		sql.append("	ri.baseimponible_amt, ");
-		sql.append("	ri.retencion_percent, ");
-		sql.append("	ri.importe_determinado_amt, ");
-		sql.append("	c.name ");
-		sql.append("FROM ");
-		sql.append("	" + X_C_BankList.Table_Name + " bl ");
-		sql.append("	INNER JOIN " + X_C_BankListLine.Table_Name + " bll ");
-		sql.append("		ON bll.c_banklist_id = bl.c_banklist_id ");
-		sql.append("	INNER JOIN " + X_C_AllocationHdr.Table_Name + " a ");
-		sql.append("		ON a.c_allocationhdr_id = bll.c_allocationhdr_id ");
-		sql.append("	INNER JOIN " + X_C_AllocationLine.Table_Name + " al ");
-		sql.append("		ON al.c_allocationhdr_id = a.c_allocationhdr_id ");
-		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
-		sql.append("		ON al.c_invoice_id = i.c_invoice_id ");
-		sql.append("	INNER JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
-		sql.append("		ON (ri.c_allocationhdr_id = a.c_allocationhdr_id and ri.c_invoice_id = al.c_invoice_credit_id) ");
-		sql.append("	INNER JOIN " + X_AD_Client.Table_Name + " c ");
-		sql.append("		ON c.ad_client_id = i.ad_client_id ");
-		sql.append("WHERE ");
-		sql.append("	bll.c_banklistline_id = ? ");
-		sql.append("	AND ri.c_invoice_id = ? ");
-		sql.append("GROUP BY ");
-		sql.append("	i.c_invoice_id, ");
-		sql.append("	i.numerocomprobante, ");
-		sql.append("	i.dateinvoiced, ");
-		sql.append("	ri.importe_no_imponible_amt, ");
-		sql.append("	COALESCE(ri.base_calculo_percent, 100), ");
-		sql.append("	ri.baseimponible_amt, ");
-		sql.append("	ri.retencion_percent, ");
-		sql.append("	ri.importe_determinado_amt, ");
-		sql.append("	c.name ");
-		sql.append("ORDER BY ");
-		sql.append("	i.dateinvoiced, ");
-		sql.append("	nro ASC ");
+		sql.append("SELECT c_allocationhdr_id ");
+		sql.append("FROM " + X_C_BankListLine.Table_Name + " bll ");
+		sql.append("WHERE bll.c_banklistline_id = ? ");
 
+		int allocationHdr = DB.getSQLValue(get_TrxName(), sql.toString(), c_banklistline_id);
+		MAllocationHdr aHdr = new MAllocationHdr(getCtx(), allocationHdr, get_TrxName());
+		MInvoice currentInvoice = new MInvoice(getCtx(), currentInvoiceId, get_TrxName()); 
+		DateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
+		
 		StringBuffer tmp = new StringBuffer();
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		BigDecimal total = BigDecimal.ZERO;
-		BigDecimal baseImponible = BigDecimal.ZERO;
-		BigDecimal basePercent = BigDecimal.ZERO;
-		BigDecimal noImponibleImp = BigDecimal.ZERO;
-		BigDecimal retencionPercent = BigDecimal.ZERO;
-		BigDecimal importeDetermAmt = BigDecimal.ZERO;
-		String clientName = "";
-
-		try {
-			ps = DB.prepareStatement(sql.toString());
-
-			ps.setInt(1, c_banklistline_id);
-			ps.setInt(2, currentInvoiceId);
-			rs = ps.executeQuery();
-			while (rs.next()) {
-				total = total.add(rs.getBigDecimal("amount"));
-				noImponibleImp = rs.getBigDecimal(5);
-				baseImponible = rs.getBigDecimal(7);
-				basePercent = rs.getBigDecimal(6);
-				retencionPercent = rs.getBigDecimal(8);
-				importeDetermAmt = rs.getBigDecimal(9);
-				clientName = rs.getString(10);
-
-				Date date = new Date(rs.getTimestamp(3).getTime());
-				DateFormat fmt = new SimpleDateFormat("dd/MM/yyyy");
-
-				tmp.append(getPCLine(fillField(fmt.format(date), " ", MExpFormatRow.ALIGNMENT_Left, 31, null)
-							+"FAC " + fillField(String.valueOf(rs.getInt(2)), " ", MExpFormatRow.ALIGNMENT_Right, 8, null)
-							+fillField(String.valueOf(rs.getBigDecimal("amount").doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 24, null)));
-			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "getCompanyInfo", e);
-		} finally {
-			try {
-				rs.close();
-				ps.close();
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Cannot close statement or resultset");
-			}
-
+		for (MInvoice debit : aHdr.getAllocationDebits()) {
+			tmp.append(getPCLine(fillField(fmt.format(debit.getDateInvoiced()), " ", MExpFormatRow.ALIGNMENT_Left, 41, null)
+					+ fillField(String.valueOf(debit.getDocumentNo()), " ", MExpFormatRow.ALIGNMENT_Right, 36, null)));
 		}
 
-		String tmpStr = NumeroCastellano.numeroACastellano(importeDetermAmt);
+		String tmpStr = NumeroCastellano.numeroACastellano(currentInvoice.getGrandTotal());
 		//tmpStr = tmpStr.replaceAll("PESOS CON", "......." + getRowSeparator() + commonMargin() + whiteSpace(12) + "CON");
 
 		tmp.append(getBlankPCLine());
 		tmp.append(getBlankPCLine());
-		tmp.append(getPCLine("Este pago" + fillField(String.valueOf(total.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 58, null)));
-		tmp.append(getPCLine("Importe No Imponible" + fillField("" + noImponibleImp.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 47, null)));
-		tmp.append(getPCLine("Porcentaje Base Calculo %" + fillField("" + basePercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 42, null)));
-		tmp.append(getPCLine("Base Imponible" + fillField(String.valueOf(baseImponible.doubleValue()), " ", MExpFormatRow.ALIGNMENT_Right, 53, null)));
-		tmp.append(getPCLine("Alicuota %" + fillField("" + retencionPercent.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 57, null)));
-		tmp.append(getBlankPCLine());
-		tmp.append(getPCLine("IMPORTE RETENIDO" + fillField("" + importeDetermAmt.doubleValue(), " ", MExpFormatRow.ALIGNMENT_Right, 51, null)));
-		tmp.append(getPCLine("SON PESOS:  " + tmpStr));
+		tmp.append(getPCLine("IMPORTE RETENIDO" + fillField("" + currentInvoice.getGrandTotal().doubleValue(), " ",
+				MExpFormatRow.ALIGNMENT_Right, 51, null)));
 		tmp.append(getBlankPCLine());
 		tmp.append(getBlankPCLine());
-		tmp.append(getLastPCLine(whiteSpace(27) + clientName + " - AdmCentral"));
+		tmp.append(getLastPCLine(whiteSpace(27) + MClient.get(getCtx()).getName() + " - AdmCentral"));
 
 		return tmp.toString();
 	}
