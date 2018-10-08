@@ -2277,7 +2277,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 					boolean withQtyReturned = ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0 && !Env.isAllowDeliveryReturn(getCtx());
 					if ((MovementType.endsWith("-") && QtySO.signum() >= 0) 
 							|| (MovementType.endsWith("+") && QtySO.signum() < 0)) {
-	                    if (realOrderLinePendingQty.subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
+	                    if (realOrderLinePendingQty.subtract(sLine.getMovementQty()).compareTo(Env.ZERO) < 0) {
 	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
 							if (withQtyReturned) {
 	                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
