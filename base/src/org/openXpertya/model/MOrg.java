@@ -136,6 +136,8 @@ public class MOrg extends X_AD_Org {
             MRoleOrgAccess.createForOrg(this);
             MRole.getDefault(getCtx(), true);		// reload
 
+            MUserOrgAccess.createForOrg(this);
+            
             // TreeNode
             insert_Tree(MTree_Base.TREETYPE_Organization);
         }

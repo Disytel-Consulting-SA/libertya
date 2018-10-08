@@ -22,6 +22,7 @@ package org.openXpertya.model;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
 //~--- Importaciones JDK ------------------------------------------------------
@@ -259,6 +260,15 @@ public class MUserOrgAccess extends X_AD_User_OrgAccess {
         return m_orgName;
 
     }		// getOrgName
+    
+    /**
+     *      Creacion de acceso por usuario para la organizacion 
+     */
+    public static boolean createForOrg(MOrg org) {
+    	MUserOrgAccess	userOrgAccess	= new MUserOrgAccess(org, Env.getAD_User_ID(org.getCtx()));
+        return userOrgAccess.save();
+    }		// createForOrg
+
 }	// MUserOrgAccess
 
 
