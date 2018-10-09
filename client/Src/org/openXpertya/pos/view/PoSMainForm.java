@@ -2498,8 +2498,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cTenderTypeCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cTenderTypeCombo.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
-					ValueNamePair tenderType = (ValueNamePair) e.getItem();
-					loadTenderType(tenderType.getValue());
+					if(ItemEvent.SELECTED == e.getStateChange()){
+						ValueNamePair tenderType = (ValueNamePair) e.getItem();
+						loadTenderType(tenderType.getValue());
+					}
 				}
 			});
 			
@@ -3059,7 +3061,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardPlanCombo.addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
-					loadPaymentMediumInfo();
+					if(ItemEvent.SELECTED == e.getStateChange()){
+						loadPaymentMediumInfo();
+					}
 				}
 			});
 			FocusUtils.addFocusHighlight(cCreditCardPlanCombo);
@@ -4151,7 +4155,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cPaymentMediumCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cPaymentMediumCombo.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
-					loadPaymentMedium(true);
+					if(ItemEvent.SELECTED == e.getStateChange()){
+						loadPaymentMedium(true);
+					}
 				}
 
 			});
