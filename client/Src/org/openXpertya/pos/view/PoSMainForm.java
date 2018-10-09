@@ -5205,7 +5205,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		payment.setRealAmount(realAmount);
 		payment.setRealAmountConverted(getModel().currencyConvert(realAmount, currencyId, getCurrencyBaseID()));
 		payment.setDiscountBaseAmt(getModel().getCurrentPaymentDiscountBaseAmount());
-		payment.setDiscountBaseAmt(getModel().currencyConvert(getModel().getCurrentPaymentDiscountBaseAmount(),
+		payment.setDiscountBaseAmtConverted(getModel().currencyConvert(getModel().getCurrentPaymentDiscountBaseAmount(),
 				currencyId, getCurrencyBaseID()));
 		// Se asocia el medio de pago con el pago concreto.
 		payment.setPaymentMedium(paymentMedium);
