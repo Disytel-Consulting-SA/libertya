@@ -16,8 +16,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
@@ -52,6 +50,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -2495,13 +2495,22 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CComboBox getCTenderTypeCombo() {
 		if (cTenderTypeCombo == null) {
 			cTenderTypeCombo = getComponentFactory().createTenderTypeCombo();
-			cTenderTypeCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
-			cTenderTypeCombo.addItemListener(new ItemListener() {
-				public void itemStateChanged(ItemEvent e) {
-					if(ItemEvent.SELECTED == e.getStateChange()){
-						ValueNamePair tenderType = (ValueNamePair) e.getItem();
-						loadTenderType(tenderType.getValue());
-					}
+			cTenderTypeCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));			
+			cTenderTypeCombo.addPopupMenuListener(new PopupMenuListener() {
+				
+				@Override
+				public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+					// No hace nada porque recién se torna visible el popup
+				}
+				
+				@Override
+				public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+					loadTenderType(((ValueNamePair)cTenderTypeCombo.getSelectedItem()).getValue());					
+				}
+				
+				@Override
+				public void popupMenuCanceled(PopupMenuEvent e) {
+					// No hace nada porque se canceló la selección
 				}
 			});
 			
@@ -3001,12 +3010,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cAmountText.addVetoableChangeListener(new VetoableChangeListener() {
 
 				public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
-					// Si el valor ingresado supera el pendiente del pedido,
-					// entonces se usa el pendiente
-					/*if (getCAmountText().getValue() == null) {
-						getCAmountText().setValue(getCurrencyOrderOpenAmount());
-					}*/
-					//updateConvertedAmount();
 					refreshPaymentMediumInfo((BigDecimal) getCAmountText()
 							.getValue());
 				}
@@ -3058,12 +3061,23 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardPlanCombo.setPreferredSize(size);
 			cCreditCardPlanCombo.setMinimumSize(size);
 			cCreditCardPlanCombo.setMandatory(true);
-			cCreditCardPlanCombo.addItemListener(new ItemListener() {
+			cCreditCardPlanCombo.addPopupMenuListener(new PopupMenuListener() {
+				
 				@Override
-				public void itemStateChanged(ItemEvent e) {
-					if(ItemEvent.SELECTED == e.getStateChange()){
-						loadPaymentMediumInfo();
-					}
+				public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+					loadPaymentMediumInfo();
+				}
+				
+				@Override
+				public void popupMenuCanceled(PopupMenuEvent e) {
+					// TODO Auto-generated method stub
+					
 				}
 			});
 			FocusUtils.addFocusHighlight(cCreditCardPlanCombo);
@@ -4153,14 +4167,27 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (cPaymentMediumCombo == null) {
 			cPaymentMediumCombo = new CComboBox();
 			cPaymentMediumCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
-			cPaymentMediumCombo.addItemListener(new ItemListener() {
-				public void itemStateChanged(ItemEvent e) {
-					if(ItemEvent.SELECTED == e.getStateChange()){
-						loadPaymentMedium(true);
-					}
+			cPaymentMediumCombo.addPopupMenuListener(new PopupMenuListener() {
+				
+				@Override
+				public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+					// TODO Auto-generated method stub
+					
 				}
 
+				
+				@Override
+				public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+					loadPaymentMedium(true);
+				}
+				
+				@Override
+				public void popupMenuCanceled(PopupMenuEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
 			});
+			
 			cPaymentMediumCombo.setMandatory(true);
 			FocusUtils.addFocusHighlight(cPaymentMediumCombo);
 		}
