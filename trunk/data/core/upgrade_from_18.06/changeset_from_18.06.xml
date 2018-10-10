@@ -54,6 +54,11 @@ Ejemplos de cambios
     	<!-- 20180830 - Incorporar argumentos de invocacion --> 
     	<copy file="${SOURCE_DIR}/CreateReplicationTriggers.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
     	
+    	<!-- 20181010 - Nuevas versiones que incluyen timeout -->
+    	<copy file="${SOURCE_DIR}/libertyad_centos.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/libertyad_fedora.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/libertyad_ubuntu-debian.sh" todir="${TARGET_DIR}/utils/unix" overwrite="yes" />    		
+    	
     </target>
     
 </project>

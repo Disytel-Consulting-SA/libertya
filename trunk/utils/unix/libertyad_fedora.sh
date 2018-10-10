@@ -53,11 +53,18 @@ start-stop-daemon --start --chuid libertya --background -m --pidfile $PID --exec
 findLogs cantLogs $OXP_HOME
 # obtenemos la cantidad actual de ficheros
 findLogs cantLogsNew $OXP_HOME
+c=0
+timeout=180
 # ingresamos a un bucle, mientras exista la misma cantidad de ficheros
 while [ $cantLogs = $cantLogsNew ]; do
 # esperamos 900 milisegundos
 sleep 0.9
 echo -n "."
+c=`expr $c + 1`
+if [ $c -gt $timeout ]; then
+	echo " [ERROR] Timeout al iniciar "
+	exit 1;
+fi
 # volvemos a obtener la cantidad de ficheros
 findLogs cantLogsNew $OXP_HOME
 done
