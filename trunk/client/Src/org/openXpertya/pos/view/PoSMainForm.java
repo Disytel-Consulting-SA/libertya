@@ -16,6 +16,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
@@ -2495,7 +2497,17 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CComboBox getCTenderTypeCombo() {
 		if (cTenderTypeCombo == null) {
 			cTenderTypeCombo = getComponentFactory().createTenderTypeCombo();
-			cTenderTypeCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));			
+			cTenderTypeCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cTenderTypeCombo.addItemListener(new ItemListener() {
+				
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					if (!cTenderTypeCombo.isPopupVisible() && ItemEvent.SELECTED == e.getStateChange()) {
+						loadTenderType(((ValueNamePair)cTenderTypeCombo.getSelectedItem()).getValue());
+					}
+					
+				}
+			});
 			cTenderTypeCombo.addPopupMenuListener(new PopupMenuListener() {
 				
 				@Override
@@ -3061,6 +3073,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardPlanCombo.setPreferredSize(size);
 			cCreditCardPlanCombo.setMinimumSize(size);
 			cCreditCardPlanCombo.setMandatory(true);
+			cCreditCardPlanCombo.addItemListener(new ItemListener() {
+				
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					if (!cCreditCardPlanCombo.isPopupVisible() && ItemEvent.SELECTED == e.getStateChange()) {
+						loadPaymentMediumInfo();
+					}
+					
+				}
+			});
 			cCreditCardPlanCombo.addPopupMenuListener(new PopupMenuListener() {
 				
 				@Override
@@ -4167,6 +4189,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (cPaymentMediumCombo == null) {
 			cPaymentMediumCombo = new CComboBox();
 			cPaymentMediumCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
+			cPaymentMediumCombo.addItemListener(new ItemListener() {
+				
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					if (!cPaymentMediumCombo.isPopupVisible() && ItemEvent.SELECTED == e.getStateChange()) {
+						loadPaymentMedium(true);
+					}
+					
+				}
+			});
 			cPaymentMediumCombo.addPopupMenuListener(new PopupMenuListener() {
 				
 				@Override
