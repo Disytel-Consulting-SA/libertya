@@ -262,7 +262,8 @@ public class MInOutLine extends X_M_InOutLine {
 					setM_Locator_ID(M_Locator_ID);
 				}
 			} else {
-				set_ValueNoCheck("M_Locator_ID", null);
+				set_ValueNoCheck("M_Locator_ID", MWarehouse.getDefaultLocatorID(
+						getM_Warehouse_ID(), get_TrxName()));
 			}
 		}
 
