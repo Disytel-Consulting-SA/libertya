@@ -1,6 +1,7 @@
 package org.openXpertya.process.release;
 
 import org.openXpertya.JasperReport.MJasperReport;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.utils.JarHelper;
 
@@ -13,6 +14,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	/** UID de la impresión de codigos o cupones promocionales */
 	protected final static String PROMOTIONAL_CODES_BATCH_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010251";
 	protected final static String PROMOTIONAL_CODES_BATCH_JASPER_REPORT_FILENAME = "PromotionalCodeBatch.jasper";
+	
+	/** UID del Listado de OC */
+	protected final static String PURCHASE_ORDER_REPORT_JASPER_REPORT_UID = "CORE-AD_Process-1010433";
+	protected final static String PURCHASE_ORDER_REPORT_JASPER_REPORT_FILENAME = "PurchaseOrderReport.jrxml";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -47,6 +52,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(PROMOTIONAL_CODES_BATCH_JASPER_REPORT_FILENAME)));
+		
+		// Listado de OC
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				PURCHASE_ORDER_REPORT_JASPER_REPORT_UID,
+				PURCHASE_ORDER_REPORT_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(PURCHASE_ORDER_REPORT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
