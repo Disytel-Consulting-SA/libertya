@@ -13,6 +13,7 @@ public class DetailParticipant extends GenericMap {
 	/** Campos a almacenar en la DB. */
 	public static String[] filteredFields = {
 			"comercio_participante",
+			"fecha_vencimiento_clearing",
 			"numero_liquidacion",
 			"importe_total",
 			"importe_total_signo",
@@ -21,7 +22,7 @@ public class DetailParticipant extends GenericMap {
 
 	public DetailParticipant(Datum values) {
 		super(filteredFields, values, null);
-		matchingFields = new String[] { "comercio_participante", "numero_liquidacion" };
+		matchingFields = new String[] { "comercio_participante", "numero_liquidacion", "fecha_vencimiento_clearing" };
 	}
 
 }

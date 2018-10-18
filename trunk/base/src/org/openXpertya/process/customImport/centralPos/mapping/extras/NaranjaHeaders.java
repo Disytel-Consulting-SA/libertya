@@ -30,7 +30,7 @@ public class NaranjaHeaders extends GenericMap {
 
 	public NaranjaHeaders(Datum values) {
 		super(filteredFields, values, null);
-		matchingFields = new String[] { "comercio", "fecha_pago" };
+		matchingFields = new String[] { "comercio", "nro_liquidacion", "fecha_pago" };
 	}
 
 }

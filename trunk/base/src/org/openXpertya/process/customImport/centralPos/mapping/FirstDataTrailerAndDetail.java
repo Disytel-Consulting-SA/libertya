@@ -17,7 +17,7 @@ public class FirstDataTrailerAndDetail extends GenericMap {
 
 	public FirstDataTrailerAndDetail(TrailerParticipants trailerParticipant, DetailParticipant detailParticipant) {
 		super(joinArrays(TrailerParticipants.filteredFields, DetailParticipant.filteredFields), null, X_I_FirstDataTrailerAndDetail.Table_Name);
-		matchingFields = new String[] { "comercio_participante", "numero_liquidacion" };
+		matchingFields = new String[] { "comercio_participante", "numero_liquidacion", "fecha_vencimiento_clearing" };
 
 		List<GenericDatum> data = new ArrayList<GenericDatum>();
 		data.add(trailerParticipant.getValues());
@@ -28,12 +28,12 @@ public class FirstDataTrailerAndDetail extends GenericMap {
 
 	public FirstDataTrailerAndDetail(TrailerParticipants trailerParticipant) {
 		super(joinArrays(TrailerParticipants.filteredFields, DetailParticipant.filteredFields), trailerParticipant.getValues(), X_I_FirstDataTrailerAndDetail.Table_Name);
-		matchingFields = new String[] { "comercio_participante", "numero_liquidacion" };
+		matchingFields = new String[] { "comercio_participante", "numero_liquidacion", "fecha_vencimiento_clearing" };
 	}
 
 	public FirstDataTrailerAndDetail() {
 		super(joinArrays(TrailerParticipants.filteredFields, DetailParticipant.filteredFields), null, X_I_FirstDataTrailerAndDetail.Table_Name);
-		matchingFields = new String[] { "comercio_participante", "numero_liquidacion" };
+		matchingFields = new String[] { "comercio_participante", "numero_liquidacion", "fecha_vencimiento_clearing" };
 	}
 
 }

@@ -23,7 +23,7 @@ public class AmexPaymentsWithTaxes extends GenericMap {
 	public AmexPaymentsWithTaxes(AmexPayments payment, AmexTaxes tax) {
 		super(joinArrays(AmexPayments.filteredFields, AmexTaxes.filteredFields), null, X_I_AmexPaymentsAndTaxes.Table_Name);
 
-		matchingFields = new String[] { "num_sec_pago" };
+		matchingFields = new String[] { "num_sec_pago", "fecha_pago" };
 
 		List<GenericDatum> data = new ArrayList<GenericDatum>();
 		data.add(payment.getValues());
@@ -38,13 +38,13 @@ public class AmexPaymentsWithTaxes extends GenericMap {
 	 */
 	public AmexPaymentsWithTaxes(AmexPayments payment) {
 		super(joinArrays(AmexPayments.filteredFields, AmexTaxes.filteredFields), payment.getValues(), X_I_AmexPaymentsAndTaxes.Table_Name);
-		matchingFields = new String[] { "num_sec_pago" };
+		matchingFields = new String[] { "num_sec_pago", "fecha_pago" };
 	}
 
 	/** Constructor. */
 	public AmexPaymentsWithTaxes() {
 		super(joinArrays(AmexPayments.filteredFields, AmexTaxes.filteredFields), null, X_I_AmexPaymentsAndTaxes.Table_Name);
-		matchingFields = new String[] { "num_sec_pago" };
+		matchingFields = new String[] { "num_sec_pago", "fecha_pago" };
 	}
 
 }

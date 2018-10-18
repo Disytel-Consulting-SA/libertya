@@ -41,7 +41,7 @@ public class TrailerParticipants extends GenericMap {
 
 	public TrailerParticipants(Datum values) {
 		super(filteredFields, values, null);
-		matchingFields = new String[] { "comercio_participante", "numero_liquidacion" };
+		matchingFields = new String[] { "comercio_participante", "numero_liquidacion", "fecha_vencimiento_clearing" };
 	}
 
 	public String getSettlementNo() {
