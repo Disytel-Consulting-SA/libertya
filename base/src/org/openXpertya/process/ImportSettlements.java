@@ -35,6 +35,7 @@ import org.openXpertya.process.customImport.centralPos.mapping.FirstDataTrailerA
 import org.openXpertya.process.customImport.centralPos.mapping.GenericMap;
 import org.openXpertya.process.customImport.centralPos.mapping.NaranjaPayments;
 import org.openXpertya.process.customImport.centralPos.mapping.VisaPayments;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -427,6 +428,7 @@ public class ImportSettlements extends SvrProcess {
 					} else {
 						settlement.setAmount(settlement.getAmount().add(totalAmt));
 						if (!settlement.save(get_TrxName())) {
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 							return ERROR;
 						} else {
 							result = SAVED;
@@ -446,6 +448,7 @@ public class ImportSettlements extends SvrProcess {
 					settlement.setSettlementNo(rs.getString("numero_liquidacion"));
 	
 					if (!settlement.save(get_TrxName())) {
+						markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 						return ERROR;
 					}
 					/* -- -- -- */
@@ -459,7 +462,10 @@ public class ImportSettlements extends SvrProcess {
 							cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							cc.setAD_Org_ID(settlement.getAD_Org_ID());
 							cc.setAmount(commission);
-							cc.save(get_TrxName());
+							if(!cc.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							commissionAmt = commissionAmt.add(commission);
 						}
 					} catch (NullPointerException e) {
@@ -476,7 +482,10 @@ public class ImportSettlements extends SvrProcess {
 							iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							iv.setAD_Org_ID(settlement.getAD_Org_ID());
 							iv.setAmount(iva);
-							iv.save(get_TrxName());
+							if(!iv.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							ivaAmt = ivaAmt.add(iva);
 						}
 					} catch (NullPointerException e) {
@@ -493,7 +502,10 @@ public class ImportSettlements extends SvrProcess {
 							cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							cc.setAD_Org_ID(settlement.getAD_Org_ID());
 							cc.setAmount(expense);
-							cc.save(get_TrxName());
+							if(!cc.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							expensesAmt = expensesAmt.add(expense); 
 						}
 					} catch (NullPointerException e) {
@@ -510,7 +522,10 @@ public class ImportSettlements extends SvrProcess {
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ps.setAD_Org_ID(settlement.getAD_Org_ID());
 							ps.setAmount(perception);
-							ps.save(get_TrxName());
+							if(!ps.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							perceptionAmt = perceptionAmt.add(perception); 
 						}
 					} catch (NullPointerException e) {
@@ -527,7 +542,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
-							ws.save(get_TrxName());
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					} catch (NullPointerException e) {
@@ -544,7 +562,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
-							ws.save(get_TrxName());
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					} catch (NullPointerException e) {
@@ -562,7 +583,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setC_Region_ID(retSchema.getC_Region_ID());
 							ws.setAmount(withholding);
-							ws.save(get_TrxName());
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					} catch (NullPointerException e) {
@@ -573,7 +597,8 @@ public class ImportSettlements extends SvrProcess {
 					settlement.setExpenses(expensesAmt);
 					settlement.setIVAAmount(ivaAmt);
 					settlement.setCommissionAmount(commissionAmt);
-					if (!settlement.save(get_TrxName())) {
+					if (!settlement.save()) {
+						markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 						return ERROR;
 					} else {
 						result = SAVED;
@@ -600,9 +625,13 @@ public class ImportSettlements extends SvrProcess {
 								ec.setAD_Org_ID(settlement.getAD_Org_ID());
 								ec.setAmount(expense);
 							}
-							ec.save(get_TrxName());
+							if(!ec.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							settlement.setExpenses(settlement.getExpenses().add(expense));
-							if (!settlement.save(get_TrxName())) {
+							if (!settlement.save()) {
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 								return ERROR;
 							} else {
 								result = SAVED;
@@ -718,7 +747,8 @@ public class ImportSettlements extends SvrProcess {
 						return ERROR;
 					} else {
 						settlement.setAmount(settlement.getAmount().add(compraAmt));
-						if (!settlement.save(get_TrxName())) {
+						if (!settlement.save()) {
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 							return ERROR;
 						} else {
 							result = SAVED;
@@ -750,6 +780,7 @@ public class ImportSettlements extends SvrProcess {
 					settlement.setSettlementNo(settlementNo);
 	
 					if (!settlement.save()) {
+						markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 						return ERROR;
 					}
 					
@@ -765,7 +796,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setC_Region_ID(retSchema.getC_Region_ID());
 							ws.setAmount(withholding);
-							ws.save();
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					} catch (NullPointerException e) {
@@ -782,7 +816,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
-							ws.save();
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					} catch (NullPointerException e) {
@@ -799,7 +836,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
-							ws.save();
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					} catch (NullPointerException e) {
@@ -818,7 +858,10 @@ public class ImportSettlements extends SvrProcess {
 							cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							cc.setAD_Org_ID(settlement.getAD_Org_ID());
 							cc.setAmount(commission);
-							cc.save();
+							if(!cc.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							commissionAmt = commissionAmt.add(commission); 
 						}
 					} catch (NullPointerException e) {
@@ -837,7 +880,10 @@ public class ImportSettlements extends SvrProcess {
 							iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							iv.setAD_Org_ID(settlement.getAD_Org_ID());
 							iv.setAmount(iva);
-							iv.save();
+							if(!iv.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							ivaAmt = ivaAmt.add(iva);
 						}
 					} catch (NullPointerException e) {
@@ -858,7 +904,10 @@ public class ImportSettlements extends SvrProcess {
 							ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ec.setAD_Org_ID(settlement.getAD_Org_ID());
 							ec.setAmount(expense);
-							ec.save();
+							if(!ec.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							expensesAmt = expensesAmt.add(expense); 
 						}
 					} catch (NullPointerException e) {
@@ -869,7 +918,8 @@ public class ImportSettlements extends SvrProcess {
 					settlement.setExpenses(expensesAmt);
 					settlement.setIVAAmount(ivaAmt);
 					settlement.setCommissionAmount(commissionAmt);
-					if (!settlement.save(get_TrxName())) {
+					if (!settlement.save()) {
+						markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 						return ERROR;
 					} else {
 						result = SAVED;
@@ -1026,9 +1076,10 @@ public class ImportSettlements extends SvrProcess {
 					settlement.setAmount(safeNumber(rs.getString("imp_bruto_est")));
 					settlement.setNetAmount(amt);
 					settlement.setC_Currency_ID(defaultCurrency.getC_Currency_ID());
-					settlement.setSettlementNo(rs.getString("num_sec_pago") + sdf_liq.format(date));
+					settlement.setSettlementNo(rs.getString("num_sec_pago"));
 
 					if (!settlement.save()) {
+						markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 						return ERROR;
 					}
 					/* -- -- -- */
@@ -1042,7 +1093,10 @@ public class ImportSettlements extends SvrProcess {
 							ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID()); 
 							ec.setAD_Org_ID(settlement.getAD_Org_ID());
 							ec.setAmount(expense);
-							ec.save();
+							if(!ec.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}						
 							expensesAmt = expensesAmt.add(expense);
 						}
 					} catch (NullPointerException e) {
@@ -1059,7 +1113,10 @@ public class ImportSettlements extends SvrProcess {
 							cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							cc.setAD_Org_ID(settlement.getAD_Org_ID());
 							cc.setAmount(commission);
-							cc.save();
+							if(!cc.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							commissionAmt = commissionAmt.add(commission);
 						}
 					} catch (NullPointerException e) {
@@ -1080,7 +1137,10 @@ public class ImportSettlements extends SvrProcess {
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ps.setAD_Org_ID(settlement.getAD_Org_ID());
 							ps.setAmount(iva);
-							ps.save();
+							if(!ps.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							ivaAmt = ivaAmt.add(iva);
 						}
 					}
@@ -1094,7 +1154,10 @@ public class ImportSettlements extends SvrProcess {
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ps.setAD_Org_ID(settlement.getAD_Org_ID());
 							ps.setAmount(perception);
-							ps.save();
+							if(!ps.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							perceptionAmt = perceptionAmt.add(perception);
 						}
 					}
@@ -1108,7 +1171,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
-							ws.save();
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					}
@@ -1122,7 +1188,10 @@ public class ImportSettlements extends SvrProcess {
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
 							ws.setAmount(withholding);
-							ws.save();
+							if(!ws.save()){
+								markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+								return ERROR;
+							}
 							withholdingAmt = withholdingAmt.add(withholding);
 						}
 					}
@@ -1141,7 +1210,10 @@ public class ImportSettlements extends SvrProcess {
 								ws.setAD_Org_ID(settlement.getAD_Org_ID());
 								ws.setC_Region_ID(retSchema.getC_Region_ID());
 								ws.setAmount(withholding);
-								ws.save();
+								if(!ws.save()){
+									markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+									return ERROR;
+								}
 								withholdingAmt = withholdingAmt.add(withholding);
 							}
 						}
@@ -1160,7 +1232,10 @@ public class ImportSettlements extends SvrProcess {
 								ws.setAD_Org_ID(settlement.getAD_Org_ID());
 								ws.setC_Region_ID(retSch.getC_Region_ID());
 								ws.setAmount(withholding);
-								ws.save();
+								if(!ws.save()){
+									markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+									return ERROR;
+								}
 								withholdingAmt = withholdingAmt.add(withholding);
 							}
 						}
@@ -1174,7 +1249,8 @@ public class ImportSettlements extends SvrProcess {
 				settlement.setExpenses(expensesAmt);
 				settlement.setIVAAmount(ivaAmt);
 				settlement.setCommissionAmount(commissionAmt);
-				if (!settlement.save(get_TrxName())) {
+				if (!settlement.save()) {
+					markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 					return ERROR;
 				} else {
 					result = SAVED;
@@ -1327,6 +1403,7 @@ public class ImportSettlements extends SvrProcess {
 				settlement.setSettlementNo(rs.getString("nroliq"));
 
 				if (!settlement.save()) {
+					markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 					return ERROR;
 				} 
 				
@@ -1342,7 +1419,10 @@ public class ImportSettlements extends SvrProcess {
 						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setC_Region_ID(retSchema.getC_Region_ID());
 						ws.setAmount(withholding);
-						ws.save();
+						if(!ws.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						withholdingAmt = withholdingAmt.add(withholding);
 					}
 				} catch (NullPointerException e) {
@@ -1359,7 +1439,10 @@ public class ImportSettlements extends SvrProcess {
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setAmount(withholding);
-						ws.save();
+						if(!ws.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						withholdingAmt = withholdingAmt.add(withholding);
 					}
 				} catch (NullPointerException e) {
@@ -1376,7 +1459,10 @@ public class ImportSettlements extends SvrProcess {
 						ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ws.setAD_Org_ID(settlement.getAD_Org_ID());
 						ws.setAmount(withholding);
-						ws.save();
+						if(!ws.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						withholdingAmt = withholdingAmt.add(withholding);
 					}
 				} catch (NullPointerException e) {
@@ -1393,7 +1479,10 @@ public class ImportSettlements extends SvrProcess {
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
-						ec.save();
+						if(!ec.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						expensesAmt = expensesAmt.add(expense);
 					}
 				} catch (NullPointerException e) {
@@ -1410,7 +1499,10 @@ public class ImportSettlements extends SvrProcess {
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
-						ec.save();
+						if(!ec.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						expensesAmt = expensesAmt.add(expense);
 					}
 				} catch (NullPointerException e) {
@@ -1427,7 +1519,10 @@ public class ImportSettlements extends SvrProcess {
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
-						ec.save();
+						if(!ec.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						expensesAmt = expensesAmt.add(expense);
 					}
 				} catch (NullPointerException e) {
@@ -1444,7 +1539,10 @@ public class ImportSettlements extends SvrProcess {
 						ec.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ec.setAD_Org_ID(settlement.getAD_Org_ID());
 						ec.setAmount(expense);
-						ec.save();
+						if(!ec.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						expensesAmt = expensesAmt.add(expense);
 					}
 				} catch (NullPointerException e) {
@@ -1461,7 +1559,10 @@ public class ImportSettlements extends SvrProcess {
 						cc.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						cc.setAD_Org_ID(settlement.getAD_Org_ID());
 						cc.setAmount(commission);
-						cc.save();
+						if(!cc.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						commissionAmt = commissionAmt.add(commission);
 					}
 				} catch (NullPointerException e) {
@@ -1478,7 +1579,10 @@ public class ImportSettlements extends SvrProcess {
 						iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						iv.setAD_Org_ID(settlement.getAD_Org_ID());
 						iv.setAmount(iva);
-						iv.save();
+						if(!iv.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						ivaAmt = ivaAmt.add(iva);
 					}
 				} catch (NullPointerException e) {
@@ -1496,7 +1600,10 @@ public class ImportSettlements extends SvrProcess {
 						iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						iv.setAD_Org_ID(settlement.getAD_Org_ID());
 						iv.setAmount(iva);
-						iv.save();
+						if(!iv.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						ivaAmt = ivaAmt.add(iva);
 					}
 				} catch (NullPointerException e) {
@@ -1513,7 +1620,10 @@ public class ImportSettlements extends SvrProcess {
 						ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 						ps.setAD_Org_ID(settlement.getAD_Org_ID());
 						ps.setAmount(perception);
-						ps.save();
+						if(!ps.save()){
+							markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
+							return ERROR;
+						}
 						perceptionAmt = perceptionAmt.add(perception);
 					}
 				} catch (NullPointerException e) {
@@ -1525,7 +1635,8 @@ public class ImportSettlements extends SvrProcess {
 				settlement.setExpenses(expensesAmt);
 				settlement.setIVAAmount(ivaAmt);
 				settlement.setCommissionAmount(commissionAmt);
-				if (!settlement.save(get_TrxName())) {
+				if (!settlement.save()) {
+					markAsError(tableName, rs.getInt(tableName + "_ID"), CLogger.retrieveErrorAsString());
 					return ERROR;
 				} else {
 					result = SAVED;

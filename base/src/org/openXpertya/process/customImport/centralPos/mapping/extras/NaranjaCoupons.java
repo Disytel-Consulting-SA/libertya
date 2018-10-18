@@ -14,6 +14,7 @@ public class NaranjaCoupons extends GenericMap {
 	public static String[] filteredFields = {
 			// Asociación con Detalle
 			"comercio", // Comercio.
+			"nro_liquidacion", 
 			"fecha_pago", // Fecha de pago.
 			// Importe total
 			"compra", // Importe total de la compra.
@@ -22,7 +23,7 @@ public class NaranjaCoupons extends GenericMap {
 
 	public NaranjaCoupons(Datum values) {
 		super(filteredFields, values, null);
-		matchingFields = new String[] { "comercio", "fecha_pago" };
+		matchingFields = new String[] { "comercio", "nro_liquidacion", "fecha_pago" };
 	}
 
 }

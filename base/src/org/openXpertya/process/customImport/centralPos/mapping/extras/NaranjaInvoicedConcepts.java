@@ -14,6 +14,7 @@ public class NaranjaInvoicedConcepts extends GenericMap {
 	public static String[] filteredFields = {
 			// Asociación con Header
 			"comercio", // Comercio.
+			"nro_liquidacion", 
 			"fecha_pago", // Fecha de pago.
 			// Comisiones
 			"importe_ara_vto", // Importe descontado de arancel facturado en vto.
@@ -62,7 +63,7 @@ public class NaranjaInvoicedConcepts extends GenericMap {
 
 	public NaranjaInvoicedConcepts(Datum values) {
 		super(filteredFields, values, null);
-		matchingFields = new String[] { "comercio", "fecha_pago" };
+		matchingFields = new String[] { "comercio", "nro_liquidacion", "fecha_pago" };
 	}
 
 }

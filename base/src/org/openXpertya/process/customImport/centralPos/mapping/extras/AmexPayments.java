@@ -26,7 +26,7 @@ public class AmexPayments extends GenericMap {
 
 	public AmexPayments(Datum values) {
 		super(filteredFields, values, null);
-		matchingFields = new String[] { "num_sec_pago" };
+		matchingFields = new String[] { "num_sec_pago", "fecha_pago" };
 	}
 
 	public String getNumSecPago() {
