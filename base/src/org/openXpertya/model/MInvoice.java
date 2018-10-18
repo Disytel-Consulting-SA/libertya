@@ -5410,6 +5410,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		 */
 		//
 		
+		// Liberar cupones promocionales relacionados a este documento
+		freePromotionalCoupons();
+		
 		m_processMsg = info.toString();
 		reversal.setC_Payment_ID(0);
 		reversal.setIsPaid(true);
@@ -6846,6 +6849,20 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				|| MInvoice.DOCSTATUS_Completed.equals(getDocStatus());
 	}
 
+	/**
+	 * Libera los cupones promocionales utilizados en este documento
+	 */
+	protected void freePromotionalCoupons(){
+		// Libera los cupones promocionales siempre y cuando la fecha de
+		// creación sea igual a la fecha de facturación
+		if(TimeUtil.isSameDay(getCreated(), getDateInvoiced())){
+			String sql = "UPDATE "+X_C_Promotion_Code.Table_Name +
+						" SET used = 'N', c_invoice_id = null " +
+						" WHERE c_invoice_id = "+getID();
+			DB.executeUpdate(sql, get_TrxName());
+		}
+	} 
+	
 } // MInvoice
 
 /*
