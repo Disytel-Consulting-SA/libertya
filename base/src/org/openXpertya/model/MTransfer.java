@@ -719,6 +719,15 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 			incomingLine.setM_Product_ID(outgoingLine.getM_Product_ID());
 			incomingLine.setM_Locator_ID(outgoingLine.getM_Locator_ID());
 			locatorToID = outgoingLine.getM_Locator_To_ID();
+			
+			// Controlar que la ubicación pertenezca al almacén
+			if (!Util.isEmpty(locatorToID, true)) {
+				MLocator locatorTo = MLocator.get(getCtx(), locatorToID);
+				if(locatorTo.getM_Warehouse_ID() != incomingTransfer.getM_WarehouseTo_ID()){
+					locatorToID = 0;
+				}
+			}
+			
 			// Si no existe una ubicación destino, entonces agrego la que se
 			// encuentra por defecto del almacén destino
 			if (Util.isEmpty(locatorToID, true)) {
@@ -729,6 +738,7 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 					locatorToID = locator.getID();
 				}
 			}
+			
 			incomingLine.setM_Locator_To_ID(locatorToID);
 			// Intenta guardar la línea, si no es posible se levanta una
 			// excepción.
