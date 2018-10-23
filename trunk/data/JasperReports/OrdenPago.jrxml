@@ -221,6 +221,7 @@
 	<parameter name="URL_IMAGE_TITLE" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="PRINT_RETENCIONES" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="BPARTNER_TAXID" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="LOGO" isForPrompting="false" class="java.io.InputStream"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -288,14 +289,14 @@
 				</textField>
 				<image  scaleImage="FillFrame" onErrorType="Blank" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="4"
-						y="5"
-						width="130"
-						height="37"
+						x="0"
+						y="0"
+						width="171"
+						height="52"
 						key="image-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<graphicElement stretchType="NoStretch"/>
-					<imageExpression class="java.lang.String"><![CDATA[$P{URL_IMAGE_TITLE}]]></imageExpression>
+					<imageExpression class="java.io.InputStream"><![CDATA[$P{LOGO}]]></imageExpression>
 				</image>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
