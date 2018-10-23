@@ -1,6 +1,7 @@
 package org.openXpertya.JasperReport;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Properties;
@@ -9,6 +10,7 @@ import java.util.logging.Level;
 import org.openXpertya.JasperReport.DataSource.OrdenPagoDataSource;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MClient;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.process.ProcessInfo;
@@ -203,9 +205,8 @@ public class LaunchOrdenPago extends SvrProcess {
 	protected void loadReportParameters(MJasperReport jasperWrapper) {
 		// Se obtienen los parámetros necesarios del reporte.
 		MAllocationHdr op = getAllocationHdr();
-		String clientName = DB.getSQLValueString(get_TrxName(),
-				"SELECT Name FROM AD_Client WHERE Ad_Client_ID = ?",
-				op.getAD_Client_ID());
+		MClient client = MClient.get(getCtx(), op.getAD_Client_ID());
+		String clientName = client.getName();
 		String orgName = DB.getSQLValueString(get_TrxName(),
 				"SELECT Name FROM AD_Org WHERE AD_Org_ID = ?",
 				op.getAD_Org_ID());
@@ -239,6 +240,11 @@ public class LaunchOrdenPago extends SvrProcess {
 		jasperWrapper.addParameter("RETENCIONES_AMOUNT", retencionesAmount);
 		jasperWrapper.addParameter("URL_IMAGE_TITLE", this.getUrlReportImage(op.getAD_Client_ID(), op.getAD_Org_ID()));
 		jasperWrapper.addParameter("PRINT_RETENCIONES", printRetentions);
+		
+		if(client.getLogoImg() != null){
+			InputStream logo = new ByteArrayInputStream(client.getLogoImg());
+			jasperWrapper.addParameter("LOGO",(InputStream)logo);
+		}
 	}
 	
 	protected int getAllocationHdrID() {

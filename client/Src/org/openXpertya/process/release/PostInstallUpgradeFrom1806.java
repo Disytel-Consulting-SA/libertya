@@ -19,6 +19,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String PURCHASE_ORDER_REPORT_JASPER_REPORT_UID = "CORE-AD_Process-1010433";
 	protected final static String PURCHASE_ORDER_REPORT_JASPER_REPORT_FILENAME = "PurchaseOrderReport.jrxml";
 	
+	/** UID del reporte de Orden de Pago */
+	protected final static String ORDEN_PAGO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000012";
+	protected final static String ORDEN_PAGO_JASPER_REPORT_FILENAME = "OrdenPago.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -63,6 +67,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PURCHASE_ORDER_REPORT_JASPER_REPORT_FILENAME)));
+		
+		// Informe de Orden de Pago
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					ORDEN_PAGO_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(ORDEN_PAGO_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
