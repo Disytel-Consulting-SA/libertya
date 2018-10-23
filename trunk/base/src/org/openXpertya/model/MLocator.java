@@ -282,6 +282,8 @@ public class MLocator extends X_M_Locator {
     	if(rs.next()){
     		locator = new MLocator(ctx, rs, trxName);
     	}
+    	rs.close();
+    	ps.close();
     	return locator;
     }
 

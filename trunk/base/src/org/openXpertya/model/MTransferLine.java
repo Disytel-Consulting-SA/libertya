@@ -14,6 +14,9 @@ import org.openXpertya.util.Msg;
  */
 public class MTransferLine extends X_M_TransferLine {
 
+	/** Transferencia */
+	private MTransfer transfer = null;
+	
 	/**
 	 * Constructor de la clase.
 	 * @param ctx
@@ -68,6 +71,21 @@ public class MTransferLine extends X_M_TransferLine {
 //			log.saveError("SaveError", Msg.translate(getCtx(), "DuplicateMaterialTransferLine"));
 //			return false;
 //		}
+		
+		// Setear la ubicación por defecto del depósito de la transferencia entrante
+		// cuando no posee valor asignado
+		if (getTransfer().isWarehouseTransfer() && getM_Locator_To_ID() == 0) {
+			MLocator locatorDefault = null;
+			try{
+				locatorDefault = MLocator.getDefault(getCtx(), getTransfer().getM_WarehouseTo_ID(), false,
+						get_TrxName());
+			} catch(Exception e){
+				e.printStackTrace();
+			}
+			if(locatorDefault != null){
+				setM_Locator_To_ID(locatorDefault.getM_Locator_ID());
+			}
+		}
 		
 		// Obtiene el número de línea si no ha sido asignado aún
 		if (getLine() == 0) {
@@ -137,5 +155,16 @@ public class MTransferLine extends X_M_TransferLine {
 			setM_Locator_To_ID(M_Locator_Destination_ID);
 		}
 	} // setOrderLine
+
+	protected MTransfer getTransfer() {
+		if(transfer == null){
+			transfer = new MTransfer(getCtx(), getM_Transfer_ID(), get_TrxName());
+		}
+		return transfer;
+	}
+
+	protected void setTransfer(MTransfer transfer) {
+		this.transfer = transfer;
+	}
 
 }

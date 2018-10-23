@@ -25,6 +25,7 @@ import java.util.logging.Level;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 /**
@@ -155,9 +156,16 @@ public class MInventoryLine extends X_M_InventoryLine {
 
         setM_Inventory_ID( inventory.getM_Inventory_ID());    // Parent
         setClientOrg( inventory.getAD_Client_ID(),inventory.getAD_Org_ID());
+        MLocator locatorDefault = null;
+		try{
+			locatorDefault = MLocator.getDefault(getCtx(), inventory.getM_Warehouse_ID(), false, get_TrxName());
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+        M_Locator_ID = M_Locator_ID != 0?M_Locator_ID:(locatorDefault != null?locatorDefault.getID():0);
         setM_Locator_ID( M_Locator_ID );                      // FK
         setM_Product_ID( M_Product_ID );                      // FK
-        setM_AttributeSetInstance_ID( M_AttributeSetInstance_ID );
+        setM_AttributeSetInstance_ID( M_AttributeSetInstance_ID );	
 
         //
 
@@ -294,6 +302,17 @@ public class MInventoryLine extends X_M_InventoryLine {
 //            }
 //        }
 
+		// La ubicación configurada en la línea se debe corresponder con el
+		// almacén de la cabecera
+        if(getM_Locator_ID() != 0){
+        	MLocator locatorLine = MLocator.get(getCtx(), getM_Locator_ID());
+        	if(locatorLine.getM_Warehouse_ID() != getInventory().getM_Warehouse_ID()){
+				log.saveError("SaveError",
+						Msg.getMsg(getCtx(), "LocatorNotWarehouseConfigured", new Object[] { getLine() }));
+        		return false;
+        	}
+        }
+        
         return true;
     }    // beforeSave
     
