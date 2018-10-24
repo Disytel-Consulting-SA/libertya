@@ -243,6 +243,14 @@ public class MInventoryLine extends X_M_InventoryLine {
 						Env.getContextAsInt(getCtx(), "$C_Currency_ID"), Env.getDate(),
 						false, false, null, false, get_TrxName()));
 	        }
+	        // Si la cantidad ingresada posee decimales, entonces controlar si la UM
+	 		// configurada en el artículo así lo permite
+	 		if(!MUOM.isAllowedQty(getCtx(), product.getC_UOM_ID(), getQtyCount(), get_TrxName())){
+	 			log.saveError(Msg.getMsg(getCtx(), "UOMNotAllowedQty",
+	 					new Object[] { MUOM.get(getCtx(), product.getC_UOM_ID()).getName(),
+	 							getQtyCount() }), "");
+	 			return false;
+	 		}
         }
         
         // Si el inventario es una Entrada/Salida Simple, se nulean las cantidades de sistema
