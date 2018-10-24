@@ -375,13 +375,12 @@ public class MUOM extends X_C_UOM {
 	 */
     public static boolean isAllowedQty(Properties ctx, Integer uomID, BigDecimal qty, String trxName){
     	boolean allowedQty = true;
-    	MUOM uom = MUOM.get(ctx, uomID);
 		// Si no permite decimales, entonces verificar si existen decimales en
 		// la cantidad parámetro
-    	if(!uom.isAllowDecimals()){
-    		int intQty = qty.intValue();
-			allowedQty = qty.subtract(new BigDecimal(intQty)).compareTo(
-					BigDecimal.ZERO) == 0;
+		int intQty = qty.intValue();
+		if (qty.subtract(new BigDecimal(intQty)).compareTo(BigDecimal.ZERO) > 0) {
+        	MUOM uom = MUOM.get(ctx, uomID);
+        	allowedQty = uom.isAllowDecimals();
     	}
     	return allowedQty;
     }
