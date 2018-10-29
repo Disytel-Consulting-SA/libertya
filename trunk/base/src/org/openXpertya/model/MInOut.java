@@ -3340,7 +3340,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 		// entrega).
 		filter.append("C_Order.IsSOTrx='").append(inout.isSOTrx()?"Y":"N")
 				.append("' AND ")
-				.append("C_Order.DocStatus IN ('CL','CO') ")
+				.append("C_Order.DocStatus IN ('CO') ")
 				.append(" AND ");
 		if(addExists){
 				filter.append("(EXISTS ")
