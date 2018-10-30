@@ -3739,7 +3739,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		checkPayAll.setSelected(false);
 		cboChequeBancoID.setValue(null);
 		
-		String documentNo = null;
+		cboDocumentType.setValue(null);
+		m_model.setDocumentType(null);
+		fldDocumentNo.setValue(null);
+		m_model.setDocumentNo(null);
+		
+		/*String documentNo = null;
 		Integer docTypeID = (Integer)cboDocumentType.getValue();
 		try {
 			documentNo = getModel().nextDocumentNo();
@@ -3751,7 +3756,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_model.setDocumentType(docTypeID);
 		cboDocumentType.setValue(docTypeID);
 		fldDocumentNo.setValue(documentNo);
-		m_model.setDocumentNo(documentNo);
+		m_model.setDocumentNo(documentNo);*/
 		
 		getAuthDialog().markAuthorized(UserAuthConstants.OPRC_FINISH_MOMENT, true);
 		

@@ -2675,8 +2675,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		m_model.setDescription("");
 		checkPayAll.setSelected(false);
 		
+		cboDocumentType.setValue(null);
+		m_model.setDocumentType(null);
+		fldDocumentNo.setValue(null);
+		m_model.setDocumentNo(null);
 		
-		String documentNo = null;
+		/*String documentNo = null;
 		Integer docTypeID = (Integer)cboDocumentType.getValue();
 		try {
 			documentNo = getModel().nextDocumentNo();
@@ -2688,7 +2692,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		m_model.setDocumentType(docTypeID);
 		cboDocumentType.setValue(docTypeID);
 		fldDocumentNo.setValue(documentNo);
-		m_model.setDocumentNo(documentNo);
+		m_model.setDocumentNo(documentNo);*/
 		
 		getModel().reset();
 		updateTreeModel();
