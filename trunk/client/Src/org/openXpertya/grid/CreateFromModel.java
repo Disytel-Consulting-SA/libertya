@@ -209,7 +209,7 @@ public class CreateFromModel {
 
      	filter
      		.append("C_Order.IsSOTrx='").append(isSOTrx).append("' AND ")
-     		.append("C_Order.DocStatus IN ('CL','CO') AND ")
+     		.append("C_Order.DocStatus IN ('CO') AND ")
      		.append("C_Order.C_Order_ID IN (")
      		.append(   "SELECT ol.C_Order_ID ")
      		.append(   "FROM C_OrderLine ol ")
