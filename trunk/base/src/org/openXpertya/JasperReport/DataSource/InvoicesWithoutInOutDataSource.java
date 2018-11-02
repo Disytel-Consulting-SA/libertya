@@ -50,12 +50,15 @@ public class InvoicesWithoutInOutDataSource extends QueryDataSource {
 	@Override
 	protected String getQuery() {
 		String qtyColumnName = "qty";
-		StringBuffer sqlIsSOTrx = new StringBuffer();		
+		StringBuffer sqlIsSOTrx = new StringBuffer();
+		StringBuffer whereClauseIsSOTrx = new StringBuffer();
 		// En ventas se deben buscar los pendientes de los
 		// pedidos relacionados con las facturas
 		if(getIsSOTrx().booleanValue()){
 			sqlIsSOTrx.append(" INNER JOIN c_orderline as ol ON ol.c_orderline_id = il.c_orderline_id ");
-			qtyColumnName = "ol.qtyordered - ol.qtydelivered";
+			sqlIsSOTrx.append(" INNER JOIN c_order as ord ON ord.c_order_id = ol.c_order_id ");
+			whereClauseIsSOTrx.append("ord.docstatus NOT IN ('DR','IP','IN')");
+			qtyColumnName = "ol.qtyreserved";
 		}
 		// En compras se debe restar lo remitido de las facturas en mmatchinv
 		else{
@@ -78,6 +81,7 @@ public class InvoicesWithoutInOutDataSource extends QueryDataSource {
 		sql.append(" WHERE ");
 		sql.append(getWhereClause());
 		sql.append(" AND ").append(qtyColumnName).append(" > 0 ");
+		sql.append(" AND ").append(whereClauseIsSOTrx.toString());
 		sql.append(" ORDER BY i.dateinvoiced, i.documentno, il.line ");
 		return sql.toString();
 	}
