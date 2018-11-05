@@ -99,13 +99,20 @@ public class InfoInvoicePanel extends InfoPanel implements ValueChangeListener
     protected InfoInvoicePanel(int WindowNo, String value,
             boolean multiSelection, String whereClause, boolean lookup)
     {
-        super ( WindowNo, "i", "C_Invoice_ID", multiSelection, whereClause, lookup);
+        this(WindowNo, value, multiSelection, whereClause, lookup, true);
+    }
+
+    protected InfoInvoicePanel(int WindowNo, String value,
+            boolean multiSelection, String whereClause, boolean lookup, boolean addSecurityValidation){
+    	super ( WindowNo, "i", "C_Invoice_ID", multiSelection, whereClause, lookup);
         
         setTitle(Msg.getMsg(Env.getCtx(), "InfoInvoice"));
+        setAddSecurityValidation(addSecurityValidation);
         //
         initComponents();
         init();
-           
+        
+        
        p_loadedOK = initInfo ();
        int no = contentPanel.getRowCount();
        setStatusLine(Integer.toString(no) + " " + Msg.getMsg(Env.getCtx(), "SearchRows_EnterQuery"), false);
@@ -118,7 +125,8 @@ public class InfoInvoicePanel extends InfoPanel implements ValueChangeListener
            renderItems();
        }
     }
-
+    
+    
     private Label lblDocumentNo;
     private Label lblDescription;
     private Label lblDateInvoiced;

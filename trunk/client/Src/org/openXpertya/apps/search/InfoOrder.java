@@ -62,11 +62,11 @@ public class InfoOrder extends Info {
      * @param whereClause
      */
 
-    public InfoOrder( Frame frame,boolean modal,int WindowNo,String value,boolean multiSelection,String whereClause ) {
+    public InfoOrder( Frame frame,boolean modal,int WindowNo,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation ) {
         super( frame,modal,WindowNo,"o","C_Order_ID",multiSelection,whereClause );
         log.info( "InfoOrder" );
         setTitle( Msg.getMsg( Env.getCtx(),"InfoOrder" ));
-
+        setAddSecurityValidation(addSecurityValidation);
         //
 
         try {

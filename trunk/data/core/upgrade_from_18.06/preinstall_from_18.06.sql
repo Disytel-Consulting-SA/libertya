@@ -618,16 +618,16 @@ ALTER FUNCTION c_posjournal_c_payment_v_filtered(anyarray)
   OWNER TO libertya;
   
 --20181003-1245 Códigos o Cupones Promocionales 
-ALTER TABLE c_promotion ADD COLUMN promotiontype character(1);
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_promotion','promotiontype','character(1)'));
 
 UPDATE c_promotion
 set promotiontype = 'G'
 where ad_client_id = 1010016;
 
 ALTER TABLE c_promotion ALTER COLUMN promotiontype SET NOT NULL;
-ALTER TABLE c_promotion ADD COLUMN maxpromotionalcodes integer NOT NULL DEFAULT 0;
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_promotion','maxpromotionalcodes','integer NOT NULL DEFAULT 0'));
 
-ALTER TABLE m_discountconfig ADD COLUMN maxpromotionalcoupons integer NOT NULL DEFAULT 0;
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_discountconfig','maxpromotionalcoupons','integer NOT NULL DEFAULT 0'));
 
 CREATE TABLE c_promotion_code_batch
 (
@@ -698,3 +698,6 @@ OIDS=FALSE
 );
 ALTER TABLE c_promotion_code
 OWNER TO libertya;
+
+--20181105-1630 Agregar o no validación de acceso a organizaciones para Crear Desde de Facturas
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','addsecurityvalidation_createfrominvoice','character(1) NOT NULL DEFAULT ''Y''::bpchar'));

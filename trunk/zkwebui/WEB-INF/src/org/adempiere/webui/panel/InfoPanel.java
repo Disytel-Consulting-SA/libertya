@@ -101,43 +101,47 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	/** Metodo general de acceso */
     public static InfoPanel create (int WindowNo, String tableName, String keyColumn, String value, boolean multiSelection, String whereClause, boolean isSoTrx, Integer M_Warehouse_ID, Integer M_PriceList_ID)
 	{
-    		InfoPanel info = null;
-	        /**
-	         * Logica para plugins - Redefinicion de clases InfoPanel
-	         */
-	        info = PluginInfoPanelUtils.getInfoPanel(tableName, WindowNo, value, multiSelection, whereClause, M_Warehouse_ID, M_PriceList_ID, isSoTrx, keyColumn);
-	        
-	        if (info!=null)        
-	        	;
-	        else if (tableName.equals("C_BPartner"))
-                info = new InfoBPartnerPanel (WindowNo, value, isSoTrx, multiSelection, whereClause);
-            else if (tableName.equals("M_Product"))
-                info = new InfoProductPanel ( WindowNo, M_Warehouse_ID, M_PriceList_ID, multiSelection, value,whereClause);
-            else if (tableName.equals("C_Invoice"))
-                info = new InfoInvoicePanel ( WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("A_Asset"))
-                info = new InfoAssetPanel (WindowNo, 0, value, multiSelection, whereClause);
-            else if (tableName.equals("C_Order"))
-                info = new InfoOrderPanel ( WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("M_InOut"))
-                info = new InfoInOutPanel (WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("C_Payment"))
-                info = new InfoPaymentPanel (WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("C_CashLine"))
-               info = new InfoCashLinePanel (WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("S_ResourceAssigment"))
-                info = new InfoAssignmentPanel (WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("C_POSJournal"))
-                info = new InfoPOSJournalPanel(WindowNo, value, multiSelection, whereClause);
-            else if (tableName.equals("C_AllocationHdr"))
-            	info = new InfoAllocationHdrPanel(WindowNo,value,isSoTrx ,multiSelection, whereClause);
-            else
-                info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, isSoTrx, multiSelection, whereClause);
-            //
-            return info;
+    	return create (WindowNo, tableName, keyColumn, value, multiSelection, whereClause, isSoTrx, M_Warehouse_ID, M_PriceList_ID, true);
+    }
     
-        }
-    
+    public static InfoPanel create (int WindowNo, String tableName, String keyColumn, String value, boolean multiSelection, String whereClause, boolean isSoTrx, Integer M_Warehouse_ID, Integer M_PriceList_ID, boolean addSecurityValidation) {
+    	InfoPanel info = null;
+        /**
+         * Logica para plugins - Redefinicion de clases InfoPanel
+         */
+        info = PluginInfoPanelUtils.getInfoPanel(tableName, WindowNo, value, multiSelection, whereClause, M_Warehouse_ID, M_PriceList_ID, isSoTrx, keyColumn);
+        
+        if (info!=null)        
+        	;
+        else if (tableName.equals("C_BPartner"))
+            info = new InfoBPartnerPanel (WindowNo, value, isSoTrx, multiSelection, whereClause);
+        else if (tableName.equals("M_Product"))
+            info = new InfoProductPanel ( WindowNo, M_Warehouse_ID, M_PriceList_ID, multiSelection, value,whereClause);
+        else if (tableName.equals("C_Invoice"))
+            info = new InfoInvoicePanel ( WindowNo, value, multiSelection, whereClause, true, addSecurityValidation);
+        else if (tableName.equals("A_Asset"))
+            info = new InfoAssetPanel (WindowNo, 0, value, multiSelection, whereClause);
+        else if (tableName.equals("C_Order"))
+            info = new InfoOrderPanel ( WindowNo, value, multiSelection, whereClause, true, addSecurityValidation);
+        else if (tableName.equals("M_InOut"))
+            info = new InfoInOutPanel (WindowNo, value, multiSelection, whereClause, true, addSecurityValidation);
+        else if (tableName.equals("C_Payment"))
+            info = new InfoPaymentPanel (WindowNo, value, multiSelection, whereClause);
+        else if (tableName.equals("C_CashLine"))
+           info = new InfoCashLinePanel (WindowNo, value, multiSelection, whereClause);
+        else if (tableName.equals("S_ResourceAssigment"))
+            info = new InfoAssignmentPanel (WindowNo, value, multiSelection, whereClause);
+        else if (tableName.equals("C_POSJournal"))
+            info = new InfoPOSJournalPanel(WindowNo, value, multiSelection, whereClause);
+        else if (tableName.equals("C_AllocationHdr"))
+        	info = new InfoAllocationHdrPanel(WindowNo,value,isSoTrx ,multiSelection, whereClause);
+        else
+            info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, isSoTrx, multiSelection, whereClause);
+        //
+        info.setAddSecurityValidation(addSecurityValidation);
+        return info;
+	}
+
 	/**
 	 * Show BPartner Info (non modal)
 	 * @param WindowNo window no
@@ -417,6 +421,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	private int cacheEnd;
 	private boolean m_useDatabasePaging = false;
 	private BusyDialog progressWindow;
+
+    /** Add Security Validation */
+    private boolean addSecurityValidation = true;
 	
 	private static final String[] lISTENER_EVENTS = {};
 
@@ -629,8 +636,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         else
         	sql.append(m_sqlOrder);
         String dataSql = Msg.parseTranslation(Env.getCtx(), sql.toString());    //  Variables
-        dataSql = MRole.getDefault().addAccessSQL(dataSql, getTableName(),
-            MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+        if(isAddSecurityValidation()){
+        	dataSql = MRole.getDefault().addAccessSQL(dataSql, getTableName(), MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+        }
         if (end > start && m_useDatabasePaging && DB.getDatabase().isPagingSupported())
         {
         	dataSql = DB.getDatabase().addPagingSQL(dataSql, cacheStart, cacheEnd);
@@ -717,8 +725,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 			sql.append(dynWhere);   //  includes first AND
 		
 		String countSql = Msg.parseTranslation(Env.getCtx(), sql.toString());	//	Variables
-		countSql = MRole.getDefault().addAccessSQL	(countSql, getTableName(), 
-													MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+		if(isAddSecurityValidation()){
+			countSql = MRole.getDefault().addAccessSQL	(countSql, getTableName(),MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+		}
 		log.finer(countSql);
 		m_count = -1;
 		
@@ -1336,4 +1345,12 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         log.fine("String=" + s);
         return s;
     }   //  getSQLText
+    
+    protected boolean isAddSecurityValidation() {
+		return addSecurityValidation;
+	}
+
+	protected void setAddSecurityValidation(boolean addSecurityValidation) {
+		this.addSecurityValidation = addSecurityValidation;
+	}
 }	//	Info

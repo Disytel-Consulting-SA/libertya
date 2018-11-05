@@ -132,10 +132,16 @@ public class InfoInOutPanel extends InfoPanel implements ValueChangeListener, Ev
 	protected InfoInOutPanel(	int WindowNo, String value,
 								boolean multiSelection, String whereClause, boolean lookup)
 	{
+		this(WindowNo, value, multiSelection, whereClause, lookup, true);
+	} // InfoInOutPanel
+	
+	protected InfoInOutPanel(	int WindowNo, String value,
+			boolean multiSelection, String whereClause, boolean lookup, boolean addSecurityValidation){
 		super (WindowNo, "i", "M_InOut_ID", multiSelection, whereClause, lookup);
 		log.info( "InfoInOut");
 		setTitle(Msg.getMsg(Env.getCtx(), "InfoInOut"));
-
+		setAddSecurityValidation(addSecurityValidation);
+		
 		try
 		{
 			statInit();
@@ -154,8 +160,9 @@ public class InfoInOutPanel extends InfoPanel implements ValueChangeListener, Ev
 		{
 			fDocumentNo.setValue(value);
 			executeQuery();
+			renderItems();
 		}
-	} // InfoInOutPanel
+	}
 
 	/**
 	 *	Static Setup - add fields to parameterPanel
