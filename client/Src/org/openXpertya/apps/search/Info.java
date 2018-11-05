@@ -121,16 +121,16 @@ public abstract class Info extends CDialog implements ListSelectionListener {
             info = Info.factoryProduct( frame,modal,WindowNo,0,0,value,multiSelection,whereClause );
         } else if( tableName.equals( "C_Invoice" )) {
         	// System.out.println("creando info C_Invoice");
-            info = new InfoInvoice( frame,modal,WindowNo,value,multiSelection,whereClause );
+            info = new InfoInvoice( frame,modal,WindowNo,value,multiSelection,whereClause, addSecurityValidation );
         } else if( tableName.equals( "A_Asset" )) {
         	// System.out.println("creando info A_Asset");
             info = new InfoAsset( frame,modal,WindowNo,0,value,multiSelection,whereClause );
         } else if( tableName.equals( "C_Order" )) {
         	// System.out.println("creando info C_Order");
-            info = new InfoOrder( frame,modal,WindowNo,value,multiSelection,whereClause );
+            info = new InfoOrder( frame,modal,WindowNo,value,multiSelection,whereClause, addSecurityValidation );
         } else if( tableName.equals( "M_InOut" )) {
         	// System.out.println("creando info M_InOutr");
-            info = new InfoInOut( frame,modal,WindowNo,value,multiSelection,whereClause );
+            info = new InfoInOut( frame,modal,WindowNo,value,multiSelection,whereClause, addSecurityValidation );
         } else if( tableName.equals( "C_Payment" )) {
         	// System.out.println("creando info C_Payment");
             info = new InfoPayment( frame,modal,WindowNo,value,multiSelection,whereClause );
@@ -251,7 +251,7 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         Info info = PluginInfoUtils.getInfo("C_Order", frame, false, WindowNo, value, false, "", null, null, null, null);
         
         if (info==null)
-        	info = new InfoOrder( frame,false,WindowNo,value,false,"" );
+        	info = new InfoOrder( frame,false,WindowNo,value,false,"", true );
 
         AEnv.showCenterWindow( frame,info );
     }    // showOrder
@@ -271,7 +271,7 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         Info info = PluginInfoUtils.getInfo("C_Invoice", frame, false, WindowNo, value, false, "", null, null, null, null);
         
         if (info==null)
-        	info = new InfoInvoice( frame,false,WindowNo,value,false,"" );
+        	info = new InfoInvoice( frame,false,WindowNo,value,false,"", true );
 
         AEnv.showCenterWindow( frame,info );
     }    // showInvoice
@@ -290,7 +290,7 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         Info info = PluginInfoUtils.getInfo("M_InOut", frame, false, WindowNo, value, false, "", null, null, null, null);
         
         if (info==null)
-        	info = new InfoInOut( frame,false,WindowNo,value,false,"" );
+        	info = new InfoInOut( frame,false,WindowNo,value,false,"", true );
 
         AEnv.showCenterWindow( frame,info );
     }    // showInOut

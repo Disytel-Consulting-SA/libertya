@@ -292,7 +292,8 @@ public class WCreateFromInvoice extends WCreateFrom {
     	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx());     	
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3521; 	// M_InOut.M_InOut_ID
-    	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(), p_WindowNo, p_mTab.getTabNo(), colID,
+				DisplayType.Search, whereClause, addSecurityValidation());
     	info.ZoomQuery = new MQuery();
     	MLookup lookup       = new MLookup(info, p_mTab.getTabNo());
     	if (whereClause != null && whereClause.length() > 0)
@@ -317,7 +318,8 @@ public class WCreateFromInvoice extends WCreateFrom {
     	String whereClause = CreateFromInvoiceModel.getInvoiceOrderFilter(getIsSOTrx(), getOrderFilter()); 
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3484; 	// C_Invoice.C_Invoice_ID
-    	MLookupInfo info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),p_WindowNo,p_mTab.getTabNo(),colID,DisplayType.Search, whereClause );
+		MLookupInfo info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(), p_WindowNo, p_mTab.getTabNo(), colID,
+				DisplayType.Search, whereClause, addSecurityValidation());
     	info.ZoomQuery = new MQuery();
     	MLookup lookup       = new MLookup(info, p_mTab.getTabNo());
     	if (whereClause != null && whereClause.length() > 0)
@@ -649,7 +651,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 
 		@Override
 		protected boolean addSecurityValidation() {
-			return getRole().isAddSecurityValidation_CreateFromShipment();
+			return getRole().isAddSecurityValidation_CreateFromInvoice();
 		}
 	
 }

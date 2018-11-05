@@ -31,12 +31,10 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.grid.WBPartner;
-import org.adempiere.webui.panel.InfoBPartnerPanel;
 import org.adempiere.webui.panel.InfoPanel;
-import org.adempiere.webui.panel.InfoProductPanel;
 import org.adempiere.webui.window.WFieldRecordInfo;
-import org.openXpertya.model.MField;
 import org.openXpertya.model.Lookup;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MRole;
@@ -597,7 +595,13 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	            if (queryValue.length() == 0 && getComponent().getText().length() > 0)
 	                queryValue = getComponent().getText();
 	
-				InfoPanel ig = InfoPanel.create(lookup.getWindowNo(), m_tableName,m_keyColumnName,queryValue, m_multiSelect, whereClause);
+				boolean isSOTrx = true;     //  default
+				
+				if (Env.getContext(Env.getCtx(), lookup.getWindowNo(), "IsSOTrx").equals("N"))
+					isSOTrx = false;
+	            
+				InfoPanel ig = InfoPanel.create(lookup.getWindowNo(), m_tableName, m_keyColumnName, queryValue,
+						m_multiSelect, whereClause, isSOTrx, null, null, lookup.addSecurityValidation());
 				ig.setVisible(true);
 				ig.setStyle("border: 2px");
 				ig.setClosable(true);

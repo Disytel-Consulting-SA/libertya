@@ -118,9 +118,15 @@ public class InfoOrderPanel extends InfoPanel implements ValueChangeListener
     protected InfoOrderPanel(int WindowNo, String value,
             boolean multiSelection, String whereClause, boolean lookup)
     {
+    	this(WindowNo, value, multiSelection, whereClause, lookup, true);
+    }
+    
+    protected InfoOrderPanel(int WindowNo, String value,
+            boolean multiSelection, String whereClause, boolean lookup, boolean addSecurityValidation){
         super ( WindowNo, "o", "C_Order_ID", multiSelection, whereClause, lookup);
         log.info( "InfoOrder");
         setTitle(Msg.getMsg(Env.getCtx(), "InfoOrder"));
+        setAddSecurityValidation(addSecurityValidation);
         //
   
 		try
@@ -146,6 +152,7 @@ public class InfoOrderPanel extends InfoPanel implements ValueChangeListener
             renderItems();
         }
     }
+    
     public void initComponents()
     {
         lblDocumentNo = new Label(Util.cleanAmp(Msg.translate(Env.getCtx(), "DocumentNo")));

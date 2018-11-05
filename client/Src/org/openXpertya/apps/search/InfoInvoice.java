@@ -63,11 +63,11 @@ public class InfoInvoice extends Info {
      * @param whereClause
      */
 
-    public InfoInvoice( Frame frame,boolean modal,int WindowNo,String value,boolean multiSelection,String whereClause ) {
+    public InfoInvoice( Frame frame,boolean modal,int WindowNo,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation ) {
         super( frame,modal,WindowNo,"i","C_Invoice_ID",multiSelection,whereClause );
         log.info( "InfoInvoice" );
         setTitle( Msg.getMsg( Env.getCtx(),"InfoInvoice" ));
-
+        setAddSecurityValidation(addSecurityValidation);
         //
 
         try {

@@ -60,11 +60,11 @@ public class InfoInOut extends Info {
      * @param whereClause
      */
 
-    public InfoInOut( Frame frame,boolean modal,int WindowNo,String value,boolean multiSelection,String whereClause ) {
+    public InfoInOut( Frame frame,boolean modal,int WindowNo,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation ) {
         super( frame,modal,WindowNo,"i","M_InOut_ID",multiSelection,whereClause );
         log.info( "InfoInOut" );
         setTitle( Msg.getMsg( Env.getCtx(),"InfoInOut" ));
-
+        setAddSecurityValidation(addSecurityValidation);
         //
 
         try {

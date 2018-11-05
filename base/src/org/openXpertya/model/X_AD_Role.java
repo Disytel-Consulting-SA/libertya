@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-03-16 16:17:42.267 */
+ *  @version  - 2018-11-05 16:24:20.345 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_AD_Role (Properties ctx, int AD_Role_ID, String trxName)
 super (ctx, AD_Role_ID, trxName);
 /** if (AD_Role_ID == 0)
 {
+setAddSecurityValidation_CreateFromInvoice (false);
 setAddSecurityValidation_CreateFromShipment (false);
 setAddSecurityValidation_OPRC_NC (false);
 setAddSecurityValidation_POS_NC (false);
@@ -118,6 +119,22 @@ public int getAD_ComponentVersion_ID()
 Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Create From Invoice */
+public void setAddSecurityValidation_CreateFromInvoice (boolean AddSecurityValidation_CreateFromInvoice)
+{
+set_Value ("AddSecurityValidation_CreateFromInvoice", new Boolean(AddSecurityValidation_CreateFromInvoice));
+}
+/** Get Create From Invoice */
+public boolean isAddSecurityValidation_CreateFromInvoice() 
+{
+Object oo = get_Value("AddSecurityValidation_CreateFromInvoice");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Create From Shipment */
 public void setAddSecurityValidation_CreateFromShipment (boolean AddSecurityValidation_CreateFromShipment)

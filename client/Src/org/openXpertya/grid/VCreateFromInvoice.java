@@ -330,7 +330,8 @@ public class VCreateFromInvoice extends VCreateFrom {
 	 */
 	private void initShipmentLookup() {
     	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx()); 
-    	shipmentField = VComponentsFactory.VLookupFactory("M_InOut_ID", "M_InOut", p_WindowNo, DisplayType.Search, whereClause, false);
+		shipmentField = VComponentsFactory.VLookupFactory("M_InOut_ID", "M_InOut", p_WindowNo, DisplayType.Search,
+				whereClause, false, addSecurityValidation());
     	shipmentField.addVetoableChangeListener(new VetoableChangeListener() {
 			
 			@Override
@@ -348,7 +349,8 @@ public class VCreateFromInvoice extends VCreateFrom {
 	 */
 	private void initInvoiceOrderLookup() {
     	String whereClause = CreateFromInvoiceModel.getInvoiceOrderFilter(getIsSOTrx(), getOrderFilter()); 
-    	invoiceOrderField = VComponentsFactory.VLookupFactory("C_Invoice_ID", "C_Invoice", p_WindowNo, DisplayType.Search, whereClause, false);
+		invoiceOrderField = VComponentsFactory.VLookupFactory("C_Invoice_ID", "C_Invoice", p_WindowNo,
+				DisplayType.Search, whereClause, false, addSecurityValidation());
     	invoiceOrderField.addVetoableChangeListener(new VetoableChangeListener() {
 			
 			@Override
@@ -629,7 +631,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 
 		@Override
 		protected boolean addSecurityValidation() {
-			return getRole().isAddSecurityValidation_CreateFromShipment();
+			return getRole().isAddSecurityValidation_CreateFromInvoice();
 		}
 
 
