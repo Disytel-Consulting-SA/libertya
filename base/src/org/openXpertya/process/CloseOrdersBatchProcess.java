@@ -32,13 +32,15 @@ public class CloseOrdersBatchProcess  {
 	static final String PARAM_CLIENT_FILTER	 				=	"-c";
 	// Filtro por Organizacion
 	static final String PARAM_ORG_FILTER	 				=	"-o";
+	// Filtro por Organizacion basado en thishost de ad_replicationhost
+	static final String PARAM_ORG_FILTER_HOST	 			=	"-oh";	
 	// Acción a realizar
 	static final String PARAM_ISSOTRX_FILTER	 			=	"-i";
 	// Pedidos por trx
 	static final String PARAM_TRX_BATCH_COUNT	 			=	"-n";
 	/* Filtro por Compañía */
 	protected static int clientFilter = 0;
-	/* Filtro por organizacion */
+	/* Filtro por organizacion.  (0 todas, >0 una en particular, -1 segun replicacion),  */
 	protected static int orgFilter = 0;
 	/* Filtro por issotrx */
 	protected static String isSOTrxFilter = null;
@@ -56,19 +58,27 @@ public class CloseOrdersBatchProcess  {
 	{
 		for (String arg : args) {
 			if (arg.toLowerCase().startsWith(PARAM_HELP))
-				showHelp(" Ayuda: \n  " 
-							+ PARAM_CLIENT_FILTER 			+ " Filtra por compañía (Si no se especifica toma la compañía de la organización concreta. Obligatorio si no se ingresa una organización concreta.) \n "
-							+ PARAM_ORG_FILTER 				+ " Filtra por organizacion (Si no se especifica se toma 0 (*)) \n "
-							+ PARAM_ISSOTRX_FILTER 			+ " Transacción de ventas o compras. Valores Y o N respectivamente. Obligatorio. \n "
-							+ PARAM_DATE_FROM 				+ " Fecha Desde. Obligatorio. Formato: YYYY-MM-DD \n "
-							+ PARAM_DATE_TO 				+ " Fecha Hasta. Obligatorio. Formato: YYYY-MM-DD \n "
-							+ PARAM_TRX_BATCH_COUNT			+ " Numero de pedidos por TRX, por defecto " + trxBatchCount);
+				showHelp(" Ayuda: \n " 
+							+ PARAM_CLIENT_FILTER 			+ "  Filtra por compañía (Si no se especifica toma la compañía de la organización concreta. Obligatorio si no se ingresa una organización concreta.) \n "
+							+ PARAM_ORG_FILTER 				+ "  Filtra por organizacion (Indicar su orgID. Si no se especifica se toma 0 (*)) \n "
+							+ PARAM_ORG_FILTER_HOST			+ " Filtra por organizacion (Se determina el orgID segun thishost de AD_ReplicationHost) \n "
+							+ PARAM_ISSOTRX_FILTER 			+ "  Transacción de ventas o compras. Valores Y o N respectivamente. Obligatorio. \n "
+							+ PARAM_DATE_FROM 				+ "  Fecha Desde. Obligatorio. Formato: YYYY-MM-DD \n "
+							+ PARAM_DATE_TO 				+ "  Fecha Hasta. Obligatorio. Formato: YYYY-MM-DD \n "
+							+ PARAM_TRX_BATCH_COUNT			+ "  Numero de pedidos por TRX, por defecto " + trxBatchCount);
 			// Filtrado por compañía en particular?
 			else if (arg.toLowerCase().startsWith(PARAM_CLIENT_FILTER))
 				clientFilter = Integer.parseInt(arg.substring(PARAM_CLIENT_FILTER.length()));
 			// Filtrado por organizacion en particular?
-			else if (arg.toLowerCase().startsWith(PARAM_ORG_FILTER))
-				orgFilter = Integer.parseInt(arg.substring(PARAM_ORG_FILTER.length()));
+			else if (arg.toLowerCase().startsWith(PARAM_ORG_FILTER)) {
+				// Definicion de organizacion segun el host?
+				if (arg.toLowerCase().startsWith(PARAM_ORG_FILTER_HOST)) {
+					orgFilter = -1;
+				} else {
+					// Definicion de organizacion explícita?
+					orgFilter = Integer.parseInt(arg.substring(PARAM_ORG_FILTER.length()));
+				}
+			}
 			// Filtrado por tipo de transacción
 			else if (arg.toLowerCase().startsWith(PARAM_ISSOTRX_FILTER))
 				isSOTrxFilter = arg.substring(PARAM_ISSOTRX_FILTER.length());
@@ -97,6 +107,11 @@ public class CloseOrdersBatchProcess  {
 	  	if (!OpenXpertya.startupEnvironment( false )) {
 	  		System.err.println("ERROR: Error al iniciar la configuracion... Postgres esta levantado?");
 	  		System.exit(1);
+	  	}
+	  	
+	  	// Filtrar por organizacion, basándonos en la configuracion del host
+	  	if (orgFilter == -1) {
+	  		orgFilter = DB.getSQLValue(null, "SELECT ad_org_id from ad_replicationhost where thishost = 'Y'");
 	  	}
 		
 	  	// Tipo de Transacción
