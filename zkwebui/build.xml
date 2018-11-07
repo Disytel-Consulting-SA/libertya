@@ -51,7 +51,8 @@
 	           destdir="${classes.dir}"
 	           debug="${compile.debug}"
 	     	   deprecation="${compile.deprecation}"
-	           optimize="${compile.optimize}">
+	           optimize="${compile.optimize}"
+	    	   encoding="UTF-8" >
 	        <classpath refid="compile.classpath"/>
 	    </javac>
 		<copy  todir="${classes.dir}" overwrite="true">
