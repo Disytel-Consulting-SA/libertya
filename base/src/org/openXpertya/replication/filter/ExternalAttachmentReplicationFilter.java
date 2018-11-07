@@ -5,6 +5,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.openXpertya.model.MAttachment;
+import org.openXpertya.model.MChangeLog;
 import org.openXpertya.replication.ChangeLogGroupReplication;
 import org.openXpertya.replication.ReplicationConstantsWS;
 import org.openXpertya.util.DB;
@@ -15,6 +16,10 @@ public class ExternalAttachmentReplicationFilter extends ReplicationFilter {
 	@Override
 	public void applyFilter(String trxName, ChangeLogGroupReplication group) throws Exception {
 
+		// Para eliminaciones, omitir el filtrado dado que si originalmente fue replicado significa que tenia referencias a tablas de replicacion con configuracion de salida
+		if (MChangeLog.OPERATIONTYPE_Deletion.equalsIgnoreCase(group.getOperation()))
+			return;
+		
 		int attID = Integer.parseInt((String)getNewValueForElement(group, "AD_Attachment_ID"));
 		MAttachment att = new MAttachment(Env.getCtx(), attID, trxName);
 
