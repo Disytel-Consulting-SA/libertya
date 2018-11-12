@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.compiere.swing.CComboBox;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.grid.ed.VBPartnerPOSCreateFactory;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.model.MPOSPaymentMedium;
@@ -42,7 +43,6 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 
 			public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException {
 				String pName = event.getPropertyName();
-				Object pValue = event.getNewValue();
 				VLookup lookup = (VLookup)event.getSource();
 				// El valor del componente cambio.
 				if(pName == "C_BPartner_ID") {
@@ -51,6 +51,7 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 			}
 			
 		});
+		bPartnerLookup.setMenuCreateFactory(new VBPartnerPOSCreateFactory());
 		return bPartnerLookup;
 	}
 

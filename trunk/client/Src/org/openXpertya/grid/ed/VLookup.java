@@ -399,6 +399,8 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             mBPartnerUpd = new JMenuItem( Msg.getMsg( Env.getCtx(),"Update" ),Env.getImageIcon( "InfoBPartner16.gif" ));
             mBPartnerUpd.addActionListener( this );
             popupMenu.add( mBPartnerUpd );
+            
+            setMenuCreateFactory(new VBPartnerCreateFactory());
         }
 
         //
@@ -533,6 +535,8 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     protected boolean resetValue = false;
     
     protected boolean m_multiSelect = false;
+    
+    private LookupMenuCreateFactory menuCreateFactory;
     
     /**
      * Descripción de Método
@@ -1507,8 +1511,9 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
      * @param newRecord
      */
 
-    private void actionBPartner( boolean newRecord ) {
-        VBPartner vbp = new VBPartner( Env.getFrame( this ),m_lookup.getWindowNo());
+    private void actionBPartner( boolean newRecord ) {  
+		VBPartner vbp = (VBPartner) getMenuCreateFactory().getCreateHandlerPanel(Env.getFrame(this),
+				m_lookup.getWindowNo());
         int BPartner_ID = 0;
 
         // if update, get current value
@@ -1528,8 +1533,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
 
         int result = vbp.getC_BPartner_ID();
 
-        if( (result == 0                            // 0 = not saved
-                ) && (result == BPartner_ID) ) {    // the same
+        if(result == 0) {
             return;
         }
 
@@ -2016,6 +2020,14 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
 
 	public Object getM_value() {
 		return m_value;
+	}
+
+	public LookupMenuCreateFactory getMenuCreateFactory() {
+		return menuCreateFactory;
+	}
+
+	public void setMenuCreateFactory(LookupMenuCreateFactory menuCreateFactory) {
+		this.menuCreateFactory = menuCreateFactory;
 	}
     
 	

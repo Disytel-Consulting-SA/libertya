@@ -17,7 +17,6 @@
 package org.openXpertya.grid.ed;
 
 import java.awt.BorderLayout;
-import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -26,11 +25,15 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 
 import javax.swing.Box;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CDialog;
@@ -40,21 +43,24 @@ import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.apps.form.VComponentsFactory;
-import org.openXpertya.model.CalloutBPartner;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
+import org.openXpertya.model.MField;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MLocationLookup;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MUser;
+import org.openXpertya.model.X_C_BP_Group;
+import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
-import org.openXpertya.util.ValueNamePair;
+import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -77,8 +83,9 @@ public class VBPartner extends CDialog implements ActionListener {
     public VBPartner( Frame frame,int WindowNo ) {
         super( frame,Msg.translate( Env.getCtx(),"C_BPartner_ID" ),true );
         m_WindowNo = WindowNo;
-        m_readOnly = !MRole.getDefault().canUpdate( Env.getAD_Client_ID( Env.getCtx()),Env.getAD_Org_ID( Env.getCtx()),MBPartner.Table_ID,false );
-        log.info( "R/O=" + m_readOnly );
+		m_readOnly = !MRole.getDefault().canUpdate(clientID, Env.getAD_Org_ID(getCtx()),
+				MBPartner.Table_ID, false);
+        setCompoLabels(new HashMap<JComponent, JLabel>());
 
         try {
             jbInit();
@@ -88,7 +95,7 @@ public class VBPartner extends CDialog implements ActionListener {
 
         initBPartner();
 
-        //
+        postInit();
 
         AEnv.positionCenterWindow( frame,this );
     }    // VBPartner
@@ -132,8 +139,6 @@ public class VBPartner extends CDialog implements ActionListener {
     /** Descripción de Campos */
 
     private Object[] m_greeting;
-
-    private Object[] m_partnergroup ;
     
     /** Descripción de Campos */
 
@@ -143,50 +148,58 @@ public class VBPartner extends CDialog implements ActionListener {
 
     /** Descripción de Campos */
 
-    private VString fValue,fName,fName2,fContact,fTitle,fPhone,fFax,fPhone2,fEMail,fCIF,fTaxID;
+    protected VString fValue,fName,fName2,fContact,fTitle,fPhone,fFax,fPhone2,fEMail,fCIF,fTaxID;
+    
+    protected VLookup fTaxIdType;
 
     /** Descripción de Campos */
 
-    private VLocation fAddress;
+    protected VLocation fAddress;
 
     /** Descripción de Campos */
 
-    private JComboBox fGreetingBP,fGreetingC, fPartnerGroup;
-
-    //
-
-    /** Descripción de Campos */
-
-    private CPanel mainPanel = new CPanel();
+    protected JComboBox fGreetingBP,fGreetingC;
+    
+    protected VLookup fPartnerGroup;
 
     /** Descripción de Campos */
 
-    private BorderLayout mainLayout = new BorderLayout();
+    protected CPanel mainPanel = new CPanel();
 
     /** Descripción de Campos */
 
-    private CPanel centerPanel = new CPanel();
+    protected BorderLayout mainLayout = new BorderLayout();
 
     /** Descripción de Campos */
 
-    private CPanel southPanel = new CPanel();
+    protected CPanel centerPanel = new CPanel();
 
     /** Descripción de Campos */
 
-    private GridBagLayout centerLayout = new GridBagLayout();
+    protected CPanel southPanel = new CPanel();
 
     /** Descripción de Campos */
 
-    private ConfirmPanel confirmPanel = new ConfirmPanel( true );
+    protected GridBagLayout centerLayout = new GridBagLayout();
+
+    /** Descripción de Campos */
+
+    protected ConfirmPanel confirmPanel = new ConfirmPanel( true );
 
     /** Descripción de Campos */
 
     private BorderLayout southLayout = new BorderLayout();
     
-    private VLookup fCategoriaIVA = null;
+    protected VLookup fCategoriaIVA = null;
     
     private boolean m_localeARActive  = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 
+    private Properties ctx = Env.getCtx();
+    private String trxName;
+    private int clientID = Env.getAD_Client_ID(Env.getCtx());
+    
+    private Map<JComponent, JLabel> compoLabels;
+    
     /**
      * Descripción de Método
      *
@@ -219,8 +232,6 @@ public class VBPartner extends CDialog implements ActionListener {
         // Get Data
 
         m_greeting = fillGreeting();
-
-        m_partnergroup = fillPartnerGroup();
         
         // Display
 
@@ -246,7 +257,7 @@ public class VBPartner extends CDialog implements ActionListener {
         fValue = new VString( "Value",true,false,true,30,60,"",null );
         fValue.addActionListener( this );
         createLine( fValue,"Value",false );
-
+        
         // CIF
         
         fCIF = new VString( "DUNS",false,false,true,30,60,"",null);
@@ -266,7 +277,8 @@ public class VBPartner extends CDialog implements ActionListener {
 
         // Group Business Partner
 
-        fPartnerGroup = new JComboBox( m_partnergroup );
+        fPartnerGroup = VComponentsFactory.VLookupFactory("C_BP_Group_ID", X_C_BP_Group.Table_Name, m_WindowNo,
+				DisplayType.TableDir, null, false);
         fPartnerGroup.setPreferredSize(new Dimension(60,20));
         createLine( fPartnerGroup,"PartnerGroup",true );        
         
@@ -281,8 +293,13 @@ public class VBPartner extends CDialog implements ActionListener {
         	// CUIT
         	fTaxID = new VString( "TaxID",false,false,true,30,60,"",null);
             createLine(fTaxID,"TaxID",false);
+            
+            // Tipo de Identificación
+			setfTaxIdType(VComponentsFactory.VLookupFactory("TaxIdType", X_C_BPartner.Table_Name, m_WindowNo,
+					DisplayType.List, null, false));
+            createLine(getfTaxIdType(),"TaxIdType",false);
         }
-                
+        
         // Contact
 
         fContact = new VString( "Contact",false,false,true,30,60,"",null );
@@ -306,8 +323,9 @@ public class VBPartner extends CDialog implements ActionListener {
 
         // Location
 
-        fAddress = new VLocation( "C_Location_ID",false,false,true,new MLocationLookup( Env.getCtx(),m_WindowNo ));
+        fAddress = new VLocation( "C_Location_ID",false,false,true,new MLocationLookup(getCtx(),m_WindowNo ));
         fAddress.setValue( null );
+        fAddress.addActionListener(this);
         createLine( fAddress,"C_Location_ID",true ).setFontBold( true );
 
         // Phone
@@ -361,9 +379,9 @@ public class VBPartner extends CDialog implements ActionListener {
         m_gbc.insets = m_labelInsets;
         m_gbc.fill   = GridBagConstraints.HORIZONTAL;
 
-        String labelStr = Msg.getElement(Env.getCtx(), title);
+        String labelStr = Msg.getElement(getCtx(), title);
         if (labelStr == null || labelStr.equals(""))
-        	labelStr = Msg.translate( Env.getCtx(),title );
+        	labelStr = Msg.translate(getCtx(),title );
         CLabel label = new CLabel( labelStr );
 
         centerPanel.add( label,m_gbc );
@@ -379,6 +397,8 @@ public class VBPartner extends CDialog implements ActionListener {
             field.setEnabled( false );
         }
 
+        getCompoLabels().put(field, label);
+        
         return label;
     }    // createLine
 
@@ -397,12 +417,6 @@ public class VBPartner extends CDialog implements ActionListener {
         return DB.getKeyNamePairs( sql,true );
     }    // fillGreeting
 
-    private Object[] fillPartnerGroup() {
-        String sql = "SELECT C_BP_Group_ID, Name FROM C_BP_Group WHERE IsActive='Y' AND AD_Client_ID = "+Env.getAD_Client_ID(Env.getCtx())+" ORDER BY 2";
-
-        return DB.getKeyNamePairs( sql,true );
-    }    // fillPartnerGroup      
-    
     /**
      * Descripción de Método
      *
@@ -446,7 +460,7 @@ public class VBPartner extends CDialog implements ActionListener {
             return true;
         }
 
-        m_partner = new MBPartner( Env.getCtx(),C_BPartner_ID,null );
+        m_partner = new MBPartner( getCtx(),C_BPartner_ID,null );
 
         if( m_partner.getID() == 0 ) {
             ADialog.error( m_WindowNo,this,"BPartnerNotFound" );
@@ -460,18 +474,19 @@ public class VBPartner extends CDialog implements ActionListener {
         fGreetingBP.setSelectedItem( getGreeting( m_partner.getC_Greeting_ID()));
         fName.setText( m_partner.getName());
         fName2.setText( m_partner.getName2());
-        
         fCIF.setText(m_partner.getDUNS());
+        fPartnerGroup.setValue(m_partner.getC_BP_Group_ID());
         
         // Campos específicos de localización argentina
         if (m_localeARActive) {
         	fTaxID.setText(m_partner.getTaxID());
+        	fTaxIdType.setValue(m_partner.getTaxIdType());
         	fCategoriaIVA.setValue(m_partner.getC_Categoria_Iva_ID());
         }
 
         // Contact - Load values
 
-        m_pLocation = m_partner.getLocation( Env.getContextAsInt( Env.getCtx(),m_WindowNo,"C_BPartner_Location_ID" ));
+        m_pLocation = m_partner.getLocation( Env.getContextAsInt( getCtx(),m_WindowNo,"C_BPartner_Location_ID" ));
 
         if( m_pLocation != null ) {
             int location = m_pLocation.getC_Location_ID();
@@ -487,7 +502,7 @@ public class VBPartner extends CDialog implements ActionListener {
 
         // User - Load values
 
-        m_user = m_partner.getContact( Env.getContextAsInt( Env.getCtx(),m_WindowNo,"AD_User_ID" ));
+        m_user = m_partner.getContact( Env.getContextAsInt( getCtx(),m_WindowNo,"AD_User_ID" ));
 
         if( m_user != null ) {
             fGreetingC.setSelectedItem( getGreeting( m_user.getC_Greeting_ID()));
@@ -526,6 +541,8 @@ public class VBPartner extends CDialog implements ActionListener {
             if( (fContact.getText() == null) || (fContact.getText().length() == 0) ) {
                 fContact.setText( fName.getText());
             }
+        } else if(e.getSource() == fAddress.getM_button()){
+        	return;
         }
 
         // OK pressed
@@ -548,176 +565,222 @@ public class VBPartner extends CDialog implements ActionListener {
      */
 
     private boolean actionSave() {
-        log.config( "save" );
-
+    	boolean saved = true;
+        setTrxName(Trx.createTrxName());
+        Trx trx = Trx.get(getTrxName(), true);
+        trx.start();
+        
         // Check Mandatory fields
 
-        if( fName.getText().equals( "" )) {
-            fName.setBackground( CompierePLAF.getFieldBackground_Error());
-
-            return false;
-        } else {
-            fName.setBackground( CompierePLAF.getFieldBackground_Mandatory());
-        }
-
-        if( fAddress.getC_Location_ID() == 0 ) {
-            fAddress.setBackground( CompierePLAF.getFieldBackground_Error());
-
-            return false;
-        } else {
-            fAddress.setBackground( CompierePLAF.getFieldBackground_Mandatory());
-        }
-
-        // ***** Business Partner *****
-
-        if( m_partner == null ) {
-            int AD_Client_ID = Env.getAD_Client_ID( Env.getCtx());
-
-            m_partner = MBPartner.getTemplate( Env.getCtx(),AD_Client_ID );
-
-            boolean isSOTrx = !"N".equals( Env.getContext( Env.getCtx(),m_WindowNo,"IsSOTrx" ));
-
-            m_partner.setIsCustomer( isSOTrx );
-            m_partner.setIsVendor( !isSOTrx );
-            
-            if(isSOTrx){
-            	m_partner.setSOCreditStatus(MBPartner.SOCREDITSTATUS_CreditOK);
-            	m_partner.setSO_CreditLimit(new BigDecimal("100000"));
-            }
-        }
-
-        // Check Value
-
-        String value = fValue.getText();
-
-        if( (value == null) || (value.length() == 0) ) {
-
-            // get Table Documet No
-
-            value = DB.getDocumentNo( Env.getAD_Client_ID( Env.getCtx()),"C_BPartner",null );
-            fValue.setText( value );
-        }
-
-        m_partner.setValue( fValue.getText());
-
-        //
+        try{
         
-        m_partner.setName( fName.getText());
-        m_partner.setName2( fName2.getText());
-        m_partner.setDUNS(fCIF.getText());
-        
-        KeyNamePair p = ( KeyNamePair )fGreetingBP.getSelectedItem();
-
-        if( (p != null) && (p.getKey() > 0) ) {
-            m_partner.setC_Greeting_ID( p.getKey());
-        } else {
-            m_partner.setC_Greeting_ID( 0 );
+	        if( fName.getText().equals( "" )) {
+	            fName.setBackground( CompierePLAF.getFieldBackground_Error());
+	
+	            return false;
+	        } else {
+	            fName.setBackground( CompierePLAF.getFieldBackground_Mandatory());
+	        }
+	
+	        if( fAddress.getC_Location_ID() == 0 ) {
+	            fAddress.setBackground( CompierePLAF.getFieldBackground_Error());
+	
+	            return false;
+	        } else {
+	            fAddress.setBackground( CompierePLAF.getFieldBackground_Mandatory());
+	        }
+	
+	        // ***** Business Partner *****
+	
+	        if( m_partner == null ) {	
+	            m_partner = new MBPartner(getCtx(), 0, getTrxName());
+	            m_partner.setClientOrg(clientID, 0);
+	            
+	            boolean isSOTrx = !"N".equals( Env.getContext( getCtx(),m_WindowNo,"IsSOTrx" ));
+	
+	            m_partner.setIsCustomer( isSOTrx );
+	            m_partner.setIsVendor( !isSOTrx );
+	            
+	        }
+	
+	        // Check Value
+	        String value = fValue.getText();
+	        if(!Util.isEmpty(value, true)){
+	        	m_partner.set_ValueNoCheck("Value", fValue.getText());
+	        }
+	        
+	        m_partner.setName( fName.getText());
+	        m_partner.setName2( fName2.getText());
+	        m_partner.setDUNS(fCIF.getText());
+	        
+	        KeyNamePair p = ( KeyNamePair )fGreetingBP.getSelectedItem();
+	
+	        if( (p != null) && (p.getKey() > 0) ) {
+	            m_partner.setC_Greeting_ID( p.getKey());
+	        } else {
+	            m_partner.setC_Greeting_ID( 0 );
+	        }
+	
+	        // Campos especificos de la localización argentina.
+	        if (m_localeARActive) {
+				// CUIT
+	        	m_partner.setTaxID(fTaxID.getText());
+				
+	        	// Tipo de identificación
+	        	m_partner.setTaxIdType((String)getfTaxIdType().getValue());
+	        	
+	        	// Categoria de Iva
+	        	Integer categoriaIva = (Integer)fCategoriaIVA.getValue();
+	        	if (categoriaIva != null && categoriaIva > 0)
+	        		m_partner.setC_Categoria_Iva_ID(categoriaIva);
+	        	else
+	        		m_partner.setC_Categoria_Iva_ID(0);
+	        }
+	        
+	        if(fPartnerGroup.getValue() != null) {
+	            m_partner.setC_BP_Group_ID((Integer)fPartnerGroup.getValue());
+	        } else {
+	            m_partner.setC_BP_Group_ID( 0 );        	
+			}
+	
+			// Asociar los valores default en cada columna donde su valor sea
+			// null siempre y cuando no se haya cargado una entidad comercial
+			// existente
+	        if(m_partner.getID() == 0){
+	        	setDefaultValues(m_partner);
+		        // Para que no quede referencia a ninguna lista de precios
+		        m_partner.setM_PriceList_ID(0);
+		        m_partner.setSOCreditStatus(MBPartner.SOCREDITSTATUS_NoCreditCheck);
+	        }
+	        
+	        if(!m_partner.save()) {
+	        	throw new Exception(CLogger.retrieveErrorAsString());
+	        }
+	        
+	
+	        // ***** Business Partner - Location *****
+	
+	        if( m_pLocation == null ) {
+	            m_pLocation = new MBPartnerLocation( m_partner );
+	        }
+	
+	        m_pLocation.setC_Location_ID( fAddress.getC_Location_ID());
+	        MLocation location = new MLocation (getCtx(), fAddress.getC_Location_ID(), getTrxName());
+	        m_pLocation.setName(location.toString());
+	        
+	        //
+	
+	        m_pLocation.setPhone( fPhone.getText());
+	        m_pLocation.setPhone2( fPhone2.getText());
+	        m_pLocation.setFax( fFax.getText());
+	        m_pLocation.setEMail(fEMail.getText());
+	
+	        if(!m_pLocation.save()) {
+	        	throw new Exception(CLogger.retrieveErrorAsString());
+	        }
+	
+	        // ***** Business Partner - User *****
+	
+	        String contact = fContact.getText();
+	        String email   = fEMail.getText();
+	        
+	
+	        if( (m_user == null) && ( (contact.length() > 0) || (email.length() > 0) ) ) {
+	            m_user = new MUser( m_partner );
+	        }
+	
+	        if( m_user != null ) {
+	            if( contact.length() == 0 ) {
+	                contact = fName.getText();
+	            }
+	
+	            m_user.setName( contact );
+	            m_user.setEMail( email );
+	            
+	            m_user.setTitle( fTitle.getText());
+	            p = ( KeyNamePair )fGreetingC.getSelectedItem();
+	
+	            if( (p != null) && (p.getKey() > 0) ) {
+	                m_user.setC_Greeting_ID( p.getKey());
+	            } else {
+	                m_user.setC_Greeting_ID( 0 );
+	            }
+	
+	            //
+	           
+	            m_user.setPhone( fPhone.getText());
+	            m_user.setPhone2( fPhone2.getText());
+	            m_user.setFax( fFax.getText());
+	
+	            if(!m_user.save()) {
+	            	throw new Exception(CLogger.retrieveErrorAsString());
+	            }
+	        }
+	        
+	        trx.commit();
+	        saved = true;
+        } catch(Exception e){
+        	ADialog.error( m_WindowNo,this,"BPartnerNotSaved",e.getMessage());
+        	trx.rollback();
+        	m_partner = null;
+        	m_pLocation = null;
+        	m_user = null;
+        	saved = false;
+        } finally{
+        	trx.close();
         }
 
-        // Campos especificos de la localización argentina.
-        if (m_localeARActive) {
-			// CUIT
-        	m_partner.setTaxID(fTaxID.getText());
-			
-        	// Categoria de Iva
-        	Integer categoriaIva = (Integer)fCategoriaIVA.getValue();
-        	if (categoriaIva != null && categoriaIva > 0)
-        		m_partner.setC_Categoria_Iva_ID(categoriaIva);
-        	else
-        		m_partner.setC_Categoria_Iva_ID(0);
-        }
-        
-        KeyNamePair pg = ( KeyNamePair )fPartnerGroup.getSelectedItem();
-        if( (pg != null) && (pg.getKey() > 0) ) {
-            m_partner.setC_BP_Group_ID( pg.getKey());
-        } else {
-            m_partner.setC_BP_Group_ID( 0 );        	
-		}
-
-        if( m_partner.save()) {
-            log.fine( "VBPartner.save - C_BPartner_ID=" + m_partner.getC_BPartner_ID());
-            /*
-             * Verificar si se repiten los cuits en otra entidad comercial para la localización Argentina
-             */
-            if(m_localeARActive){
-            	String bpName = CalloutBPartner.existCUIT(Env.getCtx(), fTaxID.getText(), m_partner.getID());
-            	if(bpName != null){
-            		ADialog.info(this.m_WindowNo,this, "",Msg.getMsg(Env.getCtx(), "ExistentBPartnerCUIT", new Object[] {fTaxID.getText(), bpName}));
-            	}
-            }
-        } else {
-        	ValueNamePair vnp = log.retrieveError();
-            ADialog.error( m_WindowNo,this,"BPartnerNotSaved", (vnp.getName().length() == 0)?Msg.getMsg(Env.getCtx(), vnp.getValue()):vnp.getName());
-            return true;
-        }
-        
-
-        // ***** Business Partner - Location *****
-
-        if( m_pLocation == null ) {
-            m_pLocation = new MBPartnerLocation( m_partner );
-        }
-
-        m_pLocation.setC_Location_ID( fAddress.getC_Location_ID());
-        MLocation location = new MLocation (Env.getCtx(), fAddress.getC_Location_ID(), null );
-        m_pLocation.setName(location.toString());
-        
-        //
-
-        m_pLocation.setPhone( fPhone.getText());
-        m_pLocation.setPhone2( fPhone2.getText());
-        m_pLocation.setFax( fFax.getText());
-        m_pLocation.setEMail(fEMail.getText());
-
-        if( m_pLocation.save()) {
-            log.fine( "VBPartner.save - C_BPartner_Location_ID=" + m_pLocation.getC_BPartner_Location_ID());
-        } else {
-            ADialog.error( m_WindowNo,this,"BPartnerNotSaved",Msg.translate( Env.getCtx(),"C_BPartner_Location_ID" ));
-        }
-
-        // ***** Business Partner - User *****
-
-        String contact = fContact.getText();
-        String email   = fEMail.getText();
-        
-
-        if( (m_user == null) && ( (contact.length() > 0) || (email.length() > 0) ) ) {
-            m_user = new MUser( m_partner );
-        }
-
-        if( m_user != null ) {
-            if( contact.length() == 0 ) {
-                contact = fName.getText();
-            }
-
-            m_user.setName( contact );
-            m_user.setEMail( email );
-            
-            m_user.setTitle( fTitle.getText());
-            p = ( KeyNamePair )fGreetingC.getSelectedItem();
-
-            if( (p != null) && (p.getKey() > 0) ) {
-                m_user.setC_Greeting_ID( p.getKey());
-            } else {
-                m_user.setC_Greeting_ID( 0 );
-            }
-
-            //
-           
-            m_user.setPhone( fPhone.getText());
-            m_user.setPhone2( fPhone2.getText());
-            m_user.setFax( fFax.getText());
-
-            if( m_user.save()) {
-                log.fine( "VBPartner.save - AD_User_ID=" + m_user.getAD_User_ID());
-            } else {
-                ADialog.error( m_WindowNo,this,"BPartnerNotSaved",Msg.translate( Env.getCtx(),"AD_User_ID" ));
-            }
-        }
-
-        return true;
+        return saved;
     }    // actionSave
 
+    protected void postInit(){
+    	
+    }
+
+    /**
+     * Asigna los valores por defecto a las columnas que poseen valor null
+     * @param bp
+     */
+    protected void setDefaultValues(MBPartner bp){
+    	setDefaultValues(bp, getBPTabID());
+    	setDefaultValues(bp, getBPSpecificTabID(bp.isCustomer()));
+    }
+    
+    protected void setDefaultValues(MBPartner bp, Integer tabID){
+    	MField[] bpFields = null;
+    	if(tabID != null && tabID > 0){
+    		bpFields = MField.createFields(getCtx(), m_WindowNo, 0, tabID);
+    	}
+    	for (MField field : bpFields) {
+			if(DisplayType.YesNo != field.getDisplayType() 
+					|| bp.get_Value(field.getColumnName()) == null 
+					|| (DisplayType.isID(field.getDisplayType())
+							&& bp.get_Value(field.getColumnName()) instanceof Integer
+							&& ((Integer) bp.get_Value(field.getColumnName())) == 0)) {
+				bp.set_Value(field.getColumnName(), field.getDefault());
+			}
+		}
+    }
+    
+    protected Integer getTabID(String uid){
+    	return DB.getSQLValue(getTrxName(), "SELECT ad_tab_id FROM ad_tab WHERE ad_componentobjectUID = '"+uid+"'");
+    }
+    
+    /**
+     * @return el ID de la primer pestaña de la ventana Entidades Comerciales
+     */
+    protected Integer getBPTabID(){
+    	return getTabID("CORE-AD_Tab-220");
+    }
+    
+    /**
+	 * @return el ID de la pestaña Cliente o Proveedor (dependiendo el issotrx)
+	 *         de la ventana Entidades Comerciales
+	 */
+    protected Integer getBPSpecificTabID(boolean isSOTrx){
+    	return getTabID(isSOTrx?"CORE-AD_Tab-223":"CORE-AD_Tab-224");
+    }
+    
     /**
      * Descripción de Método
      *
@@ -732,6 +795,38 @@ public class VBPartner extends CDialog implements ActionListener {
 
         return m_partner.getC_BPartner_ID();
     }    // getBPartner_ID
+
+	protected VLookup getfTaxIdType() {
+		return fTaxIdType;
+	}
+
+	protected void setfTaxIdType(VLookup fTaxIdType) {
+		this.fTaxIdType = fTaxIdType;
+	}
+
+	protected Properties getCtx() {
+		return ctx;
+	}
+
+	protected void setCtx(Properties ctx) {
+		this.ctx = ctx;
+	}
+
+	protected String getTrxName() {
+		return trxName;
+	}
+
+	protected void setTrxName(String trxName) {
+		this.trxName = trxName;
+	}
+
+	protected Map<JComponent, JLabel> getCompoLabels() {
+		return compoLabels;
+	}
+
+	protected void setCompoLabels(Map<JComponent, JLabel> compoLabels) {
+		this.compoLabels = compoLabels;
+	}
 }    // VBPartner
 
 
