@@ -73,6 +73,16 @@ public class MCategoriaIva extends X_C_Categoria_Iva {
 		return codigo;
 	}
 
+	public static MCategoriaIva get(Properties ctx, int codigo, String trxName) {
+		MCategoriaIva civa = null;
+		int civaID = DB.getSQLValue(trxName, "SELECT c_categoria_iva_id from " + Table_Name + " where ad_client_id = "
+				+ Env.getAD_Client_ID(ctx) + " and codigo = " + codigo + " and isactive = 'Y' order by created desc");
+		if(civaID > 0){
+			civa = new MCategoriaIva(ctx, civaID, trxName);
+		}
+		return civa;
+	}
+	
 	public static int getCodigoOfBPartner(int C_BPartner_ID, String trxName) {
 		int codigo = 0;
 		Integer categoriaIvaID = (Integer)DB.getSQLObject(trxName, "SELECT C_Categoria_IVA_ID FROM C_BPartner WHERE C_BPartner_ID = ?", new Object[] {C_BPartner_ID});

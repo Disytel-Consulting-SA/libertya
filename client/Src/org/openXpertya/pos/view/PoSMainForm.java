@@ -4827,16 +4827,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 	protected boolean loadBPartner(int bPartnerID) {
 		boolean load = true;
-		// Solo se carga el cliente si el pedido no tiene asignado un cliente
-		// o el cliente asignado al pedido es distinto al que se quiere cargar.
-		if(getOrder().getBusinessPartner() == null || 
-		   getOrder().getBusinessPartner().getId() != bPartnerID) {
-			
-			BusinessPartner bp = getModel().getBPartner(bPartnerID);
-			getOrder().setBusinessPartner(bp);
-			getModel().getOtherTaxes();
-			getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
-		}
+		
+		BusinessPartner bp = getModel().getBPartner(bPartnerID);
+		getOrder().setBusinessPartner(bp);
+		getModel().getOtherTaxes();
+		getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
 		
 		getCTaxIdText().setText("");
 		getCCustomerDescriptionText().setText("");

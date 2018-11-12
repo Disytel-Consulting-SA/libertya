@@ -23,6 +23,8 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
@@ -87,6 +89,16 @@ public class VLocation extends JComponent implements VEditor,ActionListener {
         m_button.setMargin( new Insets( 0,0,0,0 ));
         m_button.setPreferredSize( new Dimension( height,height ));
         m_button.addActionListener( this );
+        m_button.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					actionPerformed(new ActionEvent(m_button, ActionEvent.ACTION_PERFORMED, null));
+				}
+			}
+        	
+        });
         this.add( m_button,BorderLayout.EAST );
 
         // ***     Button & Text   ***
@@ -404,6 +416,14 @@ public class VLocation extends JComponent implements VEditor,ActionListener {
      */
 
     public void setField( org.openXpertya.model.MField mField ) {}    // setField
+
+	public CButton getM_button() {
+		return m_button;
+	}
+
+	public void setM_button(CButton m_button) {
+		this.m_button = m_button;
+	}
 }    // VLocation
 
 
