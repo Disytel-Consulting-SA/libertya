@@ -1342,3 +1342,29 @@ $BODY$
   ROWS 1000;
 ALTER FUNCTION v_dailysales_current_account_payments_filtered(integer, integer, integer, date, date)
   OWNER TO libertya;
+  
+--20181115-1545 Nueva función para determinar la cantidad facturada en devoluciones
+CREATE OR REPLACE FUNCTION getInvoicedQtyReturned(orderlineID integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	qty numeric;
+BEGIN
+	select into qty sum(il.qtyinvoiced)
+	from c_orderline as ol 
+	inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id 
+	inner join m_inout as io on io.m_inout_id = iol.m_inout_id 
+	inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id 
+	inner join c_invoiceline as il on il.m_inoutline_id = iol.m_inoutline_id 
+	inner join c_invoice as i on i.c_invoice_id = il.c_invoice_id 
+	where ol.c_orderline_id = orderlineID AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') and i.docstatus IN ('CL','CO');
+
+	if (qty is null) then qty = 0; end if;
+	
+	return qty;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getInvoicedQtyReturned(integer)
+  OWNER TO libertya;

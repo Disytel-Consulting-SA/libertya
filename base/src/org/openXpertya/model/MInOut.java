@@ -3347,8 +3347,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append("(SELECT col.C_Order_ID ")
 				.append("FROM C_OrderLine col ")
 				.append("WHERE C_Order.C_Order_ID = col.C_Order_ID AND ")
-				.append(afterInvoicing ? " col.QtyInvoiced > "
-						: " col.QtyOrdered > ")
+				.append(afterInvoicing ? " (col.QtyInvoiced + getInvoicedQtyReturned(col.c_orderline_id)) "
+						: " col.QtyOrdered ")
+				.append(" > ")
 				.append(ReservedUtil.getSQLRealDeliveredQtyByColumns(inout.getCtx(), "col"))
 				.append(") ")
 				.append("OR ")
