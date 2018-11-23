@@ -123,12 +123,16 @@ public class CopyFromOrder extends SvrProcess {
         	Integer docTypeID = to.getC_DocTypeTarget_ID();
         	String docAction = to.getDocAction();
         	String docStatus = to.getDocStatus();
+        	Integer salesRepID = to.getSalesRep_ID();
+			String documentNo = to.getDocumentNo();
         	PO.copyValues(from, to);
         	to.setC_DocTypeTarget_ID(docTypeID);
+        	to.setDocumentNo(documentNo);
         	to.setDocStatus(docStatus);
         	to.setDocAction(docAction);
         	to.setProcessed(false);
         	to.setRef_Order_ID(from.getC_Order_ID());
+        	to.setSalesRep_ID(salesRepID);
         	if(!to.save()){
         		throw new Exception(CLogger.retrieveErrorAsString());
         	}
