@@ -2,6 +2,8 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.util.Properties;
 
+import org.openXpertya.util.Util;
+
 public class DeclaracionValoresCuponDataSource extends
 		DeclaracionValoresDataSource {
 
@@ -24,7 +26,15 @@ public class DeclaracionValoresCuponDataSource extends
 
 	@Override
 	protected String getQuery() {
-		return getStdQuery(true);
+		StringBuffer sql = new StringBuffer(getStdSelect(true));
+		sql.append(getStdWhereClause(true, null, true, true, false));
+		if(!Util.isEmpty(getGroupBy())){
+			sql.append(" GROUP BY "+getGroupBy());
+		}
+		if(!Util.isEmpty(getOrderBy(), true)){
+			sql.append(" ORDER BY "+getOrderBy());
+		}
+		return sql.toString();
 	}
 
 	@Override
