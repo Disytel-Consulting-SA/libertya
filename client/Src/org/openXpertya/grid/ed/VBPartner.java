@@ -752,11 +752,11 @@ public class VBPartner extends CDialog implements ActionListener {
     		bpFields = MField.createFields(getCtx(), m_WindowNo, 0, tabID);
     	}
     	for (MField field : bpFields) {
-			if(DisplayType.YesNo != field.getDisplayType() 
-					|| bp.get_Value(field.getColumnName()) == null 
-					|| (DisplayType.isID(field.getDisplayType())
-							&& bp.get_Value(field.getColumnName()) instanceof Integer
-							&& ((Integer) bp.get_Value(field.getColumnName())) == 0)) {
+			if((DisplayType.YesNo != field.getDisplayType() 
+					&& bp.get_Value(field.getColumnName()) == null) 
+				|| (DisplayType.isID(field.getDisplayType())
+					&& bp.get_Value(field.getColumnName()) instanceof Integer
+					&& ((Integer) bp.get_Value(field.getColumnName())) == 0)) {
 				bp.set_Value(field.getColumnName(), field.getDefault());
 			}
 		}
