@@ -154,134 +154,13 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         return null;
     }    // createProduct
 
-    /**
-     * Constructor de la clase ...
-     *
-     *
-     * @param columnName
-     * @param mandatory
-     * @param isReadOnly
-     * @param isUpdateable
-     * @param lookup
-     * @param mtab
-     */
-
-    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup,MTab mtab ) {
-    	super();
-        super.setName( columnName );
-        m_combo.setName( columnName );
-        m_columnName = columnName;
-        setMandatory( mandatory );
-        m_lookup = lookup;
-        m_tab=mtab;
-
-        //
-
-        setLayout( new BorderLayout());
-
-        VLookup_mouseAdapter mouse = new VLookup_mouseAdapter( this );    // popup
-
-        // ***     Text & Button   ***
-
-        m_text.addActionListener( this );
-        m_text.addFocusListener( this );
-        m_text.addMouseListener( mouse );
-
-        // Button
-
-        m_button.addActionListener( this );
-        m_button.addMouseListener( mouse );
-        m_button.setFocusable( false );    // don't focus when tabbing
-        m_button.setMargin( new Insets( 0,0,0,0 ));
-
-        if( columnName.equals( "C_BPartner_ID" )) {
-            m_button.setIcon( Env.getImageIcon( "BPartner10.gif" ));
-        } else if( columnName.equals( "M_Product_ID" )) {
-            m_button.setIcon( Env.getImageIcon( "Product10.gif" ));
-        } else {
-            m_button.setIcon( Env.getImageIcon( "PickOpen10.gif" ));
-        }
-
-        // *** VComboBox   ***
-
-        if( (m_lookup != null) && (m_lookup.getDisplayType() != DisplayType.Search) )    // No Search
-        {
-
-            // Memory Leak after executing the next two lines ??
-
-            m_lookup.fillComboBox( isMandatory(),false,false,false );
-            m_combo.setModel( m_lookup );
-            
-            // ToolTips renderer
-            m_combo.setRenderer(new ToolTipComboBoxRenderer());
-
-            //
-
-            m_combo.addActionListener( this );    // Selection
-            m_combo.addMouseListener( mouse );    // popup
-
-            // FocusListener to refresh selection before opening
-
-            m_combo.addFocusListener( this );
-        }
-
-        setUI( true );
-
-        // ReadWrite       -       decides what components to show
-
-        if( isReadOnly ||!isUpdateable || (m_lookup == null) ) {
-            setReadWrite( false );
-        } else {
-            setReadWrite( true );
-        }
-
-        // Popup
-
-        if( m_lookup != null ) {
-            if( ( (m_lookup.getDisplayType() == DisplayType.List) && (Env.getContextAsInt( Env.getCtx(),"#AD_Role_ID" ) == 0) ) || (m_lookup.getDisplayType() != DisplayType.List) )    // only system admins can change lists, so no need to zoom for others
-            {
-                mZoom = new JMenuItem( Msg.getMsg( Env.getCtx(),"Zoom" ),Env.getImageIcon( "Zoom16.gif" ));
-                mZoom.addActionListener( this );
-                popupMenu.add( mZoom );
-            }
-
-            mRefresh = new JMenuItem( Msg.getMsg( Env.getCtx(),"Refresh" ),Env.getImageIcon( "Refresh16.gif" ));
-            mRefresh.addActionListener( this );
-            popupMenu.add( mRefresh );
-        }
-
-        // VBPartner quick entry link
-
-        if( columnName.equals( "C_BPartner_ID" )) {
-        	// LY PARTNER
-            mBPartnerNew = new JMenuItem( Msg.getMsg( Env.getCtx(),"New" ),Env.getImageIcon( "InfoBPartner16.gif" ));
-            mBPartnerNew.addActionListener( this );
-            popupMenu.add( mBPartnerNew );
-            // OTHER PARTNERS - Incorporación según plugins 
-            PluginLookupUtils.insertLookupEntries(mLookupEntries);
-            for (PluginLookupInterface anEntry : mLookupEntries)
-            {
-            	for (JMenuItem anItem : anEntry.getBPartnerLookupEntries())
-            	{
-            		anItem.addActionListener(this);
-                	popupMenu.add(anItem);	
-            	}
-            }
-            mBPartnerUpd = new JMenuItem( Msg.getMsg( Env.getCtx(),"Update" ),Env.getImageIcon( "InfoBPartner16.gif" ));
-            mBPartnerUpd.addActionListener( this );
-            popupMenu.add( mBPartnerUpd );
-        }
-
-        //
-
-        if( (m_lookup != null) && (m_lookup.getZoom() == 0) ) {
-            mZoom.setEnabled( false );
-        }    	
-    }
-
     /** Sobrecarga de constructor para compatibilidad */
     public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup) {
-    	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, false);
+    	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, null);
+    }
+    
+    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup,MTab mtab ) {
+    	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, mtab, false);
     }
     
     /**
@@ -295,14 +174,27 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
      * @param lookup
      */
 
-    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup, boolean multiSelect ) {
+    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup, MTab mtab, boolean multiSelect ) {
+    	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, mtab, multiSelect, true);
+    }
+    
+    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup, MTab mtab, boolean multiSelect, boolean controlByRoleForBPartnerCreateMenu ) {
         super();
         super.setName( columnName );
         m_combo.setName( columnName );
         m_columnName = columnName;
         setMandatory( mandatory );
         m_lookup = lookup;
+        m_tab=mtab;
         m_multiSelect = multiSelect;
+        boolean showCreateMenuBPartner = true;
+        if(controlByRoleForBPartnerCreateMenu){
+        	MRole role = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx()));
+        	if(role != null && role.getID() > 0){
+        		showCreateMenuBPartner = role.isLookup_Allow_BPartner_Create_Menu();
+        	}
+        }
+        setAllowBPartnerCreationMenu(showCreateMenuBPartner);
         
         //
 
@@ -385,7 +277,9 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         	// LY PARTNER
             mBPartnerNew = new JMenuItem( Msg.getMsg( Env.getCtx(),"New" ),Env.getImageIcon( "InfoBPartner16.gif" ));
             mBPartnerNew.addActionListener( this );
-            popupMenu.add( mBPartnerNew );
+            if(isAllowBPartnerCreationMenu()){
+            	popupMenu.add( mBPartnerNew );
+            }
             // OTHER PARTNERS - Incorporación según plugins 
             PluginLookupUtils.insertLookupEntries(mLookupEntries);
             for (PluginLookupInterface anEntry : mLookupEntries)
@@ -398,7 +292,9 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             }
             mBPartnerUpd = new JMenuItem( Msg.getMsg( Env.getCtx(),"Update" ),Env.getImageIcon( "InfoBPartner16.gif" ));
             mBPartnerUpd.addActionListener( this );
-            popupMenu.add( mBPartnerUpd );
+            if(isAllowBPartnerCreationMenu()){
+            	popupMenu.add( mBPartnerUpd );
+            }
             
             setMenuCreateFactory(new VBPartnerCreateFactory());
         }
@@ -537,6 +433,8 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     protected boolean m_multiSelect = false;
     
     private LookupMenuCreateFactory menuCreateFactory;
+    
+    private boolean allowBPartnerCreationMenu = true;
     
     /**
      * Descripción de Método
@@ -1267,7 +1165,8 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         m_value = null;    // forces re-display if value is unchanged but text updated and still unique
 		if (m_mField != null
 				&& m_mField.getColumnName().compareTo("M_Product_ID") == 0
-				&& idInstance != 0) {
+				&& idInstance != 0
+				&& m_tab != null) {
         	m_tab.getField("M_AttributeSetInstance_ID").setValue(idInstance,false);
 			
         }
@@ -2029,7 +1928,14 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
 	public void setMenuCreateFactory(LookupMenuCreateFactory menuCreateFactory) {
 		this.menuCreateFactory = menuCreateFactory;
 	}
-    
+
+	public boolean isAllowBPartnerCreationMenu() {
+		return allowBPartnerCreationMenu;
+	}
+
+	public void setAllowBPartnerCreationMenu(boolean allowBPartnerCreationMenu) {
+		this.allowBPartnerCreationMenu = allowBPartnerCreationMenu;
+	}    
 	
 }    // VLookup
 

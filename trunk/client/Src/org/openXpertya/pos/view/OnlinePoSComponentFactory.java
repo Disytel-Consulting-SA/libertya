@@ -36,7 +36,8 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 
 	@Override
 	public VLookup createBPartnerSearch() {
-		VLookup bPartnerLookup =  VComponentsFactory.VLookupFactory("C_BPartner_ID","C_BPartner",getWindowNo(),DisplayType.Search);
+		VLookup bPartnerLookup = VComponentsFactory.VLookupFactory("C_BPartner_ID", "C_BPartner", getWindowNo(),
+				DisplayType.Search, null, true, true, false, false);
 		bPartnerLookup.setMandatory(true);
 		bPartnerLookup.setBackground(true);
 		bPartnerLookup.addVetoableChangeListener(new VetoableChangeListener() {
