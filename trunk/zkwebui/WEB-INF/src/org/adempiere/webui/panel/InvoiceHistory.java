@@ -36,6 +36,7 @@ import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.component.Window;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPriceList;
+import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -133,6 +134,7 @@ public class InvoiceHistory extends Window implements EventListener
 	 */
 	void jbInit() throws Exception
 	{
+		MRole role = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx()));
 		label.setText("Label");
 		
 		Tabs tabs = new Tabs();
@@ -142,8 +144,12 @@ public class InvoiceHistory extends Window implements EventListener
 		tabbox.appendChild(tabpanels);
 		
 		tabs.appendChild(new Tab(Msg.getMsg(Env.getCtx(), "PriceHistory")));
-		tabs.appendChild(new Tab(Msg.translate(Env.getCtx(), "QtyReserved")));
-		tabs.appendChild(new Tab(Msg.translate(Env.getCtx(), "QtyOrdered")));
+		if(role != null && role.isAllow_Info_Product_Reserved_Tab()){
+			tabs.appendChild(new Tab(Msg.translate(Env.getCtx(), "QtyReserved")));
+		}
+		if(role != null && role.isAllow_Info_Product_Ordered_Tab()){
+			tabs.appendChild(new Tab(Msg.translate(Env.getCtx(), "QtyOrdered")));
+		}
 		tabs.appendChild(new Tab(Msg.getMsg(Env.getCtx(), "QtyUnconfirmed")));
 		
 		if (m_M_Product_ID != 0)
@@ -153,13 +159,17 @@ public class InvoiceHistory extends Window implements EventListener
 		pricePane.appendChild(m_tablePrice);
 		tabpanels.appendChild(pricePane);
 		
-		reservedPane.setHeight("100%");
-		reservedPane.appendChild(m_tableReserved);
-		tabpanels.appendChild(reservedPane);
+		if(role != null && role.isAllow_Info_Product_Reserved_Tab()){
+			reservedPane.setHeight("100%");
+			reservedPane.appendChild(m_tableReserved);
+			tabpanels.appendChild(reservedPane);
+		}
 		
-		orderedPane.setHeight("100%");
-		orderedPane.appendChild(m_tableOrdered);
-		tabpanels.appendChild(orderedPane);
+		if(role != null && role.isAllow_Info_Product_Ordered_Tab()){
+			orderedPane.setHeight("100%");
+			orderedPane.appendChild(m_tableOrdered);
+			tabpanels.appendChild(orderedPane);
+		}
 		
 		unconfirmedPane.setHeight("100%");
 		unconfirmedPane.appendChild(m_tableUnconfirmed);

@@ -44,6 +44,7 @@ import org.compiere.swing.CPanel;
 import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.minigrid.MiniTable;
+import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -186,6 +187,7 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
      */
 
     void jbInit() throws Exception {
+    	MRole role = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx()));
         this.setDefaultCloseOperation( WindowConstants.DISPOSE_ON_CLOSE );
         mainPanel.setLayout( mainLayout );
         label.setText( "Label" );
@@ -198,8 +200,12 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
         mainPanel.add( centerTabbedPane,BorderLayout.CENTER );
         centerTabbedPane.addChangeListener( this );
         centerTabbedPane.add( pricePane,Msg.getMsg( Env.getCtx(),"PriceHistory" ));
-        centerTabbedPane.add( reservedPane,Msg.translate( Env.getCtx(),"QtyReserved" ));
-        centerTabbedPane.add( orderedPane,Msg.translate( Env.getCtx(),"QtyOrdered" ));
+        if(role != null && role.isAllow_Info_Product_Reserved_Tab()){
+        	centerTabbedPane.add( reservedPane,Msg.translate( Env.getCtx(),"QtyReserved" ));
+        }
+        if(role != null && role.isAllow_Info_Product_Ordered_Tab()){
+        	centerTabbedPane.add( orderedPane,Msg.translate( Env.getCtx(),"QtyOrdered" ));
+        }
         centerTabbedPane.add( unconfirmedPane,Msg.getMsg( Env.getCtx(),"UnconfirmedQty" ));
 
         //
