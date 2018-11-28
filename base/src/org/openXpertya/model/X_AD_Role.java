@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-11-28 13:28:12.69 */
+ *  @version  - 2018-11-28 13:59:56.761 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -60,6 +60,7 @@ setIsPersonalAccess (false);	// N
 setIsPersonalLock (false);	// N
 setIsShowAcct (false);	// N
 setIsUseUserOrgAccess (false);	// N
+setLookup_Allow_BPartner_Create_Menu (false);
 setMaxQueryRecords (0);
 setName (null);
 setOverwritePriceLimit (false);	// N
@@ -910,6 +911,24 @@ Use Org Access defined by user instead of Role Org Access */
 public boolean isUseUserOrgAccess() 
 {
 Object oo = get_Value("IsUseUserOrgAccess");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow Creation Menu.
+Allow Business Partner Creation Menu Element */
+public void setLookup_Allow_BPartner_Create_Menu (boolean Lookup_Allow_BPartner_Create_Menu)
+{
+set_Value ("Lookup_Allow_BPartner_Create_Menu", new Boolean(Lookup_Allow_BPartner_Create_Menu));
+}
+/** Get Allow Creation Menu.
+Allow Business Partner Creation Menu Element */
+public boolean isLookup_Allow_BPartner_Create_Menu() 
+{
+Object oo = get_Value("Lookup_Allow_BPartner_Create_Menu");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

@@ -1372,3 +1372,6 @@ ALTER FUNCTION getInvoicedQtyReturned(integer)
 --20181128-1325 Incorporación de permisos por perfil para visualizar las pestañas Pendente de Recibir y de Entrega en ventana Historial, accesible desde los Info Product e Info BPartner
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','allow_info_product_reserved_tab','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','allow_info_product_ordered_tab','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20181128-1355 Incorporación de permisos por perfil para visualizar las opciones de Creación y Actualización de Entidades Comerciales en el campo
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','lookup_allow_bpartner_create_menu','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
