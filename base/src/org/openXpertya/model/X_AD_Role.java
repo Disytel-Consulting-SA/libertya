@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-11-05 16:24:20.345 */
+ *  @version  - 2018-11-28 13:28:12.69 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -32,6 +32,8 @@ setAllow_Info_MRP (true);	// Y
 setAllow_Info_Order (true);	// Y
 setAllow_Info_Payment (true);	// Y
 setAllow_Info_Product (true);	// Y
+setAllow_Info_Product_Ordered_Tab (false);
+setAllow_Info_Product_Reserved_Tab (false);
 setAllow_Info_Resource (true);	// Y
 setAllow_Info_Schedule (true);	// Y
 setConfirmQueryRecords (0);
@@ -401,6 +403,38 @@ set_Value ("Allow_Info_Product", new Boolean(Allow_Info_Product));
 public boolean isAllow_Info_Product() 
 {
 Object oo = get_Value("Allow_Info_Product");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow Ordered Tab */
+public void setAllow_Info_Product_Ordered_Tab (boolean Allow_Info_Product_Ordered_Tab)
+{
+set_Value ("Allow_Info_Product_Ordered_Tab", new Boolean(Allow_Info_Product_Ordered_Tab));
+}
+/** Get Allow Ordered Tab */
+public boolean isAllow_Info_Product_Ordered_Tab() 
+{
+Object oo = get_Value("Allow_Info_Product_Ordered_Tab");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Allow Reserved Tab */
+public void setAllow_Info_Product_Reserved_Tab (boolean Allow_Info_Product_Reserved_Tab)
+{
+set_Value ("Allow_Info_Product_Reserved_Tab", new Boolean(Allow_Info_Product_Reserved_Tab));
+}
+/** Get Allow Reserved Tab */
+public boolean isAllow_Info_Product_Reserved_Tab() 
+{
+Object oo = get_Value("Allow_Info_Product_Reserved_Tab");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
