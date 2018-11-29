@@ -1375,3 +1375,155 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','allow_info_
 
 --20181128-1355 Incorporación de permisos por perfil para visualizar las opciones de Creación y Actualización de Entidades Comerciales en el campo
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','lookup_allow_bpartner_create_menu','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--20181129-1730 Funview correspondiente a la view v_product_movements_detailed. Mejoras de performance
+--TYPE v_product_movements_detailed_type
+CREATE TYPE v_product_movements_detailed_type AS (movement_table text, ad_client_id integer, ad_org_id integer, 
+		m_locator_id integer, m_warehouse_id integer, warehouse_value varchar(40), warehouse_name varchar(60), 
+		receiptvalue text, movementdate timestamp, doctypename varchar(60), documentno varchar(60), 
+		docstatus character(2), m_product_id integer, product_value varchar(40), product_name varchar(60), 
+		qty numeric(22,4), c_order_id integer, created timestamp, updated timestamp);
+	
+--FUNCTION v_product_movements_detailed_filtered(integer)
+CREATE OR REPLACE FUNCTION v_product_movements_detailed_filtered(productID integer)
+  RETURNS SETOF v_product_movements_detailed_type AS
+$BODY$
+declare
+	consulta varchar;
+	productCondition varchar;
+	adocument v_product_movements_detailed_type;
+BEGIN
+	-- Armar la condición por el artículo
+	productCondition = '(' || $1 || ' <= 0 or m_product_id = ' || $1 || ')';
+	-- Armar la consulta
+	consulta = ' SELECT t.movement_table, t.ad_client_id, t.ad_org_id, t.m_locator_id, w.m_warehouse_id, w.value AS warehouse_value, w.name AS warehouse_name, t.receiptvalue, t.movementdate, t.doctypename, t.documentno, t.docstatus, t.m_product_id, p.value as product_value, p.name as product_name, t.qty, t.c_order_id, t.created, t.updated
+from (
+
+SELECT t.ad_client_id, t.ad_org_id, t.m_locator_id, 
+	t.movementdate, t.m_product_id, io.c_order_id, 
+	CASE 
+	WHEN t.movementqty > 0 THEN ''Y''::text
+	ELSE ''N''::text
+	END AS receiptvalue,
+	abs(t.movementqty) AS qty, 
+	CASE 
+	WHEN iol.m_inoutline_id IS NOT NULL THEN ''M_InOut'' 
+	WHEN ml.m_movementline_id IS NOT NULL THEN ''M_Movement'' 
+	WHEN tr.m_transfer_id IS NOT NULL THEN ''M_Transfer''
+	WHEN (sp.m_splitting_id IS NOT NULL OR spv.m_splitting_id IS NOT NULL) THEN ''M_Splitting''
+	WHEN (pc.m_productchange_id IS NOT NULL OR pcv.m_productchange_id IS NOT NULL) THEN ''M_ProductChange''
+	ELSE ''M_Inventory''
+	END AS movement_table, 
+	CASE 
+	WHEN iol.m_inoutline_id IS NOT NULL THEN dtio.name
+	WHEN ml.m_movementline_id IS NOT NULL THEN dtm.name
+	WHEN tr.m_transfer_id IS NOT NULL THEN tr.transfertype
+	WHEN (sp.m_splitting_id IS NOT NULL OR spv.m_splitting_id IS NOT NULL) THEN ''M_Splitting_ID''
+	WHEN (pc.m_productchange_id IS NOT NULL OR pcv.m_productchange_id IS NOT NULL) THEN ''M_ProductChange_ID''
+	ELSE dti.name
+	END AS doctypename,
+	CASE 
+	WHEN iol.m_inoutline_id IS NOT NULL THEN io.documentno
+	WHEN ml.m_movementline_id IS NOT NULL THEN m.documentno
+	WHEN tr.m_transfer_id IS NOT NULL THEN tr.documentno
+	WHEN sp.m_splitting_id IS NOT NULL THEN sp.documentno
+	WHEN spv.m_splitting_id IS NOT NULL THEN spv.documentno
+	WHEN pc.m_productchange_id IS NOT NULL THEN pc.documentno
+	WHEN pcv.m_productchange_id IS NOT NULL THEN pcv.documentno
+	ELSE i.documentno
+	END AS documentno,
+	CASE 
+	WHEN iol.m_inoutline_id IS NOT NULL THEN io.docstatus
+	WHEN ml.m_movementline_id IS NOT NULL THEN m.docstatus
+	WHEN tr.m_transfer_id IS NOT NULL THEN tr.docstatus
+	WHEN sp.m_splitting_id IS NOT NULL THEN sp.docstatus
+	WHEN spv.m_splitting_id IS NOT NULL THEN spv.docstatus
+	WHEN pc.m_productchange_id IS NOT NULL THEN pc.docstatus
+	WHEN pcv.m_productchange_id IS NOT NULL THEN pcv.docstatus
+	ELSE i.docstatus
+	END AS docstatus,
+	CASE 
+	WHEN iol.m_inoutline_id IS NOT NULL THEN io.created 
+	WHEN ml.m_movementline_id IS NOT NULL THEN m.created 
+	WHEN tr.m_transfer_id IS NOT NULL THEN tr.created
+	WHEN sp.m_splitting_id IS NOT NULL THEN sp.created
+	WHEN spv.m_splitting_id IS NOT NULL THEN spv.created
+	WHEN pc.m_productchange_id IS NOT NULL THEN pc.created 
+	WHEN pcv.m_productchange_id IS NOT NULL THEN pcv.created
+	ELSE i.created
+	END AS created,
+	CASE 
+	WHEN iol.m_inoutline_id IS NOT NULL THEN io.updated 
+	WHEN ml.m_movementline_id IS NOT NULL THEN m.updated 
+	WHEN tr.m_transfer_id IS NOT NULL THEN tr.updated
+	WHEN sp.m_splitting_id IS NOT NULL THEN sp.updated
+	WHEN spv.m_splitting_id IS NOT NULL THEN spv.updated
+	WHEN pc.m_productchange_id IS NOT NULL THEN pc.updated
+	WHEN pcv.m_productchange_id IS NOT NULL THEN pcv.updated
+	ELSE i.updated
+	END AS updated
+FROM (SELECT *
+	FROM m_transaction
+	WHERE ' || productCondition || ') t
+LEFT JOIN m_inoutline iol ON iol.m_inoutline_id = t.m_inoutline_id
+LEFT JOIN m_inout io ON io.m_inout_id = iol.m_inout_id
+LEFT JOIN c_doctype dtio ON dtio.c_doctype_id = io.c_doctype_id
+
+LEFT JOIN m_movementline ml ON ml.m_movementline_id = t.m_movementline_id
+LEFT JOIN m_movement m ON m.m_movement_id = ml.m_movement_id
+LEFT JOIN c_doctype dtm ON dtm.c_doctype_id = m.c_doctype_id
+
+LEFT JOIN m_inventoryline il ON il.m_inventoryline_id = t.m_inventoryline_id
+LEFT JOIN m_inventory i ON i.m_inventory_id = il.m_inventory_id
+LEFT JOIN c_doctype dti ON dti.c_doctype_id = i.c_doctype_id
+
+LEFT JOIN m_transfer tr ON tr.m_inventory_id = i.m_inventory_id
+LEFT JOIN m_splitting sp ON sp.m_inventory_id = i.m_inventory_id
+LEFT JOIN m_splitting spv ON spv.void_inventory_id = i.m_inventory_id
+LEFT JOIN m_productchange pc ON pc.m_inventory_id = i.m_inventory_id
+LEFT JOIN m_productchange pcv ON pcv.void_inventory_id = i.m_inventory_id
+
+UNION ALL
+
+SELECT i.ad_client_id, i.ad_org_id, il.m_locator_id, 
+	i.movementdate, il.m_product_id, NULL::integer AS c_order_id,
+	CASE
+	WHEN (il.qtycount - il.qtybook) >= 0::numeric THEN ''Y''::text
+	ELSE ''N''::text
+	END AS receiptvalue,
+	abs(il.qtycount - il.qtybook) AS qty,
+	''M_Inventory'' AS movement_table, 
+	dt.name AS doctypename, i.documentno, i.docstatus, i.created, i.updated
+FROM m_inventory i
+JOIN m_inventoryline il ON i.m_inventory_id = il.m_inventory_id
+JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+WHERE ' || productCondition || ' 
+	and NOT EXISTS ( SELECT t.m_transaction_id
+			  FROM m_transaction t
+			  WHERE il.m_inventoryline_id = t.m_inventoryline_id)
+) as t
+JOIN m_product p on p.m_product_id = t.m_product_id
+JOIN m_locator l ON l.m_locator_id = t.m_locator_id
+JOIN m_warehouse w ON w.m_warehouse_id = l.m_warehouse_id; ';
+
+FOR adocument IN EXECUTE consulta LOOP
+	return next adocument;
+END LOOP;
+
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION v_product_movements_detailed_filtered(integer)
+  OWNER TO libertya;
+
+--VIEW v_product_movements_detailed
+DROP VIEW v_product_movements_detailed;
+
+CREATE OR REPLACE VIEW v_product_movements_detailed AS 
+ select *
+ from v_product_movements_detailed_filtered(-1);
+
+ALTER TABLE v_product_movements_detailed
+  OWNER TO libertya;

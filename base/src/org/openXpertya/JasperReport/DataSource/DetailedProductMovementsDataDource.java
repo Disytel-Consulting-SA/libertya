@@ -47,12 +47,21 @@ public class DetailedProductMovementsDataDource extends QueryDataSource {
 	protected String getSQLOrderBy(){
 		return " ORDER BY movementdate, updated ";
 	}
+
+	protected String getSelectSQL(){
+		return " movement_table, receiptvalue, receiptvalue as io_kind_no_parsed, movementdate, doctypename, documentno, qty, "
+				+ " (select documentno "
+				+ "	from c_invoice i "
+				+ "	where i.c_order_id = m.c_order_id "
+				+ "	order by i.created "
+				+ "	limit 1) as invoice_documentno ";
+	}
 	
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("select movement_table, receiptvalue, receiptvalue as io_kind_no_parsed, movementdate, doctypename, documentno, qty, invoice_documentno " +
-					 "from v_product_movements_detailed " +
-					 "where m_product_id = ? AND m_warehouse_id = ? AND docstatus IN ('CO','CL') ");
+		StringBuffer sql = new StringBuffer("select "+getSelectSQL());
+		sql.append(" from v_product_movements_detailed_filtered("+getProductID()+") as m ");
+		sql.append(" where m_warehouse_id = ? AND docstatus IN ('CO','CL') ");
 		if(getDateFrom() != null){
 			sql.append(" AND date_trunc('day',movementdate) >= date_trunc('day',?::date) ");
 		}
@@ -66,7 +75,6 @@ public class DetailedProductMovementsDataDource extends QueryDataSource {
 	@Override
 	protected Object[] getParameters() {
 		List<Object> params = new ArrayList<Object>();
-		params.add(getProductID());
 		params.add(getWarehouseID());
 		if(getDateFrom() != null){
 			params.add(getDateFrom());

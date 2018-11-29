@@ -16,8 +16,14 @@ public class TotalDetailedProductMovementsDataSource extends
 		// TODO Auto-generated constructor stub
 	}
 	
+	@Override
 	protected String getSQLOrderBy(){
 		return "";
+	}
+
+	@Override
+	protected String getSelectSQL(){
+		return "receiptvalue, doctypename, qty ";
 	}
 	
 	@Override
