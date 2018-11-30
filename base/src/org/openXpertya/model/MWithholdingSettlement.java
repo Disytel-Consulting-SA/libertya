@@ -16,6 +16,32 @@ import org.openXpertya.util.DB;
 public class MWithholdingSettlement extends X_C_WithholdingSettlement {
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Obtiene la retención para el esquema de retención y liquidación parámetro.
+	 * 
+	 * @param ctx
+	 * @param creditCardSettlementID
+	 * @param retencionSchemaID
+	 * @param trxName
+	 * @return la retención para el esquema de retención y liquidación parámetro, null si
+	 *         no existe
+	 * @throws Exception
+	 */
+	public static MWithholdingSettlement get(Properties ctx, Integer creditCardSettlementID, Integer retencionSchemaID, String trxName) throws Exception{
+		MWithholdingSettlement perse = null;
+		String sql = "SELECT * FROM "+Table_Name+" WHERE "+MCreditCardSettlement.Table_Name+"_ID = ? AND c_retencionschema_id = ? AND isactive = 'Y'";
+		PreparedStatement ps = DB.prepareStatement(sql, trxName);
+		ps.setInt(1, creditCardSettlementID);
+		ps.setInt(2, retencionSchemaID);
+		ResultSet rs = ps.executeQuery();
+		if(rs.next()){
+			perse = new MWithholdingSettlement(ctx, rs, trxName);
+		}
+		rs.close();
+		ps.close();
+		return perse;
+	}
+	
 	public MWithholdingSettlement(Properties ctx, ResultSet rs, String trxName) {
 		super(ctx, rs, trxName);
 	}
