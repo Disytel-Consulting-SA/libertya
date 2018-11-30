@@ -106,7 +106,7 @@ public abstract class DeclaracionValoresDataSource extends QueryDataSource {
 	}
 
 	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus, boolean withAllocationActive){
-		return getStdWhereClause(withTenderType, tableAlias, addDocStatus, withAllocationActive, true);
+		return getStdWhereClause(withTenderType, tableAlias, addDocStatus, withAllocationActive, false);
 	}
 	
 	protected String getStdWhereClause(boolean withTenderType, String tableAlias, boolean addDocStatus, boolean withAllocationActive, boolean withProductFilter){
