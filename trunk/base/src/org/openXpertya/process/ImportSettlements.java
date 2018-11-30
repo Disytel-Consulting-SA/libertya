@@ -1132,7 +1132,11 @@ public class ImportSettlements extends SvrProcess {
 						int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
 						BigDecimal iva = negativeValue(safeNumber(rs.getString("importe_imp")));
 						if (iva.compareTo(new BigDecimal(0)) != 0) {
-							MIVASettlements ps = new MIVASettlements(getCtx(), 0, get_TrxName());
+							MIVASettlements ps = MIVASettlements.get(getCtx(),
+									settlement.getC_CreditCardSettlement_ID(), C_Tax_ID, get_TrxName());
+							if(ps == null){
+								ps = new MIVASettlements(getCtx(), 0, get_TrxName());
+							}
 							ps.setC_Tax_ID(C_Tax_ID);
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ps.setAD_Org_ID(settlement.getAD_Org_ID());
@@ -1149,7 +1153,11 @@ public class ImportSettlements extends SvrProcess {
 						int C_Tax_ID = getTaxIDByName(attributes.get(name).getName());
 						BigDecimal perception = negativeValue(safeNumber(rs.getString("importe_imp")));
 						if (perception.compareTo(new BigDecimal(0)) != 0) {
-							MPerceptionsSettlement ps = new MPerceptionsSettlement(getCtx(), 0, get_TrxName());
+							MPerceptionsSettlement ps = MPerceptionsSettlement.get(getCtx(),
+									settlement.getC_CreditCardSettlement_ID(), C_Tax_ID, get_TrxName());
+							if(ps == null){
+								ps = new MPerceptionsSettlement(getCtx(), 0, get_TrxName());
+							}
 							ps.setC_Tax_ID(C_Tax_ID);
 							ps.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ps.setAD_Org_ID(settlement.getAD_Org_ID());
@@ -1166,7 +1174,11 @@ public class ImportSettlements extends SvrProcess {
 						int C_RetencionSchema_ID = getRetencionSchemaIDByValue(attributes.get(name).getName());
 						BigDecimal withholding = negativeValue(safeNumber(rs.getString("importe_imp")));
 						if (withholding.compareTo(new BigDecimal(0)) != 0) {
-							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+							MWithholdingSettlement ws = MWithholdingSettlement.get(getCtx(),
+									settlement.getC_CreditCardSettlement_ID(), C_RetencionSchema_ID, get_TrxName());
+							if(ws == null){
+								ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+							}
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
@@ -1183,7 +1195,11 @@ public class ImportSettlements extends SvrProcess {
 						int C_RetencionSchema_ID = getRetencionSchemaIDByValue(attributes.get(name).getName());
 						BigDecimal withholding = negativeValue(safeNumber(rs.getString("importe_imp")));
 						if (withholding.compareTo(new BigDecimal(0)) != 0) {
-							MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+							MWithholdingSettlement ws = MWithholdingSettlement.get(getCtx(),
+									settlement.getC_CreditCardSettlement_ID(), C_RetencionSchema_ID, get_TrxName());
+							if(ws == null){
+								ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+							}
 							ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 							ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 							ws.setAD_Org_ID(settlement.getAD_Org_ID());
@@ -1204,7 +1220,11 @@ public class ImportSettlements extends SvrProcess {
 							MRetencionSchema retSchema = new MRetencionSchema(getCtx(), C_RetencionSchema_ID, get_TrxName()); 
 							BigDecimal withholding = negativeValue(safeNumber(rs.getString("importe_imp")));
 							if (withholding.compareTo(new BigDecimal(0)) != 0) {
-								MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+								MWithholdingSettlement ws = MWithholdingSettlement.get(getCtx(),
+										settlement.getC_CreditCardSettlement_ID(), C_RetencionSchema_ID, get_TrxName());
+								if(ws == null){
+									ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+								}
 								ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 								ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 								ws.setAD_Org_ID(settlement.getAD_Org_ID());
@@ -1226,7 +1246,11 @@ public class ImportSettlements extends SvrProcess {
 							MRetencionSchema retSch= new MRetencionSchema(getCtx(), C_RetencionSchema_ID, get_TrxName()); 
 							BigDecimal withholding = negativeValue(safeNumber(rs.getString("importe_imp")));
 							if (withholding.compareTo(new BigDecimal(0)) != 0) {
-								MWithholdingSettlement ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+								MWithholdingSettlement ws = MWithholdingSettlement.get(getCtx(),
+										settlement.getC_CreditCardSettlement_ID(), C_RetencionSchema_ID, get_TrxName());
+								if(ws == null){
+									ws = new MWithholdingSettlement(getCtx(), 0, get_TrxName());
+								}
 								ws.setC_RetencionSchema_ID(C_RetencionSchema_ID);
 								ws.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
 								ws.setAD_Org_ID(settlement.getAD_Org_ID());
@@ -1263,6 +1287,8 @@ public class ImportSettlements extends SvrProcess {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch(Exception e){
 			e.printStackTrace();
 		}
 		return result;

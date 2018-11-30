@@ -16,6 +16,32 @@ import org.openXpertya.util.DB;
 public class MIVASettlements extends X_C_IVASettlements {
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Obtiene el impuesto para el impuesto y liquidación parámetro.
+	 * 
+	 * @param ctx
+	 * @param creditCardSettlementID
+	 * @param taxID
+	 * @param trxName
+	 * @return el impuesto para el impuesto y liquidación parámetro, null si
+	 *         no existe
+	 * @throws Exception
+	 */
+	public static MIVASettlements get(Properties ctx, Integer creditCardSettlementID, Integer taxID, String trxName) throws Exception{
+		MIVASettlements perse = null;
+		String sql = "SELECT * FROM "+Table_Name+" WHERE "+MCreditCardSettlement.Table_Name+"_ID = ? AND c_tax_id = ? AND isactive = 'Y'";
+		PreparedStatement ps = DB.prepareStatement(sql, trxName);
+		ps.setInt(1, creditCardSettlementID);
+		ps.setInt(2, taxID);
+		ResultSet rs = ps.executeQuery();
+		if(rs.next()){
+			perse = new MIVASettlements(ctx, rs, trxName);
+		}
+		rs.close();
+		ps.close();
+		return perse;
+	}
+	
 	public MIVASettlements(Properties ctx, ResultSet rs, String trxName) {
 		super(ctx, rs, trxName);
 	}
