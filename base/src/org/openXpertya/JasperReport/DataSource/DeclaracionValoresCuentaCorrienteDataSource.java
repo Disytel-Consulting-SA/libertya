@@ -36,9 +36,12 @@ public class DeclaracionValoresCuentaCorrienteDataSource extends
 		superSql.append(" SELECT invoice_documentno, invoice_grandtotal, ingreso, egreso, egreso * -1 as total ");
 		superSql.append(" FROM ");
 		superSql.append(getDSFunView("c_pos_declaracionvalores_v_filtered"));
+		superSql.append(" as nc ");
+		superSql.append(" JOIN c_invoice i on i.c_invoice_id = nc.c_invoice_id ");
 		superSql.append(" WHERE ");
 		superSql.append(getStdWhereClause(false));
-		superSql.append(" AND (tendertype = 'ARC') ");
+		superSql.append(" AND (nc.tendertype = 'ARC') ");
+		superSql.append(" AND (i.paymentrule = 'P') ");
 		superSql.append(" ORDER BY invoice_documentno");
 		
 		return superSql.toString();
