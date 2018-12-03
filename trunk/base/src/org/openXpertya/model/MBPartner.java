@@ -1068,7 +1068,11 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
             ResultSet rs = pstmt.executeQuery();
 
             while( rs.next()) {
-            	esquemas.add( new MRetencionSchema(getCtx(),rs.getInt("c_retencionschema_id"), get_TrxName()));
+				MRetencionSchema retSchema = new MRetencionSchema(getCtx(), rs.getInt("c_retencionschema_id"),
+						get_TrxName()); 
+            	if(retSchema.isActive()){
+            		esquemas.add(retSchema);
+            	}
             }
 
             rs.close();
