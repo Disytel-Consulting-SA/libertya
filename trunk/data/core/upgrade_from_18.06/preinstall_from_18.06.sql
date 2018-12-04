@@ -1527,3 +1527,6 @@ CREATE OR REPLACE VIEW v_product_movements_detailed AS
 
 ALTER TABLE v_product_movements_detailed
   OWNER TO libertya;
+  
+--20181204-1305 Nueva columna para permitir que las unidades de medida sean seleccionables para artículos
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_uom','productselectable','character(1) NOT NULL DEFAULT ''Y''::bpchar'));

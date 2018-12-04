@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_UOM
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-08-23 17:45:08.64 */
+ *  @version  - 2018-12-04 13:00:50.055 */
 public class X_C_UOM extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setCostingPrecision (0);
 setC_UOM_ID (0);
 setIsDefault (false);
 setName (null);
+setProductSelectable (false);
 setStdPrecision (0);
 setX12DE355 (null);
 }
@@ -183,6 +184,24 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Product Selectable.
+If it is active, can select the uom for products */
+public void setProductSelectable (boolean ProductSelectable)
+{
+set_Value ("ProductSelectable", new Boolean(ProductSelectable));
+}
+/** Get Product Selectable.
+If it is active, can select the uom for products */
+public boolean isProductSelectable() 
+{
+Object oo = get_Value("ProductSelectable");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Standard Precision.
 Rule for rounding  calculated amounts */
