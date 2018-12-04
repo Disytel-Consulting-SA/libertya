@@ -1530,3 +1530,114 @@ ALTER TABLE v_product_movements_detailed
   
 --20181204-1305 Nueva columna para permitir que las unidades de medida sean seleccionables para artículos
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_uom','productselectable','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--201812041339 Nueva función para redireccionar un UOM a otro junto con todos sus artículos y lineas de pedido, remito y factura
+CREATE OR REPLACE FUNCTION redirect_um(clientID integer, orgID integer, x12de355_from varchar, x12de355_to varchar, postproductselectable boolean)
+RETURNS void AS
+$BODY$
+/**
+* Redireccionar desde la UM from a la UM to:
+* - Los artículos 
+* - Las líneas de remitos 
+* - Las líneas de facturas
+* - Las líneas de pedidos
+* Luego se deja activo o desactivo la UM from dependiendo el parámetro postinactive.
+*/
+DECLARE
+	productID integer;
+	uomfromid integer;
+	uomtoid integer;
+	inoutlines integer;
+	invoicelines integer;
+	orderlines integer;
+	products integer;
+	uomactive varchar; 
+BEGIN
+	-- Obtener el ID del UOM desde en base al símbolo parámetro
+	SELECT c_uom_id INTO uomfromid
+	FROM c_uom 
+	WHERE (ad_client_id = clientID OR ad_client_id = 0) and x12de355 = x12de355_from
+	order by ad_client_id desc limit 1;
+
+	IF uomfromid IS NULL OR uomfromid = 0 THEN 
+		RAISE NOTICE 'Imposible determinar Unidad de Medida, x12de355 %', x12de355_from;
+		RETURN;
+	END IF;
+
+	-- Obtener el ID del UOM hasta en base al símbolo parámetro
+	SELECT c_uom_id INTO uomtoid 
+	FROM c_uom 
+	WHERE (ad_client_id = clientID OR ad_client_id = 0) and x12de355 = x12de355_to
+	order by ad_client_id desc limit 1;
+	
+	IF uomtoid IS NULL OR uomtoid = 0 THEN 
+		RAISE NOTICE 'Imposible determinar Unidad de Medida, x12de355 %', x12de355_to;
+		RETURN;
+	END IF;
+	
+	-- Se modifican las líneas de remitos, facturas y pedidos 
+	-- para los artículos de la UOM desde que poseen esa UOM en la línea
+	FOR productID IN 
+		SELECT m_product_id 
+		FROM m_product 
+		WHERE ad_client_id = clientID and c_uom_id = uomfromid
+		ORDER BY m_product_id
+	LOOP
+		RAISE NOTICE 'Articulo %', productID;
+		
+		-- Líneas de remito
+		UPDATE m_inoutline il 
+		SET c_uom_id = uomtoid
+		WHERE m_product_id = productID AND c_uom_id = uomfromid AND ad_org_id = orgID 
+			AND EXISTS (SELECT m_inout_id 
+					FROM m_inout i 
+					WHERE i.m_inout_id = il.m_inout_id and i.docstatus = 'CO');
+
+		GET DIAGNOSTICS inoutlines = ROW_COUNT;
+		RAISE NOTICE 'Lineas de remito actualizadas %', inoutlines;
+		
+		-- Líneas de factura
+		UPDATE c_invoiceline il
+		SET c_uom_id = uomtoid
+		WHERE m_product_id = productID AND c_uom_id = uomfromid AND ad_org_id = orgID 
+			AND EXISTS (SELECT c_invoice_id 
+					FROM c_invoice i 
+					WHERE i.c_invoice_id = il.c_invoice_id and i.docstatus = 'CO');
+
+		GET DIAGNOSTICS invoicelines = ROW_COUNT;
+		RAISE NOTICE 'Lineas de factura actualizadas %', invoicelines;
+		
+		-- Líneas de pedido
+		UPDATE c_orderline il 
+		SET c_uom_id = uomtoid
+		WHERE m_product_id = productID AND c_uom_id = uomfromid AND ad_org_id = orgID 
+			AND EXISTS (SELECT c_order_id 
+					FROM c_order i 
+					WHERE i.c_order_id = il.c_order_id and i.docstatus = 'CO');
+
+		GET DIAGNOSTICS orderlines = ROW_COUNT;
+		RAISE NOTICE 'Lineas de pedido actualizadas %', orderlines;
+	END LOOP;
+
+	-- Actualizar los artículos
+	UPDATE m_product
+	SET c_uom_id = uomtoid
+	WHERE c_uom_id = uomfromid;
+
+	-- Articulos actualizados
+	GET DIAGNOSTICS products = ROW_COUNT;
+	RAISE NOTICE 'Articulos actualizados %', products;
+
+	-- Activar/Desactivar UM
+	uomactive = 'N';
+	IF postproductselectable THEN uomactive = 'Y'; END IF;
+
+	UPDATE c_uom
+	SET productselectable = uomactive
+	WHERE c_uom_id = uomfromid;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION redirect_um(integer, integer, varchar, varchar, boolean)
+  OWNER TO libertya;
