@@ -1468,7 +1468,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 
 		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType(),
 				getM_Warehouse_ID(), 
-				isTPVInstance() || !dt.isWarehouseClosureControl())) {
+				isTPVInstance() || !dt.isWarehouseClosureControl() || isReversal())) {
             if (MWarehouseClose.isWarehouseCloseControlActivated()) {
             	m_processMsg = "@PeriodClosedOrWarehouseClosed@";
             } else {
