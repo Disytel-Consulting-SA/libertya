@@ -693,11 +693,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		sql += "			(NOT EXISTS (SELECT c_payment_id "
 				+ "							FROM c_allocationhdr as ah "
 				+ "							INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "							WHERE ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id) "
+				+ "							WHERE ah.c_bpartner_id = ? and ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id) "
 				+ "			OR EXISTS (SELECT c_payment_id "
 				+ "						FROM c_allocationhdr as ah "
 				+ "						INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "						WHERE ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype = 'OPA')) AND "
+				+ "						WHERE ah.c_bpartner_id = ? and ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype = 'OPA')) AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -725,6 +725,8 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
+		ps.setInt(i++, bpartner.getID());
+		ps.setInt(i++, bpartner.getID());
 		// Esquema de retención en subconsulta
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
@@ -775,7 +777,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		sql += "				p.c_payment_id IN (SELECT c_payment_id "
 				+ "							FROM c_allocationhdr as ah "
 				+ "							INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "							WHERE ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype <> 'OPA') AND "
+				+ "							WHERE ah.c_bpartner_id = ? and ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype <> 'OPA') AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "		                INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -803,6 +805,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
+		ps.setInt(i++, bpartner.getID());
 		// Esquema de retención en la subconsulta
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
@@ -872,11 +875,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		sql += "			(NOT EXISTS (SELECT c_cashline_id "
 				+ "						FROM c_allocationline as al "
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y') "
+				+ "						WHERE ah.c_bpartner_id = ? and al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y') "
 				+ "			OR EXISTS (SELECT c_cashline_id "
 				+ "						FROM c_allocationline as al "
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y' and allocationtype = 'OPA')) AND "
+				+ "						WHERE ah.c_bpartner_id = ? and al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y' and allocationtype = 'OPA')) AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -904,6 +907,8 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
+		ps.setInt(i++, bpartner.getID());
+		ps.setInt(i++, bpartner.getID());
 		// Esquema de retención
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
@@ -959,7 +964,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		sql += "			EXISTS (SELECT c_cashline_id "
 				+ "						FROM c_allocationline as al "
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y' and allocationtype <> 'OPA') AND "
+				+ "						WHERE ah.c_bpartner_id = ? and al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y' and allocationtype <> 'OPA') AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -989,6 +994,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
+		ps.setInt(i++, bpartner.getID());
 		// Esquema de retención
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
