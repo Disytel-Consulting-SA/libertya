@@ -1641,3 +1641,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION redirect_um(integer, integer, varchar, varchar, boolean)
   OWNER TO libertya;
+  
+-- 20181207-1153 Indice para bpartners en allocations
+update ad_system set dummy = (SELECT addindexifnotexists('c_allocationhdr_bpartner','c_allocationhdr','c_bpartner_id'));
