@@ -2350,11 +2350,6 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		if (isDebit && !isProcessed()) {
 			setApplyPercepcion(true);
 		}
-		
-		//Está separada la condición a propósito, porque sino no funciona combinado con las otras condiciones
-		if (isDiffCambio()) {
-			setApplyPercepcion(false);
-		}
 
 		/*
 		 * Comprobar si el documento base denota crédito (generalmente una nota
