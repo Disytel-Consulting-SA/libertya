@@ -1644,3 +1644,7 @@ ALTER FUNCTION redirect_um(integer, integer, varchar, varchar, boolean)
   
 -- 20181207-1153 Indice para bpartners en allocations
 update ad_system set dummy = (SELECT addindexifnotexists('c_allocationhdr_bpartner','c_allocationhdr','c_bpartner_id'));
+
+--20181221-1050 La unicidad de liquidaciones debe incluir la fecha de pago
+ALTER TABLE c_creditcardsettlement DROP CONSTRAINT uniquecreditcardsettlement;
+ALTER TABLE c_creditcardsettlement ADD CONSTRAINT uniquecreditcardsettlement UNIQUE (settlementno, c_bpartner_id, paymentdate);

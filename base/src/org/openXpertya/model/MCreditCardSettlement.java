@@ -114,7 +114,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		int found = 0;
 
 		// Validación de unicidad mediante Entidad Comercial y número de liquidación.
-		if (!Util.isEmpty(getC_BPartner_ID()) && !Util.isEmpty(getSettlementNo(), true)) {
+		if (!Util.isEmpty(getC_BPartner_ID()) && !Util.isEmpty(getSettlementNo(), true) && getPaymentDate() != null) {
 			StringBuffer sql = new StringBuffer();
 	
 			sql.append("SELECT ");
@@ -124,6 +124,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 			sql.append("WHERE ");
 			sql.append("	C_BPartner_ID = ? ");
 			sql.append("	AND SettlementNo = ? ");
+			sql.append("	AND PaymentDate::date = '").append(Env.getDateFormatted(getPaymentDate())).append("'::date ");
 			sql.append(newRecord?"":"	AND C_CreditCardSettlement_ID <> "+getID());
 	
 			found = DB.getSQLValue(get_TrxName(), sql.toString(), getC_BPartner_ID(), getSettlementNo());
