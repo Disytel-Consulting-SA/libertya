@@ -1406,13 +1406,20 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
 				log.saveError("SaveError", Msg.translate(getCtx(), "TypeIIBBRequired"));
 				return false;
 			}
+			/* 
+			 * Comentada la siguiente validación. Motivo:
+			 * A partir del 2015, los contribuyentes en Convenio Multilateral se identifican por su CUIT, 
+			 * con lo cual NO rige mas el tema de la numeración de inscripción que comience con 9.
+			 * Esto implica entonces que hay que eliminar por completo la validación de que el Nro de IIBB 
+			 * comience con 9, sea o no Convenio Multilateral.
+			 */
 			// Si Tipo de Situación es 2 (Convenio Multilateral), el nro de IIBB debe comenzar con 9.
-			if (X_C_BPartner.IIBBTYPE_ConvenioMultilateral.compareTo(getIIBBType()) == 0) {
-				if(getIIBB().substring(0,1).compareTo("9") != 0){
-					log.saveError("SaveError", Msg.translate(getCtx(), "IIBBMultilateralInvalid"));
-					return false;
-				}
-			}
+//			if (X_C_BPartner.IIBBTYPE_ConvenioMultilateral.compareTo(getIIBBType()) == 0) {
+//				if(getIIBB().substring(0,1).compareTo("9") != 0){
+//					log.saveError("SaveError", Msg.translate(getCtx(), "IIBBMultilateralInvalid"));
+//					return false;
+//				}
+//			}
 		}
 		
 		// Marcar convenio multilateral
