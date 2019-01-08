@@ -63,6 +63,10 @@ public class ImportNaranja extends Import {
 			}
 			response = (Detalle) get.execute(Detalle.class); // Ejecuto la consulta.
 
+			if(response == null){
+				continue;
+			}
+			
 			currentPage = response.getCupones().getCurrentPage();
 			lastPage = response.getCupones().getLastPage();
 
@@ -74,7 +78,6 @@ public class ImportNaranja extends Import {
 
 				Map<String, String> leFields = new HashMap<String, String>();
 				leFields.put("comercio", (String) coupon.getValue("comercio"));
-				leFields.put("nro_liquidacion", (String) coupon.getValue("nro_liquidacion"));
 				leFields.put("fecha_pago", (String) coupon.getValue("fecha_pago"));
 				
 				matchingFields.add(leFields);
