@@ -21,7 +21,7 @@ public class NaranjaPayments extends GenericMap {
 	/** Constructor. */
 	public NaranjaPayments() {
 		super(joinArrays(NaranjaCoupons.filteredFields, NaranjaHeaders.filteredFields, NaranjaInvoicedConcepts.filteredFields), null, X_I_NaranjaPayments.Table_Name);
-		matchingFields = new String[] { "comercio", "nro_liquidacion", "fecha_pago" };
+		matchingFields = new String[] { "comercio", "fecha_pago" };
 	}
 
 	/**
@@ -30,7 +30,7 @@ public class NaranjaPayments extends GenericMap {
 	 */
 	public NaranjaPayments(NaranjaCoupons coupons) {
 		super(joinArrays(NaranjaCoupons.filteredFields, NaranjaHeaders.filteredFields, NaranjaInvoicedConcepts.filteredFields), null, X_I_NaranjaPayments.Table_Name);
-		matchingFields = new String[] { "comercio", "nro_liquidacion", "fecha_pago" };
+		matchingFields = new String[] { "comercio", "fecha_pago" };
 
 		data = new ArrayList<GenericDatum>();
 		data.add(coupons.getValues());
