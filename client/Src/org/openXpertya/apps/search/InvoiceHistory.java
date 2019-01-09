@@ -445,11 +445,11 @@ public class InvoiceHistory extends JDialog implements ActionListener,ChangeList
      */
 
     public void stateChanged( ChangeEvent e ) {
-        if( centerTabbedPane.getSelectedIndex() == 1 ) {
+		if (centerTabbedPane.getSelectedIndex() == centerTabbedPane.indexOfComponent(reservedPane)) {
             initReservedOrderedTab( true );
-        } else if( centerTabbedPane.getSelectedIndex() == 2 ) {
+		} else if (centerTabbedPane.getSelectedIndex() == centerTabbedPane.indexOfComponent(orderedPane)) {
             initReservedOrderedTab( false );
-        } else if( centerTabbedPane.getSelectedIndex() == 3 ) {
+        } else if( centerTabbedPane.getSelectedIndex() == centerTabbedPane.indexOfComponent(unconfirmedPane) ) {
             initUnconfirmedTab();
         }
     }    // stateChanged

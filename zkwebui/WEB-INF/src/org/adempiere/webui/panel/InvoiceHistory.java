@@ -375,13 +375,13 @@ public class InvoiceHistory extends Window implements EventListener
 			dispose();
 		else if(component instanceof Tab)
 		{
-			if (tabbox.getSelectedIndex() == 1)
+			if (tabbox.getSelectedTabpanel() == reservedPane)
 				initReservedOrderedTab(true);
-			else if (tabbox.getSelectedIndex() == 2)
+			else if (tabbox.getSelectedTabpanel() == orderedPane)
 				initReservedOrderedTab(false);
-			else if (tabbox.getSelectedIndex() == 3)
+			else if (tabbox.getSelectedTabpanel() == unconfirmedPane)
 				initUnconfirmedTab();
-			else if (tabbox.getSelectedIndex() == 4)
+			else if (tabbox.getSelectedTabpanel() == atpPane)
 				initAtpTab();
 		}
 	}
