@@ -128,6 +128,9 @@ public class ConfigurationData {
 
     /** Descripción de Campo */
     public static final String	OPCIONES_JAVA_OXP	= "OPCIONES_JAVA_OXP";
+    
+    /** Numero de conexiones a BBDD server-side */
+    public static final String	SERVER_DB_CONNECTIONS = "SERVER_DB_CONNECTIONS";
 
     /** Descripción de Campo */
     public static final String	NOMBRE_BD_OXP	= "NOMBRE_BD_OXP";
@@ -538,6 +541,11 @@ public class ConfigurationData {
             p_properties.setProperty(OPCIONES_JAVA_OXP, "-Xms1024M -Xmx1536M -XX:MaxPermSize=1024M -Dfile.encoding=UTF-8");
         }
 
+        // Default server-side connections
+        if (!p_properties.containsKey(SERVER_DB_CONNECTIONS)) {
+            p_properties.setProperty(SERVER_DB_CONNECTIONS, "5");
+        }
+        
         // Web Alias
         if (!p_properties.containsKey(ALIAS_WEB_OXP) && (localhost != null)) {
             p_properties.setProperty(ALIAS_WEB_OXP, localhost.getCanonicalHostName());

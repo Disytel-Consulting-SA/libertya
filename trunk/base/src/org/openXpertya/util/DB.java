@@ -16,6 +16,8 @@
 
 package org.openXpertya.util;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.rmi.RemoteException;
 import java.sql.CallableStatement;
@@ -48,6 +50,7 @@ import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.MSystem;
 import org.openXpertya.process.SequenceCheck;
+import org.postgresql.PGConnection;
 
 /**
  * Descripción de Clase
@@ -58,6 +61,9 @@ import org.openXpertya.process.SequenceCheck;
  */
 
 public final class DB {
+	
+	/** Nro por defecto de conexiones (si no se especifica otro valor en el properties de configuracion) */
+	public static final int DEFAULT_SERVER_DB_CONN = 5;
 	
 	/** dREHER, Compatibilidad Jasper Adempiere 
 	 
@@ -109,7 +115,7 @@ public final class DB {
 
     private static int s_conCacheSize = Ini.isClient()
             ?1
-            :1;
+            :getServerDBConnectionCount();
 
     /** Descripción de Campos */
 
@@ -120,13 +126,38 @@ public final class DB {
     private static Connection s_connectionRW = null;
 
     /** Descripción de Campos */
-
+ 
     private static Connection s_connectionID = null;
 
     /** Descripción de Campos */
 
     private static CLogger log = CLogger.getCLogger( DB.class );
 
+    /** Recupera - si es que existe - la configuracion del numero de conexiones server-side alojado en el 
+     *  properties correspondiente.  En caso de no existir o de no encontrarlo, utiliza el valor por defecto */
+    protected static int getServerDBConnectionCount() {
+    	int connectionsNo = DEFAULT_SERVER_DB_CONN;
+    	FileInputStream fis	= null;
+    	try {
+    		String fileName = Ini.getOXPHome() + File.separator + "LibertyaEnv.properties";
+    		fis	= new FileInputStream(fileName);
+    		Properties prop = new Properties();
+    		prop.load(fis);
+    		connectionsNo = Integer.parseInt(prop.getProperty("SERVER_DB_CONNECTIONS", ""+connectionsNo));
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	} finally {
+    		try {
+	    		if (fis!=null)
+	    			fis.close();
+	    		fis=null;
+    		} catch (Exception e2) {
+    			e2.printStackTrace();
+    		}
+    	}
+    	return connectionsNo;
+    }
+    
     /**
      * Descripción de Método
      *
@@ -351,6 +382,12 @@ public final class DB {
      * @return
      */
 
+    
+    /** Posición actual de asignacion de server connection */
+    protected static int serverConnPos = 1;
+    /** Mapeo de server connections: SessionID -> connectionNo */
+    protected static CCache<String, Integer> serverConnections = new CCache<String, Integer>("ServerConns", s_conCacheSize, 10);
+    
     public static Connection getConnectionRO() {
         try {
             synchronized( s_cc )    // use as mutex as s_connection is null the first time
@@ -373,11 +410,46 @@ public final class DB {
         }
 
         // check health of connection
-
-        int        pos          = s_conCount++;
-        int        connectionNo = pos % s_conCacheSize;
-        Connection connection   = s_connections[ connectionNo ];
-
+        int connectionNo = -1;
+        Connection connection = null;
+        if (Ini.isClient()) {
+        	connectionNo = (s_conCount++) % s_conCacheSize;
+        	connection   = s_connections[ connectionNo ];
+        }
+        
+        /* Logica especial server-side de gestion de conexiones para LYWeb:  
+         * Reutilizar la conexion asignada de la sesion por un intervalo de tiempo */
+        if (!Ini.isClient()) {
+        	try {
+        		// Las sesiones sin servlet.sessionID (por ejemplo Proc.Ctble / LYWS) utilizaran la misma conexion 
+        		// De esta manera, las conexiones no webui se gestionan de manera tradicional,
+        		// Y unicamente las englobadas bajo sessionID (webui por ejemplo) tendran asignacion especial incremental
+        		String sessionID = Env.getContext(Env.getCtx(), "servlet.sessionId");
+        		// No hay un sessionID definido? Gestion tradicional de conexiones server-side (posicion 0 del pool de conexiones) 
+        		if (Util.isEmpty(sessionID, true) || s_conCacheSize == 1) {
+        			connectionNo = 0;
+        			connection = s_connections[connectionNo];
+        		} else {
+        			// Bajo un sessionID, asignar una conexion por sessionID del pool (exceptuando la 0)
+        			// Si originalmente no existe la asociación: sessionID -> connectionNo, generarla
+        			if (serverConnections.get(sessionID)==null) {
+        				connectionNo = serverConnPos++ % s_conCacheSize;
+        				if (connectionNo==0 && s_conCacheSize > 1) {
+        					serverConnPos++;
+        					connectionNo++;
+        				}
+        				connection = s_connections[connectionNo];
+	        			serverConnections.put(sessionID, connectionNo);
+	        		} 
+        			connectionNo = serverConnections.get(sessionID);
+	        		connection = s_connections[connectionNo];
+        		}
+        		log.finest("sessionID:" + sessionID + " - connecionNo:" + connectionNo + " - backPID:" + ((PGConnection)connection).getBackendPID());
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
+        }
+        
         try {
             if( connection == null ) {
                 ;
