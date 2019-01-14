@@ -4474,7 +4474,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		documentDiscount.setTaxRate(taxRate);
 		documentDiscount.setDiscountKind(discountKind);
 		documentDiscount.setDescription(description);
-		documentDiscount.setM_DiscountSchema_ID(discountSchemaID);
+		documentDiscount.setM_DiscountSchema_ID(discountSchemaID == null ? 0 : discountSchemaID);
 		return documentDiscount;
 	}
 	
