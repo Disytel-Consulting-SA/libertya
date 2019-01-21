@@ -635,6 +635,13 @@ public class VBPartner extends CDialog implements ActionListener {
 	        		m_partner.setC_Categoria_Iva_ID(categoriaIva);
 	        	else
 	        		m_partner.setC_Categoria_Iva_ID(0);
+	        	
+	        	// No es posible modificar los datos de CF
+		        if(!Util.isEmpty(m_partner.getValue()) && m_partner.getValue().equals("CF")){
+					throw new Exception(m_partner.getID() > 0
+							? "No es posible modificar los datos de la entidad comercial CONSUMIDOR FINAL"
+							: "No es posible agregar una entidad comercial con clave CF");
+		        }
 	        }
 	        
 	        if(fPartnerGroup.getValue() != null) {

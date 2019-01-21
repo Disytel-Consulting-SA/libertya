@@ -30,6 +30,7 @@ import org.adempiere.webui.editor.WLocationEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.window.FDialog;
+import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MLocation;
@@ -41,6 +42,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -99,6 +101,8 @@ public class WBPartner extends Window implements EventListener, ValueChangeListe
 	private VerticalBox centerPanel = new VerticalBox();
 	
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true, false, false, false, false, false);
+	
+	private boolean m_localeARActive  = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 	
 	/**
 	 *	Constructor.
@@ -415,6 +419,15 @@ public class WBPartner extends Window implements EventListener, ValueChangeListe
 		}
 		
 		m_partner.setValue(fValue.getText());
+
+		if(m_localeARActive){
+			// No es posible modificar los datos de CF
+	        if(!Util.isEmpty(m_partner.getValue()) && m_partner.getValue().equals("CF")){
+	        	FDialog.error(m_WindowNo, this, "BPartnerNotSaved", m_partner.getID() > 0
+						? "No es posible modificar los datos de la entidad comercial CONSUMIDOR FINAL"
+						: "No es posible agregar una entidad comercial con clave CF");
+	        }
+		}
 		
 		m_partner.setName(fName.getText());
 		m_partner.setName2(fName2.getText());
