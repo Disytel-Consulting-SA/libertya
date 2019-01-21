@@ -1497,6 +1497,11 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
     	}
     	else
     	{
+    		if(curTab.isReadOnly()){
+    			onIgnore();
+    			return true;
+    		}
+    		
     		if (onSaveEvent && curTab.getCommitWarning() != null && curTab.getCommitWarning().trim().length() > 0)
     		{
     			if (!FDialog.ask(curWindowNo, this.getComponent(), "SaveChanges?", curTab.getCommitWarning()))
