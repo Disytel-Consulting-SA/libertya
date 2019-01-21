@@ -1701,6 +1701,11 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
             manualCmd = false;
         }
 
+        if(m_curTab.isReadOnly()){
+        	cmd_ignore();
+        	return true;
+        }
+        
         log.config( "Manual=" + manualCmd );
         m_errorDisplayed = false;
         m_curGC.stopEditor( true );
