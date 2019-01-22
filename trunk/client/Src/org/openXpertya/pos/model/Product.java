@@ -29,6 +29,10 @@ public class Product {
 	
 	private int productCategoryID;
 	
+	private int productGamasID;
+	
+	private int productLinesID;
+	
 	private String checkoutPlace;
 	
 	private boolean sold = true;
@@ -53,7 +57,7 @@ public class Product {
 	 * @param checkoutPlace
 	 * @param sold
 	 */
-	public Product(int id, String code, String description, BigDecimal stdPrice, BigDecimal limitPrice, int M_AttributeSetInstance_ID, String masiDescription, boolean taxIncludedInPrice, boolean perceptionIncludedInPrice, boolean masiMandatory, int productCategoryID, List<Integer> vendorsIds, String checkoutPlace, boolean sold) {
+	public Product(int id, String code, String description, BigDecimal stdPrice, BigDecimal limitPrice, int M_AttributeSetInstance_ID, String masiDescription, boolean taxIncludedInPrice, boolean perceptionIncludedInPrice, boolean masiMandatory, int productCategoryID, List<Integer> vendorsIds, String checkoutPlace, boolean sold, int productGamasID, int productLinesID) {
 		super();
 		setId(id);
 		setCode(code);
@@ -69,6 +73,8 @@ public class Product {
 		setVendorsIds(vendorsIds);
 		setCheckoutPlace(checkoutPlace);
 		setSold(sold);
+		setProductGamasID(productGamasID);
+		setProductLinesID(productLinesID);
 	}
 	
 	/**
@@ -265,6 +271,22 @@ public class Product {
 
 	public void setPerceptionIncludedInPrice(boolean perceptionIncludedInPrice) {
 		this.perceptionIncludedInPrice = perceptionIncludedInPrice;
+	}
+
+	public int getProductGamasID() {
+		return productGamasID;
+	}
+
+	public void setProductGamasID(int productGamasID) {
+		this.productGamasID = productGamasID;
+	}
+
+	public int getProductLinesID() {
+		return productLinesID;
+	}
+
+	public void setProductLinesID(int productLinesID) {
+		this.productLinesID = productLinesID;
 	}
 	
 }

@@ -98,7 +98,7 @@ public class PosMainFormEmulator extends PoSMainForm {
 			ArrayList<OrderProduct> productsList = new ArrayList<OrderProduct>();
 			for (int j = 0; j < TPV_LINES_PER_SIMULATION; j++)
 			{
-				Product aProduct = new Product(1032483, "999-999", "ART-LIB", BigDecimal.ONE, BigDecimal.ONE, 0, "---", true, false, false, 1010402, new ArrayList<Integer>(), "B", true);      
+				Product aProduct = new Product(1032483, "999-999", "ART-LIB", BigDecimal.ONE, BigDecimal.ONE, 0, "---", true, false, false, 1010402, new ArrayList<Integer>(), "B", true, 0, 0);      
 				OrderProduct anOrderProduct = new OrderProduct(BigDecimal.ONE, BigDecimal.ZERO, aTax, aProduct, "P");
 				productsList.add(anOrderProduct);
 			}

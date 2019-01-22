@@ -1470,6 +1470,27 @@ public class MOrderLine extends X_C_OrderLine {
 		public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
 			MOrderLine.this.setTpvGeneratedInvoiceLineID(generatedInvoiceLineID);
 		}
+
+		@Override
+		public int getProductCategoryID() {
+			return MProduct.get(MOrderLine.this.getCtx(), getProductID()).getM_Product_Category_ID();
+		}
+
+		@Override
+		public int getProductGamasID() {
+			return MProductGamas.getGamaIDFromCategory(getProductCategoryID(), MOrderLine.this.get_TrxName());
+		}
+
+		@Override
+		public int getProductLinesID() {
+			return MProductLines.getProductLineIDFromGama(getProductGamasID(), MOrderLine.this.get_TrxName());
+		}
+
+		@Override
+		public List<Integer> getProductVendorIDs() {
+			return MProductPO.getBPartnerIDsOfProduct(MOrderLine.this.getCtx(), getProductID(), true,
+					MOrderLine.this.get_TrxName());
+		}
     }
 
 	public boolean isShouldUpdateHeader() {

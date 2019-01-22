@@ -57,6 +57,23 @@ public class MProductGamas extends X_M_Product_Gamas {
 
         return pc;
     }    // get
+    
+
+    public static Integer getGamaIDFromCategory(int productCategoryID, String trxName){
+        Integer gamaID = ( Integer )s_categoriesGamas.get( productCategoryID );
+        
+        // Si no esta cacheado lo busco
+        if(gamaID == null){
+			gamaID = DB.getSQLValue(trxName,
+					"SELECT M_Product_Gamas_ID FROM M_Product_Category WHERE M_Product_Category_ID=?",
+					productCategoryID);
+			if(gamaID > 0){
+				s_categoriesGamas.put(productCategoryID, gamaID);
+			}
+        }
+        
+        return gamaID;
+    }
 
     /**
      * Descripción de Método
@@ -72,57 +89,8 @@ public class MProductGamas extends X_M_Product_Gamas {
         if( (M_Product_Category_ID == 0) || (M_Product_Gamas_ID == 0) ) {
             return false;
         }
-
-        // Look up
-
-        Integer category = new Integer( M_Product_Category_ID );
-        Integer gamas    = ( Integer )s_products.get( category );
-
-        if( gamas != null ) {
-            return gamas.intValue() == M_Product_Gamas_ID;
-        }
-
-        PreparedStatement pstmt = null;
-
-        try {
-            pstmt = DB.prepareStatement( "SELECT M_Product_Gamas_ID FROM M_Product_Category WHERE M_Product_Category_ID=?" );
-            pstmt.setInt( 1,M_Product_Category_ID );
-
-            ResultSet rs = pstmt.executeQuery();
-
-            if( rs.next()) {
-                gamas = new Integer( rs.getInt( 1 ));
-            }
-
-            rs.close();
-            pstmt.close();
-            pstmt = null;
-        } catch( Exception e ) {
-            s_log.log( Level.SEVERE,"isGama",e );
-        }
-
-        try {
-            if( pstmt != null ) {
-                pstmt.close();
-            }
-
-            pstmt = null;
-        } catch( Exception e ) {
-            pstmt = null;
-        }
-
-        if( gamas != null ) {
-
-            // TODO: LRU logic
-
-            s_products.put( category,gamas );
-
-            return category.intValue() == M_Product_Category_ID;
-        }
-
-        s_log.log( Level.SEVERE,"isgamas - No Encontrado N�mero de Categor�a=" + M_Product_Category_ID );
-
-        return false;
+        Integer gamaID = getGamaIDFromCategory(M_Product_Category_ID, null);
+        return gamaID != null && gamaID.intValue() == M_Product_Gamas_ID;
     }    // isCategory
 
     /** Descripción de Campos */
@@ -131,7 +99,7 @@ public class MProductGamas extends X_M_Product_Gamas {
 
     /** Descripción de Campos */
 
-    private static CCache s_products = new CCache( "M_Product_Category",100 );
+    private static CCache s_categoriesGamas = new CCache( "M_Product_Category",100 );
 
     /** Descripción de Campos */
 

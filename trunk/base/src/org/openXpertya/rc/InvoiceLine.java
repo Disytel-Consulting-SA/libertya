@@ -2,6 +2,7 @@ package org.openXpertya.rc;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountableDocumentLine;
@@ -9,6 +10,11 @@ import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
+import org.openXpertya.model.MProduct;
+import org.openXpertya.model.MProductCategory;
+import org.openXpertya.model.MProductGamas;
+import org.openXpertya.model.MProductLines;
+import org.openXpertya.model.MProductPO;
 import org.openXpertya.util.Env;
 
 public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, Serializable{
@@ -359,5 +365,26 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 	@Override
 	public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
 		// Este método no realiza nada aquí ya que las facturas ya están creadas
+	}
+
+	@Override
+	public int getProductCategoryID() {
+		return MProduct.get(getInvoice().getCtx(), getProductID()).getM_Product_Category_ID();
+	}
+
+	@Override
+	public int getProductGamasID() {
+		return MProductGamas.getGamaIDFromCategory(getProductCategoryID(), getInvoice().getTrxName());
+	}
+
+	@Override
+	public int getProductLinesID() {
+		return MProductLines.getProductLineIDFromGama(getProductGamasID(), getInvoice().getTrxName());
+	}
+
+	@Override
+	public List<Integer> getProductVendorIDs() {
+		return MProductPO.getBPartnerIDsOfProduct(getInvoice().getCtx(), getProductID(), true,
+				getInvoice().getTrxName());
 	}
 }

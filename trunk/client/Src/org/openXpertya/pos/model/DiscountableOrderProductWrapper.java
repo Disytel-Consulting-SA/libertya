@@ -1,6 +1,7 @@
 package org.openXpertya.pos.model;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.openXpertya.model.DiscountCalculator;
 import org.openXpertya.model.DiscountableDocumentLine;
@@ -179,5 +180,25 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 	@Override
 	public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
 		getOrderProduct().setInvoiceLineID(generatedInvoiceLineID);
+	}
+
+	@Override
+	public int getProductCategoryID() {
+		return getOrderProduct().getProduct().getProductCategoryID();
+	}
+
+	@Override
+	public int getProductGamasID() {
+		return getOrderProduct().getProduct().getProductGamasID();
+	}
+
+	@Override
+	public int getProductLinesID() {
+		return getOrderProduct().getProduct().getProductLinesID();
+	}
+
+	@Override
+	public List<Integer> getProductVendorIDs() {
+		return getOrderProduct().getProduct().getVendorsIds();
 	}
 }
