@@ -55,9 +55,16 @@ public class MProductPO extends X_M_Product_PO {
      * @return
      */
 
-    public static MProductPO[] getOfProduct( Properties ctx,int M_Product_ID,String trxName ) {
+    public static MProductPO[] getOfProduct( Properties ctx,int M_Product_ID, String trxName ) {
+    	return getOfProduct(ctx, M_Product_ID, false, trxName);
+    }
+    
+    public static MProductPO[] getOfProduct( Properties ctx,int M_Product_ID, boolean onlyCurrent, String trxName ) {
         ArrayList list = new ArrayList();
-        String    sql  = "SELECT * FROM M_Product_PO " + "WHERE M_Product_ID=? AND IsActive='Y' " + "ORDER BY IsCurrentVendor DESC";
+        String    sql  = "SELECT * FROM M_Product_PO " + 
+        				"WHERE M_Product_ID=? AND IsActive='Y' " +
+        				(onlyCurrent?" AND IsCurrentVendor = 'Y' ":"") +
+        				"ORDER BY IsCurrentVendor DESC";
         PreparedStatement pstmt = null;
 
         try {
@@ -136,6 +143,32 @@ public class MProductPO extends X_M_Product_PO {
 			rs = ps.executeQuery();
 			while (rs.next()) {
 				pos.add(rs.getInt("m_product_id"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+    	return pos;
+    }
+    
+    public static List<Integer> getBPartnerIDsOfProduct(Properties ctx, Integer productID, boolean onlyCurrents, String trxName) {
+    	List<Integer> pos = new ArrayList<Integer>();
+    	String sql = "SELECT c_bpartner_id FROM M_Product_PO " + "WHERE M_Product_ID=? AND IsActive='Y' ";
+    	sql+=(onlyCurrents?" AND IsCurrentVendor = 'Y' ":"");
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, productID);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				pos.add(rs.getInt("c_bpartner_id"));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

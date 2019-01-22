@@ -16,7 +16,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
-import org.apache.ecs.xhtml.code;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.ProductMatching.MatchingCompareType;
 import org.openXpertya.reflection.CallResult;
@@ -360,8 +359,8 @@ public class DiscountCalculator {
 	 *         aplicados. Si no se aplican descuentos devuelve el mismo valor de
 	 *         <code>price</code>.
 	 */
-	public BigDecimal calculatePrice(BigDecimal price, BigDecimal qty,
-			int productCategoryID, int productID, Date date) {
+	public BigDecimal calculatePrice(BigDecimal price, BigDecimal qty, int productCategoryID, int productID,
+			int productGamasID, int productLinesID, List<Integer> vendorIDs, Date date) {
 		
 		// Por defecto el precio devuelto es el precio original
 		BigDecimal discountedPrice = price;
@@ -378,6 +377,9 @@ public class DiscountCalculator {
 					price, 
 					productID, 
 					productCategoryID, 
+					productGamasID,
+					productLinesID,
+					vendorIDs,
 					getBPartnerFlatDiscount(), 
 					date
 			);
@@ -565,7 +567,10 @@ public class DiscountCalculator {
 						qty, 
 						price, 
 						documentLine.getProductID(), 
-						0, 
+						documentLine.getProductCategoryID(),
+						documentLine.getProductGamasID(),
+						documentLine.getProductLinesID(),
+						documentLine.getProductVendorIDs(),
 						getBPartnerFlatDiscount(), 
 						documentLine.getDocument().getDate()
 				)
@@ -2982,6 +2987,18 @@ public class DiscountCalculator {
 		
 		/** Setea el ID de la factura en caso que se haya facturado el pedido */
 		public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID);
+		
+		/** Obtiene el ID de la subfamilia asociado al artículo de la línea */
+		public int getProductCategoryID();
+		
+		/** Obtiene el ID de la familia asociado al artículo de la línea */
+		public int getProductGamasID();
+		
+		/** Obtiene el ID de la línea de artículo asociado al artículo de la línea */
+		public int getProductLinesID();
+		
+		/** Obtiene los IDs de los proveedores asociados al artículo de la línea */
+		public List<Integer> getProductVendorIDs();
 	}
 
 	/**

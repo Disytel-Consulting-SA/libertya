@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -720,11 +721,17 @@ public class MProductPricing implements Serializable{
         //Modificado por ConSerTi para que coja el precio de tarifa no el estandar 
         // m_PriceStd       = sd.calculatePrice( m_Qty,m_PriceStd,m_M_Product_ID,m_M_Product_Category_ID,FlatDiscount );
         
+        // Obtener Familia, Línea de Artículo y Proveedores
+        int gamasID = MProductGamas.getGamaIDFromCategory(m_M_Product_Category_ID, null);
+        int linesID = MProductLines.getProductLineIDFromGama(gamasID, null);
+		List<Integer> vendorIDs = MProductPO.getBPartnerIDsOfProduct(Env.getCtx(), m_M_Product_ID, true, null);
+        
         // Revertido por Disytel - Si calculamos el descuento del PriceSTD el parámetro
         // debe ser necesariamente PriceSTD (sino se asigna el PriceList al PriceSTD). 
         // Hay que tener en cuenta que el PriceSTD se lee de la BD con lo cual no hay forma
         // de que se apliquen descuentos sucesivos que produzcan valores incorrectos
-        m_PriceStd       = calculator.calculatePrice(m_PriceStd, m_Qty, m_M_Product_Category_ID,m_M_Product_ID, m_PriceDate);
+		m_PriceStd = calculator.calculatePrice(m_PriceStd, m_Qty, m_M_Product_Category_ID, m_M_Product_ID, gamasID,
+				linesID, vendorIDs, m_PriceDate);
     }    // calculateDiscount
 
     /**

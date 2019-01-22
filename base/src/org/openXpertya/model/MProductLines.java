@@ -4,11 +4,30 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.openXpertya.util.CCache;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Util;
 
 public class MProductLines extends X_M_Product_Lines {
 
+	private static CCache s_gamasLine = new CCache( "GamasLines",100 );
+	
+	public static Integer getProductLineIDFromGama(int productGamasID, String trxName){
+		Integer lineID = ( Integer )s_gamasLine.get( productGamasID );
+        
+        // Si no esta cacheado lo busco
+        if(lineID == null){
+        	lineID = DB.getSQLValue(trxName,
+					"SELECT M_Product_Lines_ID FROM M_Product_Gamas WHERE M_Product_Gamas_ID=?",
+					productGamasID);
+			if(lineID > 0){
+				s_gamasLine.put(productGamasID, lineID);
+			}
+        }
+        
+        return lineID;
+	}
+	
 	/**
 	 * @param ctx
 	 * @param productID

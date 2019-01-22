@@ -74,20 +74,6 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
     public MDiscountSchemaBreak( Properties ctx,ResultSet rs,String trxName ) {
         super( ctx,rs,trxName );
     }    // MDiscountSchemaBreak
-
-    /**
-     * Indica si este corte es aplicable para una serie de parámetros, tomando la fecha
-     * actual como referencia.
-     * @param value Monto o Cantidad de consulta
-     * @param productID ID del artículo de consulta
-     * @param productCategoryID ID de subfamilia de consulta. Si es 0, se consulta la 
-     * subfamilia asociada al artículo directamente.
-     * @return <code>true</code> si el corte es aplicable según su configuración,
-     * <code>false</code> si no lo es.
-     */
-    public boolean applies(BigDecimal value, int productID, int productCategoryID, int bPartnerID) {
-    	return applies(value, productID, productCategoryID, null);
-    }
     
     /**
      * Indica si este corte es aplicable para una serie de parámetros
@@ -99,7 +85,8 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
      * @return <code>true</code> si el corte es aplicable según su configuración,
      * <code>false</code> si no lo es.
      */
-    public boolean applies(BigDecimal value, int productID, int productCategoryID, Date date) {
+	public boolean applies(BigDecimal value, int productID, int productCategoryID, int productGamasID,
+			int productLinesID, List<Integer> vendorIDs, Date date) {
         /*
          * Refactorizado y Recodificado por Franco Bonafine - Disytel (2010-05-19)
          * - Definición de condiciones necesarias.
@@ -126,7 +113,7 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
     	// -------------------------------------------------------------------------
         // -- Condiciones agrupadas por Operador (AND u OR)
     	// -------------------------------------------------------------------------
-        if (!evaluateConditionSet(productID, productCategoryID)) {
+        if (!evaluateConditionSet(productID, productCategoryID, productGamasID, productLinesID, vendorIDs)) {
         	return false;
         }
 
@@ -232,11 +219,9 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
 	 */
 	private List<Integer> getProductCurrentVendorsIDs(int productID) {
 		List<Integer> vendorIDs = new ArrayList<Integer>();
-		MProductPO[] productPOs = MProductPO.getOfProduct(getCtx(), productID, get_TrxName());
+		MProductPO[] productPOs = MProductPO.getOfProduct(getCtx(), productID, true, get_TrxName());
 		for (MProductPO productPO : productPOs) {
-			if (productPO.isCurrentVendor()) {
-				vendorIDs.add(productPO.getC_BPartner_ID());
-			}
+			vendorIDs.add(productPO.getC_BPartner_ID());
 		}
 		return vendorIDs;
 	}
@@ -282,7 +267,8 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
 	 * @return <code>true</code> si el corte es aplicable en cuanto a estos filtros,
 	 * <code>false</code> en caso contrario.
 	 */
-	private boolean evaluateConditionSet(int productID, int productCategoryID) {
+	private boolean evaluateConditionSet(int productID, int productCategoryID, int productGamasID,
+			int productLinesID, List<Integer> vendorIDs) {
         // Se evaluan el conjunto de condiciones del corte según el operador 
         // configurado como política de aplicación. Las condiciones evaluadas por
         // el operador son:
@@ -302,14 +288,16 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         boolean allEmptyCondition;   // Indica si todas las entradas están vacías
         boolean result;              // Contiene el resultado final de la evaluación
         
+        productGamasID = productGamasID > 0?productGamasID:-1;
+        productLinesID = productLinesID > 0?productLinesID:-1;
+        
         // 0. Evaluación de condición de Línea de Artículo
         // El artículo pertenece a la línea asociada al corte.
-        productLinesCondition = getM_Product_Lines_ID() == getProductLinesID(productID); 
+        productLinesCondition = getM_Product_Lines_ID() == productLinesID; 
         
         // 1. Evaluación de condición de Familia.
         // El artículo pertene a la familia asociada al corte. 
-        productGamasCondition = 
-        	getM_Product_Gamas_ID() == getProductGamasID(productID);
+        productGamasCondition = getM_Product_Gamas_ID() == productGamasID;
         
         // 2. Evaluación de la condición de Subfamilia.
         // El parámetro de subfamilia es una subfamilia válida y es igual a la subfamilia 
@@ -327,8 +315,7 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
         // 4. Evaluación de la condición de Proveedor
         // El listado de proveedores actuales del artículo contiene el proveedor
         // asociado al corte.
-        vendorCondition =
-        	getProductCurrentVendorsIDs(productID).contains(getC_BPartner_ID());
+        vendorCondition = !Util.isEmpty(vendorIDs) && vendorIDs.contains(getC_BPartner_ID());
         
         // 99. Todas las entradas vacías.
         // Si el corte no contiene Línea, Familia, Subfamilia, Artículo o Proveedor (ninguna

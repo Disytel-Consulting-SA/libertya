@@ -277,7 +277,9 @@ public class MDiscountSchema extends X_M_DiscountSchema {
      * @return
      */
 
-    public BigDecimal calculatePrice( BigDecimal Qty,BigDecimal Price,int M_Product_ID,int M_Product_Category_ID,BigDecimal BPartnerFlatDiscount, Date date) {
+	public BigDecimal calculatePrice(BigDecimal Qty, BigDecimal Price, int M_Product_ID, int M_Product_Category_ID,
+			int M_Product_Gamas_ID, int M_Product_Lines_ID, List<Integer> vendorIDs, BigDecimal BPartnerFlatDiscount,
+			Date date) {
         log.fine("Llegamos en calculatePrice de MDiscountSchema");
     	log.fine( "Price=" + Price + ",Qty=" + Qty );
 
@@ -287,7 +289,8 @@ public class MDiscountSchema extends X_M_DiscountSchema {
 
         //
 
-        BigDecimal discount = calculateDiscount( Qty,Price,M_Product_ID,M_Product_Category_ID,BPartnerFlatDiscount, date);
+		BigDecimal discount = calculateDiscount(Qty, Price, M_Product_ID, M_Product_Category_ID, M_Product_Gamas_ID,
+				M_Product_Lines_ID, vendorIDs, BPartnerFlatDiscount, date);
 
         // nothing to calculate
 
@@ -322,7 +325,7 @@ public class MDiscountSchema extends X_M_DiscountSchema {
      * @return
      */
 
-    public BigDecimal calculateDiscount( BigDecimal Qty,BigDecimal Price,int M_Product_ID,int M_Product_Category_ID,BigDecimal BPartnerFlatDiscount, Date date) {
+    public BigDecimal calculateDiscount( BigDecimal Qty,BigDecimal Price,int M_Product_ID,int M_Product_Category_ID, int M_Product_Gamas_ID, int M_Product_Lines_ID, List<Integer> vendorIDs, BigDecimal BPartnerFlatDiscount, Date date) {
     	log.fine("Llegamos en calculateDiscount de MDiscountSchema, BPartnerFlatDiscount="+BPartnerFlatDiscount);
     	if( BPartnerFlatDiscount == null ) {
             BPartnerFlatDiscount = Env.ZERO;
@@ -375,7 +378,8 @@ public class MDiscountSchema extends X_M_DiscountSchema {
             }
 
             if( isQuantityBased()) {
-                if( !br.applies( Qty,M_Product_ID,M_Product_Category_ID, date)) {
+				if (!br.applies(Qty, M_Product_ID, M_Product_Category_ID, M_Product_Gamas_ID, M_Product_Lines_ID,
+						vendorIDs, date)) {
                     log.finer( "Va a ser aqui1,No: " + br );
 
                     continue;
@@ -383,7 +387,8 @@ public class MDiscountSchema extends X_M_DiscountSchema {
 
                 log.finer( "Yes: " + br );
             } else {
-                if( !br.applies( Amt,M_Product_ID, M_Product_Category_ID, date)) {
+                if( !br.applies( Amt,M_Product_ID, M_Product_Category_ID, M_Product_Gamas_ID, M_Product_Lines_ID,
+						vendorIDs, date)) {
                     log.finer( "Va a ser aqui2,No: " + br );
 
                     continue;

@@ -78,9 +78,9 @@ public class PromotionsDialog extends JDialog {
 	
 	private void initialize(){
 		initMsgs();
-		this.setSize(new java.awt.Dimension(650,180));
+		this.setSize(new java.awt.Dimension(700,230));
         this.setResizable(true);
-        this.setPreferredSize(new java.awt.Dimension(650,180));
+        this.setPreferredSize(new java.awt.Dimension(700,230));
         this.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         this.setContentPane(getCMainPanel());
         this.setTitle(MSG_TITLE);
@@ -173,7 +173,7 @@ public class PromotionsDialog extends JDialog {
 	private CScrollPane getCPromotionTableScrollPane() {
 		if (cPromotionsTableScrollPane == null) {
 			cPromotionsTableScrollPane = new CScrollPane();
-			//cPromotionsTableScrollPane.setPreferredSize(new java.awt.Dimension(300,55));
+			cPromotionsTableScrollPane.setPreferredSize(new java.awt.Dimension(500,100));
 			cPromotionsTableScrollPane.setViewportView(getCPromotionsTable());
 		}
 		return cPromotionsTableScrollPane;

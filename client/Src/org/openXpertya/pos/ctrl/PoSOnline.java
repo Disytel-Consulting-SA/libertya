@@ -892,7 +892,9 @@ public class PoSOnline extends PoSConnectionState {
 		  .append(   "s.MandatoryType, ")
 		  .append(   "p.m_product_category_id, ")
 		  .append(   "p.CheckoutPlace, ")
-		  .append(   "p.IsSold ")
+		  .append(   "p.IsSold, ")
+		  .append(   "coalesce(pg.m_product_gamas_id,0) as m_product_gamas_id, ")
+		  .append(   "coalesce(pg.m_product_lines_id,0) as m_product_lines_id ")
 		  .append("FROM ( "); 
 		
 		boolean needUnion = false;  // Indicador de concatenación de UNION a la consulta
@@ -932,6 +934,8 @@ public class PoSOnline extends PoSConnectionState {
 		  .append("INNER JOIN M_ProductPrice pp ON (pp.M_PriceList_Version_ID = ?) ")
 		  .append("LEFT JOIN M_AttributeSet s ON (p.M_AttributeSet_ID = s.M_AttributeSet_ID) ") 
 		  .append("LEFT JOIN M_AttributeSetInstance masi ON (u.M_AttributeSetInstance_ID = masi.M_AttributeSetInstance_ID) ")
+		  .append("JOIN M_Product_Category pc ON pc.M_Product_Category_ID = p.M_Product_Category_ID ")
+		  .append("LEFT JOIN M_Product_Gamas pg ON pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID ")
           .append("WHERE u.M_Product_ID = pp.M_Product_ID ")
           .append(  "AND u.M_Product_ID = p.M_Product_ID ")
           .append(  "AND p.IsActive = 'Y' ")
@@ -999,7 +1003,9 @@ public class PoSOnline extends PoSConnectionState {
 						rs.getInt("m_product_category_id"), 
 						vendors,
 						checkoutPlace,
-						sold);
+						sold,
+						rs.getInt("m_product_gamas_id"),
+						rs.getInt("m_product_lines_id"));
 				
 				productList.addProduct(product, matchType);
 				productMatch.put(product.getId(), matchType);
@@ -2571,9 +2577,11 @@ public class PoSOnline extends PoSConnectionState {
               "  AND pp.IsActive = 'Y' ";
 		 */
 		
-		sql = " SELECT p.M_Product_ID, bomPriceStd(p.M_Product_ID, ?, ?), p.value, p.name, bomPriceLimit(p.M_Product_ID, ?, ?), p.upc, s.MandatoryType, p.m_product_category_id, p.CheckoutPlace, p.IsSold, p.Value " +    
+		sql = " SELECT p.M_Product_ID, bomPriceStd(p.M_Product_ID, ?, ?), p.value, p.name, bomPriceLimit(p.M_Product_ID, ?, ?), p.upc, s.MandatoryType, p.m_product_category_id, p.CheckoutPlace, p.IsSold, p.Value, coalesce(pg.m_product_gamas_id,0) as m_product_gamas_id, coalesce(pg.m_product_lines_id,0) as m_product_lines_id " +    
 			  "	FROM M_Product p " +
 			  "	LEFT JOIN M_AttributeSet s ON (p.M_AttributeSet_ID = s.M_AttributeSet_ID)     " +
+			  " JOIN M_Product_Category pc ON pc.M_Product_Category_ID = p.M_Product_Category_ID " +
+			  " LEFT JOIN M_Product_Gamas pg ON pg.M_Product_Gamas_ID = pc.M_Product_Gamas_ID " +
 			  " WHERE p.M_Product_ID = ? " +
 			  "   AND p.IsActive = 'Y'";
 
@@ -2619,7 +2627,9 @@ public class PoSOnline extends PoSConnectionState {
 								rs.getInt("m_product_category_id"), 
 								vendorsIDs,
 								checkoutPlace,
-								sold);
+								sold,
+								rs.getInt("m_product_gamas_id"),
+								rs.getInt("m_product_lines_id"));
 			}
 			
 			rs.close();
@@ -2919,7 +2929,7 @@ public class PoSOnline extends PoSConnectionState {
 
 	@Override
 	public List<Integer> getVendors(int productID) {
-		List<PO> vendors = PO.find(ctx, "M_Product_PO", "m_product_id= ? AND iscurrentvendor='Y'", new Object[]{productID}, null, null);
+		List<PO> vendors = PO.find(ctx, "M_Product_PO", "m_product_id= ? AND iscurrentvendor='Y' AND IsActive='Y'", new Object[]{productID}, null, null);
 		List<Integer> vendorsID = new ArrayList<Integer>();
 		MProductPO productPO;
 		for (PO mProductPO : vendors) {

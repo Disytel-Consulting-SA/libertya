@@ -2115,6 +2115,27 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		public void setGeneratedInvoiceLineID(Integer generatedInvoiceLineID) {
 			// En este método no hace nada ya que estamos bajo una factura
 		}
+
+		@Override
+		public int getProductCategoryID() {
+			return MProduct.get(MInvoiceLine.this.getCtx(), getProductID()).getM_Product_Category_ID();
+		}
+
+		@Override
+		public int getProductGamasID() {
+			return MProductGamas.getGamaIDFromCategory(getProductCategoryID(), MInvoiceLine.this.get_TrxName());
+		}
+
+		@Override
+		public int getProductLinesID() {
+			return MProductLines.getProductLineIDFromGama(getProductGamasID(), MInvoiceLine.this.get_TrxName());
+		}
+
+		@Override
+		public List<Integer> getProductVendorIDs() {
+			return MProductPO.getBPartnerIDsOfProduct(MInvoiceLine.this.getCtx(), getProductID(), true,
+					MInvoiceLine.this.get_TrxName());
+		}
     }
 
 	public void setRMALine(MRMALine rmaLine)
