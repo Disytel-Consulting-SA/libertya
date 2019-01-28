@@ -11,6 +11,7 @@ package org.openXpertya.replication;
  * -------------------------------------------------------------------------
  */
 
+import java.util.HashMap;
 import java.util.Vector;
 
 import org.openXpertya.model.MChangeLog;
@@ -46,6 +47,8 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 	/** Log de ACKS/Errores a enviar al host origen */
 	protected Vector<String[]> eventLog = null; 
 
+	/** Breve cache de usuarios */
+	protected HashMap<String, Integer> userIDs = new HashMap<String, Integer>();
 	
 	/**
 	 * Constructor con ID de organizacion origen, y posicion de este hosts
@@ -296,6 +299,23 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		{
 			query.append( quotes + column.getNewValue() + quotes );
 			retValue = true;
+		}
+		/* El createdby y updatedby también deberían copiarse como cualquier otro dato (no utilizar el usuario conectado como lo hace la superclase) */
+		else if (("CreatedBy".equalsIgnoreCase(column.getName()) || "UpdatedBy".equalsIgnoreCase(column.getName())) && column.getNewValue()!=null && column.getNewValue().length() > 0 )
+		{
+			/* Intentar recuperar el userID a partir del retrieveuid en la breve cache */
+			String refUID = column.getNewValue().substring(ReplicationBuilder.RUID_REFERENCE_PREFIX.length());
+			Integer userID = userIDs.get(refUID);
+			/* Intentar recuperar el userID accediendo a BBDD. Se presupone que usa retrieveUID */
+			if (userID == null) {
+				userID = DB.getSQLValue(m_trxName, "SELECT AD_User_ID FROM AD_User WHERE retrieveuid = ?", refUID);
+			}
+			/* Si lo encuentra lo usa para la referencia, en caso contrario aplicara la logica de la superclase */
+			if (userID != null && userID >= 0) {
+				userIDs.put(refUID, userID);
+				query.append(userID);
+				retValue = true;
+			}
 		}
 		/* Dado que una misma sucursal puede tener un AD_Org_ID distinto en cada host, se debe realiza el mapeo correspondiente 
 		 * (siempre y cuando sea una organizacion con valor distinto de cero, en este caso no es necesario realizar mapeo alguno
