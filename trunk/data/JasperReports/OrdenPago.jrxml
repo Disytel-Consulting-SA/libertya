@@ -287,7 +287,7 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($P{CITY_NAME} == null?"":$P{CITY_NAME}) + ", "]]></textFieldExpression>
 				</textField>
-				<image  scaleImage="FillFrame" onErrorType="Blank" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<image  scaleImage="RetainShape" onErrorType="Blank" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="0"
