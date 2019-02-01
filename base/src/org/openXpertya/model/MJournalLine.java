@@ -318,6 +318,18 @@ public class MJournalLine extends X_GL_JournalLine {
 			return false;
 		}
 		
+		// Obtener el rate y sino lo setea a 1
+		if(Util.isEmpty(getCurrencyRate(), true)){
+			MJournal journal = new MJournal(getCtx(), getGL_Journal_ID(), get_TrxName());
+			MAcctSchema as = MAcctSchema.get( getCtx(),journal.getC_AcctSchema_ID() );
+			setCurrencyRate(MConversionRate.getRate(getC_Currency_ID(), as.getC_Currency_ID(), journal.getDateAcct(),
+					getC_ConversionType_ID(), getAD_Client_ID(), getAD_Org_ID()));
+		}
+		
+		if(Util.isEmpty(getCurrencyRate(), true)){
+			setCurrencyRate(BigDecimal.ONE);
+		}
+		
         BigDecimal rate = getCurrencyRate();
         BigDecimal amt  = rate.multiply( getAmtSourceDr());
 
