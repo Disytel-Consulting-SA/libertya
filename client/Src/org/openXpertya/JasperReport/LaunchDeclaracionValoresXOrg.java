@@ -24,6 +24,7 @@ public class LaunchDeclaracionValoresXOrg extends LaunchDeclaracionValores {
 	
 	@Override
 	protected void addSubreports() throws Exception{
+		loadMainDS();
 		// Cupon
 		DeclaracionValoresCuponDataSource cuponDS = getCuponDS();
 		// Venta

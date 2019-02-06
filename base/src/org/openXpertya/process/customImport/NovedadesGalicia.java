@@ -2,6 +2,7 @@ package org.openXpertya.process.customImport;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,10 +11,14 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 
+import org.openXpertya.model.MAllocationHdr;
+import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MSequence;
 import org.openXpertya.model.X_C_BankAccount;
 import org.openXpertya.model.X_C_BankList;
 import org.openXpertya.model.X_I_PaymentBankNews;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 
 /**
  * Proceso de importación de novedades de pago mediante
@@ -42,7 +47,13 @@ public class NovedadesGalicia extends FileImportProcess {
 			}
 
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-
+			// Confeccionar nro de OP
+			MDocType opDocType = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_Orden_De_Pago, get_TrxName());
+			if(opDocType == null){
+				throw new Exception("Tipo de Documento OP no existe");
+			}
+			String opPrefix = MSequence.getPrefix(opDocType.getDocNoSequence_ID(), get_TrxName());
+			
 			// El resto de las lineas del archivo son el detalle.
 			while ((line = reader.readLine()) != null) {
 
@@ -52,10 +63,19 @@ public class NovedadesGalicia extends FileImportProcess {
 				String paymentStatus = read(line, 26, 27);
 				String receiptNumber = read(line, 162, 176);
 				String paymentOrder = read(line, 179, 188).replaceFirst ("^0*", "");
+				// Agregar el prefijo del tipo de documento OP si es que no lo tiene
+				if(!paymentOrder.startsWith(opPrefix)){
+					paymentOrder = opPrefix+paymentOrder;
+				}
+				
 				String documentNo = read(line, 251, 258);
 
 				Date updateDate = formatter.parse(read(line, 275, 282));
 
+				// El importe viene en centavos
+				BigDecimal amount = (new BigDecimal(read(line, 234, 250))).divide(Env.ONEHUNDRED, 2,
+						BigDecimal.ROUND_HALF_UP);
+				
 				X_I_PaymentBankNews record = new X_I_PaymentBankNews(getCtx(), 0, get_TrxName());
 				record.setList_Type(listType);
 				record.setList_Value(listValue);
@@ -66,7 +86,8 @@ public class NovedadesGalicia extends FileImportProcess {
 				record.setRegister_Number(registerNumber);
 				record.setC_Bank_ID(getC_Bank_ID(documentNo));
 				record.setProcess_Date(new Timestamp(updateDate.getTime()));
-
+				record.setPayment_Amount(amount);
+				
 				if (!record.save()) {
 					return errorMsg(null, true);
 				} else {

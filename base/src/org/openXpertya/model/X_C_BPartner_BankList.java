@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_BankList
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-24 20:12:03.849 */
+ *  @version  - 2019-02-06 14:01:25.605 */
 public class X_C_BPartner_BankList extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setC_BPartner_BankList_ID (0);
 setC_BPartner_ID (0);
 setC_DocType_ID (0);
 setC_ElectronicPaymentBranch_ID (0);
+setNotToOrder (false);
 }
  */
 }
@@ -131,5 +132,21 @@ set_Value ("Nombre_Retirante", Nombre_Retirante);
 public String getNombre_Retirante() 
 {
 return (String)get_Value("Nombre_Retirante");
+}
+/** Set Not to order */
+public void setNotToOrder (boolean NotToOrder)
+{
+set_Value ("NotToOrder", new Boolean(NotToOrder));
+}
+/** Get Not to order */
+public boolean isNotToOrder() 
+{
+Object oo = get_Value("NotToOrder");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 }

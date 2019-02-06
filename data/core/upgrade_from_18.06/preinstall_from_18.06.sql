@@ -1648,3 +1648,138 @@ update ad_system set dummy = (SELECT addindexifnotexists('c_allocationhdr_bpartn
 --20181221-1050 La unicidad de liquidaciones debe incluir la fecha de pago
 ALTER TABLE c_creditcardsettlement DROP CONSTRAINT uniquecreditcardsettlement;
 ALTER TABLE c_creditcardsettlement ADD CONSTRAINT uniquecreditcardsettlement UNIQUE (settlementno, c_bpartner_id, paymentdate);
+
+-- 20181213-1730 Nueva columna para permitir indicar el dato No A La Orden en exportación de pagos electrónicos Patagonia
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner_banklist','nottoorder','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20181221-1715 Nueva tabla temporal para el informe de Declaración de Valores para mejorar performance
+CREATE TABLE t_pos_declaracionvalores ( 
+  t_pos_declaracionvalores_id integer NOT NULL,
+  ad_pinstance_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_posjournal_id integer, 
+  ad_user_id integer, 
+  c_currency_id integer, 
+  datetrx date, 
+  docstatus character(2), 
+  category varchar, 
+  tendertype character(3), 
+  description text, 
+  c_charge_id integer, 
+  chargename character varying(60), 
+  doc_id integer, 
+  ingreso numeric(22,2), 
+  egreso numeric(22,2), 
+  c_invoice_id integer, 
+  invoice_documentno character varying(30), 
+  invoice_grandtotal numeric(22,2), 
+  entidadfinanciera_value varchar, 
+  entidadfinanciera_name varchar, 
+  bp_entidadfinanciera_value varchar, 
+  bp_entidadfinanciera_name varchar, 
+  cupon varchar, 
+  creditcard varchar, 
+  generated_invoice_documentno varchar, 
+  allocation_active character(1), 
+  c_pos_id integer, 
+  posname character varying(60),
+  CONSTRAINT t_pos_declaracionvalores_key PRIMARY KEY (t_pos_declaracionvalores_id)
+ );
+ALTER TABLE t_pos_declaracionvalores 
+  OWNER TO libertya;
+  
+--20190114-1720 Nuevas funciones de obtención y actualización de cantidad por recibir
+CREATE OR REPLACE FUNCTION getqtyordered(
+    clientid integer,
+    orgid integer,
+    locatorid integer,
+    productid integer,
+    dateto date)
+  RETURNS numeric AS
+$BODY$
+/***********
+Obtiene la cantidad a recibir a fecha de corte. Si no hay fecha de corte, entonces se devuelven los pedidos actuales.
+Por lo pronto no se utiliza el pendiente a fecha de corte ya que primero deberíamos analizar e implementar 
+una forma en la que se determine cuando un pedido fue completo, anulado, etc.
+*/
+DECLARE
+reserved numeric;
+BEGIN
+reserved := 0;
+
+SELECT INTO reserved coalesce(sum(ol.qtyreserved),0)
+from c_orderline ol
+inner join c_order o on o.c_order_id = ol.c_order_id
+inner join c_doctype dto on dto.c_doctype_id = o.c_doctypetarget_id
+inner join m_warehouse w on w.m_warehouse_id = o.m_warehouse_id
+inner join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+where o.ad_client_id = clientid
+and o.ad_org_id = orgid 
+and ol.qtyreserved > 0
+and o.docstatus in ('CO','CL')
+and ol.m_product_id = productid
+and l.m_locator_id = locatorid
+and (dateto is null or o.dateordered::date <= dateto::date)
+and o.issotrx = 'N';
+
+return reserved;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getqtyordered(integer, integer, integer, integer, date)
+  OWNER TO libertya;
+
+CREATE OR REPLACE FUNCTION update_ordered(
+    clientid integer,
+    orgid integer,
+    productid integer,
+    dateto date)
+  RETURNS void AS
+$BODY$
+/***********
+Actualiza la cantidad a recibir de los depósitos de la compañía, organización y artículo parametro, 
+siempre y cuando existan los regitros en m_storage 
+y sólo sobre locators marcados como default ya que asi se realiza al procesar pedidos.
+Las cantidades pedidas se obtienen de pedidos procesados. 
+IMPORTANTE: No funciona para artículos que no son ITEMS (Stockeables)
+*/
+BEGIN
+	--Seteamos a 0 todo
+	update m_storage s
+	set qtyordered = 0
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid);
+		
+	--Actualizamos el reservado
+	update m_storage s
+	set qtyordered = getqtyordered(clientid, s.ad_org_id, s.m_locator_id, s.m_product_id, dateto)
+	where ad_client_id = clientid
+		and (orgid = 0 or ad_org_id = orgid)
+		and (productid = 0 or m_product_id = productid)
+		and exists (select ol.c_orderline_id
+				from c_orderline ol
+				join m_warehouse w on w.m_warehouse_id = ol.m_warehouse_id
+				join m_locator l on l.m_warehouse_id = w.m_warehouse_id
+				where l.m_locator_id = s.m_locator_id 
+					and ol.m_product_id = s.m_product_id 
+					and ol.qtyreserved > 0);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_ordered(integer, integer, integer, date)
+  OWNER TO libertya;
+  
+--20190204-1820 Incorporación de nuevas columnas para registro de datos para importación de novedades
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','banklist_registerno','character varying(60)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','bank_payment_msg_description','character varying(255)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_paymentbanknews','payment_amount','numeric(20,2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_paymentbanknews','payment_status_msg_description','character varying(255)'));

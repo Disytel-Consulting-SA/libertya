@@ -149,7 +149,8 @@ public class ExportListaPatagonia extends ExportBankList {
 		sql.append("	WHERE ");
 		sql.append("		ah.c_allocationhdr_id = ahb.c_allocationhdr_id ");
 		sql.append("	LIMIT 4 ");
-		sql.append("	) invoices ");
+		sql.append("	) invoices, ");
+		sql.append("	bpbl.nottoorder ");
 		sql.append("FROM ");
 		sql.append("	c_electronic_payments lpp "); // Vista
 		sql.append("	INNER JOIN " + X_C_AllocationHdr.Table_Name + " AS ahb ");
@@ -197,7 +198,7 @@ public class ExportListaPatagonia extends ExportBankList {
 		// Requerir Recibo oficial del Beneficiario en pagos con cheques
 		row.append("S");
 		// Cláusula No a la Orden
-		row.append("N");
+		row.append(rs.getString("nottoorder").equals("Y")?"S":"N");
 		// Incluir firma en la impresión de cheques y CADJ
 		row.append("S");
 		// Acompañamiento de Comprobantes Adjuntos

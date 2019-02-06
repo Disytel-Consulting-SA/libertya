@@ -1,5 +1,8 @@
 package org.openXpertya.JasperReport.DataSource;
 
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.openXpertya.model.MBPartner;
@@ -23,8 +26,8 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 
 	private int C_BPartner_ID;
 	private String auditState;
-	private String dateFrom;
-	private String dateTo;
+	private Timestamp dateFrom;
+	private Timestamp dateTo;
 	private int AD_Org_ID;
 
 	public ListOfCouponsDataSource(String trxName) {
@@ -82,11 +85,11 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		if (auditState != null && !auditState.trim().isEmpty()) {
 			sql.append("	AND p.auditstatus = '" + auditState + "' ");
 		}
-		if (dateFrom != null && !dateFrom.trim().isEmpty()) {
-			sql.append("	AND p.datetrx >= '" + dateFrom + "' ");
+		if (dateFrom != null) {
+			sql.append("	AND p.datetrx::date >= ?::date ");
 		}
-		if (dateTo != null && !dateTo.trim().isEmpty()) {
-			sql.append("	AND p.datetrx <= '" + dateTo + "' ");
+		if (dateTo != null) {
+			sql.append("	AND p.datetrx::date <= ?::date ");
 		}
 
 		sql.append("ORDER BY ");
@@ -102,7 +105,14 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 
 	@Override
 	protected Object[] getParameters() {
-		return new Object[0];
+		List<Object> params = new ArrayList<Object>();
+		if (dateFrom != null) {
+			params.add(dateFrom);
+		}
+		if (dateTo != null) {
+			params.add(dateTo);
+		}
+		return params.toArray();
 	}
 
 	@Override
@@ -116,11 +126,11 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		this.C_BPartner_ID = C_BPartner_ID;
 	}
 
-	public void setDateFrom(String dateFrom) {
+	public void setDateFrom(Timestamp dateFrom) {
 		this.dateFrom = dateFrom;
 	}
 
-	public void setDateTo(String dateTo) {
+	public void setDateTo(Timestamp dateTo) {
 		this.dateTo = dateTo;
 	}
 

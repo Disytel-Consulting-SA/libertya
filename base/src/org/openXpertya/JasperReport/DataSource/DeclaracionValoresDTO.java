@@ -6,7 +6,7 @@ import java.util.List;
 import org.openXpertya.util.Util;
 
 public class DeclaracionValoresDTO {
-
+	
 	/** Usuario operador de la caja */
 	private Integer userID;
 	
@@ -24,6 +24,12 @@ public class DeclaracionValoresDTO {
 	
 	/** ID de Organización */
 	private Integer orgID;
+	
+	/** ID de la instancia del proceso */
+	private Integer pInstanceID = 0;
+	
+	/** Artículos a filtrar */
+	private int[] productIDs;
 	
 	/**
 	 * Método que permite actualizar el valor del array sql a partir de los ids
@@ -83,6 +89,22 @@ public class DeclaracionValoresDTO {
 
 	public void setJournalIDsSQLArray(String journalIDsSQLArray) {
 		this.journalIDsSQLArray = journalIDsSQLArray;
+	}
+
+	public Integer getpInstanceID() {
+		return pInstanceID;
+	}
+
+	public void setpInstanceID(Integer pInstanceID) {
+		this.pInstanceID = pInstanceID;
+	}
+
+	public int[] getProductIDs() {
+		return productIDs;
+	}
+
+	public void setProductIDs(int[] productIDs) {
+		this.productIDs = productIDs;
 	}
 	
 }

@@ -501,7 +501,7 @@ public class VOrderReceiptIssue extends CPanel
                 attribute = new VPAttribute (false, false, true, m_WindowNo, attributeL);
                 attribute.setValue(new Integer(0));
                                                                         //  Tab, Window 
-                MFieldVO vo =  MFieldVO.createStdField(ctx , m_WindowNo , 1000031 , 1000013, false, false, false);
+                MFieldVO vo =  MFieldVO.createStdField(ctx , m_WindowNo , 1000031 , 1000013, false, false, false, false);
                 // M_AttributeSetInstance_ID
                 vo.AD_Column_ID = 1000183;                
                 MField field = new MField(vo);               

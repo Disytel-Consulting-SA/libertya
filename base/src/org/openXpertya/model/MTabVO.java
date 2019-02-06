@@ -261,7 +261,8 @@ public class MTabVO implements Evaluatee, Serializable {
 
             while (rs.next()) {
 
-                MFieldVO	voF	= MFieldVO.create(mTabVO.ctx, mTabVO.WindowNo, mTabVO.TabNo, mTabVO.AD_Window_ID, mTabVO.IsReadOnly, rs);
+				MFieldVO voF = MFieldVO.create(mTabVO.ctx, mTabVO.WindowNo, mTabVO.TabNo, mTabVO.AD_Window_ID,
+						mTabVO.IsReadOnly, rs, mTabVO.IsAlwaysUpdateable);
 
                 if (voF != null) {
                     mTabVO.Fields.add(voF);
@@ -650,7 +651,7 @@ public class MTabVO implements Evaluatee, Serializable {
 		{
 			MFieldVO field = Fields.get(i);
 			MFieldVO cloneField = field.clone(Ctx, windowNo, TabNo, 
-				AD_Window_ID, AD_Tab_ID, IsReadOnly);
+				AD_Window_ID, AD_Tab_ID, IsReadOnly, IsAlwaysUpdateable);
 			if (cloneField == null)
 				return null;
 			clone.Fields.add(cloneField);

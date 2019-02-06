@@ -496,7 +496,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 			if (mField.getVO().displayType == DisplayType.YesNo)
 			{
 				MFieldVO vo = mField.getVO();
-				MFieldVO ynvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
+				MFieldVO ynvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly, vo.tabAlwaysUpdateable);
 				ynvo.IsDisplayed = true;
 				ynvo.displayType = DisplayType.List;
 				ynvo.AD_Reference_Value_ID = AD_REFERENCE_ID_YESNO;
@@ -519,7 +519,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 				MFieldVO vo = mField.getVO();
 				if ( vo.AD_Reference_Value_ID > 0 )
 				{
-					MFieldVO postedvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly);
+					MFieldVO postedvo = vo.clone(vo.ctx, vo.WindowNo, vo.TabNo, vo.AD_Window_ID, vo.AD_Tab_ID, vo.tabReadOnly, vo.tabAlwaysUpdateable);
 					postedvo.IsDisplayed = true;
 					postedvo.displayType = DisplayType.List;
 

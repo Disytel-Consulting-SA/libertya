@@ -22,22 +22,23 @@ import org.openXpertya.util.DB;
  * archo provisto por el Banco Patagonia.
  * @author Kevin Feuerschvenger - Sur Software S.H.
  */
-public class NovedadesPatagonia extends FileImportProcess {
+public class NovedadesPatagoniaQN extends FileImportProcess {
 
 	private TempLine tempLine;
+	private Timestamp newsDate;
 
 	@Override
 	protected String doIt() throws Exception {
 
 		int saved = 0;
 		int currentLine = 0;
-		tempLine = new TempLine();
+		tempLine = null;
 		BufferedReader reader = null;
 
 		try {
 			reader = new BufferedReader(new FileReader(p_file));
+			
 			String line; // Linea a procesar
-
 			while ((line = reader.readLine()) != null) {
 
 				// Si es la primera linea, se trata de la cabecera.
@@ -46,20 +47,21 @@ public class NovedadesPatagonia extends FileImportProcess {
 				}
 
 				if (line.startsWith("N1")) {
+					if(tempLine != null){
+						if (!saveRecord()) {
+							return errorMsg(null, true);
+						} else {
+							saved++;
+						}
+					}
 					readPaymentOrderHead(line);
 				}
 
-				// Si se lee una linea de detalle, guarda el 
-				// registro completo en I_PaymentBankNews.
+				// Si se lee una linea de detalle, se registra el mensaje
 				if (line.startsWith("QN")) {
 					readPaymentOrderLine(line);
-
-					if (!saveRecord()) {
-						return errorMsg(null, true);
-					} else {
-						saved++;
-					}
 				}
+				
 				currentLine++;
 			}
 			reader.close();
@@ -86,8 +88,9 @@ public class NovedadesPatagonia extends FileImportProcess {
 
 		record.setProcess_Date(tempLine.getProcessDate());
 		record.setPayment_Order(tempLine.getPaymentOrder());
-		record.setRegister_Number(tempLine.getCheckNo());
+		record.setCheckNo(tempLine.getCheckNo());
 		record.setPayment_Status_Msg(tempLine.getPaymentStatusMsg());
+		record.setPayment_Status_Msg_Description(tempLine.getPaymentStatusMsgDescription());
 		record.setReceipt_Number(tempLine.getReceiptNumber());
 		record.setC_Bank_ID(tempLine.getC_bank_id());
 
@@ -102,7 +105,7 @@ public class NovedadesPatagonia extends FileImportProcess {
 	private void readHead(String line) throws ParseException {
 		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
 		Date processDate = formatter.parse(read(line, 54, 61));
-		tempLine.setProcessDate(new Timestamp(processDate.getTime()));
+		newsDate = new Timestamp(processDate.getTime());
 	}
 
 	/**
@@ -110,6 +113,8 @@ public class NovedadesPatagonia extends FileImportProcess {
 	 * @param line Linea de donde se extraerán los datos.
 	 */
 	private void readPaymentOrderHead(String line) {
+		tempLine = new TempLine();
+		tempLine.setProcessDate(newsDate);
 		tempLine.setPaymentOrder(read(line, 23, 47));
 		tempLine.setReceiptNumber(read(line, 48, 55));
 
@@ -171,6 +176,9 @@ public class NovedadesPatagonia extends FileImportProcess {
 	 */
 	private void readPaymentOrderLine(String line) {
 		tempLine.setPaymentStatusMsg(read(line, 17, 76));
+		tempLine.setPaymentStatusMsgDescription(
+				tempLine.getPaymentStatusMsgDescription() == null ? read(line, 80, line.length())
+						: tempLine.getPaymentStatusMsgDescription() + "." + read(line, 80, line.length()));
 	}
 
 	// ------------------------------------------------------------------------
@@ -193,7 +201,9 @@ public class NovedadesPatagonia extends FileImportProcess {
 
 		// Datos de Registro de Estados y Eventos del día para cada Orden de Pago
 		private String paymentStatusMsg;
-
+		//Descripción del estado
+		private String paymentStatusMsgDescription;
+		
 		// GETTERS & SETTERS:
 
 		public Timestamp getProcessDate() {
@@ -242,6 +252,14 @@ public class NovedadesPatagonia extends FileImportProcess {
 
 		public void setC_bank_id(int c_bank_id) {
 			this.c_bank_id = c_bank_id;
+		}
+
+		public String getPaymentStatusMsgDescription() {
+			return paymentStatusMsgDescription;
+		}
+
+		public void setPaymentStatusMsgDescription(String paymentStatusMsgDescription) {
+			this.paymentStatusMsgDescription = paymentStatusMsgDescription;
 		}
 
 	}

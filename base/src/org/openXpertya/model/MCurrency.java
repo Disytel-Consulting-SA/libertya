@@ -204,6 +204,11 @@ public class MCurrency extends X_C_Currency {
     
     public static BigDecimal currencyConvert(BigDecimal amount, int currencyFrom, int currencyTo, Date date, int adOrg, Properties ctx )
     {
+    	// Si es la misma moneda entonces ni siquiera abro una conexión
+    	if(currencyFrom == currencyTo){
+    		return amount;
+    	}
+    	
     	BigDecimal result = null;
     	PreparedStatement pstmt = null;
     	ResultSet rs = null;

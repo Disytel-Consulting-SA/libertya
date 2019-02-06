@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_PaymentBankNews
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-25 15:20:07.162 */
+ *  @version  - 2019-02-06 14:07:17.627 */
 public class X_I_PaymentBankNews extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -157,6 +157,18 @@ public String getList_Value()
 {
 return (String)get_Value("List_Value");
 }
+/** Set Payment Amount */
+public void setPayment_Amount (BigDecimal Payment_Amount)
+{
+set_Value ("Payment_Amount", Payment_Amount);
+}
+/** Get Payment Amount */
+public BigDecimal getPayment_Amount() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Payment_Amount");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Payment_Order */
 public void setPayment_Order (String Payment_Order)
 {
@@ -201,6 +213,21 @@ set_Value ("Payment_Status_Msg", Payment_Status_Msg);
 public String getPayment_Status_Msg() 
 {
 return (String)get_Value("Payment_Status_Msg");
+}
+/** Set Payment Status Msg Description */
+public void setPayment_Status_Msg_Description (String Payment_Status_Msg_Description)
+{
+if (Payment_Status_Msg_Description != null && Payment_Status_Msg_Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Payment_Status_Msg_Description = Payment_Status_Msg_Description.substring(0,255);
+}
+set_Value ("Payment_Status_Msg_Description", Payment_Status_Msg_Description);
+}
+/** Get Payment Status Msg Description */
+public String getPayment_Status_Msg_Description() 
+{
+return (String)get_Value("Payment_Status_Msg_Description");
 }
 /** Set Process_Date */
 public void setProcess_Date (Timestamp Process_Date)

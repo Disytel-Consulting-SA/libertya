@@ -415,25 +415,25 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         // Add Standard Fields
         // Bug fix, para las vistas no es obligatorio esas columnas
         if( !m_vo.IsView && m_mTable.getField( "Created" ) == null ) {
-            MField created = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,true,true ));
+            MField created = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,true,true,false ));
 
             m_mTable.addField( created );
         }
 
         if( !m_vo.IsView && m_mTable.getField( "CreatedBy" ) == null ) {
-            MField createdBy = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,true,false ));
+            MField createdBy = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,true,false,false ));
 
             m_mTable.addField( createdBy );
         }
 
         if( !m_vo.IsView && m_mTable.getField( "Updated" ) == null ) {
-            MField updated = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,false,true ));
+            MField updated = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,false,true,false ));
 
             m_mTable.addField( updated );
         }
 
         if( !m_vo.IsView && m_mTable.getField( "UpdatedBy" ) == null ) {
-            MField updatedBy = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,false,false ));
+            MField updatedBy = new MField( MFieldVO.createStdField( m_vo.ctx,m_vo.WindowNo,m_vo.TabNo,m_vo.AD_Window_ID,false,false,false,false ));
 
             m_mTable.addField( updatedBy );
         }

@@ -14,7 +14,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Util;
 
 
-public class ValoresDataSource extends DeclaracionValoresDataSource {
+public class ValoresDataSource extends DeclaracionValoresSubreportDataSource {
 
 	public ValoresDataSource(String trxName) {
 		super(trxName);
@@ -34,7 +34,7 @@ public class ValoresDataSource extends DeclaracionValoresDataSource {
 					 "inner join c_posjournal as pj on pj.c_posjournal_id = cs.c_posjournal_id " +
 					 "inner join c_currency as c on c.c_currency_id = cs.c_currency_id");
 		String where = " WHERE pj.docstatus NOT IN ('DR') AND ";
-		String whereClause = getStdWhereClause(false, "pj", false, false, false);
+		String whereClause = getStdWhereClause(false, "pj", false, false, false, false);
 		if(!Util.isEmpty(whereClause, true)){
 			sql.append(where).append(whereClause);
 		}

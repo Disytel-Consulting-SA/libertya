@@ -212,6 +212,7 @@ public class ExportListaGalicia extends ExportBankList {
 		sql.append("		ON ba.c_electronicpaymentbranch_id = bpbl.c_electronicpaymentbranch_id ");
 		sql.append("WHERE ");
 		sql.append("	lgp.c_banklist_id = ? ");
+		sql.append("ORDER BY ah.documentno, p.c_payment_id ");
 
 		return sql.toString();
 	}
@@ -239,9 +240,11 @@ public class ExportListaGalicia extends ExportBankList {
 		String postal = Util.isEmpty(rs.getString("postal"), true) ? "P" : rs.getString("postal");
 		String cuit = Util.isEmpty(rs.getString("cuit"), true) ? "" : rs.getString("cuit");
 
+		String registerNo = fillField(String.valueOf(checkCount), "0", MExpFormatRow.ALIGNMENT_Right, 6, null);
+		
 		StringBuffer row = new StringBuffer("PD");
 		// Número del registro
-		row.append(fillField(String.valueOf(checkCount), "0", MExpFormatRow.ALIGNMENT_Right, 6, null));
+		row.append(registerNo);
 		// Importe del cheque
 		row.append(fillField(String.valueOf(payAmt), "0", MExpFormatRow.ALIGNMENT_Right, 17, null));
 		// Sucursal distribuidora
@@ -291,6 +294,10 @@ public class ExportListaGalicia extends ExportBankList {
 		row.append(fillField(" ", " ", MExpFormatRow.ALIGNMENT_Right, 14, null));
 
 		write(row.toString());
+		
+		// Setear el número de registro del cheque actual
+		setRegisterNo(rs.getInt("c_payment_id"),
+				fillField(String.valueOf(checkCount), "0", MExpFormatRow.ALIGNMENT_Right, 3, null));
 	}
 
 	protected void writeOP(ResultSet rs) throws Exception {
@@ -632,6 +639,12 @@ public class ExportListaGalicia extends ExportBankList {
 	@Override
 	protected String getFileFooter() {
 		return null;
+	}
+	
+	protected void setRegisterNo(int paymentID, String registerNo){
+		DB.executeUpdate(
+				"UPDATE c_payment SET banklist_registerno = '" + registerNo + "' WHERE c_payment_id = " + paymentID,
+				get_TrxName());
 	}
 
 	@Override

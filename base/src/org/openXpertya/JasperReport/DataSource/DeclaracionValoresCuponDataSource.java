@@ -2,10 +2,8 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.util.Properties;
 
-import org.openXpertya.util.Util;
-
 public class DeclaracionValoresCuponDataSource extends
-		DeclaracionValoresDataSource {
+		DeclaracionValoresSubreportDataSource {
 
 	public DeclaracionValoresCuponDataSource(String trxName) {
 		super(trxName);
@@ -37,10 +35,5 @@ public class DeclaracionValoresCuponDataSource extends
 	@Override
 	protected String getTenderType() {
 		return "'C'";
-	}
-
-	@Override
-	protected String getDSDataTable(){
-		return getDSFunView("c_pos_declaracionvalores_payments_filtered");
 	}
 }

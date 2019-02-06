@@ -3,6 +3,8 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
@@ -60,6 +62,19 @@ public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 		//Verifico que la factura elegida no esté ya incorporada en el detalle
 		if (invoiceInDetail(getC_Invoice_ID(), getC_PaymentBatchpoDetail_ID(), getID())) {
 			String msg = Msg.getMsg(getCtx(), "InvoiceAlreadyInDetail");
+			m_processMsg =  msg;
+			log.saveError(msg, "");
+			return false;
+		}
+		
+		//Verifico que la factura elegida no esté ya incorporada en cualquier detalle del lote
+		int batchPODetailID = invoiceDetail(getC_Invoice_ID(), paymentBatch.getID(), getID());
+		if (!Util.isEmpty(batchPODetailID, true)) {
+			MPaymentBatchPODetail pod = new MPaymentBatchPODetail(getCtx(), batchPODetailID, get_TrxName());
+			MBPartner bpPOD = new MBPartner(getCtx(), pod.getC_BPartner_ID(), get_TrxName());
+			DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+			String msg = Msg.getMsg(getCtx(), "InvoiceAlreadyInBatchPODetail", new Object[] { invoice.getDocumentNo(),
+					bpPOD.getValue() + " - " + bpPOD.getName(), df.format(pod.getPaymentDate()), pod.getPaymentAmount() });
 			m_processMsg =  msg;
 			log.saveError(msg, "");
 			return false;
@@ -181,6 +196,53 @@ public class MPaymentBatchPOInvoices extends X_C_PaymentBatchPOInvoices {
 		return false;
 	}
 
+	/**
+	 * @param invoiceId
+	 * @param batchPOId
+	 * @param excludePOInvoicesID
+	 * @return ID del detalle donde pertenece esta factura, tomando en cuenta
+	 *         todos los parámetros
+	 */
+	public static int invoiceDetail(Integer invoiceId, Integer batchPOId, Integer excludePOInvoicesID) {
+		//Construyo la query
+		int batchPODetailID = 0;
+		String sql = "SELECT pod.c_paymentbatchpodetail_id " + 
+					 "FROM C_PaymentBatchPOInvoices poi " +
+					 "JOIN c_paymentbatchpodetail pod on pod.c_paymentbatchpodetail_id = poi.c_paymentbatchpodetail_id " +
+					 "WHERE " + 
+					 " poi.c_invoice_id = ? " +
+					 " AND pod.c_paymentbatchpo_id = ? " +
+					 (Util.isEmpty(excludePOInvoicesID, true) ? ""
+											: " AND poi.C_PaymentBatchPOInvoices_ID <> " + excludePOInvoicesID);
+		
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, null);
+			
+			//Parámetros
+			ps.setInt(1, invoiceId);
+			ps.setInt(2, batchPOId);
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				batchPODetailID = rs.getInt("c_paymentbatchpodetail_id");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (ps != null)
+					ps.close();
+				if (rs != null)
+					rs.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return batchPODetailID;
+	}
+
+	
 	protected boolean afterSave(boolean newRecord, boolean success) {
 		if( !success ) {
             return success;

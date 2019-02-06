@@ -9,7 +9,7 @@ import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
 
 
-public class DeclaracionValoresCashDataSource extends DeclaracionValoresDataSource {
+public class DeclaracionValoresCashDataSource extends DeclaracionValoresSubreportDataSource {
 
 	public DeclaracionValoresCashDataSource(String trxName) {
 		super(trxName);
@@ -52,11 +52,5 @@ public class DeclaracionValoresCashDataSource extends DeclaracionValoresDataSour
 		// Obtiene el valor del campo del registro actual, a partir del nombre del
 		// campo del reporte jasper.
 		return returnVal;
-	}
-
-	@Override
-	protected String getDSDataTable(){
-		return getDSFunView("c_pos_declaracionvalores_cash_filtered");
-	}
-	
+	}	
 }
