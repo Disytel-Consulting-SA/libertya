@@ -39,6 +39,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010117";
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME = "ValuedMovementsDetail.jasper";
 	
+	/** UID del Informe de Pedidos por Línea de Artículo */
+	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_UID = "";
+	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME = "OrdersForProductLines.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -138,6 +142,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME)));
+		
+		// Pedidos por Línea de Artículo
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_UID,
+				ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
