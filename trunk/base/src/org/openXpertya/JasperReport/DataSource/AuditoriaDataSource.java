@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
+public abstract class AuditoriaDataSource extends DeclaracionValoresSubreportDataSource {
 	
 	/** Moneda legal */
 	private Integer currencyID;	
@@ -35,7 +35,8 @@ public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
 	protected String getQuery() {
 		String trxColumn = getTrxColumn();
 		StringBuffer sql = new StringBuffer("SELECT i.c_invoice_id, (i.documentno::text || ' '::text) || COALESCE(i.description, ''::character varying)::text AS description, pjp.amount, currencyconvert(pjp.amount, dv.c_currency_id, ?, dv.datetrx, 0, dv.ad_client_id, dv.ad_org_id) as amountanothercurrency, pjp.description as observacion FROM ("); 
-		sql.append(getStdQuery(true));
+		sql.append(getStdSelect(true));
+		sql.append(getStdWhereClause(true, null, true, true, false, false));
 		sql.append(" ) as dv ");
 		sql.append(" INNER JOIN ");
 		sql.append(getDSFunView(getFunViewName()));
@@ -55,6 +56,11 @@ public abstract class AuditoriaDataSource extends DeclaracionValoresDataSource {
 		return params.toArray();
 	}
 
+	@Override
+	public String getDSDataTable(){
+		return getDSFunView("c_pos_declaracionvalores_v_filtered");
+	}
+	
 	/**
 	 * @return nombre de la columna de transacción por el cual se realiza el
 	 *         join entre las vistas c_pos_declaracionvalores_v y

@@ -223,6 +223,9 @@ public class MFieldVO implements Serializable {
     
     public boolean exportRealValue = false;
 
+    /** Pestaña siempre actualizable? */
+    public boolean tabAlwaysUpdateable = false;
+    
     /**
      *  protected constructor
      *  @param ctx context
@@ -231,14 +234,15 @@ public class MFieldVO implements Serializable {
      *  @param AD_Window_ID window
      *  @param tabReadOnly read only
      */
-    protected MFieldVO(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean tabReadOnly) {
+    protected MFieldVO(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean tabReadOnly, boolean tabAlwaysUpdateable) {
 
         this.ctx		= ctx;
         this.WindowNo		= WindowNo;
         this.TabNo		= TabNo;
         this.AD_Window_ID	= AD_Window_ID;
         this.tabReadOnly	= tabReadOnly;
-
+        this.tabAlwaysUpdateable = tabAlwaysUpdateable;
+        
     }		// MFieldVO
 
     /**
@@ -251,9 +255,9 @@ public class MFieldVO implements Serializable {
      *  @param rs resultset AD_Field_v
      *  @return MFieldVO
      */
-    public static MFieldVO create(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean readOnly, ResultSet rs) {
+    public static MFieldVO create(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean readOnly, ResultSet rs, boolean alwaysUpdateable) {
 
-        MFieldVO vo	  = new MFieldVO(ctx, WindowNo, TabNo, AD_Window_ID, readOnly);
+        MFieldVO vo	  = new MFieldVO(ctx, WindowNo, TabNo, AD_Window_ID, readOnly, alwaysUpdateable);
         // Perfil actual. Se utiliza para determinar el acceso al campo.
         MRole	 role = MRole.getDefault(vo.ctx, false);
         try {
@@ -396,7 +400,7 @@ public class MFieldVO implements Serializable {
      */
     public static MFieldVO createParameter(MFieldVO voF) {
 
-        MFieldVO	voT	= new MFieldVO(voF.ctx, voF.WindowNo, voF.TabNo, voF.AD_Window_ID, voF.tabReadOnly);
+        MFieldVO	voT	= new MFieldVO(voF.ctx, voF.WindowNo, voF.TabNo, voF.AD_Window_ID, voF.tabReadOnly, voF.tabAlwaysUpdateable);
 
         voT.isProcess		= true;
         voT.IsDisplayed		= true;
@@ -444,7 +448,7 @@ public class MFieldVO implements Serializable {
      */
     public static MFieldVO createParameter(Properties ctx, int WindowNo, ResultSet rs) {
 
-        MFieldVO	vo	= new MFieldVO(ctx, WindowNo, 0, 0, false);
+        MFieldVO	vo	= new MFieldVO(ctx, WindowNo, 0, 0, false, false);
 
         vo.isProcess	= true;
         vo.IsDisplayed	= true;
@@ -509,9 +513,9 @@ public class MFieldVO implements Serializable {
      *  @param isTimestamp is the timestamp (not by)
      *  @return MFieldVO
      */
-    public static MFieldVO createStdField(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean tabReadOnly, boolean isCreated, boolean isTimestamp) {
+    public static MFieldVO createStdField(Properties ctx, int WindowNo, int TabNo, int AD_Window_ID, boolean tabReadOnly, boolean isCreated, boolean isTimestamp, boolean tabAlwaysUpdateable) {
 
-        MFieldVO	vo	= new MFieldVO(ctx, WindowNo, TabNo, AD_Window_ID, tabReadOnly);
+        MFieldVO	vo	= new MFieldVO(ctx, WindowNo, TabNo, AD_Window_ID, tabReadOnly, tabAlwaysUpdateable);
 
         vo.ColumnName	= isCreated
                           ? "Created"
@@ -635,10 +639,10 @@ public class MFieldVO implements Serializable {
 	 */
 	public MFieldVO clone(Properties Ctx, int windowNo, int tabNo, 
 		int ad_Window_ID, int ad_Tab_ID, 
-		boolean TabReadOnly)
+		boolean TabReadOnly, boolean tabAlwaysUpdateable)
 	{
 		MFieldVO clone = new MFieldVO(Ctx, windowNo, tabNo, 
-			ad_Window_ID, ad_Tab_ID, TabReadOnly);
+			ad_Window_ID, ad_Tab_ID, TabReadOnly, tabAlwaysUpdateable);
 		//
 		clone.isProcess = false;
 		//  Database Fields
@@ -702,7 +706,7 @@ public class MFieldVO implements Serializable {
 	 *  @param TabReadOnly tab read only
 	 */
 	protected MFieldVO (Properties Ctx, int windowNo, int tabNo, 
-		int ad_Window_ID, int ad_Tab_ID, boolean TabReadOnly)
+		int ad_Window_ID, int ad_Tab_ID, boolean TabReadOnly, boolean tabAlwaysUpdateable)
 	{
 		ctx = Ctx;
 		WindowNo = windowNo;
@@ -710,6 +714,7 @@ public class MFieldVO implements Serializable {
 		AD_Window_ID = ad_Window_ID;
 		AD_Tab_ID = ad_Tab_ID;
 		tabReadOnly = TabReadOnly;
+		this.tabAlwaysUpdateable = tabAlwaysUpdateable;
 	}   //  MFieldVO
 
 	

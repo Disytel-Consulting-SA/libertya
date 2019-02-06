@@ -27,7 +27,7 @@ public class DeclaracionValoresProductsFiltered extends DeclaracionValoresVentas
 		StringBuffer sql = new StringBuffer("SELECT p.m_product_id, p.name, sum(grandtotal * signo_issotrx) as total ");
 		sql.append(" FROM ( SELECT pji.* FROM ").append(getDSDataTable()).append(" as pji ");
 		sql.append(" INNER JOIN c_posjournal as pj on pj.c_posjournal_id = pji.c_posjournal_id ");
-		sql.append(" WHERE ").append(getStdWhereClause(false, null, false, false, true));
+		sql.append(" WHERE ").append(getStdWhereClause(false, null, false, false, true, false));
 		sql.append(" ) as i ");
 		sql.append(" INNER JOIN c_invoiceline il ON il.c_invoice_id = i.c_invoice_id ");
 		sql.append(" INNER JOIN m_product p ON p.m_product_id = il.m_product_id ");
@@ -37,7 +37,7 @@ public class DeclaracionValoresProductsFiltered extends DeclaracionValoresVentas
 	}
 	
 	@Override
-	protected String getDSDataTable(){
+	public String getDSDataTable(){
 		return getDSFunView("c_posjournalinvoices_v_filtered");
 	}
 	

@@ -505,7 +505,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             rw = false;
         }
 
-        if( m_combo.isReadWrite() != value ) {
+        if( m_combo != null && m_combo.isReadWrite() != value ) {
             m_combo.setReadWrite( rw );
             setUI( false );
 

@@ -3,7 +3,7 @@ package org.openXpertya.JasperReport.DataSource;
 import java.util.Properties;
 
 public class DeclaracionValoresCreditNoteDataSource extends
-		DeclaracionValoresDataSource {
+		DeclaracionValoresSubreportDataSource {
 
 	public DeclaracionValoresCreditNoteDataSource(String trxName) {
 		super(trxName);
@@ -29,11 +29,6 @@ public class DeclaracionValoresCreditNoteDataSource extends
 	@Override
 	protected String getTenderType() {
 		return "'CR'";
-	}
-
-	@Override
-	protected String getDSDataTable(){
-		return getDSFunView("c_pos_declaracionvalores_credit_filtered");
 	}
 	
 	@Override

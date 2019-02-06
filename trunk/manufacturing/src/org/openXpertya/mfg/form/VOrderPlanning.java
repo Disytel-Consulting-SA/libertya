@@ -499,7 +499,7 @@ public class VOrderPlanning extends CPanel implements FormPanel, ActionListener,
 
                 while (rs.next()) {
 
-                    MFieldVO	vo	= MFieldVO.create(Env.getCtx(), m_WindowNo, AD_Tab_ID, AD_Window_ID, true, rs);
+                    MFieldVO	vo	= MFieldVO.create(Env.getCtx(), m_WindowNo, AD_Tab_ID, AD_Window_ID, true, rs, false);
                     MField	field	= new MField(vo);
 
                     // System.out.println("Columna -------:" + field.getColumnName());

@@ -673,7 +673,7 @@ public abstract class SvrProcess implements ProcessCall {
 				.executeUpdate(
 						"DELETE FROM "
 								+ temporalTableName
-								+ " WHERE "+dateColumnName+" < ('now'::text)::timestamp(6) - interval '7 days'",
+								+ " WHERE "+dateColumnName+" < ('now'::text)::timestamp(6) - interval '"+getDeleteOldRecordsBackDays()+" days'",
 						trxName);		
 		// Eliminación de registros de esta instancia
 		if(!Util.isEmpty(pInstanceID, true)){
@@ -692,6 +692,13 @@ public abstract class SvrProcess implements ProcessCall {
 			
 	}
 	
+	/**
+	 * Obtiene la cantidad de días hacia atrás que se deben eliminar los registros de la tabla temporal
+	 * @return cantidad de días hacia atrás que se deben eliminar los registros de la tabla temporal
+	 */
+	protected int getDeleteOldRecordsBackDays(){
+		return 7;
+	}
 }    // SvrProcess
 
 

@@ -512,7 +512,9 @@ public class MField implements Serializable,Evaluatee {
 
         // Record is Processed ***
 
-        if( checkContextForReadOnlyLogic && Env.getContext( m_vo.ctx,m_vo.WindowNo,"Processed" ).equals( "Y" ) && !m_vo.isProcess) {
+		if (checkContextForReadOnlyLogic && Env.getContext(m_vo.ctx, m_vo.WindowNo, "Processed").equals("Y")
+				&& !m_vo.isProcess && !m_vo.tabAlwaysUpdateable) {
+        	
             return false;
         }
 
@@ -1656,6 +1658,7 @@ public class MField implements Serializable,Evaluatee {
         ArrayList         listVO       = new ArrayList();
         int               AD_Window_ID = 0;
         boolean           readOnly     = false;
+        boolean alwaysUpdateable       = false;
         String            sql          = MFieldVO.getSQL( ctx );
         PreparedStatement pstmt        = null;
 
@@ -1666,7 +1669,7 @@ public class MField implements Serializable,Evaluatee {
             ResultSet rs = pstmt.executeQuery();
 
             while( rs.next()) {
-                MFieldVO vo = MFieldVO.create( ctx,WindowNo,TabNo,AD_Window_ID,readOnly,rs );
+                MFieldVO vo = MFieldVO.create( ctx,WindowNo,TabNo,AD_Window_ID,readOnly,rs,alwaysUpdateable );
                 if (find)
                 	vo.IsMandatory = false;
                 listVO.add( vo );

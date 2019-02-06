@@ -33,7 +33,6 @@ import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.minigrid.IDColumn;
-import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MQuery;
@@ -299,9 +298,10 @@ public class InfoPayment extends Info {
 
         prepareTable( s_paymentLayout," C_Payment p",where.toString(),"2,3,4" );
 
-        //
-
-        MAllocationLine.setIsAllocated( Env.getCtx(),0,null );
+		// Se comenta ya que a mucho volumen de datos demora un tiempo
+		// considerable y además cada payment se setea allocated al completar o
+		// anular un allocation
+        // MAllocationLine.setIsAllocated( Env.getCtx(),0,null );
 
         return true;
     }    // initInfo

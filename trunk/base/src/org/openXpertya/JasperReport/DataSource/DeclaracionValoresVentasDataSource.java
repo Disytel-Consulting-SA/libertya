@@ -3,7 +3,7 @@ package org.openXpertya.JasperReport.DataSource;
 import java.util.Properties;
 
 public class DeclaracionValoresVentasDataSource extends
-		DeclaracionValoresDataSource {
+		DeclaracionValoresSubreportDataSource {
 
 	public DeclaracionValoresVentasDataSource(String trxName) {
 		super(trxName);
@@ -29,10 +29,5 @@ public class DeclaracionValoresVentasDataSource extends
 	@Override
 	protected String getTenderType() {
 		return "'ARI'";
-	}
-
-	@Override
-	protected String getDSDataTable(){
-		return getDSFunView("c_pos_declaracionvalores_ventas_filtered");
 	}
 }

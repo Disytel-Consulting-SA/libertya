@@ -4,9 +4,13 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -17,6 +21,8 @@ import org.openXpertya.process.GeneratorRetenciones;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.HTMLMsg;
+import org.openXpertya.util.HTMLMsg.HTMLListHeader;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
@@ -79,6 +85,8 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		}
 		// Tipo de documento pago a proveedor
 		MDocType docTypeVP = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_VendorPayment, get_TrxName());
+		String currentPODetailDescr = "";
+		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
 		try {
 			poGenerator.setDocType(getC_DoctypeAllocTarget_ID());
 			poGenerator.setCurrentSeqLock(seqLock);
@@ -86,6 +94,12 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				
 				//Proveedor
 				MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName());
+				
+				// Descripción del detalle actual
+				currentPODetailDescr = Msg.parseTranslation(getCtx(),
+						"@C_PaymentBatchPODetail_ID@: @Vendor@ " + bPartner.getValue() + " - " + bPartner.getName()
+								+ ", @PaymentDate@ " + df.format(detail.getPaymentDate()) + ", @Amount@ "
+								+ detail.getPaymentAmount());
 				
 				//Por el momento, solo acepta forma de pago "Cheque o Talón"
 //				if (!bPartner.getBatch_Payment_Rule().equals("C")) {
@@ -212,12 +226,13 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		} catch (AllocationGeneratorException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			m_processMsg = Msg.getMsg(getCtx(), "PaymentOrdenGenerationError") + " : " + e.getMessage();
+			m_processMsg = currentPODetailDescr + " | " + Msg.getMsg(getCtx(), "PaymentOrdenGenerationError") + " : "
+					+ e.getMessage();
 			return DocAction.STATUS_Invalid;
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			m_processMsg = e.getMessage();
+			m_processMsg = currentPODetailDescr + " | " + e.getMessage();
 			return DocAction.STATUS_Invalid;
 		} finally{
 			// Desactivo el bloqueo de secuencia
@@ -288,10 +303,15 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		return false;
 	}
 
+	private void addDetailMsg(Map<String, List<String>> msgs, String header, String detail){
+		if(msgs.get(header) == null){
+			msgs.put(header, new ArrayList<String>());
+		}
+		msgs.get(header).add(detail);
+	}
+	
 	@Override
 	public String prepareIt() {
-		boolean isValid = true;
-		
 		// Si el tipo de documento no permite lotes fuera de fecha, se debe
 		// actualizar automáticamente la fecha del lote con la fecha actual
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
@@ -307,38 +327,33 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 			}
 		}		
 		
-		//Valido que no haya datalles sin facturas
-		for (MPaymentBatchPODetail detail : getBatchDetails()) {
-			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName()); 
-			boolean subValid = true;
-			if (detail.getInvoices() == null || detail.getInvoices().size() <= 0) {
-				if (subValid)
-					m_processMsg = Msg.getMsg(getCtx(), "PaymentDetailsWithoutInvoices") + " \n " + bPartner.getName();
-				else 
-					m_processMsg += " \n " + bPartner.getName();
-				isValid = false;
-				subValid = false;
-			}
-		}
+		String currentPODetailDescr = "";
+		DateFormat df = new SimpleDateFormat("dd/MM/yyyy");
+
+		Map<String, Map<String, List<String>>> msgs = new HashMap<String, Map<String, List<String>>>();
 		
-		//Valido que todos los proveedores sigan teniendo la forma de pago configurada y que coincida con la del detalle
 		for (MPaymentBatchPODetail detail : getBatchDetails()) {
+			Map<String, List<String>> detailMsgs = new HashMap<String, List<String>>();
 			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName());
-			boolean subValid = true;
-			if (bPartner.getBatch_Payment_Rule() == null || !bPartner.getBatch_Payment_Rule().equals(detail.getBatch_Payment_Rule())) {
-				if (subValid)
-					m_processMsg = (isValid?"":" . \n ")+Msg.getMsg(getCtx(), "PaymentRuleChange") + " \n " + bPartner.getName();
-				else 
-					m_processMsg += " \n " + bPartner.getName();
-				isValid = false;
-				subValid = false;
+			// Descripción del detalle actual	
+			currentPODetailDescr = Msg.parseTranslation(getCtx(),
+					"@C_PaymentBatchPODetail_ID@: @Vendor@ " + bPartner.getValue() + " - " + bPartner.getName()
+							+ ", @PaymentDate@ " + df.format(detail.getPaymentDate()) + ", @Amt@ "
+							+ detail.getPaymentAmount());
+
+			// Valido que todos los proveedores sigan teniendo la forma de pago
+			// configurada y que coincida con la del detalle
+			if (bPartner.getBatch_Payment_Rule() == null
+					|| !bPartner.getBatch_Payment_Rule().equals(detail.getBatch_Payment_Rule())) {
+				addDetailMsg(detailMsgs, "POVendorPaymentRuleChange", "");
 			}
-		}
+			
+			//Valido que no haya datalles sin facturas
+			if (Util.isEmpty(detail.getInvoices())) {
+				addDetailMsg(detailMsgs, "PaymentDetailWithoutInvoices", "");
+			}
 		
-		//Valido que los importes abiertos de las facturas del lote sigan siendo los mismos
-		for (MPaymentBatchPODetail detail : getBatchDetails()) {
-			MBPartner bPartner = new MBPartner(getCtx(), detail.getC_BPartner_ID(), get_TrxName());
-			boolean subValid = true;
+			//Valido que los importes abiertos de las facturas del lote sigan siendo los mismos
 			for (MPaymentBatchPOInvoices detailInvoice : detail.getInvoices()) {
 				MInvoice invoice = new MInvoice(getCtx(), detailInvoice.getC_Invoice_ID(), get_TrxName());
 				MInvoicePaySchedule paySchedule = new MInvoicePaySchedule(getCtx(), detailInvoice.getC_InvoicePaySchedule_ID(), get_TrxName());
@@ -351,29 +366,25 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				}
 				
 				if (detailInvoice.getOpenAmount().compareTo(convertedAmt) != 0) {
-					if (subValid)
-						m_processMsg = (isValid?"":" . \n ")+Msg.getMsg(getCtx(), "InvoiceOpenAmountChange") + " \n " + bPartner.getName() + "-" + invoice.getDocumentNo();
-					else 
-						m_processMsg += " \n " + bPartner.getName() + "-" + invoice.getDocumentNo();
-					isValid = false;
-					subValid = false;
+					addDetailMsg(detailMsgs, "InvoiceOpenAmountChange", invoice.getDocumentNo());
 				}
 				
 				// El estado del documento debe ser completo o cerrado
 				if(!invoice.isInvoiceCompletedOrClosed()){
 					String msg = Msg.getMsg(getCtx(), "DocumentStatus", new Object[] { invoice.getDocumentNo(),
 							MRefList.getListName(getCtx(), DOCSTATUS_AD_Reference_ID, invoice.getDocStatus()) });
-					if (isValid)
-						m_processMsg = msg;
-					else
-						m_processMsg += " \n " + msg;
-					isValid = false;
-					subValid = false;
+					addDetailMsg(detailMsgs, "InvoicesInvalidDocStatus", msg);
 				}
+			}
+			
+			if(!Util.isEmpty(detailMsgs.keySet())){
+				msgs.put(currentPODetailDescr, detailMsgs);
 			}
 		}
 		
-		if (!isValid) {
+		// Si hubo errores, armar el mensaje de retorno
+		if (!Util.isEmpty(msgs.keySet())) {
+			setProcessMsg(getMsg(msgs));
 			return DocAction.STATUS_Invalid;
 		}
 				
@@ -381,6 +392,32 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 		return DocAction.STATUS_InProgress;
 	}
 
+	private String getMsg(Map<String, Map<String, List<String>>> msgs){
+		int idp = 1;
+		HTMLMsg msg = new HTMLMsg();
+		for (String pod : msgs.keySet()) {
+			HTMLMsg.HTMLList listd = msg.createList("pod_"+idp, HTMLListHeader.UL_LIST_TYPE, pod);
+			int idm = 1;
+			for (String m : msgs.get(pod).keySet()) {
+				HTMLMsg.HTMLList listm = msg.createList("m_" + idm, HTMLListHeader.UL_LIST_TYPE,
+						Msg.getMsg(getCtx(), m));
+				//msg.createAndAddListElement("dm_"+idm, Msg.getMsg(getCtx(), m), listm);
+				int idd = 1;
+				for (String d : msgs.get(pod).get(m)) {
+					if(!Util.isEmpty(d, true)){
+						msg.createAndAddListElement("d_"+idd, d, listm);
+					}
+					idd++;
+				}
+				listd.addElement(listm);
+				idm++;
+			}
+			msg.addList(listd);
+			idp++;
+		}
+		return msg.toString();
+	}
+	
 	private void updateBatchPaymentDate() throws Exception{
 		List<MPaymentBatchPODetail> details = getBatchDetails();
 		for (MPaymentBatchPODetail mPaymentBatchPODetail : details) {

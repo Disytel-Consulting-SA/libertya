@@ -34,9 +34,9 @@ public class ValuedMovementsDetailDataSource extends ValuedMovementsDataSource {
 
 	@Override
 	protected String getQuery() {
-		StringBuffer sql = new StringBuffer("SELECT tablename, ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m_product_id, productvalue, productname, productlinesvalue, productlinesname, pricestd, sum(qty) as qty, sum(amt) as amt " +
-											" FROM (SELECT tablename, m.ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m.m_product_id, productvalue, productname, productlinesvalue, productlinesname, qty, coalesce(pp.pricestd,0) as pricestd, coalesce(pp.pricestd,0) * m.qty as amt " +
-											" FROM (SELECT tablename, ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m_product_id, productvalue, productname, productlinesvalue, productlinesname, qty " +
+		StringBuffer sql = new StringBuffer("SELECT tablename, ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, description, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m_product_id, productvalue, productname, productlinesvalue, productlinesname, pricestd, sum(qty) as qty, sum(amt) as amt " +
+											" FROM (SELECT tablename, m.ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, description, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m.m_product_id, productvalue, productname, productlinesvalue, productlinesname, qty, coalesce(pp.pricestd,0) as pricestd, coalesce(pp.pricestd,0) * m.qty as amt " +
+											" FROM (SELECT tablename, ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, description, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m_product_id, productvalue, productname, productlinesvalue, productlinesname, qty " +
 											"		FROM v_product_movements_filtered( " + (getOrgID() != null ? getOrgID() : "-1") + ", "
 																						 + (getDateFrom() != null ? "'" + getDateFrom() + "'" : "null") + "::timestamp, "
 																						 + (getDateTo() != null ? "'" + getDateTo() + "'" : "null") + "::timestamp, "
@@ -52,7 +52,7 @@ public class ValuedMovementsDetailDataSource extends ValuedMovementsDataSource {
 		sql.append(") as m ");
 		sql.append("LEFT JOIN m_productprice as pp on pp.m_product_id = m.m_product_id " +
 				   "WHERE pp.m_pricelist_version_id = ? ) as a " +
-				   "GROUP BY tablename, ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m_product_id, productvalue, productname, productlinesvalue, productlinesname, pricestd ");
+				   "GROUP BY tablename, ad_org_id, orgvalue, orgname, doc_id, documentno, datetrx, description, c_charge_id, chargename, m_warehouse_id, warehousevalue, warehousename, m_warehouseto_id, warehousetovalue, warehousetoname, m_product_id, productvalue, productname, productlinesvalue, productlinesname, pricestd ");
 		sql.append(" ORDER BY orgvalue, datetrx, tablename, documentno ");
 		return sql.toString();
 	}
@@ -75,5 +75,10 @@ public class ValuedMovementsDetailDataSource extends ValuedMovementsDataSource {
 
 	protected void setProductLinesID(Integer productLinesID) {
 		this.productLinesID = productLinesID;
+	}
+	
+	@Override
+	protected String getDescriptionByTable(){
+		return (String)getCurrentRecord().get("DESCRIPTION");
 	}
 }

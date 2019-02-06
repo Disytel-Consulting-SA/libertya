@@ -55,18 +55,18 @@ import org.adempiere.webui.window.FindWindow;
 import org.adempiere.webui.window.WRecordAccessDialog;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
+import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MField;
+import org.openXpertya.model.MLookupFactory;
+import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MQuery;
+import org.openXpertya.model.MRole;
 import org.openXpertya.model.MTab;
 import org.openXpertya.model.MTabVO;
 import org.openXpertya.model.MTable;
 import org.openXpertya.model.MWindow;
 import org.openXpertya.model.MWindowVO;
-import org.openXpertya.model.Lookup;
-import org.openXpertya.model.MLookupFactory;
-import org.openXpertya.model.MProcess;
-import org.openXpertya.model.MQuery;
-import org.openXpertya.model.MRole;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoUtil;
@@ -91,7 +91,6 @@ import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Listitem;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Menupopup;
-import org.zkoss.zul.Messagebox;
 
 
 /**
@@ -624,60 +623,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         // We have a (Zoom) query
         if (query != null && query.isActive() && query.getRecordCount() < 10)
             return query;
-        //
-        StringBuffer where = new StringBuffer();
-        // Query automatically if high volume and no query
-        boolean require = mTab.isHighVolume();
-        if (!require && !m_onlyCurrentRows) // No Trx Window
-        {
-            String wh1 = mTab.getWhereExtended();
-            if (wh1 == null || wh1.length() == 0)
-                wh1 = mTab.getWhereClause();
-            if (wh1 != null && wh1.length() > 0)
-                where.append(wh1);
-            //
-            if (query != null)
-            {
-                String wh2 = query.getWhereClause();
-                if (wh2.length() > 0)
-                {
-                    if (where.length() > 0)
-                        where.append(" AND ");
-                    where.append(wh2);
-                }
-            }
-            //
-            StringBuffer sql = new StringBuffer("SELECT COUNT(*) FROM ")
-                    .append(mTab.getTableName());
-            if (where.length() > 0)
-                sql.append(" WHERE ").append(where);
-            // Does not consider security
-            int no = DB.getSQLValue(null, sql.toString());
-            //
-            require = MRole.getDefault().isQueryRequire(no);
-        }
-        // Show Query
-        if (require)
-        {
-        	m_findCancelled = false;
-        	m_findCreateNew = false;
-            MField[] findFields = mTab.getFields();
-            FindWindow find = new FindWindow(curWindowNo,
-                    mTab.getName(), mTab.getAD_Table_ID(), mTab.getTableName(),
-                    where.toString(), findFields, 10, mTab.getAD_Tab_ID()); // no query below 10
-            if (find.getTitle() != null && find.getTitle().length() > 0) {
-            	// Title is not set when the number of rows is below the minRecords parameter (10)
-                if (!find.isCancel())
-                {
-                	query = find.getQuery();
-                	m_findCreateNew = find.isCreateNew();
-                }
-                else
-                	m_findCancelled = true;
-                find = null;
-            }
-        }
-        return query;
+        
+        return doHighVolume(mTab, query);
     } // initialQuery
 
     public String getTitle()
@@ -1067,6 +1014,9 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		if (!back)
 		{
+			// Volumen alto al pasar por las pestañas
+			curTab.setQuery(doHighVolume(curTab, curTab.getQuery()));
+			
 		    newTabpanel.query();
 		}
 		else
@@ -1129,6 +1079,71 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 	}
 
+	/**
+	 * Realiza la gestión para tablas con Volumen Alto
+	 * 
+	 * @param mTab
+	 *            pestaña
+	 * @param query
+	 *            consulta actual
+	 * @return consulta modificada por búsqueda satisfactoria o cancelada
+	 */
+    private MQuery doHighVolume(MTab mTab, MQuery query){
+        StringBuffer where = new StringBuffer();
+        // Query automatically if high volume and no query
+        boolean require = mTab.isHighVolume() && mTab.getTabLevel() == 0;
+        if (!require && !m_onlyCurrentRows) // No Trx Window
+        {
+            String wh1 = mTab.getWhereExtended();
+            if (wh1 == null || wh1.length() == 0)
+                wh1 = mTab.getWhereClause();
+            if (wh1 != null && wh1.length() > 0)
+                where.append(wh1);
+            //
+            if (query != null)
+            {
+                String wh2 = query.getWhereClause();
+                if (wh2.length() > 0)
+                {
+                    if (where.length() > 0)
+                        where.append(" AND ");
+                    where.append(wh2);
+                }
+            }
+            //
+            StringBuffer sql = new StringBuffer("SELECT COUNT(*) FROM ")
+                    .append(mTab.getTableName());
+            if (where.length() > 0)
+                sql.append(" WHERE ").append(where);
+            // Does not consider security
+            int no = DB.getSQLValue(null, sql.toString());
+            //
+            require = require && MRole.getDefault().isQueryRequire(no);
+        }
+        // Show Query
+        if (require)
+        {
+        	m_findCancelled = false;
+        	m_findCreateNew = false;
+            MField[] findFields = mTab.getFields();
+            FindWindow find = new FindWindow(curWindowNo,
+                    mTab.getName(), mTab.getAD_Table_ID(), mTab.getTableName(),
+                    where.toString(), findFields, 10, mTab.getAD_Tab_ID()); // no query below 10
+            if (find.getTitle() != null && find.getTitle().length() > 0) {
+            	// Title is not set when the number of rows is below the minRecords parameter (10)
+                if (!find.isCancel())
+                {
+                	query = find.getQuery();
+                	m_findCreateNew = find.isCreateNew();
+                }
+                else
+                	m_findCancelled = true;
+                find = null;
+            }
+        }
+    	return query;
+    }
+	
 	/**
 	 * @param e
 	 * @see DataStatusListener#dataStatusChanged(DataStatusEvent)

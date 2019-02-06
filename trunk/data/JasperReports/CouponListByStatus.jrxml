@@ -25,8 +25,8 @@
 
 	<parameter name="Card_Type" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="Organization" isForPrompting="false" class="java.lang.String"/>
-	<parameter name="Date" isForPrompting="false" class="java.lang.String"/>
-	<parameter name="Date_To" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="Date" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="Date_To" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="Audit_State" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="name" class="java.lang.String"/>
@@ -294,7 +294,7 @@
 			</band>
 		</background>
 		<title>
-			<band height="88"  isSplitAllowed="true" >
+			<band height="98"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
@@ -346,13 +346,13 @@
 						height="15"
 						key="staticText-5"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{Date} != null || $P{Date_To} != null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{Date} != null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<text><![CDATA[Fecha:]]></text>
+				<text><![CDATA[Fecha desde:]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -371,7 +371,7 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Card_Type}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="125"
 						y="68"
@@ -380,13 +380,13 @@
 						forecolor="#5D5D5D"
 						key="textField-3"
 						isRemoveLineWhenBlank="true">
-							<printWhenExpression><![CDATA[new Boolean($P{Date} != null || $P{Date_To} != null)]]></printWhenExpression>
+							<printWhenExpression><![CDATA[new Boolean($P{Date} != null)]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Middle">
 						<font/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[(($P{Date} != null) ? $P{Date} : "") + (($P{Date_To} != null) ? (" hasta " + $P{Date_To}) : (($P{Date} != null) ? " en adelante" : ""))]]></textFieldExpression>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{Date}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -437,6 +437,39 @@
 						<font/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{Audit_State}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="0"
+						y="83"
+						width="125"
+						height="15"
+						key="staticText-44"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Date_To} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font/>
+					</textElement>
+				<text><![CDATA[Fecha hasta:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="125"
+						y="83"
+						width="414"
+						height="15"
+						forecolor="#5D5D5D"
+						key="textField-26"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{Date_To} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{Date_To}]]></textFieldExpression>
 				</textField>
 			</band>
 		</title>

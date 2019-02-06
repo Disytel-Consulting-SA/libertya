@@ -3,7 +3,7 @@ package org.openXpertya.JasperReport.DataSource;
 import java.util.Properties;
 
 public class DeclaracionValoresVoidedDocumentsDataSource extends
-		DeclaracionValoresDataSource {
+		DeclaracionValoresSubreportDataSource {
 
 	public DeclaracionValoresVoidedDocumentsDataSource(String trxName) {
 		super(trxName);
@@ -36,8 +36,4 @@ public class DeclaracionValoresVoidedDocumentsDataSource extends
 		return getStdWhereClauseParams();
 	}
 
-	@Override
-	protected String getDSDataTable(){
-		return getDSFunView("c_pos_declaracionvalores_voided_filtered");
-	}
 }

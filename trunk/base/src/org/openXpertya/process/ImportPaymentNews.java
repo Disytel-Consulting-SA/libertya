@@ -1,5 +1,6 @@
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.model.X_I_PaymentBankNews;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Proceso de importación de novedades de bancos 
@@ -62,22 +64,28 @@ public class ImportPaymentNews extends SvrProcess {
 					news.setI_ErrorMsg(Msg.getMsg(getCtx(), "NotFoundPaymentList"));
 			} else {
 				//3 - Recupero el cheque (payment) a actualizar
-				MPayment payment = getPayment(news.getRegister_Number(), bankList.getC_BankAccount_ID());
+				MPayment payment = getPayment(bankList, news);
 				if (payment == null) {
 					news.setI_ErrorMsg(Msg.getMsg(getCtx(), "CheckNotFound"));
 				} else {
 					//4 - Si tengo códigos de estado, como en el caso del galicia, busco por código el estado interno correspondiente
-					int statusId = -1;
-					if (news.getPayment_Status() != null && !news.getPayment_Status().isEmpty()) {
-						statusId = getStatusIdByCode(news.getPayment_Status(), news.getC_Bank_ID());
-					} else { //Caso contrario, busco por mensaje, como en el Patagonia
-						statusId = getStatusIdByName(news.getPayment_Status_Msg(), news.getC_Bank_ID());
-					}
+					int statusId = 0;
+					// Tiene estado o mensaje de estado, entonces lo busco sino
+					// es se toma como una novedad que no posee mensajes
+					if (!Util.isEmpty(news.getPayment_Status(), true)
+							|| !Util.isEmpty(news.getPayment_Status_Msg(), true)) {
+						if (!Util.isEmpty(news.getPayment_Status(), true)) {
+							statusId = getStatusIdByCode(news.getPayment_Status(), news.getC_Bank_ID());
+						} else { //Caso contrario, busco por mensaje, como en el Patagonia
+							statusId = getStatusIdByName(news.getPayment_Status_Msg(), news.getC_Bank_ID());
+						}
+					} 
 					if (statusId < 0) {
 						news.setI_ErrorMsg(Msg.getMsg(getCtx(), "StatusNotFound"));
 					} else {
 						//5 - Actualizo los datos del pago
 						payment.setC_Bankpaymentstatus_ID(statusId);
+						payment.setBank_Payment_Msg_Description(news.getPayment_Status_Msg_Description());
 						payment.setBank_Payment_Date(news.getProcess_Date());
 						payment.setBank_Payment_DocumentNo(news.getReceipt_Number());
 						payment.setCheckNo(news.getCheckNo());
@@ -312,5 +320,73 @@ public class ImportPaymentNews extends SvrProcess {
 		
 		return -1;
 	}
+	
+	protected MPayment getPayment(MBankList bankList, X_I_PaymentBankNews news){
+		MPayment p = null;
+		// Buscar por el numero de registro del pago dentro de la lista
+		if(!Util.isEmpty(news.getRegister_Number(), true)){
+			p = getPaymentByRegisterNo(bankList.getID(), news.getRegister_Number());
+		}
+		
+		// Buscar por OP e importe
+		if (p == null && !Util.isEmpty(news.getPayment_Order(), true)
+				&& !Util.isEmpty(news.getPayment_Amount(), true)) {
+			p = getPaymentByOP(news.getPayment_Order(), news.getPayment_Amount());
+		}
+		
+		// Buscar por OP y número de cheque
+		if (p == null && !Util.isEmpty(news.getPayment_Order(), true)
+				&& !Util.isEmpty(news.getCheckNo(), true)) {
+			p = getPaymentByOP(news.getPayment_Order(), news.getCheckNo());
+		}
+		return p;
+	}
 
+	protected MPayment getPaymentByRegisterNo(Integer bankListID, String register_number){
+		MPayment payment = null;
+		String sql = "SELECT c_payment_id "
+					+ "FROM c_payment p "
+					+ "WHERE banklist_registerno = '"+register_number+"'"
+							+ " AND EXISTS (SELECT c_allocationline_id "
+							+ 				"FROM c_allocationline al "
+							+				"JOIN c_allocationhdr ah on ah.c_allocationhdr_id = al.c_allocationhdr_id "
+							+ 				"WHERE ah.c_banklist_id = ? AND al.c_payment_id = p.c_payment_id) ";
+		int payID = DB.getSQLValue(get_TrxName(), sql, bankListID);
+		if(payID > 0){
+			payment = new MPayment(getCtx(), payID, get_TrxName());
+		}
+		return payment;
+	}
+	
+	protected MPayment getPaymentByOP(String payment_order, BigDecimal payment_amount){
+		MPayment payment = null;
+		String sql = "SELECT c_payment_id "
+					+ "FROM c_payment p "
+					+ "WHERE payamt = " +payment_amount
+							+ " AND EXISTS (SELECT c_allocationline_id "
+							+ 				"FROM c_allocationline al "
+							+				"JOIN c_allocationhdr ah on ah.c_allocationhdr_id = al.c_allocationhdr_id "
+							+ 				"WHERE ah.documentno = '"+payment_order+"' AND al.c_payment_id = p.c_payment_id) ";
+		int payID = DB.getSQLValue(get_TrxName(), sql);
+		if(payID > 0){
+			payment = new MPayment(getCtx(), payID, get_TrxName());
+		}
+		return payment;
+	}
+	
+	protected MPayment getPaymentByOP(String payment_order, String checkNo){
+		MPayment payment = null;
+		String sql = "SELECT c_payment_id "
+					+ "FROM c_payment p "
+					+ "WHERE checkno = '" + checkNo + "' "
+							+ " AND EXISTS (SELECT c_allocationline_id "
+							+ 				"FROM c_allocationline al "
+							+				"JOIN c_allocationhdr ah on ah.c_allocationhdr_id = al.c_allocationhdr_id "
+							+ 				"WHERE ah.documentno = '"+payment_order+"' AND al.c_payment_id = p.c_payment_id) ";
+		int payID = DB.getSQLValue(get_TrxName(), sql);
+		if(payID > 0){
+			payment = new MPayment(getCtx(), payID, get_TrxName());
+		}
+		return payment;
+	}
 }

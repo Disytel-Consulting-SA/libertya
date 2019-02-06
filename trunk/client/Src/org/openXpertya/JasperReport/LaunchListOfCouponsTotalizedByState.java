@@ -1,8 +1,6 @@
 package org.openXpertya.JasperReport;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.openXpertya.JasperReport.DataSource.ListOfCouponsDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
@@ -59,7 +57,7 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 		sql.append("WHERE ");
 		sql.append("	AD_Org_ID = ?");
 
-		return DB.getSQLValueString("", sql.toString(), getAD_Org_ID());
+		return DB.getSQLValueString(get_TrxName(), sql.toString(), getAD_Org_ID());
 	}
 
 	private String getBPartner() {
@@ -72,7 +70,7 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 		sql.append("WHERE ");
 		sql.append("	C_BPartner_ID = ?");
 
-		return DB.getSQLValueString("", sql.toString(), getC_BPartner_ID());
+		return DB.getSQLValueString(get_TrxName(), sql.toString(), getC_BPartner_ID());
 	}
 
 	private String getAuditStateName() {
@@ -92,7 +90,7 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 		sql.append("	AND l.value = ? ");
 		sql.append("	AND ad_language = ? ");
 
-		return DB.getSQLValueString("", sql.toString(), getAuditState(), Env.getAD_Language(getCtx()));
+		return DB.getSQLValueString(get_TrxName(), sql.toString(), getAuditState(), Env.getAD_Language(getCtx()));
 	}
 
 	// GETTERS:
@@ -105,16 +103,12 @@ public class LaunchListOfCouponsTotalizedByState extends JasperReportLaunch {
 		return 0;
 	}
 
-	public String getDateFrom() {
-		Timestamp leDate = (Timestamp) getParameterValue("Date");
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-		return sdf.format(new Date(leDate.getTime()));
+	public Timestamp getDateFrom() {
+		return (Timestamp) getParameterValue("Date");
 	}
 
-	public String getDateTo() {
-		Timestamp leDate = (Timestamp) getParameterValue("Date_To");
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-		return sdf.format(new Date(leDate.getTime()));
+	public Timestamp getDateTo() {
+		return (Timestamp) getParameterValue("Date_To");
 	}
 
 	public int getC_BPartner_ID() {

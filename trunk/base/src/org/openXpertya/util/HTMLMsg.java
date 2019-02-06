@@ -48,7 +48,7 @@ public class HTMLMsg {
 	 */
 	public void addListElement(HTMLList list, HTMLListElement element){
 		if (list != null && element != null) {
-			list.addListElement(element);
+			list.addElement(element);
 		}
 	}
 	
@@ -107,7 +107,7 @@ public class HTMLMsg {
 	 *            lista destino del elemento creado
 	 */
 	public void createAndAddListElement(String id, String value, HTMLList list){
-		list.addListElement(createListElement(id, value));
+		list.addElement(createListElement(id, value));
 	}
 	
 	/**
@@ -179,20 +179,31 @@ public class HTMLMsg {
 		return footerMsg;
 	}
 
+	
+	/**
+	 * Cualquier elemento HTML
+	 * 
+	 * @author Equipo de Desarrollo - Disytel
+	 * 
+	 */
+	public abstract class HTMLElement{
+		
+	}
+	
 	/**
 	 * Lista HTML con su cabecera y elementos
 	 * 
 	 * @author Equipo de Desarrollo - Disytel
 	 * 
 	 */
-	public class HTMLList{
+	public class HTMLList extends HTMLElement{
 		
 		private HTMLListHeader header;
-		private List<HTMLListElement> elements;
+		private List<HTMLElement> elements;
 		
 		public HTMLList(String listID, String listType){
 			setHeader(new HTMLListHeader(listID, listType));
-			setElements(new ArrayList<HTMLListElement>());
+			setElements(new ArrayList<HTMLElement>());
 		}
 
 		public HTMLList(String listID, String listType, String msg){
@@ -200,13 +211,12 @@ public class HTMLMsg {
 			setMsg(msg);
 		}
 		
+		
 		/**
-		 * Agrega el elemento parámetro a la lista
-		 * 
+		 * Agrego un elemento a la lista
 		 * @param element
-		 *            elemento de lista
 		 */
-		public void addListElement(HTMLListElement element){
+		public void addElement(HTMLElement element){
 			getElements().add(element);
 		}
 		
@@ -218,11 +228,11 @@ public class HTMLMsg {
 			return header;
 		}
 
-		public void setElements(List<HTMLListElement> elements) {
+		public void setElements(List<HTMLElement> elements) {
 			this.elements = elements;
 		}
 
-		public List<HTMLListElement> getElements() {
+		public List<HTMLElement> getElements() {
 			return elements;
 		}
 		
@@ -234,7 +244,7 @@ public class HTMLMsg {
 		public String toString(){
 			StringBuffer listStr = new StringBuffer();
 			listStr.append(getHeader().getStringOpenList());
-			for (HTMLListElement element : getElements()) {
+			for (HTMLElement element : getElements()) {
 				listStr.append(element.toString());
 			}
 			listStr.append(getHeader().getStringCloseList());
@@ -248,7 +258,7 @@ public class HTMLMsg {
 	 * @author Equipo de Desarrollo - Disytel
 	 * 
 	 */
-	public class HTMLListHeader{
+	public class HTMLListHeader extends HTMLElement{
 		public static final String UL_LIST_TYPE = "ul";
 		public static final String OL_LIST_TYPE = "ll";
 		
@@ -326,7 +336,7 @@ public class HTMLMsg {
 	 * @author Equipo de Desarrollo - Disytel
 	 * 
 	 */
-	public class HTMLListElement{
+	public class HTMLListElement extends HTMLElement{
 		public static final String TAG_LIST_ELEM = "li"; 
 		
 		private String id;

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-01-30 10:24:43.022 */
+ *  @version  - 2019-02-06 14:03:34.732 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -360,6 +360,21 @@ public String getA_Zip()
 {
 return (String)get_Value("A_Zip");
 }
+/** Set Bank List Register No */
+public void setBankList_RegisterNo (String BankList_RegisterNo)
+{
+if (BankList_RegisterNo != null && BankList_RegisterNo.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+BankList_RegisterNo = BankList_RegisterNo.substring(0,60);
+}
+set_Value ("BankList_RegisterNo", BankList_RegisterNo);
+}
+/** Get Bank List Register No */
+public String getBankList_RegisterNo() 
+{
+return (String)get_Value("BankList_RegisterNo");
+}
 /** Set Bank Payment Date */
 public void setBank_Payment_Date (Timestamp Bank_Payment_Date)
 {
@@ -384,6 +399,21 @@ set_Value ("Bank_Payment_DocumentNo", Bank_Payment_DocumentNo);
 public String getBank_Payment_DocumentNo() 
 {
 return (String)get_Value("Bank_Payment_DocumentNo");
+}
+/** Set Bank Payment Msg Description */
+public void setBank_Payment_Msg_Description (String Bank_Payment_Msg_Description)
+{
+if (Bank_Payment_Msg_Description != null && Bank_Payment_Msg_Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Bank_Payment_Msg_Description = Bank_Payment_Msg_Description.substring(0,255);
+}
+set_Value ("Bank_Payment_Msg_Description", Bank_Payment_Msg_Description);
+}
+/** Get Bank Payment Msg Description */
+public String getBank_Payment_Msg_Description() 
+{
+return (String)get_Value("Bank_Payment_Msg_Description");
 }
 /** Set Activity.
 Business Activity */

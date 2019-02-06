@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCashDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCheckDataSource;
@@ -13,6 +14,7 @@ import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCuentaCorriente
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresCuponDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDTO;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresDataSource;
+import org.openXpertya.JasperReport.DataSource.DeclaracionValoresMainDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresProductsFiltered;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresTransferDataSource;
 import org.openXpertya.JasperReport.DataSource.DeclaracionValoresVentasDataSource;
@@ -26,20 +28,28 @@ import org.openXpertya.model.MCash;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_POSJournal;
+import org.openXpertya.model.X_M_Product;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 public class LaunchDeclaracionValores extends JasperReportLaunch {
 
+	/** Nombre de preference que posee los artículos a filtrar en todos los data source */
+	private static final String productValuesFilterPreferenceName = "DeclaracionValores_FilterProductValues";
+	
 	/** Caja Diaria */
 	private MPOSJournal posJournal;
 	
 	/** Data Transfer Object para enviar a los Data Sources del reporte */
 	private DeclaracionValoresDTO valoresDTO;
+	
+	/** Flag que indica si se cargó el main principal volcado sobre la tabla temporal */
+	private boolean mainLoaded = false;
 	
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
@@ -62,6 +72,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		valoresDTO.setDateFrom(getDateFrom());
 		valoresDTO.setDateTo(getDateTo());
 		valoresDTO.setOrgID(getOrgID());
+		valoresDTO.setpInstanceID(getAD_PInstance_ID());
 		// Parámetros adicionales
 		addReportParameter("TITLE", getTitle());
 		addReportParameter("DATE_FROM", getDateFrom());
@@ -87,6 +98,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 			addReportParameter("ORG_VALUE", org.getValue());
 			addReportParameter("ORG_NAME", org.getName());
 		}
+		valoresDTO.setProductIDs(getFilteredProducts());
 		// Agregar el saldo final de cada uno de los libros de caja
 		addCashEndingBalance(journalIDs);
 		
@@ -108,6 +120,9 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		addSubreports();
 	}
 
+	protected int getDeleteOldRecordsBackDays(){
+		return 3;
+	}
 	
 	protected void initialize(){
 		if (!Util.isEmpty(getTable_ID(), true)
@@ -115,6 +130,29 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 			M_Table table = M_Table.get(getCtx(), getTable_ID());
 			setPosJournal((MPOSJournal)table.getPO(getRecord_ID(), get_TrxName()));
 		}
+	}
+	
+	protected int[] getFilteredProducts(){
+		String productValues = MPreference.searchCustomPreferenceValue(
+				productValuesFilterPreferenceName, Env.getAD_Client_ID(getCtx()),
+				Env.getAD_Org_ID(getCtx()), null, true);
+		int[] productIDs = null;
+		if(!Util.isEmpty(productValues, true)){
+			// Iterar por los artículos de filtro
+			StringTokenizer tokens = new StringTokenizer(productValues, ";");
+			String token;
+			StringBuffer whereClause = new StringBuffer("(");
+			while(tokens.hasMoreTokens()){
+				token = tokens.nextToken();
+				whereClause.append("'").append(token).append("',");
+			}
+			whereClause = new StringBuffer(whereClause.substring(0, whereClause.lastIndexOf(",")));
+			whereClause.append(")");
+			productIDs = PO.getAllIDs(X_M_Product.Table_Name,
+					"ad_client_id = " + Env.getAD_Client_ID(getCtx()) + " AND value IN " + whereClause.toString(),
+					get_TrxName());
+		}
+		return productIDs;
 	}
 	
 	protected void addCashEndingBalance(List<Integer> journalIDs){
@@ -132,13 +170,28 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 	}
 	
 	/**
+	 * Cargar el DS principal volcado a la tabla temporal
+	 */
+	protected void loadMainDS() throws Exception{
+		if(!isMainLoaded()){
+			deleteOldRecords("t_pos_declaracionvalores", getAD_PInstance_ID(), get_TrxName());
+			DeclaracionValoresMainDataSource allDS = new DeclaracionValoresMainDataSource(getCtx(), getValoresDTO(),
+					get_TrxName());
+			allDS = (DeclaracionValoresMainDataSource)loadDSData(allDS);
+			setMainLoaded(true);
+		}
+	} 
+	
+	/**
 	 * Agrega los subreportes al reporte
 	 * @throws Exception
 	 */
 	protected void addSubreports() throws Exception{
 		// Obtener los subreportes junto con sus datasources
 		// Datasources
-		//////////////////////////////////////
+		// Primero cargar el DS principal
+		loadMainDS();
+		//////////////////////////////////////				
 		// Data Source de Ventas
 		DeclaracionValoresVentasDataSource ventaDS = getVentaDataSource();
 		// Data Source de Efectivo
@@ -272,6 +325,7 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		Timestamp dateTo = getDateTo();
 		Integer orgID = getOrgID();
 		Integer posID = getPOSID();
+		Integer userID = getUserID();
 		Boolean isRange = getParameterValue("IsRange") == null ? false
 				: getParameterValue("IsRange").equals("Y");
 		List<Object> params = new ArrayList<Object>();
@@ -282,6 +336,10 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 		if(posID != null){
 			where.append(" AND (c_pos_id = ?) ");
 			params.add(posID);
+		}
+		if(userID != null){
+			where.append(" AND (ad_user_id = ?) ");
+			params.add(userID);
 		}
 		if(dateFrom != null){
 			where.append(" AND (date_trunc('day',datetrx) >= date_trunc('day',?::date)) ");
@@ -583,5 +641,13 @@ public class LaunchDeclaracionValores extends JasperReportLaunch {
 
 	protected DeclaracionValoresDTO getValoresDTO() {
 		return valoresDTO;
+	}
+
+	protected boolean isMainLoaded() {
+		return mainLoaded;
+	}
+
+	protected void setMainLoaded(boolean mainLoaded) {
+		this.mainLoaded = mainLoaded;
 	}
 }
