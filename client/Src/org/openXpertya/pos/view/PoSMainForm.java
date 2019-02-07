@@ -2008,6 +2008,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 						if(pValue == null) {
 							getOrder().setBusinessPartner(null);
 							getCClientLocationCombo().removeAllItems();
+							getCCustomerDescriptionText().setValue(null);
 						} else {
 							TimeStatsLogger.beginTask(MeasurableTask.POS_LOAD_BPARTNER);
 							int bPartnerID = ((Integer)pValue).intValue();
@@ -4853,6 +4854,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			//Se carga el text del taxid.
 			getCTaxIdText().setText(getOrder().getBusinessPartner().getTaxId());
 		 	getCClientText().setBackground(false);
+		 	getCClientText().setValue(getOrder().getBusinessPartner().getId());
 		 	refreshBPartnerCreditPaymentMedium(getSelectedTenderType());
 		 	refreshBPartnerDiscount();
 			loadPaymentMediumInfo();
@@ -5493,7 +5495,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getAuthDialog().markAuthorized(UserAuthConstants.POS_FINISH_MOMENT, true);
 		getModel().newOrder();
 		getModel().loadDefaultPriceList(windowNo);
-		loadBPartner(getModel().getDefaultBPartner());
 		getOrderTableUtils().refreshTable();
 		getPaymentsTableUtils().refreshTable();
 		selectTab(0);
@@ -5501,6 +5502,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		clearComponent(getCClientLocationCombo());
 		clearComponent(getCTaxIdText());
 		clearComponent(getCAmountText());
+		loadBPartner(getModel().getDefaultBPartner());
 		selectTenderType(MPOSPaymentMedium.TENDERTYPE_Cash);
 		getCProductNameDetailLabel().setText("");
 		getCCountText().setText("1");
@@ -5616,14 +5618,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			setActionEnabled(GOTO_INSERT_CARD, true);
 			getStatusBar().setStatusLine(MSG_POS_PAYMENT_STATUS);
 			// Se carga el cliente que tenga asignado el pedido. (pedidos pre creados)
-			if(getOrder().getBusinessPartner() != null) {
+			/*if(getOrder().getBusinessPartner() != null) {
 				getCClientText().setValue(getOrder().getBusinessPartner().getId());
 				loadBPartner(getOrder().getBusinessPartner().getId());
 			// Se carga el ciente por defecto de la configuración del TPV
 			} else {
 				getCClientText().setValue(getModel().getDefaultBPartner());
 				loadBPartner(getModel().getDefaultBPartner());
-			}
+			}*/
 			getCPosTab().setTitleAt(0, MSG_ORDER+" " + KeyUtils.getKeyStr(getActionKeys().get(GOTO_ORDER)));
 			// Actualiza la info adicional del medio de pago porque puede haber cambiado
 			// algún artículo y es necesario recalcular descuentos y cuotas.
@@ -5636,7 +5638,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			Dimension dim = new Dimension(getCTotalPanel().getWidth(), getCClientBorderPanel().getHeight());
 			getCTotalPanel().setPreferredSize(dim);
 			getCTotalPanel().setMaximumSize(dim);
-			
 		}
 		if(getCPosTab().getSelectedIndex() != index) {
 			getCPosTab().setSelectedIndex(index);
@@ -6874,6 +6875,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCGeneralDiscountPercText().setReadWrite(!processing);
 		getCClientText().setReadWrite(!processing);
 		getCFinishPayButton().setReadWrite(!processing);
+		getCClientLocationCombo().setReadWrite(!processing);
 		this.repaint();
 	}
 
