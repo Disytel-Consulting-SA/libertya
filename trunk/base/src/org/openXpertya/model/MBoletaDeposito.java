@@ -437,7 +437,8 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 			reversalCheck.addDescription(
 					Msg.getMsg(getCtx(), "ReversalCheck", 
 					new Object[] { check.getDocumentNo(), getDocumentNo() }));
-			
+			// Se saca el flag de manual
+			reversalCheck.setIsManual(false);
 			// FB - Corrección a partir de problema detectado en Intersys
 			// Setea el estado a Borrador ya que el copyValues copia el estado
 			// del cheque original (Completado) y entonces al completar el
