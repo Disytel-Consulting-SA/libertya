@@ -40,7 +40,7 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME = "ValuedMovementsDetail.jasper";
 	
 	/** UID del Informe de Pedidos por Línea de Artículo */
-	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_UID = "";
+	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_UID = "TA712CORE-AD_Process-1010617-20190206172121";
 	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME = "OrdersForProductLines.jrxml";
 	
 	@Override
