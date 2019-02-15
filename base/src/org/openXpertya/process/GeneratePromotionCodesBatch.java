@@ -78,14 +78,22 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 			}
 			promotionsCodes.remove(randomPromoIndex);
 		}
-		
-		// Tirar la impresión
+
+		// == Tirar la impresión ==
 		ProcessInfo pi = new ProcessInfo("Impresion Cupones Promocionales", getPrintProcessID(),
 				X_C_Promotion_Code_Batch.Table_ID, pcBatch.getID());
+		// Propagar la configuracion de envio a stream unicamente o no de este processInfo al pi de impresion
+		pi.setToStreamOnly(getProcessInfo().isToStreamOnly());
+		// Ejecucion de la impresion
 		MProcess.execute(getCtx(), getPrintProcess(), pi, get_TrxName());
 		if(pi.isError()){
 			throw new Exception(pi.getSummary());
 		}
+		// Recuperar el stream resultante de pi (si se configuro mediante isToStreamOnly) y asignarlo a este processInfo.
+		getProcessInfo().setReportResultStream(pi.getReportResultStream());
+
+		// Almaceno en el log, el ID del lote generado, bajo el P_ID 
+		addLog(pcBatch.getC_Promotion_Code_Batch_ID(), null, null, null);
 		
 		return Msg.getMsg(getCtx(), "GeneratedBatch")+" : "+pcBatch.getDocumentNo();
 	}
