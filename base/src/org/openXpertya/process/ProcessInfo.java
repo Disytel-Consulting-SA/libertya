@@ -16,6 +16,7 @@
 
 package org.openXpertya.process;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -173,6 +174,12 @@ public class ProcessInfo implements Serializable {
 /** Compatibilidad Jasper Adempiere Batch                       */
 
     private JasperReportDTO jasperReportDTO = null;
+    
+    /** Solo devolver al stream */
+    private boolean toStreamOnly = false;
+    
+    /** En caso de que el proceso sea una impresion Jasper en particular (pedido, remito, factura), almacena el stream resultante */
+    private ByteArrayOutputStream reportResultStream = null;
     
     /**
      * Descripción de Método
@@ -919,6 +926,23 @@ public class ProcessInfo implements Serializable {
 		return m_printPreview;
 	}
 
+	public ByteArrayOutputStream getReportResultStream() {
+		return reportResultStream;
+	}
+
+	public void setReportResultStream(ByteArrayOutputStream reportResultStream) {
+		this.reportResultStream = reportResultStream;
+	}
+
+	public boolean isToStreamOnly() {
+		return toStreamOnly;
+	}
+
+	public void setToStreamOnly(boolean toStreamOnly) {
+		this.toStreamOnly = toStreamOnly;
+	}
+
+	
 	
 }    // ProcessInfo
 

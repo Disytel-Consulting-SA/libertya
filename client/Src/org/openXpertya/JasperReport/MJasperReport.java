@@ -1,6 +1,7 @@
 package org.openXpertya.JasperReport;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +10,7 @@ import java.util.Properties;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
@@ -200,6 +202,14 @@ public class MJasperReport extends X_AD_JasperReport
     }
     
     public static void showReport(Properties ctx, ProcessInfo pi, JasperPrint jPrint, String name) throws Exception {
+    	// Guardar la referencia en formato PDF en el PI
+    	if (pi.isToStreamOnly()) {
+	    	ByteArrayOutputStream stream = new ByteArrayOutputStream();
+	    	JasperExportManager.exportReportToPdfStream(jPrint, stream);
+	    	pi.setReportResultStream(stream);
+	    	return;
+    	}
+    	
     	// Si es invocacion server-side, delegar a ViewerProvider
     	if (!Ini.isClient()) {
             JRViewerProvider viewerLauncher = ReportStarter.getReportViewerProvider();
