@@ -5014,7 +5014,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				
 				// Recuperar y parsear la preferencia, la cual tiene el siguiente formato: TABLA=ACCIONES:TABLA=ACCIONES
 				// Ejemplo: C_OrderLine = IMD : C_Order = DM
-				String auditConfig = MPreference.GetCustomPreferenceValue(AUDIT_EVENTS_CONFIGURATION_PREFERENCE, getAD_Client_ID());
+				String auditConfig = MPreference.GetCustomPreferenceValue(AUDIT_EVENTS_CONFIGURATION_PREFERENCE);
 				if (Util.isEmpty(auditConfig))
 					return false;
 				auditConfig = auditConfig.trim().replaceAll(" ", "");
