@@ -4148,16 +4148,16 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			// Save change log - Used for components developement
 			MComponentVersion componentVersion = MComponentVersion
 					.getCurrentComponentVersion(getCtx(), get_TrxName());
-			if (MChangeLog.isLogged(p_info.getAD_Table_ID())
+			if ((shouldAudit(p_info.getTableName(), operationType)) || (MChangeLog.isLogged(p_info.getAD_Table_ID())
 					&& passTableExceptions(operationType)
-					&& componentVersion != null) {
+					&& componentVersion != null)) {
 				// Change Log
 				MSession session = MSession.get(p_ctx, false);
 				if (session == null) {
 					log.fine("No Session found");
 				}
 				// AD_ComponentVersion
-				Integer valueVersion = componentVersion.getID();
+				Integer valueVersion = (componentVersion!=null?componentVersion.getID():0);
 				if (p_info.getTableName().equalsIgnoreCase("AD_Component")
 						|| p_info.getTableName().equalsIgnoreCase(
 								"AD_ComponentVersion")) {
@@ -4984,6 +4984,58 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		for (String ref : getRefCache(refUID))
 			retValue.append(" - ").append(ref).append(" ");
 		return retValue.toString();
+	}
+
+	/** Nombre de la preferencia con la configuracion de tablas a auditar */
+	public static final String AUDIT_EVENTS_CONFIGURATION_PREFERENCE = "AuditEventsConfiguration";
+	
+	/** Cache de configuracion de auditoria 
+	 * 	La configuracion debe realizarse con el siguiente formato: TABLA = ACCIONES_A_AUDITAR : TABLA = ACCIONES_A_AUDITAR : ...
+	 * 	Ejemplo: C_OrderLine = IMD : C_Order = DM 
+	 *  Siempre debe usarse el signo = para separar tabla y acciones a auditar.
+	 *  Siempre debe usarse el signo : para separar entre cada configuración de tabla
+	 *  Pueden existir o no separaciones entre las tablas y las acciones. El orden de las acciones es indistinto.  
+	 *	Las tablas y acciones pueden estar expresadas en la preferencia tanto en mayuscula como en minuscula
+	 *	Importante: Cualquier modificación sobre la configuración de auditoria requerirá reiniciar la aplicación
+	 * */
+	protected static HashMap<String, String> auditTables = null;
+	
+	/**
+	 * Determina si la actividad de persistencia debe ser auditada 
+	 * @param tableName nombre de la tabla sobre la cual se esta efectuando la actividad de persistencia
+	 * @param opType operacion: (I)nsertion, (M)odification, (D)eletion
+	 * @return true si debe auditarse la actividad, o false en caso contrario
+	 */
+	public boolean shouldAudit(String tableName, String opType) {
+		try {
+			// Recuperar la - eventual - configuracion para una la tabla sobre la que se esta operando
+			if (auditTables==null) {
+				auditTables = new HashMap<String, String>();
+				
+				// Recuperar y parsear la preferencia, la cual tiene el siguiente formato: TABLA=ACCIONES:TABLA=ACCIONES
+				// Ejemplo: C_OrderLine = IMD : C_Order = DM
+				String auditConfig = MPreference.GetCustomPreferenceValue(AUDIT_EVENTS_CONFIGURATION_PREFERENCE, getAD_Client_ID());
+				if (Util.isEmpty(auditConfig))
+					return false;
+				auditConfig = auditConfig.trim().replaceAll(" ", "");
+				String[] ruleSet = auditConfig.split(":");
+
+				// Iterar por cada regla y almacenar en la map de auditorias: TableName -> Actions 
+				for (String aRule : ruleSet) {
+					String[] aRulePart = aRule.split("=");
+					String table = aRulePart[0];
+					String actions = aRulePart[1];
+					auditTables.put(table.toLowerCase(), actions.toLowerCase());
+				}
+			}
+
+			// Si la tabla sobre la que se esta actuando esta en la map, y la operacion esta incluida, entonces auditar
+			return (auditTables.get(tableName.toLowerCase())!=null && auditTables.get(tableName.toLowerCase()).contains(opType.toLowerCase()));
+		} catch (Exception e) {
+			// Ante cualquier error por esta logica, se omite la auditoria
+			e.printStackTrace();
+			return false;
+		}
 	}
 	
 } // PO
