@@ -43,6 +43,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_UID = "TA712CORE-AD_Process-1010617-20190206172121";
 	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME = "OrdersForProductLines.jrxml";
 	
+	/** UID del Reporte de libro diario */
+	protected final static String LIBRO_DIARIO_REPORT_UID = "CORE-AD_Process-1010379";
+	protected final static String LIBRO_DIARIO_REPORT_FILENAME = "LibroDiario.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -153,6 +157,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME)));
+		
+		// Reporte de Libro Diario
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				LIBRO_DIARIO_REPORT_UID,
+				LIBRO_DIARIO_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(LIBRO_DIARIO_REPORT_FILENAME)));
 		
 		return " ";
 	}
