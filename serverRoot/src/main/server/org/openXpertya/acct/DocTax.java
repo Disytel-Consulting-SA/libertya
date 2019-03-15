@@ -36,7 +36,7 @@ import org.openXpertya.util.Env;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public final class DocTax {
+public class DocTax {
 
     /**
      * Constructor de la clase ...

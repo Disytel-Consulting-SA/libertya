@@ -22,6 +22,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MAcctSchema;
@@ -30,6 +32,7 @@ import org.openXpertya.model.MTax;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -68,6 +71,8 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
     private int m_precision = -1;
 
+    private List<DocTax_Discount> m_taxes_discount = new ArrayList<DocTax_Discount>();
+    
     /**
      * Descripción de Método
      *
@@ -200,7 +205,8 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
             ResultSet rs = pstmt.executeQuery();
 
-            //
+            // Descuentos de documento por tasa
+            Map<Integer, DocTax_Discount> discountsByTax = new HashMap<Integer, DocTax_Discount>();
 
             while( rs.next()) {
                 int             Line_ID = rs.getInt( "C_InvoiceLine_ID" );
@@ -250,18 +256,28 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
                         PriceList = PriceList.subtract( PriceListTax );
                     }
+                    
+                    // Descuento de documento x tasa
+                    if(!Util.isEmpty(rs.getBigDecimal("documentdiscountamt"),true)){
+                    	DocTax_Discount dd = discountsByTax.get(C_Tax_ID);
+                    	if(dd == null){
+                    		MTax t = MTax.get(getCtx(), C_Tax_ID, m_trxName);
+                    		dd = new DocTax_Discount(C_Tax_ID, t.getName(), t.getRate(), BigDecimal.ZERO, BigDecimal.ZERO);
+                    	}
+                    	dd.setDiscountAmt(dd.getDiscountAmt().add(rs.getBigDecimal("documentdiscountamt")));
+                    	discountsByTax.put(C_Tax_ID, dd);
+                    }
 
                 }    // correct included Tax
 
                 docLine.setAmount( LineNetAmt,PriceList,Qty );
 
-                //
-
                 log.fine( docLine.toString());
                 list.add( docLine );
             }
 
-            //
+            // Descuentos x tasa
+            m_taxes_discount.addAll(discountsByTax.values());
 
             rs.close();
             pstmt.close();
@@ -294,7 +310,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
                 }        // tax difference
             }            // for all taxes
         }                // Included Tax difference
-
+        
         // Return Array
 
         return dls;
@@ -394,8 +410,8 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
             fact.createLine( null,getAccount( Doc.ACCTTYPE_C_Receivable,as ),p_vo.C_Currency_ID,getAmount( Doc.AMTTYPE_Gross ),null );
 
             // Header Charge           CR
-
-            fact.createLine( null,getAccount( Doc.ACCTTYPE_Charge,as ),p_vo.C_Currency_ID,null,getAmount( Doc.AMTTYPE_Charge ));
+            
+            createChargeFact(fact, as, DocTax.ACCTTYPE_TaxDue, false);
 
             // TaxDue                  CR
 
@@ -435,7 +451,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
             // Header Charge   DR
 
-            fact.createLine( null,getAccount( Doc.ACCTTYPE_Charge,as ),p_vo.C_Currency_ID,getAmount( Doc.AMTTYPE_Charge ),null );
+            createChargeFact(fact, as, DocTax.ACCTTYPE_TaxDue, true);
 
             // TaxDue          DR
 
@@ -475,7 +491,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
             // Charge          DR
 
-            fact.createLine( null,getAccount( Doc.ACCTTYPE_Charge,as ),p_vo.C_Currency_ID,getAmount( Doc.AMTTYPE_Charge ),null );
+            createChargeFact(fact, as, DocTax.ACCTTYPE_TaxCredit, true);
 
             // TaxCredit       DR
 
@@ -517,7 +533,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
             // Charge                  CR
 
-            fact.createLine( null,getAccount( Doc.ACCTTYPE_Charge,as ),p_vo.C_Currency_ID,null,getAmount( Doc.AMTTYPE_Charge ));
+            createChargeFact(fact, as, DocTax.ACCTTYPE_TaxCredit, false);
 
             // TaxCredit               CR
 
@@ -554,6 +570,49 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
         return fact;
     }    // createFact
 
+    /**
+     * El importe del cargo de la cabecera se corresponde con los descuentos/recargos a nivel de documento. Si el comprobante no posee el impuesto incluído, entonces siempre se registra el neto, caso contrario se debe determinar lo que corresponde al neto y a los impuestos 
+     * @param fact
+     * @param as
+     * @param docTax_acctType
+     * @param isDebit
+     */
+    protected void createChargeFact(Fact fact, MAcctSchema as, int docTax_acctType, boolean isDebit){
+    	BigDecimal chargeAmt = getAmount( Doc.AMTTYPE_Charge );
+    	if(!Util.isEmpty(chargeAmt, true)){
+    		if(!p_vo.TaxIncluded){
+            	fact.createLine( null,getAccount( Doc.ACCTTYPE_Charge,as ),p_vo.C_Currency_ID,isDebit ? chargeAmt : null, !isDebit ? chargeAmt : null);
+            } 
+            else{
+				// Iterar por los descuentos/recargos de documento realizados
+				// por tasa y obtener el neto total e importe de tasa de cada uno
+            	BigDecimal chargeNetTotalAmount = BigDecimal.ZERO;
+            	BigDecimal chargeTotalAmount = BigDecimal.ZERO;
+            	BigDecimal netDiscount, taxAmt;
+            	for (DocTax_Discount dd : m_taxes_discount) {
+            		// Proporción correspondiente al impuesto
+            		taxAmt = MTax.calculateTax(dd.getDiscountAmt(), true, dd.getRate(), 2);
+            		// Crear el fact
+					fact.createLine(null, dd.getAccount(docTax_acctType, as), p_vo.C_Currency_ID,
+							isDebit ? taxAmt.multiply(new BigDecimal(chargeAmt.signum())) : null,
+							!isDebit ? taxAmt.multiply(new BigDecimal(chargeAmt.signum())) : null);
+            		// Acumuladores
+            		netDiscount = dd.getDiscountAmt().subtract(taxAmt);
+            		chargeNetTotalAmount = chargeNetTotalAmount.add(netDiscount);
+            		chargeTotalAmount = chargeTotalAmount.add(netDiscount.add(taxAmt));
+				}
+            	// Quedan con el signo inicial del cargo
+            	chargeNetTotalAmount = chargeNetTotalAmount.multiply(new BigDecimal(chargeAmt.signum()));
+            	chargeTotalAmount = chargeTotalAmount.multiply(new BigDecimal(chargeAmt.signum()));
+            	// Por diferencias de redondeos
+				chargeNetTotalAmount = chargeTotalAmount.compareTo(chargeAmt) == 0 ? chargeNetTotalAmount
+						: chargeNetTotalAmount.add(chargeTotalAmount.subtract(chargeAmt));
+				fact.createLine(null, getAccount(Doc.ACCTTYPE_Charge, as), p_vo.C_Currency_ID,
+						isDebit ? chargeNetTotalAmount : null, !isDebit ? chargeNetTotalAmount : null);
+            }
+    	}    	
+    }
+    
     /**
      * Descripción de Método
      *
@@ -727,6 +786,14 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 	protected String loadDocumentDetails() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public List<DocTax_Discount> getM_taxes_discount() {
+		return m_taxes_discount;
+	}
+
+	public void setM_taxes_discount(List<DocTax_Discount> m_taxes_discount) {
+		this.m_taxes_discount = m_taxes_discount;
 	}
 	
 }    // Doc_Invoice
