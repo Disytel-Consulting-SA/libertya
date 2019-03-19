@@ -201,7 +201,7 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 			String sql = "SELECT i.c_invoice_id " +
 						 "FROM c_invoice as i " +
 						 "INNER JOIN c_doctype AS dt ON dt.c_doctype_id = i.c_doctypetarget_id " +
-						 "WHERE i.c_bpartner_id = ? AND i.issotrx = 'Y' AND i.docstatus IN ('CO','CL') AND dt.signo_issotrx = 1 AND i.ispaid = 'N' " +
+						 "WHERE i.c_bpartner_id = ? AND i.issotrx = 'Y' AND i.docstatus IN ('CO','CL') AND dt.signo_issotrx = 1 AND i.ispaid = 'N' AND i.paymentrule = '" + MInvoice.PAYMENTRULE_OnCredit + "' " +
 						 "ORDER BY i.dateinvoiced";
 			PreparedStatement ps = null;
 			ResultSet rs = null;
