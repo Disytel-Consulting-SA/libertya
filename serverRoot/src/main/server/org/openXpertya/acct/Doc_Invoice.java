@@ -264,7 +264,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
                     		MTax t = MTax.get(getCtx(), C_Tax_ID, m_trxName);
                     		dd = new DocTax_Discount(C_Tax_ID, t.getName(), t.getRate(), BigDecimal.ZERO, BigDecimal.ZERO);
                     	}
-                    	dd.setDiscountAmt(dd.getDiscountAmt().add(rs.getBigDecimal("documentdiscountamt")));
+                    	dd.setDiscountAmt(dd.getDiscountAmt().add(rs.getBigDecimal("documentdiscountamt").abs()));
                     	discountsByTax.put(C_Tax_ID, dd);
                     }
 
