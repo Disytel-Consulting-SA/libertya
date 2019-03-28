@@ -103,7 +103,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoOrigen.setAD_Org_ID(getAD_Org_ID());
 			pagoOrigen.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 			pagoOrigen.setC_BankAccount_ID(getC_bankaccount_from_ID());
-			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().multiply(anular?BigDecimal.ONE:minusOne));
+			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().multiply(anular?minusOne:BigDecimal.ONE));
 			pagoOrigen.setDateTrx(getDateTrx());
 			pagoOrigen.setDateAcct(getDateTrx());
 			pagoOrigen.setC_BPartner_ID(getC_BPartner_ID());
