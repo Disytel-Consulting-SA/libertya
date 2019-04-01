@@ -1,18 +1,23 @@
 package org.openXpertya.print.fiscal.hasar;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 import org.openXpertya.print.fiscal.document.CreditNote;
 import org.openXpertya.print.fiscal.document.Document;
 import org.openXpertya.print.fiscal.document.Payment;
-import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.document.Payment.TenderType;
+import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
+import org.openXpertya.util.Env;
 
 public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 
@@ -434,5 +439,53 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		// Dirección de Correo Electrónico
 		cmd.setString(i++, "");
 		return cmd;
+	}
+
+	@Override
+	public FiscalClosingResponseDTO decodeClosingResponse(FiscalPacket closingResponse) {
+		String closingType = closingResponse.getString(3);
+		Timestamp responseDate = null;
+		try{
+			responseDate = new Timestamp((new SimpleDateFormat("yyMMdd").parse(closingResponse.getString(5))).getTime());
+		} catch(ParseException pe){
+			pe.printStackTrace();
+			responseDate = Env.getDate();
+		}
+		FiscalClosingResponseDTO dto = new FiscalClosingResponseDTO();
+		dto.closingDate = responseDate;
+		if(closingType.equals("X")){
+			dto.creditnoteamt = closingResponse.getBigDecimal(13);
+			dto.creditnoteperceptionamt = closingResponse.getBigDecimal(15);
+			dto.creditnotetaxamt = closingResponse.getBigDecimal(14);
+			dto.fiscalclosingno = closingResponse.getInt(4);
+			dto.fiscaldocumentamt = closingResponse.getBigDecimal(9);
+			dto.fiscaldocumentperceptionamt = closingResponse.getBigDecimal(11);
+			dto.fiscaldocumenttaxamt = closingResponse.getBigDecimal(10);
+			dto.qtycreditnote = closingResponse.getInt(16);
+			dto.qtyfiscaldocument = closingResponse.getInt(12);
+			dto.qtynofiscalhomologated = closingResponse.getInt(17);
+		}
+		else{
+			dto.creditnoteamt = closingResponse.getBigDecimal(14);
+			dto.creditnotegravadoamt = closingResponse.getBigDecimal(15);
+			dto.creditnotenogravadoamt = closingResponse.getBigDecimal(16);
+			dto.creditnoteexemptamt = closingResponse.getBigDecimal(17);
+			dto.creditnoteperceptionamt = closingResponse.getBigDecimal(19);
+			dto.creditnotetaxamt = closingResponse.getBigDecimal(18);
+			dto.fiscalclosingno = closingResponse.getInt(4);
+			dto.fiscaldocumentamt = closingResponse.getBigDecimal(6);
+			dto.fiscaldocumentgravadoamt = closingResponse.getBigDecimal(7);
+			dto.fiscaldocumentnogravadoamt = closingResponse.getBigDecimal(8);
+			dto.fiscaldocumentexemptamt = closingResponse.getBigDecimal(9);
+			dto.fiscaldocumentperceptionamt = closingResponse.getBigDecimal(11);
+			dto.fiscaldocumenttaxamt = closingResponse.getBigDecimal(10);
+			dto.nofiscalhomologatedamt = closingResponse.getBigDecimal(22);
+			dto.qtycanceledcreditnote = closingResponse.getInt(21);
+			dto.qtycanceledfiscaldocument = closingResponse.getInt(13);
+			dto.qtycreditnote = closingResponse.getInt(20);
+			dto.qtyfiscaldocument = closingResponse.getInt(12);
+			dto.qtynofiscalhomologated = closingResponse.getInt(23);
+		}
+		return dto;
 	}
 }

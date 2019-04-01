@@ -47,6 +47,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String LIBRO_DIARIO_REPORT_UID = "CORE-AD_Process-1010379";
 	protected final static String LIBRO_DIARIO_REPORT_FILENAME = "LibroDiario.jrxml";
 	
+	/** UID del Informe de Control de Ventas y Cierres Z */
+	protected final static String VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_UID = "TACC2CORE-AD_Process-1010626-20190401164139";
+	protected final static String VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_FILENAME = "ControlVentasXCierreZ.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -168,6 +172,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(LIBRO_DIARIO_REPORT_FILENAME)));
+		
+		// Reporte Control de Ventas y Cierres Z
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_UID,
+				VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

@@ -250,4 +250,23 @@ public interface FiscalPrinter {
 	public void setFiscalPrinterLogger(AbstractFiscalPrinterLogger fiscalPrinterLogger);
 	
 	public AbstractFiscalPrinterLogger getFiscalPrinterLogger();
+	
+	/**
+	 * @return Returns the lastRequest.
+	 */
+	public FiscalPacket getLastRequest();
+	
+	/**
+	 * @return Returns the lastResponse.
+	 */
+	public FiscalPacket getLastResponse();
+
+	/**
+	 * Decodifica la respuesta del comando de cierre fiscal
+	 * 
+	 * @param closingResponse
+	 *            respuesta del comando de cierre fiscal
+	 * @return dto con los datos decodificados de respuesta
+	 */
+	public FiscalClosingResponseDTO decodeClosingResponse(FiscalPacket closingResponse);
 }

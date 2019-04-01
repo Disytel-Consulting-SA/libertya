@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.openXpertya.print.fiscal.BasicFiscalPrinter;
+import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 import org.openXpertya.print.fiscal.document.CreditNote;
@@ -1563,5 +1564,34 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		return lastNro;
 	}
 	
-	
+	@Override
+	public FiscalClosingResponseDTO decodeClosingResponse(FiscalPacket closingResponse) {
+		FiscalClosingResponseDTO dto = new FiscalClosingResponseDTO();
+		dto.creditnote_a_lastemitted = closingResponse.getInt(17);
+		dto.creditnote_bc_lastemitted = closingResponse.getInt(16);
+		dto.creditnoteamt = closingResponse.getBigDecimal(18);
+		dto.creditnoteinternaltaxamt = closingResponse.getBigDecimal(20);
+		dto.creditnotenotregisteredtaxamt = closingResponse.getBigDecimal(22);
+		dto.creditnoteperceptionamt = closingResponse.getBigDecimal(21);
+		dto.creditnotetaxamt = closingResponse.getBigDecimal(19);
+		dto.fiscalclosingno = closingResponse.getInt(3);
+		dto.fiscaldocument_a_lastemitted = closingResponse.getInt(10);
+		dto.fiscaldocumentamt = closingResponse.getBigDecimal(11);
+		dto.fiscaldocument_bc_lastemitted = closingResponse.getInt(9);
+		dto.fiscaldocumentinternaltaxamt = closingResponse.getBigDecimal(13);
+		dto.fiscaldocumentnotregisteredtaxamt = closingResponse.getBigDecimal(15);
+		dto.fiscaldocumentperceptionamt = closingResponse.getBigDecimal(14);
+		dto.fiscaldocumenttaxamt = closingResponse.getBigDecimal(12);
+		//dto.qtycanceledcreditnote = closingResponse.getInt(24);
+		dto.qtycanceledfiscaldocument = closingResponse.getInt(4);
+		//dto.qtycreditnotea = closingResponse.getInt(28);
+		//dto.qtycreditnotebc = closingResponse.getInt(27);
+		dto.qtyfiscaldocument = closingResponse.getInt(7);
+		//dto.qtyfiscaldocumenta = closingResponse.getInt(26);
+		//dto.qtyfiscaldocumentbc = closingResponse.getInt(25);
+		dto.qtynofiscaldocument = closingResponse.getInt(6);
+		dto.qtynofiscalhomologated = closingResponse.getInt(5);
+
+		return dto;
+	}
 }

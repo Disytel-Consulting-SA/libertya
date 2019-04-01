@@ -368,7 +368,7 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 	/**
 	 * @return Returns the lastRequest.
 	 */
-	protected FiscalPacket getLastRequest() {
+	public FiscalPacket getLastRequest() {
 		return lastRequest;
 	}
 
@@ -379,10 +379,7 @@ public abstract class BasicFiscalPrinter implements FiscalPrinter {
 		this.lastRequest = lastRequest;
 	}
 
-	/**
-	 * @return Returns the lastResponse.
-	 */
-	protected FiscalPacket getLastResponse() {
+	public FiscalPacket getLastResponse() {
 		return lastResponse;
 	}
 
