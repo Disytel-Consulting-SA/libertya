@@ -19,6 +19,8 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.print.OXPFiscalMsgSource;
+import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
+import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.print.fiscal.FiscalPrinterLogRecord;
@@ -34,8 +36,8 @@ import org.openXpertya.print.fiscal.document.DocumentLine;
 import org.openXpertya.print.fiscal.document.Invoice;
 import org.openXpertya.print.fiscal.document.NonFiscalDocument;
 import org.openXpertya.print.fiscal.document.Payment;
-import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.document.Payment.TenderType;
+import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.exception.DocumentException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
@@ -491,6 +493,9 @@ public class FiscalDocumentPrint {
 		
 		// Cerrar la impresora fiscal
 		getFiscalPrinter().fiscalClose(closeType);
+		
+		// Guardar la respuesta 
+		saveFiscalClosing(closeType, getFiscalPrinter().getLastResponse());
 		
 		// Se dispara el evento de acción finalizada.
 		fireActionEndedOk(Actions.ACTION_FISCAL_CLOSE);
@@ -2368,6 +2373,61 @@ public class FiscalDocumentPrint {
 			getFiscalPrinter().getFiscalPrinterLogger().clearBatchLog();
 		}
 		return true;
+	}
+	
+	/**
+	 * Guardar la respuesta del comando de cierre
+	 * 
+	 * @param closingType tipo de cierre fiscal
+	 * @param closingResponse
+	 *            respuesta del comando de cierre
+	 * @throws Exception
+	 */
+	private void saveFiscalClosing(String closingType, FiscalPacket closingResponse) {
+		// Obtener el dto con todos los valores de respuesta del comando de cierre
+		FiscalClosingResponseDTO dto = getFiscalPrinter().decodeClosingResponse(closingResponse);
+		dto.closingType = closingType;
+		// Crear el registro
+		MControladorFiscalClosingInfo cinfo = new MControladorFiscalClosingInfo(ctx, 0, getTrxName());
+		cinfo.setAD_Org_ID(Env.getAD_Org_ID(ctx));
+		cinfo.setC_Controlador_Fiscal_ID(cFiscal.getID());
+		cinfo.setCreditNote_A_LastEmitted(dto.creditnote_a_lastemitted);
+		cinfo.setCreditNote_BC_LastEmitted(dto.creditnote_bc_lastemitted);
+		cinfo.setCreditNoteAmt(dto.creditnoteamt);
+		cinfo.setCreditNoteExemptAmt(dto.creditnoteexemptamt);
+		cinfo.setCreditNoteGravadoAmt(dto.creditnotegravadoamt);
+		cinfo.setCreditNoteNoGravadoAmt(dto.creditnotenogravadoamt);
+		cinfo.setCreditNoteInternalTaxAmt(dto.creditnoteinternaltaxamt);
+		cinfo.setCreditNoteNotRegisteredTaxAmt(dto.creditnotenotregisteredtaxamt);
+		cinfo.setCreditNotePerceptionAmt(dto.creditnoteperceptionamt);
+		cinfo.setCreditNoteTaxAmt(dto.creditnotetaxamt);
+		cinfo.setFiscalClosingNo(dto.fiscalclosingno);
+		cinfo.setFiscalClosingType(closingType);
+		cinfo.setFiscalClosingDate(dto.closingDate);
+		cinfo.setFiscalDocument_A_LastEmitted(dto.fiscaldocument_a_lastemitted);
+		cinfo.setFiscalDocument_BC_LastEmitted(dto.fiscaldocument_bc_lastemitted);
+		cinfo.setFiscalDocumentAmt(dto.fiscaldocumentamt);
+		cinfo.setFiscalDocumentExemptAmt(dto.fiscaldocumentexemptamt);
+		cinfo.setFiscalDocumentGravadoAmt(dto.fiscaldocumentgravadoamt);
+		cinfo.setFiscalDocumentNoGravadoAmt(dto.fiscaldocumentnogravadoamt);
+		cinfo.setFiscalDocumentInternalTaxAmt(dto.fiscaldocumentinternaltaxamt);
+		cinfo.setFiscalDocumentNotRegisteredTaxAmt(dto.fiscaldocumentnotregisteredtaxamt);
+		cinfo.setFiscalDocumentPerceptionAmt(dto.fiscaldocumentperceptionamt);
+		cinfo.setFiscalDocumentTaxAmt(dto.fiscaldocumenttaxamt);
+		cinfo.setNoFiscalHomologatedAmt(dto.nofiscalhomologatedamt);
+		cinfo.setQtyCanceledCreditNote(dto.qtycanceledcreditnote);
+		cinfo.setQtyCanceledFiscalDocument(dto.qtycanceledfiscaldocument);
+		cinfo.setQtyCreditNote(dto.qtycreditnote);
+		cinfo.setQtyCreditNoteA(dto.qtycreditnotea);
+		cinfo.setQtyCreditNoteBC(dto.qtycreditnotebc);
+		cinfo.setQtyFiscalDocument(dto.qtyfiscaldocument);
+		cinfo.setQtyFiscalDocumentA(dto.qtyfiscaldocumenta);
+		cinfo.setQtyFiscalDocumentBC(dto.qtyfiscaldocumentbc);
+		cinfo.setQtyNoFiscalDocument(dto.qtynofiscaldocument);
+		cinfo.setQtyNoFiscalHomologated(dto.qtynofiscalhomologated);
+		if(!cinfo.save()){
+			log.saveError("SaveError", CLogger.retrieveErrorAsString());
+		}
 	}
 
 	public boolean isThrowExceptionInCancelCheckStatus() {

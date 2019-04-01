@@ -1786,3 +1786,64 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_paymentbanknews','p
 
 --20190322-1303 Nueva columna para referenciar el ticket originante del cupon (o codigo) promocional
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Promotion_Code','C_Invoice_Orig_ID','integer'));
+
+--20190401-1645 Nueva tabla para registrar la información de los cierres fiscales Z y X
+CREATE TABLE c_controlador_fiscal_closing_info
+(
+  c_controlador_fiscal_closing_info_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_controlador_fiscal_id integer NOT NULL,
+  puntodeventa integer,
+  fiscalclosingtype character(1) NOT NULL,
+  fiscalclosingno integer NOT NULL DEFAULT 0,
+  fiscalclosingdate timestamp without time zone NOT NULL,
+  qtycanceledfiscaldocument integer NOT NULL DEFAULT 0,
+  qtycanceledcreditnote integer NOT NULL DEFAULT 0,
+  qtynofiscalhomologated integer NOT NULL DEFAULT 0,
+  qtynofiscaldocument integer NOT NULL DEFAULT 0,
+  qtyfiscaldocument integer NOT NULL DEFAULT 0,
+  qtyfiscaldocumentbc integer NOT NULL DEFAULT 0,
+  qtyfiscaldocumenta integer NOT NULL DEFAULT 0,
+  qtycreditnote integer NOT NULL DEFAULT 0,
+  qtycreditnotebc integer NOT NULL DEFAULT 0,
+  qtycreditnotea integer NOT NULL DEFAULT 0,
+  fiscaldocument_bc_lastemitted integer NOT NULL DEFAULT 0,
+  fiscaldocument_a_lastemitted integer NOT NULL DEFAULT 0,
+  fiscaldocumentamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumentgravadoamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumentnogravadoamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumentexemptamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumenttaxamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumentinternaltaxamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumentperceptionamt numeric(22,4) NOT NULL DEFAULT 0,
+  fiscaldocumentnotregisteredtaxamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnote_bc_lastemitted integer NOT NULL DEFAULT 0,
+  creditnote_a_lastemitted integer NOT NULL DEFAULT 0,
+  creditnoteamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnotegravadoamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnotenogravadoamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnoteexemptamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnotetaxamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnoteinternaltaxamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnoteperceptionamt numeric(22,4) NOT NULL DEFAULT 0,
+  creditnotenotregisteredtaxamt numeric(22,4) NOT NULL DEFAULT 0,
+  nofiscalhomologatedamt numeric(22,4) NOT NULL DEFAULT 0,
+  CONSTRAINT c_controlador_fiscal_closing_info_key PRIMARY KEY (c_controlador_fiscal_closing_info_id),
+  CONSTRAINT adclient_c_controlador_fiscal_closing_info FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorg_c_controlador_fiscal_closing_info FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE c_controlador_fiscal_closing_info
+  OWNER TO libertya;
