@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Promotion_Code
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-10-03 12:02:42.638 */
+ *  @version  - 2019-03-22 13:35:50.225 */
 public class X_C_Promotion_Code extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -64,6 +64,20 @@ Invoice Identifier */
 public int getC_Invoice_ID() 
 {
 Integer ii = (Integer)get_Value("C_Invoice_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Factura Original */
+public void setC_Invoice_Orig_ID (int C_Invoice_Orig_ID)
+{
+if (C_Invoice_Orig_ID <= 0) set_Value ("C_Invoice_Orig_ID", null);
+ else 
+set_Value ("C_Invoice_Orig_ID", new Integer(C_Invoice_Orig_ID));
+}
+/** Get Factura Original */
+public int getC_Invoice_Orig_ID() 
+{
+Integer ii = (Integer)get_Value("C_Invoice_Orig_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
