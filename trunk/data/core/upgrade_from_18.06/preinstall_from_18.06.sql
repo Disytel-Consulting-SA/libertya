@@ -1783,3 +1783,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','banklist_
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_payment','bank_payment_msg_description','character varying(255)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_paymentbanknews','payment_amount','numeric(20,2)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_paymentbanknews','payment_status_msg_description','character varying(255)'));
+
+--20190322-1303 Nueva columna para referenciar el ticket originante del cupon (o codigo) promocional
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Promotion_Code','C_Invoice_Orig_ID','integer'));

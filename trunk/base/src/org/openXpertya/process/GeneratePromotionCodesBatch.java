@@ -10,6 +10,7 @@ import org.openXpertya.model.MPromotionCode;
 import org.openXpertya.model.X_C_Promotion_Code;
 import org.openXpertya.model.X_C_Promotion_Code_Batch;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.PromotionBarcodeGenerator;
@@ -18,14 +19,47 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 
 	private static String PRINT_PROCESS_VALUE = "PromotionalCodesBatchPrintProcess";
 	
+	// Cantidad de cupones a generar
+	protected Integer numberOfCodes = null;
+	// C_Invoice_ID de la factura con la que se generará este cupon
+	protected int invoiceOrigID = -1;
+	
+	@Override
+	protected void prepare() {
+		ProcessInfoParameter[] para = getParameter();
+		for (int i = 0; i < para.length; i++) {
+			String name = para[i].getParameterName();
+			// Factura original
+			if (name.equals("C_Invoice_Orig_ID")) {
+				invoiceOrigID = para[i].getParameterAsInt();
+			}
+			// Numero de cupones
+			if (name.equals("QTY")) {
+				numberOfCodes = para[i].getParameterAsInt();
+			} 
+
+		}
+	}
+	
 	@Override
 	protected String doIt() throws Exception {
 		Timestamp today = Env.getDate();
 		// Si no tenemos cantidad de códigos parámetro, por defecto es 1
-		Integer numberOfCodes = (Integer)getParametersValues().get("QTY");
 		if(numberOfCodes == null || numberOfCodes <= 0){
 			numberOfCodes = 1;
 		}
+
+		// Se ingreso un C_Invoice_Orig_ID como argumento? (por cliente LY es obligatorio, pero este control no existe en LYWS)
+		if (invoiceOrigID <= 0) {
+			throw new Exception("Debe especificar la factura origen con la que se va a generar el cupon promocional");
+		}
+		
+		// La factura ya fue utilizada para generar un cupon? En ese caso no es posible reutilizar
+		int count = DB.getSQLValue(get_TrxName(), "SELECT count(1) FROM C_Promotion_Code WHERE C_Invoice_Orig_ID = " + invoiceOrigID);
+		if (count>0) {
+			throw new Exception("La factura ingresada ya fue utilizada para generar un cupon promocional");
+		}
+		
 		// Deben existir promociones válidas para la fecha actual de tipo
 		// código promocional y que la cantidad máxima de códigos generados sea
 		// mayor a los códigos ya generados en lotes no anulados
@@ -33,7 +67,7 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 		if(promotionsCodes.size() == 0){
 			throw new Exception(Msg.getMsg(getCtx(), "NotExistPromotionValidForCodeGeneration"));
 		}
-
+		
 		// Random de promociones existentes a tomar
 		Integer maxCodes = numberOfCodes > promotionsCodes.size() ? promotionsCodes.size() : numberOfCodes;
 		
@@ -72,6 +106,7 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 			pc.setCode(codeGenerator.generateCode());
 			pc.setValidFrom(randomPromo.getValidFrom());
 			pc.setValidTo(randomPromo.getValidTo());
+			pc.setC_Invoice_Orig_ID(invoiceOrigID);
 			pc.setProcessed(true);
 			if(!pc.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
