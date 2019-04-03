@@ -497,7 +497,7 @@ order by fiscalclosingdate, puntodeventa]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{cierrez_df_Sum}.subtract($V{ventas})]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{cierrez_df_Sum}.subtract($V{cierrez_nc}).subtract($V{ventas})]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
@@ -559,7 +559,7 @@ order by fiscalclosingdate, puntodeventa]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{cierrez_df_Sum}.subtract($V{ventas})]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{cierrez_df_Sum}.subtract($V{cierrez_nc}).subtract($V{ventas})]]></textFieldExpression>
 				</textField>
 						</cellContents>
 					</crosstabCell>
