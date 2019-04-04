@@ -1847,3 +1847,35 @@ WITH (
 );
 ALTER TABLE c_controlador_fiscal_closing_info
   OWNER TO libertya;
+  
+--20190404-1425 Nueva view de retenciones
+CREATE OR REPLACE VIEW c_invoice_retenciones_v AS 
+SELECT distinct i.ad_client_id, i.ad_org_id, i.c_invoice_id, i.documentno, date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, 
+	date_trunc('day'::text, i.dateacct) AS dateacct, date_trunc('day'::text, i.dateinvoiced) AS date, 
+	lc.letra, i.puntodeventa, i.numerocomprobante, translate(i.documentno::text, lc.letra::text, ''::text)::character varying(30) AS documentno_without_letter, 
+	i.grandtotal, i.netamount, bp.c_bpartner_id, bp.value AS bpartner_value, bp.name AS bpartner_name, 
+	replace(bp.taxid::text, '-'::text, ''::text) AS taxid, bp.iibb, bp.isconveniomultilateral,
+	((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) 
+		|| "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) 
+		|| "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script,
+	r.jurisdictioncode,
+	ri.c_retencionschema_id,
+	ri.amt_retenc,
+	ri.pagos_ant_acumulados_amt,
+	ri.retenciones_ant_acumuladas_amt,
+	ri.pago_actual_amt, 
+	ri.retencion_percent,
+	ri.importe_no_imponible_amt,
+	ri.baseimponible_amt,
+	ri.importe_determinado_amt
+FROM c_allocationhdr ah
+JOIN m_retencion_invoice ri ON ah.c_allocationhdr_id = ri.c_allocationhdr_id
+JOIN c_invoice i ON i.c_invoice_id = ri.c_invoice_id
+JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+JOIN c_retencionschema rs ON rs.c_retencionschema_id = ri.c_retencionschema_id
+LEFT JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+LEFT JOIN c_region r ON r.c_region_id = rs.c_region_id
+WHERE rs.retencionapplication = 'E' and i.docstatus in ('CO','CL');
+
+ALTER TABLE c_invoice_retenciones_v
+  OWNER TO libertya;
