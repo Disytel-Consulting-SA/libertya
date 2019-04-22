@@ -160,6 +160,10 @@ public class DocTax {
         return m_amount;
     }
 
+    public void setAmount(BigDecimal amt) {
+        m_amount = amt;
+    }
+    
     /**
      * Descripción de Método
      *

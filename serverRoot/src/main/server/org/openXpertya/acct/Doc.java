@@ -1509,11 +1509,11 @@ public abstract class Doc {
 
         // Fill Acct/Trx Date
 
-        if( p_vo.DateAcct == null & p_vo.DateDoc != null ) {
+        if( p_vo.DateAcct == null && p_vo.DateDoc != null ) {
             p_vo.DateAcct = p_vo.DateDoc;
         }
 
-        if( p_vo.DateDoc == null & p_vo.DateAcct != null ) {
+        if( p_vo.DateDoc == null && p_vo.DateAcct != null ) {
             p_vo.DateDoc = p_vo.DateAcct;
         }
 

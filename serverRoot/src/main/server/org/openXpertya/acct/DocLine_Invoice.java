@@ -57,7 +57,7 @@ public class DocLine_Invoice extends DocLine {
     /** Descripción de Campos */
 
     private BigDecimal m_DiscountAmt = Env.ZERO;
-
+    
     /**
      * Descripción de Método
      *
@@ -66,32 +66,28 @@ public class DocLine_Invoice extends DocLine {
      * @param PriceList
      * @param Qty
      */
+    public void setAmount( BigDecimal LineNetAmt,BigDecimal PriceList,BigDecimal Qty) {
+    	m_LineNetAmt = (LineNetAmt == null)?Env.ZERO:LineNetAmt;
 
-    public void setAmount( BigDecimal LineNetAmt,BigDecimal PriceList,BigDecimal Qty ) {
-        m_LineNetAmt = (LineNetAmt == null)
-                       ?Env.ZERO
-                       :LineNetAmt;
+		 if( (PriceList != null) && (Qty != null) ) {
+		     m_ListAmt = PriceList.multiply( Qty );
+		 }
+		
+		 if( m_ListAmt.equals( Env.ZERO )) {
+		     m_ListAmt = m_LineNetAmt;
+		 }
+		
+		 m_DiscountAmt = m_ListAmt.subtract( m_LineNetAmt );
+		
+		setAmount(LineNetAmt == null ? m_ListAmt : m_LineNetAmt,
+				LineNetAmt == null ? m_DiscountAmt : BigDecimal.ZERO);
+		
+		 // Log.trace(this,Log.l6_Database, "DocLine_Invoice.setAmount",
+		 // "LineNet=" + m_LineNetAmt + ", List=" + m_ListAmt + ", Discount=" + m_DiscountAmt
+		 // + " => Amount=" + getAmount());
 
-        if( (PriceList != null) && (Qty != null) ) {
-            m_ListAmt = PriceList.multiply( Qty );
-        }
-
-        if( m_ListAmt.equals( Env.ZERO )) {
-            m_ListAmt = m_LineNetAmt;
-        }
-
-        m_DiscountAmt = m_ListAmt.subtract( m_LineNetAmt );
-
-        //
-
-        setAmount( m_ListAmt,m_DiscountAmt );
-
-        // Log.trace(this,Log.l6_Database, "DocLine_Invoice.setAmount",
-        // "LineNet=" + m_LineNetAmt + ", List=" + m_ListAmt + ", Discount=" + m_DiscountAmt
-        // + " => Amount=" + getAmount());
-
-    }    // setAmounts
-
+    }
+    
     /**
      * Descripción de Método
      *
@@ -126,11 +122,12 @@ public class DocLine_Invoice extends DocLine {
 
         m_LineNetAmt  = m_LineNetAmt.subtract( diff );
         m_DiscountAmt = m_ListAmt.subtract( m_LineNetAmt );
-        setAmount( m_ListAmt,m_DiscountAmt );
+        //setAmount( m_ListAmt,m_DiscountAmt );
+        setAmount(m_LineNetAmt,BigDecimal.ZERO);
         msg += " -> " + m_LineNetAmt;
         log.fine( msg );
     }    // setLineNetAmtDifference
-
+    
     /**
      * Descripción de Método
      *
@@ -163,6 +160,7 @@ public class DocLine_Invoice extends DocLine {
 
         return p_productInfo.getAccount( AcctType,as );
     }    // getAccount
+
 }    // DocLine_Invoice
 
 
