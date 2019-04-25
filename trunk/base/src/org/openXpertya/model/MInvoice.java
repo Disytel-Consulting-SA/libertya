@@ -384,7 +384,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		
 		try {
 			if(copyAutomaticInvoiceTaxes || voidProcess){
-				to.copyAutomaticInvoiceTaxes(from);
+				to.copyInvoiceTaxes(from, false);
 			}
 		} catch (Exception e) {
 			throw new IllegalStateException(e.getMessage());
@@ -393,7 +393,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// Impuestos manuales de la factura
 		if (copyManualInvoiceTaxes || voidProcess) {
 			try {
-				to.copyManualInvoiceTaxes(from);
+				to.copyInvoiceTaxes(from, true);
 			} catch (Exception e) {
 				throw new IllegalStateException(e.getMessage());
 			}
@@ -554,36 +554,32 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		return DB.getSQLValueTimestamp( trxName,sql);
 	}
 
-	public void copyAutomaticInvoiceTaxes(MInvoice from) throws Exception {
-		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, false);
+	/**
+	 * Copia los impuestos manuales o automáticos de un comprobante origen a
+	 * otro
+	 * 
+	 * @param from
+	 *            comprobante origen
+	 * @param manualInvoicesTaxes
+	 *            true si se debe copiar los impuestos manuales, false caso
+	 *            contrario
+	 * @throws Exception
+	 *             en caso de error
+	 */
+	public void copyInvoiceTaxes(MInvoice from, boolean manualInvoicesTaxes) throws Exception {
+		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, manualInvoicesTaxes);
 		MInvoiceTax newInvoiceTax;
 		for (MInvoiceTax mInvoiceTax : invoiceTaxes) {
 			newInvoiceTax = new MInvoiceTax(getCtx(), 0, get_TrxName());
-			newInvoiceTax.setC_Invoice_ID(getID());
+			PO.copyValues(mInvoiceTax, newInvoiceTax);
+			newInvoiceTax.setC_Invoice_ID(getC_Invoice_ID());
 			newInvoiceTax.setC_Tax_ID(mInvoiceTax.getC_Tax_ID());
-			newInvoiceTax.setTaxAmt(mInvoiceTax.getTaxAmt());
-			newInvoiceTax.setTaxBaseAmt(mInvoiceTax.getTaxBaseAmt());
 			if (!newInvoiceTax.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 		}
 	}
 	
-	public void copyManualInvoiceTaxes(MInvoice from) throws Exception {
-		List<MInvoiceTax> invoiceTaxes = MInvoiceTax.getTaxesFromInvoice(from, true);
-		MInvoiceTax newInvoiceTax;
-		for (MInvoiceTax mInvoiceTax : invoiceTaxes) {
-			newInvoiceTax = new MInvoiceTax(getCtx(), 0, get_TrxName());
-			newInvoiceTax.setC_Invoice_ID(getID());
-			newInvoiceTax.setC_Tax_ID(mInvoiceTax.getC_Tax_ID());
-			newInvoiceTax.setTaxAmt(mInvoiceTax.getTaxAmt());
-			newInvoiceTax.setTaxBaseAmt(mInvoiceTax.getTaxBaseAmt());
-			if (!newInvoiceTax.save()) {
-				throw new Exception(CLogger.retrieveErrorAsString());
-			}
-		}
-	}
-
 	/**
 	 * Copia los descuentos arrastrados desde el pedido desde el comprobante
 	 * parámetro al actual
