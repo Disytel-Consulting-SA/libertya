@@ -87,7 +87,7 @@ public abstract class Import {
 	 * realizar las consultas posteriores.<br>
 	 * IMPORTANTE: Deben estar apropiadamente configurados los campos "Email y Contraseña".
 	 */
-	public String login() {
+	public String login() throws Exception{
 		X_C_ExternalServiceAttributes attr = externalService.getAttributeByName("URL Login");
 		Post loginPost = new Post(attr.getName());
 
@@ -131,7 +131,7 @@ public abstract class Import {
 	 * @return Total de elementos importados.
 	 * @throws SaveFromAPIException
 	 */
-	public abstract String excecute() throws SaveFromAPIException;
+	public abstract String excecute() throws SaveFromAPIException, Exception;
 
 	/**
 	 * Agrega parámetros adicionales a las consultas.

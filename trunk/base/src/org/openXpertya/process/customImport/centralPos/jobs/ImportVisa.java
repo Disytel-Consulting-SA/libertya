@@ -21,7 +21,7 @@ public class ImportVisa extends Import {
 	}
 
 	@Override
-	public String excecute() throws SaveFromAPIException {
+	public String excecute() throws SaveFromAPIException, Exception {
 		VisaPagos response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.

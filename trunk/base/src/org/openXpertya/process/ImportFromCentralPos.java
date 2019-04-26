@@ -13,7 +13,6 @@ import org.openXpertya.process.customImport.centralPos.jobs.ImportAmex;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportFirstData;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportNaranja;
 import org.openXpertya.process.customImport.centralPos.jobs.ImportVisa;
-import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
@@ -109,11 +108,6 @@ public class ImportFromCentralPos extends SvrProcess {
 			if (p_Date_To != null) {
 				importJob.addParam("fecha_vencimiento_clearing-max", sdf.format(new Date(p_Date_To.getTime())));
 			}
-			try {
-				msg = importJob.excecute();
-			} catch (SaveFromAPIException e) {
-				return e.getMessage();
-			}
 		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_NARANJA)) {
 
 			if (p_Date_From != null) {
@@ -121,11 +115,6 @@ public class ImportFromCentralPos extends SvrProcess {
 			}
 			if (p_Date_To != null) {
 				importJob.addParam("fecha_pago-max", sdf.format(new Date(p_Date_To.getTime())));
-			}
-			try {
-				msg = importJob.excecute();
-			} catch (SaveFromAPIException e) {
-				return e.getMessage();
 			}
 		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_AMEX)) {
 
@@ -135,11 +124,6 @@ public class ImportFromCentralPos extends SvrProcess {
 			if (p_Date_To != null) {
 				importJob.addParam("fecha_pago-max", sdf.format(new Date(p_Date_To.getTime())));
 			}
-			try {
-				msg = importJob.excecute();
-			} catch (SaveFromAPIException e) {
-				return e.getMessage();
-			}
 		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_VISA)) {
 
 			if (p_Date_From != null) {
@@ -147,18 +131,22 @@ public class ImportFromCentralPos extends SvrProcess {
 			}
 			if (p_Date_To != null) {
 				importJob.addParam("fpag-max", sdf.format(new Date(p_Date_To.getTime())));
-			}
-			try {
-				msg = importJob.excecute();
-			} catch (SaveFromAPIException e) {
-				return e.getMessage();
-			}
+			}	
 		}
 
+		try {
+			msg = importJob.excecute();
+		} catch (SaveFromAPIException e) {
+			return e.getMessage();
+		} catch (Exception e) {
+			return e.getMessage();
+		} 
+		
 		boolean processSuccess = createSettlementsProcess.startProcess(getCtx(), getProcessInfo(), getTrx(get_TrxName()));
 
 		if (!processSuccess) {
-			throw new Exception(CLogger.retrieveErrorAsString());
+			throw new Exception(createSettlementsProcess.getProcessInfo().getSummary() + " - "
+					+ createSettlementsProcess.getProcessInfo().getLogInfo());
 		}
 		return msg;
 	}
