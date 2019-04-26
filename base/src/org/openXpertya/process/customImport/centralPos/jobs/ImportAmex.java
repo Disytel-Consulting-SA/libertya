@@ -24,7 +24,7 @@ public class ImportAmex extends Import {
 	}
 
 	@Override
-	public String excecute() throws SaveFromAPIException {
+	public String excecute() throws SaveFromAPIException, Exception {
 		AmexPagos response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
@@ -103,7 +103,7 @@ public class ImportAmex extends Import {
 		return msg(new Object[] { processed, areadyExists });
 	}
 
-	private List<AmexTaxes> importAmexTaxes(List<String> secNumbers) throws SaveFromAPIException {
+	private List<AmexTaxes> importAmexTaxes(List<String> secNumbers) throws SaveFromAPIException, Exception {
 		AmexImpuestos response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.

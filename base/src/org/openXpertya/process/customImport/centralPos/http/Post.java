@@ -1,13 +1,10 @@
 package org.openXpertya.process.customImport.centralPos.http;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -40,19 +37,11 @@ public class Post {
 		params.add(new BasicNameValuePair(key, value));
 	}
 
-	public Pojo execute(Class<? extends Pojo> cls) {
-		try {
-			postMethod.setEntity(new UrlEncodedFormEntity(params));
-			HttpResponse response = client.execute(postMethod);
-			String responseStr = EntityUtils.toString(response.getEntity());
-			return gsonUtil.fromJson(responseStr, cls);
-		} catch (UnsupportedEncodingException e) {
-			return null;
-		} catch (ClientProtocolException e) {
-			return null;
-		} catch (IOException e) {
-			return null;
-		}
+	public Pojo execute(Class<? extends Pojo> cls) throws Exception{
+		postMethod.setEntity(new UrlEncodedFormEntity(params));
+		HttpResponse response = client.execute(postMethod);
+		String responseStr = EntityUtils.toString(response.getEntity());
+		return gsonUtil.fromJson(responseStr, cls);
 	}
 
 }

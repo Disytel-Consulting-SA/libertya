@@ -28,7 +28,7 @@ public class ImportFirstData extends Import {
 	 * @return Total de elementos importados.
 	 * @throws SaveFromAPIException
 	 */
-	public String excecute() throws SaveFromAPIException {
+	public String excecute() throws SaveFromAPIException, Exception {
 		Trailer response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
@@ -95,7 +95,7 @@ public class ImportFirstData extends Import {
 		return msg(new Object[] { processed, areadyExists });
 	}
 
-	private List<DetailParticipant> importFirstDataDetails(List<String> settlementNumbers) throws SaveFromAPIException {
+	private List<DetailParticipant> importFirstDataDetails(List<String> settlementNumbers) throws SaveFromAPIException, Exception {
 		Detalle response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.

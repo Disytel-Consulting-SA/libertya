@@ -30,11 +30,11 @@ public class ImportNaranja extends Import {
 	}
 
 	@Override
-	public String excecute() throws SaveFromAPIException {
+	public String excecute() throws SaveFromAPIException, Exception {
 		return importNaranjaCoupons();
 	}
 
-	private String importNaranjaCoupons() throws SaveFromAPIException {
+	private String importNaranjaCoupons() throws SaveFromAPIException, Exception {
 		Detalle response; // Respuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
@@ -119,7 +119,7 @@ public class ImportNaranja extends Import {
 		return msg(new Object[] { processed, areadyExists });
 	}
 
-	private List<NaranjaHeaders> importNaranjaHeaders(Set<Map<String, String>> matchingFields) throws SaveFromAPIException {
+	private List<NaranjaHeaders> importNaranjaHeaders(Set<Map<String, String>> matchingFields) throws SaveFromAPIException, Exception {
 		Headers response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
@@ -177,7 +177,7 @@ public class ImportNaranja extends Import {
 		return headers;
 	}
 
-	private List<NaranjaInvoicedConcepts> importNaranjaInvoicedConcepts(Set<Map<String, String>> matchingFields) throws SaveFromAPIException {
+	private List<NaranjaInvoicedConcepts> importNaranjaInvoicedConcepts(Set<Map<String, String>> matchingFields) throws SaveFromAPIException, Exception {
 		Conceptos response; // Repuesta.
 		int currentPage = 1; // Pagina actual.
 		int lastPage = 2; // Ultima pagina.
