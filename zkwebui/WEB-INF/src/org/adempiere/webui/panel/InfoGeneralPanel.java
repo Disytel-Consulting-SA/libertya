@@ -364,12 +364,12 @@ public class InfoGeneralPanel extends InfoPanel implements EventListener
 					if (Env.isBaseLanguage(Env.getCtx(), "AD_Ref_List"))
 						colSql = new StringBuffer("(SELECT l.Name FROM AD_Ref_List l WHERE l.AD_Reference_ID=")
 							.append(AD_Reference_Value_ID).append(" AND l.Value=").append(columnSql)
-							.append(") AS ").append(columnName);
+							.append("::varchar) AS ").append(columnName);
 					else
 						colSql = new StringBuffer("(SELECT t.Name FROM AD_Ref_List l, AD_Ref_List_Trl t "
 							+ "WHERE l.AD_Ref_List_ID=t.AD_Ref_List_ID AND l.AD_Reference_ID=")
 							.append(AD_Reference_Value_ID).append(" AND l.Value=").append(columnSql)
-							.append(" AND t.AD_Language='").append(Env.getAD_Language(Env.getCtx()))
+							.append("::varchar AND t.AD_Language='").append(Env.getAD_Language(Env.getCtx()))
 							.append("') AS ").append(columnName);
 					colClass = String.class;
 				}
