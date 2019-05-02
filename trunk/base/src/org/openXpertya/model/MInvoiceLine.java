@@ -412,7 +412,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			if(!Util.isEmpty(lineDiscountAmt, true)){
 				createDocumentDiscountToSave(0, getProductName(), totalPriceList, lineDiscountAmt,
 						MDocumentDiscount.CUMULATIVELEVEL_Line, MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
-						MDocumentDiscount.DISCOUNTKIND_DiscountLine, true);
+						MDocumentDiscount.DISCOUNTKIND_DiscountLine, 0, true);
 			}
 			
 			bonusDiscountAmt = Util.getRatedAmt(totalPriceList, orderLine.getLineBonusAmt(),
@@ -420,7 +420,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			if(!Util.isEmpty(bonusDiscountAmt, true)){
 				createDocumentDiscountToSave(0, getProductName(), totalPriceList, bonusDiscountAmt,
 						MDocumentDiscount.CUMULATIVELEVEL_Line, MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
-						MDocumentDiscount.DISCOUNTKIND_DiscountLine, true);
+						MDocumentDiscount.DISCOUNTKIND_DiscountLine, 0, true);
 			}
 		}
 		
@@ -491,7 +491,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			if(!Util.isEmpty(documentDiscountAmt, true)){
 				createDocumentDiscountToSave(0, getProductName(), totalPriceList, documentDiscountAmt,
 						MDocumentDiscount.CUMULATIVELEVEL_Document, null,
-						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount, true);
+						MDocumentDiscount.DISCOUNTKIND_DocumentDiscount, 0, true);
 			}
 		}
 		
@@ -509,7 +509,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     private MDocumentDiscount createDocumentDiscountToSave(MDocumentDiscount from, BigDecimal discountBaseAmt, BigDecimal discountAmt, boolean addToList){
 		return createDocumentDiscountToSave(from.getM_DiscountSchema_ID(),
 				from.getDescription(), discountBaseAmt, discountAmt, from.getCumulativeLevel(),
-				from.getDiscountApplication(), from.getDiscountKind(), true);
+				from.getDiscountApplication(), from.getDiscountKind(), from.getC_Payment_ID(), true);
     }
     
     /**
@@ -524,7 +524,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
      * @param addToList
      * @return
      */
-    private MDocumentDiscount createDocumentDiscountToSave(Integer discountSchemaID, String description, BigDecimal discountBaseAmt, BigDecimal discountAmt, String cumulativeLevel, String discountApplication, String discountKind, boolean addToList){
+	private MDocumentDiscount createDocumentDiscountToSave(Integer discountSchemaID, String description,
+			BigDecimal discountBaseAmt, BigDecimal discountAmt, String cumulativeLevel, String discountApplication,
+			String discountKind, Integer paymentID, boolean addToList) {
     	// Creo el nuevo document discount para la línea de la factura y
 		// lo agrego a la lista para luego guardar
     	MDocumentDiscount newDocumentDiscount = new MDocumentDiscount(getCtx(), 0, get_TrxName());
@@ -536,6 +538,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		newDocumentDiscount.setDiscountKind(discountKind);
 		newDocumentDiscount.setDiscountBaseAmt(discountBaseAmt);
 		newDocumentDiscount.setDiscountAmt(discountAmt);
+		newDocumentDiscount.setC_Payment_ID(paymentID);
 		if(addToList){
 			if(documentDiscountsToSave == null){
 				documentDiscountsToSave = new ArrayList<MDocumentDiscount>();

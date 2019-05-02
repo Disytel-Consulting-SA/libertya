@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocumentDiscount
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-02-23 18:31:00.712 */
+ *  @version  - 2019-05-02 10:35:45.949 */
 public class X_C_DocumentDiscount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -140,6 +140,22 @@ Sales Order Line */
 public int getC_OrderLine_ID() 
 {
 Integer ii = (Integer)get_Value("C_OrderLine_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Payment.
+Payment identifier */
+public void setC_Payment_ID (int C_Payment_ID)
+{
+if (C_Payment_ID <= 0) set_Value ("C_Payment_ID", null);
+ else 
+set_Value ("C_Payment_ID", new Integer(C_Payment_ID));
+}
+/** Get Payment.
+Payment identifier */
+public int getC_Payment_ID() 
+{
+Integer ii = (Integer)get_Value("C_Payment_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

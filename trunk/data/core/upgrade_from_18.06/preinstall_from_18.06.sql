@@ -2288,3 +2288,14 @@ $BODY$
   LANGUAGE 'plpgsql' VOLATILE
   COST 100;
 ALTER FUNCTION replication_event() OWNER TO libertya;
+
+--20190502-1030 Incorporación de nuevas columnas para registro de datos para importación de novedades
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_gljournal','importonlyjournal','character(1)'));
+
+--20190502-1030 Nueva configuración de proveedor para transferencias electrónicas
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner_BankList','cbu','character varying(30)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner_BankList','transferbankaccounttype','character(2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner_BankList','transferconcept','character(3)'));
+
+--20190502-1030 Incorporación del dato del cobro que genera el descuento/recargo en el TPV
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_documentdiscount','c_payment_id','integer'));

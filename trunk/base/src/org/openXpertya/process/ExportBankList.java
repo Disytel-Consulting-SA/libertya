@@ -3,11 +3,8 @@ package org.openXpertya.process;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -35,14 +32,6 @@ public abstract class ExportBankList extends ExportProcess {
 	private MBankList bankList;
 	/** Fecha actual */
 	protected Timestamp today = Env.getTimestamp();
-	/** Formato de fechas yyyyMMdd */
-	protected DateFormat dateFormat_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
-	/** Formato de fechas ddMMyyyy */
-	protected DateFormat dateFormat_ddMMyyyy = new SimpleDateFormat("ddMMyyyy");
-	/** Formato de fechas HHmmss */
-	protected DateFormat dateFormat_HHmmss = new SimpleDateFormat("HHmmss");
-	/** Formato de fechas MMyyyy */
-	protected DateFormat dateFormat_MMyyyy = new SimpleDateFormat("MMyyyy");
 	/** Tipo de Documento de la lista de bancos */
 	private MDocType docType;
 	/** Configuración de la lista de banco */
@@ -114,15 +103,17 @@ public abstract class ExportBankList extends ExportProcess {
 		ResultSet rs = ps.executeQuery();
 		// Iterar por los resultados
 		while(rs.next()){
-			//Si la fecha del payment es anterior a la del vencimiento (hoy + 1), actualizo el payment
-			Calendar duedate = Calendar.getInstance();
-			duedate.setTime(rs.getTimestamp("duedate"));
-			if (rs.getTimestamp("duedate").compareTo(rs.getTimestamp("paymentduedate")) > 0 ||
-					getNextWorkingDay(rs.getTimestamp("duedate")).compareTo(duedate) > 0) {
-				MPayment payment = new MPayment(getCtx(), rs.getInt("c_payment_id"), get_TrxName());
-				payment.setDueDate(new Timestamp(getNextWorkingDay(rs.getTimestamp("duedate")).getTimeInMillis()));
-				if (!payment.save()) {
-					throw new Exception(CLogger.retrieveErrorAsString());
+			if(rs.getTimestamp("duedate") != null && rs.getInt("c_payment_id") > 0){
+				//Si la fecha del payment es anterior a la del vencimiento (hoy + 1), actualizo el payment
+				Calendar duedate = Calendar.getInstance();
+				duedate.setTime(rs.getTimestamp("duedate"));
+				if (rs.getTimestamp("duedate").compareTo(rs.getTimestamp("paymentduedate")) > 0 ||
+						getNextWorkingDay(rs.getTimestamp("duedate")).compareTo(duedate) > 0) {
+					MPayment payment = new MPayment(getCtx(), rs.getInt("c_payment_id"), get_TrxName());
+					payment.setDueDate(new Timestamp(getNextWorkingDay(rs.getTimestamp("duedate")).getTimeInMillis()));
+					if (!payment.save()) {
+						throw new Exception(CLogger.retrieveErrorAsString());
+					}
 				}
 			}
 			// Escribe al línea en el archivo

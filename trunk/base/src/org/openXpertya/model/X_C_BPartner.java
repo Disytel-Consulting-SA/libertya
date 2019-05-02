@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-08-14 11:33:51.239 */
+ *  @version  - 2019-05-02 10:35:17.312 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -219,10 +219,12 @@ public static final int BATCH_PAYMENT_RULE_AD_Reference_ID = MReference.getRefer
 public static final String BATCH_PAYMENT_RULE_Check = "C";
 /** Electronic Check = E */
 public static final String BATCH_PAYMENT_RULE_ElectronicCheck = "E";
+/** Electronic Transfer = T */
+public static final String BATCH_PAYMENT_RULE_ElectronicTransfer = "T";
 /** Set Batch Payment Rule */
 public void setBatch_Payment_Rule (String Batch_Payment_Rule)
 {
-if (Batch_Payment_Rule == null || Batch_Payment_Rule.equals("C") || Batch_Payment_Rule.equals("E") || ( refContainsValue("SSTE2CORE-AD_Reference-1010278-20161024122334", Batch_Payment_Rule) ) );
+if (Batch_Payment_Rule == null || Batch_Payment_Rule.equals("C") || Batch_Payment_Rule.equals("E") || Batch_Payment_Rule.equals("T") || ( refContainsValue("SSTE2CORE-AD_Reference-1010278-20161024122334", Batch_Payment_Rule) ) );
  else throw new IllegalArgumentException ("Batch_Payment_Rule Invalid value: " + Batch_Payment_Rule + ".  Valid: " +  refValidOptions("SSTE2CORE-AD_Reference-1010278-20161024122334") );
 if (Batch_Payment_Rule != null && Batch_Payment_Rule.length() > 1)
 {

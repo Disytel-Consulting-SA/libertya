@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -75,6 +76,14 @@ public class ExportProcess extends SvrProcess {
 	private Map<String, Integer> sequenceNumbers = new HashMap<String, Integer>();
 	/** Caracteres inválidos a elminar antes de escribir sobre el archivo */
 	private Set<String> invalidCaracters = null;
+	/** Formato de fechas yyyyMMdd */
+	protected DateFormat dateFormat_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
+	/** Formato de fechas ddMMyyyy */
+	protected DateFormat dateFormat_ddMMyyyy = new SimpleDateFormat("ddMMyyyy");
+	/** Formato de fechas HHmmss */
+	protected DateFormat dateFormat_HHmmss = new SimpleDateFormat("HHmmss");
+	/** Formato de fechas MMyyyy */
+	protected DateFormat dateFormat_MMyyyy = new SimpleDateFormat("MMyyyy");
 	
 	@Override
 	protected void prepare() {
@@ -230,6 +239,9 @@ public class ExportProcess extends SvrProcess {
 			// Escribe al línea en el archivo
 			writeLine(rs);
 		}
+		
+		rs.close();
+		ps.close();
 	}
 	
 	protected String getQuery(){

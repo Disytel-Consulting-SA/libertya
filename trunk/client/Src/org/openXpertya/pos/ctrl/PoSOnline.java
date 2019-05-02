@@ -37,6 +37,7 @@ import org.openXpertya.model.MCheckCuitControl;
 import org.openXpertya.model.MConversionRate;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MEntidadFinancieraPlan;
 import org.openXpertya.model.MInOut;
@@ -1992,6 +1993,19 @@ public class PoSOnline extends PoSConnectionState {
 			
 			sobraPorCheques = null;
 		}
+		
+		// Si este payment tiene un id de descuento interno entonces obtengo el
+		// document discount relacionado y le seteo el id del payment
+		Integer pinternalDiscountID = p.getPaymentMedium().getInternalID(p);
+		if(!Util.isEmpty(pinternalDiscountID, true)){
+			MDocumentDiscount dd = discountCalculator.getSavedDiscounts().get(pinternalDiscountID);
+			if(dd != null){
+				dd.setC_Payment_ID(pay.getC_Payment_ID());
+				if(!dd.save()){
+					throw new PosException(CLogger.retrieveErrorAsString());
+				}
+			}
+		}
 	}
 	
 	private void createOxpCreditCardPayment(CreditCardPayment p, Order order) throws PosException {
@@ -2029,6 +2043,19 @@ public class PoSOnline extends PoSConnectionState {
 		// Si el cobro posee retiro de efectivo entonces creo el débito y lo
 		// asocio en el allocation
 		createCreditCardRetirementInvoice(p, pay, order);
+		
+		// Si este payment tiene un id de descuento interno entonces obtengo el
+		// document discount relacionado y le seteo el id del payment
+		Integer pinternalDiscountID = p.getPaymentMedium().getInternalID(p);
+		if(!Util.isEmpty(pinternalDiscountID, true)){
+			MDocumentDiscount dd = discountCalculator.getSavedDiscounts().get(pinternalDiscountID);
+			if(dd != null){
+				dd.setC_Payment_ID(pay.getC_Payment_ID());
+				if(!dd.save()){
+					throw new PosException(CLogger.retrieveErrorAsString());
+				}
+			}
+		}
 	}
 	
 	private void createCreditCardRetirementInvoice(CreditCardPayment p, MPayment pay, Order order) throws PosException{
@@ -2161,6 +2188,19 @@ public class PoSOnline extends PoSConnectionState {
 		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		createOxpMAllocationLine(p, pay);
+		
+		// Si este payment tiene un id de descuento interno entonces obtengo el
+		// document discount relacionado y le seteo el id del payment
+		Integer pinternalDiscountID = p.getPaymentMedium().getInternalID(p);
+		if(!Util.isEmpty(pinternalDiscountID, true)){
+			MDocumentDiscount dd = discountCalculator.getSavedDiscounts().get(pinternalDiscountID);
+			if(dd != null){
+				dd.setC_Payment_ID(pay.getC_Payment_ID());
+				if(!dd.save()){
+					throw new PosException(CLogger.retrieveErrorAsString());
+				}
+			}
+		}
 	}
 	
 	private MAllocationHdr createOxpAllocation() throws PosException {

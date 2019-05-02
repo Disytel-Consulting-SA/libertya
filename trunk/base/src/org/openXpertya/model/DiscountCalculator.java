@@ -191,6 +191,12 @@ public class DiscountCalculator {
 	private boolean promotionsChanged = false; 
 	
 	/**
+	 * Asociación entre ID interno de descuento y el document discount padre
+	 * generado
+	 */
+	private Map<Integer, MDocumentDiscount> savedDiscounts = null;
+	
+	/**
 	 * Crea un nuevo calculador de descuentos vacío. Por defecto este calculador
 	 * no aplicará descuentos hasta que se cargue un descuento de Entidad
 	 * Comercial mediante el método {@link #loadBPartnerDiscount(int, boolean)}
@@ -1839,8 +1845,8 @@ public class DiscountCalculator {
 	 *         Mediante este ID luego los clientes podrán actualizar los datos
 	 *         del descuento. Devuelve <code>null</code> si
 	 *         <code>generalDiscountSchema</code> es <code>null</code> o no es
-	 *         un esquema de ámbito general (
-	 *         <code>{@link MDiscountSchema#isGeneralScope()} == false</code>)
+	 *         un esquema de ámbito general ( <code>
+	 *         {@link MDiscountSchema#isGeneralScope()} == false</code>)
 	 */
 	public Integer addGeneralDiscount(MDiscountSchema generalDiscountSchema,
 			GeneralDiscountKind generalDiscountKind, BigDecimal baseAmt,
@@ -1860,13 +1866,13 @@ public class DiscountCalculator {
 		}
 		// Crea la estructura del nuevo descuento y lo agrega al conjunto de
 		// descuentos generales asociados.
-		Discount discount = new Discount(discountID, discountDescription,
-				generalDiscountSchema, baseAmt, generalDiscountKind.toDiscountKind(), getDocument());
+		Discount discount = new Discount(discountID, discountDescription, generalDiscountSchema, baseAmt,
+				generalDiscountKind.toDiscountKind(), getDocument());
 		
 		getGeneralDiscounts().put(discountID, discount);
 		return discountID;
 	}
-
+	
 	/**
 	 * Suma un importe base determinado al importe base actual de un de
 	 * descuento asociado a este calculador
@@ -2033,6 +2039,7 @@ public class DiscountCalculator {
 		getLineManualDiscounts().clear();
 		getPromotionalCodes().clear();
 		setPromotionsChanged(true);
+		setSavedDiscounts(null);
 	}
 
 	/**
@@ -2247,6 +2254,7 @@ public class DiscountCalculator {
 		 */
 		boolean saveOk = true;
 		trxName = trxName == null ? getTrxName() : trxName;
+		setSavedDiscounts(new HashMap<Integer, MDocumentDiscount>());
 		
 		for (Discount appliedDiscount : getAppliedDiscounts()) {
 			// Si no se puede guardar aborta la operación y devuelve false.
@@ -2254,6 +2262,9 @@ public class DiscountCalculator {
 				saveOk = false;
 				break;
 			}
+			// Guardar la asociación entre id de descuento interno con el
+			// document discount padre generado
+			getSavedDiscounts().put(appliedDiscount.getId(), appliedDiscount.getGeneratedParentDD());
 		}
 		
 		// Marcar los cupones promocionales cargados como usados
@@ -2584,6 +2595,14 @@ public class DiscountCalculator {
 
 	private void setValidPromos(List<MPromotion> validPromos) {
 		this.validPromos = validPromos;
+	}
+
+	public Map<Integer, MDocumentDiscount> getSavedDiscounts() {
+		return savedDiscounts;
+	}
+
+	public void setSavedDiscounts(Map<Integer, MDocumentDiscount> savedDiscounts) {
+		this.savedDiscounts = savedDiscounts;
 	}
 
 	/**
@@ -3040,7 +3059,10 @@ public class DiscountCalculator {
 		 * línea en particular. Sólo se llama desde el TVP, desde las M no es
 		 * necesario ya que es información persistida.
 		 */
-		private Map<Integer, IDocumentLine> generatedInvoiceLineIDs = null; 
+		private Map<Integer, IDocumentLine> generatedInvoiceLineIDs = null;  
+		
+		/** Registro del document discount padre generado */
+		private MDocumentDiscount generatedParentDD = null;
 		
 		/**
 		 * Constructor básico de Descuentos
@@ -3198,6 +3220,7 @@ public class DiscountCalculator {
 			discountBaseAmtByTax.clear();
 			getDocumentLineDiscounts().clear();
 			getGeneratedInvoiceLineIDs().clear();
+			setGeneratedParentDD(null);
 		}
 		
 		/**
@@ -3333,6 +3356,9 @@ public class DiscountCalculator {
 				}
 			}
 			
+			// Guardar la referencia del document discount padre
+			setGeneratedParentDD(documentDiscount);
+			
 			return true;
 		}
 		
@@ -3451,6 +3477,14 @@ public class DiscountCalculator {
 
 		public void setGeneratedInvoiceLineIDs(Map<Integer, IDocumentLine> generatedInvoiceLineIDs) {
 			this.generatedInvoiceLineIDs = generatedInvoiceLineIDs;
+		}
+
+		public MDocumentDiscount getGeneratedParentDD() {
+			return generatedParentDD;
+		}
+
+		public void setGeneratedParentDD(MDocumentDiscount generatedParentDD) {
+			this.generatedParentDD = generatedParentDD;
 		}
 	}
 	
