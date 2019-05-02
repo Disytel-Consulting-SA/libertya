@@ -18,6 +18,7 @@ import org.openXpertya.model.MBankListLine;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPaymentBatchPO;
 import org.openXpertya.model.MPaymentBatchPODetail;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
 
@@ -89,7 +90,8 @@ public class GenerateElectronicPaymentsProcess extends SvrProcess {
 		bankList.setDocStatus(DocAction.STATUS_Drafted);
 		bankList.setDocAction(DocAction.ACTION_Complete);
 		if (!bankList.save()) {
-			throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": " + bankList.getProcessMsg());
+			throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": "
+					+ CLogger.retrieveErrorAsString());
 		}
 		
 		//Lineas de la lista
@@ -101,7 +103,8 @@ public class GenerateElectronicPaymentsProcess extends SvrProcess {
 			line.setDescription(Msg.getMsg(getCtx(), "PaymentBatchPOElectronicPaymentListDesc") + " " + paymentBatch.getDocumentNo());
 			line.setC_AllocationHdr_ID(detail.getC_AllocationHdr_ID());
 			if (!line.save()) {
-				throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": " + line.getProcessMsg());
+				throw new Exception(Msg.getMsg(getCtx(), "PaymentBatchPOEPListGenerationError") + ": "
+						+ CLogger.retrieveErrorAsString());
 			}
 		}
 		

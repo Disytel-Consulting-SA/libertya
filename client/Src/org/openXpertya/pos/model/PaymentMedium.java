@@ -252,7 +252,7 @@ public class PaymentMedium implements IPaymentMediumInfo {
 		// planes
 		Integer internal = internalID; 
 		if(isCreditCard()){
-			internal = ((CreditCardPayment) payment).getPlan().getInternalID();
+			internal = ((CreditCardPayment) payment).getPlan().getInternalID(payment);
 		}
 		return internal;
 	}
@@ -271,7 +271,7 @@ public class PaymentMedium implements IPaymentMediumInfo {
 		// Entonces, los id internos de tarjetas de crédito se manejan en los
 		// planes
 		if(isCreditCard()){
-			((CreditCardPayment) payment).getPlan().setInternalID(internalID);
+			((CreditCardPayment) payment).getPlan().setInternalID(internalID, payment);
 		}
 		else{
 			this.internalID = internalID;

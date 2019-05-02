@@ -42,7 +42,7 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	/** UID del Informe de Pedidos por Línea de Artículo */
 	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_UID = "TA712CORE-AD_Process-1010617-20190206172121";
 	protected final static String ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME = "OrdersForProductLines.jrxml";
-	
+
 	/** UID del Reporte de libro diario */
 	protected final static String LIBRO_DIARIO_REPORT_UID = "CORE-AD_Process-1010379";
 	protected final static String LIBRO_DIARIO_REPORT_FILENAME = "LibroDiario.jrxml";
@@ -51,6 +51,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_UID = "TACC2CORE-AD_Process-1010626-20190401164139";
 	protected final static String VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_FILENAME = "ControlVentasXCierreZ.jrxml";
 	
+	/** UID del Informe de Ventas por Financiación */
+	protected final static String FINANCIAL_SALES_REPORT_JASPER_REPORT_UID = "T0082CORE-AD_Process-1010627-20190502102158";
+	protected final static String FINANCIAL_SALES_REPORT_JASPER_REPORT_FILENAME = "FinancialSales.jrxml";
+
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -161,7 +165,7 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(ORDERS_FOR_PRODUCT_LINES_REPORT_JASPER_REPORT_FILENAME)));
-		
+
 		// Reporte de Libro Diario
 		MProcess.addAttachment(
 				get_TrxName(),
@@ -183,7 +187,18 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(VENTAS_CIERRES_Z_REPORT_JASPER_REPORT_FILENAME)));
-		
+
+		// Informe de Ventas por Financiación
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				FINANCIAL_SALES_REPORT_JASPER_REPORT_UID,
+				FINANCIAL_SALES_REPORT_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(FINANCIAL_SALES_REPORT_JASPER_REPORT_FILENAME)));
+
 		return " ";
 	}
 }

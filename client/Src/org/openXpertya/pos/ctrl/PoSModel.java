@@ -25,7 +25,9 @@ import org.openXpertya.pos.exceptions.ProductAddValidationFailed;
 import org.openXpertya.pos.exceptions.UserException;
 import org.openXpertya.pos.model.BusinessPartner;
 import org.openXpertya.pos.model.CheckPayment;
+import org.openXpertya.pos.model.CreditCardPayment;
 import org.openXpertya.pos.model.EntidadFinanciera;
+import org.openXpertya.pos.model.EntidadFinancieraPlan;
 import org.openXpertya.pos.model.Location;
 import org.openXpertya.pos.model.Order;
 import org.openXpertya.pos.model.OrderProduct;
@@ -895,5 +897,27 @@ public class PoSModel {
 	 */
 	public void removePromotionalCode(String promotionCode){
 		getOrder().removePromotionalCode(promotionCode);
+	}
+	
+	/***
+	 * No es posible agregar un pago en tarjeta con mismo plan y banco
+	 * 
+	 * @param creditCardPlan
+	 *            plan de entidad financiera
+	 * @param bankName
+	 *            nombre de banco
+	 * @return true si no existe un cobro en tarjeta con mismo plan y banco,
+	 *         false caso contrario
+	 */
+	public boolean isRepeatCreditCardPayment(EntidadFinancieraPlan creditCardPlan, String bankName){
+		for (Payment p : getOrder().getPayments()) {
+			if(p.isCreditCardPayment()){
+				CreditCardPayment pcc = (CreditCardPayment)p;
+				if(pcc.getBankName().equals(bankName) && pcc.getPlan().equals(creditCardPlan)){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

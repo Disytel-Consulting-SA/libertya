@@ -1,5 +1,8 @@
 package org.openXpertya.pos.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.openXpertya.model.MPOSPaymentMedium;
 
 /**
@@ -16,7 +19,7 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 	private int coutasPago;
 	private DiscountSchema discountSchema;
 	/** ID utilizado para el Calculador de Descuentos */
-	private Integer internalID = null;
+	private Map<String, Integer> internalIDs = null;
 	
 	/**
 	 * Constructor de la clase
@@ -29,6 +32,7 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 		this.entidadFinancieraID = entidadFinancieraID;
 		this.name = name;
 		this.coutasPago = coutasPago;
+		this.internalIDs = new HashMap<String, Integer>();
 	}
 
 	/**
@@ -106,19 +110,49 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 		this.discountSchema = discountSchema;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.openXpertya.pos.model.IPaymentMediumInfo#getTenderType()
-	 */
 	@Override
 	public String getTenderType() {
 		return MPOSPaymentMedium.TENDERTYPE_CreditCard;
 	}
 
-	public Integer getInternalID() {
-		return internalID;
+	public Map<String, Integer> getInternalIDs() {
+		return internalIDs;
 	}
 
-	public void setInternalID(Integer internalID) {
-		this.internalID = internalID;
+	public void setInternalIDs(Map<String, Integer> internalIDs) {
+		this.internalIDs = internalIDs;
+	}
+	
+	/**
+	 * @return the internalID
+	 */
+	public Integer getInternalID(Payment payment) {
+		// El id interno se utiliza por el discount calculator para tener los
+		// descuentos por esquema de descuento. Para el caso de tarjetas de
+		// crédito, los esquemas de descuento se configuran dentro de los
+		// planes, y a su vez por banco ya que se pueden tener mismos planes 
+		// (mismas tarjetas y mismas cuotas) pero distinto banco. 
+		// Por lo tanto si tenemos varios planes con diferentes esquemas
+		// de descuento y se utiliza el mismo id para todos los planes de un
+		// medio de pago, entonces puede haber conflictos entre esquemas de
+		// descuento diferentes.
+		// Entonces, los id internos de tarjetas de crédito se manejan en los
+		// planes
+		return getInternalIDs().get(((CreditCardPayment)payment).getBankName());
+	}
+	
+	public Integer setInternalID(Integer internalID, Payment payment) {
+		// El id interno se utiliza por el discount calculator para tener los
+		// descuentos por esquema de descuento. Para el caso de tarjetas de
+		// crédito, los esquemas de descuento se configuran dentro de los
+		// planes, y a su vez por banco ya que se pueden tener mismos planes 
+		// (mismas tarjetas y mismas cuotas) pero distinto banco. 
+		// Por lo tanto si tenemos varios planes con diferentes esquemas
+		// de descuento y se utiliza el mismo id para todos los planes de un
+		// medio de pago, entonces puede haber conflictos entre esquemas de
+		// descuento diferentes.
+		// Entonces, los id internos de tarjetas de crédito se manejan en los
+		// planes
+		return getInternalIDs().put(((CreditCardPayment)payment).getBankName(), internalID);
 	}
 }

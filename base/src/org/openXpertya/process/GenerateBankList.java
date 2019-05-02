@@ -3,9 +3,12 @@ package org.openXpertya.process;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MAllocationHdr;
+import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MBankListLine;
 import org.openXpertya.model.MDocType;
@@ -14,12 +17,21 @@ import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BankAccount;
 import org.openXpertya.model.X_C_BankListLine;
+import org.openXpertya.model.X_C_BankList_Config;
 import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 
 public class GenerateBankList extends AbstractSvrProcess {
 
+	/** Asociación entre tipo de lista con tipo de pago */
+	protected static Map<String, String> tenderTypes;
+	static{
+		tenderTypes = new HashMap<String, String>();
+		tenderTypes.put(X_C_BankList_Config.PAYMENTTYPE_ElectronicCheck, X_C_Payment.TENDERTYPE_Check);
+		tenderTypes.put(X_C_BankList_Config.PAYMENTTYPE_ElectronicTransfer, X_C_Payment.TENDERTYPE_DirectDeposit);
+	}
+	
 	/**
 	 * Elimina las líneas de la lista del banco parámetro
 	 * @throws Exception
@@ -38,6 +50,18 @@ public class GenerateBankList extends AbstractSvrProcess {
 		// Eliminar las líneas de la lista actual para recargarlas
 		deleteBankListLines();
 		MBankList bankList = new MBankList(getCtx(), getRecord_ID(), get_TrxName());
+		MBankAccount ba = MBankAccount.get(getCtx(), bankList.getC_BankAccount_ID());
+		// Obtener la forma de pago de los payments dependiendo la config de
+		// esta lista de banco
+		Integer bankListConfigID = DB.getSQLValue(get_TrxName(),
+				"SELECT C_BankList_Config_ID FROM C_BankList_Config blc WHERE blc.C_Bank_ID = ? AND blc.C_DocType_ID = ? ORDER BY created DESC LIMIT 1",
+				ba.getC_Bank_ID(), bankList.getC_DocType_ID());
+		String pt = X_C_BankList_Config.PAYMENTTYPE_ElectronicCheck;
+		if(bankListConfigID > 0){
+			X_C_BankList_Config blc = new X_C_BankList_Config(getCtx(), bankListConfigID, get_TrxName());
+			pt = blc.getPaymentType();
+		}
+		String tt = tenderTypes.get(pt);
 		MAllocationHdr op = new MAllocationHdr(getCtx(), (Integer) getParametersValues().get("C_ALLOCATIONHDR_ID"), get_TrxName());
 		// Obtener prefijo y sufijo de la secuencia de la OP
 		String opPrefix = MSequence.getPrefix(opDocType.getDocNoSequence_ID(), get_TrxName());
@@ -63,7 +87,7 @@ public class GenerateBankList extends AbstractSvrProcess {
 		sql.append("		ON ba.c_bankaccount_id = p.c_bankaccount_id ");
 		sql.append("WHERE ");
 		sql.append("	p.ad_client_id = ? ");
-		sql.append("	AND p.tendertype = 'K' ");
+		sql.append("	AND p.tendertype = '"+tt+"' ");
 		sql.append("	AND p.isreceipt = 'N' ");
 		sql.append("	AND p.docstatus IN ('CO','CL') ");
 		sql.append("	AND ah.docstatus IN ('CO','CL') ");

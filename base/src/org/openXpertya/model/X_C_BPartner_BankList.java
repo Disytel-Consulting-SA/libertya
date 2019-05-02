@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_BankList
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-02-06 14:01:25.605 */
+ *  @version  - 2019-05-02 10:35:20.24 */
 public class X_C_BPartner_BankList extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -91,6 +91,23 @@ Integer ii = (Integer)get_Value("C_BPartner_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set CBU.
+Unique Bank Code */
+public void setCBU (String CBU)
+{
+if (CBU != null && CBU.length() > 30)
+{
+log.warning("Length > 30 - truncated");
+CBU = CBU.substring(0,30);
+}
+set_Value ("CBU", CBU);
+}
+/** Get CBU.
+Unique Bank Code */
+public String getCBU() 
+{
+return (String)get_Value("CBU");
+}
 /** Set Document Type.
 Document type or rules */
 public void setC_DocType_ID (int C_DocType_ID)
@@ -148,5 +165,61 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int TRANSFERBANKACCOUNTTYPE_AD_Reference_ID = MReference.getReferenceID("Bank Account Type");
+/** Savings Bank = CA */
+public static final String TRANSFERBANKACCOUNTTYPE_SavingsBank = "CA";
+/** Current Account = CC */
+public static final String TRANSFERBANKACCOUNTTYPE_CurrentAccount = "CC";
+/** Set Bank Account Type */
+public void setTransferBankAccountType (String TransferBankAccountType)
+{
+if (TransferBankAccountType == null || TransferBankAccountType.equals("CA") || TransferBankAccountType.equals("CC") || ( refContainsValue("T0082CORE-AD_Reference-1010416-20190502100958", TransferBankAccountType) ) );
+ else throw new IllegalArgumentException ("TransferBankAccountType Invalid value: " + TransferBankAccountType + ".  Valid: " +  refValidOptions("T0082CORE-AD_Reference-1010416-20190502100958") );
+if (TransferBankAccountType != null && TransferBankAccountType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+TransferBankAccountType = TransferBankAccountType.substring(0,2);
+}
+set_Value ("TransferBankAccountType", TransferBankAccountType);
+}
+/** Get Bank Account Type */
+public String getTransferBankAccountType() 
+{
+return (String)get_Value("TransferBankAccountType");
+}
+public static final int TRANSFERCONCEPT_AD_Reference_ID = MReference.getReferenceID("Transfer Concepts");
+/** Expenses = EXP */
+public static final String TRANSFERCONCEPT_Expenses = "EXP";
+/** Rents = ALQ */
+public static final String TRANSFERCONCEPT_Rents = "ALQ";
+/** Fee = CUO */
+public static final String TRANSFERCONCEPT_Fee = "CUO";
+/** Invoice = FAC */
+public static final String TRANSFERCONCEPT_Invoice = "FAC";
+/** Honoraries = HON */
+public static final String TRANSFERCONCEPT_Honoraries = "HON";
+/** Loan = PRE */
+public static final String TRANSFERCONCEPT_Loan = "PRE";
+/** Assurance = SEG */
+public static final String TRANSFERCONCEPT_Assurance = "SEG";
+/** Others = VAR */
+public static final String TRANSFERCONCEPT_Others = "VAR";
+/** Set Transfer Concept */
+public void setTransferConcept (String TransferConcept)
+{
+if (TransferConcept == null || TransferConcept.equals("EXP") || TransferConcept.equals("ALQ") || TransferConcept.equals("CUO") || TransferConcept.equals("FAC") || TransferConcept.equals("HON") || TransferConcept.equals("PRE") || TransferConcept.equals("SEG") || TransferConcept.equals("VAR") || ( refContainsValue("T0082CORE-AD_Reference-1010417-20190502101111", TransferConcept) ) );
+ else throw new IllegalArgumentException ("TransferConcept Invalid value: " + TransferConcept + ".  Valid: " +  refValidOptions("T0082CORE-AD_Reference-1010417-20190502101111") );
+if (TransferConcept != null && TransferConcept.length() > 3)
+{
+log.warning("Length > 3 - truncated");
+TransferConcept = TransferConcept.substring(0,3);
+}
+set_Value ("TransferConcept", TransferConcept);
+}
+/** Get Transfer Concept */
+public String getTransferConcept() 
+{
+return (String)get_Value("TransferConcept");
 }
 }

@@ -438,6 +438,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_RETURN_CASH_POSITIVE_AMOUNT_ERROR;
 	private String MSG_CREDIT_NOTE_REPEATED_ERROR;
 	private String MSG_INVALID_CARD_AMOUNT_ERROR;
+	private String MSG_CREDIT_CARD_REPEATED;
 	private String MSG_NO_BPARTNER_ERROR;
 	private String MSG_NO_LOCATION_ERROR;
 	private String MSG_POS_ORDER_STATUS;
@@ -823,6 +824,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_TAXES = getMsg("Taxes");
 		MSG_TAX = getMsg("Tax");
 		MSG_PROMOTIONS = getMsg("Promotions");
+		MSG_CREDIT_CARD_REPEATED = getMsg("POSCreditCardPaymentRepeated");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -5112,7 +5114,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					.isCashRetirement() ? cashRetirementAmt : BigDecimal.ZERO;
 			
 			// Es necesario un plan de tarjeta
-			if (getSelectedCreditCardPlan() == null) {
+			if (creditCardPlan == null) {
 				errorMsg(MSG_NO_CREDIT_CARD_PLAN_ERROR);
 				return;
 			// El banco es requerido
@@ -5122,6 +5124,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// El importe no puede superar el saldo pendiente del pedido
 			} else if (!validatePaymentAmount(amount, null)) {
 				errorMsg(MSG_INVALID_CARD_AMOUNT_ERROR);
+				return;
+			} else if (getModel().isRepeatCreditCardPayment(creditCardPlan, bankName)) {
+				errorMsg(MSG_CREDIT_CARD_REPEATED);
 				return;
 			// El importe de retiro de efectivo es mayor al límite configurado
 			} else if (cashRetirementAmt.compareTo(paymentMedium

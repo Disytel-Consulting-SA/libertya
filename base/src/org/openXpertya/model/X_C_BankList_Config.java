@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankList_Config
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-24 20:11:57.664 */
+ *  @version  - 2019-05-02 10:35:12.984 */
 public class X_C_BankList_Config extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,7 +16,6 @@ public X_C_BankList_Config (Properties ctx, int C_BankList_Config_ID, String trx
 super (ctx, C_BankList_Config_ID, trxName);
 /** if (C_BankList_Config_ID == 0)
 {
-setC_BankAccount_ID (0);
 setC_Bank_ID (0);
 setC_BankList_Config_ID (0);
 setC_DocType_ID (0);
@@ -48,20 +47,6 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_BankList_Config[").append(getID()).append("]");
 return sb.toString();
-}
-/** Set Bank Account.
-Account at the Bank */
-public void setC_BankAccount_ID (int C_BankAccount_ID)
-{
-set_Value ("C_BankAccount_ID", new Integer(C_BankAccount_ID));
-}
-/** Get Bank Account.
-Account at the Bank */
-public int getC_BankAccount_ID() 
-{
-Integer ii = (Integer)get_Value("C_BankAccount_ID");
-if (ii == null) return 0;
-return ii.intValue();
 }
 /** Set Bank.
 Bank */
@@ -136,11 +121,13 @@ return (String)get_Value("ClientName");
 public static final int PAYMENTTYPE_AD_Reference_ID = MReference.getReferenceID("Electronic Payment Types");
 /** Electronic Check = EC */
 public static final String PAYMENTTYPE_ElectronicCheck = "EC";
+/** Electronic Transfer = ET */
+public static final String PAYMENTTYPE_ElectronicTransfer = "ET";
 /** Set PaymentType */
 public void setPaymentType (String PaymentType)
 {
-if (PaymentType.equals("EC"));
- else throw new IllegalArgumentException ("PaymentType Invalid value - Reference = PAYMENTTYPE_AD_Reference_ID - EC");
+if (PaymentType.equals("EC") || PaymentType.equals("ET") || ( refContainsValue("SSTE2CORE-AD_Reference-1010299-20161024200259", PaymentType) ) );
+ else throw new IllegalArgumentException ("PaymentType Invalid value: " + PaymentType + ".  Valid: " +  refValidOptions("SSTE2CORE-AD_Reference-1010299-20161024200259") );
 if (PaymentType == null) throw new IllegalArgumentException ("PaymentType is mandatory");
 if (PaymentType.length() > 2)
 {
