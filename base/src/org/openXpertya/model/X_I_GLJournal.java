@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_GLJournal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-02-07 02:04:49.757 */
+ *  @version  - 2019-05-03 10:38:26.291 */
 public class X_I_GLJournal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -725,6 +725,23 @@ if (oo != null)
 }
 return false;
 }
+/** Set Import Only Journal.
+Import Only Journal (Without Batch) */
+public void setImportOnlyJournal (String ImportOnlyJournal)
+{
+if (ImportOnlyJournal != null && ImportOnlyJournal.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ImportOnlyJournal = ImportOnlyJournal.substring(0,1);
+}
+set_Value ("ImportOnlyJournal", ImportOnlyJournal);
+}
+/** Get Import Only Journal.
+Import Only Journal (Without Batch) */
+public String getImportOnlyJournal() 
+{
+return (String)get_Value("ImportOnlyJournal");
+}
 /** Set ISO Currency Code.
 Three letter ISO 4217 Code of the Currency */
 public void setISO_Code (String ISO_Code)
@@ -836,8 +853,8 @@ public static final String POSTINGTYPE_Actual = "A";
 The type of amount that this journal updated */
 public void setPostingType (String PostingType)
 {
-if (PostingType == null || PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A"));
- else throw new IllegalArgumentException ("PostingType Invalid value - Reference = POSTINGTYPE_AD_Reference_ID - B - E - S - A");
+if (PostingType == null || PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A") || ( refContainsValue("CORE-AD_Reference-125", PostingType) ) );
+ else throw new IllegalArgumentException ("PostingType Invalid value: " + PostingType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-125") );
 if (PostingType != null && PostingType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
