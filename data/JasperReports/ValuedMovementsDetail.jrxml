@@ -423,13 +423,13 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="721"
+						x="559"
 						y="3"
 						width="61"
 						height="16"
 						backcolor="#E8E3E3"
 						key="staticText-12"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
@@ -453,7 +453,7 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="676"
+						x="514"
 						y="3"
 						width="45"
 						height="16"
@@ -483,13 +483,13 @@
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="514"
+						x="620"
 						y="3"
 						width="162"
 						height="16"
 						backcolor="#E8E3E3"
 						key="staticText-21"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="10" isBold="false"/>
 					</textElement>
@@ -550,7 +550,7 @@
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="721"
+						x="559"
 						y="0"
 						width="61"
 						height="15"
@@ -605,7 +605,7 @@
 				</line>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="676"
+						x="514"
 						y="0"
 						width="45"
 						height="15"
@@ -635,7 +635,7 @@
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="514"
+						x="620"
 						y="0"
 						width="162"
 						height="15"
