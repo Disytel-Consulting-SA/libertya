@@ -8,6 +8,7 @@ import org.openXpertya.model.X_I_GLJournal;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.HTMLMsg.HTMLList;
+import org.openXpertya.util.Msg;
 
 public class ImportGLJournal extends ImportGLJournalBatch {
 
@@ -22,7 +23,7 @@ public class ImportGLJournal extends ImportGLJournalBatch {
 		// Completar los diarios generados
 		for (MJournal journal : journals) {
 			if (!DocumentEngine.processAndSave(journal, MJournal.DOCACTION_Complete, false)) {
-				DB.executeUpdate("UPDATE I_GLJournal SET I_ErrorMsg = '" + journal.getProcessMsg()
+				DB.executeUpdate("UPDATE I_GLJournal SET I_ErrorMsg = '" + Msg.parseTranslation(getCtx(), journal.getProcessMsg())
 						+ "' WHERE Gl_Journal_ID = " + journal.getID(), get_TrxName());
 			} 
 		}

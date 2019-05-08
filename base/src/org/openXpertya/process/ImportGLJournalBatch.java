@@ -32,7 +32,6 @@ import org.openXpertya.model.X_C_ValidCombination;
 import org.openXpertya.model.X_I_GLJournal;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
-import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.HTMLMsg.HTMLList;
 import org.openXpertya.util.Msg;
@@ -114,8 +113,8 @@ public class ImportGLJournalBatch extends SvrProcess {
 				m_DateAcct = (Timestamp) para[i].getParameter();
 			} else if (name.equals("IsValidateOnly")) {
 				m_IsValidateOnly = "Y".equals(para[i].getParameter());
-			/*} else if (name.equals("IsImportOnlyNoErrors")) {
-				m_IsImportOnlyNoErrors = "Y".equals(para[i].getParameter());*/
+			} else if (name.equals("IsImportOnlyNoErrors")) {
+				m_IsImportOnlyNoErrors = "Y".equals(para[i].getParameter());
 			} else if (name.equals("DeleteOldImported")) {
 				m_DeleteOldImported = "Y".equals(para[i].getParameter());
 			} else {
@@ -574,14 +573,14 @@ public class ImportGLJournalBatch extends SvrProcess {
 				"UPDATE I_GLJournal i "
 						+ "SET AD_Org_ID=(SELECT o.AD_Org_ID FROM AD_Org o"
 						+ " WHERE o.Value=i.OrgValue AND o.IsSummary='N' AND i.AD_Client_ID=o.AD_Client_ID) "
-						+ "WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND OrgValue IS NOT NULL"
+						+ "WHERE OrgValue IS NOT NULL "
 						+ " AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'");
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		log.fine("doIt - Set Org from Value=" + no);
 		sql = new StringBuffer(
 				"UPDATE I_GLJournal i "
 						+ "SET AD_Org_ID=AD_OrgDoc_ID "
-						+ "WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND OrgValue IS NULL AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0"
+						+ "WHERE (AD_Org_ID IS NULL OR AD_Org_ID=0) AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0"
 						+ " AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'")
 				.append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
@@ -774,16 +773,15 @@ public class ImportGLJournalBatch extends SvrProcess {
 
 		sql = new StringBuffer("UPDATE I_GLJournal i "
 				+ "SET I_ErrorMsg=I_ErrorMsg||'WARN=Zero Acct Balance, ' "
-				// +
-				// "WHERE (AmtSourceDr-AmtSourceCr)<>0 AND (AmtAcctDr-AmtAcctCr)=0"
-				+ "WHERE (AmtAcctDr-AmtAcctCr)=0" + " AND I_IsImported<>'Y'")
+				+ "WHERE ((AmtSourceDr-AmtSourceCr)=0 OR (AmtAcctDr-AmtAcctCr)=0) " 
+				+ " AND I_IsImported<>'Y'")
 				.append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
 			log.warning("doIt - Zero Acct Balance=" + no);
 		sql = new StringBuffer("UPDATE I_GLJournal i "
 				+ "SET I_ErrorMsg=I_ErrorMsg||'WARN=Check Acct Balance, ' "
-				+ "WHERE ABS(AmtAcctDr-AmtAcctCr)>100000000" // 100 mio
+				+ "WHERE (ABS(AmtAcctDr-AmtAcctCr)>100000000 OR abs(AmtSourceDr-AmtSourceCr)>100000000)" // 100 mio
 				+ " AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		if (no != 0)
@@ -803,29 +801,21 @@ public class ImportGLJournalBatch extends SvrProcess {
 		/*********************************************************************/
 
 		// Get Balance
-		// sql = new StringBuffer
-		// ("SELECT SUM(AmtSourceDr)-SUM(AmtSourceCr), SUM(AmtAcctDr)-SUM(AmtAcctCr) "
-		sql = new StringBuffer("SELECT SUM(AmtAcctDr)-SUM(AmtAcctCr) "
-				+ "FROM I_GLJournal " + "WHERE I_IsImported='N'")
+		sql = new StringBuffer("SELECT SUM(AmtSourceDr)-SUM(AmtSourceCr), SUM(AmtAcctDr)-SUM(AmtAcctCr) "
+				+ "FROM I_GLJournal " + "WHERE I_IsImported<>'Y'")
 				.append(clientCheck);
 		PreparedStatement pstmt = null;
+		BigDecimal balance = BigDecimal.ZERO;
 		try {
 			pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
-				// BigDecimal source = rs.getBigDecimal(1);
-				BigDecimal acct = rs.getBigDecimal(1);
-				// if (source != null && source.compareTo(Env.ZERO) == 0
-				if (acct != null && acct.compareTo(Env.ZERO) == 0)
-					log.info("doIt - Import Balance = 0");
-				else
-					// log.warn("doIt - Balance Source=" + source + ", Acct=" +
-					// acct);
-					log.warning("doIt - Balance Acct=" + acct);
-				// if (source != null)
-				// addLog (0, null, source, "@AmtSourceDr@ - @AmtSourceCr@");
-				if (acct != null)
-					addLog(0, null, acct, "@AmtAcctDr@ - @AmtAcctCr@");
+				BigDecimal acct = rs.getBigDecimal(2);
+				BigDecimal acctsrc = rs.getBigDecimal(1);
+				if (!Util.isEmpty(acct, true) || !Util.isEmpty(acctsrc, true)){
+					log.warning("doIt - Balance Acct=" + (!Util.isEmpty(acctsrc, true)?acctsrc:acct));
+					balance = !Util.isEmpty(acctsrc, true)?acctsrc:acct;
+				}
 			}
 
 			rs.close();
@@ -849,13 +839,12 @@ public class ImportGLJournalBatch extends SvrProcess {
 				"SELECT COUNT(*) FROM I_GLJournal WHERE I_IsImported NOT IN ('Y','N')"
 						+ clientCheck);
 
-		if (errors != 0) {
-			if (m_IsValidateOnly || m_IsImportOnlyNoErrors) {
-				throw new Exception("@Errors@=" + errors);
-			}
-		} else if (m_IsValidateOnly) {
-			return "@Errors@=" + errors;
-		}
+		if (m_IsValidateOnly || ((errors != 0 || !Util.isEmpty(balance, true)) && m_IsImportOnlyNoErrors)) {
+			setNotImported(clientCheck);
+			return (!Util.isEmpty(balance, true) ? 
+					"@ImportJournalNoBalance@: @AmtAcctDr@ - @AmtAcctCr@ = " + balance
+					: "@Errors@=" + errors);
+		} 
 
 		log.info("doIt - Validation Errors=" + errors);
 
@@ -865,6 +854,10 @@ public class ImportGLJournalBatch extends SvrProcess {
 		MJournal journal = null;
 		String BatchDocumentNo = null, currentBatchDocumentNo = "";
 		String JournalDocumentNo = null, currentJournalDocumentNo = "";
+		
+		Integer batchID = null;
+		Integer journalID = null;
+		
 		Timestamp DateAcct = null;
 		ResultSet rs = null;
 		
@@ -887,21 +880,23 @@ public class ImportGLJournalBatch extends SvrProcess {
 				currentBatchDocumentNo = imp.getBatchDocumentNo() == null ? "" : imp.getBatchDocumentNo();
 
 				batch = importBatch(imp, batch, BatchDocumentNo, currentBatchDocumentNo);
-				if (batch != null && (BatchDocumentNo == null || !BatchDocumentNo.equals(currentBatchDocumentNo))) {
+				if (batch != null && (Util.isEmpty(batchID, true) || batchID != batch.getID())) {
 					batches.add(batch);
 					BatchDocumentNo = imp.getBatchDocumentNo() == null ? "" : imp.getBatchDocumentNo();
 					journal = null;
 					JournalDocumentNo = null;
+					batchID = batch.getID();
 				}
 				
 				// Import Journal
 				currentJournalDocumentNo = imp.getJournalDocumentNo() == null ? "" : imp.getJournalDocumentNo();
 				
 				journal = importJournal(imp, batch, journal, JournalDocumentNo, DateAcct, currentJournalDocumentNo);
-				if(JournalDocumentNo == null || !JournalDocumentNo.equals(currentJournalDocumentNo)){
+				if(Util.isEmpty(journalID, true) || journalID != journal.getID()){
 					journals.add(journal);
 					JournalDocumentNo = imp.getJournalDocumentNo() == null ? "" : imp.getJournalDocumentNo();
 					DateAcct = journal.getDateAcct();
+					journalID = journal.getID();
 				}
 				
 				// Import JournalLine
@@ -939,10 +934,7 @@ public class ImportGLJournalBatch extends SvrProcess {
 		}
 
 		// Set Error to indicator to not imported
-		sql = new StringBuffer("UPDATE I_GLJournal "
-				+ "SET I_IsImported='N', Updated=SysDate "
-				+ "WHERE I_IsImported<>'Y'").append(clientCheck);
-		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		no = setNotImported(clientCheck);
 		
 		return getMsg(no);
 	} // doIt
@@ -968,8 +960,7 @@ public class ImportGLJournalBatch extends SvrProcess {
 		if (currentBatch == null
 				|| !oldBatchDocumentNo.equals(currentBatchDocumento)) {
 			batch = new MJournalBatch(getCtx(), 0, get_TrxName());
-			batch.setClientOrg(imp.getAD_Client_ID(),
-					imp.getAD_OrgDoc_ID());
+			batch.setClientOrg(imp.getAD_Client_ID(),m_AD_Org_ID);
 
 			if ((imp.getBatchDocumentNo() != null)
 					&& (imp.getBatchDocumentNo().length() > 0)) {
@@ -1016,8 +1007,6 @@ public class ImportGLJournalBatch extends SvrProcess {
 	protected MJournal importJournal(X_I_GLJournal imp, MJournalBatch currentBatch, MJournal currentJournal, String old_journalDocumentNo, Timestamp old_dateAcct, String currentJournalDocumentNo) throws Exception{
 		// Journal
 		MJournal journal = currentJournal;
-		
-		Timestamp impDateAcct = TimeUtil.getDay(imp.getDateAcct());
 
 		if (currentJournal == null
 				|| !old_journalDocumentNo.equals(currentJournalDocumentNo)
@@ -1026,11 +1015,10 @@ public class ImportGLJournalBatch extends SvrProcess {
 				|| (currentJournal.getGL_Category_ID() != imp.getGL_Category_ID())
 				|| !currentJournal.getPostingType().equals(imp.getPostingType())
 				|| (currentJournal.getC_Currency_ID() != imp.getC_Currency_ID())
-				|| !impDateAcct.equals(old_dateAcct)
-				|| (currentJournal.getAD_Org_ID() != imp.getAD_OrgDoc_ID())) {
+				|| !TimeUtil.isSameDay(imp.getDateAcct(), old_dateAcct)) {
 
 			journal = new MJournal(getCtx(), 0, get_TrxName());
-			journal.setClientOrg(imp.getAD_Client_ID(),	imp.getAD_OrgDoc_ID());
+			journal.setClientOrg(imp.getAD_Client_ID(),	m_AD_Org_ID);
 			if(currentBatch != null){
 				journal.setGL_JournalBatch_ID(currentBatch.getGL_JournalBatch_ID());
 			}
@@ -1079,6 +1067,7 @@ public class ImportGLJournalBatch extends SvrProcess {
 	protected MJournalLine importJournalLine(X_I_GLJournal imp, MJournalBatch currentBatch, MJournal currentJournal) throws Exception{
 		// Lines
 		MJournalLine line = new MJournalLine(currentJournal);
+		line.setClientOrg(imp.getAD_Client_ID(), imp.getAD_Org_ID());
 		line.setDescription(imp.getDescription());
 		line.setCurrency(imp.getC_Currency_ID(), imp.getC_ConversionType_ID(), imp.getCurrencyRate());
 		line.setC_ElementValue_ID(imp.getAccount_ID());
@@ -1121,11 +1110,25 @@ public class ImportGLJournalBatch extends SvrProcess {
 	protected void processJournals(){
 		for (MJournalBatch batch : batches) {
 			if (!DocumentEngine.processAndSave(batch, MJournalBatch.DOCACTION_Complete, false)) {
-				DB.executeUpdate("UPDATE I_GLJournal SET I_ErrorMsg = '" + batch.getProcessMsg()
+				DB.executeUpdate("UPDATE I_GLJournal SET I_ErrorMsg = '" + Msg.parseTranslation(getCtx(), batch.getProcessMsg())
 						+ "' WHERE Gl_JournalBatch_ID = " + batch.getID(), get_TrxName());
 			} 
 		}
 	}
+	
+	/**
+	 * Setea no importados a los registros que quedaron sin importar
+	 * 
+	 * @param clientCheck
+	 *            cláusula where de ad_client
+	 * @return cantidad de registros actualizados
+	 */
+	protected int setNotImported(String clientCheck){
+		StringBuffer sql = new StringBuffer("UPDATE I_GLJournal "
+				+ "SET I_IsImported='N', Updated=SysDate "
+				+ "WHERE I_IsImported<>'Y'").append(clientCheck);
+		return DB.executeUpdate(sql.toString(), get_TrxName());
+	}	
 	
 	/**
 	 * @param errors
