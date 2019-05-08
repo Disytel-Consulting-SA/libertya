@@ -111,6 +111,7 @@ public class GeneratePaymentProposalProcess extends SvrProcess {
 					  + MInvoice.AUTHORIZATIONCHAINSTATUS_Authorized + "') " +
 					  " AND bp.batch_payment_rule IS NOT NULL " +
 					  " AND bp.C_BankAccount_ID IS NOT NULL " +
+					  " AND bp.paymentblocked = 'N' " +
 					  " AND dt.signo_issotrx = -1 " +
 					  " AND dt.DocBaseType = 'API' " +
 					  " AND invoiceopen(i.C_Invoice_ID, ps.c_InvoicePaySchedule_ID) > 0 ";

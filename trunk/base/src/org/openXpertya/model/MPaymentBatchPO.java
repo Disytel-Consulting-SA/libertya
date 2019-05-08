@@ -354,6 +354,11 @@ public class MPaymentBatchPO extends X_C_PaymentBatchPO implements DocAction {
 				addDetailMsg(detailMsgs, "POVendorPaymentRuleChange", "");
 			}
 			
+			// Valido que los proveedores no tengan pagos bloqueados
+			if(bPartner.ispaymentblocked()){
+				addDetailMsg(detailMsgs, "PartnerPaymentAuthorizationFailed", "");
+			}
+			
 			//Valido que no haya datalles sin facturas
 			if (Util.isEmpty(detail.getInvoices())) {
 				addDetailMsg(detailMsgs, "PaymentDetailWithoutInvoices", "");
