@@ -7,6 +7,7 @@ import java.util.Random;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MPromotion;
 import org.openXpertya.model.MPromotionCode;
+import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Promotion_Code;
 import org.openXpertya.model.X_C_Promotion_Code_Batch;
 import org.openXpertya.util.CLogger;
@@ -60,12 +61,19 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 			throw new Exception("La factura ingresada ya fue utilizada para generar un cupon promocional");
 		}
 		
+		// Factura originante del cupon
+		X_C_Invoice invoiceOrig = new X_C_Invoice(getCtx(), invoiceOrigID, get_TrxName());
+		
 		// Deben existir promociones válidas para la fecha actual de tipo
 		// código promocional y que la cantidad máxima de códigos generados sea
-		// mayor a los códigos ya generados en lotes no anulados
-		List<MPromotion> promotionsCodes = MPromotion.getValidForCodesGeneration(today, getCtx(), get_TrxName());
+		// mayor a los códigos ya generados en lotes no anulados.  Se priorizan las promociones
+		// específicas de la sucursal, y de no haber disponibilidad, se buscan las generales
+		List<MPromotion> promotionsCodes = MPromotion.getValidForCodesGeneration(today, getCtx(), get_TrxName(), invoiceOrig.getAD_Org_ID());
 		if(promotionsCodes.size() == 0){
-			throw new Exception(Msg.getMsg(getCtx(), "NotExistPromotionValidForCodeGeneration"));
+			promotionsCodes = MPromotion.getValidForCodesGeneration(today, getCtx(), get_TrxName(), 0);
+			if(promotionsCodes.size() == 0){
+				throw new Exception(Msg.getMsg(getCtx(), "NotExistPromotionValidForCodeGeneration"));
+			}
 		}
 		
 		// Random de promociones existentes a tomar
@@ -99,14 +107,21 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 			randomPromoIndex = r.nextInt(promotionsCodes.size());
 			randomPromo = promotionsCodes.get(randomPromoIndex);
 			codeGenerator = new PromotionBarcodeGenerator(pcBatch, randomPromo);
-			// Generar el código promocional
+			// Generar el cupon
 			pc = new MPromotionCode(getCtx(), 0, get_TrxName());
 			pc.setC_Promotion_Code_Batch_ID(pcBatch.getID());
 			pc.setC_Promotion_ID(randomPromo.getID());
-			pc.setCode(codeGenerator.generateCode());
 			pc.setValidFrom(randomPromo.getValidFrom());
 			pc.setValidTo(randomPromo.getValidTo());
 			pc.setC_Invoice_Orig_ID(invoiceOrigID);
+			pc.setAD_Org_ID(randomPromo.getAD_Org_ID());
+			pc.setCode(""); // Valor temporal hasta asignarle el definitivo luego de contar con el c_promotion_code_id
+			if(!pc.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+			// Generar el codigo de promocion y asignarlo al cupon
+			codeGenerator.setPromotionCode(pc);
+			pc.setCode(codeGenerator.generateCode());
 			pc.setProcessed(true);
 			if(!pc.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
