@@ -109,6 +109,13 @@ public class ADSortTab extends Panel implements IADTabpanel
 	private Button bRemove = new Button();
 	private Button bUp = new Button();
 	private Button bDown = new Button();
+	
+	/**
+	 * Ventana/Pestaña como read only también esta pestaña debe terner el mismo
+	 * comportamiento
+	 */
+    private boolean readOnly = false;
+    
 	//
 	SimpleListModel noModel = new SimpleListModel() {
 		/**
@@ -481,6 +488,8 @@ public class ADSortTab extends Panel implements IADTabpanel
 		yesList.setEnabled(isReadWrite);
 		noList.setEnabled(isReadWrite);
 
+		updateButtons();
+		
 		yesList.setItemRenderer(yesModel);
 		yesList.setModel(yesModel);
 		noList.setItemRenderer(noModel);
@@ -703,6 +712,22 @@ public class ADSortTab extends Panel implements IADTabpanel
 		adWindowPanel = null;
 	}	//	dispose
 
+	private void updateButtons(){
+		bAdd.setEnabled(!isReadOnly());
+    	bDown.setEnabled(!isReadOnly());
+    	bRemove.setEnabled(!isReadOnly());
+    	bUp.setEnabled(!isReadOnly());
+    }
+    
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
+		updateButtons();
+	}
+	
 	/**
 	 * List Item
 	 * @author Teo Sarca

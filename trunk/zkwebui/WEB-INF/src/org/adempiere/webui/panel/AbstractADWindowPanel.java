@@ -551,6 +551,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 		if (gTab.isSortTab())
 		{
 			ADSortTab sortTab = new ADSortTab(curWindowNo, gTab);
+			sortTab.setReadOnly(gTab.isReadOnly());
 			if (includedMap.containsKey(gTab.getAD_Tab_ID()))
 		    {
 		    	includedMap.get(gTab.getAD_Tab_ID()).embed(ctx, curWindowNo, mWindow, gTab.getAD_Tab_ID(), tabIndex, sortTab);
