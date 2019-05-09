@@ -4,6 +4,8 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 import org.openXpertya.model.MPromotion;
+import org.openXpertya.model.X_AD_Org;
+import org.openXpertya.model.X_C_Invoice;
 import org.openXpertya.model.X_C_Promotion_Code;
 import org.openXpertya.model.X_C_Promotion_Code_Batch;
 import org.openXpertya.print.pdf.text.pdf.Barcode;
@@ -26,7 +28,7 @@ public class PromotionBarcodeGenerator extends BarcodeGenerator {
 	private SimpleDateFormat sdf;
 	
 	public PromotionBarcodeGenerator() {
-		sdf = new SimpleDateFormat("SSSssmmHHddMMyy");
+		sdf = new SimpleDateFormat("ddMMyy");
 	}
 	
 	public PromotionBarcodeGenerator(X_C_Promotion_Code_Batch pcBatch, MPromotion promo) {
@@ -46,7 +48,21 @@ public class PromotionBarcodeGenerator extends BarcodeGenerator {
 		// ID de promoción
 		if(Util.isEmpty(code, true)){
 			Timestamp actualTime = Env.getTimestamp();
-			code = getBatchPromotionalCode().getID()+sdf.format(actualTime)+getPromotion().getID();
+			//code = getBatchPromotionalCode().getID()+sdf.format(actualTime)+getPromotion().getID();
+			
+			/* Modificado a fin de que genere codigos de 16 caracteres:
+		     * 	Value de Sucursal (a la cual pertenece el ticket original de la compra)
+		     * 	ID Cupón (más un 0 si la longitud del ID es menor a 7)
+		     * 	Fecha Cupon (ddMMyy)
+		     */
+			String promCodeID = Integer.toString(promotionCode.getC_Promotion_Code_ID());
+			if (promCodeID.length() < 8)
+				promCodeID = "0" + promCodeID;
+			StringBuffer sb = new StringBuffer();
+			sb.append(getOrgValueFromOriginalTicket());
+			sb.append(promCodeID);
+			sb.append(sdf.format(actualTime));
+			code = sb.toString();
 			//((Barcode128)getBarcode()).
 		}
 		setCode(code);
@@ -82,4 +98,10 @@ public class PromotionBarcodeGenerator extends BarcodeGenerator {
 		return new Barcode128();
 	}
 
+	protected String getOrgValueFromOriginalTicket() {
+		X_C_Invoice ticket = new X_C_Invoice(promotionCode.getCtx(), promotionCode.getC_Invoice_Orig_ID(), promotionCode.get_TrxName());
+		X_AD_Org org = new X_AD_Org(ticket.getCtx(), ticket.getAD_Org_ID(), ticket.get_TrxName());
+		return org.getValue();
+	}
+	
 }

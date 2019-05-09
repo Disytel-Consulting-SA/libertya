@@ -217,26 +217,29 @@ public class MPromotion extends X_C_Promotion {
 	 *            contexto
 	 * @param trxName
 	 *            nombre de transacción
+	 * @param orgID
+	 * 			  organizacion de la promocion (especifica de una sucursal, o bien general)
 	 * @return lista de promociones que cumplen las condiciones para ser
 	 *         seleccionables para la generación de códigos promocionales
 	 */
-	public static List<MPromotion> getValidForCodesGeneration(Date date, Properties ctx, String trxName){
+	public static List<MPromotion> getValidForCodesGeneration(Date date, Properties ctx, String trxName, int orgID) {
 		List<MPromotion> validPromos = new ArrayList<MPromotion>();
 		PreparedStatement pstmt = null;
 		ResultSet         rs    = null;
 		
 		// Obtiene todas las promociones activas y publicadas cuyo rango de validez
-		// contenga la fecha recibida com parámetro.
+		// contenga la fecha recibida com parámetro, para la organización especificada (o bien *)
 		String sql = "SELECT c_promotion_id " +
 				"FROM (" +
-			" SELECT p.c_promotion_id, p.maxpromotionalcodes, coalesce((select count(*) "
-																	+ " from C_Promotion_Code pc "
-																	+ " where p.c_promotion_id = pc.c_promotion_id "
-																	+ "		and pc.IsActive = 'Y' "
-																	+ "		AND pc.ValidFrom::date <= ?::date "
-																	+ "		AND (pc.ValidTo::date IS NULL OR ?::date <= pc.ValidTo::date)),0) as generateds " +
+			" SELECT p.ad_org_id, p.c_promotion_id, p.maxpromotionalcodes, coalesce((select count(*) "
+																		+ " from C_Promotion_Code pc "
+																		+ " where p.c_promotion_id = pc.c_promotion_id "
+																		+ "		and pc.IsActive = 'Y' "
+																		+ "		AND pc.ValidFrom::date <= ?::date "
+																		+ "		AND (pc.ValidTo::date IS NULL OR ?::date <= pc.ValidTo::date)),0) as generateds " +
 			" FROM C_Promotion p " +
 			" WHERE p.AD_Client_ID = ? " +
+			  " AND p.AD_Org_ID = " + orgID +
 			  " AND p.IsActive = 'Y' " +
 			  " AND p.PublishStatus = ? " +
 			  " AND p.promotiontype = '" + MPromotion.PROMOTIONTYPE_PromotionalCode + "' " +
