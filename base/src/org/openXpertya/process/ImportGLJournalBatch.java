@@ -577,6 +577,16 @@ public class ImportGLJournalBatch extends SvrProcess {
 						+ " AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'");
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 		log.fine("doIt - Set Org from Value=" + no);
+		
+		sql = new StringBuffer(
+				"UPDATE I_GLJournal i "
+						+ "SET AD_Org_ID=AD_OrgDoc_ID "
+						+ "WHERE OrgValue IS NULL AND AD_OrgDoc_ID IS NOT NULL AND AD_OrgDoc_ID<>0"
+						+ " AND (C_ValidCombination_ID IS NULL OR C_ValidCombination_ID=0) AND I_IsImported<>'Y'")
+				.append(clientCheck);
+		no = DB.executeUpdate(sql.toString(), get_TrxName());
+		log.fine("doIt - Set Org from Doc Org=" + no);
+		
 		sql = new StringBuffer(
 				"UPDATE I_GLJournal i "
 						+ "SET AD_Org_ID=AD_OrgDoc_ID "
