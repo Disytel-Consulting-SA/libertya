@@ -2299,3 +2299,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner_BankList',
 
 --20190502-1030 Incorporación del dato del cobro que genera el descuento/recargo en el TPV
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_documentdiscount','c_payment_id','integer'));
+
+--20190509-0945 Fecha de última exportación en los formatos de exportación
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','lastexporteddate','timestamp without time zone'));

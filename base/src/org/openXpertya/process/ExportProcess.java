@@ -28,6 +28,7 @@ import org.openXpertya.model.MProcessPara;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.model.X_AD_ExpFormat;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -345,6 +346,13 @@ public class ExportProcess extends SvrProcess {
 	protected void saveDocument() throws Exception {
 		// Cierro el archivo
 		getFileWriter().close();
+		// Guardo la última fecha de exportación del formato
+		if(getExportFormat() != null){
+			getExportFormat().setLastExportedDate(Env.getTimestamp());
+			if(!getExportFormat().save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
 	}
 	
 	protected void writeLine(ResultSet rs) throws Exception{
