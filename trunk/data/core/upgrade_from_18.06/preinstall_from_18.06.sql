@@ -2302,3 +2302,20 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_documentdiscount','
 
 --20190509-0945 Fecha de última exportación en los formatos de exportación
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','lastexporteddate','timestamp without time zone'));
+
+--20190509-1020 FKs de los asientos generados desde importaciones no deben ser bloqueantes ante la eliminación del asiento importado 
+ALTER TABLE i_gljournal DROP CONSTRAINT gljourbelline_igljournal;
+ALTER TABLE i_gljournal DROP CONSTRAINT gljournal_igljournal;
+ALTER TABLE i_gljournal DROP CONSTRAINT gljournalbatch_igljournal;
+
+ALTER TABLE i_gljournal ADD CONSTRAINT gljourbelline_igljournal FOREIGN KEY (gl_journalline_id)
+      REFERENCES gl_journalline (gl_journalline_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE;
+      
+ALTER TABLE i_gljournal ADD CONSTRAINT gljournal_igljournal FOREIGN KEY (gl_journal_id)
+      REFERENCES gl_journal (gl_journal_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE;
+      
+ALTER TABLE i_gljournal ADD CONSTRAINT gljournalbatch_igljournal FOREIGN KEY (gl_journalbatch_id)
+      REFERENCES gl_journalbatch (gl_journalbatch_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE;
