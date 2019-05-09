@@ -753,7 +753,8 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 
                     if( mTab.isSortTab()) {
                         VSortTab st = new VSortTab( m_curWindowNo,mTab.getAD_Table_ID(),mTab.getAD_ColumnSortOrder_ID(),mTab.getAD_ColumnSortYesNo_ID());
-
+                        
+                        st.setReadOnly(mTab.isReadOnly());
                         st.setTabLevel( mTab.getTabLevel());
                         tabElement = st;
                     } else                                           // normal tab

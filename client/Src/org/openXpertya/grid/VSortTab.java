@@ -177,6 +177,12 @@ public class VSortTab extends CPanel implements APanelTab,ActionListener {
 
     private JScrollPane yesPane = new JScrollPane( yesList );
 
+	/**
+	 * Ventana/Pestaña como read only también esta pestaña debe terner el mismo
+	 * comportamiento
+	 */
+    private boolean readOnly = false;
+    
     /**
      * Descripción de Método
      *
@@ -218,7 +224,7 @@ public class VSortTab extends CPanel implements APanelTab,ActionListener {
         noPane.setPreferredSize( new Dimension( 300,400 ));
         noList.setSelectionMode( ListSelectionModel.MULTIPLE_INTERVAL_SELECTION );
 
-        //
+        updateButtons();
 
         this.add( noLabel,new GridBagConstraints( 0,0,1,1,0.0,0.0,GridBagConstraints.CENTER,GridBagConstraints.NONE,new Insets( 0,0,0,0 ),0,0 ));
         this.add( yesLabel,new GridBagConstraints( 2,0,1,1,0.0,0.0,GridBagConstraints.CENTER,GridBagConstraints.NONE,new Insets( 0,0,0,0 ),0,0 ));
@@ -573,6 +579,23 @@ public class VSortTab extends CPanel implements APanelTab,ActionListener {
             	log.log( Level.SEVERE,"VSortTab.saveData - NoModel - Not updated: " + m_KeyColumnName + "=" + pp.getKey());
         }
     }    // saveData
+
+    
+    private void updateButtons(){
+    	bAdd.setReadWrite(!isReadOnly());
+    	bDown.setReadWrite(!isReadOnly());
+    	bRemove.setReadWrite(!isReadOnly());
+    	bUp.setReadWrite(!isReadOnly());
+    }
+    
+	public boolean isReadOnly() {
+		return readOnly;
+	}
+
+	public void setReadOnly(boolean readOnly) {
+		this.readOnly = readOnly;
+		updateButtons();
+	}
 }    // VSortTab
 
 
