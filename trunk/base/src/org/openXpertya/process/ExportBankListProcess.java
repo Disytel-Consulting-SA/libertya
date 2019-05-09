@@ -18,6 +18,8 @@ public class ExportBankListProcess extends AbstractSvrProcess {
 			exporter.export();
 			exporter = new ExportListaPatagonia(getCtx(), bankList, get_TrxName());
 		} else if (MDocType.DOCTYPE_Lista_HSBC.equals(bankListDocType.getDocTypeKey())) {
+			exporter = new ExportListaHSBCProveedores(getCtx(), bankList, get_TrxName());
+			exporter.export();
 			exporter = new ExportListaHSBC(getCtx(), bankList, get_TrxName());
 		}
 		

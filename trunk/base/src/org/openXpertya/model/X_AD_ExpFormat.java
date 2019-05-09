@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-03-08 18:00:13.708 */
+ *  @version  - 2019-05-09 09:52:19.323 */
 public class X_AD_ExpFormat extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -168,8 +168,8 @@ public static final String ENCODINGTYPE_UTF_8 = "U";
 /** Set Encoding Type */
 public void setEncodingType (String EncodingType)
 {
-if (EncodingType.equals("I") || EncodingType.equals("U"));
- else throw new IllegalArgumentException ("EncodingType Invalid value - Reference = ENCODINGTYPE_AD_Reference_ID - I - U");
+if (EncodingType.equals("I") || EncodingType.equals("U") || ( refContainsValue("CORE-AD_Reference-1010255", EncodingType) ) );
+ else throw new IllegalArgumentException ("EncodingType Invalid value: " + EncodingType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010255") );
 if (EncodingType == null) throw new IllegalArgumentException ("EncodingType is mandatory");
 if (EncodingType.length() > 1)
 {
@@ -191,8 +191,8 @@ public static final String ENDLINETYPE_Windows = "W";
 /** Set End Line Type */
 public void setEndLineType (String EndLineType)
 {
-if (EndLineType.equals("U") || EndLineType.equals("W"));
- else throw new IllegalArgumentException ("EndLineType Invalid value - Reference = ENDLINETYPE_AD_Reference_ID - U - W");
+if (EndLineType.equals("U") || EndLineType.equals("W") || ( refContainsValue("CORE-AD_Reference-1010256", EndLineType) ) );
+ else throw new IllegalArgumentException ("EndLineType Invalid value: " + EndLineType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010256") );
 if (EndLineType == null) throw new IllegalArgumentException ("EndLineType is mandatory");
 if (EndLineType.length() > 1)
 {
@@ -214,8 +214,8 @@ public static final String EXTENSION_TXT = "T";
 /** Set Extension */
 public void setExtension (String Extension)
 {
-if (Extension.equals("C") || Extension.equals("T"));
- else throw new IllegalArgumentException ("Extension Invalid value - Reference = EXTENSION_AD_Reference_ID - C - T");
+if (Extension.equals("C") || Extension.equals("T") || ( refContainsValue("CORE-AD_Reference-1010257", Extension) ) );
+ else throw new IllegalArgumentException ("Extension Invalid value: " + Extension + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010257") );
 if (Extension == null) throw new IllegalArgumentException ("Extension is mandatory");
 if (Extension.length() > 1)
 {
@@ -260,8 +260,8 @@ public static final String FORMATTYPE_XML = "X";
 Format of the data */
 public void setFormatType (String FormatType)
 {
-if (FormatType.equals("F") || FormatType.equals("C") || FormatType.equals("T") || FormatType.equals("X"));
- else throw new IllegalArgumentException ("FormatType Invalid value - Reference = FORMATTYPE_AD_Reference_ID - F - C - T - X");
+if (FormatType.equals("F") || FormatType.equals("C") || FormatType.equals("T") || FormatType.equals("X") || ( refContainsValue("CORE-AD_Reference-209", FormatType) ) );
+ else throw new IllegalArgumentException ("FormatType Invalid value: " + FormatType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-209") );
 if (FormatType == null) throw new IllegalArgumentException ("FormatType is mandatory");
 if (FormatType.length() > 1)
 {
@@ -275,6 +275,16 @@ Format of the data */
 public String getFormatType() 
 {
 return (String)get_Value("FormatType");
+}
+/** Set Last Exported Date */
+public void setLastExportedDate (Timestamp LastExportedDate)
+{
+set_Value ("LastExportedDate", LastExportedDate);
+}
+/** Get Last Exported Date */
+public Timestamp getLastExportedDate() 
+{
+return (Timestamp)get_Value("LastExportedDate");
 }
 /** Set Name.
 Alphanumeric identifier of the entity */
