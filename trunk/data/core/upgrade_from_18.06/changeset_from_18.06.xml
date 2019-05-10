@@ -62,6 +62,17 @@ Ejemplos de cambios
     	<!-- 20190318 - Soporte para OXPRootBase.war -->
     	<copy file="${SOURCE_DIR}/build.xml" todir="${TARGET_DIR}" overwrite="yes" />
     	
+    	<!-- 20190506 - Fix a clase del proyecto Apache Axis 1.4, para solucionar error: SOAPFaultBuilder throws DOMException WRONG_DOCUMENT_ERR
+    					Solucion segun https://issues.apache.org/jira/browse/AXIS-2705  
+    					 
+    					Clase SoapFaultBuilder, Linea 307: 
+    						elements[i].appendChild(tempDoc.importNode(node,true)); 
+    					por
+    						Node node2 = elements[i].getOwnerDocument().importNode(node, true); // line added
+                            elements[i].appendChild(node2);
+                            
+                        Se modificó y recompiló la clase según lo indicado, y se incorporó en AxiaJar.jar -->
+    	<copy file="${SOURCE_DIR}/AxisJar.jar" todir="${TARGET_DIR}/lib" overwrite="yes" />
     </target>
     
 </project>
