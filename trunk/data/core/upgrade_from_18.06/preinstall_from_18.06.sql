@@ -2319,3 +2319,7 @@ ALTER TABLE i_gljournal ADD CONSTRAINT gljournal_igljournal FOREIGN KEY (gl_jour
 ALTER TABLE i_gljournal ADD CONSTRAINT gljournalbatch_igljournal FOREIGN KEY (gl_journalbatch_id)
       REFERENCES gl_journalbatch (gl_journalbatch_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE;
+      
+--20190510-1130 Columnas de tipo TableDir que deberian ser Busqueda dado que referencian tablas potencialmente voluminosas
+update ad_column set ad_reference_id = 30, updated=now() where ad_componentobjectuid = 'CORE-AD_Column-1014641';
+update ad_column set ad_reference_id = 30, updated=now() where ad_componentobjectuid = 'CORE-AD_Column-1014838';
