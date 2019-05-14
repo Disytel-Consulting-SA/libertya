@@ -9,7 +9,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MClient;
@@ -29,6 +28,7 @@ import org.openXpertya.model.X_C_RetencionType;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.Util;
 
 public class ExportListaHSBC extends ExportBankList {
@@ -144,7 +144,7 @@ public class ExportListaHSBC extends ExportBankList {
 		idLine.append(getFieldSeparator());
 		// Cuenta Corriente de la Empresa. Formato SSSTNNNNND, es el
 		// número de la cuenta bancaria del pago
-		idLine.append(accountno.length() > 10?accountno.substring(0, 9):accountno);
+		idLine.append(StringUtil.trimStrict(accountno, 10));
 		idLine.append(getFieldSeparator());
 		// Fecha de Emisión de Pagos del Banco, fecha actual + 1
 		Calendar today = Calendar.getInstance();
@@ -173,9 +173,9 @@ public class ExportListaHSBC extends ExportBankList {
 		idLine.append(getFieldSeparator());
 		idLine.append(rs.getString("sucursal"));
 		idLine.append(getFieldSeparator());
-		idLine.append(rs.getString("a_name"));
+		idLine.append(rs.getString("a_name") == null?"":StringUtil.trimStrict(rs.getString("a_name"), 60));
 		idLine.append(getFieldSeparator());
-		idLine.append(rs.getString("paydescription"));
+		idLine.append(rs.getString("paydescription") == null?"":StringUtil.trimStrict(rs.getString("paydescription"), 120));
 		idLine.append(getFieldSeparator());
 		// CBU de la cuenta del proveedor para las transferencias
 		idLine.append(rs.getString("cbu"));
@@ -225,7 +225,7 @@ public class ExportListaHSBC extends ExportBankList {
 		dcLine.append(getFieldSeparator());
 		dcLine.append(dateFormat_ddMMyyyy.format(dateInvoiced));
 		dcLine.append(getFieldSeparator());
-		dcLine.append(rs.getString("description") == null?"":rs.getString("description"));
+		dcLine.append(rs.getString("description") == null?"":StringUtil.trimStrict(rs.getString("description"),20));
 		dcLine.append(getFieldSeparator());
 		dcLine.append(rs.getBigDecimal("grandtotal"));
 		dcLine.append(getFieldSeparator());
@@ -257,17 +257,17 @@ public class ExportListaHSBC extends ExportBankList {
 		reLine.append(getFieldSeparator());
 		reLine.append(rs.getString("retentionno"));
 		reLine.append(getFieldSeparator());
-		reLine.append(rs.getString("retentionname"));
+		reLine.append(StringUtil.trimStrict(rs.getString("retentionname"),15));
 		reLine.append(getFieldSeparator());
 		// Código Oficial de la Retención
 		// Por lo pronto se envía el ID del esquema de retención
 		// Si es IIBB va 0000
 		reLine.append(X_C_RetencionType.RETENTIONTYPE_IngresosBrutos.equals(rs.getString("retentiontype")) ? "0000"
-				: rs.getInt("c_retencionschema_id"));
+				: StringUtil.trimStrict(String.valueOf(rs.getInt("c_retencionschema_id")),4));
 		reLine.append(getFieldSeparator());
 		// Descripción Oficial de la Retención
 		// Por lo pronto se envía el nombre del esquema de retención
-		reLine.append(rs.getString("retentionname"));
+		reLine.append(StringUtil.trimStrict(rs.getString("retentionname"),20));
 		reLine.append(getFieldSeparator());
 		// Base Imponible
 		reLine.append(rs.getBigDecimal("baseimponible_amt"));
@@ -280,13 +280,10 @@ public class ExportListaHSBC extends ExportBankList {
 		reLine.append(dateFormat_MM_yyyy.format(rs.getTimestamp("retentiondate")));
 		reLine.append(getFieldSeparator());
 		// Resolución DGR - Se envía vacío
-		reLine.append(rs.getString("retentionname"));
+		reLine.append(StringUtil.trimStrict(rs.getString("retentionname"),15));
 		reLine.append(getFieldSeparator());
 		// Provincia
-		reLine.append(rs.getString("retencion_provincia"));
-		reLine.append(getFieldSeparator());
-		// Jurisdicción
-		reLine.append(rs.getString("jurisdictioncode"));
+		reLine.append(StringUtil.trimStrict(rs.getString("retencion_provincia"),20));
 		reLine.append(getFieldSeparator());
 		// Porcentaje de Retención
 		reLine.append(rs.getBigDecimal("retencion_percent"));
@@ -303,9 +300,9 @@ public class ExportListaHSBC extends ExportBankList {
 		// Observaciones
 		reLine.append("");
 		reLine.append(getFieldSeparator());
-		reLine.append(rs.getString("src_documentno") != null ? rs.getString("src_documentno")
+		reLine.append(StringUtil.trimStrict(rs.getString("src_documentno") != null ? rs.getString("src_documentno")
 				: (rs.getString("invoices") != null ? rs.getString("invoices").replace("{", "").replace("}", "")
-						.replace(",", "/").replace("\"", "") : ""));
+						.replace(",", "/").replace("\"", "") : ""),1599));
 		reLine.append(getFieldSeparator());
 		reLine.append(getRowSeparator());
 
@@ -578,27 +575,37 @@ public class ExportListaHSBC extends ExportBankList {
 	}
 
 	@Override
-	protected Set<String> initInvalidaCaracters(){
-		Set<String> invalids = super.initInvalidaCaracters();
-		invalids.add("|");
-		invalids.add("¬");
-		invalids.add("!");
-		invalids.add("#");
-		invalids.add("&");
-		invalids.add("(");
-		invalids.add("(");
-		invalids.add("?");
-		invalids.add("'");
-		invalids.add("¿");
-		invalids.add("¡");
-		invalids.add("{");
-		invalids.add("}");
-		invalids.add("[");
-		invalids.add("]");
-		invalids.add("^");
-		invalids.add("~");
-		invalids.add("¨");
-		invalids.add("*");
+	protected Map<String, String> initInvalidCaracters(){
+		Map<String, String> invalids = super.initInvalidCaracters();
+		invalids.put("|", null);
+		invalids.put("¬", null);
+		invalids.put("!", null);
+		invalids.put("#", null);
+		invalids.put("&", null);
+		invalids.put("(", null);
+		invalids.put("(", null);
+		invalids.put("?", null);
+		invalids.put("'", null);
+		invalids.put("¿", null);
+		invalids.put("¡", null);
+		invalids.put("{", null);
+		invalids.put("}", null);
+		invalids.put("[", null);
+		invalids.put("]", null);
+		invalids.put("^", null);
+		invalids.put("~", null);
+		invalids.put("¨", null);
+		invalids.put("*", null);
+		invalids.put("ñ", null);
+		invalids.put("°", null);
+		invalids.put("`", null);
+		invalids.put("/", null);
+		invalids.put("\\", null);
+		invalids.put("á", "a");
+		invalids.put("é", "e");
+		invalids.put("í", "i");
+		invalids.put("ó", "o");
+		invalids.put("ú", "u");
 		return invalids;
 	}
 }

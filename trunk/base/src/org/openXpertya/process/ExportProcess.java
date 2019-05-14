@@ -16,10 +16,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.openXpertya.model.MExpFormat;
 import org.openXpertya.model.MExpFormatRow;
@@ -47,6 +45,9 @@ public class ExportProcess extends SvrProcess {
 	/** Extensión del archivo exportado */
 	protected static final String FILE_EXTENSION_CSV = "csv";
 	protected static final String FILE_EXTENSION_TXT = "txt";
+
+	/** Caracter por defecto para el reemplazo de caracteres inválidos */
+	protected static final String DEFAULT_REPLACE_CARACTER = " ";
 	
 	/** Formato de exportación */
 	private MExpFormat exportFormat;
@@ -76,7 +77,7 @@ public class ExportProcess extends SvrProcess {
 	/** Campos de secuencia */
 	private Map<String, Integer> sequenceNumbers = new HashMap<String, Integer>();
 	/** Caracteres inválidos a elminar antes de escribir sobre el archivo */
-	private Set<String> invalidCaracters = null;
+	private Map<String, String> invalidCaracters = null;
 	/** Formato de fechas yyyyMMdd */
 	protected DateFormat dateFormat_yyyyMMdd = new SimpleDateFormat("yyyyMMdd");
 	/** Formato de fechas ddMMyyyy */
@@ -517,8 +518,14 @@ public class ExportProcess extends SvrProcess {
 	protected String cleanWrite(String line){
 		String lineCleaned = line;
 		if(line != null){
-			for (String ic : getInvalidCaracters()) {
-				lineCleaned = lineCleaned.replace(ic, " ");
+			// Por defecto es espacio en blanco
+			String replace;
+			for (String ic : getInvalidCaracters().keySet()) {
+				replace = DEFAULT_REPLACE_CARACTER;
+				if(getInvalidCaracters().get(ic) != null){
+					replace = getInvalidCaracters().get(ic);
+				}
+				lineCleaned = lineCleaned.replace(ic, replace);
 			}
 		}
 		return lineCleaned;
@@ -620,16 +627,16 @@ public class ExportProcess extends SvrProcess {
 		this.sequenceNumbers = sequenceNumbers;
 	}
 
-	protected Set<String> getInvalidCaracters() {
+	protected Map<String, String> getInvalidCaracters() {
 		if(invalidCaracters == null){
-			invalidCaracters = initInvalidaCaracters();
+			invalidCaracters = initInvalidCaracters();
 		}
 		return invalidCaracters;
 	}
 	
-	protected Set<String> initInvalidaCaracters(){
-		Set<String> invalids = new HashSet<String>();
-		invalids.add("\"");
+	protected Map<String, String> initInvalidCaracters(){
+		Map<String, String> invalids = new HashMap<String,String>();
+		invalids.put("\"",null);
 		return invalids;
 	}
 }
