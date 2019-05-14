@@ -46,18 +46,18 @@
 	where r.ad_componentobjectuid = 'CORE-AD_Reference-149' and rl.value = p.creditcardtype) as us_trl, 
 	p.c_payment_id, dd.m_discountschema_id, ds.name as discountschemaname, 
 	i.c_doctypetarget_id, dt.name as doctypename, i.c_invoice_id, i.documentno, i.dateacct, 
-	i.grandtotal, coalesce(al.amount, p.payamt, i.grandtotal) as amount,
-	(case when dd.discountamt < 0 then dd.discountamt else 0.00 end) as rechargeamt,
-	(case when dd.discountamt < 0 then 0.00 else dd.discountamt end) as discountamt
-from c_documentdiscount dd
-join c_payment p on p.c_payment_id = dd.c_payment_id
-join c_invoice i on i.c_invoice_id = dd.c_invoice_id
-join c_allocationline al on (al.c_invoice_id = i.c_invoice_id and al.c_payment_id = p.c_payment_id)
+	i.grandtotal, p.payamt as amount,
+	(case when dd.discountamt is not null and dd.discountamt < 0 then abs(dd.discountamt) else 0.00 end) as rechargeamt,
+	(case when dd.discountamt is not null and dd.discountamt < 0 then 0.00 else dd.discountamt * -1 end) as discountamt
+from c_invoice i 
+join c_allocationline al on al.c_invoice_id = i.c_invoice_id
+join c_payment p on p.c_payment_id = al.c_payment_id
 join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id
 join ad_org o on o.ad_org_id = i.ad_org_id
-join m_discountschema ds on ds.m_discountschema_id = dd.m_discountschema_id
 join m_entidadfinancieraplan efp on efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 join m_entidadfinanciera ef on ef.m_entidadfinanciera_id = efp.m_entidadfinanciera_id
+left join c_documentdiscount dd on (dd.c_invoice_id = i.c_invoice_id and dd.c_payment_id = p.c_payment_id)
+left join m_discountschema ds on ds.m_discountschema_id = dd.m_discountschema_id
 where i.ad_client_id = $P{AD_CLIENT_ID}
 	and i.docstatus in ('CO','CL') 
 	AND i.dateacct::date >= $P{DateFrom}::date
@@ -418,7 +418,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 						mode="Opaque"
 						x="182"
 						y="0"
-						width="130"
+						width="146"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-10"/>
@@ -431,9 +431,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="312"
+						x="328"
 						y="0"
-						width="28"
+						width="34"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-11"/>
@@ -446,7 +446,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="459"
+						x="495"
 						y="0"
 						width="50"
 						height="16"
@@ -461,7 +461,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="509"
+						x="545"
 						y="0"
 						width="65"
 						height="16"
@@ -476,9 +476,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="682"
+						x="672"
 						y="0"
-						width="50"
+						width="55"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-14"/>
@@ -491,24 +491,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="574"
+						x="727"
 						y="0"
-						width="56"
-						height="16"
-						backcolor="#F9F9F9"
-						key="staticText-15"/>
-					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font size="9"/>
-					</textElement>
-				<text><![CDATA[Total]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						mode="Opaque"
-						x="732"
-						y="0"
-						width="50"
+						width="55"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-16"/>
@@ -536,9 +521,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="340"
+						x="362"
 						y="0"
-						width="119"
+						width="133"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-18"/>
@@ -551,9 +536,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="630"
+						x="610"
 						y="0"
-						width="52"
+						width="62"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-19"/>
@@ -589,7 +574,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 					<reportElement
 						x="182"
 						y="0"
-						width="130"
+						width="146"
 						height="15"
 						key="textField-10"
 						isPrintWhenDetailOverflows="true"/>
@@ -601,9 +586,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="312"
+						x="328"
 						y="0"
-						width="28"
+						width="34"
 						height="15"
 						key="textField-11"
 						isPrintWhenDetailOverflows="true"/>
@@ -615,7 +600,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="509"
+						x="545"
 						y="0"
 						width="65"
 						height="15"
@@ -629,7 +614,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="459"
+						x="495"
 						y="0"
 						width="50"
 						height="15"
@@ -643,23 +628,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="574"
+						x="672"
 						y="0"
-						width="56"
-						height="15"
-						key="textField"
-						isPrintWhenDetailOverflows="true"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font size="7"/>
-					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{grandtotal}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="true" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="682"
-						y="0"
-						width="50"
+						width="55"
 						height="15"
 						key="textField-14"
 						isPrintWhenDetailOverflows="true"/>
@@ -671,9 +642,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="732"
+						x="727"
 						y="0"
-						width="50"
+						width="55"
 						height="15"
 						key="textField-16"
 						isPrintWhenDetailOverflows="true"/>
@@ -699,9 +670,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="340"
+						x="362"
 						y="0"
-						width="119"
+						width="133"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -713,9 +684,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="630"
+						x="610"
 						y="0"
-						width="52"
+						width="62"
 						height="15"
 						key="textField-17"
 						isPrintWhenDetailOverflows="true"/>
@@ -735,9 +706,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 			<band height="15"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="732"
+						x="727"
 						y="0"
-						width="50"
+						width="55"
 						height="15"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -752,9 +723,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 			<band height="15"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="732"
+						x="727"
 						y="0"
-						width="50"
+						width="55"
 						height="15"
 						key="textField-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -769,31 +740,18 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 			<band height="18"  isSplitAllowed="true" >
 				<line direction="BottomUp">
 					<reportElement
-						x="574"
-						y="0"
-						width="208"
-						height="1"
+						x="609"
+						y="1"
+						width="173"
+						height="0"
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
 				</line>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="574"
+						x="727"
 						y="2"
-						width="56"
-						height="16"
-						key="textField"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font size="8"/>
-					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$V{GRANDTOTAL_SUM}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="732"
-						y="2"
-						width="50"
+						width="55"
 						height="16"
 						key="textField-15"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -804,9 +762,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="630"
+						x="610"
 						y="2"
-						width="52"
+						width="62"
 						height="16"
 						key="textField-18"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -817,9 +775,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="682"
+						x="672"
 						y="2"
-						width="50"
+						width="55"
 						height="16"
 						key="textField-19"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
