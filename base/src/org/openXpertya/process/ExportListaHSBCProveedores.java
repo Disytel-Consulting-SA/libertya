@@ -17,6 +17,7 @@ import org.openXpertya.model.X_C_ElectronicPaymentBranch;
 import org.openXpertya.model.X_C_Location;
 import org.openXpertya.model.X_C_Region;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.Util;
 
 public class ExportListaHSBCProveedores extends ExportListaHSBC {
@@ -42,11 +43,10 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 		sql.append("	bp.value, ");
 		sql.append("	bp.name, ");
 		sql.append("	bp.taxid, ");
-		sql.append(" 	l.address1, ");
-		sql.append(" 	l.city, ");
-		sql.append(" 	l.postal, ");
-		sql.append(" 	l.address1, ");
-		sql.append(" 	r.name as provincia, ");
+		sql.append(" 	coalesce(l.address1, 'Sin Domicilio') as address1, ");
+		sql.append(" 	coalesce(l.city, 'Sin Ciudad') as city, ");
+		sql.append(" 	coalesce(l.postal, '0000') as postal, ");
+		sql.append(" 	coalesce(r.name, 'Sin Provincia') as provincia, ");
 		sql.append("	epb.value as sucursal, ");
 		sql.append("	bp.iibb, ");
 		sql.append("	ci.name as categoriaiva, ");
@@ -115,32 +115,31 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 			spLine.append(getFieldSeparator());
 			spLine.append(taxid);
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("name"));
+			spLine.append(StringUtil.trimStrict(rs.getString("name"), 40));
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("address1"));
+			spLine.append(StringUtil.trimStrict(rs.getString("address1"),40));
 			spLine.append(getFieldSeparator());
 			// Localidad no puede superar los 20 caracteres
-			spLine.append(rs.getString("city") != null && rs.getString("city").length() > 20
-					? rs.getString("city").substring(0, 19)
-					: (rs.getString("city") != null ? rs.getString("city") : ""));
+			spLine.append(rs.getString("city") == null?"":StringUtil.trimStrict(rs.getString("city"),20));
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("postal") == null?"":rs.getString("postal"));
+			spLine.append(rs.getString("postal") == null ? ""
+					: (rs.getString("postal").matches("[\\d]*") ? StringUtil.trimStrict(rs.getString("postal"), 4) : "0000"));
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("provincia") == null?"":rs.getString("provincia"));
+			spLine.append(rs.getString("provincia") == null?"":StringUtil.trimStrict(rs.getString("provincia"),20));
 			spLine.append(getFieldSeparator());
 			spLine.append(rs.getString("sucursal"));
 			spLine.append(getFieldSeparator());
-			spLine.append(!Util.isEmpty(rs.getString("iibb"), true)?rs.getString("iibb"):taxid);
+			spLine.append(StringUtil.trimStrict(!Util.isEmpty(rs.getString("iibb"), true)?rs.getString("iibb"):taxid,15));
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("categoriaiva"));
+			spLine.append(StringUtil.trimStrict(rs.getString("categoriaiva"),25));
 			spLine.append(getFieldSeparator());
 			// Por lo pronto no se envía el teléfono
 			// spLine.append(rs.getString("phone"));
 			spLine.append("");
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("email") == null?"":rs.getString("email"));
+			spLine.append(rs.getString("email") == null?"":StringUtil.trimStrict(rs.getString("email"),50));
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("contact") == null?"":rs.getString("contact"));
+			spLine.append(rs.getString("contact") == null?"":StringUtil.trimStrict(rs.getString("contact"),40));
 			spLine.append(getFieldSeparator());
 			// Por ahora estos datos no se llenan, por lo pronto sólo se va a
 			// utilizar para transferencias, requiere una estructura de datos

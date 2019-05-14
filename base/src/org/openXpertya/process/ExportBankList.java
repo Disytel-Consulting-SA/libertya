@@ -6,8 +6,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.openXpertya.model.MBankList;
 import org.openXpertya.model.MDocType;
@@ -70,11 +70,11 @@ public abstract class ExportBankList extends ExportProcess {
 	protected abstract void validate() throws Exception;
 
 	@Override
-	protected Set<String> initInvalidaCaracters(){
-		Set<String> invalids = super.initInvalidaCaracters();
-		invalids.add("(");
-		invalids.add(")");
-		invalids.add(":");
+	protected Map<String, String> initInvalidCaracters(){
+		Map<String, String> invalids = super.initInvalidCaracters();
+		invalids.put("(", null);
+		invalids.put(")", null);
+		invalids.put(":", null);
 		return invalids;
 	}
 	

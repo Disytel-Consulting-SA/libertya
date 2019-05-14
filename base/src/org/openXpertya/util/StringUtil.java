@@ -42,10 +42,10 @@ public final class StringUtil {
     	if(s == null){
     		return null;
     	}
-        if( s.length() >= length ) {
-            return s.substring( 0,length - 1 );
+        if( s.trim().length() >= length ) {
+            return s.trim().substring( 0,length - 1 );
         } else {
-            return s;
+            return s.trim();
         }
     }
     
@@ -53,10 +53,10 @@ public final class StringUtil {
     	if(s == null){
     		return null;
     	}
-        if( s.length() > length ) {
-            return s.substring( 0,length );
+        if( s.trim().length() > length ) {
+            return s.trim().substring( 0,length );
         } else {
-            return s;
+            return s.trim();
         }
     }
     
