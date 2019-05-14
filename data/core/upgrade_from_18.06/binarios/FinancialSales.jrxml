@@ -47,8 +47,8 @@
 	p.c_payment_id, dd.m_discountschema_id, ds.name as discountschemaname, 
 	i.c_doctypetarget_id, dt.name as doctypename, i.c_invoice_id, i.documentno, i.dateacct, 
 	i.grandtotal, p.payamt as amount,
-	(case when dd.discountamt is not null and dd.discountamt < 0 then abs(dd.discountamt) else 0.00 end) as rechargeamt,
-	(case when dd.discountamt is not null and dd.discountamt < 0 then 0.00 else dd.discountamt * -1 end) as discountamt
+	(case when dd.discountamt is null then 0.00 when dd.discountamt < 0 then abs(dd.discountamt) else 0.00 end) as rechargeamt,
+	(case when dd.discountamt is null then 0.00 when dd.discountamt < 0 then 0.00 else dd.discountamt * -1 end) as discountamt
 from c_invoice i 
 join c_allocationline al on al.c_invoice_id = i.c_invoice_id
 join c_payment p on p.c_payment_id = al.c_payment_id
