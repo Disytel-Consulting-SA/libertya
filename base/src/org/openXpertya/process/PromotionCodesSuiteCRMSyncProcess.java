@@ -182,7 +182,7 @@ public class PromotionCodesSuiteCRMSyncProcess extends SvrProcess {
 	protected String getContactID(X_C_Promotion_Code promotionCode, Entry_value login, SugarsoapPortType port) throws Exception {
 		// Si la EC es CF, el DNI debo sacarlo de la factura directamente, campo nroidentificcliente 
 		// Si la EC no es CF, debo debo sacarlo de la factura directamente, campo cuit
-		String documentNo = DB.getSQLValueString(null, "SELECT coalesce(cuit, nroidentificcliente) FROM C_Invoice WHERE C_Invoice_ID = ?", promotionCode.getC_Invoice_Orig_ID());
+		String documentNo = DB.getSQLValueString(null, "SELECT coalesce(nullif(cuit,''), nullif(nroidentificcliente,'')) FROM C_Invoice WHERE C_Invoice_ID = ?", promotionCode.getC_Invoice_Orig_ID());
 		if (documentNo == null || documentNo.length()==0)
 			throw new Exception("La factura con ID " + promotionCode.getC_Invoice_Orig_ID() + " no tiene informacion registrada sobre la entidad comercial");
 		Get_entry_list_result_version2 contact = port.get_entry_list(login.getId(), CONTACTS_MODULE_NAME, "contacts_cstm.num_doc_c='"+documentNo+"'", null, 0, null, null, 1, 0, false);
