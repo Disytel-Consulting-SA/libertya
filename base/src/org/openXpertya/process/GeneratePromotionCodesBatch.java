@@ -115,6 +115,7 @@ public class GeneratePromotionCodesBatch extends AbstractSvrProcess {
 			pc.setValidTo(randomPromo.getValidTo());
 			pc.setC_Invoice_Orig_ID(invoiceOrigID);
 			pc.setAD_Org_ID(randomPromo.getAD_Org_ID());
+			pc.setSuiteSyncStatus(X_C_Promotion_Code.SUITESYNCSTATUS_Pending);
 			pc.setCode(""); // Valor temporal hasta asignarle el definitivo luego de contar con el c_promotion_code_id
 			if(!pc.save()){
 				throw new Exception(CLogger.retrieveErrorAsString());

@@ -6848,7 +6848,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// creación sea igual a la fecha de facturación
 		if(TimeUtil.isSameDay(getCreated(), getDateInvoiced())){
 			String sql = "UPDATE "+X_C_Promotion_Code.Table_Name +
-						" SET used = 'N', c_invoice_id = null " +
+						" SET used = 'N', c_invoice_id = null, suitesyncstatus ='" + X_C_Promotion_Code.SUITESYNCSTATUS_Pending + "' " +
 						" WHERE c_invoice_id = "+getID();
 			DB.executeUpdate(sql, get_TrxName());
 		}

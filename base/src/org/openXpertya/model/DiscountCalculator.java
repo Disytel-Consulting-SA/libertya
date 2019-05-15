@@ -2272,6 +2272,7 @@ public class DiscountCalculator {
 			MPromotionCode pc = MPromotionCode.getFromCode(getCtx(), promotionalCode, trxName);
 			if(pc != null){
 				pc.setUsed(true);
+				pc.setSuiteSyncStatus(X_C_Promotion_Code.SUITESYNCSTATUS_Pending);
 				getDocument().setDocumentReferences(pc);
 				if(!pc.save(trxName)){
 					saveOk = false;
