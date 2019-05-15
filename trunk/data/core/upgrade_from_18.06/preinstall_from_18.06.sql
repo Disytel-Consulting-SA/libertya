@@ -2323,3 +2323,6 @@ ALTER TABLE i_gljournal ADD CONSTRAINT gljournalbatch_igljournal FOREIGN KEY (gl
 --20190510-1130 Columnas de tipo TableDir que deberian ser Busqueda dado que referencian tablas potencialmente voluminosas
 update ad_column set ad_reference_id = 30, updated=now() where ad_componentobjectuid = 'CORE-AD_Column-1014641';
 update ad_column set ad_reference_id = 30, updated=now() where ad_componentobjectuid = 'CORE-AD_Column-1014838';
+
+-- 20190514-110000.  Estado de la sincronizacion.  P: Pending - S: Sincronizado	- E: Error
+alter table c_promotion_code add column suitesyncstatus character(1) not null default 'P';

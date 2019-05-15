@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Promotion_Code
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-03-22 13:35:50.225 */
+ *  @version  - 2019-05-14 11:16:52.537 */
 public class X_C_Promotion_Code extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setC_Promotion_Code_Batch_ID (0);
 setC_Promotion_Code_ID (0);
 setC_Promotion_ID (0);
 setProcessed (false);
+setSuiteSyncStatus (null);
 setUsed (false);
 setValidFrom (new Timestamp(System.currentTimeMillis()));
 }
@@ -67,6 +68,7 @@ Integer ii = (Integer)get_Value("C_Invoice_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_INVOICE_ORIG_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
 /** Set Factura Original */
 public void setC_Invoice_Orig_ID (int C_Invoice_Orig_ID)
 {
@@ -154,6 +156,31 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+public static final int SUITESYNCSTATUS_AD_Reference_ID = MReference.getReferenceID("SuiteSyncStatusList");
+/** Pending = P */
+public static final String SUITESYNCSTATUS_Pending = "P";
+/** Synchronized = S */
+public static final String SUITESYNCSTATUS_Synchronized = "S";
+/** Error = E */
+public static final String SUITESYNCSTATUS_Error = "E";
+/** Set SuiteSyncStatus */
+public void setSuiteSyncStatus (String SuiteSyncStatus)
+{
+if (SuiteSyncStatus.equals("P") || SuiteSyncStatus.equals("S") || SuiteSyncStatus.equals("E") || ( refContainsValue("CORE-AD_Reference-1010423", SuiteSyncStatus) ) );
+ else throw new IllegalArgumentException ("SuiteSyncStatus Invalid value: " + SuiteSyncStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010423") );
+if (SuiteSyncStatus == null) throw new IllegalArgumentException ("SuiteSyncStatus is mandatory");
+if (SuiteSyncStatus.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+SuiteSyncStatus = SuiteSyncStatus.substring(0,1);
+}
+set_Value ("SuiteSyncStatus", SuiteSyncStatus);
+}
+/** Get SuiteSyncStatus */
+public String getSuiteSyncStatus() 
+{
+return (String)get_Value("SuiteSyncStatus");
 }
 /** Set Used */
 public void setUsed (boolean Used)

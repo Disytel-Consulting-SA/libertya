@@ -1,6 +1,7 @@
 package org.openXpertya.process;
 
 import org.openXpertya.model.MPromotionCode;
+import org.openXpertya.model.X_C_Promotion_Code;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Msg;
 
@@ -25,7 +26,7 @@ public abstract class VoidPromotionCodes extends AbstractSvrProcess {
 	 * @throws Exception
 	 */
 	public int voidCodes() throws Exception {
-		String sql = "update " + MPromotionCode.Table_Name + " set isactive = 'N' where "
+		String sql = "update " + MPromotionCode.Table_Name + " set isactive = 'N' , suitesyncstatus ='" + X_C_Promotion_Code.SUITESYNCSTATUS_Pending + "' where "
 				+ getPromotionCodeRelationedColumn() + " = " + getPromotionCodeRelationedID();
 		return DB.executeUpdate(sql, get_TrxName());
 	}
