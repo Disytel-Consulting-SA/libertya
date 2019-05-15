@@ -75,6 +75,7 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 		sql.append("	bp.ad_client_id = ").append(Env.getAD_Client_ID(getCtx()));
 		sql.append("	and bp.isvendor = 'Y' ");
 		sql.append("	and bp.isactive = 'Y' ");
+		sql.append("	and bpbl.cbu is not null ");
 		// Tener en cuenta la última fecha exportada del formato de exportación
 		// para aplicarla a las fechas de creación o de actualización de
 		// entidades comerciales
