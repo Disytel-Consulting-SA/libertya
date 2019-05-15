@@ -55,6 +55,10 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 	protected final static String FINANCIAL_SALES_REPORT_JASPER_REPORT_UID = "T0082CORE-AD_Process-1010627-20190502102158";
 	protected final static String FINANCIAL_SALES_REPORT_JASPER_REPORT_FILENAME = "FinancialSales.jrxml";
 
+	/** UID del Informe de Ventas por Subfamilia y Familia */
+	protected final static String SALES_CATEGORY_GAMAS_REPORT_JASPER_REPORT_UID = "CORE-AD_Process-1010374";
+	protected final static String SALES_CATEGORY_GAMAS_REPORT_JASPER_REPORT_FILENAME = "SalesByCategoryAndGamas.jrxml";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -199,6 +203,17 @@ public class PostInstallUpgradeFrom1806 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(FINANCIAL_SALES_REPORT_JASPER_REPORT_FILENAME)));
 
+		// Informe de Ventas por Subfamilia y Familia
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				SALES_CATEGORY_GAMAS_REPORT_JASPER_REPORT_UID,
+				SALES_CATEGORY_GAMAS_REPORT_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(SALES_CATEGORY_GAMAS_REPORT_JASPER_REPORT_FILENAME)));
+		
 		return " ";
 	}
 }
