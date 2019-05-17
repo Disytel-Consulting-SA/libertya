@@ -268,6 +268,35 @@ public class MPreference extends X_AD_Preference {
 		return GetCustomPreferenceValue(Key, clientID);
 	}
 	
+	
+
+	/**
+	 * Obtener el ID del cargo que posee la clave del mismo configurado en una
+	 * preference
+	 * 
+	 * @param ctx
+	 *            contexto actual
+	 * @param preferenceName
+	 *            nombre de la preference
+	 * @param chargeType
+	 *            tipo de cargo
+	 * @param trxName
+	 *            trx actual
+	 * @return id del cargo si es que existe, -1 sino
+	 */
+	public static Integer getChargeIDByPreference(Properties ctx, String preferenceName, String chargeType, String trxName){
+		Integer acctChargeID = 0;
+		String value = MPreference.searchCustomPreferenceValue(preferenceName,
+				Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx), Env.getAD_User_ID(ctx), true);
+		if(!Util.isEmpty(value)){
+			// Buscar la clave del cargo de la preference
+			acctChargeID = DB.getSQLValue(trxName,
+					"SELECT c_charge_id FROM c_charge WHERE ad_client_id = ? and chargetype = '" + chargeType
+							+ "' and value = '" + value + "'",
+					Env.getAD_Client_ID(ctx));
+		}
+		return acctChargeID;
+	} 
 }    // MPreference
 
 
