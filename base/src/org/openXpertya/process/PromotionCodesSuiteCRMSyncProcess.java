@@ -180,6 +180,9 @@ public class PromotionCodesSuiteCRMSyncProcess extends SvrProcess {
 	
 	/** Obtiene el ID del contacto (de SuiteCRM) para el cupon dado */
 	protected String getContactID(X_C_Promotion_Code promotionCode, Entry_value login, SugarsoapPortType port) throws Exception {
+		// El cupon tiene la referencia a la factura original con la cual se origino el cupon?
+		if (promotionCode.getC_Invoice_Orig_ID()==0)
+			throw new Exception("El cupon " + promotionCode.getCode() + " no posee la referencia al ticket originante");
 		// Si la EC es CF, el DNI debo sacarlo de la factura directamente, campo nroidentificcliente 
 		// Si la EC no es CF, debo debo sacarlo de la factura directamente, campo cuit
 		String documentNo = DB.getSQLValueString(null, "SELECT coalesce(nullif(cuit,''), nullif(nroidentificcliente,'')) FROM C_Invoice WHERE C_Invoice_ID = ?", promotionCode.getC_Invoice_Orig_ID());
@@ -187,7 +190,7 @@ public class PromotionCodesSuiteCRMSyncProcess extends SvrProcess {
 			throw new Exception("La factura con ID " + promotionCode.getC_Invoice_Orig_ID() + " no tiene informacion registrada sobre la entidad comercial");
 		Get_entry_list_result_version2 contact = port.get_entry_list(login.getId(), CONTACTS_MODULE_NAME, "contacts_cstm.num_doc_c='"+documentNo+"'", null, 0, null, null, 1, 0, false);
 		if (contact==null || contact.getEntry_list()==null || contact.getEntry_list().length==0)
-			throw new Exception("Imposible recuperar el contacto con documento " + documentNo + " para el cupon " + promotionCode.getCode());
+			throw new Exception("Imposible recuperar el contacto cuyo documento es " + documentNo + " para el cupon " + promotionCode.getCode());
 		return contact.getEntry_list()[0].getId();
 	}
 	
