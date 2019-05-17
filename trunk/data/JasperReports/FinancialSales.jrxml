@@ -418,7 +418,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 						mode="Opaque"
 						x="182"
 						y="0"
-						width="146"
+						width="141"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-10"/>
@@ -431,7 +431,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="328"
+						x="323"
 						y="0"
 						width="34"
 						height="16"
@@ -446,7 +446,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="495"
+						x="485"
 						y="0"
 						width="50"
 						height="16"
@@ -461,7 +461,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="545"
+						x="535"
 						y="0"
 						width="65"
 						height="16"
@@ -521,9 +521,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="362"
+						x="357"
 						y="0"
-						width="133"
+						width="128"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-18"/>
@@ -536,9 +536,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="610"
+						x="600"
 						y="0"
-						width="62"
+						width="72"
 						height="16"
 						backcolor="#F9F9F9"
 						key="staticText-19"/>
@@ -546,7 +546,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="9"/>
 					</textElement>
-				<text><![CDATA[Cobrado]]></text>
+				<text><![CDATA[Total Cobrado]]></text>
 				</staticText>
 			</band>
 		</pageHeader>
@@ -574,7 +574,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 					<reportElement
 						x="182"
 						y="0"
-						width="146"
+						width="141"
 						height="15"
 						key="textField-10"
 						isPrintWhenDetailOverflows="true"/>
@@ -586,7 +586,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="328"
+						x="323"
 						y="0"
 						width="34"
 						height="15"
@@ -600,7 +600,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="545"
+						x="535"
 						y="0"
 						width="65"
 						height="15"
@@ -614,7 +614,7 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="495"
+						x="485"
 						y="0"
 						width="50"
 						height="15"
@@ -670,9 +670,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="362"
+						x="357"
 						y="0"
-						width="133"
+						width="128"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -684,9 +684,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="610"
+						x="600"
 						y="0"
-						width="62"
+						width="72"
 						height="15"
 						key="textField-17"
 						isPrintWhenDetailOverflows="true"/>
@@ -740,9 +740,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 			<band height="18"  isSplitAllowed="true" >
 				<line direction="BottomUp">
 					<reportElement
-						x="609"
+						x="600"
 						y="1"
-						width="173"
+						width="182"
 						height="0"
 						key="line-1"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -762,9 +762,9 @@ order by i.dateacct, i.documentno, ef.value, efp.value]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="610"
+						x="600"
 						y="2"
-						width="62"
+						width="72"
 						height="16"
 						key="textField-18"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
