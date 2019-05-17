@@ -81,7 +81,7 @@ public class PromotionCodesSuiteCRMSyncProcess extends SvrProcess {
 		// Recuperar la nomina de cupones pendientes a sincronizar		
 		PreparedStatement pstmt = DB.prepareStatement(	" SELECT * " +
 														" FROM C_Promotion_Code " +
-														" WHERE suitesyncstatus <> '" + X_C_Promotion_Code.SUITESYNCSTATUS_Synchronized + "'" +
+														" WHERE suitesyncstatus IN ('" + X_C_Promotion_Code.SUITESYNCSTATUS_Pending + "', '" + X_C_Promotion_Code.SUITESYNCSTATUS_Error + "') " +
 														" AND AD_Client_ID = " + Env.getAD_Client_ID(Env.getCtx()) +
 														" ORDER BY C_Promotion_Code_ID ASC ", null);
 		ResultSet rs = pstmt.executeQuery();
