@@ -248,6 +248,7 @@ public class ExportListaHSBC extends ExportBankList {
 	 */
 	protected String getRELine(ResultSet rs) throws Exception{
 		StringBuffer reLine = new StringBuffer();
+		boolean isIIBB = X_C_RetencionType.RETENTIONTYPE_IngresosBrutos.equals(rs.getString("retentiontype"));
 		// Línea RE
 		reLine.append("RE");
 		reLine.append(getFieldSeparator());
@@ -262,8 +263,7 @@ public class ExportListaHSBC extends ExportBankList {
 		// Código Oficial de la Retención
 		// Por lo pronto se envía el ID del esquema de retención
 		// Si es IIBB va 0000
-		reLine.append(X_C_RetencionType.RETENTIONTYPE_IngresosBrutos.equals(rs.getString("retentiontype")) ? "0000"
-				: StringUtil.trimStrict(String.valueOf(rs.getInt("c_retencionschema_id")),4));
+		reLine.append(isIIBB ? "0000" : StringUtil.trimStrict(String.valueOf(rs.getInt("c_retencionschema_id")),4));
 		reLine.append(getFieldSeparator());
 		// Descripción Oficial de la Retención
 		// Por lo pronto se envía el nombre del esquema de retención
@@ -279,23 +279,23 @@ public class ExportListaHSBC extends ExportBankList {
 		reLine.append(getFieldSeparator());
 		reLine.append(dateFormat_MM_yyyy.format(rs.getTimestamp("retentiondate")));
 		reLine.append(getFieldSeparator());
-		// Resolución DGR - Se envía vacío
-		reLine.append(StringUtil.trimStrict(rs.getString("retentionname"),15));
+		// Resolución DGR
+		reLine.append(isIIBB ? StringUtil.trimStrict(rs.getString("retentionname"), 15) : "");
 		reLine.append(getFieldSeparator());
 		// Provincia
-		reLine.append(StringUtil.trimStrict(rs.getString("retencion_provincia"),20));
+		reLine.append(isIIBB ? StringUtil.trimStrict(rs.getString("retencion_provincia"), 20) : "");
 		reLine.append(getFieldSeparator());
 		// Porcentaje de Retención
-		reLine.append(rs.getBigDecimal("retencion_percent"));
+		reLine.append(isIIBB ? rs.getBigDecimal("retencion_percent") : "");
 		reLine.append(getFieldSeparator());
 		// Alícuota de Retención
-		reLine.append(rs.getBigDecimal("retencion_percent"));
+		reLine.append(isIIBB ? rs.getBigDecimal("retencion_percent") : "");
 		reLine.append(getFieldSeparator());
 		// Monto acumulado de Retención
-		reLine.append(rs.getBigDecimal("retenciones_ant_acumuladas_amt"));
+		reLine.append(isIIBB ? "" : rs.getBigDecimal("retenciones_ant_acumuladas_amt"));
 		reLine.append(getFieldSeparator());
 		// Monto de pagos acumulados por el mismo concepto dentro del mes
-		reLine.append(rs.getBigDecimal("pagos_ant_acumulados_amt"));
+		reLine.append(isIIBB ? "" : rs.getBigDecimal("pagos_ant_acumulados_amt"));
 		reLine.append(getFieldSeparator());
 		// Observaciones
 		reLine.append("");
@@ -599,7 +599,6 @@ public class ExportListaHSBC extends ExportBankList {
 		invalids.put("ñ", null);
 		invalids.put("°", null);
 		invalids.put("`", null);
-		invalids.put("/", null);
 		invalids.put("\\", null);
 		invalids.put("á", "a");
 		invalids.put("é", "e");
