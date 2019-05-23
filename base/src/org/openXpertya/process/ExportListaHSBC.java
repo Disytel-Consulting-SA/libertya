@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -83,6 +84,9 @@ public class ExportListaHSBC extends ExportBankList {
 	/** Formato de fechas MM/yyyy */
 	protected DateFormat dateFormat_MM_yyyy = new SimpleDateFormat("MM/yyyy");
 	
+	/** Fecha de emisión o generación de pagos del banco al proveedor */
+	protected Date paymentDate;
+	
 	public ExportListaHSBC(Properties ctx, MBankList bankList, String trxName) {
 		super(ctx, bankList, trxName);
 		// TODO Auto-generated constructor stub
@@ -147,10 +151,7 @@ public class ExportListaHSBC extends ExportBankList {
 		idLine.append(StringUtil.trimStrict(accountno, 10));
 		idLine.append(getFieldSeparator());
 		// Fecha de Emisión de Pagos del Banco, fecha actual + 1
-		Calendar today = Calendar.getInstance();
-		today.setTimeInMillis(Env.getDate().getTime());
-		today.add(Calendar.DATE, 1);
-		idLine.append(dateFormat_ddMMyyyy.format(today.getTime()));
+		idLine.append(dateFormat_ddMMyyyy.format(paymentDate));
 		idLine.append(getFieldSeparator());
 		idLine.append(rs.getBigDecimal("payamt"));
 		idLine.append(getFieldSeparator());
@@ -158,7 +159,7 @@ public class ExportListaHSBC extends ExportBankList {
 		idLine.append(getFieldSeparator());
 		idLine.append(rs.getString("taxid").replace("-", ""));
 		idLine.append(getFieldSeparator());
-		idLine.append(dateFormat_ddMMyyyy.format(rs.getTimestamp("allocationdate")));
+		idLine.append(dateFormat_ddMMyyyy.format(paymentDate));
 		idLine.append(getFieldSeparator());
 		idLine.append("Y");
 		idLine.append(getFieldSeparator());
@@ -292,7 +293,9 @@ public class ExportListaHSBC extends ExportBankList {
 		reLine.append(isIIBB ? rs.getBigDecimal("retencion_percent") : "");
 		reLine.append(getFieldSeparator());
 		// Monto acumulado de Retención
-		reLine.append(isIIBB ? "" : rs.getBigDecimal("retenciones_ant_acumuladas_amt"));
+		reLine.append(isIIBB ? ""
+				: !Util.isEmpty(rs.getBigDecimal("retenciones_ant_acumuladas_amt"), true)
+						? rs.getBigDecimal("retenciones_ant_acumuladas_amt") : rs.getBigDecimal("amt_retenc"));
 		reLine.append(getFieldSeparator());
 		// Monto de pagos acumulados por el mismo concepto dentro del mes
 		reLine.append(isIIBB ? "" : rs.getBigDecimal("pagos_ant_acumulados_amt"));
@@ -316,7 +319,10 @@ public class ExportListaHSBC extends ExportBankList {
 		// Cargar todo el documento en las variables y luego impactarla en el
 		// archivo ya que es necesario saber la cantidad de lineas que posee el
 		// archivo como dato en el header 
-		
+		Calendar today = Calendar.getInstance();
+		today.setTimeInMillis(Env.getDate().getTime());
+		today.add(Calendar.DATE, 1);
+		paymentDate = today.getTime();
 		// Ejecutar la query
 		PreparedStatement ps = DB.prepareStatement(getQuery(), get_TrxName(), true);
 		// Agregar los parámetros
