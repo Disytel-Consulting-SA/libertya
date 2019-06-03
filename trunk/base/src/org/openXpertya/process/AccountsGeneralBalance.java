@@ -1,14 +1,20 @@
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
 import org.openXpertya.model.MAcctBalance;
+import org.openXpertya.model.MInflationIndex;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 
 public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 
@@ -18,12 +24,18 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	protected Timestamp  p_DateAcct_To;
 	/** Booleano que determina si actualizar el balance o no */
 	protected boolean updateBalance = true;
+	/** Booleano que determina si se debe mostrar el saldo aplicando el ajuste por inflación */
+	protected boolean applyInflationIndexes = false;
 	
 	@Override
 	protected boolean loadParameter(String name, ProcessInfoParameter param) {
 		if( name.equalsIgnoreCase( "DateAcct" )) {
 			p_DateAcct_From = ( Timestamp )param.getParameter();
 			p_DateAcct_To = ( Timestamp )param.getParameter_To();
+			return true;
+		}
+		if(name.equalsIgnoreCase( "ApplyInflationIndex" )){
+			applyInflationIndexes = ((String)param.getParameter()).equals("Y");
 			return true;
 		}
 		return false;
@@ -33,6 +45,9 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	protected String doIt() throws Exception {
 		// Procesamiento de AccountsHierarchicalReport
 		super.doIt();
+		
+		// Obtener el índice de inflación entre la fecha desde y hasta
+		BigDecimal inflationIndex = getInflationIndex();
 		
 		StringBuffer sqlView = new StringBuffer();
 		sqlView.append(" SELECT ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode, COALESCE(SUM(fa.AmtAcctDr),0) as AmtAcctDr, COALESCE(SUM(fa.AmtAcctCr),0) as AmtAcctCr "); 
@@ -72,6 +87,10 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 			sqlUpdateBalance.append(", ");
 			sqlUpdateBalance.append(" c_elementvalue_to_id = " + p_C_ElementValue_To_ID );
 		}
+		// Saldo ajustado
+		sqlUpdateBalance.append(", ");
+		sqlUpdateBalance.append(" BalanceAdjusted = (CASE WHEN isadjustable = 'N' THEN (Debit - Credit) ELSE ((Debit - Credit) + ((Debit - Credit) * ")
+				.append(applyInflationIndexes ? inflationIndex : "0").append(")) END) ");
 		sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? ");
 		
 		PreparedStatement pstmt = null;
@@ -102,7 +121,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 			// Actualización de saldo
 			if(updateBalance){
 				// Actualización del SALDO en base al debe y el haber
-				pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName());
+				pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
 				i = 1;
 				pstmt.setInt(i++, getAD_PInstance_ID());
 				no = pstmt.executeUpdate();
@@ -204,6 +223,10 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		//line.setAD_Org_ID(accountElement.orgID);
 		line.setAD_Org_ID(p_AD_Org_ID);
 		line.setHierarchicalCode(accountElement.hierarchicalCode);
+		line.setApplyInflationIndex(applyInflationIndexes);
+		
+		// Ajustar por índice de inflación
+		line.setIsAdjustable(applyInflationIndexes?accountElement.adjustable:false);
 		
 		// El Debe y Haber se calculan masivamente en el doIt. 
 		line.setDebit(null);
@@ -217,6 +240,57 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	
 	protected void clearDateAcct() {
 		DB.executeUpdate("UPDATE AD_PInstance_Para SET p_date = null, p_date_to = null WHERE parametername = 'DateAcct' AND AD_PInstance_ID = " + getAD_PInstance_ID());		
+	}
+	
+	/**
+	 * @return Índice de inflación entre las fechas parámetro
+	 */
+	protected BigDecimal getInflationIndex() throws Exception{
+		BigDecimal inflationIndex = BigDecimal.ZERO;
+		if(applyInflationIndexes){
+			if(p_DateAcct_From == null){
+				throw new Exception(Msg.getMsg(getCtx(), "ApplyInflationIndexNotDateFrom"));
+			}
+			DateFormat df = new SimpleDateFormat("dd-MM-yyyy");
+			Timestamp dateTo = p_DateAcct_To != null ? p_DateAcct_To : Env.getDate();
+			// Obtener el indice de inflación entre fecha desde y hasta
+			int inflationIndexFromID = getInflationIndexID(p_DateAcct_From);
+			int inflationIndexToID = getInflationIndexID(dateTo);
+			MInflationIndex fiFrom = null, fiTo = null;
+			if(inflationIndexFromID > 0){
+				fiFrom = new MInflationIndex(getCtx(), inflationIndexFromID, get_TrxName());
+			}
+			else{
+				throw new Exception(Msg.getMsg(getCtx(), "ApplyInflationIndexNotPeriod",
+						new Object[] { df.format(p_DateAcct_From) }));
+			}
+			if(inflationIndexToID > 0){
+				fiTo = new MInflationIndex(getCtx(), inflationIndexToID, get_TrxName());
+			}
+			else{
+				throw new Exception(
+						Msg.getMsg(getCtx(), "ApplyInflationIndexNotPeriod", new Object[] { df.format(dateTo) }));
+			}
+			inflationIndex = fiFrom.getInflationIndex().compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : (fiTo.getInflationIndex().subtract(fiFrom.getInflationIndex()).divide(fiFrom.getInflationIndex(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		return inflationIndex;
+	}
+	
+	/**
+	 * @param compareDate
+	 *            fecha de comparación del período
+	 * @return id del índice de inflación que incluye la fecha parámetro, -1 si no existe
+	 */
+	protected Integer getInflationIndexID(Timestamp compareDate){
+		if(compareDate == null){
+			return 0;
+		}
+		return DB.getSQLValue(get_TrxName(),
+				"select ii.c_inflation_index_id from " + MInflationIndex.Table_Name
+						+ " ii join c_period p on p.c_period_id = ii.c_period_id where ii.ad_client_id = "
+						+ Env.getAD_Client_ID(getCtx()) + " and '" + Env.getDateFormatted(compareDate)
+						+ "'::date between startdate::date and enddate::date ",
+				true);
 	}
 	
 	@Override

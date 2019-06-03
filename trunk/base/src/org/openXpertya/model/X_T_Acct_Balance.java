@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_Acct_Balance
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-03-12 16:09:56.329 */
+ *  @version  - 2019-06-03 13:40:04.472 */
 public class X_T_Acct_Balance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,8 @@ super (ctx, T_Acct_Balance_ID, trxName);
 /** if (T_Acct_Balance_ID == 0)
 {
 setAD_PInstance_ID (0);
+setApplyInflationIndex (false);
+setIsAdjustable (false);
 setSubindex (0);
 setT_Acct_Balance_ID (0);
 }
@@ -46,20 +48,6 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_T_Acct_Balance[").append(getID()).append("]");
 return sb.toString();
-}
-/** Set Process Instance.
-Instance of the process */
-public void setAD_PInstance_ID (int AD_PInstance_ID)
-{
-set_Value ("AD_PInstance_ID", new Integer(AD_PInstance_ID));
-}
-/** Get Process Instance.
-Instance of the process */
-public int getAD_PInstance_ID() 
-{
-Integer ii = (Integer)get_Value("AD_PInstance_ID");
-if (ii == null) return 0;
-return ii.intValue();
 }
 /** Set Account Code */
 public void setAcct_Code (String Acct_Code)
@@ -91,6 +79,36 @@ public String getAcct_Description()
 {
 return (String)get_Value("Acct_Description");
 }
+/** Set Process Instance.
+Instance of the process */
+public void setAD_PInstance_ID (int AD_PInstance_ID)
+{
+set_Value ("AD_PInstance_ID", new Integer(AD_PInstance_ID));
+}
+/** Get Process Instance.
+Instance of the process */
+public int getAD_PInstance_ID() 
+{
+Integer ii = (Integer)get_Value("AD_PInstance_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Apply Inflation Index */
+public void setApplyInflationIndex (boolean ApplyInflationIndex)
+{
+set_Value ("ApplyInflationIndex", new Boolean(ApplyInflationIndex));
+}
+/** Get Apply Inflation Index */
+public boolean isApplyInflationIndex() 
+{
+Object oo = get_Value("ApplyInflationIndex");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Balance */
 public void setBalance (BigDecimal Balance)
 {
@@ -100,6 +118,18 @@ set_Value ("Balance", Balance);
 public BigDecimal getBalance() 
 {
 BigDecimal bd = (BigDecimal)get_Value("Balance");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Balance Adjusted */
+public void setBalanceAdjusted (BigDecimal BalanceAdjusted)
+{
+set_Value ("BalanceAdjusted", BalanceAdjusted);
+}
+/** Get Balance Adjusted */
+public BigDecimal getBalanceAdjusted() 
+{
+BigDecimal bd = (BigDecimal)get_Value("BalanceAdjusted");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -171,6 +201,24 @@ set_Value ("HierarchicalCode", HierarchicalCode);
 public String getHierarchicalCode() 
 {
 return (String)get_Value("HierarchicalCode");
+}
+/** Set Adjustable.
+Adjustable by inflation is index */
+public void setIsAdjustable (boolean IsAdjustable)
+{
+set_Value ("IsAdjustable", new Boolean(IsAdjustable));
+}
+/** Get Adjustable.
+Adjustable by inflation is index */
+public boolean isAdjustable() 
+{
+Object oo = get_Value("IsAdjustable");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Subindex */
 public void setSubindex (int Subindex)

@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_ElementValue
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:29.875 */
-public class X_C_ElementValue extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2019-06-03 13:38:15.057 */
+public class X_C_ElementValue extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_ElementValue (Properties ctx, int C_ElementValue_ID, String trxName)
@@ -17,8 +18,9 @@ super (ctx, C_ElementValue_ID, trxName);
 {
 setAccountSign (null);	// N
 setAccountType (null);	// E
-setC_ElementValue_ID (0);
 setC_Element_ID (0);
+setC_ElementValue_ID (0);
+setIsAdjustable (false);
 setIsSummary (false);
 setName (null);
 setPostActual (true);	// Y
@@ -34,13 +36,13 @@ public X_C_ElementValue (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=188 */
-public static final int Table_ID=188;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_ElementValue");
 
 /** TableName=C_ElementValue */
 public static final String Table_Name="C_ElementValue";
 
-protected static KeyNamePair Model = new KeyNamePair(188,"C_ElementValue");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_ElementValue");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -54,7 +56,7 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_ElementValue[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int ACCOUNTSIGN_AD_Reference_ID=118;
+public static final int ACCOUNTSIGN_AD_Reference_ID = MReference.getReferenceID("C_ElementValue Account Sign");
 /** Natural = N */
 public static final String ACCOUNTSIGN_Natural = "N";
 /** Debit = D */
@@ -65,13 +67,13 @@ public static final String ACCOUNTSIGN_Credit = "C";
 Indicates the Natural Sign of the Account as a Debit or Credit */
 public void setAccountSign (String AccountSign)
 {
-if (AccountSign.equals("N") || AccountSign.equals("D") || AccountSign.equals("C"));
- else throw new IllegalArgumentException ("AccountSign Invalid value - Reference_ID=118 - N - D - C");
+if (AccountSign.equals("N") || AccountSign.equals("D") || AccountSign.equals("C") || ( refContainsValue("CORE-AD_Reference-118", AccountSign) ) );
+ else throw new IllegalArgumentException ("AccountSign Invalid value: " + AccountSign + ".  Valid: " +  refValidOptions("CORE-AD_Reference-118") );
 if (AccountSign == null) throw new IllegalArgumentException ("AccountSign is mandatory");
 if (AccountSign.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-AccountSign = AccountSign.substring(0,0);
+AccountSign = AccountSign.substring(0,1);
 }
 set_Value ("AccountSign", AccountSign);
 }
@@ -81,7 +83,7 @@ public String getAccountSign()
 {
 return (String)get_Value("AccountSign");
 }
-public static final int ACCOUNTTYPE_AD_Reference_ID=117;
+public static final int ACCOUNTTYPE_AD_Reference_ID = MReference.getReferenceID("C_ElementValue AccountType");
 /** Asset = A */
 public static final String ACCOUNTTYPE_Asset = "A";
 /** Liability = L */
@@ -98,13 +100,13 @@ public static final String ACCOUNTTYPE_Memo = "M";
 Indicates the type of account */
 public void setAccountType (String AccountType)
 {
-if (AccountType.equals("A") || AccountType.equals("L") || AccountType.equals("R") || AccountType.equals("E") || AccountType.equals("O") || AccountType.equals("M"));
- else throw new IllegalArgumentException ("AccountType Invalid value - Reference_ID=117 - A - L - R - E - O - M");
+if (AccountType.equals("A") || AccountType.equals("L") || AccountType.equals("R") || AccountType.equals("E") || AccountType.equals("O") || AccountType.equals("M") || ( refContainsValue("CORE-AD_Reference-117", AccountType) ) );
+ else throw new IllegalArgumentException ("AccountType Invalid value: " + AccountType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-117") );
 if (AccountType == null) throw new IllegalArgumentException ("AccountType is mandatory");
 if (AccountType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-AccountType = AccountType.substring(0,0);
+AccountType = AccountType.substring(0,1);
 }
 set_Value ("AccountType", AccountType);
 }
@@ -146,20 +148,6 @@ Integer ii = (Integer)get_Value("C_Currency_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Account Element.
-Account Element */
-public void setC_ElementValue_ID (int C_ElementValue_ID)
-{
-set_ValueNoCheck ("C_ElementValue_ID", new Integer(C_ElementValue_ID));
-}
-/** Get Account Element.
-Account Element */
-public int getC_ElementValue_ID() 
-{
-Integer ii = (Integer)get_Value("C_ElementValue_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
 /** Set Element.
 Accounting Element */
 public void setC_Element_ID (int C_Element_ID)
@@ -174,6 +162,20 @@ Integer ii = (Integer)get_Value("C_Element_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Account Element.
+Account Element */
+public void setC_ElementValue_ID (int C_ElementValue_ID)
+{
+set_ValueNoCheck ("C_ElementValue_ID", new Integer(C_ElementValue_ID));
+}
+/** Get Account Element.
+Account Element */
+public int getC_ElementValue_ID() 
+{
+Integer ii = (Integer)get_Value("C_ElementValue_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -181,7 +183,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 255)
 {
 log.warning("Length > 255 - truncated");
-Description = Description.substring(0,254);
+Description = Description.substring(0,255);
 }
 set_Value ("Description", Description);
 }
@@ -190,6 +192,24 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Adjustable.
+Adjustable by inflation is index */
+public void setIsAdjustable (boolean IsAdjustable)
+{
+set_Value ("IsAdjustable", new Boolean(IsAdjustable));
+}
+/** Get Adjustable.
+Adjustable by inflation is index */
+public boolean isAdjustable() 
+{
+Object oo = get_Value("IsAdjustable");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Bank Account.
 Indicates if this is the Bank Account */
@@ -271,7 +291,7 @@ if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Name = Name.substring(0,59);
+Name = Name.substring(0,60);
 }
 set_Value ("Name", Name);
 }
@@ -385,7 +405,7 @@ if (Value == null) throw new IllegalArgumentException ("Value is mandatory");
 if (Value.length() > 40)
 {
 log.warning("Length > 40 - truncated");
-Value = Value.substring(0,39);
+Value = Value.substring(0,40);
 }
 set_Value ("Value", Value);
 }

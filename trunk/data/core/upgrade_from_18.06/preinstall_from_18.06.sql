@@ -2326,3 +2326,42 @@ update ad_column set ad_reference_id = 30, updated=now() where ad_componentobjec
 
 -- 20190514-110000.  Estado de la sincronizacion.  P: Pending - S: Sincronizado	- E: Error
 alter table c_promotion_code add column suitesyncstatus character(1) not null default 'P';
+
+--20190603-1350 Cuentas contables ajustables por índice de inflación
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_elementvalue','isadjustable','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20190603-1350 Tabla para el registro de índices de inflación
+CREATE TABLE c_inflation_index
+(
+  c_inflation_index_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  c_period_id integer NOT NULL,
+  description character varying(255),
+  inflationindex numeric(8,4) NOT NULL DEFAULT 0,
+  CONSTRAINT c_inflation_index_key PRIMARY KEY (c_inflation_index_id),
+  CONSTRAINT adclient_inflation_index FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorg_inflation_index FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT period_inflation_index FOREIGN KEY (c_period_id)
+      REFERENCES c_period (c_period_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_inflation_index
+  OWNER TO libertya;
+
+--20190603-1350 Nuevas columnas para extensión de informe de balance contable para aplicar índices de inflación
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','isadjustable','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','balanceadjusted','numeric(12,2) DEFAULT 0'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','ApplyInflationIndex','character(1) NOT NULL DEFAULT ''N''::bpchar'));
