@@ -2365,3 +2365,6 @@ ALTER TABLE c_inflation_index
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','isadjustable','character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','balanceadjusted','numeric(12,2) DEFAULT 0'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_acct_balance','ApplyInflationIndex','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20190603-1616 Nueva columna en boletas de depósito para registrar cargos contables y trasladarlos al pago generado
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_boletadeposito','accounting_c_charge_id','integer'));
