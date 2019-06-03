@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_BoletaDeposito
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-07-08 09:14:26.194 */
-public class X_M_BoletaDeposito extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2019-06-03 16:14:34.997 */
+public class X_M_BoletaDeposito extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_M_BoletaDeposito (Properties ctx, int M_BoletaDeposito_ID, String trxName)
@@ -37,13 +38,13 @@ public X_M_BoletaDeposito (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000129 */
-public static final int Table_ID=1000129;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("M_BoletaDeposito");
 
 /** TableName=M_BoletaDeposito */
 public static final String Table_Name="M_BoletaDeposito";
 
-protected static KeyNamePair Model = new KeyNamePair(1000129,"M_BoletaDeposito");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"M_BoletaDeposito");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -57,7 +58,24 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_M_BoletaDeposito[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int BOLETAACTION_AD_Reference_ID=1010094;
+public static final int ACCOUNTING_C_CHARGE_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
+/** Set Accounting Account.
+Alternative Accounting Account */
+public void setACCOUNTING_C_Charge_ID (int ACCOUNTING_C_Charge_ID)
+{
+if (ACCOUNTING_C_Charge_ID <= 0) set_Value ("ACCOUNTING_C_Charge_ID", null);
+ else 
+set_Value ("ACCOUNTING_C_Charge_ID", new Integer(ACCOUNTING_C_Charge_ID));
+}
+/** Get Accounting Account.
+Alternative Accounting Account */
+public int getACCOUNTING_C_Charge_ID() 
+{
+Integer ii = (Integer)get_Value("ACCOUNTING_C_Charge_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int BOLETAACTION_AD_Reference_ID = MReference.getReferenceID("M_BoletaDeposito Action");
 /** Document For Each Check = C */
 public static final String BOLETAACTION_DocumentForEachCheck = "C";
 /** Document For Boleta = A */
@@ -66,8 +84,8 @@ public static final String BOLETAACTION_DocumentForBoleta = "A";
 Boleta Action */
 public void setBoletaAction (String BoletaAction)
 {
-if (BoletaAction.equals("C") || BoletaAction.equals("A"));
- else throw new IllegalArgumentException ("BoletaAction Invalid value - Reference_ID=1010094 - C - A");
+if (BoletaAction.equals("C") || BoletaAction.equals("A") || ( refContainsValue("CORE-AD_Reference-1010094", BoletaAction) ) );
+ else throw new IllegalArgumentException ("BoletaAction Invalid value: " + BoletaAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010094") );
 if (BoletaAction == null) throw new IllegalArgumentException ("BoletaAction is mandatory");
 if (BoletaAction.length() > 2)
 {
@@ -96,7 +114,7 @@ Integer ii = (Integer)get_Value("C_BankAccount_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_BOLETA_PAYMENT_ID_AD_Reference_ID=343;
+public static final int C_BOLETA_PAYMENT_ID_AD_Reference_ID = MReference.getReferenceID("C_Payment");
 /** Set Payment Of Boleta.
 Payment Of Boleta */
 public void setC_Boleta_Payment_ID (int C_Boleta_Payment_ID)
@@ -155,7 +173,7 @@ Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int DOCACTION_AD_Reference_ID=135;
+public static final int DOCACTION_AD_Reference_ID = MReference.getReferenceID("_Document Action");
 /** Approve = AP */
 public static final String DOCACTION_Approve = "AP";
 /** Close = CL */
@@ -188,8 +206,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference_ID=135 - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -204,9 +222,7 @@ public String getDocAction()
 {
 return (String)get_Value("DocAction");
 }
-public static final int DOCSTATUS_AD_Reference_ID=131;
-/** Reversed = RE */
-public static final String DOCSTATUS_Reversed = "RE";
+public static final int DOCSTATUS_AD_Reference_ID = MReference.getReferenceID("_Document Status");
 /** Voided = VO */
 public static final String DOCSTATUS_Voided = "VO";
 /** Not Approved = NA */
@@ -229,12 +245,14 @@ public static final String DOCSTATUS_Unknown = "??";
 public static final String DOCSTATUS_Drafted = "DR";
 /** Invalid = IN */
 public static final String DOCSTATUS_Invalid = "IN";
+/** Reversed = RE */
+public static final String DOCSTATUS_Reversed = "RE";
 /** Set Document Status.
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("RE") || DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference_ID=131 - RE - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {

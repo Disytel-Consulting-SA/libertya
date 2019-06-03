@@ -512,6 +512,7 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 		payment.setDueDate(getFechaAcreditacion() == null? getDocumentDate() : getFechaAcreditacion()); //La fecha de vcto es la fecha de acreditación
 		payment.setDateEmissionCheck(getFechaDeposito()); // La fecha de emisión es la fecha de depósito
 		payment.setAD_Org_ID(getAD_Org_ID());
+		payment.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
 		
 		// Se asigna el Tipo de Documento indicado en la boleta (si existe)
 		if (getC_DocType_ID() > 0)
@@ -564,6 +565,7 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 			newCheck.setC_BPartner_ID(getC_BPartner_ID());
 			newCheck.setC_BankAccount_ID(getC_BankAccount_ID());
 			newCheck.setAD_Org_ID(getAD_Org_ID());
+			newCheck.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
 			// Se agrega una descripcion
 			newCheck.setDescription(
 					Msg.getMsg(getCtx(), "IncomeBoletaCheck", 
