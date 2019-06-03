@@ -159,6 +159,7 @@ public class AccountsHierarchicalReport extends SvrProcess {
 			acctCode = ev.getValue();
 			//acctDescription = ev.getDescription(); // Puede ser NULL, mejor el Name
 			acctDescription = ev.getName();
+			
 		}
 		
 		// Creo una instancia de la estructura interna que contiene todos los datos
@@ -177,13 +178,14 @@ public class AccountsHierarchicalReport extends SvrProcess {
 				// sobre la tabla temporal, y de poner el ID del elemento original la línea será
 				// filtrada luego por el Engine.
 				elementValueID,
-				
 				// Elemento de Cuenta
 				ev, 
 				// Subindice de la cuenta.
 				subindex,
 				// Código jerárquico calculado internamente
-				getHierarchicalCode(node)
+				getHierarchicalCode(node),
+				// Ajustable por índice de inflación
+				ev == null?false:ev.isAdjustable()
 		);
 		
 		// Inicia la creación de la línea en la tabla temporal.
@@ -258,13 +260,13 @@ public class AccountsHierarchicalReport extends SvrProcess {
 		protected MElementValue elementValue;
 		protected int subindex;
 		protected String hierarchicalCode;
-		
+		protected boolean adjustable;
 		
 		public AccountElement() {
 			super();
 		}
 
-		public AccountElement(String code, String description, int orgID, MTreeNode treeNode, int elementValueID, MElementValue elementValue, int subindex, String hierarchicalCode) {
+		public AccountElement(String code, String description, int orgID, MTreeNode treeNode, int elementValueID, MElementValue elementValue, int subindex, String hierarchicalCode, boolean adjustable) {
 			super();
 			this.code = code;
 			this.description = description;
@@ -273,7 +275,8 @@ public class AccountsHierarchicalReport extends SvrProcess {
 			this.elementValueID = elementValueID;
 			this.elementValue = elementValue;
 			this.subindex = subindex;
-			this.hierarchicalCode = hierarchicalCode; 
+			this.hierarchicalCode = hierarchicalCode;
+			this.adjustable = adjustable;
 		}
 
 		
