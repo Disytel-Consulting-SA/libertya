@@ -12,7 +12,9 @@ import org.openXpertya.model.X_AD_User;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_BPartner_BankList;
 import org.openXpertya.model.X_C_BPartner_Location;
+import org.openXpertya.model.X_C_BankList_Config;
 import org.openXpertya.model.X_C_Categoria_Iva;
+import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.model.X_C_ElectronicPaymentBranch;
 import org.openXpertya.model.X_C_Location;
 import org.openXpertya.model.X_C_Region;
@@ -62,6 +64,10 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 		sql.append("		ON bpbl.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("	INNER JOIN " + X_C_ElectronicPaymentBranch.Table_Name + " AS epb ");
 		sql.append("		ON epb.c_electronicpaymentbranch_id = bpbl.c_electronicpaymentbranch_id ");
+		sql.append("	INNER JOIN " + X_C_BankList_Config.Table_Name + " AS bc ");
+		sql.append("		ON bc.c_bank_id = epb.c_bank_id ");
+		sql.append("	INNER JOIN " + X_C_DocType.Table_Name + " AS dt ");
+		sql.append("		ON dt.c_doctype_id = bc.c_doctype_id "); 
 		sql.append("	INNER JOIN " + X_C_BPartner_Location.Table_Name + " bpl ");
 		sql.append("		ON (bpl.c_bpartner_id = bp.c_bpartner_id and bpl.isactive = 'Y') ");
 		sql.append("	INNER JOIN " + X_C_Location.Table_Name + " l ");
@@ -76,6 +82,7 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 		sql.append("	and bp.isvendor = 'Y' ");
 		sql.append("	and bp.isactive = 'Y' ");
 		sql.append("	and bpbl.cbu is not null ");
+		sql.append("	and dt.doctypekey = 'LHSBC' ");
 		// Tener en cuenta la última fecha exportada del formato de exportación
 		// para aplicarla a las fechas de creación o de actualización de
 		// entidades comerciales

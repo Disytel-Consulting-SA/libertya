@@ -19,6 +19,7 @@ import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_BPartner_BankList;
 import org.openXpertya.model.X_C_BankAccount;
+import org.openXpertya.model.X_C_BankList_Config;
 import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.model.X_C_ElectronicPaymentBranch;
 import org.openXpertya.model.X_C_Invoice;
@@ -509,6 +510,10 @@ public class ExportListaHSBC extends ExportBankList {
 		sql.append("		ON bpbl.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("	INNER JOIN " + X_C_ElectronicPaymentBranch.Table_Name + " AS epb ");
 		sql.append("		ON epb.c_electronicpaymentbranch_id = bpbl.c_electronicpaymentbranch_id ");
+		sql.append("	INNER JOIN " + X_C_BankList_Config.Table_Name + " AS bc ");
+		sql.append("		ON bc.c_bank_id = epb.c_bank_id ");
+		sql.append("	INNER JOIN " + X_C_DocType.Table_Name + " AS dt ");
+		sql.append("		ON dt.c_doctype_id = bc.c_doctype_id "); 
 		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " p ");
 		sql.append("		ON p.c_payment_id = lgp.c_payment_id ");
 		sql.append("	INNER JOIN " + X_C_BankAccount.Table_Name + " ba ");
@@ -534,6 +539,7 @@ public class ExportListaHSBC extends ExportBankList {
 		
 		sql.append("WHERE ");
 		sql.append("	lgp.c_banklist_id = ? ");
+		sql.append("	and dt.doctypekey = 'LHSBC' ");
 		sql.append("ORDER BY ah.documentno, p.c_payment_id, i.c_invoice_id, ri.c_invoice_id ");
 		
 		return sql.toString();
