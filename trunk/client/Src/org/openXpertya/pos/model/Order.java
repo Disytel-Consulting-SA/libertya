@@ -724,9 +724,13 @@ public class Order  {
 	 */
 	public void addOrderProductsFrom(Order anotherOrder) {
 		for (OrderProduct orderProduct : anotherOrder.getOrderProducts()) {
+			if(getTax() != null){
+				orderProduct.setTax(getTax());
+			}
 			addOrderProduct(orderProduct);
 			orderProduct.setDiscount(orderProduct.getDiscount(),
 					DiscountApplication.ToPrice);
+			
 		}
 		updateDiscounts();
 	}
@@ -1372,6 +1376,21 @@ public class Order  {
 		
 		return taxes;
 	}
+	
+	/**
+	 * Devuelve el impuesto si es que tiene configurado uno el cliente o alguna
+	 * otra configuración centralizada
+	 * 
+	 * @return impuesto
+	 */
+	public Tax getTax(){
+		Tax tax = null;
+		if (getBusinessPartner() != null){
+			tax = getBusinessPartner().getTax();
+		}
+		return tax;
+	}
+	
 	
 	/**
 	 * Validaciones de código promocional parámetro para determinar si es

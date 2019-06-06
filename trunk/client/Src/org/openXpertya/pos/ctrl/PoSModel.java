@@ -300,15 +300,17 @@ public class PoSModel {
 	}
 	
 	public Tax getProductTax(Product product){
-		Tax productTax;
-		if (getOrder().getBusinessPartner() != null){
-			productTax = getOrder().getBusinessPartner().getTax() != null ? getOrder()
-					.getBusinessPartner().getTax() : getConnectionState()
-					.getProductTax(product.getId(),
-							getOrder().getBusinessPartner().getLocationId());
+		Tax productTax = getOrder().getTax();
+		if(productTax == null){
+			if (getOrder().getBusinessPartner() != null){
+				productTax = getConnectionState().getProductTax(product.getId(),
+						getOrder().getBusinessPartner().getLocationId());
+			}
+			else{
+				productTax = getConnectionState().getProductTax(product.getId());
+			}
 		}
-		else
-			productTax = getConnectionState().getProductTax(product.getId());
+			
 		return productTax;
 	}
 	
