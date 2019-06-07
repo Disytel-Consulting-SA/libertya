@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal_Closing_Info
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-03-22 15:34:40.263 */
+ *  @version  - 2019-06-07 13:47:47.171 */
 public class X_C_Controlador_Fiscal_Closing_Info extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -418,6 +418,21 @@ public BigDecimal getNoFiscalHomologatedAmt()
 BigDecimal bd = (BigDecimal)get_Value("NoFiscalHomologatedAmt");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set POS Name */
+public void setPOSName (String POSName)
+{
+if (POSName != null && POSName.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+POSName = POSName.substring(0,100);
+}
+set_Value ("POSName", POSName);
+}
+/** Get POS Name */
+public String getPOSName() 
+{
+return (String)get_Value("POSName");
 }
 /** Set Punto De Venta */
 public void setPuntoDeVenta (int PuntoDeVenta)

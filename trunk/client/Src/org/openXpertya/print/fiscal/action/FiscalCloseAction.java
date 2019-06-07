@@ -59,6 +59,13 @@ public class FiscalCloseAction extends FiscalPrinterAction {
 			return false;
 		}
 
+		// Obtener la info de inicialización de la impresora
+		if(!getFdp().getInitData(getControladorFiscalID())) {
+			setErrorMsg(getFdp().getErrorMsg());
+			return false;
+		}
+		
+		// Cierre fiscal
 		if(!getFdp().fiscalClose(getControladorFiscalID(), getClosetype())) {
 			setErrorMsg(getFdp().getErrorMsg());
 			return false;

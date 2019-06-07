@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
+import org.openXpertya.print.fiscal.FiscalInitData;
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 import org.openXpertya.print.fiscal.document.CreditNote;
@@ -487,5 +488,19 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 			dto.qtynofiscalhomologated = closingResponse.getInt(23);
 		}
 		return dto;
+	}
+	
+	@Override
+	public FiscalInitData decodeInitData(FiscalPacket getInitDataResponse){
+		FiscalInitData fid = new FiscalInitData();
+		fid.cuit = getInitDataResponse.getString(3);
+		fid.name = getInitDataResponse.getString(4);
+		fid.registerNo = getInitDataResponse.getString(5);
+		fid.posNo = getInitDataResponse.getInt(6);
+		fid.initDate = getInitDataResponse.getDate(7);
+		fid.iibb = getInitDataResponse.getString(8);
+		fid.categoriaIVA = getInitDataResponse.getString(9);
+		fid.activityDate = getInitDataResponse.getDate(10);
+		return fid;
 	}
 }

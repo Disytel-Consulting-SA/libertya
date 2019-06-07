@@ -20,6 +20,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.print.OXPFiscalMsgSource;
 import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
+import org.openXpertya.print.fiscal.FiscalInitData;
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
@@ -66,7 +67,8 @@ public class FiscalDocumentPrint {
 		ACTION_FISCAL_CLOSE,
 		ACTION_PRINT_DELIVERY_DOCUMENT,
 		ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT,
-		ACTION_OPEN_DRAWER
+		ACTION_OPEN_DRAWER,
+		ACTION_GET_INIT_DATA
 	};
 
 	static {
@@ -149,6 +151,12 @@ public class FiscalDocumentPrint {
 	 * documento
 	 */
 	private boolean alwaysOpenDrawer = false;
+	
+	/**
+	 * Datos de inicialización de la impresora fiscal. Se requiere ejecutar el
+	 * comando para que esta variable tenga datos.
+	 */
+	private FiscalInitData fiscalInitData = null;
 
 	public FiscalDocumentPrint() {
 		super();
@@ -323,6 +331,7 @@ public class FiscalDocumentPrint {
 			case ACTION_PRINT_DELIVERY_DOCUMENT: 		doPrintDeliveryDocument(args); break;
 			case ACTION_PRINT_CURRENT_ACCOUNT_DOCUMENT:	doPrintCurrentAccountDocument(args); break;
 			case ACTION_OPEN_DRAWER:					doOpenDrawer(args); break;
+			case ACTION_GET_INIT_DATA:					doGetInitData(args); break;
 			default:						throw new Exception(Msg.getMsg(ctx, "InvalidAction"));
 		}
 	}
@@ -719,6 +728,40 @@ public class FiscalDocumentPrint {
 		// Se dispara el evento de acción finalizada.
 		fireActionEndedOk(Actions.ACTION_OPEN_DRAWER);
 	}
+
+	// **************************************************************
+	//   		OBTENER INFORMACIÓN DE INICIALIZACIÓN
+	// **************************************************************
+
+	/**
+	 * @param cFiscalID
+	 *            impresora fiscal
+	 * @return true si se ejecutó correctamente, falso en caso contrario
+	 */
+	public boolean getInitData(Integer cFiscalID) {
+		return execute(Actions.ACTION_GET_INIT_DATA, cFiscalID,
+				new Object[] { });
+	}
+	
+	/**
+	 * @param args argumentos
+	 * @throws Exception en caso de error
+	 */
+	public void doGetInitData(Object[] args) throws Exception{
+		fireActionStarted(FiscalDocumentPrintListener.AC_EXECUTING_ACTION);
+		
+		// Ejecutar el comando de obtención de datos de inicialización de la
+		// impresora
+		getFiscalPrinter().getInitData();
+		
+		// Decodificar la respuesta del comando para quedarnos con el DTO 
+		setFiscalInitData(getFiscalPrinter().decodeInitData(getFiscalPrinter().getLastResponse()));
+		
+		// Se dispara el evento de acción finalizada.
+		fireActionEndedOk(Actions.ACTION_GET_INIT_DATA);
+	}
+	
+	// **************************************************************
 	
 	public void endPrintingOK() throws Exception{
 		saveDocumentData((MInvoice)getOxpDocument(), getDocument());
@@ -2391,6 +2434,10 @@ public class FiscalDocumentPrint {
 		MControladorFiscalClosingInfo cinfo = new MControladorFiscalClosingInfo(ctx, 0, getTrxName());
 		cinfo.setAD_Org_ID(Env.getAD_Org_ID(ctx));
 		cinfo.setC_Controlador_Fiscal_ID(cFiscal.getID());
+		// El punto de venta lo obtenemos de la info de la fiscal
+		if(getFiscalInitData() != null){
+			cinfo.setPuntoDeVenta(getFiscalInitData().posNo);
+		}
 		cinfo.setCreditNote_A_LastEmitted(dto.creditnote_a_lastemitted);
 		cinfo.setCreditNote_BC_LastEmitted(dto.creditnote_bc_lastemitted);
 		cinfo.setCreditNoteAmt(dto.creditnoteamt);
@@ -2469,5 +2516,13 @@ public class FiscalDocumentPrint {
 
 	protected void setAlwaysOpenDrawer(boolean alwaysOpenDrawer) {
 		this.alwaysOpenDrawer = alwaysOpenDrawer;
+	}
+
+	public FiscalInitData getFiscalInitData() {
+		return fiscalInitData;
+	}
+
+	public void setFiscalInitData(FiscalInitData fiscalInitData) {
+		this.fiscalInitData = fiscalInitData;
 	}
 }
