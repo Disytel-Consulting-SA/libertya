@@ -269,4 +269,19 @@ public interface FiscalPrinter {
 	 * @return dto con los datos decodificados de respuesta
 	 */
 	public FiscalClosingResponseDTO decodeClosingResponse(FiscalPacket closingResponse);
+	
+	/**
+	 * Ejecuta el comando de consulta de datos de inicialización de la impresora
+	 */
+	public void getInitData() throws FiscalPrinterStatusError, FiscalPrinterIOException;
+	
+	/**
+	 * Decodifica la respuesta del comando de consulta de datos de
+	 * inicialización
+	 * 
+	 * @param getInitDataResponse
+	 *            respuesta del comando getInitData
+	 * @return dto con los datos decodificados por impresora
+	 */
+	public FiscalInitData decodeInitData(FiscalPacket getInitDataResponse);
 }

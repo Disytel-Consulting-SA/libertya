@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.openXpertya.print.fiscal.BasicFiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
+import org.openXpertya.print.fiscal.FiscalInitData;
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 import org.openXpertya.print.fiscal.document.CreditNote;
@@ -241,6 +242,11 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		return cmd;
 	}
 
+	public FiscalPacket cmdGetInitData() {
+		FiscalPacket cmd = createFiscalPacket(CMD_GET_INIT_DATA);
+		return cmd;
+	}
+	
 	public FiscalPacket cmdGetDateTime() {
 		FiscalPacket cmd = createFiscalPacket(CMD_GET_DATE_TIME);
 		return cmd;
@@ -1594,4 +1600,27 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 
 		return dto;
 	}
+	
+	@Override
+	public void getInitData() throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		execute(cmdGetInitData());
+		
+		// Se indica al manejador de eventos que la impresión ha finalizado.
+		fireFiscalCloseEnded();
+	}
+	
+	@Override
+	public FiscalInitData decodeInitData(FiscalPacket getInitDataResponse){
+		FiscalInitData fid = new FiscalInitData();
+		fid.cuit = getInitDataResponse.getString(3);
+		fid.name = getInitDataResponse.getString(4);
+		fid.registerNo = getInitDataResponse.getString(5);
+		fid.initDate = getInitDataResponse.getDate(6);
+		fid.posNo = getInitDataResponse.getInt(7);
+		fid.iibb = getInitDataResponse.getString(8);
+		fid.activityDate = getInitDataResponse.getDate(9);
+		fid.categoriaIVA = getInitDataResponse.getString(10);
+		return fid;
+	}
+	
 }

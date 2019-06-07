@@ -2481,3 +2481,15 @@ CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS
 
 ALTER TABLE reginfo_ventas_cbte_v
   OWNER TO libertya;
+
+--20190607-1400 Incorporación del nombre de la config del tpv relacionada al punto de venta del cierre fiscal
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal_closing_info','posname','character varying(100)'));
+
+update c_controlador_fiscal_closing_info  ci
+set posname = (SELECT name
+		FROM c_pos 
+		WHERE ad_client_id = 1010016 
+			and posnumber = ci.puntodeventa
+			and isactive = 'Y' 
+		ORDER BY created desc 
+		LIMIT 1);
