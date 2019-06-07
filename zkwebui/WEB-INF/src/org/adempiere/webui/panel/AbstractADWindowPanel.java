@@ -168,6 +168,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 	private boolean m_findCreateNew;
 
+	private static int MAX_RECORDS  =10000;
+	
 	/**
 	 * Constructor for non-embedded mode
 	 * @param ctx
@@ -1093,43 +1095,56 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         StringBuffer where = new StringBuffer();
         // Query automatically if high volume and no query
         boolean require = mTab.isHighVolume() && mTab.getTabLevel() == 0;
-        if (!require && !m_onlyCurrentRows) // No Trx Window
-        {
-            String wh1 = mTab.getWhereExtended();
-            if (wh1 == null || wh1.length() == 0)
-                wh1 = mTab.getWhereClause();
-            if (wh1 != null && wh1.length() > 0)
-                where.append(wh1);
-            //
-            if (query != null)
-            {
-                String wh2 = query.getWhereClause();
-                if (wh2.length() > 0)
-                {
-                    if (where.length() > 0)
-                        where.append(" AND ");
-                    where.append(wh2);
-                }
-            }
-            //
-            StringBuffer sql = new StringBuffer("SELECT COUNT(*) FROM ")
-                    .append(mTab.getTableName());
-            if (where.length() > 0)
-                sql.append(" WHERE ").append(where);
-            // Does not consider security
-            int no = DB.getSQLValue(null, sql.toString());
-            //
-            require = require && MRole.getDefault().isQueryRequire(no);
-        }
+//        if (!require && !m_onlyCurrentRows && mTab.getTabLevel() == 0) // No Trx Window
+//        {
+//            String wh1 = mTab.getWhereExtended();
+//            if (wh1 == null || wh1.length() == 0)
+//                wh1 = mTab.getWhereClause();
+//            if (wh1 != null && wh1.length() > 0)
+//                where.append(wh1);
+//            //
+//            if (query != null)
+//            {
+//                String wh2 = query.getWhereClause();
+//                if (wh2.length() > 0)
+//                {
+//                    if (where.length() > 0)
+//                        where.append(" AND ");
+//                    where.append(wh2);
+//                }
+//            }
+//            //
+//            StringBuffer sql = new StringBuffer("SELECT COUNT(*) FROM ")
+//                    .append(mTab.getTableName());
+//            if (where.length() > 0)
+//                sql.append(" WHERE ").append(where);
+//            // Does not consider security
+//            int no = DB.getSQLValue(null, sql.toString());
+//            //
+//            require = require && MRole.getDefault().isQueryRequire(no);
+//        }
         // Show Query
         if (require)
         {
         	m_findCancelled = false;
         	m_findCreateNew = false;
-            MField[] findFields = mTab.getFields();
-            FindWindow find = new FindWindow(curWindowNo,
-                    mTab.getName(), mTab.getAD_Table_ID(), mTab.getTableName(),
-                    where.toString(), findFields, 10, mTab.getAD_Tab_ID()); // no query below 10
+        	FindWindow find = null;
+        	int records = 0;
+        	do {        		
+	            MField[] findFields = mTab.getFields();
+	            find = new FindWindow(curWindowNo,
+	                    mTab.getName(), mTab.getAD_Table_ID(), mTab.getTableName(),
+	                    where.toString(), findFields, 10, mTab.getAD_Tab_ID()); // no query below 10
+	            if (find.getQuery()!=null)
+	            	records = find.getNoOfRecordsLastExec(); // NoOfRecords(find.getQuery(), false);
+	            else
+	            	records = 0;
+	            if( records > MAX_RECORDS && find.getQuery() != null) {
+	            	FDialog.info(curWindowNo, this.getComponent(), "Resultado de busqueda muy extenso. " +
+							"Cambie o agregue criterios de busqueda");
+	            }
+	            if (find.getQuery()==null) break;
+        	} while (records > MAX_RECORDS);
             if (find.getTitle() != null && find.getTitle().length() > 0) {
             	// Title is not set when the number of rows is below the minRecords parameter (10)
                 if (!find.isCancel())
@@ -1141,6 +1156,10 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
                 	m_findCancelled = true;
                 find = null;
             }
+			if(query == null){
+				query = new MQuery(mTab.getTableName());
+				query.addRestriction("1=2");
+			}
         }
     	return query;
     }

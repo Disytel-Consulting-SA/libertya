@@ -1392,6 +1392,13 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         return m_total;
     }    // getTotalRecords
 
+    protected int noOfRecordsLastExec = -1;
+    
+    /** Retorna el numero de registros obtenidos en la ultima ejecucion */
+    public int getNoOfRecordsLastExec() {
+    	return noOfRecordsLastExec;
+    }
+    
     /**
      * Descripción de Método
      *
@@ -1461,6 +1468,7 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
             statusBar.setStatusToolTip( query.getWhereClause());
         }
 
+        noOfRecordsLastExec = count;
         return count;
     }    // getNoOfRecords
 

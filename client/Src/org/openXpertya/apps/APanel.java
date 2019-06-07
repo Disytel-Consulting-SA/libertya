@@ -917,7 +917,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
 						mTab.getAD_Table_ID(), mTab.getTableName(), 
 						mTab.getWhereExtended(), findFields, 10);
 				if (find.getQuery()!=null)
-					records = find.getNoOfRecords(find.getQuery(),false);
+					records = find.getNoOfRecordsLastExec(); // getNoOfRecords(find.getQuery(),false);
 				else 
 					records=0;
 				if( records > MAX_RECORDS && find.getQuery() != null)
