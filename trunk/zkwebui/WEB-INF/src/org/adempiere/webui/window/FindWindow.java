@@ -567,7 +567,10 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         if (hasDescription)
             fieldDescription.addEventListener(Events.ON_CHANGE,this);
 
-        m_total = getNoOfRecords(null, false);
+        //Cambios para que no cuente al mostrar el formulario
+        // m_total = getNoOfRecords( null,false );
+        m_total=4000;
+
 
     }   //  initFind
 
@@ -1473,6 +1476,13 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         }
     }   //  cmd_save
 
+    protected int noOfRecordsLastExec = -1;
+    
+    /** Retorna el numero de registros obtenidos en la ultima ejecucion */
+    public int getNoOfRecordsLastExec() {
+    	return noOfRecordsLastExec;
+    }
+    
     /**
      *  Get the number of records of target tab
      *  @param query where clause for target tab
@@ -1480,7 +1490,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
      *  @return number of selected records;
      *          if the results are more then allowed this method will return 0
     **/
-    private int getNoOfRecords (MQuery query, boolean alertZeroRecords)
+    public int getNoOfRecords (MQuery query, boolean alertZeroRecords)
     {
         log.config("" + query);
         StringBuffer sql = new StringBuffer("SELECT COUNT(*) FROM ");
@@ -1536,6 +1546,8 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         //
         /*if (query != null)
             statusBar.setStatusToolTip (query.getWhereClause());*/
+        
+        noOfRecordsLastExec = m_total;
         return m_total;
 
     }   //  getNoOfRecords
