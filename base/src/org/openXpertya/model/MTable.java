@@ -45,6 +45,7 @@ import org.openXpertya.model.MField;
 import org.openXpertya.model.MTable.Loader;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DBException;
 import org.openXpertya.util.DisplayType;
@@ -207,7 +208,7 @@ public class MTable extends AbstractTableModel implements Serializable {
 
     /** Descripción de Campos */
 
-    protected String m_SQL_Count;
+//    protected String m_SQL_Count;	// <-- No se utiliza más.  Cargar este dato forzaba la ejecucion duplicada del query (m_SQL y m_SQL_Count), lo que practicamente duplicaba los tiempos de respuesta. 
 
     /** Descripción de Campos */
 
@@ -423,7 +424,7 @@ public class MTable extends AbstractTableModel implements Serializable {
 
         select.append( " FROM " ).append( m_tableName );
         m_SQL_Select = select.toString();
-        m_SQL_Count  = "SELECT COUNT(*) FROM " + m_tableName;
+//        m_SQL_Count  = "SELECT COUNT(*) FROM " + m_tableName;
 
         //
 
@@ -484,7 +485,7 @@ public class MTable extends AbstractTableModel implements Serializable {
         // RO/RW Access
 
         m_SQL       = m_SQL_Select + where.toString();
-        m_SQL_Count += where.toString();
+//        m_SQL_Count += where.toString();
 
         if( m_withAccessControl ) {
             boolean ro = MRole.SQL_RO;
@@ -493,7 +494,7 @@ public class MTable extends AbstractTableModel implements Serializable {
             // ro = MRole.SQL_RW;
 
             m_SQL = MRole.getDefault( m_ctx,false ).addAccessSQL( m_SQL,m_tableName,MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO );
-            m_SQL_Count = MRole.getDefault( m_ctx,false ).addAccessSQL( m_SQL_Count,m_tableName,MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO );
+//            m_SQL_Count = MRole.getDefault( m_ctx,false ).addAccessSQL( m_SQL_Count,m_tableName,MRole.SQL_FULLYQUALIFIED,MRole.SQL_RO );
         }
 
         // ORDER BY
@@ -504,7 +505,7 @@ public class MTable extends AbstractTableModel implements Serializable {
 
         //
 
-        log.fine( m_SQL_Count );
+//        log.fine( m_SQL_Count );
         Env.setContext( m_ctx,m_WindowNo,m_TabNo,"SQL",m_SQL );
 
         return m_SQL;
@@ -3799,33 +3800,33 @@ public class MTable extends AbstractTableModel implements Serializable {
 		//	log.config( "MTable Loader.open");
 			//	Get Number of Rows
 			int rows = 0;
-			PreparedStatement pstmt = null;
-			ResultSet rs = null;			
-			try
-			{
-				pstmt = DB.prepareStatement(m_SQL_Count, null);
-				setParameter (pstmt, true);
-				rs = pstmt.executeQuery();
-				if (rs.next())
-					rows = rs.getInt(1);
-			}
-			catch (SQLException e0)
-			{
-				//	Zoom Query may have invalid where clause
-				if (DBException.isInvalidIdentifierError(e0))
-					log.warning("Count - " + e0.getLocalizedMessage() + "\nSQL=" + m_SQL_Count);
-				else
-					log.log(Level.SEVERE, "Count SQL=" + m_SQL_Count, e0);
-				return 0;
-			}
-			finally
-			{
-				DB.close(rs, pstmt);				
-			}
+//			PreparedStatement pstmt = null;
+//			ResultSet rs = null;			
+//			try
+//			{
+//				pstmt = DB.prepareStatement(m_SQL_Count, null);
+//				setParameter (pstmt, true);
+//				rs = pstmt.executeQuery();
+//				if (rs.next())
+//					rows = rs.getInt(1);
+//			}
+//			catch (SQLException e0)
+//			{
+//				//	Zoom Query may have invalid where clause
+//				if (DBException.isInvalidIdentifierError(e0))
+//					log.warning("Count - " + e0.getLocalizedMessage() + "\nSQL=" + m_SQL_Count);
+//				else
+//					log.log(Level.SEVERE, "Count SQL=" + m_SQL_Count, e0);
+//				return 0;
+//			}
+//			finally
+//			{
+//				DB.close(rs, pstmt);				
+//			}
 			StringBuffer info = new StringBuffer("Rows=");
-			info.append(rows);
-			if (rows == 0)
-				info.append(" - ").append(m_SQL_Count);
+//			info.append(rows);
+//			if (rows == 0)
+//				info.append(" - ").append(m_SQL_Count);
 						
 			//postgresql need trx to use cursor based resultset
 			String trxName = m_virtual ? Trx.createTrxName("Loader") : null;
@@ -3833,18 +3834,26 @@ public class MTable extends AbstractTableModel implements Serializable {
 			//	open Statement (closed by Loader.close)
 			try
 			{
-				m_pstmt = DB.prepareStatement(m_SQL, trxName);
-				if (maxRows > 0 && rows > maxRows)
-				{
-					m_pstmt.setMaxRows(maxRows);
-					info.append(" - MaxRows=").append(maxRows);
-					rows = maxRows;
-				}
+				m_pstmt = DB.prepareStatement( m_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY, trxName, false);
+//				if (maxRows > 0 && rows > maxRows)
+//				{
+//					m_pstmt.setMaxRows(maxRows);
+//					info.append(" - MaxRows=").append(maxRows);
+//					rows = maxRows;
+//				}
 				//ensure not all row is fectch into memory for virtual table
 				if (m_virtual)
 					m_pstmt.setFetchSize(100);
 				setParameter (m_pstmt, false);
 				m_rs = m_pstmt.executeQuery();
+				if (m_rs.last()) {
+					m_rs.last();
+					rows = m_rs.getRow();
+					m_rs.beforeFirst();
+				}
+				info.append(" - rows=").append(rows);		
+				if (rows == 0)
+					info.append(" - ").append(m_SQL);
 			}
 			catch (SQLException e)
 			{
@@ -3885,42 +3894,48 @@ public class MTable extends AbstractTableModel implements Serializable {
 
             int rows = 0;
 
-            try {
-            	//JOptionPane.showMessageDialog( null,"Ejecutando la consulta: "+m_SQL_Count,"MTable.open()", JOptionPane.INFORMATION_MESSAGE );
-                PreparedStatement pstmt = DB.prepareStatement( m_SQL_Count );
-
-                setParameter( pstmt,true );
-
-                ResultSet rs = pstmt.executeQuery();
-
-                if( rs.next()) {
-                    rows = rs.getInt( 1 );
-                }
-                //JOptionPane.showMessageDialog( null,"Con el resultado de:  "+rows,"MTable.open()", JOptionPane.INFORMATION_MESSAGE ); 
-                rs.close();
-                pstmt.close();
-            } catch( SQLException e0 ) {
-
-                // Zoom Query may have invalid where clause
-            	// JOptionPane.showMessageDialog( null,"Error Numero: "+e0.getErrorCode(),"MTable.open()", JOptionPane.INFORMATION_MESSAGE );
-                if( e0.getErrorCode() == 904 ) {    // ORA-00904: "C_x_ID": invalid identifier
-                    log.warning( "Count - " + e0.getLocalizedMessage() + "\nSQL=" + m_SQL_Count );
-                } else {
-                    log.log( Level.SEVERE,"Count SQL=" + m_SQL_Count,e0 );
-                }
-
-                return 0;
-            }
+//            try {
+//            	//JOptionPane.showMessageDialog( null,"Ejecutando la consulta: "+m_SQL_Count,"MTable.open()", JOptionPane.INFORMATION_MESSAGE );
+//                PreparedStatement pstmt = DB.prepareStatement( m_SQL_Count );
+//
+//                setParameter( pstmt,true );
+//
+//                ResultSet rs = pstmt.executeQuery();
+//
+//                if( rs.next()) {
+//                    rows = rs.getInt( 1 );
+//                }
+//                //JOptionPane.showMessageDialog( null,"Con el resultado de:  "+rows,"MTable.open()", JOptionPane.INFORMATION_MESSAGE ); 
+//                rs.close();
+//                pstmt.close();
+//            } catch( SQLException e0 ) {
+//
+//                // Zoom Query may have invalid where clause
+//            	// JOptionPane.showMessageDialog( null,"Error Numero: "+e0.getErrorCode(),"MTable.open()", JOptionPane.INFORMATION_MESSAGE );
+//                if( e0.getErrorCode() == 904 ) {    // ORA-00904: "C_x_ID": invalid identifier
+//                    log.warning( "Count - " + e0.getLocalizedMessage() + "\nSQL=" + m_SQL_Count );
+//                } else {
+//                    log.log( Level.SEVERE,"Count SQL=" + m_SQL_Count,e0 );
+//                }
+//
+//                return 0;
+//            }
 
             // open Statement (closed by Loader.close)
 
             try {
-                m_pstmt = DB.prepareStatement( m_SQL );
+                m_pstmt = DB.prepareStatement( m_SQL, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY, null, false);
 
                 // m_pstmt.setFetchSize(20);
 
                 setParameter( m_pstmt,false );
                 m_rs = m_pstmt.executeQuery();
+                if (m_rs.last()) {
+                    m_rs.last();
+                    rows = m_rs.getRow();
+                    m_rs.beforeFirst();
+                }
+                
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,m_SQL,e );
 
@@ -3932,7 +3947,7 @@ public class MTable extends AbstractTableModel implements Serializable {
             info.append( rows );
 
             if( rows == 0 ) {
-                info.append( " - " ).append( m_SQL_Count );
+                info.append( " - " ).append( m_SQL );
             }
 
             log.fine( info.toString());
