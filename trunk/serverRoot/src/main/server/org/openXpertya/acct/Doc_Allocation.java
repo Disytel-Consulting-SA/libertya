@@ -249,16 +249,30 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
 
             else if( invoice.isSOTrx()) {
 
+				// El débito asignado a la linea puede ser un crédito, en ese
+				// caso el asiento debe ser al revés
+            	MDocType dt = MDocType.get(getCtx(), invoice.getC_DocTypeTarget_ID());
+				BigDecimal debitInvoiceAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType()) ? null
+						: invoiceAmt;
+				BigDecimal creditInvoiceAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType()) ? invoiceAmt
+						: null;
+				BigDecimal allocationLineDebitAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType())
+						? invoiceAmt : null;
+				BigDecimal allocationLineCreditAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType()) ? null
+						: invoiceAmt; 
+            	
                 // Payment/Cash    DR
 
                 if( line.getC_Payment_ID() != 0 ) {
-                    fl = fact.createLine( line,getPaymentAcct( as,line.getC_Payment_ID()),p_vo.C_Currency_ID,line.getAmount(),null );
+					fl = fact.createLine(line, getPaymentAcct(as, line.getC_Payment_ID()), p_vo.C_Currency_ID,
+							allocationLineDebitAmt, allocationLineCreditAmt);
 
                     if( (fl != null) && (payment != null) ) {
                         fl.setAD_Org_ID( payment.getAD_Org_ID());
                     }
                 } else if( line.getC_CashLine_ID() != 0 ) {
-                    fl = fact.createLine( line,getCashAcct( as,line.getC_CashLine_ID()),p_vo.C_Currency_ID,line.getAmount(),null );
+					fl = fact.createLine(line, getCashAcct(as, line.getC_CashLine_ID()), p_vo.C_Currency_ID,
+							allocationLineDebitAmt, allocationLineCreditAmt);
 
                     MCashLine cashLine = new MCashLine( getCtx(),line.getC_CashLine_ID(),m_trxName );
 
@@ -268,26 +282,11 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                 } else if(line.getC_Invoice_Credit_ID() != 0){
                 	// Si es factura de clientes entonces crear una línea para la cuenta de clientes
                 	MInvoice invoiceCredit = new MInvoice(getCtx(),line.getC_Invoice_Credit_ID(),m_trxName);
-                	
-                	// Se obtiene el tipo de documento 
-            		MDocType docType = MDocType.get(getCtx(), invoiceCredit.getC_DocTypeTarget_ID());
             		if(invoiceCredit.isSOTrx()){
-            			BigDecimal amountDebit;
-            			BigDecimal amountCredit;
-            			
-            			// Si el doc base del invoice credit está basado en un abono, entonces va para el debito
-            			if(docType.getDocBaseType().equalsIgnoreCase(MDocType.DOCBASETYPE_ARCreditMemo)){
-            				amountDebit = line.getAmount();
-            				amountCredit = null;
-            			}
-            			else{
-            				amountDebit = null;
-            				amountCredit = line.getAmount();
-            			}
-            			
-                		// Actualizar la cuenta del cliente
+            			// Actualizar la cuenta del cliente
                 		bpAcct = getAccount( Doc.ACCTTYPE_C_Receivable,as );
-                		fl = fact.createLine( line,bpAcct,p_vo.C_Currency_ID,amountDebit,amountCredit);
+						fl = fact.createLine(line, bpAcct, p_vo.C_Currency_ID, allocationLineDebitAmt,
+								allocationLineCreditAmt);
                 		
                 		if( (fl != null) && (invoiceCredit.getID() != 0) ) {
                             fl.setAD_Org_ID( invoiceCredit.getAD_Org_ID());
@@ -296,7 +295,8 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                 	else{
                 		// Actualizar la cuenta de los proveedores
                 		bpAcct = getAccount( Doc.ACCTTYPE_V_Liability,as );
-                        fl = fact.createLine( line,bpAcct,p_vo.C_Currency_ID,line.getAmount(),null );    // payment currency
+						fl = fact.createLine(line, bpAcct, p_vo.C_Currency_ID, allocationLineDebitAmt,
+								allocationLineCreditAmt); // payment currency
                         
                         if( (fl != null) && (invoiceCredit.getID() != 0) ) {
                             fl.setAD_Org_ID( invoiceCredit.getAD_Org_ID());
@@ -307,7 +307,13 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                 // Discount                DR
 
                 if( Env.ZERO.compareTo( line.getDiscountAmt()) != 0 ) {
-                    fl = fact.createLine( line,getAccount( Doc.ACCTTYPE_DiscountExp,as ),p_vo.C_Currency_ID,line.getDiscountAmt(),null );
+                	BigDecimal debitDiscountAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType())
+    						? line.getDiscountAmt() : null;
+    				BigDecimal creditDiscountAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType()) ? null
+    						: line.getDiscountAmt();
+                	
+					fl = fact.createLine(line, getAccount(Doc.ACCTTYPE_DiscountExp, as), p_vo.C_Currency_ID,
+							debitDiscountAmt, creditDiscountAmt);
 
                     if( (fl != null) && (payment != null) ) {
                         fl.setAD_Org_ID( payment.getAD_Org_ID());
@@ -317,7 +323,13 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                 // Write off               DR
 
                 if( Env.ZERO.compareTo( line.getWriteOffAmt()) != 0 ) {
-                    fl = fact.createLine( line,getAccount( Doc.ACCTTYPE_WriteOff,as ),p_vo.C_Currency_ID,line.getWriteOffAmt(),null );
+                	BigDecimal debitWriteOffAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType())
+    						? line.getWriteOffAmt() : null;
+    				BigDecimal creditWriteOffAmt = MDocType.DOCBASETYPE_ARInvoice.equals(dt.getDocBaseType()) ? null
+    						: line.getWriteOffAmt();
+                	
+					fl = fact.createLine(line, getAccount(Doc.ACCTTYPE_WriteOff, as), p_vo.C_Currency_ID,
+							debitWriteOffAmt, creditWriteOffAmt);
 
                     if( (fl != null) && (payment != null) ) {
                         fl.setAD_Org_ID( payment.getAD_Org_ID());
@@ -327,8 +339,8 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                 // AR Invoice Amount       CR
 
                 bpAcct = getAccount( Doc.ACCTTYPE_C_Receivable,as );
-                fl     = fact.createLine( line,bpAcct,p_vo.C_Currency_ID,null,invoiceAmt );    // payment currency
-
+				fl = fact.createLine(line, bpAcct, p_vo.C_Currency_ID, debitInvoiceAmt, creditInvoiceAmt); // payment
+																											// currency
                 if( fl != null ) {
                     allocationAccounted = fl.getAcctBalance().negate();
                 }
