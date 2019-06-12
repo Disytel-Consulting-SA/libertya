@@ -227,7 +227,8 @@ public class ExportListaHSBC extends ExportBankList {
 		dcLine.append(getFieldSeparator());
 		dcLine.append(dateFormat_ddMMyyyy.format(dateInvoiced));
 		dcLine.append(getFieldSeparator());
-		dcLine.append(rs.getString("description") == null?"":StringUtil.trimStrict(rs.getString("description"),20));
+		dcLine.append(StringUtil.trimStrict(
+				rs.getString("description") == null ? rs.getString("doctypename") : rs.getString("description"), 20));
 		dcLine.append(getFieldSeparator());
 		dcLine.append(rs.getBigDecimal("grandtotal"));
 		dcLine.append(getFieldSeparator());
@@ -251,6 +252,8 @@ public class ExportListaHSBC extends ExportBankList {
 	protected String getRELine(ResultSet rs) throws Exception{
 		StringBuffer reLine = new StringBuffer();
 		boolean isIIBB = X_C_RetencionType.RETENTIONTYPE_IngresosBrutos.equals(rs.getString("retentiontype"));
+		boolean isGanancias = X_C_RetencionType.RETENTIONTYPE_Ganancias.equals(rs.getString("retentiontype"));
+		boolean isSUSS = X_C_RetencionType.RETENTIONTYPE_Suss.equals(rs.getString("retentiontype"));
 		// Línea RE
 		reLine.append("RE");
 		reLine.append(getFieldSeparator());
@@ -294,12 +297,14 @@ public class ExportListaHSBC extends ExportBankList {
 		reLine.append(isIIBB ? rs.getBigDecimal("retencion_percent") : "");
 		reLine.append(getFieldSeparator());
 		// Monto acumulado de Retención
-		reLine.append(isIIBB ? ""
-				: !Util.isEmpty(rs.getBigDecimal("retenciones_ant_acumuladas_amt"), true)
-						? rs.getBigDecimal("retenciones_ant_acumuladas_amt") : rs.getBigDecimal("amt_retenc"));
+		reLine.append(
+				isGanancias
+						? (!Util.isEmpty(rs.getBigDecimal("retenciones_ant_acumuladas_amt"), true)
+								? rs.getBigDecimal("retenciones_ant_acumuladas_amt") : rs.getBigDecimal("amt_retenc"))
+						: "");
 		reLine.append(getFieldSeparator());
 		// Monto de pagos acumulados por el mismo concepto dentro del mes
-		reLine.append(isIIBB ? "" : rs.getBigDecimal("pagos_ant_acumulados_amt"));
+		reLine.append(isSUSS ? rs.getBigDecimal("pagos_ant_acumulados_amt") : "");
 		reLine.append(getFieldSeparator());
 		// Observaciones
 		reLine.append("");
@@ -455,6 +460,7 @@ public class ExportListaHSBC extends ExportBankList {
 		sql.append("	case when p.tendertype = 'A' then bp.taxid else p.a_cuit end as a_cuit, ");
 		
 		sql.append("	i.c_invoice_id, ");
+		sql.append("	dti.name as doctypename, ");
 		sql.append("	i.documentno as factura, ");
 		sql.append("	i.dateinvoiced, ");
 		sql.append("	i.description, ");
@@ -524,6 +530,8 @@ public class ExportListaHSBC extends ExportBankList {
 		sql.append("		ON ah.c_allocationhdr_id = al.c_allocationhdr_id ");
 		sql.append("	INNER JOIN " + X_C_Invoice.Table_Name + " i ");
 		sql.append("		ON i.c_invoice_id = al.c_invoice_id ");
+		sql.append("	INNER JOIN " + X_C_DocType.Table_Name + " dti ");
+		sql.append("		ON dti.c_doctype_id = i.c_doctypetarget_id ");
 		sql.append("	LEFT JOIN " + X_M_Retencion_Invoice.Table_Name + " ri ");
 		sql.append("		ON ri.c_allocationhdr_id = ah.c_allocationhdr_id "); // Retención
 		sql.append("	LEFT JOIN " + X_C_Invoice.Table_Name + " cr ");
