@@ -128,7 +128,8 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 			spLine.append(StringUtil.trimStrict(rs.getString("address1"),40));
 			spLine.append(getFieldSeparator());
 			// Localidad no puede superar los 20 caracteres
-			spLine.append(rs.getString("city") == null?"":StringUtil.trimStrict(rs.getString("city"),20));
+			spLine.append(rs.getString("city") == null ? ""
+					: StringUtil.trimStrict(rs.getString("city").replace(getFieldSeparator(), ""), 20));
 			spLine.append(getFieldSeparator());
 			spLine.append(rs.getString("postal") == null ? ""
 					: (rs.getString("postal").matches("[\\d]*") ? StringUtil.trimStrict(rs.getString("postal"), 4) : "0000"));
