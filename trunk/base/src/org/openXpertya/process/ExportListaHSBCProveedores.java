@@ -134,7 +134,8 @@ public class ExportListaHSBCProveedores extends ExportListaHSBC {
 			spLine.append(rs.getString("postal") == null ? ""
 					: (rs.getString("postal").matches("[\\d]*") ? StringUtil.trimStrict(rs.getString("postal"), 4) : "0000"));
 			spLine.append(getFieldSeparator());
-			spLine.append(rs.getString("provincia") == null?"":StringUtil.trimStrict(rs.getString("provincia"),20));
+			spLine.append(rs.getString("provincia") == null ? ""
+					: StringUtil.trimStrict(rs.getString("provincia").replace(getFieldSeparator(), ""), 20));
 			spLine.append(getFieldSeparator());
 			spLine.append(rs.getString("sucursal"));
 			spLine.append(getFieldSeparator());
