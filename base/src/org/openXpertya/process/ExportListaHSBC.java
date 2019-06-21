@@ -288,7 +288,9 @@ public class ExportListaHSBC extends ExportBankList {
 		reLine.append(isIIBB ? StringUtil.trimStrict(rs.getString("retentionname"), 15) : "");
 		reLine.append(getFieldSeparator());
 		// Provincia
-		reLine.append(isIIBB ? StringUtil.trimStrict(rs.getString("retencion_provincia"), 20) : "");
+		reLine.append(isIIBB ? (rs.getString("retencion_provincia") == null ? ""
+				: StringUtil.trimStrict(rs.getString("retencion_provincia").replace(getFieldSeparator(), ""), 20))
+				: "");
 		reLine.append(getFieldSeparator());
 		// Porcentaje de Retención
 		reLine.append(isIIBB ? rs.getBigDecimal("retencion_percent") : "");
