@@ -1624,12 +1624,10 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 	}
 	
 	protected void deletePosting() {
-        if (isPosted()) {
-			String sql = "DELETE FROM Fact_Acct WHERE AD_Table_ID=" + MAllocationHdr.Table_ID + " AND Record_ID=" + getC_AllocationHdr_ID();
-	        int no = DB.executeUpdate( sql,get_TrxName());
-	
-	        log.fine( "Fact_Acct deleted #" + no );
-        }
+		String sql = "DELETE FROM Fact_Acct WHERE AD_Table_ID=" + MAllocationHdr.Table_ID + " AND Record_ID=" + getC_AllocationHdr_ID();
+        int no = DB.executeUpdate( sql,get_TrxName());
+
+        log.fine( "Fact_Acct deleted #" + no );
 	}
 
 	public void setVoidPOSJournalID(Integer voidPOSJournalID) {
