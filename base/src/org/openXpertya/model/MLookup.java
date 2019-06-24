@@ -916,9 +916,40 @@ public final class MLookup extends Lookup implements Serializable {
 
                 if ((validation.length() == 0) && (m_info.ValidationCode.length() > 0)) {
 
-                    log.fine(m_info.KeyColumn + ": Loader NOT Validated: " + m_info.ValidationCode);
+                    /* Workaround al problema del combo desplegable de tipos de documento incorrectos en facturas de cliente / facturas de proveedor.
+                     * 		Por algun motivo todavia indeterminado (race condition?) se pierde el contexto para la propiedad issotrx, con lo cual  
+                     * 		no puede parsearse correctamente la query a ejectuar, dado que no es posible reemplazar los @issotrx@ con su valor  
+                     * 		correspondiente dado que no existe.
+                     * 		Esto hace que el combo de tipos de documento se visualice con informacion incorrecta (por ejemplo tipos de documento 
+                     * 		de proveedor en ventana facturas de cliente)
+                     * 		El workaround consiste en forzar el issotrx segun la informacion de la ventana, exclusivamente para la columna 3781 (C_DocTypeTarget_ID)
+                     * 		de la tabla C_Invoice.  
+                     */
+                    try {
+                    	// Workaround unicamente para columna que actualmente presenta el problema
+                    	if (m_info.Column_ID == 3781) {
+	                    	// Recuperar el AD_Tab_ID de la pestaña inicial de la ventana
+	                    	int	tabID = Env.getContextAsInt(m_info.ctx, m_info.WindowNo, 0, "AD_Tab_ID");
+	                    	if (tabID <= 0)
+	                    		throw new Exception ("Error al recuperar AD_Tab_ID: " + tabID);
+	                    	// Recuperar el issotrx de la ventana
+	                    	String isSOTrx = DB.getSQLValueString(null, "SELECT issotrx FROM AD_Window WHERE AD_Window_ID = (SELECT AD_Window_ID FROM AD_Tab WHERE AD_Tab_ID = ?)", tabID);
+	                    	// Aplicar el issotrx obtenido en el contexto
+	                    	m_info.ctx.setProperty(m_info.WindowNo + "|IsSOTrx", isSOTrx);
+	                    	// Reaplicar el parseo del ValidationCode con el contexto corregido en cuanto al issotrx
+	                    	validation = Env.parseContext(m_info.ctx, m_info.WindowNo, m_info.ValidationCode, false);
+	                    	log.fine("Contexto issotrx corregido:" + isSOTrx);	                    	
+                    	}
+                    } catch (Exception e) {
+                    	log.warning("Error al corregir contexto issotrx: " + e.toString());
+                    }
 
-                    return;
+                    if ((validation.length() == 0) && (m_info.ValidationCode.length() > 0)) {
+                    
+                    	log.warning(m_info.KeyColumn + ": Loader NOT Validated: " + m_info.ValidationCode);
+                    	
+                    	return;
+                    }
                 }
 
                 log.fine(m_info.KeyColumn + ": Loader Validated: " + validation);
