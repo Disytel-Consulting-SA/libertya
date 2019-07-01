@@ -183,7 +183,7 @@ public class ExportListaHSBC extends ExportBankList {
 		idLine.append(rs.getString("cbu"));
 		idLine.append(getFieldSeparator());
 		// 01 = CC | 02 = CA (Cuenta Corriente o Caja de Ahorro) del proveedor
-		idLine.append(rs.getString("transferbankaccounttype") == null ? "CC"
+		idLine.append(rs.getString("transferbankaccounttype") == null ? "01"
 				: s_hsbc_bankaccounttypes.get(rs.getString("transferbankaccounttype")));
 		idLine.append(getFieldSeparator());
 		idLine.append("02");
