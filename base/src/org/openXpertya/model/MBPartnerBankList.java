@@ -30,12 +30,25 @@ public class MBPartnerBankList extends X_C_BPartner_BankList {
 				+ "where c_electronicpaymentbranch_id = ? and bc.paymenttype = '"
 				+ X_C_BankList_Config.PAYMENTTYPE_ElectronicTransfer + "'",
 				getC_ElectronicPaymentBranch_ID());
-		if (isTransfer > 0
-				&& (Util.isEmpty(getCBU(), true) || getCBU().length() != 22 || !getCBU().matches("[\\d]*"))) {
+		if (isTransfer > 0) {
+			// CBU Obligatorio
 			// TODO Pasar a ad_message 
-			log.saveError("SaveError",
-					"El CBU es obligatorio para configuración de transferencias electronicas y debe tener una longitud exacta de 22 numeros.");
-			return false;
+			String msg = "";
+			if(Util.isEmpty(getCBU(), true) || getCBU().length() != 22 || !getCBU().matches("[\\d]*")){
+				msg = (Util.isEmpty(msg, true)?"":". ")+"El CBU es obligatorio para configuración de transferencias electronicas y debe tener una longitud exacta de 22 numeros";
+			}
+			// Tipo de Cuenta obligatorio
+			if(Util.isEmpty(getTransferBankAccountType(), true)){
+				msg = (Util.isEmpty(msg, true)?"":". ")+"Tipo de Cuenta obligatorio";
+			}
+			// Concepto de transferencia obligatorio
+			if(Util.isEmpty(getTransferConcept(), true)){
+				msg = (Util.isEmpty(msg, true)?"":". ")+"Concepto de Transferencia obligatorio";
+			}
+			if(!Util.isEmpty(msg, true)){
+				log.saveError("SaveError", msg);
+				return false;
+			}			
 		}
 		return true;
 	}
