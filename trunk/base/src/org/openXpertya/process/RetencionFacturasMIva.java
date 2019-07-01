@@ -140,7 +140,7 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 	
 	protected BigDecimal calculateImporteDeterminado(BigDecimal baseImponible, BigDecimal payNetAmt) {
 		if (baseImponible.compareTo(Env.ZERO) == 1) {
-			return getPayTotalAmount().subtract(payNetAmt)
+			return getPayTotalAmount().subtract(getManualTaxesAmt()).subtract(payNetAmt)
 					.multiply(getPorcentajeRetencion())
 					.divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
 		} else
