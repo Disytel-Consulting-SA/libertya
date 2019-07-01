@@ -8,7 +8,7 @@ public class RetencionIVA extends RetencionGanancias {
 
 	protected BigDecimal calculateImporteDeterminado(BigDecimal baseImponible) {
 		if (baseImponible.compareTo(Env.ZERO) == 1) {
-			return getPayTotalAmount().subtract(getPayNetAmt())
+			return getPayTotalAmount().subtract(getManualTaxesAmt()).subtract(getPayNetAmt())
 					.multiply(getPorcentajeRetencion())
 					.divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);
 		} else

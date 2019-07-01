@@ -542,6 +542,17 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public BigDecimal getPayNetAmt(MInvoice invoice, BigDecimal amt){
 		BigDecimal net = invoice.getNetAmount();
 		BigDecimal grandTotal = invoice.getGrandTotal();
+		// Decrementar los impuestos manuales
+		/*BigDecimal manualTaxesAmt = BigDecimal.ZERO;
+		try{
+			List<MInvoiceTax> manualTaxes = MInvoiceTax.getTaxesFromInvoice(invoice, true);
+			for (MInvoiceTax mInvoiceTax : manualTaxes) {
+				manualTaxesAmt = manualTaxesAmt.add(mInvoiceTax.getTaxAmt());
+			}
+			grandTotal = grandTotal.subtract(manualTaxesAmt);
+		} catch(Exception e){
+			e.printStackTrace();
+		}*/
 		return net.multiply(amt).divide(grandTotal, 2, BigDecimal.ROUND_HALF_EVEN);
 	}
 	
@@ -577,6 +588,54 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	
 	public BigDecimal getPayNetAmt() {
 		return getPayNetAmt(getInvoiceList(), getAmountList());
+	}
+	
+	/**
+	 * Obtener el importe de impuestos manuales de las facturas
+	 * 
+	 * @param invoice
+	 *            factura
+	 * @param amt
+	 *            importe pago
+	 * @return neto del pago
+	 */
+	public BigDecimal getManualTaxesAmt(MInvoice invoice, BigDecimal amt){
+		BigDecimal grandTotal = invoice.getGrandTotal();
+		// Decrementar los impuestos manuales
+		BigDecimal manualTaxesAmt = BigDecimal.ZERO;
+		try{
+			List<MInvoiceTax> manualTaxes = MInvoiceTax.getTaxesFromInvoice(invoice, true);
+			for (MInvoiceTax mInvoiceTax : manualTaxes) {
+				manualTaxesAmt = manualTaxesAmt.add(mInvoiceTax.getTaxAmt());
+			}
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		return manualTaxesAmt.multiply(amt).divide(grandTotal, 2, BigDecimal.ROUND_HALF_EVEN);
+	}
+	
+	/**
+	 * Obtengo el neto de los montos para cada factura. Los montos y las
+	 * facturas parámetros deben ir en orden.
+	 * 
+	 * @param invoices
+	 *            facturas
+	 * @param amounts
+	 *            montos imputados a cada factura
+	 * @return total neto de los montos de las facturas
+	 */
+	public BigDecimal getManualTaxesAmt(List<MInvoice> invoices, List<BigDecimal> amounts) {
+		BigDecimal manualTaxesAmt = Env.ZERO;
+		if(invoices.size() > 0){
+			for (int i = 0; i < invoices.size(); i++) {
+				manualTaxesAmt = manualTaxesAmt.add(getManualTaxesAmt(invoices.get(i),amounts.get(i)));
+			}
+		}
+		return manualTaxesAmt;
+	}
+	
+	public BigDecimal getManualTaxesAmt() {
+		return getManualTaxesAmt(getInvoiceList(), getAmountList());
 	}
 	
 	public Map<MInvoice, BigDecimal> getAllocatedInvoicesAmts(
