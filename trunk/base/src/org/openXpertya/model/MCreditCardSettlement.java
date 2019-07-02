@@ -590,7 +590,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 				amt = amt.add(rs.getBigDecimal("amount"));
 			}
 
-			X_C_CreditCardSettlement settlement = new X_C_CreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), trxName);
+			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), trxName);
 			settlement.setCouponsTotalAmount(amt);
 			if (!settlement.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
