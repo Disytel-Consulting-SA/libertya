@@ -922,7 +922,8 @@ public class ReportStarter implements ProcessCall // , ClientProcess
         log.info("Report File Dir: "+reportDir.getAbsolutePath());
         File jasperFile = new File( reportDir.getAbsolutePath(), jasperName+".jasper");
         if (jasperFile.exists()) { // test time
-            if (reportFile.lastModified() == jasperFile.lastModified()) {
+// No considerar caducidad de los reportes
+//            if (reportFile.lastModified() == jasperFile.lastModified()) {
             	log.info(" no need to compile use "+jasperFile.getAbsolutePath());
                 try {
                     jasperReport = (JasperReport)JRLoader.loadObject(jasperFile.getAbsolutePath());
@@ -930,9 +931,9 @@ public class ReportStarter implements ProcessCall // , ClientProcess
                     jasperReport = null;
                     log.severe("Can not load report - "+ e.getMessage());
                 }
-            } else {
-                jasperReport = compileReport( reportFile, jasperFile);
-            }
+//            } else {
+//               jasperReport = compileReport( reportFile, jasperFile);
+//            }
         } else { // create new jasper file
             jasperReport = compileReport( reportFile, jasperFile);
         }
