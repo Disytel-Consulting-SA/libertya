@@ -19,11 +19,18 @@ public class BusinessPartnerValidator implements ModelValidator {
 	 * @param bp entidad comercial
 	 * @return resultado de la llamada
 	 */
-	protected CallResult validateTrxEnabled(MBPartner bp) {
+	protected CallResult validateTrxEnabled(MBPartner bp, PO po, boolean controlData) {
 		CallResult cr = new CallResult();
+		// Si se debe controlar los datos significa que debemos verificar que si
+		// estamos bajo una modificación de un PO ya procesado, se debería poder
+		// sin realizar esta restricción 
 		if(!bp.isTrxEnabled()){
-			cr.setMsg(Msg.getMsg(bp.getCtx(), "BPartnerTrxDisabled",
+			boolean sendMsg = !controlData || po.get_Value("Processed") == null
+					|| !(((Boolean) po.get_Value("Processed"))).booleanValue();
+			if(sendMsg){
+				cr.setMsg(Msg.getMsg(bp.getCtx(), "BPartnerTrxDisabled",
 					new Object[] { bp.getValue() + " - " + bp.getName() }), true);
+			}
 		}
 		return cr;
 	}
@@ -40,7 +47,7 @@ public class BusinessPartnerValidator implements ModelValidator {
 			MBPartner bp = new MBPartner(po.getCtx(), bPartnerID, po.get_TrxName());
 			// Si la EC relacionada al documento no esta habilitada para transacciones, 
 			// no se puede trabajar sobre ningun comprobante
-			CallResult cr = validateTrxEnabled(bp);
+			CallResult cr = validateTrxEnabled(bp, po, false);
 			if(cr.isError()) {
 				return cr.getMsg();
 			}
@@ -99,7 +106,7 @@ public class BusinessPartnerValidator implements ModelValidator {
 			MBPartner bp = new MBPartner(po.getCtx(), bPartnerID, po.get_TrxName());
 			// Si la EC relacionada al documento no esta habilitada para transacciones, 
 			// no se puede trabajar sobre ningun comprobante
-			CallResult cr = validateTrxEnabled(bp);
+			CallResult cr = validateTrxEnabled(bp, po, true);
 			if(cr.isError()) {
 				return cr.getMsg();
 			}

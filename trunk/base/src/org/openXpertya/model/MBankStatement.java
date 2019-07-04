@@ -298,10 +298,6 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
 
     /** Descripción de Campos */
 
-    private String m_processMsg = null;
-
-    /** Descripción de Campos */
-
     private boolean m_justPrepared = false;
 
     /**
