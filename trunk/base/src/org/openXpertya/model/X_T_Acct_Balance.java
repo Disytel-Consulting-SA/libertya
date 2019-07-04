@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_Acct_Balance
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-07-04 18:03:35.859 */
+ *  @version  - 2019-07-04 19:40:40.783 */
 public class X_T_Acct_Balance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -146,20 +146,6 @@ Account Element */
 public int getC_ElementValue_ID() 
 {
 Integer ii = (Integer)get_Value("C_ElementValue_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set C_Elementvalue_To_ID */
-public void setC_Elementvalue_To_ID (int C_Elementvalue_To_ID)
-{
-if (C_Elementvalue_To_ID <= 0) set_Value ("C_Elementvalue_To_ID", null);
- else 
-set_Value ("C_Elementvalue_To_ID", new Integer(C_Elementvalue_To_ID));
-}
-/** Get C_Elementvalue_To_ID */
-public int getC_Elementvalue_To_ID() 
-{
-Integer ii = (Integer)get_Value("C_Elementvalue_To_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
