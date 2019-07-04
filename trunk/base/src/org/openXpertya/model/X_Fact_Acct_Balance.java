@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por Fact_Acct_Balance
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:33.906 */
-public class X_Fact_Acct_Balance extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2019-07-04 17:47:01.136 */
+public class X_Fact_Acct_Balance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_Fact_Acct_Balance (Properties ctx, int Fact_Acct_Balance_ID, String trxName)
@@ -30,13 +31,13 @@ public X_Fact_Acct_Balance (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=547 */
-public static final int Table_ID=547;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("Fact_Acct_Balance");
 
 /** TableName=Fact_Acct_Balance */
 public static final String Table_Name="Fact_Acct_Balance";
 
-protected static KeyNamePair Model = new KeyNamePair(547,"Fact_Acct_Balance");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"Fact_Acct_Balance");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -50,7 +51,22 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_Fact_Acct_Balance[").append(getID()).append("]");
 return sb.toString();
 }
-public static final int AD_ORGTRX_ID_AD_Reference_ID=276;
+public static final int ACCOUNT_ID_AD_Reference_ID = MReference.getReferenceID("C_ElementValue (all)");
+/** Set Account.
+Account used */
+public void setAccount_ID (int Account_ID)
+{
+set_Value ("Account_ID", new Integer(Account_ID));
+}
+/** Get Account.
+Account used */
+public int getAccount_ID() 
+{
+Integer ii = (Integer)get_Value("Account_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int AD_ORGTRX_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all)");
 /** Set Trx Organization.
 Performing or initiating organization */
 public void setAD_OrgTrx_ID (int AD_OrgTrx_ID)
@@ -64,21 +80,6 @@ Performing or initiating organization */
 public int getAD_OrgTrx_ID() 
 {
 Integer ii = (Integer)get_Value("AD_OrgTrx_ID");
-if (ii == null) return 0;
-return ii.intValue();
-}
-public static final int ACCOUNT_ID_AD_Reference_ID=182;
-/** Set Account.
-Account used */
-public void setAccount_ID (int Account_ID)
-{
-set_Value ("Account_ID", new Integer(Account_ID));
-}
-/** Get Account.
-Account used */
-public int getAccount_ID() 
-{
-Integer ii = (Integer)get_Value("Account_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -178,7 +179,7 @@ Integer ii = (Integer)get_Value("C_Campaign_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_LOCFROM_ID_AD_Reference_ID=133;
+public static final int C_LOCFROM_ID_AD_Reference_ID = MReference.getReferenceID("C_Location");
 /** Set Location From.
 Location that inventory was moved from */
 public void setC_LocFrom_ID (int C_LocFrom_ID)
@@ -195,7 +196,7 @@ Integer ii = (Integer)get_Value("C_LocFrom_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int C_LOCTO_ID_AD_Reference_ID=133;
+public static final int C_LOCTO_ID_AD_Reference_ID = MReference.getReferenceID("C_Location");
 /** Set Location To.
 Location that inventory was moved to */
 public void setC_LocTo_ID (int C_LocTo_ID)
@@ -257,6 +258,23 @@ public Timestamp getDateAcct()
 {
 return (Timestamp)get_Value("DateAcct");
 }
+/** Set Description.
+Optional short description of the record */
+public void setDescription (String Description)
+{
+if (Description != null && Description.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+Description = Description.substring(0,255);
+}
+set_Value ("Description", Description);
+}
+/** Get Description.
+Optional short description of the record */
+public String getDescription() 
+{
+return (String)get_Value("Description");
+}
 /** Set Budget.
 General Ledger Budget */
 public void setGL_Budget_ID (int GL_Budget_ID)
@@ -270,6 +288,18 @@ General Ledger Budget */
 public int getGL_Budget_ID() 
 {
 Integer ii = (Integer)get_Value("GL_Budget_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Journal Number */
+public void setJournalNo (int JournalNo)
+{
+set_Value ("JournalNo", new Integer(JournalNo));
+}
+/** Get Journal Number */
+public int getJournalNo() 
+{
+Integer ii = (Integer)get_Value("JournalNo");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -289,26 +319,26 @@ Integer ii = (Integer)get_Value("M_Product_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int POSTINGTYPE_AD_Reference_ID=125;
-/** Actual = A */
-public static final String POSTINGTYPE_Actual = "A";
+public static final int POSTINGTYPE_AD_Reference_ID = MReference.getReferenceID("_Posting Type");
 /** Presupuestaria = B */
 public static final String POSTINGTYPE_Presupuestaria = "B";
 /** Pendientes = E */
 public static final String POSTINGTYPE_Pendientes = "E";
 /** Estadisticos = S */
 public static final String POSTINGTYPE_Estadisticos = "S";
+/** Actual = A */
+public static final String POSTINGTYPE_Actual = "A";
 /** Set PostingType.
 The type of amount that this journal updated */
 public void setPostingType (String PostingType)
 {
-if (PostingType.equals("A") || PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S"));
- else throw new IllegalArgumentException ("PostingType Invalid value - Reference_ID=125 - A - B - E - S");
+if (PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A") || ( refContainsValue("CORE-AD_Reference-125", PostingType) ) );
+ else throw new IllegalArgumentException ("PostingType Invalid value: " + PostingType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-125") );
 if (PostingType == null) throw new IllegalArgumentException ("PostingType is mandatory");
 if (PostingType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
-PostingType = PostingType.substring(0,0);
+PostingType = PostingType.substring(0,1);
 }
 set_Value ("PostingType", PostingType);
 }
@@ -333,7 +363,7 @@ BigDecimal bd = (BigDecimal)get_Value("Qty");
 if (bd == null) return Env.ZERO;
 return bd;
 }
-public static final int USER1_ID_AD_Reference_ID=134;
+public static final int USER1_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID - User1");
 /** Set User1.
 User defined element #1 */
 public void setUser1_ID (int User1_ID)
@@ -350,7 +380,7 @@ Integer ii = (Integer)get_Value("User1_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-public static final int USER2_ID_AD_Reference_ID=137;
+public static final int USER2_ID_AD_Reference_ID = MReference.getReferenceID("Account_ID - User2");
 /** Set User2.
 User defined element #2 */
 public void setUser2_ID (int User2_ID)

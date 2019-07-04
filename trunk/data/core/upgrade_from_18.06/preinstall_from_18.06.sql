@@ -2544,3 +2544,243 @@ CREATE OR REPLACE VIEW c_allocation_detail_credits_v AS
 
 ALTER TABLE c_allocation_detail_credits_v
   OWNER TO libertya;
+  
+--20190704-1800 Contabilidad Agrupada
+CREATE TABLE fact_acct_balance_config
+(
+  fact_acct_balance_config_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  c_acctschema_id integer NOT NULL,
+  createdby integer NOT NULL DEFAULT 0,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL DEFAULT 0,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  seqno numeric(18,0) NOT NULL,
+  ad_column_id integer NOT NULL,
+  ad_componentversion_id integer,
+  ad_componentobjectuid character varying(100),
+  CONSTRAINT fact_acct_balance_config_key PRIMARY KEY (fact_acct_balance_config_id),
+  CONSTRAINT adclient_factacctbalconf FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT adorg_factacctbalconf FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT cacctschema_factacctbalconf FOREIGN KEY (c_acctschema_id)
+      REFERENCES c_acctschema (c_acctschema_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT column_factacctbalconf FOREIGN KEY (ad_column_id)
+      REFERENCES ad_column (ad_column_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE fact_acct_balance_config
+  OWNER TO libertya;
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_AcctSchema','factacctbalanceactive','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('Fact_Acct','isfactalreadybalanced','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('Fact_Acct_Balance','description','character varying(255)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('Fact_Acct_Balance','journalno','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_sumsandbalance','FactAcctTable','character varying(20)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_Acct_Balance','FactAcctTable','character varying(20)'));
+
+CREATE OR REPLACE VIEW v_diariomayor_balance AS 
+ SELECT fa.ad_client_id, fa.ad_org_id, fa.created, fa.createdby, fa.updated, fa.updatedby, ev.c_elementvalue_id, 
+    fa.dateacct, fa.journalno, ev.value, (ev.value::text || ' '::text) || ev.name::text AS name, 
+        coalesce(fa.description,ev.name) as description, fa.amtacctdr AS debe, fa.amtacctcr AS haber, 
+        fa.amtacctdr - fa.amtacctcr AS saldo,
+        fa.c_bpartner_id, 
+        fa.dateacct as datedoc
+   FROM fact_acct_balance  fa
+   JOIN c_elementvalue ev ON ev.c_elementvalue_id = fa.account_id 
+  ORDER BY ev.name, fa.dateacct;
+
+ALTER TABLE v_diariomayor_balance
+  OWNER TO libertya;
+
+  
+CREATE OR REPLACE FUNCTION update_fact_acct_balance(
+    fa text,
+    fact_acct_class regclass,
+    sign integer)
+  RETURNS void AS
+$BODY$
+DECLARE
+	balanceconfigs record;
+	r record;
+	
+	clientid integer;
+	acctschemaid integer;
+	factacctid integer;
+	factalreadybalanced char;
+	dobalance boolean;
+	
+	theinsert character varying;
+	theupdate character varying;
+	insertvalues character varying;
+	whereclause character varying;
+
+	qty numeric;
+	amtdr numeric;
+	amtcr numeric;
+	
+	valuei integer;
+	valuen numeric;
+	valuec character varying;
+	valuet timestamp;
+	
+	ur integer;
+BEGIN
+	EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident('ad_client_id') INTO clientid;
+	EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident('c_acctschema_id') INTO acctschemaid;
+	EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident('isfactalreadybalanced') INTO factalreadybalanced;
+
+	-- Si está activo el balance contable entonces comenzar con las actividades
+	select into r c_acctschema_id
+	from c_acctschema 
+	where isactive = 'Y' and factacctbalanceactive = 'Y' and c_acctschema_id = acctschemaid;
+
+	-- Se debe balancear este registro cuando se hay que incrementar o el registro fue balanceado previamente 
+	-- Si al decrementar el registro del balance, el fuente fact_acct no fue balanceado previamente significa que 
+	-- estamos bajo un fact no balanceado el cual sus importes no fueron balanceados previamente
+	dobalance := sign = 1 OR (sign = -1 AND factalreadybalanced = 'Y');
+
+	IF ( r IS NOT NULL AND dobalance ) THEN
+		-- Importes
+		EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident('qty') INTO qty;
+		EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident('amtacctdr') INTO amtdr;
+		EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident('amtacctcr') INTO amtcr;
+
+		qty = qty * sign;
+		amtdr = amtdr * sign;
+		amtcr = amtcr * sign;
+
+		theinsert := 'INSERT INTO Fact_Acct_Balance (AD_Client_ID, C_AcctSchema_ID, Qty, AmtAcctDr, AmtAcctCr';
+		insertvalues := ' VALUES ('||clientid||','||acctschemaid||','||qty||','||amtdr||','||amtcr;
+		theupdate := 'UPDATE Fact_Acct_Balance SET qty = qty + '||qty||', amtacctdr = amtacctdr + '||amtdr||', amtacctcr = amtacctcr + '||amtcr;
+		whereclause := ' WHERE c_acctschema_id = '||acctschemaid;
+		
+		-- Obtener las columnas de la configuración del balance contable 
+		-- Si no existe ninguna entonces se debe a que no está habilitado 
+		-- el balance contable para el esquema contable del registro (viejo y nuevo)
+		FOR balanceconfigs IN select col.ad_column_id, col.columnname, c.seqno, col.ad_reference_id
+					from Fact_Acct_Balance_Config c 
+					join ad_column col on col.ad_column_id = c.ad_column_id
+					where c.isactive = 'Y' and c.c_acctschema_id = acctschemaid
+					order by c.seqno
+		LOOP
+			-- Armar update e insert si es que es necesario
+			theinsert = theinsert ||','||balanceconfigs.columnname;
+			whereclause = whereclause || ' AND ';
+			-- Verificar tipos de datos para obtener los valores reales
+			--Fecha
+			IF (balanceconfigs.ad_reference_id = 15 
+				OR balanceconfigs.ad_reference_id = 16 
+				OR balanceconfigs.ad_reference_id = 24) THEN 
+				EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident(lower(balanceconfigs.columnname)) INTO valuet;
+				whereclause = whereclause || balanceconfigs.columnname || '::date = '||quote_literal(valuet)||'::date';
+				insertvalues = insertvalues || ', '||quote_literal(valuet)||'::date ';
+			--Numero
+			ELSIF (balanceconfigs.ad_reference_id = 12 
+				OR balanceconfigs.ad_reference_id = 22 
+				OR balanceconfigs.ad_reference_id = 37
+				OR balanceconfigs.ad_reference_id = 29) THEN 
+				EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident(lower(balanceconfigs.columnname)) INTO valuen;
+				whereclause = whereclause || ' coalesce(' || balanceconfigs.columnname || ',0) = coalesce('||valuen||',0) ';
+				insertvalues = insertvalues || ', coalesce('||valuen||',0) ';
+			--Integer
+			ELSIF (balanceconfigs.ad_reference_id = 11
+				OR balanceconfigs.ad_reference_id = 13
+				OR balanceconfigs.ad_reference_id = 28
+				OR balanceconfigs.ad_reference_id = 19
+				OR balanceconfigs.ad_reference_id = 30
+				OR balanceconfigs.ad_reference_id = 21
+				OR balanceconfigs.ad_reference_id = 31
+				OR balanceconfigs.ad_reference_id = 25
+				OR balanceconfigs.ad_reference_id = 33
+				OR balanceconfigs.ad_reference_id = 35) THEN 
+				EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident(lower(balanceconfigs.columnname)) INTO valuei;
+				whereclause = whereclause || ' coalesce(' || balanceconfigs.columnname || ',0) = coalesce('||valuei||',0) ';
+				insertvalues = insertvalues || ', coalesce('||valuei||',0) ';
+			--Otro se supone Carater
+			ELSE 
+				EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident(lower(balanceconfigs.columnname)) INTO valuec;
+				whereclause = whereclause || balanceconfigs.columnname || ' = '||quote_literal(valuec);
+				insertvalues = insertvalues || ', '||quote_literal(valuec);
+			END IF;
+		END LOOP;
+		
+		-- Insert y Update Final
+		theinsert = theinsert||') '||insertvalues||') ;';
+		theupdate = theupdate||whereclause;
+
+		--RAISE NOTICE 'Insert %s',theinsert;
+
+		-- Actualizamos, sino insertamos
+		EXECUTE theupdate;
+		GET DIAGNOSTICS ur = row_count;
+		IF (ur < 1 AND sign > 0) THEN
+			EXECUTE theinsert;
+			GET DIAGNOSTICS ur = row_count;
+		END IF;
+
+		-- Actualizar el fact_acct asignando que ya fue balanceado
+		IF ( factalreadybalanced = 'N' ) THEN
+			EXECUTE 'SELECT (' || fa || '::' || fact_acct_class::regclass || ').' || quote_ident(lower('fact_acct_id')) INTO factacctid;
+
+			UPDATE fact_acct
+			SET isfactalreadybalanced = 'Y'
+			WHERE fact_acct_id = factacctid;
+		END IF;
+		
+	END IF;
+	
+	RETURN;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_fact_acct_balance(text, regclass, integer)
+  OWNER TO libertya;
+
+
+CREATE OR REPLACE FUNCTION update_fact_acct_balance()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+	fa record;
+BEGIN
+	-- Si es delete, sólo se decrementan los datos y no se inserta
+	IF (TG_OP = 'DELETE') THEN
+		PERFORM update_fact_acct_balance(quote_literal(OLD), TG_RELID::regclass, -1);
+		fa = OLD;
+	-- Si es insert, se actualiza y sino se inserta
+	ELSIF (TG_OP = 'INSERT') THEN
+		PERFORM update_fact_acct_balance(quote_literal(NEW), TG_RELID::regclass, 1);
+		fa = NEW;
+	-- Si es update, se decrementa y luego se incrementa/inserta
+	/*ELSIF (TG_OP = 'UPDATE') THEN
+		PERFORM update_fact_acct_balance(quote_literal(OLD), TG_RELID::regclass, -1);
+		PERFORM update_fact_acct_balance(quote_literal(NEW), TG_RELID::regclass, 1);
+		fa = NEW;*/
+	END IF;
+
+	RETURN fa;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_fact_acct_balance()
+  OWNER TO libertya;
+
+CREATE TRIGGER update_fact_acct_balance
+  AFTER INSERT OR DELETE
+  ON fact_acct
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_fact_acct_balance();

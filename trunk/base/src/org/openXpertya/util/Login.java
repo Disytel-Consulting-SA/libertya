@@ -829,6 +829,7 @@ public class Login {
 
             C_AcctSchema_ID = rs.getInt( "C_AcctSchema_ID" );
             Env.setContext( ctx,"$C_AcctSchema_ID",C_AcctSchema_ID );
+            Env.setContext( ctx,"$FactAcctBalanceActive",rs.getString("factacctbalanceactive"));
             Env.setContext( ctx,"$C_Currency_ID",rs.getInt( "C_Currency_ID" ));
             Env.setContext( ctx,"$HasAlias",rs.getString( "HasAlias" ));
             Integer amortizationMethodID = rs.getInt( "M_Amortization_Method_ID" );

@@ -59,6 +59,7 @@ public class AccountsSumsAndBalances extends AccountsGeneralBalance {
 			line.setCredit(null);
 			line.setCreditBalance(null);
 			line.setDebitBalance(null);
+			line.setFactAcctTable(p_factAcctTable);
 			
 			if (!line.save()) {
 				log.severe("Cannot save X_T_SumsAndBalance line. C_ElementValue_ID=" + line.getC_ElementValue_ID());

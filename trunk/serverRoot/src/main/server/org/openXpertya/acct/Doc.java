@@ -23,8 +23,10 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -43,7 +45,6 @@ import org.openXpertya.model.MJournal;
 import org.openXpertya.model.MMatchInv;
 import org.openXpertya.model.MMatchPO;
 import org.openXpertya.model.MMovement;
-import org.openXpertya.model.MNote;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPeriod;
 import org.openXpertya.model.MProjectIssue;
@@ -58,6 +59,7 @@ import org.openXpertya.util.DBException;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -462,6 +464,12 @@ public abstract class Doc {
 	
 	/** Document No      			*/
 	private String				m_DocumentNo = null;
+	
+	/** Helpers de actualización del balance contable */
+	private Map<String, FactBalanceHelper> balanceHelpers;
+	
+	/** Flag para actualizar el balance contable */
+	private boolean updateFactBalance = true;
 	
 	public String get_TableName()
 	{
@@ -1164,14 +1172,19 @@ public abstract class Doc {
  //           note.save();
         }
 
+        // Acumuladores del balance contable 
+        //createFactBalanceHelpers(m_fact);
+        
         // dispose facts
-
-        for( int i = 0;i < m_fact.size();i++ ) { //m_fact.length //TODO Hernandez
+        for( int i = 0;i < m_fact.size();i++ ) { //m_fact.length
             if( m_fact.get(i) != null ) { //m_fact [i]
                 m_fact.get(i).dispose();
             }
         }
 
+        // Actualizar el balance contable mediante los helpers
+        //updateFactBalanceHelpers();
+        
         p_lines   = null;
         m_trxName = null;
 
@@ -1297,7 +1310,7 @@ public abstract class Doc {
                     if( (m_fact.get(i) != null) && m_fact.get(i).save( getTrxName())) {
                         ;
                     } else {
-                        log.log( Level.SEVERE,"(fact not saved) ... rolling back" );
+						log.log(Level.SEVERE, "(fact not saved) ... rolling back." + CLogger.retrieveErrorAsString());
                         trx.rollback();
                         trx.close();
                         unlock();
@@ -2195,6 +2208,75 @@ public abstract class Doc {
 		return as.getC_Currency_ID();
     }
     
+    /**
+	 * Inicializa la información de agrupación y columnas a actualizar del
+	 * balance contable
+	 * 
+	 * @param facts
+	 *            hechos contables ya publicados
+	 */
+	public void createFactBalanceHelpers(ArrayList<Fact> facts){
+		setBalanceHelpers(new HashMap<String, FactBalanceHelper>());
+		FactBalanceHelper balanceHelper;
+		String key;
+		// Itera por los hechos y obtiene los valores
+		for (Fact fact : facts) {
+			// Si no se encuentra activo el balance para este esquema contable,
+			// entonces no se crean
+			if(!fact.getAcctSchema().isFactAcctBalanceActive()){
+				continue;
+			}
+			for (FactLine line : fact.getLines()) {
+				// Obtengo la key para agrupar los valores dependiente las
+				// columnas de agrupación
+				key = FactBalanceHelper.getKey(line);
+				if(Util.isEmpty(key, true)){
+					continue;
+				}
+				// Si basados en la clave tenemos un helper, entonces le sumamos
+				// los valores a actualizar, sino creamos el nuevo
+				balanceHelper = getBalanceHelpers().get(key);
+				if(balanceHelper == null){
+					balanceHelper = new FactBalanceHelper(line);
+				}
+				else{
+					balanceHelper.add(line);
+				}
+				getBalanceHelpers().put(key, balanceHelper);
+			}
+		}
+	}
+    
+	/**
+	 * Actualiza la información del balance contable
+	 */
+	public void updateFactBalanceHelpers(){
+		if(isUpdateFactBalance()){
+			try{
+				FactBalanceHelper.saveFactBalance(getBalanceHelpers().values());
+			} catch(Exception e){
+				log.severe(e.getMessage());
+			}
+			getBalanceHelpers().clear();
+		}
+	}
+	
+	public Map<String, FactBalanceHelper> getBalanceHelpers() {
+		return balanceHelpers;
+	}
+
+	public void setBalanceHelpers(Map<String, FactBalanceHelper> balanceHelpers) {
+		this.balanceHelpers = balanceHelpers;
+	}
+	
+	public boolean isUpdateFactBalance() {
+		return updateFactBalance;
+	}
+
+	public void setUpdateFactBalance(boolean updateFactBalance) {
+		this.updateFactBalance = updateFactBalance;
+	}
+	
     // To be overwritten by Subclasses
 
     /**
@@ -2242,9 +2324,6 @@ public abstract class Doc {
 	 *  TODO: Subclasses MUST implement this method!
 	 */
 	protected abstract String loadDocumentDetails ();
-
-	
-    
 }    // Doc
 
 

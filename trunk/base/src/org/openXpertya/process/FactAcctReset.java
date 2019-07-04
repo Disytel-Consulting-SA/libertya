@@ -37,7 +37,6 @@ import org.openXpertya.model.MPeriodControl;
 import org.openXpertya.model.MProject;
 import org.openXpertya.model.MRequisition;
 import org.openXpertya.model.X_M_Production;
-import org.openXpertya.report.FinBalance;
 import org.openXpertya.util.DB;
 
 /**
@@ -252,10 +251,6 @@ public class FactAcctReset extends SvrProcess {
         sql = "DELETE Fact_Acct fact " + "WHERE AD_Client_ID=" + p_AD_Client_ID + " AND AD_Table_ID=" + AD_Table_ID + " AND EXISTS (SELECT * FROM C_PeriodControl pc " + "WHERE pc.PeriodStatus = 'O'" + docBaseType + " AND fact.C_Period_ID=pc.C_Period_ID)";
 
         int deleted = DB.executeUpdate( sql,get_TrxName());
-
-        // Balances
-
-        FinBalance.updateBalanceClient( getCtx(),p_AD_Client_ID,true );    // delete
 
         //
 

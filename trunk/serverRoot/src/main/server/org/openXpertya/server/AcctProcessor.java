@@ -24,12 +24,14 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.openXpertya.acct.Doc;
+import org.openXpertya.acct.FactBalanceHelper;
 import org.openXpertya.model.MAcctProcessor;
 import org.openXpertya.model.MAcctProcessorLog;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.X_C_AcctProcessorTable;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
@@ -76,6 +78,12 @@ public class AcctProcessor extends ServidorOXP {
      * Configuración por tabla y organización
      */
     private Map<Integer, String> tablesConfig;
+    
+	/**
+	 * Helpers para actualizar el balance contable. Se agregan todos los que se
+	 * van creando.
+	 */
+    private Map<String, FactBalanceHelper> factBalanceHelpers;
 
     /**
      * Descripción de Método
@@ -93,21 +101,30 @@ public class AcctProcessor extends ServidorOXP {
             m_ass = new MAcctSchema[]{ new MAcctSchema( getCtx(),m_model.getC_AcctSchema_ID(),null )};
         }
 
+        // Configuración de tablas a contabilizar
         initTablesConfig();
-
+        // Contabilización
         postSession();
-
-        //
-
+        // Guardar los balances contables
+        /*int factBalanceUpdateds = 0;
+        try{
+        	factBalanceUpdateds = saveFactBalance();
+        } catch(Exception e){
+        	m_summary.append("Fact Acct Balance Update Error: "+e.getMessage());
+        	factBalanceUpdateds = 0;
+        }*/
+        
         int no = m_model.deleteLog();
-
+        
+        //m_summary.append("Fact Acct Balance Update: "+ factBalanceUpdateds);
+        
         m_summary.append( "Logs deleted=" ).append( no );
-
         //
 
         MAcctProcessorLog pLog = new MAcctProcessorLog( m_model,m_summary.toString());
 
         pLog.setReference( "#" + String.valueOf( p_runCount ) + " - " + TimeUtil.formatElapsed( new Timestamp( p_startWork )));
+        //pLog.setSummary(pLog.getSummary()+"."+(Msg.parseTranslation(getCtx(), "@FactAcctBalance_ID@"))+".: "+factBalanceUpdateds);
         pLog.save();
     }    // doWork
 
@@ -215,6 +232,10 @@ public class AcctProcessor extends ServidorOXP {
 			// dos para dar soporte a configuraciones anteriores
             String whereTableConfig = getTablesConfig().get(AD_Table_ID);
 
+            // Actualización del balance contable
+            // Crear y actualizar
+            doc.setUpdateFactBalance(false);
+            
             // Select id FROM table
 
             StringBuffer sql = new StringBuffer( "SELECT " );
@@ -252,7 +273,18 @@ public class AcctProcessor extends ServidorOXP {
                     boolean ok = true;
 
                     try {
-                        ok = doc.post( id,false );    // post no force
+						// Setear los objetos de actualización de balance
+						// contable para que se vayan actualizando por cada fact
+						// y cada doc los actualice
+                    	//doc.setBalanceHelpers(getFactBalanceHelpers());
+                        
+                    	// POST
+                    	ok = doc.post( id,false );
+						
+                    	// Se actualizan los balances contables obteniendolos
+						// del doc luego de realizar o no el post
+                        //setFactBalanceHelpers(doc.getBalanceHelpers());
+                        
                     } catch( Exception e ) {
                         log.log( Level.SEVERE,getName() + ": " + doc.getTableName() + "_ID=" + id,e );
                         ok = false;
@@ -293,7 +325,19 @@ public class AcctProcessor extends ServidorOXP {
             }
         }
     }    // postSession
-
+    
+    /**
+     * Actualización del balance contable
+     * @return cantidad de registros guardados
+     */
+    private int saveFactBalance() throws Exception{
+    	int saved = 0;
+    	if(getFactBalanceHelpers() != null){
+			saved = FactBalanceHelper.saveFactBalance(getFactBalanceHelpers().values());
+    	}
+    	return saved;
+    }
+    
     /**
      * Descripción de Método
      *
@@ -310,9 +354,16 @@ public class AcctProcessor extends ServidorOXP {
 		return tablesConfig;
 	}
 
-
 	public void setTablesConfig(Map<Integer, String> tablesConfig) {
 		this.tablesConfig = tablesConfig;
+	}
+
+	public Map<String, FactBalanceHelper> getFactBalanceHelpers() {
+		return factBalanceHelpers;
+	}
+
+	public void setFactBalanceHelpers(Map<String, FactBalanceHelper> factBalanceHelpers) {
+		this.factBalanceHelpers = factBalanceHelpers;
 	}
 }    // AcctProcessor
 

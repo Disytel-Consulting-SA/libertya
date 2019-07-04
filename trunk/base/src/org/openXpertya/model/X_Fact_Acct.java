@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por Fact_Acct
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-09 10:35:26.081 */
+ *  @version  - 2019-07-04 17:46:45.429 */
 public class X_Fact_Acct extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -29,6 +29,7 @@ setDateAcct (new Timestamp(System.currentTimeMillis()));
 setDateTrx (new Timestamp(System.currentTimeMillis()));
 setFact_Acct_ID (0);
 setGL_Category_ID (0);
+setIsFactAlreadyBalanced (false);
 setPostingType (null);
 setRecord_ID (0);
 }
@@ -459,15 +460,33 @@ Integer ii = (Integer)get_Value("GL_Category_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set journalno */
-public void setjournalno (int journalno)
+/** Set Fact Already Balanced.
+Fact already taken for fact balance, fact balance includes this record */
+public void setIsFactAlreadyBalanced (boolean IsFactAlreadyBalanced)
 {
-set_Value ("journalno", new Integer(journalno));
+set_Value ("IsFactAlreadyBalanced", new Boolean(IsFactAlreadyBalanced));
 }
-/** Get journalno */
-public int getjournalno() 
+/** Get Fact Already Balanced.
+Fact already taken for fact balance, fact balance includes this record */
+public boolean isFactAlreadyBalanced() 
 {
-Integer ii = (Integer)get_Value("journalno");
+Object oo = get_Value("IsFactAlreadyBalanced");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Journal Number */
+public void setJournalNo (int JournalNo)
+{
+set_Value ("JournalNo", new Integer(JournalNo));
+}
+/** Get Journal Number */
+public int getJournalNo() 
+{
+Integer ii = (Integer)get_Value("JournalNo");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -532,8 +551,8 @@ public static final String POSTINGTYPE_Actual = "A";
 The type of amount that this journal updated */
 public void setPostingType (String PostingType)
 {
-if (PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A"));
- else throw new IllegalArgumentException ("PostingType Invalid value - Reference = POSTINGTYPE_AD_Reference_ID - B - E - S - A");
+if (PostingType.equals("B") || PostingType.equals("E") || PostingType.equals("S") || PostingType.equals("A") || ( refContainsValue("CORE-AD_Reference-125", PostingType) ) );
+ else throw new IllegalArgumentException ("PostingType Invalid value: " + PostingType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-125") );
 if (PostingType == null) throw new IllegalArgumentException ("PostingType is mandatory");
 if (PostingType.length() > 1)
 {
@@ -590,8 +609,8 @@ public static final String TYPEFACTACCT_Rest = "R";
 /** Set TypeFactAcct */
 public void setTypeFactAcct (String TypeFactAcct)
 {
-if (TypeFactAcct == null || TypeFactAcct.equals("S") || TypeFactAcct.equals("P") || TypeFactAcct.equals("PR") || TypeFactAcct.equals("VP") || TypeFactAcct.equals("R"));
- else throw new IllegalArgumentException ("TypeFactAcct Invalid value - Reference = TYPEFACTACCT_AD_Reference_ID - S - P - PR - VP - R");
+if (TypeFactAcct == null || TypeFactAcct.equals("S") || TypeFactAcct.equals("P") || TypeFactAcct.equals("PR") || TypeFactAcct.equals("VP") || TypeFactAcct.equals("R") || ( refContainsValue("CORE-AD_Reference-1010242", TypeFactAcct) ) );
+ else throw new IllegalArgumentException ("TypeFactAcct Invalid value: " + TypeFactAcct + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010242") );
 if (TypeFactAcct != null && TypeFactAcct.length() > 2)
 {
 log.warning("Length > 2 - truncated");

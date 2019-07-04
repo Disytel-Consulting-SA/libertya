@@ -284,13 +284,6 @@ public class AccountsDetail extends SvrProcess {
         		"  DateAcct, C_ElementValue_ID, Acct_Code, Acct_Description, Description, " + 
         		"  AmtAcctDr, AmtAcctCr, Balance, C_BPartner_ID, M_Product_ID, origin_tableName, procedence_id )");
 
-    	
-        // Update AcctSchema Balances
-
-        if( p_UpdateBalances ) {
-            FinBalance.updateBalance( p_C_AcctSchema_ID,false );
-        }
-
         createBalanceLine(insertSQL);
         createDetailLines(insertSQL);
 

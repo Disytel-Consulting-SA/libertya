@@ -233,11 +233,6 @@ public class FinReport extends SvrProcess {
 	protected String doIt() throws Exception {
 		AD_PInstance_ID = getAD_PInstance_ID();
 		log.info( " Corriendo: AD_PInstance_ID=" + AD_PInstance_ID);
-		
-        // Update AcctSchema Balances
-        if( p_UpdateBalances ) {
-            FinBalance.updateBalance( m_report.getC_AcctSchema_ID(),false );
-        }
                 
         // ** Get Data     ** Segment Values
 

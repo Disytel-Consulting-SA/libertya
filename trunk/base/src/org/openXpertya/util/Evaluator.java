@@ -141,7 +141,7 @@ public class Evaluator {
      */
 
     private static boolean evaluateLogicTuple( Evaluatee source,String logic ) {
-        StringTokenizer st = new StringTokenizer( logic.trim(),"!=^><",true );
+        StringTokenizer st = new StringTokenizer( logic.trim(),"!=^~><",true );
 
         if( st.countTokens() != 3 ) {
             s_log.log( Level.SEVERE,"Logic touple does not comply with format " + "'@context@=value' or '@context@!value' => " + logic );
@@ -256,6 +256,8 @@ public class Evaluator {
             }
 
             return value1.compareTo( value2 ) > 0;
+        } else if( operand.equals( "~" )) {
+        	return value1.contains(value2);
         } else    // interpreted as not
         {
             if( (value1bd != null) && (value2bd != null) ) {

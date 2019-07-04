@@ -45,8 +45,11 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	/** Saldos de las cuentas	*/
 	HashMap m_saldos;
 	
+	/** Tabla origen de los datos */
+	protected String p_factAcctTable;
 	
-	public DiarioMayorJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID)	{
+	
+	public DiarioMayorJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, String factAcctTable)	{
 		p_ctx = ctx;
 		
 		p_DateAcct_From = dateFrom;
@@ -54,7 +57,19 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		
 		p_1_ElementValue_ID = elementFrom_ID;
 		p_2_ElementValue_ID = elementTo_ID;
+		
+		p_factAcctTable = factAcctTable;
 		loadData();
+	}
+	
+	private String getReportDSTableName(){
+		return p_factAcctTable;
+	}
+	
+	private String getReportDSViewName(){
+		return p_factAcctTable.equalsIgnoreCase("Fact_Acct_Balance")?
+				"v_diariomayor_balance":
+				"v_diariomayor";
 	}
 	
 	/** 
@@ -63,8 +78,9 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	 */
 	private String  getSQLData()	{
 		StringBuffer sql = new StringBuffer();
-		sql.append( " SELECT C_ElementValue_ID, Name, Value, JournalNo, DateAcct, DateDoc, Description, Debe, Haber FROM v_diariomayor WHERE " );
-        
+		sql.append( " SELECT C_ElementValue_ID, Name, Value, JournalNo, DateAcct, DateDoc, Description, Debe, Haber ");
+		sql.append(" FROM ").append(getReportDSViewName()); 
+		sql.append(" WHERE ");
 		// Añadimos restricciones
 		sql.append( " AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
 		sql.append(" AND DateAcct::date BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
@@ -97,7 +113,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		StringBuffer sql = new StringBuffer();
 		
 		sql.append(" SELECT ac.account_id as C_ElementValue_ID, ev.name, ev.value, sum(ac.amtacctdr) as debe, sum(ac.amtacctcr) as haber");
-		sql.append("  FROM fact_acct ac, c_elementvalue ev");
+		sql.append("  FROM "+getReportDSTableName()+" ac, c_elementvalue ev");
 		sql.append(" WHERE ac.account_id=ev.c_elementvalue_id ");
 		sql.append(" AND ac.AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
 		sql.append(" AND ac.DateAcct::date < ").append(DB.TO_DATE(p_DateAcct_From));

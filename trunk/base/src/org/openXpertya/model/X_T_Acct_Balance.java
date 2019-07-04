@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_Acct_Balance
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-06-03 13:40:04.472 */
+ *  @version  - 2019-07-04 18:03:35.859 */
 public class X_T_Acct_Balance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -163,6 +163,21 @@ Integer ii = (Integer)get_Value("C_Elementvalue_To_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int C_ELEMENTVALUE_TO_ID_AD_Reference_ID = MReference.getReferenceID("C_ElementValue (all)");
+/** Set C_Elementvalue_To_ID */
+public void setC_Elementvalue_To_ID (int C_Elementvalue_To_ID)
+{
+if (C_Elementvalue_To_ID <= 0) set_Value ("C_Elementvalue_To_ID", null);
+ else 
+set_Value ("C_Elementvalue_To_ID", new Integer(C_Elementvalue_To_ID));
+}
+/** Get C_Elementvalue_To_ID */
+public int getC_Elementvalue_To_ID() 
+{
+Integer ii = (Integer)get_Value("C_Elementvalue_To_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Credit */
 public void setCredit (BigDecimal Credit)
 {
@@ -186,6 +201,28 @@ public BigDecimal getDebit()
 BigDecimal bd = (BigDecimal)get_Value("Debit");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+public static final int FACTACCTTABLE_AD_Reference_ID = MReference.getReferenceID("Accounting data source");
+/** Fact Acct = Fact_Acct */
+public static final String FACTACCTTABLE_FactAcct = "Fact_Acct";
+/** Fact Acct Balance = Fact_Acct_Balance */
+public static final String FACTACCTTABLE_FactAcctBalance = "Fact_Acct_Balance";
+/** Set Accounting Data Source */
+public void setFactAcctTable (String FactAcctTable)
+{
+if (FactAcctTable == null || FactAcctTable.equals("Fact_Acct") || FactAcctTable.equals("Fact_Acct_Balance") || ( refContainsValue("TACC2CORE-AD_Reference-1010416-20190704160250", FactAcctTable) ) );
+ else throw new IllegalArgumentException ("FactAcctTable Invalid value: " + FactAcctTable + ".  Valid: " +  refValidOptions("TACC2CORE-AD_Reference-1010416-20190704160250") );
+if (FactAcctTable != null && FactAcctTable.length() > 20)
+{
+log.warning("Length > 20 - truncated");
+FactAcctTable = FactAcctTable.substring(0,20);
+}
+set_Value ("FactAcctTable", FactAcctTable);
+}
+/** Get Accounting Data Source */
+public String getFactAcctTable() 
+{
+return (String)get_Value("FactAcctTable");
 }
 /** Set Hierarchical Code */
 public void setHierarchicalCode (String HierarchicalCode)

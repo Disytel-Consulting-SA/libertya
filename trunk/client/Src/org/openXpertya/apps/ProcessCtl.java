@@ -466,8 +466,12 @@ public class ProcessCtl extends Thread implements ProcessCall {
 					{
 						String summary = m_pi.getSummary();
 						log.finer("unlock - " + summary);
-						if (summary != null && summary.indexOf('@') != -1)
-							m_pi.setSummary(Msg.parseTranslation(Env.getCtx(), summary));
+						if (!Util.isEmpty(summary, true)){
+							if(summary.indexOf('@') != -1){
+								summary = Msg.parseTranslation(Env.getCtx(), summary);
+							}
+							m_pi.setSummary(summary);
+						}
 						m_parent.unlockUI(m_pi);
 					}
 				});
