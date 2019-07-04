@@ -301,12 +301,6 @@ public class FinStatement extends SvrProcess {
 
     protected String doIt() {
 
-        // Update AcctSchema Balances
-
-        if( p_UpdateBalances ) {
-            FinBalance.updateBalance( p_C_AcctSchema_ID,false );
-        }
-
         createBalanceLine();
         createDetailLines();
 

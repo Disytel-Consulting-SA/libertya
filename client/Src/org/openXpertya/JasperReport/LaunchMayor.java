@@ -29,6 +29,8 @@ public class LaunchMayor extends SvrProcess {
 	/** Nombre del informe	*/
 	private final String p_reportName = "Diario Mayor";
 	
+	/** Tabla origen de los datos */
+	protected String p_factAcctTable = "Fact_Acct";
 	
 	/**
 	 *  Prepare - e.g., get Parameters.
@@ -52,6 +54,9 @@ public class LaunchMayor extends SvrProcess {
 				p_DateAcct_From = (Timestamp)para[i].getParameter();
 				p_DateAcct_To = (Timestamp)para[i].getParameter_To();
 			}
+			else if( name.equalsIgnoreCase( "FactAcctTable" )) {
+				p_factAcctTable = (String)para[i].getParameter();
+			}
 			else
 				log.severe("prepare - Unknown Parameter: " + name);
 		}
@@ -72,7 +77,8 @@ public class LaunchMayor extends SvrProcess {
 	protected String doIt() throws Exception {
 		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
 		
-		DiarioMayorJasperDataSource ds = new DiarioMayorJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To, p_1_ElementValue_ID, p_2_ElementValue_ID);
+		DiarioMayorJasperDataSource ds = new DiarioMayorJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To,
+				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable);
 		
 		try {
 			ds.loadData();

@@ -26,6 +26,8 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	protected boolean updateBalance = true;
 	/** Booleano que determina si se debe mostrar el saldo aplicando el ajuste por inflación */
 	protected boolean applyInflationIndexes = false;
+	/** Tabla origen de los datos */
+	protected String p_factAcctTable = "Fact_Acct";
 	
 	@Override
 	protected boolean loadParameter(String name, ProcessInfoParameter param) {
@@ -36,6 +38,10 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		}
 		if(name.equalsIgnoreCase( "ApplyInflationIndex" )){
 			applyInflationIndexes = ((String)param.getParameter()).equals("Y");
+			return true;
+		}
+		if( name.equalsIgnoreCase( "FactAcctTable" )) {
+			p_factAcctTable = (String)param.getParameter();
 			return true;
 		}
 		return false;
@@ -53,7 +59,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		sqlView.append(" SELECT ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode, COALESCE(SUM(fa.AmtAcctDr),0) as AmtAcctDr, COALESCE(SUM(fa.AmtAcctCr),0) as AmtAcctCr "); 
 		
 		sqlView.append(" FROM C_ElementValue ev ");
-		sqlView.append(" LEFT JOIN Fact_Acct fa ON (fa.Account_ID = ev.C_ElementValue_ID) ");
+		sqlView.append(" LEFT JOIN "+p_factAcctTable+" fa ON (fa.Account_ID = ev.C_ElementValue_ID) ");
 		sqlView.append(" INNER JOIN " + getReportTableName() + " tb ON (tb.C_ElementValue_ID = ev.C_ElementValue_ID AND tb.AD_PInstance_ID = ?) ");
 		sqlView.append(" WHERE ev.IsActive = 'Y' ");
 		sqlView.append("   AND fa.AD_Client_ID = ").append(getAD_Client_ID());
@@ -227,6 +233,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		
 		// Ajustar por índice de inflación
 		line.setIsAdjustable(applyInflationIndexes?accountElement.adjustable:false);
+		line.setFactAcctTable(p_factAcctTable);
 		
 		// El Debe y Haber se calculan masivamente en el doIt. 
 		line.setDebit(null);

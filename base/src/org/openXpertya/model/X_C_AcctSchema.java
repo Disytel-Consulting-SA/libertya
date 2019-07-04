@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_AcctSchema
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-01-16 19:12:21.437 */
+ *  @version  - 2019-07-04 17:32:15.8 */
 public class X_C_AcctSchema extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setAutoPeriodControl (false);
 setC_AcctSchema_ID (0);
 setC_Currency_ID (0);
 setCostingMethod (null);
+setFactAcctBalanceActive (false);
 setGAAP (null);
 setHasAlias (false);
 setHasCombination (false);
@@ -133,8 +134,8 @@ public static final String COSTINGMETHOD_Fifo = "F";
 Indicates how Costs will be calculated */
 public void setCostingMethod (String CostingMethod)
 {
-if (CostingMethod.equals("P") || CostingMethod.equals("S") || CostingMethod.equals("A") || CostingMethod.equals("L") || CostingMethod.equals("F"));
- else throw new IllegalArgumentException ("CostingMethod Invalid value - Reference = COSTINGMETHOD_AD_Reference_ID - P - S - A - L - F");
+if (CostingMethod.equals("P") || CostingMethod.equals("S") || CostingMethod.equals("A") || CostingMethod.equals("L") || CostingMethod.equals("F") || ( refContainsValue("CORE-AD_Reference-122", CostingMethod) ) );
+ else throw new IllegalArgumentException ("CostingMethod Invalid value: " + CostingMethod + ".  Valid: " +  refValidOptions("CORE-AD_Reference-122") );
 if (CostingMethod == null) throw new IllegalArgumentException ("CostingMethod is mandatory");
 if (CostingMethod.length() > 1)
 {
@@ -182,6 +183,24 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
+/** Set Fact Acct Balance Active.
+Indicates if Fact Balance is active */
+public void setFactAcctBalanceActive (boolean FactAcctBalanceActive)
+{
+set_Value ("FactAcctBalanceActive", new Boolean(FactAcctBalanceActive));
+}
+/** Get Fact Acct Balance Active.
+Indicates if Fact Balance is active */
+public boolean isFactAcctBalanceActive() 
+{
+Object oo = get_Value("FactAcctBalanceActive");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 public static final int GAAP_AD_Reference_ID = MReference.getReferenceID("C_AcctSchema GAAP");
 /** French Accounting Standard = FR */
 public static final String GAAP_FrenchAccountingStandard = "FR";
@@ -197,8 +216,8 @@ public static final String GAAP_GermanHGB = "DE";
 Generally Accepted Accounting Principles */
 public void setGAAP (String GAAP)
 {
-if (GAAP.equals("FR") || GAAP.equals("XX") || GAAP.equals("UN") || GAAP.equals("US") || GAAP.equals("DE"));
- else throw new IllegalArgumentException ("GAAP Invalid value - Reference = GAAP_AD_Reference_ID - FR - XX - UN - US - DE");
+if (GAAP.equals("FR") || GAAP.equals("XX") || GAAP.equals("UN") || GAAP.equals("US") || GAAP.equals("DE") || ( refContainsValue("CORE-AD_Reference-123", GAAP) ) );
+ else throw new IllegalArgumentException ("GAAP Invalid value: " + GAAP + ".  Valid: " +  refValidOptions("CORE-AD_Reference-123") );
 if (GAAP == null) throw new IllegalArgumentException ("GAAP is mandatory");
 if (GAAP.length() > 2)
 {
