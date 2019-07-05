@@ -32,7 +32,7 @@
 	<parameter name="C_BP_Group_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="Mostrar" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
-	<queryString><![CDATA[select c_allocationhdr_id,
+	<queryString><![CDATA[ select c_allocationhdr_id,
 ad_client_id,
 organization,
 grupo_ec,
@@ -109,6 +109,10 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP'
 else dt.docbasetype in ('ARR') end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 )
 union all
 (select
@@ -139,8 +143,6 @@ else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx, null, a.ad_
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
-left join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
-left join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
@@ -151,6 +153,10 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
 else p.isreceipt = 'Y' end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 )
 union all
 (select
@@ -181,8 +187,6 @@ else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx, null, a.ad_
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
-left join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
-left join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
@@ -193,6 +197,10 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
 else p.isreceipt = 'Y' end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 )
 union all
 (select
@@ -223,8 +231,6 @@ else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx, null, a.ad_
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
-left join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
-left join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
@@ -236,6 +242,10 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then c.amount < 0
 else c.amount > 0  end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 )
 union all
 (select
@@ -265,9 +275,7 @@ case when al.amount = 0 then ABS(currencyconvert(i.grandtotal, i.c_currency_id, 
 else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx, null, a.ad_client_id, a.ad_org_id)) 
 end as Monto
 from c_invoice i
-inner join c_invoiceline il on (il.c_invoice_id = i.c_invoice_id)
 left join c_allocationline al on (al.c_invoice_credit_id = i.c_invoice_id)
-left join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join c_allocationhdr a on (a.c_allocationhdr_id = al.c_allocationhdr_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
@@ -276,6 +284,10 @@ inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 where (i.c_invoice_id not in (select c_invoice_id from m_retencion_invoice))
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP','API','APC') 
 else dt.docbasetype in ('ARR','ARI','ARC') end)
 AND not exists (select il.m_product_id 
@@ -312,8 +324,6 @@ else ABS(currencyconvert(al.amount, a.c_currency_id, 118, a.datetrx, null, a.ad_
 end as Monto
 from c_allocationhdr a
 inner join c_allocationline al on (al.c_allocationhdr_id = a.c_allocationhdr_id)
-left join c_invoiceline il on (il.c_invoice_id = al.c_invoice_id)
-left join m_product pr on (il.m_product_id = pr.m_product_id)
 inner join ad_org o on (o.ad_org_id = a.ad_org_id)
 inner join c_bpartner bp on (bp.c_bpartner_id = a.c_bpartner_id)
 inner join c_bp_group bpg on (bpg.c_bp_group_id = bp.c_bp_group_id)
@@ -324,6 +334,10 @@ AND (case $P{Mostrar} when (cast ('P' as varchar)) then p.isreceipt = 'N'
 else p.isreceipt = 'Y'  end)
 AND (($P{C_BP_Group_ID} IS NULL) OR (bpg.c_bp_group_id = $P{C_BP_Group_ID}))
 AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID}))
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 )
 union all
 (select
@@ -349,12 +363,12 @@ inner join c_doctype dt on (dt.c_doctype_id = a.c_doctype_id)
 where (i.issotrx <> dt.issotrx)
 AND (case $P{Mostrar} when (cast ('P' as varchar)) then dt.docbasetype in ('APP') 
 else dt.docbasetype in ('ARR') end)
+AND (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (a.ad_org_id = $P{AD_Org_ID}))
+AND (a.ad_client_id = $P{AD_CLIENT_ID})
+AND (($P{FechaDesde}::date IS NULL) OR (a.datetrx::date >= $P{FechaDesde}::date)) 
+AND (($P{FechaHasta}::date IS NULL) OR (a.datetrx::date <= $P{FechaHasta}::date))
 )) as subconsulta
-inner join ad_org o on (o.ad_org_id = $P{AD_Org_ID})
-WHERE (($P{AD_Org_ID} IS NULL) OR ($P{AD_Org_ID} = 0) OR (subconsulta.ad_org_id = $P{AD_Org_ID}))
-AND (subconsulta.ad_client_id = $P{AD_CLIENT_ID})
-AND (($P{FechaDesde}::date IS NULL) OR (Fecha > $P{FechaDesde}::date)) 
-AND (($P{FechaHasta}::date IS NULL) OR (Fecha < $P{FechaHasta}::date))) as todos
+inner join ad_org o on (o.ad_org_id = $P{AD_Org_ID})) as todos
 ) as a
 group by c_allocationhdr_id,
 ad_client_id,
