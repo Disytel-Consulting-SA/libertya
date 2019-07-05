@@ -41,10 +41,11 @@
 	familia.name as familia,
 	linea.name as linea_de_producto,
 	invoiceline.qtyentered as cantidad,
-	invoiceline.costprice as costo_unitario,
-	invoiceline.priceactual as precio_unitario,
-	invoice.grandtotal as total_venta
+	invoiceline.costprice * dt.signo_issotrx as costo_unitario,
+	invoiceline.priceactual * dt.signo_issotrx as precio_unitario,
+	invoice.grandtotal * dt.signo_issotrx as total_venta
 FROM c_invoice as invoice
+JOIN c_doctype dt on dt.c_doctype_id = invoice.c_doctypetarget_id
 INNER JOIN c_invoiceline as invoiceline ON invoiceline.c_invoice_id = invoice.c_invoice_id
 INNER JOIN m_product as product ON product.m_product_id =invoiceline.m_product_id 
 INNER JOIN m_product_category as subfamilia ON product.m_product_category_id = subfamilia.m_product_category_id
