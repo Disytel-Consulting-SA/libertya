@@ -496,7 +496,9 @@ public class ImportBankStatement extends SvrProcess {
                 if( statement == null ) {
                     statement = new MBankStatement( account );
                     statement.setEndingBalance( Env.ZERO );
-
+                    if(statement.getAD_Org_ID() == 0){
+                    	statement.setAD_Org_ID(m_AD_Org_ID);
+                    }
                     // Copy statement data
 
                     if( imp.getName() != null ) {
