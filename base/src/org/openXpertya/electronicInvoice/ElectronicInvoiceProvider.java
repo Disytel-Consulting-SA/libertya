@@ -50,7 +50,7 @@ public class ElectronicInvoiceProvider {
 	/** Retorna el provider si es que existe, ya sea de exportacion o no */
 	protected static ElectronicInvoiceInterface getProvider(MInvoice inv, String providerClass) throws Exception {
 		// Si no hay proveedor alguno, retornar null
-		if (providerClass==null)
+		if (providerClass==null || providerClass.length()==0)
 			return null;
 		// Intentar instanciar y utilizar dicho proveedor
 		Class<?> clazz = Class.forName(providerClass);
