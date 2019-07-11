@@ -30,7 +30,7 @@ public class WSFERegisterInvoice {
 			// Obtener el OXP_HOME
 			if (System.getenv("OXP_HOME") != null)
 				System.setProperty("OXP_HOME", System.getenv("OXP_HOME"));
-		  	if (!OpenXpertya.startupEnvironment( false )) {
+		  	if (!OpenXpertya.startupEnvironment( true )) {
 		  		System.err.println("ERROR: Error al iniciar el ambiente cliente.  Verifique si hay conexión a la BBDD.  Revise la configuración.  Recuerde indicar la variable de entorno OXP_HOME.");
 		  		return;
 		  	}
