@@ -342,6 +342,13 @@ public class VCreateFromStatement extends VCreateFrom implements VetoableChangeL
 		((CreateFromStatementModel)getHelper()).setGrouped(grouped.isSelected());
 		loadTable(((CreateFromStatementModel)getHelper()).getData());
 	}
+
+
+	@Override
+	protected void beforeSave() throws CreateFromSaveException {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }    // VCreateFromStatement
 

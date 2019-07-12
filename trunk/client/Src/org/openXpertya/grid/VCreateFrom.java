@@ -141,6 +141,10 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         p_WindowNo = mTab.getWindowNo();
         p_mTab     = mTab;
         setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
+		// Los Crear Desde generalmente se encuentran en la tabla cabecera de
+		// cada componente, por esto se setea como default los datos de la misma
+        getHelper().setParentTableName(mTab.getTableName());
+        getHelper().setParentID(mTab.getRecord_ID());
         
         try {
         	initOrderLookup();
@@ -492,6 +496,12 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
      */
 
     abstract void save() throws CreateFromSaveException;
+    
+    /**
+     * Before save
+     * @throws CreateFromSaveException
+     */
+    protected abstract void beforeSave() throws CreateFromSaveException;
 
     /**
      * Descripción de Método
@@ -948,7 +958,17 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
     	
     }
         
-
+    /**
+	 * Realiza controles estandar para todos los Crear Desde y llama al
+	 * beforeSave de cada subclase
+	 * 
+	 * @throws CreateFromSaveException en caso de error
+	 */
+    private void doBeforeSave() throws CreateFromSaveException {
+		beforeSave();
+    	// Validaciones del modelo
+		getHelper().doBeforeSave();
+    }
     
     /**
      * Invoca la operación de guardado de la clase concreta
@@ -966,6 +986,8 @@ public abstract class VCreateFrom extends JDialog implements ActionListener,Tabl
         	if (getSelectedSourceEntities().size() == 0) {
         		throw new CreateFromSaveException("@CreateFromEmptySelectionError@");
         	}
+        	// Realizar otras validaciones
+        	doBeforeSave();
         	// Efectua el guardado en la clase concreta.
         	save();
         	// Si todo va bien comitea la transacción.

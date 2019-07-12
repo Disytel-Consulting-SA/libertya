@@ -635,6 +635,13 @@ public class VCreateFromInvoice extends VCreateFrom {
 		}
 
 
+		@Override
+		protected void beforeSave() throws CreateFromSaveException {
+			// TODO Auto-generated method stub
+			
+		}
+
+
 }    // VCreateFromInvoice
 
 

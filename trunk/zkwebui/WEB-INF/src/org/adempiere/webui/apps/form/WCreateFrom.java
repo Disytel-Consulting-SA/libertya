@@ -120,6 +120,10 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 		window = new WCreateFromWindow(this, mTab.getWindowNo());
 		window.setTitle(Msg.translate( Env.getCtx(),"CreateFrom"));
 		setRole(MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx())));
+		// Los Crear Desde generalmente se encuentran en la tabla cabecera de
+		// cada componente, por esto se setea como default los datos de la misma
+        getHelper().setParentTableName(mTab.getTableName());
+        getHelper().setParentID(mTab.getRecord_ID());
 		
         try {
         	initOrderLookup();
@@ -400,6 +404,7 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
 
     abstract void save() throws CreateFromSaveException; 
    
+    protected abstract void beforeSave() throws CreateFromSaveException;
 
     public void selectall ()	{
 		window.selectAll();
@@ -827,6 +832,18 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
     }
     
     /**
+	 * Realiza controles estandar para todos los Crear Desde y llama al
+	 * beforeSave de cada subclase
+	 * 
+	 * @throws CreateFromSaveException en caso de error
+	 */
+    private void doBeforeSave() throws CreateFromSaveException {
+		beforeSave();
+    	// Validaciones del modelo
+		getHelper().doBeforeSave();
+    }
+    
+    /**
      * Invoca la operación de guardado de la clase concreta
      * realizando el manejo de transacción de BD.
      */
@@ -842,6 +859,8 @@ public abstract class WCreateFrom extends ADForm implements EventListener, Creat
         	if (getSelectedSourceEntities().size() == 0) {
         		throw new CreateFromSaveException("@CreateFromEmptySelectionError@");
         	}
+        	// Realizar otras validaciones
+        	doBeforeSave();
         	// Efectua el guardado en la clase concreta.
         	save();
         	// Si todo va bien comitea la transacción.
