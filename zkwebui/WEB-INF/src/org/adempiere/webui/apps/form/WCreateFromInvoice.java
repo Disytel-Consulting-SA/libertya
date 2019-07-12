@@ -653,5 +653,11 @@ public class WCreateFromInvoice extends WCreateFrom {
 		protected boolean addSecurityValidation() {
 			return getRole().isAddSecurityValidation_CreateFromInvoice();
 		}
+
+		@Override
+		protected void beforeSave() throws CreateFromSaveException {
+			// TODO Auto-generated method stub
+			
+		}
 	
 }

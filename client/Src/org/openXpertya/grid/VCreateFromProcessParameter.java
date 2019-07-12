@@ -199,4 +199,10 @@ public class VCreateFromProcessParameter extends VCreateFrom implements Vetoable
 		protected void updateColumns() {
 		}
     }
+
+	@Override
+	protected void beforeSave() throws CreateFromSaveException {
+		// TODO Auto-generated method stub
+		
+	}
 }

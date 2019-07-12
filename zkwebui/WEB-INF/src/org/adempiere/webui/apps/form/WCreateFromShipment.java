@@ -743,4 +743,10 @@ public class WCreateFromShipment extends WCreateFrom {
 		return getRole().isAddSecurityValidation_CreateFromShipment();
 	}
 
+	@Override
+	protected void beforeSave() throws CreateFromSaveException {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

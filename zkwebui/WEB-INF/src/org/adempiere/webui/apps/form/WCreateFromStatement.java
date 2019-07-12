@@ -384,4 +384,10 @@ public class WCreateFromStatement  extends WCreateFrom {
 	protected boolean addSecurityValidation() {
 		return true;
 	}
+
+	@Override
+	protected void beforeSave() throws CreateFromSaveException {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -15,7 +15,9 @@ import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.ReservedUtil;
+import org.openXpertya.util.Util;
 
 
 
@@ -23,7 +25,9 @@ public class CreateFromModel {
 
 	CLogger log = CLogger.getCLogger("CreateFromModel");
 	Properties ctx = Env.getCtx();
-
+	private String parentTableName = null;
+	private Integer parentID = 0;
+	
 	// =============================================================================================
 	// Logica para redefinición en plugins
 	// =============================================================================================
@@ -217,11 +221,67 @@ public class CreateFromModel {
 
      	return filter.toString();
     }
-	
+    
+    /**
+	 * Valida que si el registro cabecera se encuentra procesado, en ese caso no
+	 * se debería poder guardar el registro
+	 * 
+	 * @throws CreateFromSaveException
+	 */
+    protected void validateProcessed() throws CreateFromSaveException {
+    	String parentTableName = getParentTableName();
+    	Integer parentID = getParentID();
+    	if(parentTableName != null && !Util.isEmpty(parentID, true)){
+			String processed = DB.getSQLValueString(null,
+					"select processed from " + parentTableName + " where " + parentTableName + "_id = " + parentID);
+        	if(processed != null && processed.equals("Y")){
+        		throw new CreateFromSaveException(Msg.getMsg(ctx, "InsertLinesInDocumentAlreadyProcessed"));
+        	}
+    	}
+    }
+    
+    /**
+	 * Validaciones comúnes previas al save y llama al beforesave de cada
+	 * subclase
+	 * 
+	 * @throws CreateFromSaveException
+	 */
+    public void doBeforeSave() throws CreateFromSaveException {
+    	beforeSave();
+    	// Valida que la cabecera no esté ya procesado
+    	validateProcessed();
+    }
+    
+    /***
+	 * Cada subclase debe redefinir este método si es que requiere validaciones
+	 * previas a guardar
+	 * 
+	 * @throws CreateFromSaveException
+	 */
+    protected void beforeSave() throws CreateFromSaveException {
+    	// Redefinido por cada subclase
+    }
+    
 	// =============================================================================================
 	// SourceEntityListImpl y sus subclases
 	// =============================================================================================
 	
+	public void setParentTableName(String parentTableName) {
+		this.parentTableName = parentTableName;
+	}
+
+    protected String getParentTableName(){
+    	return this.parentTableName;
+    }
+    
+    protected Integer getParentID(){
+    	return this.parentID;
+    }
+
+	public void setParentID(Integer parentID) {
+		this.parentID = parentID;
+	}
+
 	/**
 	 * Esta interfaz define la necesidad de poder convertir
 	 * una instancia de SourceEntityListImpl a un array de valores
