@@ -17,7 +17,7 @@
 		 whenNoDataType="NoPages"
 		 isTitleNewPage="false"
 		 isSummaryNewPage="false">
-	<property name="ireport.scriptlethandling" value="2" />
+	<property name="ireport.scriptlethandling" value="0" />
 	<property name="ireport.encoding" value="UTF-8" />
 	<import value="java.util.*" />
 	<import value="net.sf.jasperreports.engine.*" />
@@ -60,7 +60,8 @@ WHERE i.ad_client_id = $P{AD_CLIENT_ID}
 		WHEN $P{DocOption} = 'S' THEN dt.docbasetype = 'ARI' 
 		ELSE dt.docbasetype = 'ARC' END)
 	AND (dt.doctypekey::text <> ALL (ARRAY['RCI'::text, 'RCR'::text])) 
-	AND (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) 
+	AND (CASE WHEN $P{DocOption} = 'S' THEN (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar]))
+		ELSE (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar, 'VO'::bpchar, 'RE'::bpchar])) END) 
 	AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) 
 	AND (dt.transactiontypefrontliva IS NULL OR dt.transactiontypefrontliva = 'S'::bpchar)
 	AND ($P{DateFrom}::date is null OR dateinvoiced::date >= $P{DateFrom}::date) 
