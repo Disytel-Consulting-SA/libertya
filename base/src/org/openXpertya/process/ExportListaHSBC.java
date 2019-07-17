@@ -6,7 +6,6 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -86,7 +85,7 @@ public class ExportListaHSBC extends ExportBankList {
 	protected DateFormat dateFormat_MM_yyyy = new SimpleDateFormat("MM/yyyy");
 	
 	/** Fecha de emisión o generación de pagos del banco al proveedor */
-	protected Date paymentDate;
+	protected Timestamp paymentDate;
 	
 	public ExportListaHSBC(Properties ctx, MBankList bankList, String trxName) {
 		super(ctx, bankList, trxName);
@@ -102,7 +101,7 @@ public class ExportListaHSBC extends ExportBankList {
 	protected String getFileHeader() {
 		StringBuffer head = new StringBuffer("FH");
 		head.append(getFieldSeparator());
-		head.append(dateFormat_ddMMyyyy.format(getBankList().getDateTrx()));
+		head.append(dateFormat_ddMMyyyy.format(paymentDate));
 		head.append(getFieldSeparator());
 		head.append("PCBE");
 		head.append(getFieldSeparator());
@@ -151,7 +150,7 @@ public class ExportListaHSBC extends ExportBankList {
 		// número de la cuenta bancaria del pago
 		idLine.append(StringUtil.trimStrict(accountno, 10));
 		idLine.append(getFieldSeparator());
-		// Fecha de Emisión de Pagos del Banco, fecha actual + 1
+		// Fecha de Emisión de Pagos del Banco, fecha actual
 		idLine.append(dateFormat_ddMMyyyy.format(paymentDate));
 		idLine.append(getFieldSeparator());
 		idLine.append(rs.getBigDecimal("payamt"));
@@ -327,10 +326,7 @@ public class ExportListaHSBC extends ExportBankList {
 		// Cargar todo el documento en las variables y luego impactarla en el
 		// archivo ya que es necesario saber la cantidad de lineas que posee el
 		// archivo como dato en el header 
-		Calendar today = Calendar.getInstance();
-		today.setTimeInMillis(Env.getDate().getTime());
-		today.add(Calendar.DATE, 1);
-		paymentDate = today.getTime();
+		paymentDate = Env.getDate();
 		// Ejecutar la query
 		PreparedStatement ps = DB.prepareStatement(getQuery(), get_TrxName(), true);
 		// Agregar los parámetros
