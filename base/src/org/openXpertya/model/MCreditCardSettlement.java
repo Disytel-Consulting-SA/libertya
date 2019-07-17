@@ -566,46 +566,18 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 	}
 
 	public void calculateSettlementCouponsTotalAmount(String trxName) {
+		StringBuffer subSQL = new StringBuffer();
+		subSQL.append(" SELECT SUM(amount) ");
+		subSQL.append(" FROM ").append(MCouponsSettlements.Table_Name).append(" as cs ");
+		subSQL.append(" WHERE cs.C_CreditCardSettlement_ID = ccs.C_CreditCardSettlement_ID AND include = 'Y' ");
+
 		StringBuffer sql = new StringBuffer();
-
-		sql.append("SELECT ");
-		sql.append("	amount ");
-		sql.append("FROM ");
-		sql.append("	" + MCouponsSettlements.Table_Name + " ");
-		sql.append("WHERE ");
-		sql.append("	C_CreditCardSettlement_ID = ?");
-		sql.append("	AND include = 'Y'");
-
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		try {
-			ps = DB.prepareStatement(sql.toString(), trxName);
-			ps.setInt(1, getC_CreditCardSettlement_ID());
-			rs = ps.executeQuery();
-
-			BigDecimal amt = BigDecimal.ZERO;
-
-			while (rs.next()) {
-				amt = amt.add(rs.getBigDecimal("amount"));
-			}
-
-			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), trxName);
-			settlement.setCouponsTotalAmount(amt);
-			if (!settlement.save()) {
-				throw new Exception(CLogger.retrieveErrorAsString());
-			}
-
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "calculateSettlementCouponsTotalAmount", e);
-		} finally {
-			try {
-				rs.close();
-				ps.close();
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Cannot close statement or resultset");
-			}
-		}
+		sql.append(" UPDATE ").append(MCreditCardSettlement.Table_Name).append(" as ccs ");
+		sql.append(" SET CouponsTotalAmount = ");
+		sql.append(" COALESCE(( ").append(subSQL.toString()).append("),0) ");
+		sql.append(" WHERE C_CreditCardSettlement_ID = ").append(getC_CreditCardSettlement_ID());
+		
+		DB.executeUpdate(sql.toString(), trxName);
 	}
 
 	@Override
