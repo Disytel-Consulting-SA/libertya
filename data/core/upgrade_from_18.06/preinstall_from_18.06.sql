@@ -2942,3 +2942,9 @@ CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS
 
 ALTER TABLE reginfo_ventas_cbte_v
   OWNER TO libertya;
+  
+--20190718-1130 Incremento de tamaño de columnas de importes para el informe de cuenta corriente
+ALTER TABLE t_cuentacorriente ALTER COLUMN debe TYPE numeric(22,2);
+ALTER TABLE t_cuentacorriente ALTER COLUMN haber TYPE numeric(22,2);
+ALTER TABLE t_cuentacorriente ALTER COLUMN saldo TYPE numeric(22,2);
+ALTER TABLE t_cuentacorriente ALTER COLUMN amount TYPE numeric(22,2);
