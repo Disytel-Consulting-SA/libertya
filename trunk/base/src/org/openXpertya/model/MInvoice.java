@@ -2429,6 +2429,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				&& dateInvoicedCalendar.get(Calendar.MINUTE) == 0
 				&& dateInvoicedCalendar.get(Calendar.SECOND) == 0) {
 			Calendar nowCalendar = Calendar.getInstance();
+			nowCalendar.setTimeInMillis(Env.getTimestamp().getTime());
 			dateInvoicedCalendar.set(Calendar.HOUR_OF_DAY,
 					nowCalendar.get(Calendar.HOUR_OF_DAY));
 			dateInvoicedCalendar.set(Calendar.MINUTE,
