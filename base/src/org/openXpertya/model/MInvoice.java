@@ -1923,6 +1923,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			return false;
 		}
 
+		// Documentos de proveedor: La fecha de aplicacion CG debe ser mayor o igual a la fecha de facturacion (sin considerar horario)
+		if (!isSOTrx() && (TimeUtil.getDay(getDateAcct().getTime()).compareTo(TimeUtil.getDay(getDateInvoiced().getTime())) < 0)) {
+			log.saveError("Error", "La fecha de aplicacion contable debe ser mayor o igual a la fecha de facturacion");
+			return false;
+		}
+		
 		// No Partner Info - set Template
 
 		if (getC_BPartner_ID() == 0) {
