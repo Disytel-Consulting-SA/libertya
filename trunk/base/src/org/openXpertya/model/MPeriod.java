@@ -313,7 +313,7 @@ public class MPeriod extends X_C_Period implements ITime{
 
     /** Descripción de Campos */
 
-    private static CCache s_cache = new CCache( "C_Period",10 );
+    private static CCache s_cache = new CCache( "C_Period", 10, 2 );
 
     /** Descripción de Campos */
 
@@ -745,6 +745,12 @@ public class MPeriod extends X_C_Period implements ITime{
         	createPeriodControls();
         }
 
+    	if (!newRecord && success) {
+            // Ante cualquier modificacion sobre los períodos, limpiar la cache
+    		// Principalmente para evitar problemas de período cerrado al procesar documentos.
+    		s_cache.clear();	
+    	}
+        
         return success;
     }    // afterSave
     

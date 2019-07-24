@@ -48,13 +48,13 @@ import java.util.logging.Level;
 public class MAcctSchema extends X_C_AcctSchema {
 
     /** Cache of Client AcctSchema Arrays */
-    private static CCache	s_schema	= new CCache("AD_ClientInfo", 3);	// 3 clients
+    private static CCache	s_schema	= new CCache("AD_ClientInfo", 3, 2);	// 3 clients
 
     /** Logger */
     private static CLogger	s_log	= CLogger.getCLogger(MAcctSchema.class);
 
     /** Cache of AcctSchemas */
-    private static CCache	s_cache	= new CCache("C_AcctSchema", 3);	// 3 accounting schemas
+    private static CCache	s_cache	= new CCache("C_AcctSchema", 3, 2);	// 3 accounting schemas
 
     /** Element List */
     private MAcctSchemaElement[]	m_elements	= null;
@@ -163,6 +163,18 @@ public class MAcctSchema extends X_C_AcctSchema {
 
     }		// beforeSave
 
+    
+    @Override
+    protected boolean afterSave(boolean newRecord, boolean success) {
+    	if (!newRecord && success) {
+            // Ante cualquier modificacion sobre los esquemas contables limpiar la cache
+    		// Principalmente para evitar problemas de período cerrado al procesar documentos.
+            s_cache.clear();
+            s_schema.clear();
+    	}
+    	return success;
+    }
+    
     /**
      *      Check Costing Setup
      */
