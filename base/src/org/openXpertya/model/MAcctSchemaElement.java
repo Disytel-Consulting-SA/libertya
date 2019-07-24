@@ -50,7 +50,7 @@ public final class MAcctSchemaElement extends X_C_AcctSchema_Element {
     private static CLogger	s_log	= CLogger.getCLogger(MAcctSchemaElement.class);
 
     /** Cache */
-    private static CCache	s_cache	= new CCache("C_AcctSchema_Element", 10);
+    private static CCache	s_cache	= new CCache("C_AcctSchema_Element", 10, 2);
 
     /**
      *      Parent Constructor

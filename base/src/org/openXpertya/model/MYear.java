@@ -47,7 +47,7 @@ import org.openXpertya.util.Msg;
 
 public class MYear extends X_C_Year implements ITime{
 
-	private static CCache s_cache = new CCache( "C_Year",10 );
+	private static CCache s_cache = new CCache( "C_Year", 10, 2 );
 	
 	public static MYear get(Properties ctx, Integer yearID){
 		MYear retValue = ( MYear )s_cache.get( yearID );

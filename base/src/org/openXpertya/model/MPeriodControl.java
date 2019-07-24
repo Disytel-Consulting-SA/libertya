@@ -196,10 +196,13 @@ public class MPeriodControl extends X_C_PeriodControl {
     }
     
     protected boolean afterSave(boolean newRecord, boolean success) {
-    	 // Reset Cache
-
-        CacheMgt.get().reset( "C_PeriodControl", getC_PeriodControl_ID());
-        return true;
+    	if (success && !newRecord) {
+            // Ante cualquier modificacion sobre los controles de período limpiar la cache
+    		// Principalmente para evitar problemas de período cerrado al procesar documentos.
+    		CacheMgt.get().reset( "C_PeriodControl");	
+    	}
+        
+        return success;
     }
     
 }    // MPeriodControl
