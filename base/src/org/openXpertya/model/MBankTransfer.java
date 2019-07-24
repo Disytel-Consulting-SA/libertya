@@ -103,7 +103,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			pagoOrigen.setAD_Org_ID(getAD_Org_ID());
 			pagoOrigen.setTenderType(MPayment.TENDERTYPE_DirectDeposit);
 			pagoOrigen.setC_BankAccount_ID(getC_bankaccount_from_ID());
-			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().multiply(anular?minusOne:BigDecimal.ONE));
+			pagoOrigen.setAmount(getC_currency_from_ID(), getammount_from().multiply(anular?BigDecimal.ONE:minusOne));
 			pagoOrigen.setDateTrx(getDateTrx());
 			pagoOrigen.setDateAcct(getDateTrx());
 			pagoOrigen.setC_BPartner_ID(getC_BPartner_ID());
@@ -165,7 +165,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			//Si son en distintas monedas, realizo la conversión
 			BigDecimal account_to_amount = getammount_to().multiply(anular?minusOne:BigDecimal.ONE); //Cantidad original, antes de la conversión
 			if(getC_currency_from_ID() != getC_currency_to_ID()) {
-				account_to_amount = MCurrency.currencyConvert(getammount_to(), getC_currency_from_ID(), getC_currency_to_ID(), new Date(), getAD_Org_ID(), getCtx());
+				account_to_amount = MCurrency.currencyConvert(account_to_amount, getC_currency_from_ID(), getC_currency_to_ID(), new Date(), getAD_Org_ID(), getCtx());
 			} 
 			pagoDestino.setAmount(getC_currency_to_ID(), account_to_amount);
 			pagoDestino.setDateTrx(getDateTrx());
