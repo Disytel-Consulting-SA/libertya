@@ -2943,7 +2943,7 @@ public class VOrdenCobro extends VOrdenPago {
 	 */
 	protected void updateGroupingAmtInvoices(boolean untilActualDueDate) {
 		if (radPayTypeStd.isSelected() && getModel().getBPartner() != null
-				&& getModel().getBPartner().isGroupInvoices()) {
+				&& getModel().getBPartner().isGroupInvoices() && !checkPayAll.isSelected()) {
 			// Obtener el monto para actualizar los montos manuales de las
 			// facturas
 			// El monto es lo que se encuentra en el text field de grupo,
