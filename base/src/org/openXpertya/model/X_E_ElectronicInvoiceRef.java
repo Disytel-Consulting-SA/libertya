@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por E_ElectronicInvoiceRef
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-03-12 12:10:16.217 */
+ *  @version  - 2019-07-24 16:54:29.167 */
 public class X_E_ElectronicInvoiceRef extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -93,6 +94,21 @@ set_Value ("Codigo", Codigo);
 public String getCodigo() 
 {
 return (String)get_Value("Codigo");
+}
+/** Set Codigo Inverso */
+public void setCodigo_Inverso (String Codigo_Inverso)
+{
+if (Codigo_Inverso != null && Codigo_Inverso.length() > 15)
+{
+log.warning("Length > 15 - truncated");
+Codigo_Inverso = Codigo_Inverso.substring(0,15);
+}
+set_Value ("Codigo_Inverso", Codigo_Inverso);
+}
+/** Get Codigo Inverso */
+public String getCodigo_Inverso() 
+{
+return (String)get_Value("Codigo_Inverso");
 }
 /** Set Descripcion */
 public void setDescripcion (String Descripcion)
