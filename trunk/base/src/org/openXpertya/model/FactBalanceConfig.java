@@ -166,6 +166,7 @@ public class FactBalanceConfig {
 		    	String selectWhere = " WHERE Fact_Acct.C_AcctSchema_ID=Fact_Acct_Balance.C_AcctSchema_ID";
 		    	String exists = " EXISTS (SELECT Fact_Acct.fact_acct_id FROM Fact_Acct ";
 		    	String group = " AD_Client_ID, C_AcctSchema_ID ";
+		    	String groupBy = " AD_Client_ID, C_AcctSchema_ID ";
 		    	String sqlUpdate = " UPDATE Fact_Acct_Balance " +  
 		        		" SET "+FACTACCTBALANCE_UPDATE_COLUMN_REPLACE_STRING+" = " + 
 		        		" (SELECT COALESCE(SUM("+FACTACCTBALANCE_UPDATE_COLUMN_REPLACE_STRING+"),0) " + 
@@ -175,16 +176,18 @@ public class FactBalanceConfig {
 		    		// Where
 		    		condition = " AND ";
 					if(DisplayType.isDate(column.getAD_Reference_ID())){
-						condition += " TRUNC(Fact_Acct."+column.getColumnName()+") = TRUNC(Fact_Acct_Balance."+column.getColumnName()+")"; 
+						condition += " date_trunc('day', Fact_Acct."+column.getColumnName()+") = date_trunc('day', Fact_Acct_Balance."+column.getColumnName()+")";
+						groupBy += " , date_trunc('day', "+column.getColumnName()+")";
 					}
 					else if(DisplayType.isNumeric(column.getAD_Reference_ID())){
 						condition += " COALESCE(Fact_Acct."+column.getColumnName()+", 0) = COALESCE(Fact_Acct_Balance."+column.getColumnName()+", 0)";
+						groupBy += " , coalesce("+column.getColumnName()+",0)";
 					}
 					else{
 						condition += "Fact_Acct."+column.getColumnName()+" = Fact_Acct_Balance."+column.getColumnName();
+						groupBy += " , "+column.getColumnName();
 					}
 					selectWhere += condition;
-					// Group By
 					group += " , "+column.getColumnName();
 				}
 		    	sqlUpdate += " "+selectWhere+" ) ";
@@ -193,8 +196,7 @@ public class FactBalanceConfig {
 		    	getFactacctbalance_templateUpdate().put(acctSchemaID,sqlUpdate);		    	
 		    	
 		    	String sqlInsert = " INSERT INTO Fact_Acct_Balance ( ";
-		    	String sqlInsertSelect = " SELECT "+group;
-		    	String groupBy = group;
+		    	String sqlInsertSelect = " SELECT "+groupBy;
 		    	for (String updateColumn : getFactacctbalance_updatecolumns()) {
 		    		sqlInsertSelect += " , sum("+updateColumn+")";
 					group += " , "+updateColumn;
