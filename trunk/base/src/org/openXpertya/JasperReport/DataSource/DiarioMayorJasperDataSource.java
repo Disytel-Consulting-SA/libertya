@@ -78,7 +78,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	 */
 	private String  getSQLData()	{
 		StringBuffer sql = new StringBuffer();
-		sql.append( " SELECT C_ElementValue_ID, Name, Value, JournalNo, DateAcct, DateDoc, Description, Debe, Haber ");
+		sql.append( " SELECT C_ElementValue_ID, Name, Value, JournalNo, DateAcct, DateDoc, Description, sum(Debe) as Debe, sum(Haber) as Haber ");
 		sql.append(" FROM ").append(getReportDSViewName()); 
 		sql.append(" WHERE ");
 		// Añadimos restricciones
@@ -98,6 +98,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 			sql.append("AND C_ElementValue_ID = ").append(p_1_ElementValue_ID);
 		}
 		
+		sql.append( " GROUP BY C_ElementValue_ID, Name, Value, JournalNo, DateAcct, DateDoc, Description ");
 		
 		// Orden
 		sql.append( " ORDER BY Name, DateAcct, JournalNo");
