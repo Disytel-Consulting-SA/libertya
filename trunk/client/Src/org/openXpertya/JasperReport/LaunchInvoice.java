@@ -6,6 +6,9 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
@@ -241,9 +244,13 @@ public class LaunchInvoice extends SvrProcess {
 					JasperReportsUtil.getCurrencySymbol(getCtx(),
 							order.getC_Currency_ID(), get_TrxName()));
 		} 
-		String fechaVto = (String)JasperReportsUtil.coalesce(getFechaVto(invoice), invoice.getDateInvoiced().toString());
-		fechaVto = fechaVto.substring(0, 11); // quitamos la hora del string
-		jasperwrapper.addParameter("VCTO", "Vencimiento: " +  fechaVto);			
+		Timestamp fechaVto = getFechaVto(invoice);
+		if(fechaVto == null){
+			fechaVto = invoice.getDateInvoiced();
+		}
+		DateFormat sdp = new SimpleDateFormat("dd/MM/yyyy");
+		jasperwrapper.addParameter("VCTO", "Vencimiento: " +  sdp.format(fechaVto));
+		jasperwrapper.addParameter("VCTO_DATE", fechaVto);
 		jasperwrapper.addParameter("CODVTA", JasperReportsUtil.getListName(
 			getCtx(), X_C_Invoice.PAYMENTRULE_AD_Reference_ID,
 			invoice.getPaymentRule()));
@@ -429,6 +436,17 @@ public class LaunchInvoice extends SvrProcess {
 					clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
 		*/
 		
+		if(!Util.isEmpty(clientInfo.getC_Location_ID(), true)){
+			MLocation clientLocation = MLocation.get(getCtx(), clientInfo.getC_Location_ID(), get_TrxName());
+			jasperwrapper.addParameter("CLIENT_LOCATION_DESCRIPTION",
+					JasperReportsUtil.formatLocation(getCtx(), clientInfo.getC_Location_ID(), true));
+			jasperwrapper.addParameter("CLIENT_REGION",
+					JasperReportsUtil.getRegionName(getCtx(), clientLocation.getC_Region_ID(), get_TrxName()));
+			jasperwrapper.addParameter("CLIENT_CITY", clientLocation.getCity());
+			jasperwrapper.addParameter("CLIENT_POSTAL", clientLocation.getPostal());
+			jasperwrapper.addParameter("CLIENT_ADDRESS1", clientLocation.getAddress1());
+		}
+		
 		jasperwrapper.addParameter(
 				"ORG",
 				JasperReportsUtil.getOrgName(getCtx(), invoice.getAD_Org_ID()));
@@ -534,7 +552,7 @@ public class LaunchInvoice extends SvrProcess {
 		return retValue;
 	}
 
-	private String getFechaVto(MInvoice invoice)
+	private Timestamp getFechaVto(MInvoice invoice)
 	{
 		try 
 		{
@@ -547,7 +565,7 @@ public class LaunchInvoice extends SvrProcess {
 			
 			invoicePayScheduleID = rs.getInt(1);
 			MInvoicePaySchedule invoicePaySchedule = new MInvoicePaySchedule(getCtx(), invoicePayScheduleID, null);
-			return invoicePaySchedule.getDueDate().toString();	
+			return invoicePaySchedule.getDueDate();	
 		}
 		catch (Exception e)
 		{
