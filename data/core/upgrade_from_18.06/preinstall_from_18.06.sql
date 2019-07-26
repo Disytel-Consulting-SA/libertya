@@ -3096,3 +3096,6 @@ CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS
 
 ALTER TABLE reginfo_ventas_cbte_v
   OWNER TO libertya;
+  
+--20190725-1037 Versionado de BBDD para release
+UPDATE ad_system SET version = '31-07-2019' WHERE ad_system_id = 0;
