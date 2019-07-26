@@ -69,8 +69,10 @@ public class PluginXMLUpdater {
 	
 	/** Indicador de actividad. Version optimizada para disfrutar la instalacion. */
 	protected String[] animation = {
-									"INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING", "INSTALLING",
-									"__________", "__________", "__________", "__________", "__________", "__________", "__________", "__________",
+									"Installing", "iNstalling", "inStalling", "insTalling", "instAlling", "instaLling", "instalLing", "installIng", "installiNg", "installinG",
+									"installiNg", "installIng", "instalLing", "instaLling", "instAlling", "insTalling", "inStalling", "iNstalling", "Installing", 
+									"Installing", "INstalling", "INStalling", "INSTalling", "INSTAlling", "INSTALling", "INSTALLing", "INSTALLIng", "INSTALLINg", "INSTALLING",
+									"iNSTALLING", "inSTALLING", "insTALLING", "instALLING", "instaLLING", "instalLING", "installING", "installiNG", "installinG", "installing",
 									};
 	
 	/** Si esta activado, la instalacion de un componente implicará no solo impactar en las tablas, sino que tambien copiará 
