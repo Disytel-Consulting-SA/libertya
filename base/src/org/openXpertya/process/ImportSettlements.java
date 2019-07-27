@@ -52,7 +52,7 @@ public class ImportSettlements extends SvrProcess {
 	private static final String IGNORED = "Ignorado";
 
 	/** Eliminar registros importados previamente. */
-	private boolean m_deleteOldImported = false;
+	private boolean m_deleteOldImported = true;
 	/** Tipo de tarjeta. */
 	private String p_CreditCardType;
 	/** Moneda por defecto. */
@@ -423,8 +423,10 @@ public class ImportSettlements extends SvrProcess {
 				if (C_CreditCardSettlement_ID > 0) {
 					settlement = new MCreditCardSettlement(getCtx(), C_CreditCardSettlement_ID, get_TrxName());
 					if (!settlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Drafted)) {
-						markAsError(tableName, rs.getInt(tableName + "_ID"), "La liquidación ya existe en estado completado");
-						return ERROR;
+						// Se marca importado si ya existe para que luego no se
+						// levante como un registro pendiente de importación 
+						markAsImported(tableName, rs.getInt(tableName + "_ID"));
+						return IGNORED;
 					} else {
 						settlement.setAmount(settlement.getAmount().add(totalAmt));
 						if (!settlement.save(get_TrxName())) {
@@ -743,8 +745,10 @@ public class ImportSettlements extends SvrProcess {
 				if (C_CreditCardSettlement_ID > 0) {
 					MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), C_CreditCardSettlement_ID, get_TrxName());
 					if (!settlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Drafted)) {
-						markAsError(tableName, rs.getInt(tableName + "_ID"), "La liquidación ya existe en estado completado");
-						return ERROR;
+						// Se marca importado si ya existe para que luego no se
+						// levante como un registro pendiente de importación 
+						markAsImported(tableName, rs.getInt(tableName + "_ID"));
+						return IGNORED;
 					} else {
 						settlement.setAmount(settlement.getAmount().add(compraAmt));
 						if (!settlement.save()) {
@@ -1057,8 +1061,10 @@ public class ImportSettlements extends SvrProcess {
 				if (C_CreditCardSettlement_ID > 0) {
 					settlement = new MCreditCardSettlement(getCtx(), C_CreditCardSettlement_ID, get_TrxName());
 					if (!settlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Drafted)) {
-						markAsError(tableName, rs.getInt(tableName + "_ID"), "La liquidación ya existe en estado completado");
-						return ERROR;
+						// Se marca importado si ya existe para que luego no se
+						// levante como un registro pendiente de importación 
+						markAsImported(tableName, rs.getInt(tableName + "_ID"));
+						return IGNORED;
 					} else {
 						withholdingAmt = settlement.getWithholding();
 						perceptionAmt = settlement.getPerception();
@@ -1402,8 +1408,10 @@ public class ImportSettlements extends SvrProcess {
 				if (C_CreditCardSettlement_ID > 0) {
 					MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), C_CreditCardSettlement_ID, get_TrxName());
 					if (!settlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Drafted)) {
-						markAsError(tableName, rs.getInt(tableName + "_ID"), "La liquidación ya existe en estado completado");
-						return ERROR;
+						// Se marca importado si ya existe para que luego no se
+						// levante como un registro pendiente de importación 
+						markAsImported(tableName, rs.getInt(tableName + "_ID"));
+						return IGNORED;
 					}
 				}
 

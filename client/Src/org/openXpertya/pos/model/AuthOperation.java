@@ -29,12 +29,16 @@ public class AuthOperation {
 	/** Autorización que autorizó esta operación */
 	private AUserAuthModel userAthorized;
 	
+	/** Indica si es severo o error para que sea más llamativo (Rojo y Negrita) */
+	private boolean severe = false;
+	
 	public AuthOperation() {
 		setOpDescription(null);
 		setOperationType(null);
 		setAuthorized(false);
 		setAuthorizeMoment(null);
 		setLazyAuthorization(false);
+		setSevere(false);
 	}
 	
 	public AuthOperation(String operationType, String opDescription, String authorizeMoment) {
@@ -44,6 +48,11 @@ public class AuthOperation {
 		setAuthorizeMoment(authorizeMoment);
 	}
 
+	public AuthOperation(String operationType, String opDescription, String authorizeMoment, boolean isSevere) {
+		this(operationType, opDescription, authorizeMoment);
+		setSevere(isSevere);
+	}
+	
 	public void setOpDescription(String opDescription) {
 		this.opDescription = opDescription;
 	}
@@ -90,6 +99,14 @@ public class AuthOperation {
 
 	public boolean isLazyAuthorization() {
 		return lazyAuthorization;
+	}
+
+	public boolean isSevere() {
+		return severe;
+	}
+
+	public void setSevere(boolean severe) {
+		this.severe = severe;
 	}
 
 }

@@ -2,6 +2,7 @@ package org.openXpertya.pos.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -95,6 +96,7 @@ public class AuthorizationDialog extends CDialog {
 		cOkButton = null;
 		cCancelButton = null;
 		setUserAuth(AUserAuth.get());
+		getUserAuth().setPasswordActionListener(this);
 	}
 	
 	public void addAuthOperation(AuthOperation authOperation){
@@ -119,7 +121,8 @@ public class AuthorizationDialog extends CDialog {
 				"ul", "Las siguientes operaciones requieren autorizacion:");
 		for (AuthOperation authOperation : getAuthManager().getOperations(authorizationMoment)) {
 			if(!authOperation.isAuthorized()){
-				listOperations.createAndAddListElement("", authOperation.getOpDescription(), authList);
+				listOperations.createAndAddListElement("", authOperation.getOpDescription(), authOperation.isSevere(),
+						authList);
 				operationsToAuth.add(authOperation.getOperationType());
 				authOperations.add(authOperation);
 			}
@@ -206,30 +209,7 @@ public class AuthorizationDialog extends CDialog {
 			cOkButton = new CButton();
 			cOkButton.setIcon(ImageFactory.getImageIcon("Ok16.gif"));
 			cOkButton.setPreferredSize(new java.awt.Dimension(BUTTON_WIDTH,26));
-			cOkButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					// Autorización de usuario
-					Integer userID = getUserAuth().getUserID();
-					User user = null;
-					if(userID != null){
-						user = getAuthContainer().getUser(userID);
-					}
-					UserAuthData authData = new UserAuthData();
-					authData.setForPOS(getAuthContainer() != null);
-					authData.setAuthOperations(getCurrentAuthorizationOperations());
-					authData.setPosSupervisor(user == null? false : user.isPoSSupervisor());
-					setAuthorizeResult(getUserAuth().validateAuthorization(authData));
-					if(getAuthorizeResult() != null && !getAuthorizeResult().isError()){
-						markAuthorized(getCurrentAuthorizationMoment(), true);
-						setVisible(false);
-					}
-					else{
-						if(getAuthorizeResult() != null && getAuthorizeResult().isError()){
-							errorMsg(getAuthorizeResult().getMsg());
-						}
-					}
-				}
-			});
+			cOkButton.addActionListener(this);
 			KeyUtils.setOkButtonKeys(cOkButton);
 			KeyUtils.setButtonText(cOkButton, MSG_OK);
 			cOkButton.setToolTipText(MSG_OK);
@@ -248,12 +228,7 @@ public class AuthorizationDialog extends CDialog {
 			cCancelButton = new CButton();
 			cCancelButton.setIcon(ImageFactory.getImageIcon("Cancel16.gif"));
 			cCancelButton.setPreferredSize(new java.awt.Dimension(BUTTON_WIDTH,26));
-			cCancelButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					cancel();
-				}
-			});
-			
+			cCancelButton.addActionListener(this);			
 			KeyUtils.setCancelButtonKeys(cCancelButton);
 			KeyUtils.setButtonText(cCancelButton, MSG_CANCEL);			
 			cCancelButton.setToolTipText(MSG_CANCEL);
@@ -302,6 +277,38 @@ public class AuthorizationDialog extends CDialog {
 			authorizeResult = null; 
 		}
 		return result;
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+		if(e.getSource() == cCancelButton){
+			cancel();
+		}
+		else{
+			ok();
+		}
+	}
+	
+	public void ok(){
+		// Autorización de usuario
+		Integer userID = getUserAuth().getUserID();
+		User user = null;
+		if(userID != null){
+			user = getAuthContainer().getUser(userID);
+		}
+		UserAuthData authData = new UserAuthData();
+		authData.setForPOS(getAuthContainer() != null);
+		authData.setAuthOperations(getCurrentAuthorizationOperations());
+		authData.setPosSupervisor(user == null? false : user.isPoSSupervisor());
+		setAuthorizeResult(getUserAuth().validateAuthorization(authData));
+		if(getAuthorizeResult() != null && !getAuthorizeResult().isError()){
+			markAuthorized(getCurrentAuthorizationMoment(), true);
+			setVisible(false);
+		}
+		else{
+			if(getAuthorizeResult() != null && getAuthorizeResult().isError()){
+				errorMsg(getAuthorizeResult().getMsg());
+			}
+		}
 	}
 	
 	public void setAuthManager(AuthManager authManager) {
