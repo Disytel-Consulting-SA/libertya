@@ -1,6 +1,7 @@
 package org.openXpertya.apps;
 
 import java.awt.Dimension;
+import java.awt.event.ActionListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -80,6 +81,9 @@ public abstract class AUserAuth {
 	
 	/** Modelo */
 	private AUserAuthModel userAuthModel;
+	
+	/** Action Listener para el campo password */
+	private ActionListener passwordActionListener;
 	
 	
 	public AUserAuth(AUserAuthModel userAuthModel){
@@ -207,5 +211,14 @@ public abstract class AUserAuth {
 
 	public String getShortcutLabel() {
 		return shortcutLabel;
+	}
+
+	public ActionListener getPasswordActionListener() {
+		return passwordActionListener;
+	}
+
+	public void setPasswordActionListener(ActionListener passwordActionListener) {
+		this.passwordActionListener = passwordActionListener;
+		getfPassword().addActionListener(passwordActionListener);
 	}
 }

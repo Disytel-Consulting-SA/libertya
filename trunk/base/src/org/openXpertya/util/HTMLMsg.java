@@ -12,6 +12,7 @@ public class HTMLMsg {
 	public static final String ID = "id";
 	public static final String EQUAL = "=";
 	public static final String TAG_P_ELEMENT = "p";
+	public static final String TAG_STYLE_ATTR = "style";
 	
 	/** Listas */
 	private List<HTMLList> lists;
@@ -108,6 +109,15 @@ public class HTMLMsg {
 	 */
 	public void createAndAddListElement(String id, String value, HTMLList list){
 		list.addElement(createListElement(id, value));
+	}
+	
+	public void createAndAddListElement(String id, String value, boolean severe, HTMLList list){
+		HTMLListElement le = createListElement(id, value);
+		if(severe){
+			le.setColor("red");
+			le.setBold(true);
+		}
+		list.addElement(le);
 	}
 	
 	/**
@@ -341,6 +351,8 @@ public class HTMLMsg {
 		
 		private String id;
 		private String value;
+		private String color = null;
+		private boolean bold = false;
 
 		public HTMLListElement(String id, String value){
 			setId(id);
@@ -370,6 +382,7 @@ public class HTMLMsg {
 			if(!Util.isEmpty(getId())){
 				listElem.append(BLANK).append(ID).append(EQUAL).append(getId());
 			}
+			listElem.append(getStyle());
 			listElem.append(TAG_CLOSE);
 			if(!Util.isEmpty(getValue())){
 				listElem.append(getValue());	
@@ -377,6 +390,48 @@ public class HTMLMsg {
 			listElem.append(TAG_OPEN_CLOSE_ELEMENT).append(TAG_LIST_ELEM)
 					.append(TAG_CLOSE);
 			return listElem.toString();
+		}
+		
+		private String getStyle(){
+			String style = "";
+			if(getStyleElements().size() > 0){
+				// Armar el atributo style
+				style += BLANK+TAG_STYLE_ATTR+EQUAL;
+				style += "\"";
+				for (String se : getStyleElements()) {
+					style += se;
+				}
+				style += "\"";
+				style += BLANK;
+			}
+			return style;
+		}
+
+		private List<String> getStyleElements(){
+			List<String> styleElements = new ArrayList<String>();
+			if(getColor() != null){
+				styleElements.add("color:"+getColor()+";");
+			}
+			if(isBold()){
+				styleElements.add("font-weight:bold;");
+			}
+			return styleElements;
+		}
+
+		public String getColor() {
+			return color;
+		}
+
+		public void setColor(String color) {
+			this.color = color;
+		}
+
+		public boolean isBold() {
+			return bold;
+		}
+
+		public void setBold(boolean bold) {
+			this.bold = bold;
 		}
 	}
 	

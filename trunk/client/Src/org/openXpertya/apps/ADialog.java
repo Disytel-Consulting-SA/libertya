@@ -35,6 +35,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trace;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -312,24 +313,40 @@ public final class ADialog {
         return ask( WindowNo,c,AD_Message,null );
     }    // ask
 
+    public static boolean ask( int WindowNo,Container c, String AD_Message, Object[] messageParams,String msg) {
+    	return ask( WindowNo,c, AD_Message, messageParams,msg,false );
+    }
     
-    public static boolean ask( int WindowNo,Container c, String AD_Message, Object[] messageParams,String msg ) {
+    public static boolean ask( int WindowNo,Container c, String AD_Message, Object[] messageParams,String msg, boolean warning ) {
         log.info( AD_Message + " - " + msg );
 
         Properties   ctx = Env.getCtx();
         StringBuffer out = new StringBuffer();
 
-        if( (AD_Message != null) &&!AD_Message.equals( "" )) {
+        if(!Util.isEmpty(AD_Message)) {
+        	if(warning && Util.isEmpty(msg)){
+        		out.append("<span style=\"color:red;font-weight:bold;\">");
+        	}
         	if(messageParams != null && messageParams.length > 0){
                 out.append( Msg.getMsg( ctx,AD_Message,messageParams ));
         	}
         	else{
                 out.append( Msg.getMsg( ctx,AD_Message ));
         	}
+        	if(warning && Util.isEmpty(msg)){
+        		out.append("</span>");
+        	}
         }
 
-        if( (msg != null) && (msg.length() > 0) ) {
-            out.append( "\n" ).append( msg );
+        if(!Util.isEmpty(msg)) {
+            out.append( "\n" );
+            if(warning){
+            	out.append("<span style=\"color:red;font-weight:bold;\">");
+            }
+            out.append(msg);
+            if(warning){
+            	out.append("</span>");
+            }
         }
 
         //
@@ -342,13 +359,15 @@ public final class ADialog {
 
         boolean retValue = false;
 
+        int msgType = warning?JOptionPane.WARNING_MESSAGE:JOptionPane.QUESTION_MESSAGE;
+        
         if( showDialog && (parent != null) ) {
             if( parent instanceof JFrame ) {
-                ADialogDialog d = new ADialogDialog(( JFrame )parent,Env.getHeader( ctx,WindowNo ),out.toString(),JOptionPane.QUESTION_MESSAGE );
+                ADialogDialog d = new ADialogDialog(( JFrame )parent,Env.getHeader( ctx,WindowNo ),out.toString(), msgType);
 
                 retValue = d.getReturnCode() == ADialogDialog.A_OK;
             } else {
-                ADialogDialog d = new ADialogDialog(( JDialog )parent,Env.getHeader( ctx,WindowNo ),out.toString(),JOptionPane.QUESTION_MESSAGE );
+                ADialogDialog d = new ADialogDialog(( JDialog )parent,Env.getHeader( ctx,WindowNo ),out.toString(), msgType);
 
                 retValue = d.getReturnCode() == ADialogDialog.A_OK;
             }
@@ -356,7 +375,7 @@ public final class ADialog {
             Object[] optionsOC = { Msg.getMsg( ctx,"OK" ),Msg.getMsg( ctx,"Cancel" )};
             int i = JOptionPane.showOptionDialog( parent,out.toString() + "\n",    // message
                 Env.getHeader( ctx,WindowNo ),    // title
-                JOptionPane.DEFAULT_OPTION,JOptionPane.QUESTION_MESSAGE,null,optionsOC,optionsOC[ 0 ] );
+                JOptionPane.DEFAULT_OPTION, msgType,null,optionsOC,optionsOC[ 0 ] );
 
             retValue = i == JOptionPane.YES_OPTION;
         }
