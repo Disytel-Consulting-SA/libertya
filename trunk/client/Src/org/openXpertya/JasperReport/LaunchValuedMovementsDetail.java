@@ -3,6 +3,8 @@ package org.openXpertya.JasperReport;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.JasperReport.DataSource.ValuedMovementsDetailDataSource;
 import org.openXpertya.model.MProductLines;
+import org.openXpertya.model.MRefList;
+import org.openXpertya.util.DB;
 
 public class LaunchValuedMovementsDetail extends LaunchValuedMovements {
 
@@ -10,8 +12,8 @@ public class LaunchValuedMovementsDetail extends LaunchValuedMovements {
 	protected OXPJasperDataSource createReportDataSource() {
 		return new ValuedMovementsDetailDataSource(getCtx(), getOrgID(),
 				getDateFrom(), getDateTo(), getWarehouseID(),
-				getPriceListVersionID(), getChargeID(), getProductLineID(), 
-				get_TrxName());
+				getPriceListVersionID(), getChargeID(), getProductLineID(),  
+				getPriceType(), get_TrxName());
 	}
 	
 	@Override
@@ -24,10 +26,21 @@ public class LaunchValuedMovementsDetail extends LaunchValuedMovements {
 			addReportParameter("PRODUCT_LINE_VALUE", productLine.getValue());
 			addReportParameter("PRODUCT_LINE_NAME", productLine.getName());
 		}
+		// Tipo de precio
+		addReportParameter("PRICE_TYPE", getPriceType());
+		addReportParameter("PRICE_TYPE_NAME",
+				MRefList.getListName(getCtx(), getPriceTypeReferenceID(), getPriceType()));
 	}
 	
 	protected Integer getProductLineID(){
 		return (Integer)getParameterValue("M_Product_Lines_ID");
 	}
 
+	protected String getPriceType(){
+		return (String)getParameterValue("PriceType");
+	}
+	
+	protected Integer getPriceTypeReferenceID(){
+		return DB.getSQLValue(get_TrxName(), "select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-1010435'");
+	}
 }

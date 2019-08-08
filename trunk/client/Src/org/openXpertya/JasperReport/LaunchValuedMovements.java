@@ -25,9 +25,11 @@ public class LaunchValuedMovements extends LaunchProductMovements {
 				Util.isEmpty(warehouseID, true) ? null : JasperReportsUtil
 						.getWarehouseName(getCtx(), warehouseID, get_TrxName()));
 		// Versión de Tarifa
-		MPriceListVersion priceListVersion = new MPriceListVersion(getCtx(),
-				getPriceListVersionID(), get_TrxName());
-		addReportParameter("PRICELIST_VERSION_NAME", priceListVersion.getName());
+		if(!Util.isEmpty(getPriceListVersionID(), true)){
+			MPriceListVersion priceListVersion = new MPriceListVersion(getCtx(),
+					getPriceListVersionID(), get_TrxName());
+			addReportParameter("PRICELIST_VERSION_NAME", priceListVersion.getName());
+		}
 		if(!Util.isEmpty(getChargeID(), true)){
 			MCharge charge = new MCharge(getCtx(), getChargeID(), get_TrxName());
 			addReportParameter("CHARGE_VALUE", charge.getValue());
