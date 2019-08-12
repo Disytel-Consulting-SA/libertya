@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Charge
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-07-10 09:13:16.45 */
+ *  @version  - 2019-08-12 15:43:39.723 */
 public class X_C_Charge extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -115,11 +115,13 @@ public static final String CHARGETYPE_Expenses = "E";
 public static final String CHARGETYPE_CashMovements = "C";
 /** Accounting Configuration = A */
 public static final String CHARGETYPE_AccountingConfiguration = "A";
+/** Inactive = I */
+public static final String CHARGETYPE_Inactive = "I";
 /** Set Charge Type.
 Charge Type */
 public void setChargeType (String ChargeType)
 {
-if (ChargeType.equals("D") || ChargeType.equals("W") || ChargeType.equals("S") || ChargeType.equals("T") || ChargeType.equals("M") || ChargeType.equals("E") || ChargeType.equals("C") || ChargeType.equals("A") || ( refContainsValue("CORE-AD_Reference-1010111", ChargeType) ) );
+if (ChargeType.equals("D") || ChargeType.equals("W") || ChargeType.equals("S") || ChargeType.equals("T") || ChargeType.equals("M") || ChargeType.equals("E") || ChargeType.equals("C") || ChargeType.equals("A") || ChargeType.equals("I") || ( refContainsValue("CORE-AD_Reference-1010111", ChargeType) ) );
  else throw new IllegalArgumentException ("ChargeType Invalid value: " + ChargeType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010111") );
 if (ChargeType == null) throw new IllegalArgumentException ("ChargeType is mandatory");
 if (ChargeType.length() > 2)
