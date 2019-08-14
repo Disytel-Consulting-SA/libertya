@@ -11,6 +11,7 @@ import java.util.Properties;
 
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.CLogger;
 
 import net.sf.jasperreports.engine.JRDataSource;
@@ -48,8 +49,10 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	/** Tabla origen de los datos */
 	protected String p_factAcctTable;
 	
+	/** Organización */
+	private int orgID = 0;
 	
-	public DiarioMayorJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, String factAcctTable)	{
+	public DiarioMayorJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, String factAcctTable, Integer orgID)	{
 		p_ctx = ctx;
 		
 		p_DateAcct_From = dateFrom;
@@ -59,6 +62,9 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		p_2_ElementValue_ID = elementTo_ID;
 		
 		p_factAcctTable = factAcctTable;
+		
+		this.orgID = orgID;
+		
 		loadData();
 	}
 	
@@ -83,6 +89,9 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		sql.append(" WHERE ");
 		// Añadimos restricciones
 		sql.append( " AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
+		if(!Util.isEmpty(orgID, true)){
+			sql.append( " AND AD_Org_ID=").append(orgID);
+		}
 		sql.append(" AND DateAcct::date BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
 		
 		
@@ -117,6 +126,9 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		sql.append("  FROM "+getReportDSTableName()+" ac, c_elementvalue ev");
 		sql.append(" WHERE ac.account_id=ev.c_elementvalue_id ");
 		sql.append(" AND ac.AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
+		if(!Util.isEmpty(orgID, true)){
+			sql.append( " AND ac.AD_Org_ID=").append(orgID);
+		}
 		sql.append(" AND ac.DateAcct::date < ").append(DB.TO_DATE(p_DateAcct_From));
 		
 		// Obtenemos la clausula de las cuentas basandonos en el nombre.
