@@ -32,6 +32,9 @@ public class LaunchMayor extends SvrProcess {
 	/** Tabla origen de los datos */
 	protected String p_factAcctTable = "Fact_Acct";
 	
+	/** Organización */
+	private int orgID;
+	
 	/**
 	 *  Prepare - e.g., get Parameters.
 	 */
@@ -57,6 +60,9 @@ public class LaunchMayor extends SvrProcess {
 			else if( name.equalsIgnoreCase( "FactAcctTable" )) {
 				p_factAcctTable = (String)para[i].getParameter();
 			}
+			else if (name.equals("AD_Org_ID"))	{
+				orgID = para[i].getParameterAsInt();
+			}
 			else
 				log.severe("prepare - Unknown Parameter: " + name);
 		}
@@ -78,7 +84,7 @@ public class LaunchMayor extends SvrProcess {
 		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
 		
 		DiarioMayorJasperDataSource ds = new DiarioMayorJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To,
-				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable);
+				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable, orgID);
 		
 		try {
 			ds.loadData();
