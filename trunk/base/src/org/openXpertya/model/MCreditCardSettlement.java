@@ -164,7 +164,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		 * Si cambio la cuenta contable de la liquidación y tengo un pago
 		 * asociado, también actualizo la cuenta del pago
 		 */
-		if(getACCOUNTING_C_Charge_ID() != 0) {
+		if(getACCOUNTING_C_Charge_ID() != 0 && !Util.isEmpty(getC_Payment_ID(), true)) {
 			MPayment payment = new MPayment(getCtx(), getC_Payment_ID(), get_TrxName());
 			payment.setACCOUNTING_C_Charge_ID(getACCOUNTING_C_Charge_ID());
 			payment.save();
