@@ -9,9 +9,8 @@ import java.util.logging.Level;
 import org.openXpertya.model.MCouponsSettlements;
 import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.MPayment;
-import org.openXpertya.model.X_C_AllocationHdr;
-import org.openXpertya.model.X_C_AllocationLine;
 import org.openXpertya.model.X_C_BPartner;
+import org.openXpertya.model.X_C_CouponsSettlements;
 import org.openXpertya.model.X_C_CreditCardCouponFilter;
 import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.model.X_M_EntidadFinanciera;
@@ -99,11 +98,11 @@ public class FilterCoupons extends SvrProcess {
 
 		// Filtro opcional por fecha "desde"
 		if (filter.getTrxDateFrom() != null) {
-			sql.append("AND p.datetrx >= ? ");
+			sql.append("AND p.datetrx::date >= ?::date ");
 		}
 		// Filtro opcional por fecha "hasta"
 		if (filter.getTrxDateTo() != null) {
-			sql.append("AND p.datetrx <= ? ");
+			sql.append("AND p.datetrx::date <= ?::date ");
 		}
 		// Filtro opcional por moneda
 		if (filter.getC_Currency_ID() > 0) {
@@ -131,7 +130,7 @@ public class FilterCoupons extends SvrProcess {
 		int saved = 0;
 
 		try {
-			pstmt = DB.prepareStatement(sql.toString());
+			pstmt = DB.prepareStatement(sql.toString(), get_TrxName(), true);
 
 			int aux = 1;
 			if (filter.getTrxDateFrom() != null) {
@@ -165,7 +164,7 @@ public class FilterCoupons extends SvrProcess {
 
 			rs = pstmt.executeQuery();
 			while (rs.next()) {
-				MCouponsSettlements couponsSettlements = new MCouponsSettlements(getCtx(), 0, get_TrxName());
+				X_C_CouponsSettlements couponsSettlements = new X_C_CouponsSettlements(getCtx(), 0, get_TrxName());
 				couponsSettlements.setAD_Org_ID(filter.getAD_Org_ID());
 				couponsSettlements.setC_CreditCardSettlement_ID(filter.getC_CreditCardSettlement_ID());
 				couponsSettlements.setC_CreditCardCouponFilter_ID(filter.getC_CreditCardCouponFilter_ID());
