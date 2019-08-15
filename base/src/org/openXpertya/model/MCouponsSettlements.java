@@ -29,9 +29,10 @@ public class MCouponsSettlements extends X_C_CouponsSettlements {
 
 	@Override
 	public boolean doAfterSave(boolean newRecord, boolean success) {
-		MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
-		if (!reconciledFlag)
+		if (!reconciledFlag){
+			MCreditCardSettlement settlement = new MCreditCardSettlement(getCtx(), getC_CreditCardSettlement_ID(), get_TrxName());
 			settlement.calculateSettlementCouponsTotalAmount(get_TrxName());
+		}
 		return true;
 	}
 	
