@@ -355,3 +355,9 @@ ALTER FUNCTION v_product_movements_filtered(integer,
 create or replace view v_product_movements as 
 select * 
 from v_product_movements_filtered(-1,null,null,-1,-1);
+
+--20190821-1620 Índice que mejora la performance de insert en fact_acct
+CREATE INDEX fact_acct_balance_std_index
+  ON fact_acct_balance
+  USING btree
+  (ad_client_id, ad_org_id, c_acctschema_id, dateacct, account_id, postingtype);
