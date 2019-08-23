@@ -1,10 +1,5 @@
 package org.openXpertya.process;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.logging.Level;
-
 import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.model.X_C_CouponsSettlements;
 import org.openXpertya.model.X_C_CreditCardCouponFilter;
@@ -34,9 +29,10 @@ public class ReconcileCoupons extends SvrProcess {
 		// Llegado este punto, la liquidación no está completa, y
 		// el estado de auditoría de los cupones es "A verificar".
 		StringBuffer sql = new StringBuffer();
-
-		sql.append("SELECT DISTINCT ");
-		sql.append("	p.c_payment_id ");
+		sql.append(" UPDATE ").append(X_C_Payment.Table_Name);
+		sql.append(" SET auditstatus = '" + X_C_Payment.AUDITSTATUS_Paid + "' ");
+		sql.append(" WHERE c_payment_id IN (");
+		sql.append("	SELECT p.c_payment_id ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_CreditCardCouponFilter.Table_Name + " f ");
 		sql.append("	INNER JOIN " + X_C_CouponsSettlements.Table_Name + " c ");
@@ -44,43 +40,12 @@ public class ReconcileCoupons extends SvrProcess {
 		sql.append("	INNER JOIN " + X_C_Payment.Table_Name + " p ");
 		sql.append("		ON p.c_payment_id = c.c_payment_id ");
 		sql.append("WHERE ");
-		sql.append("	f.c_creditcardsettlement_id = ? ");
-		sql.append("	AND p.auditstatus = ? ");
-		sql.append("	AND c.include = 'Y' ");
+		sql.append("	f.c_creditcardsettlement_id = ").append(creditCardSettlement.getC_CreditCardSettlement_ID());
+		sql.append("	AND p.auditstatus = '").append(X_C_Payment.AUDITSTATUS_ToVerify).append("'");
+		sql.append("	AND c.include = 'Y' ) ");
+		
+		int updated = DB.executeUpdate(sql.toString(), get_TrxName());
 
-		PreparedStatement ps = null;
-		ResultSet rs = null;
-
-		int updated = 0;
-		int deleted = 0;
-
-		try {
-			ps = DB.prepareStatement(sql.toString());
-			ps.setInt(1, creditCardSettlement.getC_CreditCardSettlement_ID());
-			ps.setString(2, X_C_Payment.AUDITSTATUS_ToVerify);
-			rs = ps.executeQuery();
-			while (rs.next()) {
-				// Cambia el estado de auditoria de los cupones a "Pagado".
-				sql = new StringBuffer();
-				sql.append("UPDATE ");
-				sql.append("	" + X_C_Payment.Table_Name + " ");
-				sql.append("SET ");
-				sql.append("	auditstatus = '" + X_C_Payment.AUDITSTATUS_Paid + "' ");
-				sql.append("WHERE ");
-				sql.append("	c_payment_id = " + rs.getInt(1));
-
-				updated += DB.executeUpdate(sql.toString());
-			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "ReconcileCoupons.doIt", e);
-		} finally {
-			try {
-				rs.close();
-				ps.close();
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Cannot close statement or resultset");
-			}
-		}
 		// Elimina de los cupones, todos los que se recuperaron
 		// al filtrar que no tengan el check "Incluir".
 		sql = new StringBuffer();
@@ -100,7 +65,7 @@ public class ReconcileCoupons extends SvrProcess {
 		sql.append("			AND C.include = 'N' ");
 		sql.append("	) ");
 
-		deleted += DB.executeUpdate(sql.toString());
+		int deleted = DB.executeUpdate(sql.toString(), get_TrxName());
 
 		// Finalmente marca los restantes como conciliados.
 		sql = new StringBuffer();
@@ -108,11 +73,12 @@ public class ReconcileCoupons extends SvrProcess {
 		sql.append("UPDATE ");
 		sql.append("	" + X_C_CouponsSettlements.Table_Name + " ");
 		sql.append("SET ");
-		sql.append("	isReconciled = 'Y' ");
+		sql.append("	isReconciled = 'Y', ");
+		sql.append("	processed = 'Y' ");
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + creditCardSettlement.getC_CreditCardSettlement_ID() + " ");
 
-		DB.executeUpdate(sql.toString());
+		DB.executeUpdate(sql.toString(), get_TrxName());
 
 		Object[] params = new Object[] { updated, deleted };
 		return Msg.getMsg(Env.getAD_Language(getCtx()), "ReconcileCouponsResult", params);
