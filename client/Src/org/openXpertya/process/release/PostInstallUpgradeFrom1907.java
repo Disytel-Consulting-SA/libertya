@@ -1,6 +1,7 @@
 package org.openXpertya.process.release;
 
 import org.openXpertya.JasperReport.MJasperReport;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.utils.JarHelper;
 
@@ -9,6 +10,10 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	/** UID del informe de Movimientos Valorizados Detallado */
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010117";
 	protected final static String VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME = "ValuedMovementsDetail.jasper";
+	
+	/** UID del informe de Autorizaciones de Usuarios */
+	protected final static String USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_UID = "T0122CORE-AD_Process-1010645-20190906165716";
+	protected final static String USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_FILENAME = "UserAuthorizations.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -32,6 +37,18 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 							.readBinaryFromJar(
 									jarFileURL,
 									getBinaryFileURL(VALUED_MOVEMENTS_DETAIL_JASPER_REPORT_FILENAME)));
+		
+		// Autorizaciones de Usuarios
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_UID,
+				USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_FILENAME)));
+
 		
 		
 		return " ";

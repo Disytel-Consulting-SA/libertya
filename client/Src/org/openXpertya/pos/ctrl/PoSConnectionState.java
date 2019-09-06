@@ -32,6 +32,7 @@ import org.openXpertya.pos.model.User;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.util.ASyncProcess;
+import org.openXpertya.util.AUserAuthModel;
 import org.openXpertya.util.CLogger;
 
 public abstract class PoSConnectionState implements CurrentAccountDocument {
@@ -135,6 +136,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	public abstract boolean addSecurityValidationToCN();
 	
 	public abstract int getDolarCurrencyID();
+	
+	public abstract void setAuthorizationModel(AUserAuthModel authModel);
 	
 	/**
 	 * @param checkDeadLineToCompare

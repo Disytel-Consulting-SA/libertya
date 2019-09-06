@@ -15,6 +15,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.UserAuthData;
+import org.openXpertya.util.UserAuthorizationOperation;
 import org.openXpertya.util.Util;
 
 public class OpenDrawerProcess extends SvrProcess {
@@ -128,8 +129,8 @@ public class OpenDrawerProcess extends SvrProcess {
 		}
 		else{
 			UserAuthData userAuthData = new UserAuthData(getUserName(),getPassword());
-			List<String> operations = new ArrayList<String>();
-			operations.add(UserAuthConstants.OPEN_DRAWER_UID);
+			List<UserAuthorizationOperation> operations = new ArrayList<UserAuthorizationOperation>();
+			operations.add(new UserAuthorizationOperation(UserAuthConstants.OPEN_DRAWER_UID));
 			userAuthData.setAuthOperations(operations);
 			AUserAuthModel userAuthValidation = AUserAuthModel.get();
 			CallResult authorized = userAuthValidation.validateAuthorization(userAuthData);

@@ -1216,8 +1216,23 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         	if (C_Payment_ID != 0 && !voidedPaysIDs.contains(C_Payment_ID)) {
         		payment = new MPayment(getCtx(), C_Payment_ID, get_TrxName());
         		pays.add(payment);
-        		if (payment.isReconciled()) 
-        			throw new Exception("@PaymentsReconciledError@");
+        		if (payment.isReconciled()){
+        			String tenderTypeName = "";
+        			if(payment.getTenderType().equals(MPayment.TENDERTYPE_Check))
+        				tenderTypeName = Msg.translate(getCtx(), "Check");
+        			else if(payment.getTenderType().equals(MPayment.TENDERTYPE_DirectDeposit))
+        				tenderTypeName = Msg.translate(getCtx(), "Transfer");
+        			else if(payment.getTenderType().equals(MPayment.TENDERTYPE_CreditCard))
+        				tenderTypeName = Msg.translate(getCtx(), "CreditCard");
+        			else if(payment.getTenderType().equals(MPayment.TENDERTYPE_DirectDebit))
+        				tenderTypeName = Msg.translate(getCtx(), "DirectDebit");        			
+        			
+        			throw new Exception("@PaymentsReconciledError@ :" 
+        			                    + " @Payment@ No: " + payment.getDocumentNo()
+        			                    + " / @TenderType@ : " + tenderTypeName
+        			                    + " / @Amt@ : $ " + payment.getPayAmt());
+        		}
+        			
         		voidedPaysIDs.add(C_Payment_ID);
         	}
         }

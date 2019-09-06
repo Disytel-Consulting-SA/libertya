@@ -106,6 +106,17 @@ public abstract class AUserAuth {
 	}
 	
 	/**
+	 * Agrega operaciones ya autorizadas
+	 * 
+	 * @param userAuthData
+	 *            datos de autorizaciones de usuario
+	 * @return resultado de la operación
+	 */
+	public CallResult manageDoneAuthorizations(UserAuthData userAuthData){
+		return getUserAuthModel().manageDoneAuthorizations(userAuthData);
+	}
+	
+	/**
 	 * @return id de usuario 
 	 */
 	public Integer getUserID(){
@@ -201,7 +212,7 @@ public abstract class AUserAuth {
 		this.userAuthModel = userAuthModel;
 	}
 
-	protected AUserAuthModel getUserAuthModel() {
+	public AUserAuthModel getUserAuthModel() {
 		return userAuthModel;
 	}
 

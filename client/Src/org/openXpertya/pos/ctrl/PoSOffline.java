@@ -22,6 +22,7 @@ import org.openXpertya.pos.model.Product;
 import org.openXpertya.pos.model.ProductList;
 import org.openXpertya.pos.model.Tax;
 import org.openXpertya.pos.model.User;
+import org.openXpertya.util.AUserAuthModel;
 
 public class PoSOffline extends PoSConnectionState {
 
@@ -337,5 +338,11 @@ public class PoSOffline extends PoSConnectionState {
 	public Integer getActualDocTypeID() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void setAuthorizationModel(AUserAuthModel authModel) {
+		// TODO Auto-generated method stub
+		
 	}
 }

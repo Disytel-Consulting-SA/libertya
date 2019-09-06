@@ -2703,6 +2703,15 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         	m_processMsg = "@FreePaymentNeededError@";
         	return false;
         }
+        
+        /** 
+         * No se permite anular si el payment se encuentra marcado como conciliado
+         * @autor Horacio Alvarez
+        */
+        if(isReconciled()){
+        	m_processMsg = "@PaymentReconciled@";
+        	return false;        	
+        }
 
         // Auto Reconcile if not on Bank Statement
         

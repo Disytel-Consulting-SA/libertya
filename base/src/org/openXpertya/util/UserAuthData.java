@@ -2,8 +2,6 @@ package org.openXpertya.util;
 
 import java.util.List;
 
-
-
 public class UserAuthData {
 	
 	/** Nombre de usuario */
@@ -16,7 +14,7 @@ public class UserAuthData {
 	private boolean isForPOS;
 	
 	/** Operaciones a autorizar */
-	private List<String> authOperations;
+	private List<UserAuthorizationOperation> authOperations;
 	
 	/** El usuario es perfil Supervisor de TPV */
 	private boolean isPosSupervisor;
@@ -73,11 +71,11 @@ public class UserAuthData {
 		return isForPOS;
 	}
 
-	public void setAuthOperations(List<String> authOperations) {
+	public void setAuthOperations(List<UserAuthorizationOperation> authOperations) {
 		this.authOperations = authOperations;
 	}
 
-	public List<String> getAuthOperations() {
+	public List<UserAuthorizationOperation> getAuthOperations() {
 		return authOperations;
 	}
 

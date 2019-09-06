@@ -41,7 +41,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.UserAuthData;
-import org.openXpertya.util.Util;
+import org.openXpertya.util.UserAuthorizationOperation;
 import org.openXpertya.util.ValueNamePair;
 
 public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
@@ -78,7 +78,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	private AUserAuth userAuthPanel = null;
 	
 	/** Autorización actual */
-	private String actualAuthOperation;
+	private UserAuthorizationOperation actualAuthOperation;
 	
 	/** Semáforo barrera */
 	private Semaphore barrerSem = new Semaphore(1);
@@ -378,7 +378,7 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 				@Override
 				public void actionPerformed(ActionEvent arg0) {
 					// Autorización actual
-					setActualAuthOperation(UserAuthConstants.OPEN_DRAWER_UID);
+					setActualAuthOperation(new UserAuthorizationOperation(UserAuthConstants.OPEN_DRAWER_UID));
 					// Operación actual
 					setActualAction(new OpenDrawerAction(getiFiscalPrinter(),
 							null,
@@ -439,9 +439,9 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 				errorDesc = null;
 				boolean authorized = true;
 				// Autorización
-				if(!Util.isEmpty(getActualAuthOperation(), true)){
+				if(getActualAuthOperation() != null){
 					UserAuthData userAuthData = new UserAuthData();
-					List<String> operations = new ArrayList<String>();
+					List<UserAuthorizationOperation> operations = new ArrayList<UserAuthorizationOperation>();
 					operations.add(getActualAuthOperation());
 					userAuthData.setAuthOperations(operations);
 					CallResult result = userAuthPanel.validateAuthorization(userAuthData);
@@ -561,11 +561,11 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		this.userAuthPanel = userAuthPanel;
 	}
 
-	protected String getActualAuthOperation() {
+	protected UserAuthorizationOperation getActualAuthOperation() {
 		return actualAuthOperation;
 	}
 
-	protected void setActualAuthOperation(String actualAuthOperation) {
+	protected void setActualAuthOperation(UserAuthorizationOperation actualAuthOperation) {
 		this.actualAuthOperation = actualAuthOperation;
 	}
 

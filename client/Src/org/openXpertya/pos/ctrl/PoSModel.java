@@ -45,6 +45,7 @@ import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
+import org.openXpertya.util.AUserAuthModel;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -92,6 +93,10 @@ public class PoSModel {
 		isCopyRep=true;
 	}
 
+	public void setAuthorizationModel(AUserAuthModel authModel){
+		getConnectionState().setAuthorizationModel(authModel);
+	}
+	
 	public void completeOrder() throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
 		getConnectionState().completeOrder(getOrder(), getAddedCustomerOrders().keySet());
 	}

@@ -1,6 +1,10 @@
 package org.openXpertya.pos.model;
 
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+
 import org.openXpertya.util.AUserAuthModel;
+import org.openXpertya.util.Env;
 
 public class AuthOperation {
 
@@ -32,6 +36,24 @@ public class AuthOperation {
 	/** Indica si es severo o error para que sea más llamativo (Rojo y Negrita) */
 	private boolean severe = false;
 	
+	/** Registro de log de esta autorización */
+	private String operationLog;
+	
+	/** Flag que determina que debe guardarse la autorización */
+	private boolean mustSave = false;
+	
+	/**
+	 * Momento en que se creó esta autorización para registrar temporalmente el
+	 * hecho
+	 */
+	private Timestamp authTime = Env.getTimestamp();
+	
+	/** Importe de la operación */
+	private BigDecimal amount;
+	
+	/** Porcentaje de la operación */
+	private BigDecimal percentage;
+	
 	public AuthOperation() {
 		setOpDescription(null);
 		setOperationType(null);
@@ -39,6 +61,7 @@ public class AuthOperation {
 		setAuthorizeMoment(null);
 		setLazyAuthorization(false);
 		setSevere(false);
+		setOperationLog(null);
 	}
 	
 	public AuthOperation(String operationType, String opDescription, String authorizeMoment) {
@@ -109,4 +132,43 @@ public class AuthOperation {
 		this.severe = severe;
 	}
 
+	public String getOperationLog() {
+		return operationLog;
+	}
+
+	public void setOperationLog(String operationLog) {
+		this.operationLog = operationLog;
+	}
+
+	public boolean isMustSave() {
+		return mustSave;
+	}
+
+	public void setMustSave(boolean mustSave) {
+		this.mustSave = mustSave;
+	}
+
+	public Timestamp getAuthTime() {
+		return authTime;
+	}
+
+	public void setAuthTime(Timestamp authTime) {
+		this.authTime = authTime;
+	}
+
+	public BigDecimal getAmount() {
+		return amount;
+	}
+
+	public void setAmount(BigDecimal amount) {
+		this.amount = amount;
+	}
+
+	public BigDecimal getPercentage() {
+		return percentage;
+	}
+
+	public void setPercentage(BigDecimal percentage) {
+		this.percentage = percentage;
+	}
 }
