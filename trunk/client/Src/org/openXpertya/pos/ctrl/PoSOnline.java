@@ -112,6 +112,7 @@ import org.openXpertya.process.DocAction;
 import org.openXpertya.process.InvoiceGlobalVoiding;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.AUserAuthModel;
 import org.openXpertya.util.AccumulableTask;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -206,6 +207,9 @@ public class PoSOnline extends PoSConnectionState {
 	
 	/** Relación entre OrderLine ID y los objetos del modelo OrderProduct */
 	private Map<Integer, OrderProduct> orderLineProductIDs = null;
+	
+	/** Modelo de autorizaciones de usuario utilizado en TPV */
+	private AUserAuthModel authorizationModel;
 	
 	public PoSOnline() {
 		super();
@@ -374,6 +378,9 @@ public class PoSOnline extends PoSConnectionState {
 
 			// Validaciones extras al finalizar
 			getCompleteOrderPOSValidations().validateEndCompleteOrder(this, order);
+			
+			// Guardar las autorizaciones de usuario
+			getAuthorizationModel().confirmAuthorizationsDone(trxName, invoice.getID());
 			
 			// Realizar las tareas de cuenta corriente antes de finalizar
 			if (shouldUpdateBPBalance) {
@@ -4084,5 +4091,13 @@ public class PoSOnline extends PoSConnectionState {
 	
 	public BigDecimal getRedondeo(){
 		return VModelHelper.GetRedondeoMoneda(ctx, getClientCurrencyID()); 
+	}
+
+	public AUserAuthModel getAuthorizationModel() {
+		return authorizationModel;
+	}
+
+	public void setAuthorizationModel(AUserAuthModel authorizationModel) {
+		this.authorizationModel = authorizationModel;
 	}
 }

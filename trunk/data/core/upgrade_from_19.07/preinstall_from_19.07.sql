@@ -361,3 +361,42 @@ CREATE INDEX fact_acct_balance_std_index
   ON fact_acct_balance
   USING btree
   (ad_client_id, ad_org_id, c_acctschema_id, dateacct, account_id, postingtype);
+  
+--20190906-2000 Registro de autorizaciones de usuario
+CREATE TABLE c_user_authorization
+(
+  c_user_authorization_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  ad_process_id integer,
+  ad_user_login_id integer NOT NULL,
+  ad_user_auth_id integer NOT NULL,
+  operationlog character varying(1000),
+  c_invoice_id integer,
+  amount numeric(22,4),
+  percentage numeric(8,4),
+  authtime timestamp without time zone,
+  CONSTRAINT c_user_authorization_key PRIMARY KEY (c_user_authorization_id),
+  CONSTRAINT c_user_authorization_process FOREIGN KEY (ad_process_id)
+      REFERENCES ad_process (ad_process_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT c_user_authorization_userauth FOREIGN KEY (ad_user_auth_id)
+      REFERENCES ad_user (ad_user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT c_user_authorization_userlogin FOREIGN KEY (ad_user_login_id)
+      REFERENCES ad_user (ad_user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+  CONSTRAINT c_user_authorization_invoice FOREIGN KEY (c_invoice_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_user_authorization
+  OWNER TO libertya;

@@ -41,8 +41,10 @@ import org.openXpertya.pos.model.User;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.swing.util.FocusUtils;
 import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.UserAuthData;
+import org.openXpertya.util.UserAuthorizationOperation;
 
 
 public class UpdateOrderProductDialog extends JDialog {
@@ -933,13 +935,31 @@ public class UpdateOrderProductDialog extends JDialog {
 						new BigDecimal((String)getCCountText().getValue())));
 	}
 	
-	private boolean validateUserAccess() {
+	private CallResult validateUserAccess(boolean deleting) {
+		CallResult cr = new CallResult();
 		// Si el TPV está configurado para permitir modificaciones de precios
 		// entonces no se validan los datos de usuario.
 		if (getModel().priceModifyAllowed()) {
 			setUser(getModel().getCurrentUser());
-			return true;
+			return cr;
 		}
+		
+		BigDecimal priceList = (BigDecimal)getCPriceListText().getValue();
+		priceList = priceList == null?priceList:priceList.setScale(4, BigDecimal.ROUND_HALF_UP);
+		BigDecimal taxedPrice = (BigDecimal)getCProductTaxedPriceText().getValue();
+		taxedPrice = taxedPrice == null?taxedPrice:taxedPrice.setScale(4, BigDecimal.ROUND_HALF_UP);
+		BigDecimal discount = (BigDecimal)getCDiscountText().getValue();
+		discount = discount == null?discount:discount.setScale(4, BigDecimal.ROUND_HALF_UP);
+		BigDecimal count = new BigDecimal(getCCountText().getText());
+		
+		// Registro de log de la autorización 
+		String recordLog = (deleting?"@Deleted@":"@Updated@")+"."+
+							"@Product@: " + getOrderProduct().getProduct().getDescription() + "." +
+							"@PriceList@: "+priceList+"."+
+							"@PriceStd@: "+taxedPrice+"."+
+							"@DiscountAmt@: "+discount+"."+
+							"@Qty@: "+count+".";
+		
 		// Autorización de usuario
 		// Obtengo el usuario del TPV
 		Integer userID = userAuthPanel.getUserID();
@@ -949,22 +969,23 @@ public class UpdateOrderProductDialog extends JDialog {
 		// Validar autorización al cambio de precio de línea
 		UserAuthData authData = new UserAuthData();
 		authData.setForPOS(true);
-		List<String> operations = new ArrayList<String>();
-		operations.add(UserAuthConstants.POS_MODIFY_PRICE_ORDER_PRODUCT_UID);
+		List<UserAuthorizationOperation> operations = new ArrayList<UserAuthorizationOperation>();
+		operations.add(new UserAuthorizationOperation(UserAuthConstants.POS_MODIFY_PRICE_ORDER_PRODUCT_UID, recordLog,
+				false, Env.getTimestamp(), taxedPrice, discount));
 		authData.setAuthOperations(operations);
 		authData.setPosSupervisor(getUser() == null ? false : getUser()
 				.isPoSSupervisor());
-		CallResult result = userAuthPanel.validateAuthorization(authData);
-		if(result.isError()){
-			errorMsg(result.getMsg());
-		}
-		
-		return !result.isError();
+		cr = userAuthPanel.validateAuthorization(authData); 
+		cr.setResult(authData);
+		return cr;
 	}
 	
 	private void updateOrderProduct() {
-		if(!validateUserAccess())
+		CallResult resultAuth = validateUserAccess(false); 
+		if(resultAuth.isError()){
+			errorMsg(resultAuth.getMsg());
 			return;
+		}
 		
 		boolean error = false;
 		StringBuffer errorMsg = new StringBuffer("");
@@ -1037,17 +1058,26 @@ public class UpdateOrderProductDialog extends JDialog {
 			getOrderProduct().setLineDescription(getCLineDescriptionText().getText());
 			
 			getPoS().updateOrderProduct(getOrderProduct());
+			if(resultAuth.getResult() != null){
+				getPoS().addAuthorizationDone((UserAuthData)resultAuth.getResult());
+			}
 			setVisible(false);
 			getPoS().requestFocus();
 		}
 	}
 	
 	private void removeOrderProduct() {
-		if(!validateUserAccess())
+		CallResult resultAuth = validateUserAccess(true); 
+		if(resultAuth.isError()){
+			errorMsg(resultAuth.getMsg());
 			return;
+		}
 		
 		if(getPoS().askMsg(MSG_CONFIRM_DELETE_RPODUCT)) {
 			getPoS().removeOrderProduct(getOrderProduct());
+			if(resultAuth.getResult() != null){
+				getPoS().addAuthorizationDone((UserAuthData)resultAuth.getResult());
+			}
 			setVisible(false);
 		}
 	}

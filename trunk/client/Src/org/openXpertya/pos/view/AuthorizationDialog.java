@@ -24,6 +24,7 @@ import org.openXpertya.reflection.CallResult;
 import org.openXpertya.swing.util.FocusUtils;
 import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.UserAuthData;
+import org.openXpertya.util.UserAuthorizationOperation;
 
 public class AuthorizationDialog extends CDialog {
 
@@ -36,8 +37,7 @@ public class AuthorizationDialog extends CDialog {
 	/** Manager de autorización */
 	private AuthManager authManager;
 	
-	/** Formulario del TPV para tener relacionado */
-//	private PoSMainForm posMainForm;
+	/** Contenedor de la autoización */
 	private AuthContainer authContainer;
 	
 	/** Autorización */
@@ -62,7 +62,7 @@ public class AuthorizationDialog extends CDialog {
 	private String currentAuthorizationMoment;
 	
 	/** Nombres de operaciones actuales a autorizar */
-	private List<String> currentAuthorizationOperations;
+	private List<UserAuthorizationOperation> currentAuthorizationOperations;
 	
 	/** Operaciones actuales a autorizar */
 	private List<AuthOperation> currentAuthOperations;
@@ -70,6 +70,8 @@ public class AuthorizationDialog extends CDialog {
 	public AuthorizationDialog(AuthContainer authContainer) {
 		setAuthManager(new AuthManager());
 		setAuthContainer(authContainer);
+		setUserAuth(AUserAuth.get());
+		getUserAuth().setPasswordActionListener(this);
 		initMsgs();
 	}
 	
@@ -95,8 +97,7 @@ public class AuthorizationDialog extends CDialog {
 		cCmdPanel = null;
 		cOkButton = null;
 		cCancelButton = null;
-		setUserAuth(AUserAuth.get());
-		getUserAuth().setPasswordActionListener(this);
+		getUserAuth().clear();
 	}
 	
 	public void addAuthOperation(AuthOperation authOperation){
@@ -112,7 +113,7 @@ public class AuthorizationDialog extends CDialog {
 	}
 	
 	public boolean authorizeOperation(String authorizationMoment){
-		Set<String> operationsToAuth = new HashSet<String>();
+		Set<UserAuthorizationOperation> operationsToAuth = new HashSet<UserAuthorizationOperation>();
 		List<AuthOperation> authOperations = new ArrayList<AuthOperation>(); 
 		setCurrentAuthorizationMoment(authorizationMoment);
 		boolean authorized = true;
@@ -123,13 +124,15 @@ public class AuthorizationDialog extends CDialog {
 			if(!authOperation.isAuthorized()){
 				listOperations.createAndAddListElement("", authOperation.getOpDescription(), authOperation.isSevere(),
 						authList);
-				operationsToAuth.add(authOperation.getOperationType());
+				operationsToAuth.add(new UserAuthorizationOperation(authOperation.getOperationType(),
+						authOperation.getOperationLog(),authOperation.isMustSave(), authOperation.getAuthTime(),
+						authOperation.getAmount(), authOperation.getPercentage()));
 				authOperations.add(authOperation);
 			}
 		}
 		if(authList.getElements().size() > 0){
 			listOperations.addList(authList);
-			setCurrentAuthorizationOperations(new ArrayList<String>(operationsToAuth));
+			setCurrentAuthorizationOperations(new ArrayList<UserAuthorizationOperation>(operationsToAuth));
 			setCurrentAuthOperations(authOperations);
 			setOperationsDescription(listOperations.toString());
 			initComponents();
@@ -311,6 +314,16 @@ public class AuthorizationDialog extends CDialog {
 		}
 	}
 	
+	/**
+	 * Datos de autorizaciones ya realizadas de usuario
+	 * 
+	 * @param userAuthData
+	 *            datos de usuario
+	 */
+	public void addAuthorizationDone(UserAuthData userAuthData){
+		getUserAuth().manageDoneAuthorizations(userAuthData);
+	}
+	
 	public void setAuthManager(AuthManager authManager) {
 		this.authManager = authManager;
 	}
@@ -361,11 +374,11 @@ public class AuthorizationDialog extends CDialog {
 
 	
 	public void setCurrentAuthorizationOperations(
-			List<String> currentAuthorizationOperations) {
+			List<UserAuthorizationOperation> currentAuthorizationOperations) {
 		this.currentAuthorizationOperations = currentAuthorizationOperations;
 	}
 
-	public List<String> getCurrentAuthorizationOperations() {
+	public List<UserAuthorizationOperation> getCurrentAuthorizationOperations() {
 		return currentAuthorizationOperations;
 	}
 

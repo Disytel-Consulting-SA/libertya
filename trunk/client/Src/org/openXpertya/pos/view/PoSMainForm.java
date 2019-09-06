@@ -139,6 +139,7 @@ import org.openXpertya.util.MeasurableTask;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeStatsLogger;
 import org.openXpertya.util.UserAuthConstants;
+import org.openXpertya.util.UserAuthData;
 import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.openXpertya.utils.Disposable;
@@ -677,6 +678,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 							.getMsg(UserAuthConstants
 									.getProcessValue(UserAuthConstants.POS_INIT_UID)),
 					UserAuthConstants.POS_INIT_MOMENT);
+			authOperation.setMustSave(true);
 			getAuthDialog().addAuthOperation(authOperation);
 			getAuthDialog().authorizeOperation(UserAuthConstants.POS_INIT_MOMENT);
 			CallResult result = getAuthDialog().getAuthorizeResult(true);
@@ -875,6 +877,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				UserAuthConstants.POS_MANUAL_GENERAL_DISCOUNT_UID,
 				MSG_DISCOUNT_GENERAL, UserAuthConstants.POS_FINISH_MOMENT));
 		getManualDiscountAuthOperation().setLazyAuthorization(true);
+		getManualDiscountAuthOperation().setAuthTime(null);
 		getFrame().setTitle(
 				getFrame().getTitle() + "- "
 						+ getModel().getPoSConfig().getName());
@@ -2119,10 +2122,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 									.getNewValue() == null ? BigDecimal.ZERO
 									: (BigDecimal) event.getNewValue();
 					getOrder().updateManualGeneralDiscount(percentage);
-					// Actualizar autorización de descuento manual general
-					updateManualDiscountAuthorization(percentage);
 					// Actualizar descuentos
 					getOrder().updateDiscounts();
+					// Actualizar autorización de descuento manual general
+					updateManualDiscountAuthorization(percentage);
 					// Actualiza la tabla de pagos
 					updatePaymentsTable();
 					// Actualiza el monto convertido
@@ -4782,6 +4785,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 						UserAuthConstants.POS_CANCEL_ORDER_UID,
 						MSG_CANCEL_ORDER,
 						UserAuthConstants.POS_CANCEL_ORDER_MOMENT);
+				BigDecimal amount = getOrder().getOrderProductsTotalAmt(true, true, false, false, false);
+				authOperation.setOperationLog(
+						"@Total@: " + amount + ".");
+				authOperation.setMustSave(true);
+				authOperation.setAmount(amount);
 				getAuthDialog().addAuthOperation(authOperation);
 				getAuthDialog().authorizeOperation(UserAuthConstants.POS_CANCEL_ORDER_MOMENT);
 				CallResult result = getAuthDialog().getAuthorizeResult(true);
@@ -5201,6 +5209,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 								.getMsg(UserAuthConstants
 										.getProcessValue(UserAuthConstants.POS_CN_MAX_CASH_RETURN_UID)),
 						UserAuthConstants.POS_ADD_PAYMENT_MOMENT);
+				authOperation.setOperationLog(
+						"@CNCashReturning@ " + getCCreditNoteSearch().getDisplay() + ": " + returnCashAmt);
+				authOperation.setAmount(returnCashAmt);
 				getAuthDialog().addAuthOperation(authOperation);
 				getAuthDialog().authorizeOperation(UserAuthConstants.POS_ADD_PAYMENT_MOMENT);
 				CallResult result = getAuthDialog().getAuthorizeResult(true);
@@ -5425,6 +5436,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					getModel().setDocActionStatusListener(docActionStatusListener);
 					getModel().setFiscalPrintListeners(infoFiscalPrinter, infoFiscalPrinter);
 					CPreparedStatement.setNoConvertSQL(true);
+					getModel().setAuthorizationModel(getAuthDialog().getUserAuth().getUserAuthModel());
 					getModel().completeOrder();
 				} catch (InsufficientCreditException e) {
 					errorMsg = MSG_INSUFFICIENT_CREDIT_ERROR;
@@ -5497,7 +5509,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			infoFiscalPrinter.clearDetail();
 		}
 		getManualDiscountAuthOperation().setAuthorized(true);
+		getManualDiscountAuthOperation().setAuthTime(null);
 		getAuthDialog().markAuthorized(UserAuthConstants.POS_FINISH_MOMENT, true);
+		getAuthDialog().reset();
+		getAuthDialog().getUserAuth().getUserAuthModel().resetAuthorizationsDone();
 		getModel().newOrder();
 		getModel().loadDefaultPriceList(windowNo);
 		getOrderTableUtils().refreshTable();
@@ -6642,6 +6657,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 										.getMsg(UserAuthConstants
 												.getProcessValue(UserAuthConstants.POS_VOID_DOCUMENTS_UID)),
 								UserAuthConstants.POS_VOID_DOCUMENT);
+						authOperation.setMustSave(true);
+						authOperation.setAmount(getOrder().getOrderProductsTotalAmt(true, true, false, false, false));
 						getAuthDialog().addAuthOperation(authOperation);
 						getAuthDialog().authorizeOperation(UserAuthConstants.POS_VOID_DOCUMENT);
 						CallResult result = getAuthDialog().getAuthorizeResult(true);
@@ -6835,10 +6852,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if(getModel().getPoSConfig().isAuthorizeManualGeneralDiscount()){
 			if(percentage == null || percentage.compareTo(BigDecimal.ZERO) == 0){
 				getAuthDialog().removeAuthOperation(getManualDiscountAuthOperation());
+				getManualDiscountAuthOperation().setAuthTime(null);
 			}
 			else if(percentage.compareTo(BigDecimal.ZERO) != 0){
 				getManualDiscountAuthOperation().setAuthorized(false);
 				getAuthDialog().removeAuthOperation(getManualDiscountAuthOperation());
+				BigDecimal totalManualAmt = getOrder().getTotalManualGeneralDiscount();
+				percentage = percentage.setScale(4, BigDecimal.ROUND_HALF_UP);
+				getManualDiscountAuthOperation().setOperationLog(
+						"@DiscountAmt@ " + percentage + "%. @Amt@: " + totalManualAmt);
+				getManualDiscountAuthOperation().setAmount(totalManualAmt);
+				getManualDiscountAuthOperation().setPercentage(percentage);
+				if(getManualDiscountAuthOperation().getAuthTime() == null){
+					getManualDiscountAuthOperation().setAuthTime(Env.getTimestamp());
+				}
 				getAuthDialog().addAuthOperation(getManualDiscountAuthOperation());
 			}
 		}
@@ -6927,6 +6954,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 	private void setTaxesTableUtils(TableUtils taxesTableUtils) {
 		this.taxesTableUtils = taxesTableUtils;
+	}
+	
+	public void addAuthorizationDone(UserAuthData userAuthData){
+		getAuthDialog().addAuthorizationDone(userAuthData);
 	}
 	
 	private class SwingWorkerRePrintDocument extends SwingWorker{
