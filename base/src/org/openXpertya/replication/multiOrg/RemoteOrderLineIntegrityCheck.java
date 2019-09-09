@@ -27,15 +27,18 @@ import ws.libertya.org.LibertyaWSSoapBindingStub;
 
 public class RemoteOrderLineIntegrityCheck {
 
-	/** Tiempo de timeout por defecto */
-	public static final int DEFAULT_TIMEOUT_MS = 30 * 1000;
-	/** Preferencia Timeout de invocacion a la operación */
+	/** Tiempo de timeout de validacion por defecto al procesar */
+	public static final int DEFAULT_TIMEOUT_AT_PROCESS_MS = 30 * 1000;
+	/** Preferencia: ¿Chequear integridad al procesar? */
 	public static final String REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_PROCESS_PROPERTY 			= "REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_PROCESS";
-	/** Preferencia Timeout de invocacion a la operación */
+	/** Preferencia: ¿timeout al procesar? */
 	public static final String REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_PROCESS_TIMEOUT_PROPERTY 	= "REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_PROCESS_TIMEOUT";
-	/** Preferencia Timeout de invocacion a la operación para el createFrom */
+
+	/** Tiempo de timeout de validacion por defecto al crear desde */
+	public static final int DEFAULT_TIMEOUT_AT_CREATEFROM_MS = 10 * 1000;
+	/** Preferencia: ¿Chequear integridad al crear desde? */
 	public static final String REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM_PROPERTY 			= "REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM";
-	/** Preferencia Timeout de invocacion a la operación para el createFrom */
+	/** Preferencia: ¿timeout al crear desde? */
 	public static final String REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM_TIMEOUT_PROPERTY 	= "REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM_TIMEOUT"; 
 	
 	/** Tipo de Error: Error en la conexion remota */
@@ -403,7 +406,7 @@ public class RemoteOrderLineIntegrityCheck {
 	
 	/** Retorna el time out previo a cancelar la operacion, paar la etapa actual */
 	protected int getTimeOutMS() {
-		int retValue = DEFAULT_TIMEOUT_MS;
+		int retValue = (currentStage == ValidationStage.AT_CREATEFROM ? DEFAULT_TIMEOUT_AT_CREATEFROM_MS : DEFAULT_TIMEOUT_AT_PROCESS_MS);
 		try {
 			String property = (currentStage == ValidationStage.AT_CREATEFROM ? REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM_TIMEOUT_PROPERTY : REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_PROCESS_TIMEOUT_PROPERTY);
 			String timeOut = MPreference.GetCustomPreferenceValue(property); 
