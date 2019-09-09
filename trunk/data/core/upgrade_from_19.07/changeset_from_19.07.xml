@@ -51,6 +51,9 @@ Ejemplos de cambios
 		<!-- Nomina de cambios a continuación -->
 		<!-- ================================ -->
 		
+    	<!-- 20190909 - Desactivar uso por defecto de JMX-Console -->
+    	<copy file="${SOURCE_DIR}/jmx-console-roles.properties" todir="${TARGET_DIR}/jboss/server/openXpertya/conf/props" overwrite="yes" />
+    	
     </target>
     
 </project>
