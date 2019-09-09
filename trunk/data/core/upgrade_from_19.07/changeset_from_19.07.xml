@@ -51,6 +51,10 @@ Ejemplos de cambios
 		<!-- Nomina de cambios a continuación -->
 		<!-- ================================ -->
 		
+    	<!-- 20190830 - Incluir las actualizaciones a build.xml a fin de incorporar lyws.jar (version actual incluida: r68SF)  -->
+    	<copy file="${SOURCE_DIR}/base/build.xml" todir="${TARGET_DIR}/base" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/install/ServidorOXP/build.xml" todir="${TARGET_DIR}/install/ServidorOXP" overwrite="yes" />
+
     	<!-- 20190909 - Desactivar uso por defecto de JMX-Console -->
     	<copy file="${SOURCE_DIR}/jmx-console-roles.properties" todir="${TARGET_DIR}/jboss/server/openXpertya/conf/props" overwrite="yes" />
     	
