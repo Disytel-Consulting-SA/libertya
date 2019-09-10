@@ -52,6 +52,7 @@ Ejemplos de cambios
 		<!-- ================================ -->
 		
     	<!-- 20190830 - Incluir las actualizaciones a build.xml a fin de incorporar lyws.jar (version actual incluida: r68SF)  -->
+    	<!-- 20190910 - Eliminacion apps JBoss innecesarias (Invoker, JMXConsole, etc.)  -->
     	<copy file="${SOURCE_DIR}/base/build.xml" todir="${TARGET_DIR}/base" overwrite="yes" />
     	<copy file="${SOURCE_DIR}/install/ServidorOXP/build.xml" todir="${TARGET_DIR}/install/ServidorOXP" overwrite="yes" />
 

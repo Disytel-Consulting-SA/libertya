@@ -584,6 +584,11 @@
     <delete file="${basedir}/jboss/server/openXpertya/lib/CServer.jar" failonerror="no"/>
     <delete file="${basedir}/jboss/server/openXpertya/lib/oracle.jar" failonerror="no"/>
 
+  	<!-- Eliminar apps innecesarias -->
+  	<delete dir="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar" failonerror="no"/>
+	<delete dir="${basedir}/jboss/server/openXpertya/deploy/jmx-console.war" failonerror="no"/>
+  	<delete dir="${basedir}/jboss/server/openXpertya/deploy/management" failonerror="no"/>
+  	
   </target>
 
 	
