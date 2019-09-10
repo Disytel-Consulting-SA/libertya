@@ -611,7 +611,12 @@
 	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto.  Directorio default: axis.war -->
 	<copy file="${basedir}/lib/OXP.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
 	<copy file="${basedir}/lib/OXPSLib.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
-		
+
+	<!-- Eliminar apps innecesarias -->
+	<delete dir="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar" failonerror="no"/>
+	<delete dir="${basedir}/jboss/server/openXpertya/deploy/jmx-console.war" failonerror="no"/>
+	<delete dir="${basedir}/jboss/server/openXpertya/deploy/management" failonerror="no"/>
+  	
   </target>
 		
 	
