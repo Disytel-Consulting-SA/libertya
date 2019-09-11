@@ -808,7 +808,7 @@ if __name__ == "__main__":
                     try:
                         fecha_vencimiento_result = wsfexv1.Vencimiento.replace('/','')
                         fecha_vencimiento_result = datetime.datetime(int(fecha_vencimiento_result[4:8]),int(fecha_vencimiento_result[2:4]),int(fecha_vencimiento_result[0:2]),00,00).strftime("%Y%m%d")
-                        salida = str(wsfexv1.Resultado)+ ":" + str(wsfexv1.CAE) + ":" + str(cbte_nro) + ":" + var_msg + ":" + str(fecha_vencimiento_result) + ":" + str(fecha_cbte)
+                        salida = str(wsfexv1.Resultado)+ ":" + str(wsfexv1.CAE) + ":" + str(wsfexv1.CbteNro) + ":" + var_msg + ":" + str(fecha_vencimiento_result) + ":" + str(fecha_cbte)
                         
                         print "salida: %s " %salida
                         open("salida.txt","w").write(salida)
