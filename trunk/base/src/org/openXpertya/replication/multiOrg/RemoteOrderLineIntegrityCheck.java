@@ -386,7 +386,7 @@ public class RemoteOrderLineIntegrityCheck {
 	/** Deben realizarse validaciones remotas? */
 	public boolean shouldCheckUpdate() {
 		// Unicamente si estamos bajo replicacion y las organizaciones del pedido y local no coinciden, considerar el chequeo de consistencias
-		return shouldValidateStage() && (getThisHostOrg() != -1) && (getRemoteHostOrg() != getThisHostOrg());
+		return shouldValidateStage() && (getThisHostOrg() > 0) && (getRemoteHostOrg() > 0) && (getRemoteHostOrg() != getThisHostOrg());
 	}
 
 	/** Retorna la organizacion de este host. Si ya fue invocado, reutiliza el valor de la primera invocacion */
@@ -399,7 +399,7 @@ public class RemoteOrderLineIntegrityCheck {
 	/** Retorna la organizacion del host remoto. Si ya fue invocado, reutiliza el valor de la primera invocacion, lo cual presupone que todas las lineas de pedido son del mismo host remoto */
 	protected int getRemoteHostOrg() {
 		if (remoteHostOrg==null) {
-			remoteHostOrg = DB.getSQLValue(null, "SELECT AD_Org_ID FROM C_Order WHERE C_Order_ID = " + orderID);
+			remoteHostOrg = DB.getSQLValue(trx, "SELECT AD_Org_ID FROM C_Order WHERE C_Order_ID = " + orderID);
 		}
 		return remoteHostOrg;
 	}
