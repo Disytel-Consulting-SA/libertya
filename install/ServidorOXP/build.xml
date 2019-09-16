@@ -565,9 +565,9 @@
 	    tofile="${basedir}/jboss/server/openXpertya/conf/login-config.xml" filtering="yes" overwrite="yes"/-->
 	
 	<!-- Filter JBoss Templates HTTP Invoker	-->
-	<copy file="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar/META-INF/jboss-serviceTemplate.xml"
+<!--	<copy file="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar/META-INF/jboss-serviceTemplate.xml"
 	    tofile="${basedir}/jboss/server/openXpertya/deploy/http-invoker.sar/META-INF/jboss-service.xml" filtering="yes" overwrite="yes"/>
-	 	
+-->	 	
 	<!-- cambios necesarios para  java1.5-->
 	<!-- Cambios para Tomcat 5.5		-->
 	<!--copy file="${basedir}/jboss/server/openXpertya/deploy/jbossweb-tomcat41.sar/META-INF/jboss-serviceTemplate.xml"
