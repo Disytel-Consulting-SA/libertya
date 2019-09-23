@@ -400,3 +400,6 @@ WITH (
 );
 ALTER TABLE c_user_authorization
   OWNER TO libertya;
+
+--20190923-1010 Incremento de tamaño de la columna porcentaje
+ALTER TABLE c_user_authorization  ALTER COLUMN percentage TYPE numeric(20,4)
