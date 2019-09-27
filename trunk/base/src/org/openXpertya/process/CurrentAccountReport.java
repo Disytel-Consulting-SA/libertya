@@ -11,6 +11,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -71,6 +72,10 @@ public class CurrentAccountReport extends SvrProcess {
 	protected static final String DOC_CASHLINE = "C_CashLine";
 	protected static final String DOC_ALLOCATIONHDR = "C_AllocationHdr";
 
+	/** Incluír SNCP */
+	private boolean p_includeCreditNoteRequest = false;
+	private String p_includeCreditNoteRequest_char;
+	
 	protected void prepare() {
 		ProcessInfoParameter[] para = getParameter();
 
@@ -102,7 +107,11 @@ public class CurrentAccountReport extends SvrProcess {
 				p_C_DocType_ID = tmp == null ? null : tmp.intValue();
 			} else if (name.equalsIgnoreCase("Condition")) {
 				condition = (String) para[i].getParameter();
-			} else {
+			} else if (name.equalsIgnoreCase("IncludeCreditNotesRequest")) {
+				p_includeCreditNoteRequest = "Y".equals((String) para[i].getParameter());
+				p_includeCreditNoteRequest_char = (String)para[i].getParameter();
+			} 
+			else {
 				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
 			}
 		}
@@ -178,7 +187,7 @@ public class CurrentAccountReport extends SvrProcess {
 				subIndice++;
 				// insert first row: before query balance period
 				// Field used for 'date field' in temporary table: DATETRX
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, Condition) "
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, Condition, IncludeCreditNotesRequest) "
 						+ " VALUES ("
 						+ subIndice
 						+ ", '"
@@ -208,6 +217,8 @@ public class CurrentAccountReport extends SvrProcess {
 						+ p_DateTrx_From + "', NULL"
 						+ ", "
 						+ "'"+getCondition()+"'"
+						+ ", "
+						+ "'"+p_includeCreditNoteRequest_char+"'"
 						+ ");");
 			}
 
@@ -266,7 +277,7 @@ public class CurrentAccountReport extends SvrProcess {
 					// ANTONIO: La cuenta es al reves acumBalance =
 					// acumBalance.add(credit.subtract(debit));
 					acumBalance = acumBalance.add(debit.subtract(credit));
-					usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, Condition) "
+					usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, Condition,IncludeCreditNotesRequest) "
 							+ " VALUES ("
 							+ subIndice
 							+ ", '"
@@ -330,6 +341,7 @@ public class CurrentAccountReport extends SvrProcess {
 						usql.append("NULL");
 					
 					usql.append(" , '"+(getCondition())+"'");
+					usql.append(" , '"+p_includeCreditNoteRequest_char+"'");
 					usql.append(" ); ");
 					documents.put(documentKey, trx_Org_ID);
 				}
@@ -339,6 +351,11 @@ public class CurrentAccountReport extends SvrProcess {
 			if (p_includeOpenOrders)
 				usql.append(appendOrdersNotInvoiced(subIndice, trx_Org_ID));
 
+			// incorporar las SNCP
+			if(p_includeCreditNoteRequest){
+				usql.append(appendSNCP(subIndice, trx_Org_ID));
+			}
+			
 			if (usql.length() > 0)
 				// Se insertan todas las líneas en la tabla.
 				DB.executeUpdate(usql.toString(), get_TrxName());
@@ -440,7 +457,7 @@ public class CurrentAccountReport extends SvrProcess {
 				.append(" ORDER BY o.C_Order_ID ASC ");
 
 		int i = 1;
-		PreparedStatement pstmt = DB.prepareStatement(query.toString());
+		PreparedStatement pstmt = DB.prepareStatement(query.toString(), get_TrxName());
 
 		pstmt.setInt(i++, client_Currency_ID);
 		pstmt.setInt(i++, getAD_Client_ID());
@@ -453,7 +470,7 @@ public class CurrentAccountReport extends SvrProcess {
 		StringBuffer usql = new StringBuffer();
 		while (rs.next()) {
 			subIndice++;
-			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition) "
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition, IncludeCreditNotesRequest) "
 					+ " VALUES ("
 					+ subIndice
 					+ ", '"
@@ -492,12 +509,97 @@ public class CurrentAccountReport extends SvrProcess {
 					+ rs.getInt("C_DocType_ID") + ", " + " null, null, null"
 					+ " , "
 					+ "'"+getCondition()+"'"
+					+ ", "
+					+ "'"+p_includeCreditNoteRequest_char+"'"
 					+ "); ");
 		}
 
 		return usql;
 	}
 
+	/**
+	 * Incorpora las SNCP pendientes a la query, actúan como créditos
+	 */
+	protected StringBuffer appendSNCP(int subIndice, int trx_Org_ID)
+			throws Exception {
+		StringBuffer query = new StringBuffer(
+				" SELECT 	o.C_Order_ID, o.DocumentNo, o.DateAcct, o.C_DocType_ID, ")
+				.append(" 			coalesce(currencyconvert(o.grandtotal, o.c_currency_id, ?, "+(p_DateTrx_To == null?"now()":"trunc(?)")+", COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as grandtotalConverted, o.c_currency_id, o.grandtotal ")
+				.append(" FROM c_order o ")
+				.append(" JOIN c_doctype dt on dt.c_doctype_id = o.c_doctype_id ")
+				.append(" WHERE o.AD_Client_ID = ? ")
+				.append(" AND o.DocStatus = 'CO' ") // Solo Pendientes
+				.append(" AND o.C_BPartner_ID = ? ")
+				.append(" AND dt.doctypekey = '").append(MDocType.DOCTYPE_Solicitud_NC_Proveedor).append("'");
+		sqlAppend("   	AND trunc(?) <= trunc(o.Dateacct) ", p_DateTrx_From, query);
+		sqlAppend("   	AND trunc(o.Dateacct) <= trunc(?) ", p_DateTrx_To, query);
+		sqlAppend("	AND o.AD_Org_ID = ? ", p_AD_Org_ID, query);
+
+		// FIXME Filtrar por la condición???
+		
+		int i = 1;
+		PreparedStatement pstmt = DB.prepareStatement(query.toString(), get_TrxName());
+
+		pstmt.setInt(i++, client_Currency_ID);
+		i = pstmtSetParam(i, p_DateTrx_To, pstmt);
+		pstmt.setInt(i++, getAD_Client_ID());
+		pstmt.setInt(i++, p_C_BPartnerID);
+		i = pstmtSetParam(i, p_DateTrx_From, pstmt);
+		i = pstmtSetParam(i, p_DateTrx_To, pstmt);
+		i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
+
+		ResultSet rs = pstmt.executeQuery();
+		StringBuffer usql = new StringBuffer();
+		BigDecimal creditRequest;
+		BigDecimal creditSign = new BigDecimal(credit_signo_isotrx);
+		while (rs.next()) {
+			subIndice++;
+			creditRequest = rs.getBigDecimal("grandtotalConverted").multiply(creditSign);
+			acumBalance = acumBalance.subtract(creditRequest);
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition, IncludeCreditNotesRequest) "
+					+ " VALUES ("
+					+ subIndice
+					+ ", '"
+					+ p_includeOpenOrders_char
+					+ "', '"
+					+ p_ShowDetailedReceiptsPayments_char
+					+ "', "
+					+ getAD_Client_ID()
+					+ ", "
+					+ trx_Org_ID
+					+ " , "
+					+ getAD_PInstance_ID()
+					+ " ,'"
+					+ MCurrency.getISO_Code(getCtx(),
+							rs.getInt("C_Currency_ID"))
+					+ "', "
+					+ rs.getBigDecimal("Grandtotal")
+					+ ", "
+					+ BigDecimal.ZERO
+					+ ", "
+					+ creditRequest
+					+ ", "
+					+ acumBalance
+					+ ", '"
+					+ rs.getString("DocumentNo")
+					+ "', "
+					+ p_C_BPartnerID
+					+ ", '"
+					+ p_AccountType
+					+ "', '"
+					+ rs.getTimestamp("DateAcct")
+					+ "', "
+					+ rs.getInt("C_DocType_ID") + ", " + " null, null, null"
+					+ " , "
+					+ "'"+getCondition()+"'"
+					+ ", "
+					+ "'"+p_includeCreditNoteRequest_char+"'"
+					+ "); ");
+		}
+
+		return usql;
+	}
+	
 	protected CurrentAccountQuery getCurrentAccountQuery() {
 		return currentAccountQuery;
 	}

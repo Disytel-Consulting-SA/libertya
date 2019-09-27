@@ -2237,6 +2237,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         	)
         	//OR isDropShip
         	|| isDropShip()
+        	// O es una Solicitud de NC
+        	|| MDocType.DOCTYPE_Solicitud_NC_Proveedor.equals(dt.getDocTypeKey())
         	) 
         {
             binding = false;

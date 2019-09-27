@@ -3978,6 +3978,13 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			setInitialCurrentAccountAmt(BigDecimal.ZERO);
 		} // CashBook
 
+		// Gestionar Solicitudes de NC
+		CallResult cr = asignCreditRequest();
+		if(cr.isError()){
+			setProcessMsg(cr.getMsg());
+			return DocAction.STATUS_Invalid; 
+		}
+		
 		// Update Order & Match
 
 		int matchInv = 0;
@@ -5050,6 +5057,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			setM_AuthorizationChain_ID(0);
 			setAuthorizationChainStatus(null);
 			setSkipAuthorizationChain(true);
+			
+			releaseCreditRequest();
 		} else {
 			voidProcess = true;
 			result = reverseCorrectIt();
@@ -5289,6 +5298,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		reversal.setFiscalDescription(Util
 				.isEmpty(voidDocumentFiscalDesc, true) ? null
 				: voidDocumentFiscalDesc);
+		reversal.setC_Order_Orig_ID(0);
 		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 
@@ -5320,6 +5330,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		addDescription("(" + reversal.getDocumentNo() + "<-)");
 
+		// Libera la solicitud asociada 
+		releaseCreditRequest();
+		
 		// Clean up Reversed (this) [thanks Victor!]
 		// Modificado por Matías Cap
 		// Sólo para tipos de doc que no son créditos ya que serían devoluciones
@@ -6860,6 +6873,48 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			DB.executeUpdate(sql, get_TrxName());
 		}
 	} 
+	
+	/**
+	 * Realizar acciones sobre el pedido o solicitud original
+	 * 
+	 * @return resultado de la llamada
+	 */
+	private CallResult asignCreditRequest(){
+		CallResult cr = new CallResult();
+		if(!Util.isEmpty(getC_Order_Orig_ID(), true)){
+			// Se debe validar unicidad y cerrar
+			// el pedido
+			// Validar que el pedido relacionado no esté ya cerrado, si es
+			// asi ya fue usado en otra NC
+			MOrder orderOrig = new MOrder(getCtx(), getC_Order_Orig_ID(), get_TrxName());
+			if(MOrder.DOCSTATUS_Closed.equals(orderOrig.getDocStatus())){
+				// Buscar la NC que posee relación con esta solicitud
+				String nc = DB.getSQLValueString(get_TrxName(),
+						"SELECT documentno FROM c_invoice WHERE c_order_orig_id = ? and docstatus in ('CO','CL') order by created",
+						getC_Order_Orig_ID());
+				cr.setMsg(Msg.getMsg(getCtx(), "CreditNoteRequestAlreadyClosed", new Object[]{nc}), true);
+				return cr;
+			}
+			// Cerrar Pedido
+			if(!DocumentEngine.processAndSave(orderOrig, MOrder.DOCACTION_Close, false)){
+				cr.setMsg(orderOrig.getProcessMsg(), true);
+				return cr;
+			}
+		}
+		return cr;
+	}
+	
+	/**
+	 * Libera el pedido original relacionado con esta NC
+	 */
+	private void releaseCreditRequest(){
+		if(!Util.isEmpty(getC_Order_Orig_ID(), true)){
+			// Dejar el pedido original completo para que pueda
+			// seleccionarse nuevamente en otra NC
+			DB.executeUpdate("UPDATE c_order SET docstatus = 'CO', docaction = 'CL' where c_order_id = "
+					+ getC_Order_Orig_ID(), get_TrxName());
+		}
+	}
 	
 } // MInvoice
 

@@ -403,3 +403,15 @@ ALTER TABLE c_user_authorization
 
 --20190923-1010 Incremento de tamaño de la columna porcentaje
 ALTER TABLE c_user_authorization  ALTER COLUMN percentage TYPE numeric(20,4)
+
+--20191226-1250 Solicitudes de NC de Proveedor
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','c_invoice_orig_id','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','creditrequesttype','character(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','pricereception','numeric(22,4)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtyreception','numeric(22,4)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','receptionamt','numeric(22,4)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','pricediff','numeric(22,4)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtydiff','numeric(22,4)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','diffamt','numeric(22,4)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','c_order_orig_id','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_cuentacorriente','IncludeCreditNotesRequest','character(1) NOT NULL DEFAULT ''N''::bpchar'));

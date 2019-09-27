@@ -222,6 +222,9 @@ public class MDocType extends X_C_DocType {
     /** Cobro por TPV = POS */
     public static final String DOCTYPE_POS = "POS";
     
+    /** Solicitud de NC Proveedor = SNCP */
+    public static final String DOCTYPE_Solicitud_NC_Proveedor = "SNCP";
+    
     /**
      *      Standard Constructor
      *      @param ctx context

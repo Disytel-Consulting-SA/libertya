@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-07-12 21:31:57.769 */
+ *  @version  - 2019-09-26 12:57:07.181 */
 public class X_C_OrderLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -302,6 +302,18 @@ public String getDescription()
 {
 return (String)get_Value("Description");
 }
+/** Set Difference Amount */
+public void setDiffAmt (BigDecimal DiffAmt)
+{
+set_Value ("DiffAmt", DiffAmt);
+}
+/** Get Difference Amount */
+public BigDecimal getDiffAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("DiffAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Discount %.
 Discount in percent */
 public void setDiscount (BigDecimal Discount)
@@ -554,6 +566,18 @@ BigDecimal bd = (BigDecimal)get_Value("PriceActual");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Price Difference */
+public void setPriceDiff (BigDecimal PriceDiff)
+{
+set_Value ("PriceDiff", PriceDiff);
+}
+/** Get Price Difference */
+public BigDecimal getPriceDiff() 
+{
+BigDecimal bd = (BigDecimal)get_Value("PriceDiff");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Price.
 Price Entered - the price based on the selected/base UoM */
 public void setPriceEntered (BigDecimal PriceEntered)
@@ -599,6 +623,18 @@ BigDecimal bd = (BigDecimal)get_Value("PriceList");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Price Reception */
+public void setPriceReception (BigDecimal PriceReception)
+{
+set_Value ("PriceReception", PriceReception);
+}
+/** Get Price Reception */
+public BigDecimal getPriceReception() 
+{
+BigDecimal bd = (BigDecimal)get_Value("PriceReception");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Processed.
 The document has been processed */
 public void setProcessed (boolean Processed)
@@ -629,6 +665,18 @@ Delivered Quantity */
 public BigDecimal getQtyDelivered() 
 {
 BigDecimal bd = (BigDecimal)get_Value("QtyDelivered");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Qty Difference */
+public void setQtyDiff (BigDecimal QtyDiff)
+{
+set_Value ("QtyDiff", QtyDiff);
+}
+/** Get Qty Difference */
+public BigDecimal getQtyDiff() 
+{
+BigDecimal bd = (BigDecimal)get_Value("QtyDiff");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -677,6 +725,18 @@ BigDecimal bd = (BigDecimal)get_Value("QtyOrdered");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Qty Reception */
+public void setQtyReception (BigDecimal QtyReception)
+{
+set_Value ("QtyReception", QtyReception);
+}
+/** Get Qty Reception */
+public BigDecimal getQtyReception() 
+{
+BigDecimal bd = (BigDecimal)get_Value("QtyReception");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Reserved Quantity.
 Reserved Quantity */
 public void setQtyReserved (BigDecimal QtyReserved)
@@ -715,6 +775,18 @@ set_Value ("QtyTransferred", QtyTransferred);
 public BigDecimal getQtyTransferred() 
 {
 BigDecimal bd = (BigDecimal)get_Value("QtyTransferred");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Reception Amount */
+public void setReceptionAmt (BigDecimal ReceptionAmt)
+{
+set_Value ("ReceptionAmt", ReceptionAmt);
+}
+/** Get Reception Amount */
+public BigDecimal getReceptionAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ReceptionAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -758,42 +830,48 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_OrderLine(C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,LineTotalAmt,CheckoutPlace,QtyTransferred,AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,C_Order_ID,C_OrderLine_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,FreightAmt,IsActive,IsDescription,Line,LineNetAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy,QtyReturned" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_OrderLine(QtyReserved,QtyInvoiced,C_Currency_ID,QtyDelivered,Created,IsActive,Line,M_Shipper_ID,DateOrdered,C_OrderLine_ID,AD_Client_ID,DateInvoiced,DatePromised,DateDelivered,C_Order_ID,Description,M_Warehouse_ID,FreightAmt,AD_Org_ID,C_BPartner_ID,UpdatedBy,PriceLimit,IsDescription,Updated,Processed,LineNetAmt,QtyOrdered,PriceList,C_Charge_ID,Discount,S_ResourceAssignment_ID,C_UOM_ID,QtyEntered,OpenMatrix,M_AttributeSetInstance_ID,M_Product_ID,C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,LineTotalAmt,C_Tax_ID,PriceActual,CheckoutPlace,QtyTransferred,PriceEntered,Ref_OrderLine_ID,C_BPartner_Location_ID,CreatedBy,QtyReturned,PriceDiff,PriceReception,QtyDiff,QtyReception,DiffAmt,ReceptionAmt" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
 
-		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
+		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
+ 		 if (getQtyInvoiced() == null) sql = sql.replaceFirst("QtyInvoiced,","").replaceFirst("\\?,", "");
+ 		 if (getQtyDelivered() == null) sql = sql.replaceFirst("QtyDelivered,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
+ 		 if (getDateInvoiced() == null) sql = sql.replaceFirst("DateInvoiced,","").replaceFirst("\\?,", "");
+ 		 if (getDatePromised() == null) sql = sql.replaceFirst("DatePromised,","").replaceFirst("\\?,", "");
+ 		 if (getDateDelivered() == null) sql = sql.replaceFirst("DateDelivered,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getFreightAmt() == null) sql = sql.replaceFirst("FreightAmt,","").replaceFirst("\\?,", "");
+ 		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
+ 		 if (getPriceLimit() == null) sql = sql.replaceFirst("PriceLimit,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
+ 		 if (getLineNetAmt() == null) sql = sql.replaceFirst("LineNetAmt,","").replaceFirst("\\?,", "");
+ 		 if (getQtyOrdered() == null) sql = sql.replaceFirst("QtyOrdered,","").replaceFirst("\\?,", "");
+ 		 if (getPriceList() == null) sql = sql.replaceFirst("PriceList,","").replaceFirst("\\?,", "");
+ 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDiscount() == null) sql = sql.replaceFirst("Discount,","").replaceFirst("\\?,", "");
+ 		 if (getS_ResourceAssignment_ID() == 0) sql = sql.replaceFirst("S_ResourceAssignment_ID,","").replaceFirst("\\?,", "");
+ 		 if (getQtyEntered() == null) sql = sql.replaceFirst("QtyEntered,","").replaceFirst("\\?,", "");
+ 		 if (getOpenMatrix() == null) sql = sql.replaceFirst("OpenMatrix,","").replaceFirst("\\?,", "");
+ 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
  		 if (getDocumentDiscountAmt() == null) sql = sql.replaceFirst("DocumentDiscountAmt,","").replaceFirst("\\?,", "");
  		 if (getLineBonusAmt() == null) sql = sql.replaceFirst("LineBonusAmt,","").replaceFirst("\\?,", "");
  		 if (getLineDiscountAmt() == null) sql = sql.replaceFirst("LineDiscountAmt,","").replaceFirst("\\?,", "");
  		 if (getLineTotalAmt() == null) sql = sql.replaceFirst("LineTotalAmt,","").replaceFirst("\\?,", "");
+ 		 if (getPriceActual() == null) sql = sql.replaceFirst("PriceActual,","").replaceFirst("\\?,", "");
  		 if (getCheckoutPlace() == null) sql = sql.replaceFirst("CheckoutPlace,","").replaceFirst("\\?,", "");
  		 if (getQtyTransferred() == null) sql = sql.replaceFirst("QtyTransferred,","").replaceFirst("\\?,", "");
- 		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getDateDelivered() == null) sql = sql.replaceFirst("DateDelivered,","").replaceFirst("\\?,", "");
- 		 if (getDateInvoiced() == null) sql = sql.replaceFirst("DateInvoiced,","").replaceFirst("\\?,", "");
- 		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
- 		 if (getDatePromised() == null) sql = sql.replaceFirst("DatePromised,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getDiscount() == null) sql = sql.replaceFirst("Discount,","").replaceFirst("\\?,", "");
- 		 if (getFreightAmt() == null) sql = sql.replaceFirst("FreightAmt,","").replaceFirst("\\?,", "");
- 		 if (getLineNetAmt() == null) sql = sql.replaceFirst("LineNetAmt,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
- 		 if (getOpenMatrix() == null) sql = sql.replaceFirst("OpenMatrix,","").replaceFirst("\\?,", "");
- 		 if (getPriceActual() == null) sql = sql.replaceFirst("PriceActual,","").replaceFirst("\\?,", "");
  		 if (getPriceEntered() == null) sql = sql.replaceFirst("PriceEntered,","").replaceFirst("\\?,", "");
- 		 if (getPriceLimit() == null) sql = sql.replaceFirst("PriceLimit,","").replaceFirst("\\?,", "");
- 		 if (getPriceList() == null) sql = sql.replaceFirst("PriceList,","").replaceFirst("\\?,", "");
- 		 if (getQtyDelivered() == null) sql = sql.replaceFirst("QtyDelivered,","").replaceFirst("\\?,", "");
- 		 if (getQtyEntered() == null) sql = sql.replaceFirst("QtyEntered,","").replaceFirst("\\?,", "");
- 		 if (getQtyInvoiced() == null) sql = sql.replaceFirst("QtyInvoiced,","").replaceFirst("\\?,", "");
- 		 if (getQtyOrdered() == null) sql = sql.replaceFirst("QtyOrdered,","").replaceFirst("\\?,", "");
- 		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
  		 if (getRef_OrderLine_ID() == 0) sql = sql.replaceFirst("Ref_OrderLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getS_ResourceAssignment_ID() == 0) sql = sql.replaceFirst("S_ResourceAssignment_ID,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getQtyReturned() == null) sql = sql.replaceFirst("QtyReturned,","").replaceFirst("\\?,", "");
+ 		 if (getPriceDiff() == null) sql = sql.replaceFirst("PriceDiff,","").replaceFirst("\\?,", "");
+ 		 if (getPriceReception() == null) sql = sql.replaceFirst("PriceReception,","").replaceFirst("\\?,", "");
+ 		 if (getQtyDiff() == null) sql = sql.replaceFirst("QtyDiff,","").replaceFirst("\\?,", "");
+ 		 if (getQtyReception() == null) sql = sql.replaceFirst("QtyReception,","").replaceFirst("\\?,", "");
+ 		 if (getDiffAmt() == null) sql = sql.replaceFirst("DiffAmt,","").replaceFirst("\\?,", "");
+ 		 if (getReceptionAmt() == null) sql = sql.replaceFirst("ReceptionAmt,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -801,56 +879,62 @@ try
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
+		 if (getQtyReserved() != null) pstmt.setBigDecimal(col++, getQtyReserved());
+		 if (getQtyInvoiced() != null) pstmt.setBigDecimal(col++, getQtyInvoiced());
+		 pstmt.setInt(col++, getC_Currency_ID());
+		 if (getQtyDelivered() != null) pstmt.setBigDecimal(col++, getQtyDelivered());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 pstmt.setInt(col++, getLine());
+		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
+		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
+		 pstmt.setInt(col++, getC_OrderLine_ID());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 if (getDateInvoiced() != null) pstmt.setTimestamp(col++, getDateInvoiced());
+		 if (getDatePromised() != null) pstmt.setTimestamp(col++, getDatePromised());
+		 if (getDateDelivered() != null) pstmt.setTimestamp(col++, getDateDelivered());
+		 pstmt.setInt(col++, getC_Order_ID());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 pstmt.setInt(col++, getM_Warehouse_ID());
+		 if (getFreightAmt() != null) pstmt.setBigDecimal(col++, getFreightAmt());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 if (getC_BPartner_ID() != 0) pstmt.setInt(col++, getC_BPartner_ID());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getPriceLimit() != null) pstmt.setBigDecimal(col++, getPriceLimit());
+		 pstmt.setString(col++, isDescription()?"Y":"N");
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 pstmt.setString(col++, isProcessed()?"Y":"N");
+		 if (getLineNetAmt() != null) pstmt.setBigDecimal(col++, getLineNetAmt());
+		 if (getQtyOrdered() != null) pstmt.setBigDecimal(col++, getQtyOrdered());
+		 if (getPriceList() != null) pstmt.setBigDecimal(col++, getPriceList());
+		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
+		 if (getDiscount() != null) pstmt.setBigDecimal(col++, getDiscount());
+		 if (getS_ResourceAssignment_ID() != 0) pstmt.setInt(col++, getS_ResourceAssignment_ID());
+		 pstmt.setInt(col++, getC_UOM_ID());
+		 if (getQtyEntered() != null) pstmt.setBigDecimal(col++, getQtyEntered());
+		 if (getOpenMatrix() != null) pstmt.setString(col++, getOpenMatrix());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
 		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
 		 if (getDocumentDiscountAmt() != null) pstmt.setBigDecimal(col++, getDocumentDiscountAmt());
 		 if (getLineBonusAmt() != null) pstmt.setBigDecimal(col++, getLineBonusAmt());
 		 if (getLineDiscountAmt() != null) pstmt.setBigDecimal(col++, getLineDiscountAmt());
 		 if (getLineTotalAmt() != null) pstmt.setBigDecimal(col++, getLineTotalAmt());
+		 pstmt.setInt(col++, getC_Tax_ID());
+		 if (getPriceActual() != null) pstmt.setBigDecimal(col++, getPriceActual());
 		 if (getCheckoutPlace() != null) pstmt.setString(col++, getCheckoutPlace());
 		 if (getQtyTransferred() != null) pstmt.setBigDecimal(col++, getQtyTransferred());
-		 pstmt.setInt(col++, getAD_Client_ID());
-		 pstmt.setInt(col++, getAD_Org_ID());
-		 if (getC_BPartner_ID() != 0) pstmt.setInt(col++, getC_BPartner_ID());
-		 pstmt.setInt(col++, getC_BPartner_Location_ID());
-		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
-		 pstmt.setInt(col++, getC_Currency_ID());
-		 pstmt.setInt(col++, getC_Order_ID());
-		 pstmt.setInt(col++, getC_OrderLine_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 pstmt.setInt(col++, getCreatedBy());
-		 pstmt.setInt(col++, getC_Tax_ID());
-		 pstmt.setInt(col++, getC_UOM_ID());
-		 if (getDateDelivered() != null) pstmt.setTimestamp(col++, getDateDelivered());
-		 if (getDateInvoiced() != null) pstmt.setTimestamp(col++, getDateInvoiced());
-		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
-		 if (getDatePromised() != null) pstmt.setTimestamp(col++, getDatePromised());
-		 if (getDescription() != null) pstmt.setString(col++, getDescription());
-		 if (getDiscount() != null) pstmt.setBigDecimal(col++, getDiscount());
-		 if (getFreightAmt() != null) pstmt.setBigDecimal(col++, getFreightAmt());
-		 pstmt.setString(col++, isActive()?"Y":"N");
-		 pstmt.setString(col++, isDescription()?"Y":"N");
-		 pstmt.setInt(col++, getLine());
-		 if (getLineNetAmt() != null) pstmt.setBigDecimal(col++, getLineNetAmt());
-		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
-		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
-		 pstmt.setInt(col++, getM_Warehouse_ID());
-		 if (getOpenMatrix() != null) pstmt.setString(col++, getOpenMatrix());
-		 if (getPriceActual() != null) pstmt.setBigDecimal(col++, getPriceActual());
 		 if (getPriceEntered() != null) pstmt.setBigDecimal(col++, getPriceEntered());
-		 if (getPriceLimit() != null) pstmt.setBigDecimal(col++, getPriceLimit());
-		 if (getPriceList() != null) pstmt.setBigDecimal(col++, getPriceList());
-		 pstmt.setString(col++, isProcessed()?"Y":"N");
-		 if (getQtyDelivered() != null) pstmt.setBigDecimal(col++, getQtyDelivered());
-		 if (getQtyEntered() != null) pstmt.setBigDecimal(col++, getQtyEntered());
-		 if (getQtyInvoiced() != null) pstmt.setBigDecimal(col++, getQtyInvoiced());
-		 if (getQtyOrdered() != null) pstmt.setBigDecimal(col++, getQtyOrdered());
-		 if (getQtyReserved() != null) pstmt.setBigDecimal(col++, getQtyReserved());
 		 if (getRef_OrderLine_ID() != 0) pstmt.setInt(col++, getRef_OrderLine_ID());
-		 if (getS_ResourceAssignment_ID() != 0) pstmt.setInt(col++, getS_ResourceAssignment_ID());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getC_BPartner_Location_ID());
+		 pstmt.setInt(col++, getCreatedBy());
 		 if (getQtyReturned() != null) pstmt.setBigDecimal(col++, getQtyReturned());
+		 if (getPriceDiff() != null) pstmt.setBigDecimal(col++, getPriceDiff());
+		 if (getPriceReception() != null) pstmt.setBigDecimal(col++, getPriceReception());
+		 if (getQtyDiff() != null) pstmt.setBigDecimal(col++, getQtyDiff());
+		 if (getQtyReception() != null) pstmt.setBigDecimal(col++, getQtyReception());
+		 if (getDiffAmt() != null) pstmt.setBigDecimal(col++, getDiffAmt());
+		 if (getReceptionAmt() != null) pstmt.setBigDecimal(col++, getReceptionAmt());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

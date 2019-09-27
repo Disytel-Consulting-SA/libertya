@@ -13,10 +13,12 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBPartnerLocation;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
+import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrderLine;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MRegion;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.MUser;
@@ -445,6 +447,20 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("BP_LOCATION_ISDN", bpLocation.getISDN());
 			jasperwrapper.addParameter("BP_LOCATION_EMAIL", bpLocation.getEMail());
 
+			// Factura Original
+			if(!Util.isEmpty(order.getC_Invoice_Orig_ID(), true)){
+				MInvoice invoiceOrig = new MInvoice(getCtx(), order.getC_Invoice_Orig_ID(), get_TrxName());
+				jasperwrapper.addParameter("ORIGINAL_INVOICE", invoiceOrig.getDocumentNo());
+			}
+			
+			// Motivo de la Solicitud
+			if(!Util.isEmpty(order.getCreditRequestType(), true)){
+				String creditRequestTypenName = MRefList.getListName(getCtx(), MOrder.CREDITREQUESTTYPE_AD_Reference_ID,
+					order.getCreditRequestType());
+				jasperwrapper.addParameter("REQUEST_TYPE_NAME", creditRequestTypenName);
+				jasperwrapper.addParameter("REQUEST_TYPE", order.getCreditRequestType());
+			}
+			
 			try {
 				jasperwrapper.fillReport(ds);
 				jasperwrapper.showReport(getProcessInfo());

@@ -1215,6 +1215,9 @@ public class CalloutOrder extends CalloutEngine {
 
         validateProductQty(ctx, WindowNo, mTab);
         
+        BigDecimal priceReception = findPriceReception(ctx, WindowNo, M_Product_ID);
+        mTab.setValue("PriceReception", priceReception);
+        
         if( steps ) {
             log.warning( "product - fini" );
         }
@@ -1947,7 +1950,44 @@ public class CalloutOrder extends CalloutEngine {
     	setCalloutActive( false );
     	return "";
     }
-   
+    
+    public String reception( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
+    	if(value == null) {
+            return "";
+        }
+    	
+    	BigDecimal enteredQty = (BigDecimal)mTab.getValue("QtyEntered");
+    	BigDecimal enteredPrice = (BigDecimal)mTab.getValue("PriceEntered");
+    	
+    	BigDecimal receptionQty = (BigDecimal)mTab.getValue("QtyReception");
+    	BigDecimal receptionPrice = (BigDecimal)mTab.getValue("PriceReception");
+    	
+    	BigDecimal priceDiff = enteredPrice.subtract(receptionPrice);
+    	BigDecimal qtyDiff = enteredQty.subtract(receptionQty);
+    	
+    	mTab.setValue("ReceptionAmt", receptionPrice.multiply(receptionQty));
+    	mTab.setValue("PriceDiff", priceDiff);
+    	mTab.setValue("QtyDiff", qtyDiff);
+    	mTab.setValue("DiffAmt", priceDiff.multiply(qtyDiff));
+    	
+    	return "";
+    }
+
+    private BigDecimal findPriceReception(Properties ctx, int WindowNo, Integer M_Product_ID){
+    	BigDecimal price = BigDecimal.ZERO;
+    	Integer invoiceOrigID = Env.getContextAsInt( ctx,WindowNo,"C_Invoice_Orig_ID" );
+    	if(!Util.isEmpty(invoiceOrigID, true)){
+    		String sql = " Select priceentered "
+    					+ " from c_orderline ol "
+    					+ " where c_order_id = (select c_order_id from c_invoice where c_invoice_id = "+invoiceOrigID+") "
+    							+ " and m_product_id = ? "
+    							+ " order by priceentered desc ";
+    		price = DB.getSQLValueBD(null, sql, M_Product_ID);
+    		price = price == null?BigDecimal.ZERO:price;
+    	}
+    	return price;
+    }
+    
 }    // CalloutOrder
 
 
