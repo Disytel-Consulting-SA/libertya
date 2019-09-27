@@ -601,7 +601,7 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 		if (!isIgnoreInvoiceOpen() && CASHTYPE_Invoice.equals(getCashType())
 				&& getC_Invoice_ID() > 0) {
 			BigDecimal open = (BigDecimal)DB.getSQLObject(get_TrxName(), "SELECT invoiceOpen(?,0)", new Object[] {getC_Invoice_ID()});
-			if (getAmount().compareTo(open) > 0) {
+			if (getAmount().abs().compareTo(open) > 0) {
 				//FIXME: pasar a ADMessage
 				m_processMsg = "El Importe no puede ser mayor al importe pendiente de la factura. Pendiente: "
 						+ open.setScale(2).toString()
@@ -952,6 +952,7 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 			reversalCashLine.setVoidPOSJournalMustBeOpen(isVoidPOSJournalMustBeOpen());
 			reversalCashLine.setC_POSJournal_ID(getC_POSJournal_ID());		
 			
+			reversalCashLine.setIgnoreInvoiceOpen(true);
 			
 			// Guarda y completa la línea de caja inversa
 			if (!DocumentEngine.processAndSave(reversalCashLine,

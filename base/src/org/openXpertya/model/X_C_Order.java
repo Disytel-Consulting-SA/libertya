@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-07-06 18:25:02.743 */
+ *  @version  - 2019-09-26 12:56:38.645 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -419,6 +419,21 @@ BigDecimal bd = (BigDecimal)get_Value("ChargeAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+public static final int C_INVOICE_ORIG_ID_AD_Reference_ID = MReference.getReferenceID("C_Invoice");
+/** Set Factura Original */
+public void setC_Invoice_Orig_ID (int C_Invoice_Orig_ID)
+{
+if (C_Invoice_Orig_ID <= 0) set_Value ("C_Invoice_Orig_ID", null);
+ else 
+set_Value ("C_Invoice_Orig_ID", new Integer(C_Invoice_Orig_ID));
+}
+/** Get Factura Original */
+public int getC_Invoice_Orig_ID() 
+{
+Integer ii = (Integer)get_Value("C_Invoice_Orig_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set CodigoCategoriaIVA */
 public void setCodigoCategoriaIVA (int CodigoCategoriaIVA)
 {
@@ -522,6 +537,42 @@ set_Value ("CreateVendorProductLines", CreateVendorProductLines);
 public String getCreateVendorProductLines() 
 {
 return (String)get_Value("CreateVendorProductLines");
+}
+public static final int CREDITREQUESTTYPE_AD_Reference_ID = MReference.getReferenceID("Credit Note Request Types");
+/** Comercial Agreements = A */
+public static final String CREDITREQUESTTYPE_ComercialAgreements = "A";
+/** Return = R */
+public static final String CREDITREQUESTTYPE_Return = "R";
+/** Missing Product = M */
+public static final String CREDITREQUESTTYPE_MissingProduct = "M";
+/** Tax Perceptions Debit = D */
+public static final String CREDITREQUESTTYPE_TaxPerceptionsDebit = "D";
+/** Other = O */
+public static final String CREDITREQUESTTYPE_Other = "O";
+/** Price Difference = P */
+public static final String CREDITREQUESTTYPE_PriceDifference = "P";
+/** Broken Product = B */
+public static final String CREDITREQUESTTYPE_BrokenProduct = "B";
+/** Payment Soon = S */
+public static final String CREDITREQUESTTYPE_PaymentSoon = "S";
+/** Transport = T */
+public static final String CREDITREQUESTTYPE_Transport = "T";
+/** Set Credit Request Type */
+public void setCreditRequestType (String CreditRequestType)
+{
+if (CreditRequestType == null || CreditRequestType.equals("A") || CreditRequestType.equals("R") || CreditRequestType.equals("M") || CreditRequestType.equals("D") || CreditRequestType.equals("O") || CreditRequestType.equals("P") || CreditRequestType.equals("B") || CreditRequestType.equals("S") || CreditRequestType.equals("T") || ( refContainsValue("CORE-AD_Reference-1010438", CreditRequestType) ) );
+ else throw new IllegalArgumentException ("CreditRequestType Invalid value: " + CreditRequestType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010438") );
+if (CreditRequestType != null && CreditRequestType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+CreditRequestType = CreditRequestType.substring(0,1);
+}
+set_Value ("CreditRequestType", CreditRequestType);
+}
+/** Get Credit Request Type */
+public String getCreditRequestType() 
+{
+return (String)get_Value("CreditRequestType");
 }
 public static final int C_REPAIR_ORDER_ID_AD_Reference_ID = MReference.getReferenceID("Repair Order");
 /** Set C_Repair_Order_ID */
@@ -1182,14 +1233,14 @@ if (oo != null)
 }
 return false;
 }
-/** Set M_AuthorizationChain_ID */
+/** Set Authorization Chain */
 public void setM_AuthorizationChain_ID (int M_AuthorizationChain_ID)
 {
 if (M_AuthorizationChain_ID <= 0) set_Value ("M_AuthorizationChain_ID", null);
  else 
 set_Value ("M_AuthorizationChain_ID", new Integer(M_AuthorizationChain_ID));
 }
-/** Get M_AuthorizationChain_ID */
+/** Get Authorization Chain */
 public int getM_AuthorizationChain_ID() 
 {
 Integer ii = (Integer)get_Value("M_AuthorizationChain_ID");
@@ -1653,17 +1704,9 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Order(ValidTo,Authorize,M_AuthorizationChain_ID,OldGrandTotal,IsExchange,NombreCli,NroIdentificCliente,Invoice_Adress,CUIT,M_Warehouse_Transfer_ID,AD_Org_Transfer_ID,IsTpvUsed,IsDelivered,Pay_BPartner_ID,Pay_Location_ID,Processing,C_Payment_ID,IsSelected,AD_OrgTrx_ID,SendEMail,IsCreditApproved,IsInvoiced,C_Campaign_ID,IsTransferred,M_Warehouse_ID,IsApproved,FreightAmt,C_DocType_ID,TotalLines,GrandTotal,DeliveryViaRule,InvoiceRule,POReference,DateAcct,IsPrinted,Description,IsActive,C_Charge_ID,IsDropShip,C_Project_ID,DeliveryRule,AD_Org_ID,C_PaymentTerm_ID,Created,PriorityRule,AD_User_ID,Updated,ChargeAmt,FreightCostRule,C_CashLine_ID,C_Activity_ID,Posted,IsSOTrx,AD_Client_ID,IsDiscountPrinted,DatePrinted,C_Order_ID,IsTaxIncluded,C_Currency_ID,Processed,IsSelfService,CopyFrom,Bill_Location_ID,C_ConversionType_ID,Bill_BPartner_ID,DocAction,repair_priority,repair_state,dateprod,daterealprod,Acceptance,M_Shipper_ID,CreateVendorProductLines,PaymentRule,M_PriceList_ID,DatePromised,DocStatus,C_BPartner_ID,DateOrdered,DocumentNo,C_DocTypeTarget_ID,program_invoice,C_BPartner_Location_ID,Ref_Order_ID,User2_ID,Bill_User_ID,CreatedBy,C_Repair_Order_ID,SalesRep_ID,UpdatedBy,User1_ID,AuthorizationChainStatus,IsReActivated" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_Order(IsDelivered,Pay_BPartner_ID,Pay_Location_ID,Processing,C_Payment_ID,IsSelected,AD_OrgTrx_ID,SendEMail,IsCreditApproved,IsInvoiced,C_Campaign_ID,IsTransferred,M_Warehouse_ID,IsApproved,FreightAmt,C_DocType_ID,TotalLines,GrandTotal,DeliveryViaRule,InvoiceRule,POReference,DateAcct,IsPrinted,Description,IsActive,C_Charge_ID,IsDropShip,C_Project_ID,DeliveryRule,AD_Org_ID,C_PaymentTerm_ID,Created,PriorityRule,AD_User_ID,Updated,ChargeAmt,FreightCostRule,C_CashLine_ID,C_Activity_ID,Posted,IsSOTrx,AD_Client_ID,IsDiscountPrinted,DatePrinted,C_Order_ID,IsTaxIncluded,C_Currency_ID,Processed,IsSelfService,CopyFrom,Bill_Location_ID,C_ConversionType_ID,Bill_BPartner_ID,DocAction,repair_priority,repair_state,dateprod,daterealprod,Acceptance,M_Shipper_ID,Authorize,CreateVendorProductLines,PaymentRule,M_PriceList_ID,DatePromised,DocStatus,C_BPartner_ID,DateOrdered,ValidTo,IsExchange,IsTpvUsed,NombreCli,NroIdentificCliente,Invoice_Adress,CUIT,M_Warehouse_Transfer_ID,AD_Org_Transfer_ID,DocumentNo,C_DocTypeTarget_ID,program_invoice,C_BPartner_Location_ID,OldGrandTotal,Ref_Order_ID,User2_ID,Bill_User_ID,CreatedBy,C_Repair_Order_ID,SalesRep_ID,UpdatedBy,User1_ID,AuthorizationChainStatus,IsReActivated,C_Invoice_Orig_ID,CreditRequestType,M_AuthorizationChain_ID" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
 
-		 if (getValidTo() == null) sql = sql.replaceFirst("ValidTo,","").replaceFirst("\\?,", "");
- 		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
- 		 if (getM_AuthorizationChain_ID() == 0) sql = sql.replaceFirst("M_AuthorizationChain_ID,","").replaceFirst("\\?,", "");
- 		 if (getOldGrandTotal() == null) sql = sql.replaceFirst("OldGrandTotal,","").replaceFirst("\\?,", "");
- 		 if (getNombreCli() == null) sql = sql.replaceFirst("NombreCli,","").replaceFirst("\\?,", "");
- 		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
- 		 if (getInvoice_Adress() == null) sql = sql.replaceFirst("Invoice_Adress,","").replaceFirst("\\?,", "");
- 		 if (getCUIT() == null) sql = sql.replaceFirst("CUIT,","").replaceFirst("\\?,", "");
- 		 if (getPay_BPartner_ID() == 0) sql = sql.replaceFirst("Pay_BPartner_ID,","").replaceFirst("\\?,", "");
+		 if (getPay_BPartner_ID() == 0) sql = sql.replaceFirst("Pay_BPartner_ID,","").replaceFirst("\\?,", "");
  		 if (getPay_Location_ID() == 0) sql = sql.replaceFirst("Pay_Location_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Payment_ID() == 0) sql = sql.replaceFirst("C_Payment_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_OrgTrx_ID() == 0) sql = sql.replaceFirst("AD_OrgTrx_ID,","").replaceFirst("\\?,", "");
@@ -1699,19 +1742,29 @@ try
  		 if (getdaterealprod() == null) sql = sql.replaceFirst("daterealprod,","").replaceFirst("\\?,", "");
  		 if (getAcceptance() == null) sql = sql.replaceFirst("Acceptance,","").replaceFirst("\\?,", "");
  		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
  		 if (getCreateVendorProductLines() == null) sql = sql.replaceFirst("CreateVendorProductLines,","").replaceFirst("\\?,", "");
  		 if (getPaymentRule() == null) sql = sql.replaceFirst("PaymentRule,","").replaceFirst("\\?,", "");
  		 if (getDatePromised() == null) sql = sql.replaceFirst("DatePromised,","").replaceFirst("\\?,", "");
  		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
  		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
+ 		 if (getValidTo() == null) sql = sql.replaceFirst("ValidTo,","").replaceFirst("\\?,", "");
+ 		 if (getNombreCli() == null) sql = sql.replaceFirst("NombreCli,","").replaceFirst("\\?,", "");
+ 		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
+ 		 if (getInvoice_Adress() == null) sql = sql.replaceFirst("Invoice_Adress,","").replaceFirst("\\?,", "");
+ 		 if (getCUIT() == null) sql = sql.replaceFirst("CUIT,","").replaceFirst("\\?,", "");
  		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
  		 if (getprogram_invoice() == 0) sql = sql.replaceFirst("program_invoice,","").replaceFirst("\\?,", "");
+ 		 if (getOldGrandTotal() == null) sql = sql.replaceFirst("OldGrandTotal,","").replaceFirst("\\?,", "");
  		 if (getRef_Order_ID() == 0) sql = sql.replaceFirst("Ref_Order_ID,","").replaceFirst("\\?,", "");
  		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
  		 if (getBill_User_ID() == 0) sql = sql.replaceFirst("Bill_User_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Repair_Order_ID() == 0) sql = sql.replaceFirst("C_Repair_Order_ID,","").replaceFirst("\\?,", "");
  		 if (getUser1_ID() == 0) sql = sql.replaceFirst("User1_ID,","").replaceFirst("\\?,", "");
  		 if (getAuthorizationChainStatus() == null) sql = sql.replaceFirst("AuthorizationChainStatus,","").replaceFirst("\\?,", "");
+ 		 if (getC_Invoice_Orig_ID() == 0) sql = sql.replaceFirst("C_Invoice_Orig_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreditRequestType() == null) sql = sql.replaceFirst("CreditRequestType,","").replaceFirst("\\?,", "");
+ 		 if (getM_AuthorizationChain_ID() == 0) sql = sql.replaceFirst("M_AuthorizationChain_ID,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -1719,18 +1772,6 @@ try
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getValidTo() != null) pstmt.setTimestamp(col++, getValidTo());
-		 if (getAuthorize() != null) pstmt.setString(col++, getAuthorize());
-		 if (getM_AuthorizationChain_ID() != 0) pstmt.setInt(col++, getM_AuthorizationChain_ID());
-		 if (getOldGrandTotal() != null) pstmt.setBigDecimal(col++, getOldGrandTotal());
-		 pstmt.setString(col++, isExchange()?"Y":"N");
-		 if (getNombreCli() != null) pstmt.setString(col++, getNombreCli());
-		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
-		 if (getInvoice_Adress() != null) pstmt.setString(col++, getInvoice_Adress());
-		 if (getCUIT() != null) pstmt.setString(col++, getCUIT());
-		 pstmt.setInt(col++, getM_Warehouse_Transfer_ID());
-		 pstmt.setInt(col++, getAD_Org_Transfer_ID());
-		 pstmt.setString(col++, isTpvUsed()?"Y":"N");
 		 pstmt.setString(col++, isDelivered()?"Y":"N");
 		 if (getPay_BPartner_ID() != 0) pstmt.setInt(col++, getPay_BPartner_ID());
 		 if (getPay_Location_ID() != 0) pstmt.setInt(col++, getPay_Location_ID());
@@ -1791,6 +1832,7 @@ try
 		 if (getdaterealprod() != null) pstmt.setTimestamp(col++, getdaterealprod());
 		 if (getAcceptance() != null) pstmt.setBigDecimal(col++, getAcceptance());
 		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
+		 if (getAuthorize() != null) pstmt.setString(col++, getAuthorize());
 		 if (getCreateVendorProductLines() != null) pstmt.setString(col++, getCreateVendorProductLines());
 		 if (getPaymentRule() != null) pstmt.setString(col++, getPaymentRule());
 		 pstmt.setInt(col++, getM_PriceList_ID());
@@ -1798,10 +1840,20 @@ try
 		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
 		 pstmt.setInt(col++, getC_BPartner_ID());
 		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
+		 if (getValidTo() != null) pstmt.setTimestamp(col++, getValidTo());
+		 pstmt.setString(col++, isExchange()?"Y":"N");
+		 pstmt.setString(col++, isTpvUsed()?"Y":"N");
+		 if (getNombreCli() != null) pstmt.setString(col++, getNombreCli());
+		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
+		 if (getInvoice_Adress() != null) pstmt.setString(col++, getInvoice_Adress());
+		 if (getCUIT() != null) pstmt.setString(col++, getCUIT());
+		 pstmt.setInt(col++, getM_Warehouse_Transfer_ID());
+		 pstmt.setInt(col++, getAD_Org_Transfer_ID());
 		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
 		 pstmt.setInt(col++, getC_DocTypeTarget_ID());
 		 if (getprogram_invoice() != 0) pstmt.setInt(col++, getprogram_invoice());
 		 pstmt.setInt(col++, getC_BPartner_Location_ID());
+		 if (getOldGrandTotal() != null) pstmt.setBigDecimal(col++, getOldGrandTotal());
 		 if (getRef_Order_ID() != 0) pstmt.setInt(col++, getRef_Order_ID());
 		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
 		 if (getBill_User_ID() != 0) pstmt.setInt(col++, getBill_User_ID());
@@ -1812,6 +1864,9 @@ try
 		 if (getUser1_ID() != 0) pstmt.setInt(col++, getUser1_ID());
 		 if (getAuthorizationChainStatus() != null) pstmt.setString(col++, getAuthorizationChainStatus());
 		 pstmt.setString(col++, isReActivated()?"Y":"N");
+		 if (getC_Invoice_Orig_ID() != 0) pstmt.setInt(col++, getC_Invoice_Orig_ID());
+		 if (getCreditRequestType() != null) pstmt.setString(col++, getCreditRequestType());
+		 if (getM_AuthorizationChain_ID() != 0) pstmt.setInt(col++, getM_AuthorizationChain_ID());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

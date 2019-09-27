@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_CuentaCorriente
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-06-28 15:44:10.174 */
+ *  @version  - 2019-09-26 13:14:29.535 */
 public class X_T_CuentaCorriente extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -21,6 +21,7 @@ setCondition (null);
 setDateAcct (new Timestamp(System.currentTimeMillis()));
 setDateCreated (new Timestamp(System.currentTimeMillis()));
 setDateTrx (new Timestamp(System.currentTimeMillis()));
+setIncludeCreditNotesRequest (false);
 }
  */
 }
@@ -194,8 +195,8 @@ public static final String CONDITION_All = "A";
 /** Set Condition */
 public void setCondition (String Condition)
 {
-if (Condition.equals("B") || Condition.equals("P") || Condition.equals("A"));
- else throw new IllegalArgumentException ("Condition Invalid value - Reference = CONDITION_AD_Reference_ID - B - P - A");
+if (Condition.equals("B") || Condition.equals("P") || Condition.equals("A") || ( refContainsValue("CORE-AD_Reference-1010267", Condition) ) );
+ else throw new IllegalArgumentException ("Condition Invalid value: " + Condition + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010267") );
 if (Condition == null) throw new IllegalArgumentException ("Condition is mandatory");
 if (Condition.length() > 1)
 {
@@ -297,6 +298,22 @@ public BigDecimal gethaber()
 BigDecimal bd = (BigDecimal)get_Value("haber");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Include Credit Notes Request */
+public void setIncludeCreditNotesRequest (boolean IncludeCreditNotesRequest)
+{
+set_Value ("IncludeCreditNotesRequest", new Boolean(IncludeCreditNotesRequest));
+}
+/** Get Include Credit Notes Request */
+public boolean isIncludeCreditNotesRequest() 
+{
+Object oo = get_Value("IncludeCreditNotesRequest");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set includeopenorders */
 public void setincludeopenorders (String includeopenorders)

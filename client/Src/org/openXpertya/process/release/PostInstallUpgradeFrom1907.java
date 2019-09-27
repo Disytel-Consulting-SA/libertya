@@ -15,6 +15,14 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_UID = "T0122CORE-AD_Process-1010645-20190906165716";
 	protected final static String USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_FILENAME = "UserAuthorizations.jasper";
 	
+	/** UID de la impresión de Solicitudes de NC */
+	protected final static String CREDIT_REQUEST_PRINT_DETAIL_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010274";
+	protected final static String CREDIT_REQUEST_PRINT_DETAIL_JASPER_REPORT_FILENAME = "rpt_SolicitudNC.jasper";
+	
+	/** UID del informe de gestión de Solicitudes de NC */
+	protected final static String CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_UID = "CORE-AD_Process-1010649";
+	protected final static String CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_FILENAME = "CreditRequestReport.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -49,7 +57,28 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(USER_AUTHORIZATIONS_DETAIL_JASPER_REPORT_FILENAME)));
 
+
+		// Impresión de SNCP
+		MJasperReport
+			.updateBinaryData(
+					get_TrxName(),
+					getCtx(),
+					CREDIT_REQUEST_PRINT_DETAIL_JASPER_REPORT_UID,
+					JarHelper
+							.readBinaryFromJar(
+									jarFileURL,
+									getBinaryFileURL(CREDIT_REQUEST_PRINT_DETAIL_JASPER_REPORT_FILENAME)));
 		
+		// Informe de SNCP
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_UID,
+				CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}

@@ -830,6 +830,31 @@ public class MOrderLine extends X_C_OrderLine {
         setLineTotalAmt();
 
         // M_AttributeSetInstance_ID
+        // Gestionar los totales de Recepción y Diferencia sólo para los valores de solicitud
+    	// Faltante de Mercadería
+    	// Rotura de Mercadería
+    	// Diferencia de Precio
+    	// Devolución
+        if(o.getCreditRequestType() != null
+        		&& (X_C_Order.CREDITREQUESTTYPE_MissingProduct.equals(o.getCreditRequestType())
+        				|| X_C_Order.CREDITREQUESTTYPE_BrokenProduct.equals(o.getCreditRequestType())
+        				|| X_C_Order.CREDITREQUESTTYPE_PriceDifference.equals(o.getCreditRequestType())
+        				|| X_C_Order.CREDITREQUESTTYPE_Return.equals(o.getCreditRequestType()))){
+        	BigDecimal receptionQty = getQtyReception() == null?BigDecimal.ZERO:getQtyReception();
+        	BigDecimal receptionPrice = getPriceReception() == null?BigDecimal.ZERO:getPriceReception();
+        	setReceptionAmt(receptionPrice.multiply(receptionQty));
+        	setPriceDiff(getPriceEntered().subtract(receptionPrice));
+        	setQtyDiff(getQtyEntered().subtract(receptionQty));
+        	setDiffAmt(getPriceDiff().multiply(getQtyDiff()));
+        }
+        else{
+        	setQtyReception(BigDecimal.ZERO);
+        	setQtyDiff(BigDecimal.ZERO);
+        	setPriceReception(BigDecimal.ZERO);
+        	setPriceDiff(BigDecimal.ZERO);
+        	setReceptionAmt(BigDecimal.ZERO);
+        	setDiffAmt(BigDecimal.ZERO);
+        }
         
         /*
         if (getM_AttributeSetInstance_ID() == 0 && shouldSetAttrSetInstance()) {
@@ -2023,6 +2048,7 @@ public class MOrderLine extends X_C_OrderLine {
     public BigDecimal getNetTaxBaseAmt(){
     	return getTotalPriceEnteredNet().subtract(getTotalDocumentDiscountUnityAmtNet());
     }
+
 }    // MOrderLine
 
 
