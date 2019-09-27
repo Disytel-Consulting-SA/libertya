@@ -237,12 +237,15 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
                     if( (fl != null) && (payment != null) ) {
                         fl.setAD_Org_ID( payment.getAD_Org_ID());
                     }
-                } else {
+                } 
+				// Se comenta ya que si no puede contabilizar esta línea,
+				// entonces siga con las restantes 
+                /*else {
                     p_vo.Error = "Cannot determine SO/PO";
                     log.log( Level.SEVERE,"createFact - " + p_vo.Error );
 
                     return null;
-                }
+                }*/
             }
 
             // Sales Invoice
