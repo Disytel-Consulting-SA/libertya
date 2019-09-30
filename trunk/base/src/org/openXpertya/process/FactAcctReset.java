@@ -108,7 +108,7 @@ public class FactAcctReset extends SvrProcess {
 
         //
 
-        String sql = "SELECT AD_Table_ID, TableName " + "FROM AD_Table t " + "WHERE t.IsView='N'";
+        String sql = "SELECT AD_Table_ID, TableName " + "FROM AD_Table t " + "WHERE t.IsView='N' and position('T_' in tablename) <> 1 ";
 
         if( p_AD_Table_ID > 0 ) {
             sql += " AND t.AD_Table_ID=" + p_AD_Table_ID;
