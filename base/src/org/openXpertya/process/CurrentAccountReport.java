@@ -524,7 +524,7 @@ public class CurrentAccountReport extends SvrProcess {
 			throws Exception {
 		StringBuffer query = new StringBuffer(
 				" SELECT 	o.C_Order_ID, o.DocumentNo, o.DateAcct, o.C_DocType_ID, ")
-				.append(" 			coalesce(currencyconvert(o.grandtotal, o.c_currency_id, ?, "+(p_DateTrx_To == null?"now()":"trunc(?)")+", COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as grandtotalConverted, o.c_currency_id, o.grandtotal ")
+				.append(" 			coalesce(currencyconvert(o.grandtotal, o.c_currency_id, ?, "+(p_DateTrx_To == null?"now()":"?::date")+", COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as grandtotalConverted, o.c_currency_id, o.grandtotal ")
 				.append(" FROM c_order o ")
 				.append(" JOIN c_doctype dt on dt.c_doctype_id = o.c_doctype_id ")
 				.append(" WHERE o.AD_Client_ID = ? ")
