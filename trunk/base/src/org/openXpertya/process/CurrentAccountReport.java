@@ -531,14 +531,15 @@ public class CurrentAccountReport extends SvrProcess {
 				.append(" AND o.DocStatus = 'CO' ") // Solo Pendientes
 				.append(" AND o.C_BPartner_ID = ? ")
 				.append(" AND dt.doctypekey = '").append(MDocType.DOCTYPE_Solicitud_NC_Proveedor).append("'");
-		sqlAppend("   	AND trunc(?) <= trunc(o.Dateacct) ", p_DateTrx_From, query);
-		sqlAppend("   	AND trunc(o.Dateacct) <= trunc(?) ", p_DateTrx_To, query);
-		sqlAppend("	AND o.AD_Org_ID = ? ", p_AD_Org_ID, query);
+		sqlAppend("   	AND ?::date <= o.Dateacct::date ", p_DateTrx_From, query);
+		sqlAppend("   	AND o.Dateacct::date <= ?::date ", p_DateTrx_To, query);
+		sqlAppend("		AND o.AD_Org_ID = ? ", p_AD_Org_ID, query);
+		if(!getCondition().equals("A")){
+			query.append("	AND o.paymentrule = '"+getCondition()+"' ");
+		}
 
-		// FIXME Filtrar por la condición???
-		
 		int i = 1;
-		PreparedStatement pstmt = DB.prepareStatement(query.toString(), get_TrxName());
+		PreparedStatement pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
 
 		pstmt.setInt(i++, client_Currency_ID);
 		i = pstmtSetParam(i, p_DateTrx_To, pstmt);
