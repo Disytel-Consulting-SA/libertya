@@ -19,7 +19,8 @@
 		<jar href = "OXPXLib.jar" main = "false" download = "eager"/>
 		<jar href = "JasperReports.jar" main = "false" download = "eager"/>
 	</resources>  
-	<application-desc main-class = "org.openXpertya.OpenXpertya"/>  
+	<application-desc main-class = "org.openXpertya.OpenXpertya"/>
+	<update check="always" policy="always"/>  
 	<security>
 		<all-permissions/>  
 	</security>
