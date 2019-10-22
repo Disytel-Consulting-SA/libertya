@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-06-25 16:36:43.02 */
+ *  @version  - 2019-10-18 11:31:38.519 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -18,8 +18,8 @@ super (ctx, C_DocType_ID, trxName);
 {
 setAllowChangePriceList (false);
 setAllowDeliveryReturned (false);
-setAllowOtherBatchPaymentDate (false);
 setAllowOnlyProviders (false);
+setAllowOtherBatchPaymentDate (false);
 setAllowProposalDue (false);
 setApplyPerception (false);
 setC_DocType_ID (0);
@@ -569,15 +569,41 @@ public static final String DOCSUBTYPECAE_NotasDeDebitoC = "12";
 public static final String DOCSUBTYPECAE_NotasDeVentaAlContadoC = "16";
 /** Recibos C = 15 */
 public static final String DOCSUBTYPECAE_RecibosC = "15";
+/** Facturas MiPyME A = 201 */
+public static final String DOCSUBTYPECAE_FacturasMiPyMEA = "201";
+/** Facturas MiPyME B = 206 */
+public static final String DOCSUBTYPECAE_FacturasMiPyMEB = "206";
+/** Facturas MiPyME C = 211 */
+public static final String DOCSUBTYPECAE_FacturasMiPyMEC = "211";
+/** Notas de Debito MiPyME A = 202 */
+public static final String DOCSUBTYPECAE_NotasDeDebitoMiPyMEA = "202";
+/** Notas de Debito MiPyME B = 207 */
+public static final String DOCSUBTYPECAE_NotasDeDebitoMiPyMEB = "207";
+/** Notas de Debito MiPyME C = 212 */
+public static final String DOCSUBTYPECAE_NotasDeDebitoMiPyMEC = "212";
+/** Notas de Credito MiPyME A = 203 */
+public static final String DOCSUBTYPECAE_NotasDeCreditoMiPyMEA = "203";
+/** Notas de Credito MiPyME B = 208 */
+public static final String DOCSUBTYPECAE_NotasDeCreditoMiPyMEB = "208";
+/** Notas de Credito MiPyME C = 213 */
+public static final String DOCSUBTYPECAE_NotasDeCreditoMiPyMEC = "213";
+/** Facturas M = 51 */
+public static final String DOCSUBTYPECAE_FacturasM = "51";
+/** Notas de Debito M = 52 */
+public static final String DOCSUBTYPECAE_NotasDeDebitoM = "52";
+/** Notas de Credito M = 53 */
+public static final String DOCSUBTYPECAE_NotasDeCreditoM = "53";
+/** Facturas de Exportacion Simplificado = 22 */
+public static final String DOCSUBTYPECAE_FacturasDeExportacionSimplificado = "22";
 /** Set docsubtypecae */
 public void setdocsubtypecae (String docsubtypecae)
 {
-if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("13") || docsubtypecae.equals("12") || docsubtypecae.equals("16") || docsubtypecae.equals("15") || ( refContainsValue("CORE-AD_Reference-1010096", docsubtypecae) ) );
+if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("13") || docsubtypecae.equals("12") || docsubtypecae.equals("16") || docsubtypecae.equals("15") || docsubtypecae.equals("201") || docsubtypecae.equals("206") || docsubtypecae.equals("211") || docsubtypecae.equals("202") || docsubtypecae.equals("207") || docsubtypecae.equals("212") || docsubtypecae.equals("203") || docsubtypecae.equals("208") || docsubtypecae.equals("213") || docsubtypecae.equals("51") || docsubtypecae.equals("52") || docsubtypecae.equals("53") || docsubtypecae.equals("22") || ( refContainsValue("CORE-AD_Reference-1010096", docsubtypecae) ) );
  else throw new IllegalArgumentException ("docsubtypecae Invalid value: " + docsubtypecae + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010096") );
-if (docsubtypecae != null && docsubtypecae.length() > 2)
+if (docsubtypecae != null && docsubtypecae.length() > 10)
 {
-log.warning("Length > 2 - truncated");
-docsubtypecae = docsubtypecae.substring(0,2);
+log.warning("Length > 10 - truncated");
+docsubtypecae = docsubtypecae.substring(0,10);
 }
 set_Value ("docsubtypecae", docsubtypecae);
 }

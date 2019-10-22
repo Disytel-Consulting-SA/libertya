@@ -415,3 +415,35 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','qtydiff
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','diffamt','numeric(22,4)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','c_order_orig_id','integer'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_cuentacorriente','IncludeCreditNotesRequest','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20191018-1303 Los codigos MiPyME requieren al menos una longitud de 3. Se amplia a un valor mayor para soportar eventuales nuevos codigos de mayor longitud
+alter table c_doctype alter column docsubtypecae type varchar(10);
+
+--20191021-1400 Facturas de crédito
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','emitir_mi_pyme','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+CREATE TABLE i_padron_mipyme
+(
+  i_padron_mipyme_id integer NOT NULL,
+  ad_client_id integer,
+  ad_org_id integer,
+  isactive character(1) DEFAULT 'Y'::bpchar,
+  created timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer,
+  updated timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer,
+  i_isimported character(1) NOT NULL DEFAULT 'N'::bpchar,
+  i_errormsg character varying(2000),
+  processing character(1),
+  cuit character varying(20),
+  denominacion character varying(60),
+  actividad integer,
+  fecha_inicio date,
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  CONSTRAINT i_padron_mipyme_key PRIMARY KEY (i_padron_mipyme_id)
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE i_padron_mipyme
+  OWNER TO libertya;

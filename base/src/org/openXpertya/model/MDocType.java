@@ -79,6 +79,8 @@ public class MDocType extends X_C_DocType {
     public static final String DOCTYPE_GLDocument = "GLD";
     /** Customer Invoice = CI (Factura de Cliente) */
     public static final String DOCTYPE_CustomerInvoice = "CI";
+    /** Customer Invoice MiPyME = CIMP (Factura de Cliente MiPyME) */
+    public static final String DOCTYPE_CustomerInvoice_MiPyME = "CIMP";
     /** Customer Indirect Invoice = CII (Factura de Cliente Indirecta) */
     public static final String DOCTYPE_CustomerIndirectInvoice = "CII";
     /** Customer ProForma Invoice = ARF (Factura ProForma de Cliente) */
@@ -87,8 +89,12 @@ public class MDocType extends X_C_DocType {
     public static final String DOCTYPE_CustomerCreditMemo = "CCM";
     /** Customer Debit Note = CDN (Nota de Débito de Cliente) */
     public static final String DOCTYPE_CustomerDebitNote = "CDN";
+    /** Customer Debit Note MiPyME = CDNMP (Nota de Débito de Cliente MiPyME) */
+    public static final String DOCTYPE_CustomerDebitNote_MiPyME = "CDNMP";
     /** Customer Credit Note = CCN (Nota de Crédito de Cliente) */
     public static final String DOCTYPE_CustomerCreditNote = "CCN";
+    /** Customer Credit Note MiPyME = CCNMP (Nota de Crédito de Cliente MiPyME) */
+    public static final String DOCTYPE_CustomerCreditNote_MiPyME = "CCNMP";
     /** Vendor Invoice = VI (Factura de Proveedor) */
     public static final String DOCTYPE_VendorInvoice = "VI";
     /** Vendor Credit Memo = VCM (Abono de Proveedor) */
@@ -861,6 +867,13 @@ public class MDocType extends X_C_DocType {
 
 		// Comparar ambos strings
 		return (seqReference.toString().compareTo(documentNo) == 0);
+	}
+	
+	/** Retorna true si el tipo de documento es de tipo MiPyME o false en caso contrario */
+	public boolean isMiPyME() {
+		return 	getDocTypeKey().startsWith(DOCTYPE_CustomerInvoice_MiPyME) ||
+				getDocTypeKey().startsWith(DOCTYPE_CustomerDebitNote_MiPyME) ||
+				getDocTypeKey().startsWith(DOCTYPE_CustomerCreditNote_MiPyME);
 	}
 	
 }	// MDocType

@@ -257,10 +257,9 @@ public class LaunchInvoice extends SvrProcess {
 		try{
 			Set<String> inouts = JasperReportsUtil.getInOutsDocumentsNo(
 				getCtx(), invoice, get_TrxName());
-			Iterator<String> inoutsIt = inouts.iterator();
 			int i = 1;
-			while (inoutsIt.hasNext()) {
-				jasperwrapper.addParameter("NROREMITO_"+(i++), inoutsIt.next());
+			for (String idocumentNo : inouts) {
+				jasperwrapper.addParameter("NROREMITO_"+(i++), idocumentNo);
 			}
 		} catch(Exception e){
 			log.severe("Error loading invoice in outs");
@@ -554,24 +553,7 @@ public class LaunchInvoice extends SvrProcess {
 
 	private Timestamp getFechaVto(MInvoice invoice)
 	{
-		try 
-		{
-			int invoicePayScheduleID = 0;
-			PreparedStatement stmt = DB.prepareStatement("SELECT c_invoicepayschedule_id FROM c_invoice_v WHERE c_invoice_id = ? ORDER BY c_invoicepayschedule_id DESC");
-			stmt.setInt(1, invoice.getC_Invoice_ID());
-			ResultSet rs = stmt.executeQuery();
-			if (!rs.next() || rs.getInt(1) == 0)
-				return null;
-			
-			invoicePayScheduleID = rs.getInt(1);
-			MInvoicePaySchedule invoicePaySchedule = new MInvoicePaySchedule(getCtx(), invoicePayScheduleID, null);
-			return invoicePaySchedule.getDueDate();	
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			return null;
-		}
+		return invoice.getFechaVto();
 	}	
 	
 	protected void initializeAmts(MInvoice invoice){
