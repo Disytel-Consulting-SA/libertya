@@ -22,6 +22,8 @@ public class POSDocTypeCreate extends SvrProcess {
 	private static String GL_ARI_NAME = "Factura%Cliente";
 	/** Nombre del tipo de documento de factura */
 	private static String DT_INVOICE_NAME = "Factura";
+	/** Prefixo para MiPyME */
+	private static String MI_PYME_PREFIX = "MiPyME";
 	/** Nombre del tipo de documento de nota de débito */
 	private static String DT_DEBIT_NOTE_NAME = "Nota de Debito";
 	/** Nombre del tipo de documento de nota de crédito */
@@ -46,6 +48,11 @@ public class POSDocTypeCreate extends SvrProcess {
 	 *  de apertura/cierre por punto de venta
 	 */
 	private boolean openCloseByPos = false;
+	
+	/** Generar tipos de documento standard CI, CCN, CDN */
+	protected boolean createStandard = false;
+	/** Generar tipos de documento standard CIMP, CCNMP, CDNMP */
+	protected boolean createMiPyME = false;
 
 	/**
 	 * CUIT de la organización carpeta parámetro o de la organización padre de
@@ -71,6 +78,10 @@ public class POSDocTypeCreate extends SvrProcess {
 				openCloseByPos = "Y".equals((String)para[ i ].getParameter());
             else if(name.equals("AD_Org_ID"))
                 setOrgID(((BigDecimal)para[i].getParameter()).intValue());
+            else if (name.equalsIgnoreCase("Standard"))
+            	createStandard = "Y".equals(para[i].getParameter());
+            else if (name.equalsIgnoreCase("MiPyME"))
+            	createMiPyME = "Y".equals(para[i].getParameter());			
 		}
 	}
 
@@ -79,6 +90,9 @@ public class POSDocTypeCreate extends SvrProcess {
 		
 		if(getP_PosNumber() < 1 || getP_PosNumber() > 9999)
 			throw new IllegalArgumentException(parseMsg("@InvalidPOSNumber@ 1 - 9999"));
+		
+		if (!createStandard && !createMiPyME)
+			throw new IllegalArgumentException("Debe seleccionar al menos un conjunto de tipos de documento a generar (Standard / MiPyME)");
 		
 		String retMsg = null;
 		int docTypesCreatedCount = 0;
@@ -334,36 +348,73 @@ public class POSDocTypeCreate extends SvrProcess {
 			for (int i = 0; i < letters.length; i++) {
 				String letter = letters[i];
 
-				//////////////////////////////////////////////////////////////
-				// Tipos de Doc para Facturas.
-				docTypeName = DT_INVOICE_NAME + " " + letter + "-" + posNumber; 
-				printName   = DT_INVOICE_NAME + " " + letter;
-				newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
-						docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
-						GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
-						MDocType.FISCALDOCUMENT_Invoice,
-						MDocType.DOCTYPE_CustomerInvoice
-				));
-				//////////////////////////////////////////////////////////////
-				// Tipos de Doc para Notas de Débito.
-				docTypeName = DT_DEBIT_NOTE_NAME + " " + letter + "-" + posNumber; 
-				printName   = DT_DEBIT_NOTE_NAME + " " + letter;
-				newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
-						docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
-						GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
-						MDocType.FISCALDOCUMENT_DebitNote,
-						MDocType.DOCTYPE_CustomerDebitNote
-				));
-				//////////////////////////////////////////////////////////////
-				// Tipos de Doc para Notas de Crédito.
-				docTypeName = DT_CREDIT_NOTE_NAME + " " + letter + "-" + posNumber; 
-				printName   = DT_CREDIT_NOTE_NAME + " " + letter;
-				newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
-						docTypeName, printName, MDocType.DOCBASETYPE_ARCreditMemo,
-						GL_ARI, MDocType.SIGNO_ISSOTRX__1, letter,
-						MDocType.FISCALDOCUMENT_CreditNote,
-						MDocType.DOCTYPE_CustomerCreditNote
-				));
+				// Crear tipos de documento tradicionales?
+				if (createStandard) {
+					//////////////////////////////////////////////////////////////
+					// Tipos de Doc para Facturas.
+					docTypeName = DT_INVOICE_NAME + " " + letter + "-" + posNumber; 
+					printName   = DT_INVOICE_NAME + " " + letter;
+					newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
+							docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
+							GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
+							MDocType.FISCALDOCUMENT_Invoice,
+							MDocType.DOCTYPE_CustomerInvoice
+					));
+					//////////////////////////////////////////////////////////////
+					// Tipos de Doc para Notas de Débito.
+					docTypeName = DT_DEBIT_NOTE_NAME + " " + letter + "-" + posNumber; 
+					printName   = DT_DEBIT_NOTE_NAME + " " + letter;
+					newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
+							docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
+							GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
+							MDocType.FISCALDOCUMENT_DebitNote,
+							MDocType.DOCTYPE_CustomerDebitNote
+					));
+					//////////////////////////////////////////////////////////////
+					// Tipos de Doc para Notas de Crédito.
+					docTypeName = DT_CREDIT_NOTE_NAME + " " + letter + "-" + posNumber; 
+					printName   = DT_CREDIT_NOTE_NAME + " " + letter;
+					newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
+							docTypeName, printName, MDocType.DOCBASETYPE_ARCreditMemo,
+							GL_ARI, MDocType.SIGNO_ISSOTRX__1, letter,
+							MDocType.FISCALDOCUMENT_CreditNote,
+							MDocType.DOCTYPE_CustomerCreditNote
+					));
+				}
+				
+				// Crear tipos de documento MiPyME? (Omitir MiPyME E dado que no corresponde)				
+				if (createMiPyME && !"E".equals(letter)) {
+					//////////////////////////////////////////////////////////////
+					// Tipos de Doc para Facturas MiPyME.
+					docTypeName = DT_INVOICE_NAME + " " + MI_PYME_PREFIX + " " + letter + "-" + posNumber; 
+					printName   = DT_INVOICE_NAME + " " + MI_PYME_PREFIX + " " + letter;
+					newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
+							docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
+							GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
+							MDocType.FISCALDOCUMENT_Invoice,
+							MDocType.DOCTYPE_CustomerInvoice_MiPyME
+					));
+					//////////////////////////////////////////////////////////////
+					// Tipos de Doc para Notas de Débito MiPyME.
+					docTypeName = DT_DEBIT_NOTE_NAME + " " + MI_PYME_PREFIX + " " + letter + "-" + posNumber; 
+					printName   = DT_DEBIT_NOTE_NAME + " " + MI_PYME_PREFIX + " " + letter;
+					newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
+							docTypeName, printName, MDocType.DOCBASETYPE_ARInvoice,
+							GL_ARI, MDocType.SIGNO_ISSOTRX_1, letter, 
+							MDocType.FISCALDOCUMENT_DebitNote,
+							MDocType.DOCTYPE_CustomerDebitNote_MiPyME
+					));
+					//////////////////////////////////////////////////////////////
+					// Tipos de Doc para Notas de Crédito MiPyME.
+					docTypeName = DT_CREDIT_NOTE_NAME + " " + MI_PYME_PREFIX + " " + letter + "-" + posNumber; 
+					printName   = DT_CREDIT_NOTE_NAME + " " + MI_PYME_PREFIX + " " + letter;
+					newDocTypes.add(new DocTypeData(getOrgID(), getOrgParentCUIT(),
+							docTypeName, printName, MDocType.DOCBASETYPE_ARCreditMemo,
+							GL_ARI, MDocType.SIGNO_ISSOTRX__1, letter,
+							MDocType.FISCALDOCUMENT_CreditNote,
+							MDocType.DOCTYPE_CustomerCreditNote_MiPyME
+					));
+				}
 			}
 		}
 		return newDocTypes;

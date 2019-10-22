@@ -1290,6 +1290,13 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
 				log.saveError("SaveError", Msg.translate(getCtx(), "TypeIDRequired"));
 				return false;
 			}
+			
+			// Buscar si la EC se encuentra en el padrón Mi Pyme para asignarle ese valor
+			if(!isEmitir_Mi_Pyme()) {
+				int existsMP = DB.getSQLValue(get_TrxName(),
+						"select count(*) from i_padron_mipyme where cuit = '" + getTaxID() + "'");
+				setEmitir_Mi_Pyme(existsMP > 0);
+			}
 		}
 		
 		//LOCALIZACION CHILE

@@ -23,6 +23,10 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_UID = "CORE-AD_Process-1010649";
 	protected final static String CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_FILENAME = "CreditRequestReport.jasper";
 	
+	/** UID de Impresión de FE */
+	protected final static String FE_REPORT_UID = "CORE-AD_JasperReport-1010118";
+	protected final static String FE_REPORT_FILENAME = "rpt_Factura_Electronica.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -79,6 +83,17 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(CREDIT_REQUEST_REPORT_DETAIL_JASPER_REPORT_FILENAME)));
+		
+		// Impresión de FE
+		MJasperReport
+				.updateBinaryData(
+						get_TrxName(),
+						getCtx(),
+						FE_REPORT_UID,
+						JarHelper
+								.readBinaryFromJar(
+										jarFileURL,
+										getBinaryFileURL(FE_REPORT_FILENAME)));
 		
 		return " ";
 	}

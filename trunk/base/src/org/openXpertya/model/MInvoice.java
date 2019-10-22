@@ -2340,6 +2340,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return false;
 			}
 			
+			// Validaciones MiPyme
+			CallResult cr = doMiPymeValidations();
+			if(cr.isError()) {
+				log.saveError("SaveError", cr.getMsg());
+				return false;
+			}
 		}
 
 		// Quito punto de venta y letra en caso que el tipo de doc no sea fiscal
@@ -3427,52 +3433,62 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			return DocAction.STATUS_Invalid;
 		}
 
-		// === Lógica adicional para evitar doble notificación a AFIP. ===
-		if (CalloutInvoiceExt.ComprobantesFiscalesActivos() && MDocType.isElectronicDocType(getC_DocTypeTarget_ID())) {
-			// Si la factura se encuentra en estado En Proceso...
-			// ¿Se debe informar al usuario que la factura se encontraba en IP y que no tenía un CAE (requiere validar en AFIP si está registrada),
-			// o bien debe dejar continuar (skip de la validacion dado que ya fue gestionada por el usuario) para que genere el CAE al completar?
-			if ((getcae() == null || getcae().length() == 0) && DocAction.STATUS_InProgress.equals(getDocStatus()) && !isSkipIPNoCaeValidation()) {
-				m_processMsg = "Factura de tipo electrónica con estado en proceso.  Validar registración de la misma en AFIP y posteriormente utilizar funcionalidad Gestionar Factura Electronica";
-				log.log(Level.SEVERE, m_processMsg);
+		// Validaciones Locale Ar
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()) {
+			// Validaciones MiPyme
+			CallResult cr = doMiPymeValidations();
+			if(cr.isError()) {
+				setProcessMsg(cr.getMsg());
 				return DocAction.STATUS_Invalid;
 			}
 			
-			// Si en el CompleteIt ya tenemos CAE asignado, validar que sea único no permitiendo completar la factura si ya existe otra Completa / Cerrada con el mismo CAE
-			// Esta validación logicamente no aplica para facturas "nuevas" ya que previo al completeIt todavía no tienen CAE
-			if (!Util.isEmpty(getcae(), true)) {
-				String documentNo = DB.getSQLValueString(get_TrxName(), " SELECT documentNo " +
-																		" FROM C_Invoice " +
-																		" WHERE cae = '" + getcae() + "' " +
-																		" AND C_Invoice_ID <> " + getC_Invoice_ID() +
-																		" AND AD_Client_ID = " + getAD_Client_ID() +
-																		" AND DocStatus IN ('CO', 'CL') "
-														);
-				if (documentNo != null) {
-					m_processMsg = "Ya existe una factura con CAE " + getcae() + ", registrado en la factura " + documentNo;
+			// === Lógica adicional para evitar doble notificación a AFIP. ===
+			if (MDocType.isElectronicDocType(getC_DocTypeTarget_ID())) {
+				// Si la factura se encuentra en estado En Proceso...
+				// ¿Se debe informar al usuario que la factura se encontraba en IP y que no tenía un CAE (requiere validar en AFIP si está registrada),
+				// o bien debe dejar continuar (skip de la validacion dado que ya fue gestionada por el usuario) para que genere el CAE al completar?
+				if ((getcae() == null || getcae().length() == 0) && DocAction.STATUS_InProgress.equals(getDocStatus()) && !isSkipIPNoCaeValidation()) {
+					m_processMsg = "Factura de tipo electrónica con estado en proceso.  Validar registración de la misma en AFIP y posteriormente utilizar funcionalidad Gestionar Factura Electronica";
 					log.log(Level.SEVERE, m_processMsg);
 					return DocAction.STATUS_Invalid;
 				}
-			}
-			
-			// Si el usuario utilizó "Gestionar Factura Electrónica", validar unicidad del Nro de Documento.
-			// Para el mismo Tipo de Documento no pueden existir 2 facturas Completas / Cerradas con el mismo DocumentNo.
-			if (!Util.isEmpty(getcaeerror()) && getcaeerror().startsWith("Factura electronica editada manualmente")) {
-				int count = DB.getSQLValue(get_TrxName(), 	" SELECT count(1) " +
-															" FROM C_Invoice " +
-															" WHERE documentno = '" + getDocumentNo() + "' " +
-															" AND C_Invoice_ID <> " + getC_Invoice_ID() +
-															" AND AD_Client_ID = " + getAD_Client_ID() +
-															" AND C_DocTypeTarget_ID = " + getC_DocTypeTarget_ID() +
-															" AND DocStatus IN ('CO', 'CL') "
-											);
-				if (count > 0) {
-					m_processMsg = "Ya existe una factura con el numero de documento " + getDocumentNo();
-					log.log(Level.SEVERE, m_processMsg);
-					return DocAction.STATUS_Invalid;
+				
+				// Si en el CompleteIt ya tenemos CAE asignado, validar que sea único no permitiendo completar la factura si ya existe otra Completa / Cerrada con el mismo CAE
+				// Esta validación logicamente no aplica para facturas "nuevas" ya que previo al completeIt todavía no tienen CAE
+				if (!Util.isEmpty(getcae(), true)) {
+					String documentNo = DB.getSQLValueString(get_TrxName(), " SELECT documentNo " +
+																			" FROM C_Invoice " +
+																			" WHERE cae = '" + getcae() + "' " +
+																			" AND C_Invoice_ID <> " + getC_Invoice_ID() +
+																			" AND AD_Client_ID = " + getAD_Client_ID() +
+																			" AND DocStatus IN ('CO', 'CL') "
+															);
+					if (documentNo != null) {
+						m_processMsg = "Ya existe una factura con CAE " + getcae() + ", registrado en la factura " + documentNo;
+						log.log(Level.SEVERE, m_processMsg);
+						return DocAction.STATUS_Invalid;
+					}
 				}
+				
+				// Si el usuario utilizó "Gestionar Factura Electrónica", validar unicidad del Nro de Documento.
+				// Para el mismo Tipo de Documento no pueden existir 2 facturas Completas / Cerradas con el mismo DocumentNo.
+				if (!Util.isEmpty(getcaeerror()) && getcaeerror().startsWith("Factura electronica editada manualmente")) {
+					int count = DB.getSQLValue(get_TrxName(), 	" SELECT count(1) " +
+																" FROM C_Invoice " +
+																" WHERE documentno = '" + getDocumentNo() + "' " +
+																" AND C_Invoice_ID <> " + getC_Invoice_ID() +
+																" AND AD_Client_ID = " + getAD_Client_ID() +
+																" AND C_DocTypeTarget_ID = " + getC_DocTypeTarget_ID() +
+																" AND DocStatus IN ('CO', 'CL') "
+												);
+					if (count > 0) {
+						m_processMsg = "Ya existe una factura con el numero de documento " + getDocumentNo();
+						log.log(Level.SEVERE, m_processMsg);
+						return DocAction.STATUS_Invalid;
+					}
+				}
+				
 			}
-			
 		}
 		
 		// Fecha del CAI > que fecha de facturacion
@@ -6915,6 +6931,115 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 					+ getC_Order_Orig_ID(), get_TrxName());
 		}
 	}
+
+	/**
+	 * Realizar validaciones Mi Pyme
+	 * 
+	 * @return resultado de las validaciones
+	 */
+	protected CallResult doMiPymeValidations(){
+		CallResult cr = new CallResult();
+		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+		if(docType.isMiPyME()) {
+			// Controlar que tenga un esquema de vencimientos obligatorio y que sea de 1
+			// sola cuota
+			if(Util.isEmpty(getC_PaymentTerm_ID(), true)) {
+				// Esquema de vencimientos obligatoria
+				cr.setMsg(Msg.getMsg(getCtx(), "NoPaymentTerm"), true);
+				return cr;
+			}
+			else {
+				// Sólo 1 sola cuota
+				String sql = "select count(*) " + 
+						"from c_payschedule " + 
+						"where c_paymentterm_id = ?";
+				int cuotas = DB.getSQLValue(get_TrxName(), sql, getC_PaymentTerm_ID());
+				if(cuotas > 1) {
+					// No puede tener más de 1 esquema de pagos el esquema de vencimiento
+					cr.setMsg(Msg.getMsg(getCtx(), "PaymentTermOnlyOneDueDate"), true);
+					return cr;
+				}
+			}
+			
+			// No es posible modificar el esquema de vencimiento cuando ya posee CAE
+			if(is_ValueChanged("C_PaymentTerm_ID") && !Util.isEmpty(getcae(), true)) {
+				// No es posible modificar el esquema de vencimientos cuando tiene CAE asignado
+				cr.setMsg(Msg.getMsg(getCtx(), "PaymentTermNoChangeWithCAE"), true);
+				return cr;
+			}
+			
+			// Si es NC o ND, debe tener un comprobante original obligatoriamente y éste
+			// debe ser CIMP (Factura de Cliente Mi Pyme)
+			if(docType.getDocTypeKey().startsWith(MDocType.DOCTYPE_CustomerDebitNote_MiPyME) || 
+					docType.getDocTypeKey().startsWith(MDocType.DOCTYPE_CustomerCreditNote_MiPyME)) {
+				
+				if(Util.isEmpty(getC_Invoice_Orig_ID(), true)) {
+					// Comprobante original obligatorio
+					cr.setMsg(Msg.getMsg(getCtx(), "OriginalDocumentIsMandatory"), true);
+					return cr;					
+				}
+				else {
+					MInvoice cimp = new MInvoice(getCtx(), getC_Invoice_Orig_ID(), get_TrxName());
+					MDocType dtCIMP = MDocType.get(getCtx(), cimp.getC_DocTypeTarget_ID());
+					// Es Factura Mi Pyme?
+					if(!dtCIMP.getDocTypeKey().startsWith(MDocType.DOCTYPE_CustomerInvoice_MiPyME)) {
+						// El comprobante original no es Factura MI Pyme.
+						cr.setMsg(Msg.getMsg(getCtx(), "OriginalDocumentMustBeMiPyme"), true);
+						return cr;
+					}
+					// Poseen misma moneda?
+					if(getC_Currency_ID() != cimp.getC_Currency_ID()) {
+						// Deben tener misma moneda que el comprobante original
+						cr.setMsg(Msg.getMsg(getCtx(), "OriginalDocumentDifferentCurrency"), true);
+						return cr;
+					}
+				}
+			}
+			
+		} else {
+			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+			if(bp.isEmitir_Mi_Pyme()) {
+				// Mi Pyme Obligatorio
+				cr.setMsg(Msg.getMsg(getCtx(), "BusinessPartnerOnlyMiPyme"), true);
+				return cr;
+			}
+		}
+		return cr;
+	}
+	
+	// Retorna la fecha de vencimiento de la factura basado en el payschedule. 
+	public Timestamp getFechaVto()
+	{
+		ResultSet rs = null;
+		PreparedStatement stmt = null;
+		try 
+		{
+			int invoicePayScheduleID = 0;
+			stmt = DB.prepareStatement("SELECT c_invoicepayschedule_id FROM c_invoice_v WHERE c_invoice_id = ? ORDER BY c_invoicepayschedule_id DESC");
+			stmt.setInt(1, getC_Invoice_ID());
+			rs = stmt.executeQuery();
+			if (!rs.next() || rs.getInt(1) == 0)
+				return null;
+			
+			invoicePayScheduleID = rs.getInt(1);
+			MInvoicePaySchedule invoicePaySchedule = new MInvoicePaySchedule(getCtx(), invoicePayScheduleID, get_TrxName());
+			return invoicePaySchedule.getDueDate();	
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			return null;
+		} finally { 
+			try {
+				rs.close();
+				stmt.close();
+				rs = null;
+				stmt = null;
+			} catch (Exception e) {
+				
+			}
+		}
+	}	
 	
 } // MInvoice
 

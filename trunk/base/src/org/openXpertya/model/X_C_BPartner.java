@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-05-02 10:35:17.312 */
+ *  @version  - 2019-10-21 13:15:27.508 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -23,6 +23,7 @@ setC_BPartner_ID (0);
 setC_BP_Group_ID (0);
 setCreditMinimumAmt (Env.ZERO);
 setDiscountContext (null);	// B
+setEmitir_Mi_Pyme (false);
 setIsConvenioMultilateral (false);
 setIsCustomer (false);
 setIsEmployee (false);
@@ -665,6 +666,22 @@ Dun & Bradstreet Number */
 public String getDUNS() 
 {
 return (String)get_Value("DUNS");
+}
+/** Set Emitir Mi Pyme */
+public void setEmitir_Mi_Pyme (boolean Emitir_Mi_Pyme)
+{
+set_Value ("Emitir_Mi_Pyme", new Boolean(Emitir_Mi_Pyme));
+}
+/** Get Emitir Mi Pyme */
+public boolean isEmitir_Mi_Pyme() 
+{
+Object oo = get_Value("Emitir_Mi_Pyme");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set EndHolidays */
 public void setEndHolidays (Timestamp EndHolidays)

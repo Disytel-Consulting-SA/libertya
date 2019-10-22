@@ -75,7 +75,7 @@ public class CalloutInvoice extends CalloutEngine {
 //        }
 
         try {
-            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
+            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, d.DocTypeKey " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
                          + " AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
             PreparedStatement pstmt = DB.prepareStatement( SQL );
 
@@ -97,11 +97,15 @@ public class CalloutInvoice extends CalloutEngine {
                 	}
                 }
 
-                // DocBaseType - Set Context
+                // DocBaseType - DocTypeKey - Set Context
 
                 String s = rs.getString( 5 );
 
                 Env.setContext( ctx,WindowNo,"DocBaseType",s );
+                
+                String dk = rs.getString( 6 );
+
+                Env.setContext( ctx,WindowNo,"DocTypeKey",dk );
 
                 // AP Check & AR Credit Memo
                 // Si el campo de forma de pago contiene un valor por defecto,
