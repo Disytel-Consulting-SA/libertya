@@ -476,3 +476,67 @@ CREATE OR REPLACE VIEW reginfo_compras_alicuotas_v AS
 
 ALTER TABLE reginfo_compras_alicuotas_v
   OWNER TO libertya;
+
+--20191024-1610 Importación de Liquidaciones Cabal (CentralPOS)
+CREATE SEQUENCE seq_i_cabalpayments
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 1000001
+  CACHE 1;
+ALTER TABLE seq_i_cabalpayments
+  OWNER TO libertya;
+
+CREATE TABLE i_cabalpayments
+(
+  i_cabalpayments_id integer NOT NULL DEFAULT nextval('seq_i_cabalpayments'::regclass),
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  i_errormsg character varying(2000),
+  i_isimported character(1) NOT NULL DEFAULT 'N'::bpchar,
+  processing character(1),
+  processed character(1) DEFAULT 'N'::bpchar,
+  id character varying(32),
+  archivo_id character varying(32),
+  hash_modelo character varying(32),
+  comercio character varying(32),
+  numero_comercio character varying(32),
+  moneda_pago character varying(32),
+  importe_venta character varying(32),
+  signo_importe_bruto character varying(32),
+  importe_arancel character varying(32),
+  signo_importe_arancel character varying(32),
+  importe_iva_arancel character varying(32),
+  signo_iva_sobre_arancel character varying(32),
+  retencion_iva character varying(32),
+  signo_retencion_iva character varying(32),
+  retencion_ganancias character varying(32),
+  signo_retencion_ganancias character varying(32),
+  retencion_ingresos_brutos character varying(32),
+  signo_retencion_ingresos_brutos character varying(32),
+  percepcion_rg_3337 character varying(32),
+  signo_percepcion_3337 character varying(32),
+  importe_neto_final character varying(32),
+  signo_importe_neto_final character varying(32),
+  fecha_pago character varying(32),
+  numero_liquidacion character varying(32),
+  revisado character varying(32),
+  costo_fin_cup character varying(32),
+  CONSTRAINT cabalpayments_key PRIMARY KEY (i_cabalpayments_id),
+  CONSTRAINT cabalpaymentsclient FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT cabalpaymentsorg FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE i_cabalpayments
+  OWNER TO libertya;
