@@ -46,5 +46,4 @@ public class AmexPaymentsWithTaxes extends GenericMap {
 		super(joinArrays(AmexPayments.filteredFields, AmexTaxes.filteredFields), null, X_I_AmexPaymentsAndTaxes.Table_Name);
 		matchingFields = new String[] { "num_sec_pago", "fecha_pago" };
 	}
-
 }

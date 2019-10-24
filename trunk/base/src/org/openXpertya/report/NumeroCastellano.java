@@ -11,7 +11,7 @@ public class NumeroCastellano {
     { "", "millon","billon","trillon"  };
   
   private static String[] _unidades = 
-    { "","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve" };
+    { "","un","dos","tres","cuatro","cinco","seis","siete","ocho","nueve" };
   
   private static String[] _decena1 = 
     { "","once","doce","trece","catorce","quince",
@@ -41,14 +41,24 @@ public class NumeroCastellano {
     if ( decenas == 1 && unidades != 0 )
       sufijo = _decena1[unidades];
     
-    if ( decenas == 2 && unidades != 0 )
-      sufijo   = "veinti"+_unidades[unidades];
+    if ( decenas == 2 && unidades != 0 ){
+    	if(unidades == 1)
+    		sufijo   = "veintiun";
+    	else
+    	    sufijo   = "veinti"+_unidades[unidades];
+    }
+      
     
     if ( unidades == 0) 
       sufijo = _decenas[decenas];
     
-    if ( decenas > 2 && unidades != 0)
-      sufijo = _decenas[decenas] + " y " + _unidades[unidades];
+    if ( decenas > 2 && unidades != 0){
+    	if(unidades == 1)
+    		sufijo   = _decenas[decenas] + " y " +"un";
+    	else    	
+    	    sufijo = _decenas[decenas] + " y " + _unidades[unidades];
+    }
+      
     
     if (centenas != 1)
       return _centenas[centenas] + " " + sufijo;
@@ -120,6 +130,7 @@ public class NumeroCastellano {
   }
   
   public static void main(String[] args) {
-    System.out.println(  numeroACastellano(123) );
+	  BigDecimal num = new BigDecimal(1021000.10);
+    System.out.println(  numeroACastellano(num) );
   }
 }
