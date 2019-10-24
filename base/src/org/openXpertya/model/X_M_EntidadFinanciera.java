@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_EntidadFinanciera
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-06-12 12:10:21.254 */
+ *  @version  - 2019-10-23 11:43:46.168 */
 public class X_M_EntidadFinanciera extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -233,10 +233,12 @@ public static final String FINANCINGSERVICE_VISA = "VI";
 public static final String FINANCINGSERVICE_NARANJA = "NA";
 /** FIRSTDATA = FD */
 public static final String FINANCINGSERVICE_FIRSTDATA = "FD";
+/** CABAL = CA */
+public static final String FINANCINGSERVICE_CABAL = "CA";
 /** Set Financing Service */
 public void setFinancingService (String FinancingService)
 {
-if (FinancingService == null || FinancingService.equals("AM") || FinancingService.equals("VI") || FinancingService.equals("NA") || FinancingService.equals("FD") || ( refContainsValue("SAPI2CORE-AD_Reference-1010321-20170125094655", FinancingService) ) );
+if (FinancingService == null || FinancingService.equals("AM") || FinancingService.equals("VI") || FinancingService.equals("NA") || FinancingService.equals("FD") || FinancingService.equals("CA") || ( refContainsValue("SAPI2CORE-AD_Reference-1010321-20170125094655", FinancingService) ) );
  else throw new IllegalArgumentException ("FinancingService Invalid value: " + FinancingService + ".  Valid: " +  refValidOptions("SAPI2CORE-AD_Reference-1010321-20170125094655") );
 if (FinancingService != null && FinancingService.length() > 2)
 {

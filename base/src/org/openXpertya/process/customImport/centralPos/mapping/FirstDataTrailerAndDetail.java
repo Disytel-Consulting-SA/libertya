@@ -35,5 +35,4 @@ public class FirstDataTrailerAndDetail extends GenericMap {
 		super(joinArrays(TrailerParticipants.filteredFields, DetailParticipant.filteredFields), null, X_I_FirstDataTrailerAndDetail.Table_Name);
 		matchingFields = new String[] { "comercio_participante", "numero_liquidacion", "fecha_vencimiento_clearing" };
 	}
-
 }

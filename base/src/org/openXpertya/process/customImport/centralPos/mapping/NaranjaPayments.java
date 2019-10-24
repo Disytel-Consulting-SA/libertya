@@ -78,5 +78,4 @@ public class NaranjaPayments extends GenericMap {
 			getValuesList().add(invoicedConcept.getValues());
 		}
 	}
-
 }

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CreditCardSettlement
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-01-30 10:24:41.946 */
+ *  @version  - 2019-10-23 11:43:43.066 */
 public class X_C_CreditCardSettlement extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -53,14 +53,16 @@ StringBuffer sb = new StringBuffer ("X_C_CreditCardSettlement[").append(getID())
 return sb.toString();
 }
 public static final int ACCOUNTING_C_CHARGE_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
-/** Set ACCOUNTING_C_Charge_ID */
+/** Set Accounting Account.
+Alternative Accounting Account */
 public void setACCOUNTING_C_Charge_ID (int ACCOUNTING_C_Charge_ID)
 {
 if (ACCOUNTING_C_Charge_ID <= 0) set_Value ("ACCOUNTING_C_Charge_ID", null);
  else 
 set_Value ("ACCOUNTING_C_Charge_ID", new Integer(ACCOUNTING_C_Charge_ID));
 }
-/** Get ACCOUNTING_C_Charge_ID */
+/** Get Accounting Account.
+Alternative Accounting Account */
 public int getACCOUNTING_C_Charge_ID() 
 {
 Integer ii = (Integer)get_Value("ACCOUNTING_C_Charge_ID");
@@ -173,11 +175,13 @@ public static final String CREDITCARDTYPE_VISA = "VI";
 public static final String CREDITCARDTYPE_NARANJA = "NA";
 /** FIRSTDATA = FD */
 public static final String CREDITCARDTYPE_FIRSTDATA = "FD";
+/** CABAL = CA */
+public static final String CREDITCARDTYPE_CABAL = "CA";
 /** Set Credit Card.
 Credit Card (Visa, MC, AmEx) */
 public void setCreditCardType (String CreditCardType)
 {
-if (CreditCardType == null || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA") || CreditCardType.equals("FD") || ( refContainsValue("SAPI2CORE-AD_Reference-1010321-20170125094655", CreditCardType) ) );
+if (CreditCardType == null || CreditCardType.equals("AM") || CreditCardType.equals("VI") || CreditCardType.equals("NA") || CreditCardType.equals("FD") || CreditCardType.equals("CA") || ( refContainsValue("SAPI2CORE-AD_Reference-1010321-20170125094655", CreditCardType) ) );
  else throw new IllegalArgumentException ("CreditCardType Invalid value: " + CreditCardType + ".  Valid: " +  refValidOptions("SAPI2CORE-AD_Reference-1010321-20170125094655") );
 if (CreditCardType != null && CreditCardType.length() > 2)
 {

@@ -10,7 +10,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
 /** @author Kevin Feuerschvenger - Sur Software S.H. */
-public class GenericMap {
+public class GenericMap {	
 	/** Campos a almacenar en la DB. */
 	protected String[] filteredFields;
 	/** Campos por los cuales se realizará el mapeo entre cabecera y lineas.
@@ -174,7 +174,7 @@ public class GenericMap {
 	 * @param arrays Arreglos de strings a unir.
 	 * @return array con elementos no repetidos.
 	 */
-	protected static String[] joinArrays(String[]... arrays) {
+	public static String[] joinArrays(String[]... arrays) {
 		if (arrays.length == 0) {
 			return new String[0];
 		}
@@ -187,7 +187,7 @@ public class GenericMap {
 		}
 		return (String[]) tmp.toArray(new String[0]);
 	}
-
+	
 	// GETTERS & SETTERS
 
 	public Object getValue(String key) {

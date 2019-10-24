@@ -1,18 +1,12 @@
 package org.openXpertya.process;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 
-import org.openXpertya.model.MCreditCardSettlement;
 import org.openXpertya.process.customImport.centralPos.exceptions.SaveFromAPIException;
 import org.openXpertya.process.customImport.centralPos.jobs.Import;
-import org.openXpertya.process.customImport.centralPos.jobs.ImportAmex;
-import org.openXpertya.process.customImport.centralPos.jobs.ImportFirstData;
-import org.openXpertya.process.customImport.centralPos.jobs.ImportNaranja;
-import org.openXpertya.process.customImport.centralPos.jobs.ImportVisa;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
@@ -56,31 +50,13 @@ public class ImportFromCentralPos extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-		Import importJob = null;
-
-		if (p_CreditCardType != null) {
-			if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_FIRSTDATA)) {
-				importJob = new ImportFirstData(getCtx(), get_TrxName());
-			} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_NARANJA)) {
-				importJob = new ImportNaranja(getCtx(), get_TrxName());
-			} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_AMEX)) {
-				importJob = new ImportAmex(getCtx(), get_TrxName());
-			} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_VISA)) {
-				importJob = new ImportVisa(getCtx(), get_TrxName());
-			} else {
-				throw new Exception(Msg.getMsg(Env.getAD_Language(getCtx()), "UnknownCreditCardTypeParam"));
-			}
-		} else {
-			throw new Exception(Msg.getMsg(Env.getAD_Language(getCtx()), "InvalidCreditCardTypeParam"));
+		Import importJob = Import.get(getCtx(), p_CreditCardType, get_TrxName());
+		if(importJob == null){
+			throw new Exception(Msg.getMsg(Env.getAD_Language(getCtx()), "UnknownCreditCardTypeParam"));
 		}
 
 		// Llegado a este punto, importJob no es null.
 		importJob.setCLogger(log);
-
-		// TODO definir qué fecha es la que se debe utilizar para cada caso, según
-		// el tipo de tarjeta. Actualmente asigné campos de fecha a mi criterio.
-
-		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
 		if (p_DaysBack > 0) {
 			if (p_Date_To == null) {
@@ -98,42 +74,10 @@ public class ImportFromCentralPos extends SvrProcess {
 			// TODO definir qué hacer con este filtro.
 		}
 
+		importJob.setDateFromParam(p_Date_From);
+		importJob.setDateToParam(p_Date_To);
+		
 		String msg = "";
-
-		if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_FIRSTDATA)) {
-
-			if (p_Date_From != null) {
-				importJob.addParam("fecha_vencimiento_clearing-min", sdf.format(new Date(p_Date_From.getTime())));
-			}
-			if (p_Date_To != null) {
-				importJob.addParam("fecha_vencimiento_clearing-max", sdf.format(new Date(p_Date_To.getTime())));
-			}
-		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_NARANJA)) {
-
-			if (p_Date_From != null) {
-				importJob.addParam("fecha_pago-min", sdf.format(new Date(p_Date_From.getTime())));
-			}
-			if (p_Date_To != null) {
-				importJob.addParam("fecha_pago-max", sdf.format(new Date(p_Date_To.getTime())));
-			}
-		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_AMEX)) {
-
-			if (p_Date_From != null) {
-				importJob.addParam("fecha_pago-min", sdf.format(new Date(p_Date_From.getTime())));
-			}
-			if (p_Date_To != null) {
-				importJob.addParam("fecha_pago-max", sdf.format(new Date(p_Date_To.getTime())));
-			}
-		} else if (p_CreditCardType.equals(MCreditCardSettlement.CREDITCARDTYPE_VISA)) {
-
-			if (p_Date_From != null) {
-				importJob.addParam("fpag-min", sdf.format(new Date(p_Date_From.getTime())));
-			}
-			if (p_Date_To != null) {
-				importJob.addParam("fpag-max", sdf.format(new Date(p_Date_To.getTime())));
-			}	
-		}
-
 		try {
 			msg = importJob.excecute();
 		} catch (SaveFromAPIException e) {
@@ -145,8 +89,11 @@ public class ImportFromCentralPos extends SvrProcess {
 		boolean processSuccess = createSettlementsProcess.startProcess(getCtx(), getProcessInfo(), getTrx(get_TrxName()));
 
 		if (!processSuccess) {
-			throw new Exception(createSettlementsProcess.getProcessInfo().getSummary() + " - "
+			throw new Exception( createSettlementsProcess.getProcessInfo().getSummary() + " - "
 					+ createSettlementsProcess.getProcessInfo().getLogInfo());
+		}
+		else {
+			msg = createSettlementsProcess.getProcessInfo().getSummary();
 		}
 		return msg;
 	}

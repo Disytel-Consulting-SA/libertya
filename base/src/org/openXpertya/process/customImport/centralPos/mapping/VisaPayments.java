@@ -65,5 +65,4 @@ public class VisaPayments extends GenericMap {
 	public VisaPayments() {
 		super(filteredFields, null, X_I_VisaPayments.Table_Name);
 	}
-
 }
