@@ -75,31 +75,26 @@ public class FacturaElectronicaBarcodeGenerator extends BarcodeGenerator {
 			getLog().severe("No existe CUIT de la compañia");
 			return;
 		}
-		// b) Código de tipo de comprobante.
+		// b) Código de tipo de comprobante.  Debe tener una longitud de 3 caracteres ( Segun https://www.afip.gob.ar/genericos/guiavirtual/consultas_detalle.aspx?id=130014 )
 		if(Util.isEmpty(docType.getdocsubtypecae(), true)){
 			getLog().severe("No existe codigo de tipo de documento electronico");
 			return;
 		}
-		setDocTypeCodeFE(docType.getdocsubtypecae());
-		// c) Punto de venta.
+		String dstc = docType.getdocsubtypecae();
+		for (int i = dstc.length(); i < 3; i++) {
+			dstc = "0" + dstc;
+		}
+		setDocTypeCodeFE(dstc);		
+		
+		// c) Punto de venta. Debe tener una longitud de 5 caracteres ( Segun https://www.afip.gob.ar/genericos/guiavirtual/consultas_detalle.aspx?id=130014 )
 		if(Util.isEmpty(invoice.getPuntoDeVenta(), true)){
 			getLog().severe("No existe punto de venta");
 			return;
 		}
-		Integer puntoDeVenta = invoice.getPuntoDeVenta();
+		Integer puntoDeVenta = invoice.getPuntoDeVenta();		
 		String ptoVta = String.valueOf(puntoDeVenta);
-		// El punto de venta debe ir con 0 cuando es menor a 1000
-		if(puntoDeVenta < 1000){
-			ptoVta = "0";
-			// Si es menor a 100, hay que agregar otro 0
-			if(puntoDeVenta < 100){
-				ptoVta += "0";
-			}
-			// Si es menor a 10, hay que agregar otro 0
-			if(puntoDeVenta < 10){
-				ptoVta += "0";
-			}
-			ptoVta = ptoVta+String.valueOf(puntoDeVenta);
+		for (int i = ptoVta.length(); i < 5; i++) {
+			ptoVta = "0" + ptoVta;
 		}
 		setPuntoDeVenta(ptoVta);
 		// d) Código de Autorización de Impresión (C.A.I.).
