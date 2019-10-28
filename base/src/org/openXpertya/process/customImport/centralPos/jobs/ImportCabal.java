@@ -172,37 +172,37 @@ public class ImportCabal extends Import {
 		String name = "IVA 21";
 		id = getTaxIDByName(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
-			throw new Exception("No se encontró el concepto IVA 21");
+			throw new Exception("No se encontró el concepto "+name);
 		}
 		
 		name = "Importe Arancel";
 		id = getCardSettlementConceptIDByValue(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
-			throw new Exception("No se encontró el concepto Importe Arancel");
+			throw new Exception("No se encontró el concepto "+name);
 		}
 		
 		name = "Ret IVA";
 		id = getRetencionSchemaIDByValue(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
-			throw new Exception("No se encontró el concepto Ret IVA");
+			throw new Exception("No se encontró el concepto "+name);
 		}
 		
 		name = "Ret Ganancias";
 		id = getRetencionSchemaIDByValue(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
-			throw new Exception("No se encontró el concepto Ret Ganancias");
+			throw new Exception("No se encontró el concepto "+name);
 		}
 		
 		name = "Costo Financiero";
 		id = getCardSettlementConceptIDByValue(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
-			throw new Exception("No se encontró el concepto Costo plan acelerado cuotas");
+			throw new Exception("No se encontró el concepto "+name);
 		}
 		
 		name = "IVA";
 		id = getTaxIDByName(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
-			throw new Exception("No se encontró el concepto IVA");
+			throw new Exception("No se encontró el concepto "+name);
 		}
 		
 		//IIBB
