@@ -7008,7 +7008,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		try 
 		{
 			int invoicePayScheduleID = 0;
-			stmt = DB.prepareStatement("SELECT c_invoicepayschedule_id FROM c_invoice_v WHERE c_invoice_id = ? ORDER BY c_invoicepayschedule_id DESC");
+			stmt = DB.prepareStatement("SELECT c_invoicepayschedule_id FROM c_invoice_v WHERE c_invoice_id = ? ORDER BY c_invoicepayschedule_id DESC", get_TrxName());
 			stmt.setInt(1, getC_Invoice_ID());
 			rs = stmt.executeQuery();
 			if (!rs.next() || rs.getInt(1) == 0)
