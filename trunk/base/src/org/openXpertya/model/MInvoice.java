@@ -6996,14 +6996,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				}
 			}
 			
-		} else {
-			MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
-			if(bp.isEmitir_Mi_Pyme()) {
-				// Mi Pyme Obligatorio
-				cr.setMsg(Msg.getMsg(getCtx(), "BusinessPartnerOnlyMiPyme"), true);
-				return cr;
-			}
-		}
+		} 
 		return cr;
 	}
 	
