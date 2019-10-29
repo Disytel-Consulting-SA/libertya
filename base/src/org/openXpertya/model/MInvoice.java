@@ -6981,9 +6981,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				else {
 					MInvoice cimp = new MInvoice(getCtx(), getC_Invoice_Orig_ID(), get_TrxName());
 					MDocType dtCIMP = MDocType.get(getCtx(), cimp.getC_DocTypeTarget_ID());
-					// Es Factura Mi Pyme?
-					if(!dtCIMP.getDocTypeKey().startsWith(MDocType.DOCTYPE_CustomerInvoice_MiPyME)) {
-						// El comprobante original no es Factura MI Pyme.
+					// Es un comprobante Mi Pyme?
+					if(!dtCIMP.isMiPyME()) {
+						// El comprobante original no es Mi Pyme.
 						cr.setMsg(Msg.getMsg(getCtx(), "OriginalDocumentMustBeMiPyme"), true);
 						return cr;
 					}
