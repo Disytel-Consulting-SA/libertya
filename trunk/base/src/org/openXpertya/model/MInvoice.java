@@ -286,6 +286,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			boolean voidProcess, boolean copyAutomaticInvoiceTaxes) {
 		MInvoice to = new MInvoice(from.getCtx(), 0, trxName);
 
+		boolean localeARActive = CalloutInvoiceExt.ComprobantesFiscalesActivos();
+		
 		PO.copyValues(from, to, from.getAD_Client_ID(), from.getAD_Org_ID());
 		to.setC_Invoice_ID(0);
 		to.set_ValueNoCheck("DocumentNo", null);
@@ -365,6 +367,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 		} else {
 			to.setRef_Invoice_ID(0);
+		}
+		
+		if (localeARActive & isSOTrx) {
+			to.setC_Invoice_Orig_ID(from.getC_Invoice_Orig_ID());
 		}
 
 		if (!to.save(trxName)) {
@@ -1167,11 +1173,17 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// de documentos en la localización argentina.
 		reverseDocTypes = new HashMap<String, String>();
 		reverseDocTypes.put(MDocType.DOCTYPE_CustomerInvoice,
-				MDocType.DOCTYPE_CustomerCreditNote);
+		MDocType.DOCTYPE_CustomerCreditNote);
+		reverseDocTypes.put(MDocType.DOCTYPE_CustomerInvoice_MiPyME,
+		MDocType.DOCTYPE_CustomerCreditNote_MiPyME);
 		reverseDocTypes.put(MDocType.DOCTYPE_CustomerDebitNote,
-				MDocType.DOCTYPE_CustomerCreditNote);
+		MDocType.DOCTYPE_CustomerCreditNote);
+		reverseDocTypes.put(MDocType.DOCTYPE_CustomerDebitNote_MiPyME,
+		MDocType.DOCTYPE_CustomerCreditNote_MiPyME);
 		reverseDocTypes.put(MDocType.DOCTYPE_CustomerCreditNote,
-				MDocType.DOCTYPE_CustomerDebitNote);
+		MDocType.DOCTYPE_CustomerDebitNote);
+		reverseDocTypes.put(MDocType.DOCTYPE_CustomerCreditNote_MiPyME,
+		MDocType.DOCTYPE_CustomerDebitNote_MiPyME);
 	}
 
 	/**
