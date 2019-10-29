@@ -370,7 +370,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 		
 		if (localeARActive & isSOTrx) {
-			to.setC_Invoice_Orig_ID(from.getC_Invoice_Orig_ID());
+			to.setC_Invoice_Orig_ID(from.getC_Invoice_ID());
 		}
 
 		if (!to.save(trxName)) {
