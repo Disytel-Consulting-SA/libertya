@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_Acct_Balance
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-07-04 19:40:40.783 */
+ *  @version  - 2019-11-01 18:31:13.471 */
 public class X_T_Acct_Balance extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -176,6 +176,18 @@ BigDecimal bd = (BigDecimal)get_Value("Credit");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Credit Adjusted */
+public void setCreditAdjusted (BigDecimal CreditAdjusted)
+{
+set_Value ("CreditAdjusted", CreditAdjusted);
+}
+/** Get Credit Adjusted */
+public BigDecimal getCreditAdjusted() 
+{
+BigDecimal bd = (BigDecimal)get_Value("CreditAdjusted");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Debit */
 public void setDebit (BigDecimal Debit)
 {
@@ -185,6 +197,18 @@ set_Value ("Debit", Debit);
 public BigDecimal getDebit() 
 {
 BigDecimal bd = (BigDecimal)get_Value("Debit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Debit Adjusted */
+public void setDebitAdjusted (BigDecimal DebitAdjusted)
+{
+set_Value ("DebitAdjusted", DebitAdjusted);
+}
+/** Get Debit Adjusted */
+public BigDecimal getDebitAdjusted() 
+{
+BigDecimal bd = (BigDecimal)get_Value("DebitAdjusted");
 if (bd == null) return Env.ZERO;
 return bd;
 }
