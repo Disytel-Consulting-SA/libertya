@@ -540,3 +540,6 @@ WITH (
 );
 ALTER TABLE i_cabalpayments
   OWNER TO libertya;
+  
+--20191101-1155 Incremento de tamaño de la columna balance ajustado
+ALTER TABLE T_ACCT_Balance ALTER COLUMN balanceadjusted TYPE numeric(22,2);
