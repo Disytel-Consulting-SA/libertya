@@ -1,12 +1,9 @@
 package org.openXpertya.process;
 
-import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
@@ -98,39 +95,69 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 			
 			log.fine("T_Acct_Balance Debit/Credit update OK = " + no);
 			
+			// Actualizo el débito y crédito ajustado
+			StringBuffer sqlUpdateBalance = new StringBuffer();
+			sqlUpdateBalance.append(" UPDATE ").append(getReportTableName()).append(" t ");
+			sqlUpdateBalance.append(" SET DebitAdjusted = Debit, CreditAdjusted = Credit ");
+			sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? ");
+			i = 1;
+			pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
+			pstmt.setInt     (i++, getAD_PInstance_ID());
+			no = pstmt.executeUpdate();
+			
 			// Actualización de saldo
 			if(updateBalance){
 				// Actualizar el saldo ajustado
-				StringBuffer sqlUpdateBalance = new StringBuffer();
 				if(applyInflationIndexes) {
+					sqlUpdateBalance = new StringBuffer();
 					sqlUpdateBalance.append(" UPDATE ").append(getReportTableName()).append(" t ");
-					sqlUpdateBalance.append(" SET BalanceAdjusted =  ");
+					sqlUpdateBalance.append(" SET DebitAdjusted = DebitAdjusted + ");
 					sqlUpdateBalance.append(" 	    (SELECT COALESCE(SUM(thesum),0.0) AS thesum ");
 					
 					sqlUpdateBalance.append(" 	    FROM ( ")
-							.append(getSQLView("(AmtAcctDr-AmtAcctCr)+((AmtAcctDr-AmtAcctCr) * (CASE WHEN "
+							.append(getSQLView("AmtAcctDr * (CASE WHEN "
 									+ inflationIndex.getInflationIndex() + " = 0 THEN 0 ELSE ((inflationindex - "
 									+ inflationIndex.getInflationIndex() + ") / " + inflationIndex.getInflationIndex()
-									+ ") END))", true))
+									+ ") END)", true))
+							.append(" ) v ");
+					sqlUpdateBalance.append(" 	    WHERE  v.HierarchicalCode LIKE t.HierarchicalCode || '%' ");
+					sqlUpdateBalance.append("     ), ");
+					sqlUpdateBalance.append(" CreditAdjusted = CreditAdjusted + ");
+					sqlUpdateBalance.append(" 	    (SELECT COALESCE(SUM(thesum),0.0) AS thesum ");
+					
+					sqlUpdateBalance.append(" 	    FROM ( ")
+					.append(getSQLView("AmtAcctCr * (CASE WHEN "
+									+ inflationIndex.getInflationIndex() + " = 0 THEN 0 ELSE ((inflationindex - "
+									+ inflationIndex.getInflationIndex() + ") / " + inflationIndex.getInflationIndex()
+									+ ") END) ", true))
 							.append(" ) v ");
 					sqlUpdateBalance.append(" 	    WHERE  v.HierarchicalCode LIKE t.HierarchicalCode || '%' ");
 					sqlUpdateBalance.append("     ) ");
-					sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? ");
+					sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? AND t.isadjustable = 'Y' ");
 					pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
+					// Parametros del primer sqlView
 					i = 1;
+					pstmt.setInt     (i++, getAD_PInstance_ID());
+					i = pstmtSetParam(i, auxAD_Org_ID, pstmt);
+					i = pstmtSetParam(i, p_DateAcct_From, pstmt);
+					i = pstmtSetParam(i, p_DateAcct_To, pstmt);
+					// Parametros del segundo sqlView
 					pstmt.setInt     (i++, getAD_PInstance_ID());
 					i = pstmtSetParam(i, auxAD_Org_ID, pstmt);
 					i = pstmtSetParam(i, p_DateAcct_From, pstmt);
 					i = pstmtSetParam(i, p_DateAcct_To, pstmt);
 					pstmt.setInt(i++, getAD_PInstance_ID());
 					no = pstmt.executeUpdate();
-					log.fine("T_Acct_Balance Balance Adjusted update OK = " + no);
+					log.fine("T_Acct_Balance Adjusted Amts update OK = " + no);
+				}
+				else {
+					
 				}
 				// Actualización del SALDO en base al debe y el haber
 				sqlUpdateBalance = new StringBuffer();
 				sqlUpdateBalance.append(" UPDATE ").append(getReportTableName());
 				sqlUpdateBalance.append(" SET Balance = Debit - Credit, ");
-				sqlUpdateBalance.append(" BalanceAdjusted = (CASE WHEN BalanceAdjusted IS NULL OR BalanceAdjusted = 0 THEN Debit - Credit ELSE BalanceAdjusted END) ");
+				sqlUpdateBalance.append(" BalanceAdjusted = DebitAdjusted - CreditAdjusted ");
 				if (p_C_ElementValue_To_ID != null) {
 					sqlUpdateBalance.append(", ");
 					sqlUpdateBalance.append(" c_elementvalue_to_id = " + p_C_ElementValue_To_ID );
@@ -145,10 +172,12 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 				// Ajustar el saldo del totalizado, sería el índice 0
 				sqlUpdateBalance = new StringBuffer();
 				sqlUpdateBalance.append(" UPDATE ").append(getReportTableName());
-				sqlUpdateBalance.append(" SET BalanceAdjusted = (select sum(BalanceAdjusted - Balance) FROM ").append(getReportTableName()).append(" WHERE AD_PInstance_ID = ? and subindex <> 0) ");
+				sqlUpdateBalance.append(" SET BalanceAdjusted = (select sum(BalanceAdjusted) FROM ").append(getReportTableName()).append(" t JOIN c_elementvalue ev on ev.c_elementvalue_id = t.c_elementvalue_id WHERE AD_PInstance_ID = ? and subindex <> 0 and ev.issummary = 'N'), ");
+				sqlUpdateBalance.append(" Balance = (select sum(Balance) FROM ").append(getReportTableName()).append(" t JOIN c_elementvalue ev on ev.c_elementvalue_id = t.c_elementvalue_id WHERE AD_PInstance_ID = ? and subindex <> 0 and ev.issummary = 'N') ");
 				sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? and subindex = 0 ");
 				pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
 				i = 1;
+				pstmt.setInt(i++, getAD_PInstance_ID());
 				pstmt.setInt(i++, getAD_PInstance_ID());
 				pstmt.setInt(i++, getAD_PInstance_ID());
 				no = pstmt.executeUpdate();
@@ -294,7 +323,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		sqlAppend     ("   AND fa.AD_Org_ID = ? ", p_AD_Org_ID > 0, sqlView);
 		sqlAppend     ("   AND ?::date <= fa.DateAcct::date ", p_DateAcct_From, sqlView);
 		sqlAppend     ("   AND fa.DateAcct::date <= ?::date ", p_DateAcct_To, sqlView);
-		if(withInflationIndex) {
+		if(withInflationIndex){
 			sqlView.append("   AND ev.isadjustable = 'Y' ");
 		}
 		sqlView.append(" GROUP BY ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode ");
@@ -354,7 +383,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 			ps.close();
 			if(periodNames.length() > 0) {
 				periodNames = periodNames.substring(1);
-				throw new Exception(Msg.getMsg(getCtx(), "Los siguientes periodos no poseen índice de inflación cargado: "+periodNames));
+				throw new Exception(Msg.getMsg(getCtx(), "NoInflationIndexPeriods", new Object[] {periodNames}));
 			}
 		}
 	}

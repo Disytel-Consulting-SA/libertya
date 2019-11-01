@@ -543,3 +543,7 @@ ALTER TABLE i_cabalpayments
   
 --20191101-1155 Incremento de tamaño de la columna balance ajustado
 ALTER TABLE T_ACCT_Balance ALTER COLUMN balanceadjusted TYPE numeric(22,2);
+
+--20191101-1830 Nuevas columnas para registrar el debe y haber ajustado por inflación
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_ACCT_Balance','debitadjusted','numeric(22,2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_ACCT_Balance','creditadjusted','numeric(22,2)'));
