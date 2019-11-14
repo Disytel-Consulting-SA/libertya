@@ -4152,6 +4152,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 						.getQtyEntered().add(qtySign));
 				orderLineToUpdate.setQtyOrdered(orderLineToUpdate
 						.getQtyOrdered().add(qtySign));
+				orderLineToUpdate.setControlStock(false);
+				orderLineToUpdate.setUpdatePriceInSave(false);
 				if (!orderLineToUpdate.save()) {
 					setProcessMsg(CLogger.retrieveErrorAsString());
 					return DOCSTATUS_Invalid;
