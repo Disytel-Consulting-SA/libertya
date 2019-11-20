@@ -793,7 +793,17 @@ public class VConciliacionTableModel {
 			// Se setea la moneda a 0 para que se asigne la moneda del pago en
 			// la línea de la conciliación
 			line.setC_Currency_ID(0);
+			BigDecimal lineAmt = line.getTrxAmt();
 			line.setPayment(pay);
+			if (lineAmt.compareTo(BigDecimal.ZERO) == 0
+					|| pay.getPayAmt().abs().compareTo(lineAmt.abs()) < 0) {
+				lineAmt = pay.getPayAmt();
+			}
+			else {
+				lineAmt = lineAmt.abs().multiply(new BigDecimal(pay.getPayAmt().signum()));
+			}
+			line.setTrxAmt(lineAmt);
+			line.setStmtAmt(lineAmt);
 			saveok = line.save();
 		}
 		
@@ -878,11 +888,17 @@ public class VConciliacionTableModel {
 				if (pay != null) {
 					brec.setC_Payment_ID(pay.getC_Payment_ID());
 					brec.setC_Currency_ID(pay.getC_Currency_ID());
-					brec.setTrxAmt(pay.getPayAmt());
+					if (line.getTrxAmt().compareTo(BigDecimal.ZERO) == 0
+							|| pay.getPayAmt().abs().compareTo(line.getTrxAmt().abs()) < 0) {
+						brec.setTrxAmt(pay.getPayAmt());
+					}
 				} else if (boleta != null) { 
 					brec.setM_BoletaDeposito_ID(boleta.getM_BoletaDeposito_ID());
 					brec.setC_Currency_ID(boleta.getC_Currency_ID());
-					brec.setTrxAmt(boleta.getGrandTotal());
+					if (line.getTrxAmt().compareTo(BigDecimal.ZERO) == 0
+							|| boleta.getGrandTotal().abs().compareTo(line.getTrxAmt().abs()) < 0) {
+						brec.setTrxAmt(boleta.getGrandTotal());
+					}
 				}
 			}
 
