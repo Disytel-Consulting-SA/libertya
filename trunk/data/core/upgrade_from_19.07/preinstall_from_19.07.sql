@@ -547,3 +547,72 @@ ALTER TABLE T_ACCT_Balance ALTER COLUMN balanceadjusted TYPE numeric(22,2);
 --20191101-1830 Nuevas columnas para registrar el debe y haber ajustado por inflación
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_ACCT_Balance','debitadjusted','numeric(22,2)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_ACCT_Balance','creditadjusted','numeric(22,2)'));
+
+--20191120-115900 Tabla de prefijo de microcomponentes
+CREATE TABLE ad_microcomponentprefix
+(
+  ad_microcomponentprefix_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  prefix varchar(10) NOT NULL,
+  description varchar(2000) NOT NULL
+);
+ALTER TABLE ad_microcomponentprefix ADD CONSTRAINT microcomponent_key PRIMARY KEY (ad_microcomponentprefix_id);
+ALTER TABLE ad_microcomponentprefix ADD CONSTRAINT microcomponent_prefix UNIQUE (prefix);
+
+--20191420-141208 Ampliacion de prefijo en AD_Component
+drop view ad_changelog_dev;
+ 
+alter table ad_component alter column prefix type varchar(10);
+
+-- Vista detallada de changelog (orientada al desarrollo de plugins)
+CREATE OR REPLACE VIEW ad_changelog_dev AS 
+	SELECT
+		g.ad_changelog_id, 
+		c.name AS client, 
+		o.name AS organization, 
+		g.isactive, 
+		g.created,
+		uc.name AS createdbyuser,
+		g.updated, 
+		uu.name AS updatedbyuser, 
+		changeloggroup_id,
+		operationtype,
+		t.tablename,
+		l.columnname,
+		g.record_id,
+		g.ad_componentobjectuid,
+		g.oldvalue,
+		g.newvalue,
+		g.binaryvalue,
+		p.prefix AS componentprefix,
+		p.publicname AS componentname,
+		v.version AS componentversion,
+		g.ad_componentversion_id,
+		g.createdby,
+		g.updatedby,
+		g.ad_session_id,
+		g.ad_table_id,
+		g.ad_column_id,
+		g.iscustomization,
+		g.redo,
+		g.undo,
+		g.trxname
+	FROM ad_changelog g
+	INNER JOIN ad_client c ON (g.ad_client_id = c.ad_client_id)
+	INNER JOIN ad_org o ON (g.ad_org_id = o.ad_org_id)
+	INNER JOIN ad_user uc ON (g.createdby = uc.ad_user_id)
+	INNER JOIN ad_user uu ON (g.updatedby = uu.ad_user_id)
+	INNER JOIN ad_table t ON (g.ad_table_id = t.ad_table_id)
+	INNER JOIN ad_column l ON (g.ad_column_id = l.ad_column_id)
+	INNER JOIN ad_componentversion v ON (g.ad_componentversion_id = v.ad_componentversion_id)
+	INNER JOIN ad_component p ON (v.ad_component_id = p.ad_component_id)
+	ORDER BY created DESC, changeloggroup_id DESC, ad_changelog_id DESC;
+
+-- Nueva columna en ad_component para determinar si el componente a desarrollar es un micro componente
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_component','ismicrocomponent','character(1) NOT NULL DEFAULT ''N''::bpchar'));

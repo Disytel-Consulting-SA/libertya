@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Component
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:26.343 */
-public class X_AD_Component extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2019-11-20 14:57:20.648 */
+public class X_AD_Component extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Component (Properties ctx, int AD_Component_ID, String trxName)
@@ -17,6 +18,7 @@ super (ctx, AD_Component_ID, trxName);
 {
 setAD_Component_ID (0);
 setCoreLevel (0);
+setIsMicroComponent (false);	// N
 setPackageName (null);
 setPrefix (null);
 setPublicName (null);
@@ -28,13 +30,13 @@ public X_AD_Component (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1010190 */
-public static final int Table_ID=1010190;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Component");
 
 /** TableName=AD_Component */
 public static final String Table_Name="AD_Component";
 
-protected static KeyNamePair Model = new KeyNamePair(1010190,"AD_Component");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Component");
 protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
@@ -104,6 +106,22 @@ Integer ii = (Integer)get_Value("CoreLevel");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set IsMicroComponent */
+public void setIsMicroComponent (boolean IsMicroComponent)
+{
+set_Value ("IsMicroComponent", new Boolean(IsMicroComponent));
+}
+/** Get IsMicroComponent */
+public boolean isMicroComponent() 
+{
+Object oo = get_Value("IsMicroComponent");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set PackageName */
 public void setPackageName (String PackageName)
 {
@@ -125,10 +143,10 @@ Prefix before the sequence number */
 public void setPrefix (String Prefix)
 {
 if (Prefix == null) throw new IllegalArgumentException ("Prefix is mandatory");
-if (Prefix.length() > 4)
+if (Prefix.length() > 10)
 {
-log.warning("Length > 4 - truncated");
-Prefix = Prefix.substring(0,4);
+log.warning("Length > 10 - truncated");
+Prefix = Prefix.substring(0,10);
 }
 set_Value ("Prefix", Prefix);
 }
@@ -153,5 +171,9 @@ set_Value ("PublicName", PublicName);
 public String getPublicName() 
 {
 return (String)get_Value("PublicName");
+}
+public KeyNamePair getKeyNamePair() 
+{
+return new KeyNamePair(getID(), getPublicName());
 }
 }
