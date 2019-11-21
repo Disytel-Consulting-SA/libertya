@@ -115,6 +115,8 @@ public class TransferReplicationFilter extends ReplicationFilter {
 		// Setear el repArray final
 		group.setRepArray(sb.toString());
 		
+		// Debe omitirse la replicación del campo C_Order_ID.
+		removeElement(group, "C_Order_ID");
 
 	}
 
