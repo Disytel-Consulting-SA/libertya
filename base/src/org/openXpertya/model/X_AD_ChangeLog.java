@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ChangeLog
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-11-25 09:34:05.039 */
+ *  @version  - 2019-11-21 12:53:08.675 */
 public class X_AD_ChangeLog extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -162,6 +163,21 @@ Integer ii = (Integer)get_Value("ChangeLogGroup_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set ChangeLogUID */
+public void setChangeLogUID (String ChangeLogUID)
+{
+if (ChangeLogUID != null && ChangeLogUID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+ChangeLogUID = ChangeLogUID.substring(0,100);
+}
+set_Value ("ChangeLogUID", ChangeLogUID);
+}
+/** Get ChangeLogUID */
+public String getChangeLogUID() 
+{
+return (String)get_Value("ChangeLogUID");
+}
 /** Set Customization.
 The change is a customization of the data dictionary and can be applied after Migration */
 public void setIsCustomization (boolean IsCustomization)
@@ -224,8 +240,8 @@ public static final String OPERATIONTYPE_Modification = "M";
 /** Set Operation Type */
 public void setOperationType (String OperationType)
 {
-if (OperationType == null || OperationType.equals("D") || OperationType.equals("I") || OperationType.equals("M"));
- else throw new IllegalArgumentException ("OperationType Invalid value - Reference = OPERATIONTYPE_AD_Reference_ID - D - I - M");
+if (OperationType == null || OperationType.equals("D") || OperationType.equals("I") || OperationType.equals("M") || ( refContainsValue("CORE-AD_Reference-1010097", OperationType) ) );
+ else throw new IllegalArgumentException ("OperationType Invalid value: " + OperationType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010097") );
 if (OperationType != null && OperationType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
