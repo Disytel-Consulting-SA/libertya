@@ -222,6 +222,9 @@
 	<parameter name="PRINT_RETENCIONES" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="BPARTNER_TAXID" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="LOGO" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SHOW_CREDIT_NOTE_SUBREPORT" isForPrompting="false" class="java.lang.Boolean"/>
+	<parameter name="COMPILED_SUBREPORT_CREDIT_NOTES" isForPrompting="false" class="java.io.InputStream"/>
+	<parameter name="SUBREPORT_CREDIT_NOTES_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 
 	<variable name="CITY" class="java.lang.String" resetType="Report" calculation="Nothing">
 		<variableExpression><![CDATA[$P{CITY_NAME} + ", "]]></variableExpression>
@@ -337,11 +340,11 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="436"  isSplitAllowed="true" >
+			<band height="473"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
-						y="354"
+						y="396"
 						width="535"
 						height="21"
 						key="staticText-4"
@@ -355,7 +358,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
-						y="376"
+						y="418"
 						width="535"
 						height="18"
 						key="textField"
@@ -380,7 +383,7 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="313"
+						y="367"
 						width="535"
 						height="22"
 						key="subreport-2"
@@ -540,7 +543,7 @@
 				<staticText>
 					<reportElement
 						x="0"
-						y="288"
+						y="343"
 						width="535"
 						height="19"
 						key="staticText-12"
@@ -576,7 +579,7 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="402"
+						y="444"
 						width="532"
 						height="26"
 						key="subreport-4"
@@ -586,6 +589,37 @@
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_COMPROBANTE_RETENCION_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_COMPROBANTE_RETENCION}]]></subreportExpression>
 				</subreport>
+				<subreport  isUsingCache="true">
+					<reportElement
+						x="0"
+						y="307"
+						width="535"
+						height="30"
+						key="subreport-5"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[$P{SHOW_CREDIT_NOTE_SUBREPORT}]]></printWhenExpression>
+						</reportElement>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_CREDIT_NOTES_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_CREDIT_NOTES}]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement
+						x="0"
+						y="286"
+						width="535"
+						height="18"
+						key="staticText-13"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[$P{SHOW_CREDIT_NOTE_SUBREPORT}]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font size="12"/>
+					</textElement>
+				<text><![CDATA[Notas de Crédito]]></text>
+				</staticText>
 			</band>
 		</summary>
 </jasperReport>
