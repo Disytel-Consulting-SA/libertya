@@ -616,3 +616,6 @@ CREATE OR REPLACE VIEW ad_changelog_dev AS
 
 -- Nueva columna en ad_component para determinar si el componente a desarrollar es un micro componente
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_component','ismicrocomponent','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+-- Nueva columna en ad_changelog para almacenar el changelogUID 
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_changelog','changeloguid','varchar(100)'));
