@@ -149,14 +149,14 @@ public class ImportCabal extends Import {
 	@Override
 	public void setDateFromParam(Timestamp date) {
 		if (date != null) {
-			addParam("fecha_pago", Env.getDateFormatted(date));
+			addParam("fecha_pago-min", Env.getDateFormatted(date));
 		}
 	}
 
 	@Override
 	public void setDateToParam(Timestamp date) {
 		if (date != null) {
-			addParam("fecha_pago", Env.getDateFormatted(date));
+			addParam("fecha_pago-max", Env.getDateFormatted(date));
 		}
 	}
 
