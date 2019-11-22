@@ -12,12 +12,15 @@ import org.openXpertya.util.Util;
 public class MComponentVersion extends X_AD_ComponentVersion {
 
 	/** Uso de cache a fin de evitar una consulta en cada guardado o borrado */
-	/* Ya fue seteado el MComponentVersion (bien con uno Component existente o con null)? */
+	/** Ya fue seteado el MComponentVersion (bien con uno Component existente o con null)? */
 	private static boolean 			 isSetcurrentComponentVersionInDevelopment 	= false;
 	
-	/* Componente actualmente en desarrollo */
+	/** Version de Componente actualmente en desarrollo */
 	private static MComponentVersion currentComponentVersionInDevelopment 		= null;
-	
+
+	/** Version de Componente actualmente en desarrollo */
+	private static MComponent currentComponentInDevelopment 		= null;
+
 	
 	// Métodos de clase
 	
@@ -42,6 +45,9 @@ public class MComponentVersion extends X_AD_ComponentVersion {
 			rs = ps.executeQuery();
 			if(rs.next()){
 				currentComponentVersionInDevelopment = new MComponentVersion(ctx, rs, trxName);
+				if (currentComponentVersionInDevelopment!=null && currentComponentVersionInDevelopment.getAD_ComponentVersion_ID() > 0) {
+					currentComponentInDevelopment = new MComponent(ctx, currentComponentVersionInDevelopment.getAD_Component_ID(), trxName);
+				}
 			}
 		} catch(Exception e){
 			e.printStackTrace();
@@ -58,6 +64,14 @@ public class MComponentVersion extends X_AD_ComponentVersion {
 		/* Por null o por Component correcto, ya se seteó el valor de currentComponentVersionInDevelopment */
 		isSetcurrentComponentVersionInDevelopment = true;
 		return currentComponentVersionInDevelopment;
+	}
+	
+	/** Retorna el componente referenciado por el componentversion actualmente activo */
+	public static MComponent getCurrentComponent(Properties ctx, String trxName){
+		// Precargar los valores en cache si es que corresponde
+		getCurrentComponentVersion(ctx, trxName);
+		// Retornar el componente correspondiente al componentversion actualmente activo
+		return currentComponentInDevelopment;
 	}
 	
 	
