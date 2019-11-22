@@ -619,3 +619,5 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('ad_component','ismicr
 
 -- Nueva columna en ad_changelog para almacenar el changelogUID 
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_changelog','changeloguid','varchar(100)'));
+-- Nueva columna en ad_changelog para almacenar el changelogGroupUID 
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_changelog','changeloggroupuid','varchar(100)'));
