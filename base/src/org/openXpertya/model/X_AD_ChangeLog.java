@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ChangeLog
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-11-21 12:53:08.675 */
+ *  @version  - 2019-11-22 10:21:03.973 */
 public class X_AD_ChangeLog extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -162,6 +162,21 @@ public int getChangeLogGroup_ID()
 Integer ii = (Integer)get_Value("ChangeLogGroup_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set ChangeLogGroupUID */
+public void setChangeLogGroupUID (String ChangeLogGroupUID)
+{
+if (ChangeLogGroupUID != null && ChangeLogGroupUID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+ChangeLogGroupUID = ChangeLogGroupUID.substring(0,100);
+}
+set_Value ("ChangeLogGroupUID", ChangeLogGroupUID);
+}
+/** Get ChangeLogGroupUID */
+public String getChangeLogGroupUID() 
+{
+return (String)get_Value("ChangeLogGroupUID");
 }
 /** Set ChangeLogUID */
 public void setChangeLogUID (String ChangeLogUID)
