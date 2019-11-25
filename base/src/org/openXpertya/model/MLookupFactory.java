@@ -52,6 +52,12 @@ public class MLookupFactory {
 
     /** Table Reference Cache */
     private static CCache	s_cacheRefTable	= new CCache("AD_Ref_Table", 30, 60);		// 1h
+    
+	/**
+	 * Preference que determina si se debe agregar la validación por organización a
+	 * la columna C_Invoice_ID de la tabla C_CashLine
+	 */
+    private static String ADD_VALIDATION_INVOICE_CASHLINE_PREFERENCE_NAME = "C_CashLine_C_Invoice_ID_AddOrgValidation";
 
     //~--- get methods --------------------------------------------------------
 
@@ -290,9 +296,24 @@ public class MLookupFactory {
         // AddSecurity Hardcode 
 		// TODO Se debería colocar una parametrización en la columna para que
 		// permita o no agregar esta seguridad de organización
+        
+        // Para la factura de líneas de caja, se basa en una preference
+        boolean isCashLineInvoice = false;
+    	// Determinar si la preference hay que buscarlo
+		String prefValue = MPreference.searchCustomPreferenceValue(ADD_VALIDATION_INVOICE_CASHLINE_PREFERENCE_NAME,
+				Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx), Env.getAD_User_ID(ctx), true);
+		if ((prefValue != null && prefValue.equals("N")) && ColumnName.equalsIgnoreCase("C_Invoice_ID")) {
+        	// Determinar si estoy en la tabla C_CashLine
+			int tableID = DB.getSQLValue(null,
+					"SELECT t.ad_table_id from ad_column c join ad_table t on t.ad_table_id = c.ad_table_id where c.ad_column_id = "
+							+ Column_ID + " and t.tablename = 'C_CashLine'");
+			isCashLineInvoice = tableID > 0;
+        }        
+        
         if(ColumnName.equalsIgnoreCase("M_WarehouseTo_ID") 
         		|| ColumnName.equals("AD_Org_Transfer_ID")
-        		|| ColumnName.equals("M_Warehouse_Transfer_ID")){
+        		|| ColumnName.equals("M_Warehouse_Transfer_ID")
+        		|| isCashLineInvoice){
         	addSecurity = false;
         }
         
