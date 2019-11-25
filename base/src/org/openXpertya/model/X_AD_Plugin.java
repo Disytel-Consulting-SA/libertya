@@ -1,12 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Plugin
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2010-11-01 12:40:55.903 */
+ *  @version  - 2019-11-25 12:11:21.389 */
 public class X_AD_Plugin extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -99,13 +100,43 @@ public String getComponent_Export_Date()
 {
 return (String)get_Value("Component_Export_Date");
 }
+/** Set Component_First_Changelog_Group_UID */
+public void setComponent_First_Changelog_Group_UID (String Component_First_Changelog_Group_UID)
+{
+if (Component_First_Changelog_Group_UID != null && Component_First_Changelog_Group_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_First_Changelog_Group_UID = Component_First_Changelog_Group_UID.substring(0,100);
+}
+set_Value ("Component_First_Changelog_Group_UID", Component_First_Changelog_Group_UID);
+}
+/** Get Component_First_Changelog_Group_UID */
+public String getComponent_First_Changelog_Group_UID() 
+{
+return (String)get_Value("Component_First_Changelog_Group_UID");
+}
+/** Set Component_First_Changelog_UID */
+public void setComponent_First_Changelog_UID (String Component_First_Changelog_UID)
+{
+if (Component_First_Changelog_UID != null && Component_First_Changelog_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_First_Changelog_UID = Component_First_Changelog_UID.substring(0,100);
+}
+set_Value ("Component_First_Changelog_UID", Component_First_Changelog_UID);
+}
+/** Get Component_First_Changelog_UID */
+public String getComponent_First_Changelog_UID() 
+{
+return (String)get_Value("Component_First_Changelog_UID");
+}
 /** Set Component_Last_Changelog */
 public void setComponent_Last_Changelog (String Component_Last_Changelog)
 {
-if (Component_Last_Changelog != null && Component_Last_Changelog.length() > 30)
+if (Component_Last_Changelog != null && Component_Last_Changelog.length() > 60)
 {
-log.warning("Length > 30 - truncated");
-Component_Last_Changelog = Component_Last_Changelog.substring(0,30);
+log.warning("Length > 60 - truncated");
+Component_Last_Changelog = Component_Last_Changelog.substring(0,60);
 }
 set_Value ("Component_Last_Changelog", Component_Last_Changelog);
 }
@@ -113,5 +144,35 @@ set_Value ("Component_Last_Changelog", Component_Last_Changelog);
 public String getComponent_Last_Changelog() 
 {
 return (String)get_Value("Component_Last_Changelog");
+}
+/** Set Component_Last_Changelog_Group_UID */
+public void setComponent_Last_Changelog_Group_UID (String Component_Last_Changelog_Group_UID)
+{
+if (Component_Last_Changelog_Group_UID != null && Component_Last_Changelog_Group_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_Last_Changelog_Group_UID = Component_Last_Changelog_Group_UID.substring(0,100);
+}
+set_Value ("Component_Last_Changelog_Group_UID", Component_Last_Changelog_Group_UID);
+}
+/** Get Component_Last_Changelog_Group_UID */
+public String getComponent_Last_Changelog_Group_UID() 
+{
+return (String)get_Value("Component_Last_Changelog_Group_UID");
+}
+/** Set Component_Last_Changelog_UID */
+public void setComponent_Last_Changelog_UID (String Component_Last_Changelog_UID)
+{
+if (Component_Last_Changelog_UID != null && Component_Last_Changelog_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_Last_Changelog_UID = Component_Last_Changelog_UID.substring(0,100);
+}
+set_Value ("Component_Last_Changelog_UID", Component_Last_Changelog_UID);
+}
+/** Get Component_Last_Changelog_UID */
+public String getComponent_Last_Changelog_UID() 
+{
+return (String)get_Value("Component_Last_Changelog_UID");
 }
 }

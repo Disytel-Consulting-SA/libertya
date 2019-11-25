@@ -621,3 +621,13 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('ad_component','ismicr
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_changelog','changeloguid','varchar(100)'));
 -- Nueva columna en ad_changelog para almacenar el changelogGroupUID 
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_changelog','changeloggroupuid','varchar(100)'));
+
+-- Nuevas columnas para almacenar los first/last changeLogUID / changeLogGroupUID
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin','component_first_changelog_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin','component_last_changelog_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin','component_first_changelog_group_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin','component_last_changelog_group_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin_detail','component_first_changelog_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin_detail','component_last_changelog_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin_detail','component_first_changelog_group_uid','varchar(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_plugin_detail','component_last_changelog_group_uid','varchar(100)'));
