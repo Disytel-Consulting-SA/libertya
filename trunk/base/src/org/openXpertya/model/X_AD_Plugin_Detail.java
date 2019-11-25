@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Plugin_Detail
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-07 10:06:57.45 */
+ *  @version  - 2019-11-25 12:11:23.229 */
 public class X_AD_Plugin_Detail extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -100,6 +100,36 @@ public String getComponent_First_Changelog()
 {
 return (String)get_Value("Component_First_Changelog");
 }
+/** Set Component_First_Changelog_Group_UID */
+public void setComponent_First_Changelog_Group_UID (String Component_First_Changelog_Group_UID)
+{
+if (Component_First_Changelog_Group_UID != null && Component_First_Changelog_Group_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_First_Changelog_Group_UID = Component_First_Changelog_Group_UID.substring(0,100);
+}
+set_Value ("Component_First_Changelog_Group_UID", Component_First_Changelog_Group_UID);
+}
+/** Get Component_First_Changelog_Group_UID */
+public String getComponent_First_Changelog_Group_UID() 
+{
+return (String)get_Value("Component_First_Changelog_Group_UID");
+}
+/** Set Component_First_Changelog_UID */
+public void setComponent_First_Changelog_UID (String Component_First_Changelog_UID)
+{
+if (Component_First_Changelog_UID != null && Component_First_Changelog_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_First_Changelog_UID = Component_First_Changelog_UID.substring(0,100);
+}
+set_Value ("Component_First_Changelog_UID", Component_First_Changelog_UID);
+}
+/** Get Component_First_Changelog_UID */
+public String getComponent_First_Changelog_UID() 
+{
+return (String)get_Value("Component_First_Changelog_UID");
+}
 /** Set Component_Last_Changelog */
 public void setComponent_Last_Changelog (String Component_Last_Changelog)
 {
@@ -114,6 +144,36 @@ set_Value ("Component_Last_Changelog", Component_Last_Changelog);
 public String getComponent_Last_Changelog() 
 {
 return (String)get_Value("Component_Last_Changelog");
+}
+/** Set Component_Last_Changelog_Group_UID */
+public void setComponent_Last_Changelog_Group_UID (String Component_Last_Changelog_Group_UID)
+{
+if (Component_Last_Changelog_Group_UID != null && Component_Last_Changelog_Group_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_Last_Changelog_Group_UID = Component_Last_Changelog_Group_UID.substring(0,100);
+}
+set_Value ("Component_Last_Changelog_Group_UID", Component_Last_Changelog_Group_UID);
+}
+/** Get Component_Last_Changelog_Group_UID */
+public String getComponent_Last_Changelog_Group_UID() 
+{
+return (String)get_Value("Component_Last_Changelog_Group_UID");
+}
+/** Set Component_Last_Changelog_UID */
+public void setComponent_Last_Changelog_UID (String Component_Last_Changelog_UID)
+{
+if (Component_Last_Changelog_UID != null && Component_Last_Changelog_UID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+Component_Last_Changelog_UID = Component_Last_Changelog_UID.substring(0,100);
+}
+set_Value ("Component_Last_Changelog_UID", Component_Last_Changelog_UID);
+}
+/** Get Component_Last_Changelog_UID */
+public String getComponent_Last_Changelog_UID() 
+{
+return (String)get_Value("Component_Last_Changelog_UID");
 }
 /** Set Install_Details */
 public void setInstall_Details (String Install_Details)
