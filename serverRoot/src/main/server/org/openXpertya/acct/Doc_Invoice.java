@@ -211,6 +211,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
             ResultSet rs = pstmt.executeQuery();
 
             // Descuentos de documento por tasa
+            m_taxes_discount = new ArrayList<DocTax_Discount>();
             Map<Integer, DocTax_Discount> discountsByTax = new HashMap<Integer, DocTax_Discount>();
 
             while( rs.next()) {
