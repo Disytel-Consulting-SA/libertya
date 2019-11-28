@@ -299,15 +299,17 @@ public class MLookupFactory {
         
         // Para la factura de líneas de caja, se basa en una preference
         boolean isCashLineInvoice = false;
-    	// Determinar si la preference hay que buscarlo
-		String prefValue = MPreference.searchCustomPreferenceValue(ADD_VALIDATION_INVOICE_CASHLINE_PREFERENCE_NAME,
-				Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx), Env.getAD_User_ID(ctx), true);
-		if ((prefValue != null && prefValue.equals("N")) && ColumnName.equalsIgnoreCase("C_Invoice_ID")) {
+		if (ColumnName.equalsIgnoreCase("C_Invoice_ID")) {
         	// Determinar si estoy en la tabla C_CashLine
 			int tableID = DB.getSQLValue(null,
 					"SELECT t.ad_table_id from ad_column c join ad_table t on t.ad_table_id = c.ad_table_id where c.ad_column_id = "
 							+ Column_ID + " and t.tablename = 'C_CashLine'");
-			isCashLineInvoice = tableID > 0;
+			if(tableID > 0) {
+				// Determinar si la preference hay que buscarlo
+				String prefValue = MPreference.searchCustomPreferenceValue(ADD_VALIDATION_INVOICE_CASHLINE_PREFERENCE_NAME,
+						Env.getAD_Client_ID(ctx), Env.getAD_Org_ID(ctx), Env.getAD_User_ID(ctx), true);
+				isCashLineInvoice = prefValue != null && prefValue.equals("N");
+			}
         }        
         
         if(ColumnName.equalsIgnoreCase("M_WarehouseTo_ID") 
