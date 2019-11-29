@@ -1033,9 +1033,9 @@ public class GenerateModel {
 	    		
 	    	}
 	    	
-	    	// quitar ultima coma
-	    	columnNames.deleteCharAt(columnNames.length()-1);
-	    	columnMarks.deleteCharAt(columnMarks.length()-1);
+//	    	// quitar ultima coma 	<-- COMENTADO: no se quitan dado que puede variar segun skip/set Additional.  Se quitan luego dirnámicamente en tiempo de ejecucion.
+//	    	columnNames.deleteCharAt(columnNames.length()-1);
+//	    	columnMarks.deleteCharAt(columnMarks.length()-1);
 	    	
     		// Si esta clase extiende de PO directamente, entoces este metodo directo debe dar lugar a que las subclases amplien el insertDirect
 	    	StringBuffer methodBody = new StringBuffer();
@@ -1053,6 +1053,11 @@ public class GenerateModel {
 	        	// methodBody.append("\t\t set" + tableName + "_ID(DB.getSQLValue(get_TrxName(), \"SELECT nextval('seq_" + tableName + "')\")); \n ");
 	        	methodBody.append("\t\t String sql = \" INSERT INTO " + tableName + "(" + columnNames + ") VALUES (" + columnMarks + ") \";\n" );
 	        	methodBody.append(columnNotNeeded + "\n ");
+	        	
+	        	// Quitar casos ,, o ,) 
+	        	methodBody.append("\t\t sql = sql.replace(\",)\", \")\"); \n");
+	        	methodBody.append("\t\t sql = sql.replace(\",,)\", \",\"); \n");
+	        	
 	        	methodBody.append("\t\t int col = 1; \n");
 	        	methodBody.append("\t\t CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true); \n");
 	        	methodBody.append(columnSets + "\n");
