@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InventoryLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-09-11 18:54:16.926 */
+ *  @version  - 2019-11-29 20:49:23.56 */
 public class X_M_InventoryLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -114,8 +114,8 @@ public static final String INVENTORYTYPE_OverwriteInventory = "O";
 Type of inventory difference */
 public void setInventoryType (String InventoryType)
 {
-if (InventoryType.equals("D") || InventoryType.equals("C") || InventoryType.equals("O"));
- else throw new IllegalArgumentException ("InventoryType Invalid value - Reference = INVENTORYTYPE_AD_Reference_ID - D - C - O");
+if (InventoryType.equals("D") || InventoryType.equals("C") || InventoryType.equals("O") || ( refContainsValue("CORE-AD_Reference-292", InventoryType) ) );
+ else throw new IllegalArgumentException ("InventoryType Invalid value: " + InventoryType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-292") );
 if (InventoryType == null) throw new IllegalArgumentException ("InventoryType is mandatory");
 if (InventoryType.length() > 1)
 {
@@ -301,55 +301,54 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_InventoryLine(AD_Client_ID,AD_Org_ID,C_Charge_ID,Cost,Created,CreatedBy,Description,InventoryType,IsActive,Line,M_AttributeSetInstance_ID,M_Inventory_ID,M_InventoryLine_ID,M_Locator_ID,M_Product_ID,Processed,QtyBook,QtyCount,QtyCountWithoutChargeSign,QtyInternalUse,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_InventoryLine(IsActive,Description,CreatedBy,Processed,Updated,UpdatedBy,AD_Org_ID,Created,AD_Client_ID,M_InventoryLine_ID,QtyBook,Line,InventoryType,C_Charge_ID,QtyInternalUse,M_Inventory_ID,Cost,QtyCount,M_AttributeSetInstance_ID,M_Product_ID,QtyCountWithoutChargeSign,M_Locator_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
- 		 if (getCost() == null) sql = sql.replaceFirst("Cost,","").replaceFirst("\\?,", "");
+		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getInventoryType() == null) sql = sql.replaceFirst("InventoryType,","").replaceFirst("\\?,", "");
- 		 if (getLine() == 0) sql = sql.replaceFirst("Line,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Inventory_ID() == 0) sql = sql.replaceFirst("M_Inventory_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InventoryLine_ID() == 0) sql = sql.replaceFirst("M_InventoryLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
  		 if (getQtyBook() == null) sql = sql.replaceFirst("QtyBook,","").replaceFirst("\\?,", "");
+ 		 if (getLine() == 0) sql = sql.replaceFirst("Line,","").replaceFirst("\\?,", "");
+ 		 if (getInventoryType() == null) sql = sql.replaceFirst("InventoryType,","").replaceFirst("\\?,", "");
+ 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
+ 		 if (getQtyInternalUse() == null) sql = sql.replaceFirst("QtyInternalUse,","").replaceFirst("\\?,", "");
+ 		 if (getCost() == null) sql = sql.replaceFirst("Cost,","").replaceFirst("\\?,", "");
  		 if (getQtyCount() == null) sql = sql.replaceFirst("QtyCount,","").replaceFirst("\\?,", "");
  		 if (getQtyCountWithoutChargeSign() == null) sql = sql.replaceFirst("QtyCountWithoutChargeSign,","").replaceFirst("\\?,", "");
- 		 if (getQtyInternalUse() == null) sql = sql.replaceFirst("QtyInternalUse,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
-		 if (getCost() != null) pstmt.setBigDecimal(col++, getCost());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getDescription() != null) pstmt.setString(col++, getDescription());
-		 if (getInventoryType() != null) pstmt.setString(col++, getInventoryType());
 		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getLine() != 0) pstmt.setInt(col++, getLine());
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_Inventory_ID() != 0) pstmt.setInt(col++, getM_Inventory_ID());
-		 if (getM_InventoryLine_ID() != 0) pstmt.setInt(col++, getM_InventoryLine_ID());
-		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 pstmt.setInt(col++, getCreatedBy());
 		 pstmt.setString(col++, isProcessed()?"Y":"N");
-		 if (getQtyBook() != null) pstmt.setBigDecimal(col++, getQtyBook());
-		 if (getQtyCount() != null) pstmt.setBigDecimal(col++, getQtyCount());
-		 if (getQtyCountWithoutChargeSign() != null) pstmt.setBigDecimal(col++, getQtyCountWithoutChargeSign());
-		 if (getQtyInternalUse() != null) pstmt.setBigDecimal(col++, getQtyInternalUse());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setInt(col++, getM_InventoryLine_ID());
+		 if (getQtyBook() != null) pstmt.setBigDecimal(col++, getQtyBook());
+		 if (getLine() != 0) pstmt.setInt(col++, getLine());
+		 if (getInventoryType() != null) pstmt.setString(col++, getInventoryType());
+		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
+		 if (getQtyInternalUse() != null) pstmt.setBigDecimal(col++, getQtyInternalUse());
+		 pstmt.setInt(col++, getM_Inventory_ID());
+		 if (getCost() != null) pstmt.setBigDecimal(col++, getCost());
+		 if (getQtyCount() != null) pstmt.setBigDecimal(col++, getQtyCount());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 pstmt.setInt(col++, getM_Product_ID());
+		 if (getQtyCountWithoutChargeSign() != null) pstmt.setBigDecimal(col++, getQtyCountWithoutChargeSign());
+		 pstmt.setInt(col++, getM_Locator_ID());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -370,4 +369,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

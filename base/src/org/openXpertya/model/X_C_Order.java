@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-09-26 12:56:38.645 */
+ *  @version  - 2019-11-29 20:38:09.74 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1704,7 +1704,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Order(IsDelivered,Pay_BPartner_ID,Pay_Location_ID,Processing,C_Payment_ID,IsSelected,AD_OrgTrx_ID,SendEMail,IsCreditApproved,IsInvoiced,C_Campaign_ID,IsTransferred,M_Warehouse_ID,IsApproved,FreightAmt,C_DocType_ID,TotalLines,GrandTotal,DeliveryViaRule,InvoiceRule,POReference,DateAcct,IsPrinted,Description,IsActive,C_Charge_ID,IsDropShip,C_Project_ID,DeliveryRule,AD_Org_ID,C_PaymentTerm_ID,Created,PriorityRule,AD_User_ID,Updated,ChargeAmt,FreightCostRule,C_CashLine_ID,C_Activity_ID,Posted,IsSOTrx,AD_Client_ID,IsDiscountPrinted,DatePrinted,C_Order_ID,IsTaxIncluded,C_Currency_ID,Processed,IsSelfService,CopyFrom,Bill_Location_ID,C_ConversionType_ID,Bill_BPartner_ID,DocAction,repair_priority,repair_state,dateprod,daterealprod,Acceptance,M_Shipper_ID,Authorize,CreateVendorProductLines,PaymentRule,M_PriceList_ID,DatePromised,DocStatus,C_BPartner_ID,DateOrdered,ValidTo,IsExchange,IsTpvUsed,NombreCli,NroIdentificCliente,Invoice_Adress,CUIT,M_Warehouse_Transfer_ID,AD_Org_Transfer_ID,DocumentNo,C_DocTypeTarget_ID,program_invoice,C_BPartner_Location_ID,OldGrandTotal,Ref_Order_ID,User2_ID,Bill_User_ID,CreatedBy,C_Repair_Order_ID,SalesRep_ID,UpdatedBy,User1_ID,AuthorizationChainStatus,IsReActivated,C_Invoice_Orig_ID,CreditRequestType,M_AuthorizationChain_ID" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_Order(IsDelivered,Pay_BPartner_ID,Pay_Location_ID,Processing,C_Payment_ID,IsSelected,AD_OrgTrx_ID,SendEMail,IsCreditApproved,IsInvoiced,C_Campaign_ID,IsTransferred,M_Warehouse_ID,IsApproved,FreightAmt,C_DocType_ID,TotalLines,GrandTotal,DeliveryViaRule,InvoiceRule,POReference,DateAcct,IsPrinted,Description,IsActive,C_Charge_ID,IsDropShip,C_Project_ID,DeliveryRule,AD_Org_ID,C_PaymentTerm_ID,Created,PriorityRule,AD_User_ID,Updated,ChargeAmt,FreightCostRule,C_CashLine_ID,C_Activity_ID,Posted,IsSOTrx,AD_Client_ID,IsDiscountPrinted,DatePrinted,C_Order_ID,IsTaxIncluded,C_Currency_ID,Processed,IsSelfService,CopyFrom,Bill_Location_ID,C_ConversionType_ID,Bill_BPartner_ID,DocAction,repair_priority,repair_state,dateprod,daterealprod,Acceptance,M_Shipper_ID,Authorize,CreateVendorProductLines,PaymentRule,M_PriceList_ID,DatePromised,DocStatus,C_BPartner_ID,DateOrdered,ValidTo,IsExchange,IsTpvUsed,NombreCli,NroIdentificCliente,Invoice_Adress,CUIT,M_Warehouse_Transfer_ID,AD_Org_Transfer_ID,DocumentNo,C_DocTypeTarget_ID,program_invoice,C_BPartner_Location_ID,OldGrandTotal,Ref_Order_ID,User2_ID,Bill_User_ID,CreatedBy,C_Repair_Order_ID,SalesRep_ID,UpdatedBy,User1_ID,AuthorizationChainStatus,IsReActivated,C_Invoice_Orig_ID,CreditRequestType,M_AuthorizationChain_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getPay_BPartner_ID() == 0) sql = sql.replaceFirst("Pay_BPartner_ID,","").replaceFirst("\\?,", "");
  		 if (getPay_Location_ID() == 0) sql = sql.replaceFirst("Pay_Location_ID,","").replaceFirst("\\?,", "");
@@ -1768,7 +1768,11 @@ try
  		 skipAdditionalNullValues(sql);
  
 
- 		 int col = 1;
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  

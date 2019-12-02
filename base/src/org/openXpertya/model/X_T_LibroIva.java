@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_LibroIva
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-04-18 14:32:12.77 */
+ *  @version  - 2019-11-29 20:56:55.216 */
 public class X_T_LibroIva extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -330,60 +330,64 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO T_LibroIva(AD_Client_ID,AD_Org_ID,AD_PInstance_ID,categoria_name,C_BPartner_ID,C_Bpartner_name,C_Categoriaiva_ID,C_DocType_ID,C_Invoice_ID,Created,CreatedBy,DateAcct,DateFrom,DateTo,DocumentNo,IIBB,Importe,IsActive,item,neto,TaxID,T_Libroiva_ID,totalfacturado,TransactionType,Updated,UpdatedBy" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO T_LibroIva(C_Bpartner_name,neto,C_Categoriaiva_ID,IIBB,IsActive,Created,CreatedBy,Updated,UpdatedBy,DocumentNo,TaxID,DateFrom,C_Invoice_ID,DateTo,AD_Client_ID,AD_Org_ID,AD_PInstance_ID,C_BPartner_ID,C_DocType_ID,DateAcct,categoria_name,item,T_Libroiva_ID,totalfacturado,TransactionType,Importe," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getcategoria_name() == null) sql = sql.replaceFirst("categoria_name,","").replaceFirst("\\?,", "");
- 		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Bpartner_name() == null) sql = sql.replaceFirst("C_Bpartner_name,","").replaceFirst("\\?,", "");
- 		 if (getC_Categoriaiva_ID() == 0) sql = sql.replaceFirst("C_Categoriaiva_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_DocType_ID() == 0) sql = sql.replaceFirst("C_DocType_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getDateAcct() == null) sql = sql.replaceFirst("DateAcct,","").replaceFirst("\\?,", "");
- 		 if (getDateFrom() == null) sql = sql.replaceFirst("DateFrom,","").replaceFirst("\\?,", "");
- 		 if (getDateTo() == null) sql = sql.replaceFirst("DateTo,","").replaceFirst("\\?,", "");
- 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
- 		 if (getIIBB() == null) sql = sql.replaceFirst("IIBB,","").replaceFirst("\\?,", "");
- 		 if (getImporte() == null) sql = sql.replaceFirst("Importe,","").replaceFirst("\\?,", "");
- 		 if (getitem() == null) sql = sql.replaceFirst("item,","").replaceFirst("\\?,", "");
+		 if (getC_Bpartner_name() == null) sql = sql.replaceFirst("C_Bpartner_name,","").replaceFirst("\\?,", "");
  		 if (getneto() == null) sql = sql.replaceFirst("neto,","").replaceFirst("\\?,", "");
+ 		 if (getC_Categoriaiva_ID() == 0) sql = sql.replaceFirst("C_Categoriaiva_ID,","").replaceFirst("\\?,", "");
+ 		 if (getIIBB() == null) sql = sql.replaceFirst("IIBB,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
+ 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
  		 if (getTaxID() == null) sql = sql.replaceFirst("TaxID,","").replaceFirst("\\?,", "");
+ 		 if (getDateFrom() == null) sql = sql.replaceFirst("DateFrom,","").replaceFirst("\\?,", "");
+ 		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDateTo() == null) sql = sql.replaceFirst("DateTo,","").replaceFirst("\\?,", "");
+ 		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_DocType_ID() == 0) sql = sql.replaceFirst("C_DocType_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDateAcct() == null) sql = sql.replaceFirst("DateAcct,","").replaceFirst("\\?,", "");
+ 		 if (getcategoria_name() == null) sql = sql.replaceFirst("categoria_name,","").replaceFirst("\\?,", "");
+ 		 if (getitem() == null) sql = sql.replaceFirst("item,","").replaceFirst("\\?,", "");
  		 if (gettotalfacturado() == null) sql = sql.replaceFirst("totalfacturado,","").replaceFirst("\\?,", "");
  		 if (getTransactionType() == null) sql = sql.replaceFirst("TransactionType,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
+ 		 if (getImporte() == null) sql = sql.replaceFirst("Importe,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
- 		 int col = 1;
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
+		 if (getC_Bpartner_name() != null) pstmt.setString(col++, getC_Bpartner_name());
+		 if (getneto() != null) pstmt.setBigDecimal(col++, getneto());
+		 if (getC_Categoriaiva_ID() != 0) pstmt.setInt(col++, getC_Categoriaiva_ID());
+		 if (getIIBB() != null) pstmt.setString(col++, getIIBB());
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getCreatedBy());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
+		 if (getTaxID() != null) pstmt.setString(col++, getTaxID());
+		 if (getDateFrom() != null) pstmt.setTimestamp(col++, getDateFrom());
+		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
+		 if (getDateTo() != null) pstmt.setTimestamp(col++, getDateTo());
 		 pstmt.setInt(col++, getAD_Client_ID());
 		 pstmt.setInt(col++, getAD_Org_ID());
 		 pstmt.setInt(col++, getAD_PInstance_ID());
-		 if (getcategoria_name() != null) pstmt.setString(col++, getcategoria_name());
 		 if (getC_BPartner_ID() != 0) pstmt.setInt(col++, getC_BPartner_ID());
-		 if (getC_Bpartner_name() != null) pstmt.setString(col++, getC_Bpartner_name());
-		 if (getC_Categoriaiva_ID() != 0) pstmt.setInt(col++, getC_Categoriaiva_ID());
 		 if (getC_DocType_ID() != 0) pstmt.setInt(col++, getC_DocType_ID());
-		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 pstmt.setInt(col++, getCreatedBy());
 		 if (getDateAcct() != null) pstmt.setTimestamp(col++, getDateAcct());
-		 if (getDateFrom() != null) pstmt.setTimestamp(col++, getDateFrom());
-		 if (getDateTo() != null) pstmt.setTimestamp(col++, getDateTo());
-		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
-		 if (getIIBB() != null) pstmt.setString(col++, getIIBB());
-		 if (getImporte() != null) pstmt.setBigDecimal(col++, getImporte());
-		 pstmt.setString(col++, isActive()?"Y":"N");
+		 if (getcategoria_name() != null) pstmt.setString(col++, getcategoria_name());
 		 if (getitem() != null) pstmt.setString(col++, getitem());
-		 if (getneto() != null) pstmt.setBigDecimal(col++, getneto());
-		 if (getTaxID() != null) pstmt.setString(col++, getTaxID());
 		 pstmt.setInt(col++, getT_Libroiva_ID());
 		 if (gettotalfacturado() != null) pstmt.setBigDecimal(col++, gettotalfacturado());
 		 if (getTransactionType() != null) pstmt.setString(col++, getTransactionType());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getImporte() != null) pstmt.setBigDecimal(col++, getImporte());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

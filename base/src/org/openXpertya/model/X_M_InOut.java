@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOut
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-30 19:21:22.086 */
+ *  @version  - 2019-11-29 20:48:47.002 */
 public class X_M_InOut extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -371,8 +371,8 @@ public static final String DELIVERYRULE_Force_AfterInvoicing = "Z";
 Defines the timing of Delivery */
 public void setDeliveryRule (String DeliveryRule)
 {
-if (DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I") || DeliveryRule.equals("Z"));
- else throw new IllegalArgumentException ("DeliveryRule Invalid value - Reference = DELIVERYRULE_AD_Reference_ID - A - O - R - L - F - I - Z");
+if (DeliveryRule.equals("A") || DeliveryRule.equals("O") || DeliveryRule.equals("R") || DeliveryRule.equals("L") || DeliveryRule.equals("F") || DeliveryRule.equals("I") || DeliveryRule.equals("Z") || ( refContainsValue("CORE-AD_Reference-151", DeliveryRule) ) );
+ else throw new IllegalArgumentException ("DeliveryRule Invalid value: " + DeliveryRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-151") );
 if (DeliveryRule == null) throw new IllegalArgumentException ("DeliveryRule is mandatory");
 if (DeliveryRule.length() > 1)
 {
@@ -398,8 +398,8 @@ public static final String DELIVERYVIARULE_Delivery = "D";
 How the order will be delivered */
 public void setDeliveryViaRule (String DeliveryViaRule)
 {
-if (DeliveryViaRule.equals("P") || DeliveryViaRule.equals("S") || DeliveryViaRule.equals("D"));
- else throw new IllegalArgumentException ("DeliveryViaRule Invalid value - Reference = DELIVERYVIARULE_AD_Reference_ID - P - S - D");
+if (DeliveryViaRule.equals("P") || DeliveryViaRule.equals("S") || DeliveryViaRule.equals("D") || ( refContainsValue("CORE-AD_Reference-152", DeliveryViaRule) ) );
+ else throw new IllegalArgumentException ("DeliveryViaRule Invalid value: " + DeliveryViaRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-152") );
 if (DeliveryViaRule == null) throw new IllegalArgumentException ("DeliveryViaRule is mandatory");
 if (DeliveryViaRule.length() > 1)
 {
@@ -464,8 +464,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -509,8 +509,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
@@ -574,8 +574,8 @@ public static final String FREIGHTCOSTRULE_FreightIncluded = "I";
 Method for charging Freight */
 public void setFreightCostRule (String FreightCostRule)
 {
-if (FreightCostRule.equals("L") || FreightCostRule.equals("F") || FreightCostRule.equals("C") || FreightCostRule.equals("I"));
- else throw new IllegalArgumentException ("FreightCostRule Invalid value - Reference = FREIGHTCOSTRULE_AD_Reference_ID - L - F - C - I");
+if (FreightCostRule.equals("L") || FreightCostRule.equals("F") || FreightCostRule.equals("C") || FreightCostRule.equals("I") || ( refContainsValue("CORE-AD_Reference-153", FreightCostRule) ) );
+ else throw new IllegalArgumentException ("FreightCostRule Invalid value: " + FreightCostRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-153") );
 if (FreightCostRule == null) throw new IllegalArgumentException ("FreightCostRule is mandatory");
 if (FreightCostRule.length() > 1)
 {
@@ -801,8 +801,8 @@ public static final String MOVEMENTTYPE_Production_ = "P-";
 Method of moving the inventory */
 public void setMovementType (String MovementType)
 {
-if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-"));
- else throw new IllegalArgumentException ("MovementType Invalid value - Reference = MOVEMENTTYPE_AD_Reference_ID - V+ - V- - I- - I+ - M- - M+ - C- - C+ - W+ - W- - P+ - P-");
+if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-") || ( refContainsValue("CORE-AD_Reference-189", MovementType) ) );
+ else throw new IllegalArgumentException ("MovementType Invalid value: " + MovementType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-189") );
 if (MovementType == null) throw new IllegalArgumentException ("MovementType is mandatory");
 if (MovementType.length() > 2)
 {
@@ -969,8 +969,8 @@ public static final String PRINTTYPE_Triplicate = "T";
 /** Set Print Type */
 public void setPrintType (String PrintType)
 {
-if (PrintType == null || PrintType.equals("O") || PrintType.equals("D") || PrintType.equals("T"));
- else throw new IllegalArgumentException ("PrintType Invalid value - Reference = PRINTTYPE_AD_Reference_ID - O - D - T");
+if (PrintType == null || PrintType.equals("O") || PrintType.equals("D") || PrintType.equals("T") || ( refContainsValue("CORE-AD_Reference-1010235", PrintType) ) );
+ else throw new IllegalArgumentException ("PrintType Invalid value: " + PrintType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010235") );
 if (PrintType != null && PrintType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -998,8 +998,8 @@ public static final String PRIORITYRULE_Minor = "9";
 Priority of a document */
 public void setPriorityRule (String PriorityRule)
 {
-if (PriorityRule.equals("5") || PriorityRule.equals("3") || PriorityRule.equals("7") || PriorityRule.equals("1") || PriorityRule.equals("9"));
- else throw new IllegalArgumentException ("PriorityRule Invalid value - Reference = PRIORITYRULE_AD_Reference_ID - 5 - 3 - 7 - 1 - 9");
+if (PriorityRule.equals("5") || PriorityRule.equals("3") || PriorityRule.equals("7") || PriorityRule.equals("1") || PriorityRule.equals("9") || ( refContainsValue("CORE-AD_Reference-154", PriorityRule) ) );
+ else throw new IllegalArgumentException ("PriorityRule Invalid value: " + PriorityRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-154") );
 if (PriorityRule == null) throw new IllegalArgumentException ("PriorityRule is mandatory");
 if (PriorityRule.length() > 1)
 {
@@ -1178,140 +1178,139 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_InOut(AD_Client_ID,AD_Org_ID,AD_OrgTrx_ID,AD_User_ID,C_Activity_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Campaign_ID,C_Charge_ID,C_DocType_ID,ChargeAmt,C_Invoice_ID,C_Order_ID,C_Project_ID,CreateConfirm,Created,CreatedBy,CreateFrom,CreatePackage,DateAcct,DateOrdered,DatePrinted,DateReceived,DeliveryRule,DeliveryViaRule,Description,DocAction,DocStatus,DocumentNo,FreightAmt,FreightCostRule,GenerateTo,InOutDate,InOutReceptionDate,IsActive,IsApproved,IsInDispute,IsInTransit,isintrastat,IsPrinted,IsSOTrx,m_incotermcode_id,M_InOut_ID,MovementDate,MovementType,m_portaircode_id,m_shipmentcode_id,M_Shipper_ID,m_statetermscode_id,M_Warehouse_ID,NoPackages,PickDate,POReference,Posted,PrePrinted_DocNo,PrintType,PriorityRule,Processed,Processing,ReceptionDate,Ref_InOut_ID,SalesRep_ID,SendEMail,ShipDate,TrackingNo,Updated,UpdatedBy,User1_ID,User2_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_InOut(C_Charge_ID,CreatePackage,TrackingNo,DocAction,NoPackages,Processed,Processing,ChargeAmt,IsSOTrx,IsActive,MovementType,AD_Org_ID,Updated,DateOrdered,Posted,GenerateTo,M_Shipper_ID,DeliveryRule,DeliveryViaRule,Created,IsPrinted,PriorityRule,M_InOut_ID,DocStatus,FreightAmt,DatePrinted,C_Invoice_ID,SendEMail,User2_ID,C_Activity_ID,C_Project_ID,AD_OrgTrx_ID,C_Campaign_ID,DateReceived,FreightCostRule,ShipDate,POReference,AD_Client_ID,PickDate,IsInTransit,IsApproved,CreateConfirm,IsInDispute,C_DocType_ID,CreateFrom,C_BPartner_ID,DateAcct,DocumentNo,Description,MovementDate,C_Order_ID,m_incotermcode_id,m_shipmentcode_id,m_statetermscode_id,m_portaircode_id,InOutDate,ReceptionDate,InOutReceptionDate,isintrastat,PrePrinted_DocNo,PrintType,M_Warehouse_ID,AD_User_ID,C_BPartner_Location_ID,CreatedBy,Ref_InOut_ID,SalesRep_ID,UpdatedBy,User1_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_OrgTrx_ID() == 0) sql = sql.replaceFirst("AD_OrgTrx_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_User_ID() == 0) sql = sql.replaceFirst("AD_User_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Activity_ID() == 0) sql = sql.replaceFirst("C_Activity_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_BPartner_ID() == 0) sql = sql.replaceFirst("C_BPartner_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_BPartner_Location_ID() == 0) sql = sql.replaceFirst("C_BPartner_Location_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Campaign_ID() == 0) sql = sql.replaceFirst("C_Campaign_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_DocType_ID() == 0) sql = sql.replaceFirst("C_DocType_ID,","").replaceFirst("\\?,", "");
- 		 if (getChargeAmt() == null) sql = sql.replaceFirst("ChargeAmt,","").replaceFirst("\\?,", "");
- 		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Order_ID() == 0) sql = sql.replaceFirst("C_Order_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreateConfirm() == null) sql = sql.replaceFirst("CreateConfirm,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getCreateFrom() == null) sql = sql.replaceFirst("CreateFrom,","").replaceFirst("\\?,", "");
+		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
  		 if (getCreatePackage() == null) sql = sql.replaceFirst("CreatePackage,","").replaceFirst("\\?,", "");
- 		 if (getDateAcct() == null) sql = sql.replaceFirst("DateAcct,","").replaceFirst("\\?,", "");
+ 		 if (getTrackingNo() == null) sql = sql.replaceFirst("TrackingNo,","").replaceFirst("\\?,", "");
+ 		 if (getDocAction() == null) sql = sql.replaceFirst("DocAction,","").replaceFirst("\\?,", "");
+ 		 if (getNoPackages() == 0) sql = sql.replaceFirst("NoPackages,","").replaceFirst("\\?,", "");
+ 		 if (getChargeAmt() == null) sql = sql.replaceFirst("ChargeAmt,","").replaceFirst("\\?,", "");
+ 		 if (getMovementType() == null) sql = sql.replaceFirst("MovementType,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
- 		 if (getDatePrinted() == null) sql = sql.replaceFirst("DatePrinted,","").replaceFirst("\\?,", "");
- 		 if (getDateReceived() == null) sql = sql.replaceFirst("DateReceived,","").replaceFirst("\\?,", "");
+ 		 if (getGenerateTo() == null) sql = sql.replaceFirst("GenerateTo,","").replaceFirst("\\?,", "");
+ 		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
  		 if (getDeliveryRule() == null) sql = sql.replaceFirst("DeliveryRule,","").replaceFirst("\\?,", "");
  		 if (getDeliveryViaRule() == null) sql = sql.replaceFirst("DeliveryViaRule,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getDocAction() == null) sql = sql.replaceFirst("DocAction,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getPriorityRule() == null) sql = sql.replaceFirst("PriorityRule,","").replaceFirst("\\?,", "");
  		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
- 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
  		 if (getFreightAmt() == null) sql = sql.replaceFirst("FreightAmt,","").replaceFirst("\\?,", "");
+ 		 if (getDatePrinted() == null) sql = sql.replaceFirst("DatePrinted,","").replaceFirst("\\?,", "");
+ 		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
+ 		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_Activity_ID() == 0) sql = sql.replaceFirst("C_Activity_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAD_OrgTrx_ID() == 0) sql = sql.replaceFirst("AD_OrgTrx_ID,","").replaceFirst("\\?,", "");
+ 		 if (getC_Campaign_ID() == 0) sql = sql.replaceFirst("C_Campaign_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDateReceived() == null) sql = sql.replaceFirst("DateReceived,","").replaceFirst("\\?,", "");
  		 if (getFreightCostRule() == null) sql = sql.replaceFirst("FreightCostRule,","").replaceFirst("\\?,", "");
- 		 if (getGenerateTo() == null) sql = sql.replaceFirst("GenerateTo,","").replaceFirst("\\?,", "");
- 		 if (getInOutDate() == null) sql = sql.replaceFirst("InOutDate,","").replaceFirst("\\?,", "");
- 		 if (getInOutReceptionDate() == null) sql = sql.replaceFirst("InOutReceptionDate,","").replaceFirst("\\?,", "");
- 		 if (getm_incotermcode_id() == 0) sql = sql.replaceFirst("m_incotermcode_id,","").replaceFirst("\\?,", "");
- 		 if (getM_InOut_ID() == 0) sql = sql.replaceFirst("M_InOut_ID,","").replaceFirst("\\?,", "");
- 		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
- 		 if (getMovementType() == null) sql = sql.replaceFirst("MovementType,","").replaceFirst("\\?,", "");
- 		 if (getm_portaircode_id() == 0) sql = sql.replaceFirst("m_portaircode_id,","").replaceFirst("\\?,", "");
- 		 if (getm_shipmentcode_id() == 0) sql = sql.replaceFirst("m_shipmentcode_id,","").replaceFirst("\\?,", "");
- 		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
- 		 if (getm_statetermscode_id() == 0) sql = sql.replaceFirst("m_statetermscode_id,","").replaceFirst("\\?,", "");
- 		 if (getM_Warehouse_ID() == 0) sql = sql.replaceFirst("M_Warehouse_ID,","").replaceFirst("\\?,", "");
- 		 if (getNoPackages() == 0) sql = sql.replaceFirst("NoPackages,","").replaceFirst("\\?,", "");
- 		 if (getPickDate() == null) sql = sql.replaceFirst("PickDate,","").replaceFirst("\\?,", "");
+ 		 if (getShipDate() == null) sql = sql.replaceFirst("ShipDate,","").replaceFirst("\\?,", "");
  		 if (getPOReference() == null) sql = sql.replaceFirst("POReference,","").replaceFirst("\\?,", "");
+ 		 if (getPickDate() == null) sql = sql.replaceFirst("PickDate,","").replaceFirst("\\?,", "");
+ 		 if (getCreateConfirm() == null) sql = sql.replaceFirst("CreateConfirm,","").replaceFirst("\\?,", "");
+ 		 if (getCreateFrom() == null) sql = sql.replaceFirst("CreateFrom,","").replaceFirst("\\?,", "");
+ 		 if (getDateAcct() == null) sql = sql.replaceFirst("DateAcct,","").replaceFirst("\\?,", "");
+ 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
+ 		 if (getC_Order_ID() == 0) sql = sql.replaceFirst("C_Order_ID,","").replaceFirst("\\?,", "");
+ 		 if (getm_incotermcode_id() == 0) sql = sql.replaceFirst("m_incotermcode_id,","").replaceFirst("\\?,", "");
+ 		 if (getm_shipmentcode_id() == 0) sql = sql.replaceFirst("m_shipmentcode_id,","").replaceFirst("\\?,", "");
+ 		 if (getm_statetermscode_id() == 0) sql = sql.replaceFirst("m_statetermscode_id,","").replaceFirst("\\?,", "");
+ 		 if (getm_portaircode_id() == 0) sql = sql.replaceFirst("m_portaircode_id,","").replaceFirst("\\?,", "");
+ 		 if (getInOutDate() == null) sql = sql.replaceFirst("InOutDate,","").replaceFirst("\\?,", "");
+ 		 if (getReceptionDate() == null) sql = sql.replaceFirst("ReceptionDate,","").replaceFirst("\\?,", "");
+ 		 if (getInOutReceptionDate() == null) sql = sql.replaceFirst("InOutReceptionDate,","").replaceFirst("\\?,", "");
  		 if (getPrePrinted_DocNo() == null) sql = sql.replaceFirst("PrePrinted_DocNo,","").replaceFirst("\\?,", "");
  		 if (getPrintType() == null) sql = sql.replaceFirst("PrintType,","").replaceFirst("\\?,", "");
- 		 if (getPriorityRule() == null) sql = sql.replaceFirst("PriorityRule,","").replaceFirst("\\?,", "");
- 		 if (getReceptionDate() == null) sql = sql.replaceFirst("ReceptionDate,","").replaceFirst("\\?,", "");
+ 		 if (getAD_User_ID() == 0) sql = sql.replaceFirst("AD_User_ID,","").replaceFirst("\\?,", "");
  		 if (getRef_InOut_ID() == 0) sql = sql.replaceFirst("Ref_InOut_ID,","").replaceFirst("\\?,", "");
  		 if (getSalesRep_ID() == 0) sql = sql.replaceFirst("SalesRep_ID,","").replaceFirst("\\?,", "");
- 		 if (getShipDate() == null) sql = sql.replaceFirst("ShipDate,","").replaceFirst("\\?,", "");
- 		 if (getTrackingNo() == null) sql = sql.replaceFirst("TrackingNo,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
  		 if (getUser1_ID() == 0) sql = sql.replaceFirst("User1_ID,","").replaceFirst("\\?,", "");
- 		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getAD_OrgTrx_ID() != 0) pstmt.setInt(col++, getAD_OrgTrx_ID());
-		 if (getAD_User_ID() != 0) pstmt.setInt(col++, getAD_User_ID());
-		 if (getC_Activity_ID() != 0) pstmt.setInt(col++, getC_Activity_ID());
-		 if (getC_BPartner_ID() != 0) pstmt.setInt(col++, getC_BPartner_ID());
-		 if (getC_BPartner_Location_ID() != 0) pstmt.setInt(col++, getC_BPartner_Location_ID());
-		 if (getC_Campaign_ID() != 0) pstmt.setInt(col++, getC_Campaign_ID());
 		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
-		 if (getC_DocType_ID() != 0) pstmt.setInt(col++, getC_DocType_ID());
-		 if (getChargeAmt() != null) pstmt.setBigDecimal(col++, getChargeAmt());
-		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
-		 if (getC_Order_ID() != 0) pstmt.setInt(col++, getC_Order_ID());
-		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
-		 if (getCreateConfirm() != null) pstmt.setString(col++, getCreateConfirm());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getCreateFrom() != null) pstmt.setString(col++, getCreateFrom());
 		 if (getCreatePackage() != null) pstmt.setString(col++, getCreatePackage());
-		 if (getDateAcct() != null) pstmt.setTimestamp(col++, getDateAcct());
-		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
-		 if (getDatePrinted() != null) pstmt.setTimestamp(col++, getDatePrinted());
-		 if (getDateReceived() != null) pstmt.setTimestamp(col++, getDateReceived());
-		 if (getDeliveryRule() != null) pstmt.setString(col++, getDeliveryRule());
-		 if (getDeliveryViaRule() != null) pstmt.setString(col++, getDeliveryViaRule());
-		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 if (getTrackingNo() != null) pstmt.setString(col++, getTrackingNo());
 		 if (getDocAction() != null) pstmt.setString(col++, getDocAction());
-		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
-		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
-		 if (getFreightAmt() != null) pstmt.setBigDecimal(col++, getFreightAmt());
-		 if (getFreightCostRule() != null) pstmt.setString(col++, getFreightCostRule());
-		 if (getGenerateTo() != null) pstmt.setString(col++, getGenerateTo());
-		 if (getInOutDate() != null) pstmt.setTimestamp(col++, getInOutDate());
-		 if (getInOutReceptionDate() != null) pstmt.setTimestamp(col++, getInOutReceptionDate());
-		 pstmt.setString(col++, isActive()?"Y":"N");
-		 pstmt.setString(col++, isApproved()?"Y":"N");
-		 pstmt.setString(col++, isInDispute()?"Y":"N");
-		 pstmt.setString(col++, isInTransit()?"Y":"N");
-		 pstmt.setString(col++, isintrastat()?"Y":"N");
-		 pstmt.setString(col++, isPrinted()?"Y":"N");
-		 pstmt.setString(col++, isSOTrx()?"Y":"N");
-		 if (getm_incotermcode_id() != 0) pstmt.setInt(col++, getm_incotermcode_id());
-		 if (getM_InOut_ID() != 0) pstmt.setInt(col++, getM_InOut_ID());
-		 if (getMovementDate() != null) pstmt.setTimestamp(col++, getMovementDate());
-		 if (getMovementType() != null) pstmt.setString(col++, getMovementType());
-		 if (getm_portaircode_id() != 0) pstmt.setInt(col++, getm_portaircode_id());
-		 if (getm_shipmentcode_id() != 0) pstmt.setInt(col++, getm_shipmentcode_id());
-		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
-		 if (getm_statetermscode_id() != 0) pstmt.setInt(col++, getm_statetermscode_id());
-		 if (getM_Warehouse_ID() != 0) pstmt.setInt(col++, getM_Warehouse_ID());
 		 if (getNoPackages() != 0) pstmt.setInt(col++, getNoPackages());
-		 if (getPickDate() != null) pstmt.setTimestamp(col++, getPickDate());
-		 if (getPOReference() != null) pstmt.setString(col++, getPOReference());
-		 pstmt.setString(col++, isPosted()?"Y":"N");
-		 if (getPrePrinted_DocNo() != null) pstmt.setString(col++, getPrePrinted_DocNo());
-		 if (getPrintType() != null) pstmt.setString(col++, getPrintType());
-		 if (getPriorityRule() != null) pstmt.setString(col++, getPriorityRule());
 		 pstmt.setString(col++, isProcessed()?"Y":"N");
 		 pstmt.setString(col++, isProcessing()?"Y":"N");
+		 if (getChargeAmt() != null) pstmt.setBigDecimal(col++, getChargeAmt());
+		 pstmt.setString(col++, isSOTrx()?"Y":"N");
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 if (getMovementType() != null) pstmt.setString(col++, getMovementType());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
+		 pstmt.setString(col++, isPosted()?"Y":"N");
+		 if (getGenerateTo() != null) pstmt.setString(col++, getGenerateTo());
+		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
+		 if (getDeliveryRule() != null) pstmt.setString(col++, getDeliveryRule());
+		 if (getDeliveryViaRule() != null) pstmt.setString(col++, getDeliveryViaRule());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setString(col++, isPrinted()?"Y":"N");
+		 if (getPriorityRule() != null) pstmt.setString(col++, getPriorityRule());
+		 pstmt.setInt(col++, getM_InOut_ID());
+		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
+		 if (getFreightAmt() != null) pstmt.setBigDecimal(col++, getFreightAmt());
+		 if (getDatePrinted() != null) pstmt.setTimestamp(col++, getDatePrinted());
+		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
+		 pstmt.setString(col++, isSendEMail()?"Y":"N");
+		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
+		 if (getC_Activity_ID() != 0) pstmt.setInt(col++, getC_Activity_ID());
+		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
+		 if (getAD_OrgTrx_ID() != 0) pstmt.setInt(col++, getAD_OrgTrx_ID());
+		 if (getC_Campaign_ID() != 0) pstmt.setInt(col++, getC_Campaign_ID());
+		 if (getDateReceived() != null) pstmt.setTimestamp(col++, getDateReceived());
+		 if (getFreightCostRule() != null) pstmt.setString(col++, getFreightCostRule());
+		 if (getShipDate() != null) pstmt.setTimestamp(col++, getShipDate());
+		 if (getPOReference() != null) pstmt.setString(col++, getPOReference());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 if (getPickDate() != null) pstmt.setTimestamp(col++, getPickDate());
+		 pstmt.setString(col++, isInTransit()?"Y":"N");
+		 pstmt.setString(col++, isApproved()?"Y":"N");
+		 if (getCreateConfirm() != null) pstmt.setString(col++, getCreateConfirm());
+		 pstmt.setString(col++, isInDispute()?"Y":"N");
+		 pstmt.setInt(col++, getC_DocType_ID());
+		 if (getCreateFrom() != null) pstmt.setString(col++, getCreateFrom());
+		 pstmt.setInt(col++, getC_BPartner_ID());
+		 if (getDateAcct() != null) pstmt.setTimestamp(col++, getDateAcct());
+		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 if (getMovementDate() != null) pstmt.setTimestamp(col++, getMovementDate());
+		 if (getC_Order_ID() != 0) pstmt.setInt(col++, getC_Order_ID());
+		 if (getm_incotermcode_id() != 0) pstmt.setInt(col++, getm_incotermcode_id());
+		 if (getm_shipmentcode_id() != 0) pstmt.setInt(col++, getm_shipmentcode_id());
+		 if (getm_statetermscode_id() != 0) pstmt.setInt(col++, getm_statetermscode_id());
+		 if (getm_portaircode_id() != 0) pstmt.setInt(col++, getm_portaircode_id());
+		 if (getInOutDate() != null) pstmt.setTimestamp(col++, getInOutDate());
 		 if (getReceptionDate() != null) pstmt.setTimestamp(col++, getReceptionDate());
+		 if (getInOutReceptionDate() != null) pstmt.setTimestamp(col++, getInOutReceptionDate());
+		 pstmt.setString(col++, isisintrastat()?"Y":"N");
+		 if (getPrePrinted_DocNo() != null) pstmt.setString(col++, getPrePrinted_DocNo());
+		 if (getPrintType() != null) pstmt.setString(col++, getPrintType());
+		 pstmt.setInt(col++, getM_Warehouse_ID());
+		 if (getAD_User_ID() != 0) pstmt.setInt(col++, getAD_User_ID());
+		 pstmt.setInt(col++, getC_BPartner_Location_ID());
+		 pstmt.setInt(col++, getCreatedBy());
 		 if (getRef_InOut_ID() != 0) pstmt.setInt(col++, getRef_InOut_ID());
 		 if (getSalesRep_ID() != 0) pstmt.setInt(col++, getSalesRep_ID());
-		 pstmt.setString(col++, isSendEMail()?"Y":"N");
-		 if (getShipDate() != null) pstmt.setTimestamp(col++, getShipDate());
-		 if (getTrackingNo() != null) pstmt.setString(col++, getTrackingNo());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getUpdatedBy());
 		 if (getUser1_ID() != 0) pstmt.setInt(col++, getUser1_ID());
-		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -1332,4 +1331,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

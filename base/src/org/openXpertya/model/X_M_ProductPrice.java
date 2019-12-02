@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_ProductPrice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-08-21 23:54:17.738 */
+ *  @version  - 2019-11-29 20:52:22.831 */
 public class X_M_ProductPrice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -129,36 +129,38 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_ProductPrice(AD_Client_ID,AD_Org_ID,Created,CreatedBy,IsActive,M_PriceList_Version_ID,M_Product_ID,PriceLimit,PriceList,PriceStd,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_ProductPrice(IsActive,Updated,AD_Client_ID,CreatedBy,AD_Org_ID,Created,M_PriceList_Version_ID,PriceList,UpdatedBy,M_Product_ID,PriceLimit,PriceStd," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
+		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getM_PriceList_Version_ID() == 0) sql = sql.replaceFirst("M_PriceList_Version_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
- 		 if (getPriceLimit() == null) sql = sql.replaceFirst("PriceLimit,","").replaceFirst("\\?,", "");
  		 if (getPriceList() == null) sql = sql.replaceFirst("PriceList,","").replaceFirst("\\?,", "");
+ 		 if (getPriceLimit() == null) sql = sql.replaceFirst("PriceLimit,","").replaceFirst("\\?,", "");
  		 if (getPriceStd() == null) sql = sql.replaceFirst("PriceStd,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
 		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getM_PriceList_Version_ID() != 0) pstmt.setInt(col++, getM_PriceList_Version_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
-		 if (getPriceLimit() != null) pstmt.setBigDecimal(col++, getPriceLimit());
-		 if (getPriceList() != null) pstmt.setBigDecimal(col++, getPriceList());
-		 if (getPriceStd() != null) pstmt.setBigDecimal(col++, getPriceStd());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setInt(col++, getCreatedBy());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getM_PriceList_Version_ID());
+		 if (getPriceList() != null) pstmt.setBigDecimal(col++, getPriceList());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getM_Product_ID());
+		 if (getPriceLimit() != null) pstmt.setBigDecimal(col++, getPriceLimit());
+		 if (getPriceStd() != null) pstmt.setBigDecimal(col++, getPriceStd());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -179,4 +181,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

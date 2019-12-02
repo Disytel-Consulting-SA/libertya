@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal_Log
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-08 10:30:29.466 */
+ *  @version  - 2019-11-29 20:35:19.541 */
 public class X_C_Controlador_Fiscal_Log extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -112,8 +112,8 @@ public static final String LOGTYPE_Info = "I";
 /** Set Log Type */
 public void setLogType (String LogType)
 {
-if (LogType.equals("E") || LogType.equals("I"));
- else throw new IllegalArgumentException ("LogType Invalid value - Reference = LOGTYPE_AD_Reference_ID - E - I");
+if (LogType.equals("E") || LogType.equals("I") || ( refContainsValue("CORE-AD_Reference-1010241", LogType) ) );
+ else throw new IllegalArgumentException ("LogType Invalid value: " + LogType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010241") );
 if (LogType == null) throw new IllegalArgumentException ("LogType is mandatory");
 if (LogType.length() > 1)
 {
@@ -151,38 +151,40 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Controlador_Fiscal_Log(AD_Client_ID,AD_Org_ID,C_Controlador_Fiscal_ID,C_Controlador_Fiscal_Log_ID,C_Invoice_ID,Command,Created,CreatedBy,IsActive,LogType,Response,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO C_Controlador_Fiscal_Log(AD_Org_ID,C_Controlador_Fiscal_Log_ID,AD_Client_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,C_Controlador_Fiscal_ID,C_Invoice_ID,Command,LogType,Response," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Controlador_Fiscal_ID() == 0) sql = sql.replaceFirst("C_Controlador_Fiscal_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Controlador_Fiscal_Log_ID() == 0) sql = sql.replaceFirst("C_Controlador_Fiscal_Log_ID,","").replaceFirst("\\?,", "");
+		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
  		 if (getCommand() == null) sql = sql.replaceFirst("Command,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
  		 if (getLogType() == null) sql = sql.replaceFirst("LogType,","").replaceFirst("\\?,", "");
  		 if (getResponse() == null) sql = sql.replaceFirst("Response,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getC_Controlador_Fiscal_ID() != 0) pstmt.setInt(col++, getC_Controlador_Fiscal_ID());
-		 if (getC_Controlador_Fiscal_Log_ID() != 0) pstmt.setInt(col++, getC_Controlador_Fiscal_Log_ID());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 pstmt.setInt(col++, getC_Controlador_Fiscal_Log_ID());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getCreatedBy());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getC_Controlador_Fiscal_ID());
 		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
 		 if (getCommand() != null) pstmt.setString(col++, getCommand());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 pstmt.setString(col++, isActive()?"Y":"N");
 		 if (getLogType() != null) pstmt.setString(col++, getLogType());
 		 if (getResponse() != null) pstmt.setString(col++, getResponse());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -203,4 +205,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

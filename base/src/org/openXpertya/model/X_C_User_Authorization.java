@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_User_Authorization
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-09-06 20:19:03.913 */
+ *  @version  - 2019-11-29 20:43:12.418 */
 public class X_C_User_Authorization extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -177,7 +177,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_User_Authorization(C_User_Authorization_ID,AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,Amount,Percentage,AD_Process_ID,AD_User_Auth_ID,AD_User_Login_ID,AuthTime,C_Invoice_ID,OperationLog" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_User_Authorization(C_User_Authorization_ID,AD_Client_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,Amount,Percentage,AD_Org_ID,AD_Process_ID,AD_User_Auth_ID,AD_User_Login_ID,AuthTime,C_Invoice_ID,OperationLog," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
@@ -190,13 +190,16 @@ try
  		 skipAdditionalNullValues(sql);
  
 
- 		 int col = 1;
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
 		 pstmt.setInt(col++, getC_User_Authorization_ID());
 		 pstmt.setInt(col++, getAD_Client_ID());
-		 pstmt.setInt(col++, getAD_Org_ID());
 		 pstmt.setString(col++, isActive()?"Y":"N");
 		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
 		 pstmt.setInt(col++, getCreatedBy());
@@ -204,6 +207,7 @@ try
 		 pstmt.setInt(col++, getUpdatedBy());
 		 if (getAmount() != null) pstmt.setBigDecimal(col++, getAmount());
 		 if (getPercentage() != null) pstmt.setBigDecimal(col++, getPercentage());
+		 pstmt.setInt(col++, getAD_Org_ID());
 		 if (getAD_Process_ID() != 0) pstmt.setInt(col++, getAD_Process_ID());
 		 pstmt.setInt(col++, getAD_User_Auth_ID());
 		 pstmt.setInt(col++, getAD_User_Login_ID());

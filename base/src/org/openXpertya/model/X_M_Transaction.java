@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Transaction
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-03-27 15:06:29.14 */
+ *  @version  - 2019-11-29 20:53:18.254 */
 public class X_M_Transaction extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -221,8 +221,8 @@ public static final String MOVEMENTTYPE_Production_ = "P-";
 Method of moving the inventory */
 public void setMovementType (String MovementType)
 {
-if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-"));
- else throw new IllegalArgumentException ("MovementType Invalid value - Reference = MOVEMENTTYPE_AD_Reference_ID - V+ - V- - I- - I+ - M- - M+ - C- - C+ - W+ - W- - P+ - P-");
+if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-") || ( refContainsValue("CORE-AD_Reference-189", MovementType) ) );
+ else throw new IllegalArgumentException ("MovementType Invalid value: " + MovementType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-189") );
 if (MovementType == null) throw new IllegalArgumentException ("MovementType is mandatory");
 if (MovementType.length() > 2)
 {
@@ -316,56 +316,56 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_Transaction(AD_Client_ID,AD_Org_ID,C_ProjectIssue_ID,Created,CreatedBy,Description,IsActive,M_AttributeSetInstance_ID,M_InOutLine_ID,M_InventoryLine_ID,M_Locator_ID,M_MovementLine_ID,MovementDate,MovementQty,MovementType,MPC_Order_BOMLine_ID,MPC_Order_ID,M_Product_ID,M_ProductionLine_ID,M_Transaction_ID,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_Transaction(AD_Org_ID,MovementDate,M_InOutLine_ID,M_Transaction_ID,IsActive,M_Product_ID,MovementQty,AD_Client_ID,M_ProductionLine_ID,UpdatedBy,M_MovementLine_ID,M_InventoryLine_ID,Created,CreatedBy,Updated,M_Locator_ID,MovementType,M_AttributeSetInstance_ID,C_ProjectIssue_ID,MPC_Order_ID,MPC_Order_BOMLine_ID,Description," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_ProjectIssue_ID() == 0) sql = sql.replaceFirst("C_ProjectIssue_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
+		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
  		 if (getM_InOutLine_ID() == 0) sql = sql.replaceFirst("M_InOutLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InventoryLine_ID() == 0) sql = sql.replaceFirst("M_InventoryLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_MovementLine_ID() == 0) sql = sql.replaceFirst("M_MovementLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
  		 if (getMovementQty() == null) sql = sql.replaceFirst("MovementQty,","").replaceFirst("\\?,", "");
- 		 if (getMovementType() == null) sql = sql.replaceFirst("MovementType,","").replaceFirst("\\?,", "");
- 		 if (getMPC_Order_BOMLine_ID() == 0) sql = sql.replaceFirst("MPC_Order_BOMLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getMPC_Order_ID() == 0) sql = sql.replaceFirst("MPC_Order_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
  		 if (getM_ProductionLine_ID() == 0) sql = sql.replaceFirst("M_ProductionLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Transaction_ID() == 0) sql = sql.replaceFirst("M_Transaction_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_MovementLine_ID() == 0) sql = sql.replaceFirst("M_MovementLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_InventoryLine_ID() == 0) sql = sql.replaceFirst("M_InventoryLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getMovementType() == null) sql = sql.replaceFirst("MovementType,","").replaceFirst("\\?,", "");
+ 		 if (getC_ProjectIssue_ID() == 0) sql = sql.replaceFirst("C_ProjectIssue_ID,","").replaceFirst("\\?,", "");
+ 		 if (getMPC_Order_ID() == 0) sql = sql.replaceFirst("MPC_Order_ID,","").replaceFirst("\\?,", "");
+ 		 if (getMPC_Order_BOMLine_ID() == 0) sql = sql.replaceFirst("MPC_Order_BOMLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getC_ProjectIssue_ID() != 0) pstmt.setInt(col++, getC_ProjectIssue_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getDescription() != null) pstmt.setString(col++, getDescription());
-		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_InOutLine_ID() != 0) pstmt.setInt(col++, getM_InOutLine_ID());
-		 if (getM_InventoryLine_ID() != 0) pstmt.setInt(col++, getM_InventoryLine_ID());
-		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
-		 if (getM_MovementLine_ID() != 0) pstmt.setInt(col++, getM_MovementLine_ID());
+		 pstmt.setInt(col++, getAD_Org_ID());
 		 if (getMovementDate() != null) pstmt.setTimestamp(col++, getMovementDate());
+		 if (getM_InOutLine_ID() != 0) pstmt.setInt(col++, getM_InOutLine_ID());
+		 pstmt.setInt(col++, getM_Transaction_ID());
+		 pstmt.setString(col++, isActive()?"Y":"N");
+		 pstmt.setInt(col++, getM_Product_ID());
 		 if (getMovementQty() != null) pstmt.setBigDecimal(col++, getMovementQty());
-		 if (getMovementType() != null) pstmt.setString(col++, getMovementType());
-		 if (getMPC_Order_BOMLine_ID() != 0) pstmt.setInt(col++, getMPC_Order_BOMLine_ID());
-		 if (getMPC_Order_ID() != 0) pstmt.setInt(col++, getMPC_Order_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 pstmt.setInt(col++, getAD_Client_ID());
 		 if (getM_ProductionLine_ID() != 0) pstmt.setInt(col++, getM_ProductionLine_ID());
-		 if (getM_Transaction_ID() != 0) pstmt.setInt(col++, getM_Transaction_ID());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getM_MovementLine_ID() != 0) pstmt.setInt(col++, getM_MovementLine_ID());
+		 if (getM_InventoryLine_ID() != 0) pstmt.setInt(col++, getM_InventoryLine_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getCreatedBy());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getM_Locator_ID());
+		 if (getMovementType() != null) pstmt.setString(col++, getMovementType());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 if (getC_ProjectIssue_ID() != 0) pstmt.setInt(col++, getC_ProjectIssue_ID());
+		 if (getMPC_Order_ID() != 0) pstmt.setInt(col++, getMPC_Order_ID());
+		 if (getMPC_Order_BOMLine_ID() != 0) pstmt.setInt(col++, getMPC_Order_BOMLine_ID());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -386,4 +386,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }
