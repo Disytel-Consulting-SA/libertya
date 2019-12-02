@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOutLineMA
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-01 01:09:47.179 */
+ *  @version  - 2019-11-29 20:49:13.422 */
 public class X_M_InOutLineMA extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -114,34 +114,35 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_InOutLineMA(AD_Client_ID,AD_Org_ID,Created,CreatedBy,IsActive,M_AttributeSetInstance_ID,M_InOutLine_ID,M_InOutLineMA_ID,MovementQty,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_InOutLineMA(IsActive,Created,CreatedBy,Updated,UpdatedBy,MovementQty,AD_Client_ID,AD_Org_ID,M_AttributeSetInstance_ID,M_InOutLine_ID,M_InOutLineMA_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InOutLine_ID() == 0) sql = sql.replaceFirst("M_InOutLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InOutLineMA_ID() == 0) sql = sql.replaceFirst("M_InOutLineMA_ID,","").replaceFirst("\\?,", "");
- 		 if (getMovementQty() == null) sql = sql.replaceFirst("MovementQty,","").replaceFirst("\\?,", "");
+		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getMovementQty() == null) sql = sql.replaceFirst("MovementQty,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
 		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_InOutLine_ID() != 0) pstmt.setInt(col++, getM_InOutLine_ID());
-		 if (getM_InOutLineMA_ID() != 0) pstmt.setInt(col++, getM_InOutLineMA_ID());
-		 if (getMovementQty() != null) pstmt.setBigDecimal(col++, getMovementQty());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getCreatedBy());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getMovementQty() != null) pstmt.setBigDecimal(col++, getMovementQty());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 pstmt.setInt(col++, getM_InOutLine_ID());
+		 pstmt.setInt(col++, getM_InOutLineMA_ID());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -162,4 +163,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

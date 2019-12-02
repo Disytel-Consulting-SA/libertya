@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Storage
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-03-27 15:06:27.383 */
+ *  @version  - 2019-11-29 20:53:09.244 */
 public class X_M_Storage extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -156,40 +156,41 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_Storage(AD_Client_ID,AD_Org_ID,Created,CreatedBy,DateLastInventory,IsActive,M_AttributeSetInstance_ID,M_Locator_ID,M_Product_ID,QtyOnHand,QtyOrdered,QtyReserved,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_Storage(AD_Client_ID,IsActive,Created,CreatedBy,Updated,AD_Org_ID,UpdatedBy,QtyReserved,QtyOrdered,DateLastInventory,QtyOnHand,M_AttributeSetInstance_ID,M_Locator_ID,M_Product_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getDateLastInventory() == null) sql = sql.replaceFirst("DateLastInventory,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
- 		 if (getQtyOnHand() == null) sql = sql.replaceFirst("QtyOnHand,","").replaceFirst("\\?,", "");
- 		 if (getQtyOrdered() == null) sql = sql.replaceFirst("QtyOrdered,","").replaceFirst("\\?,", "");
- 		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
+		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
+ 		 if (getQtyOrdered() == null) sql = sql.replaceFirst("QtyOrdered,","").replaceFirst("\\?,", "");
+ 		 if (getDateLastInventory() == null) sql = sql.replaceFirst("DateLastInventory,","").replaceFirst("\\?,", "");
+ 		 if (getQtyOnHand() == null) sql = sql.replaceFirst("QtyOnHand,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getDateLastInventory() != null) pstmt.setTimestamp(col++, getDateLastInventory());
+		 pstmt.setInt(col++, getAD_Client_ID());
 		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
-		 if (getQtyOnHand() != null) pstmt.setBigDecimal(col++, getQtyOnHand());
-		 if (getQtyOrdered() != null) pstmt.setBigDecimal(col++, getQtyOrdered());
-		 if (getQtyReserved() != null) pstmt.setBigDecimal(col++, getQtyReserved());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getCreatedBy());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getQtyReserved() != null) pstmt.setBigDecimal(col++, getQtyReserved());
+		 if (getQtyOrdered() != null) pstmt.setBigDecimal(col++, getQtyOrdered());
+		 if (getDateLastInventory() != null) pstmt.setTimestamp(col++, getDateLastInventory());
+		 if (getQtyOnHand() != null) pstmt.setBigDecimal(col++, getQtyOnHand());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 pstmt.setInt(col++, getM_Locator_ID());
+		 pstmt.setInt(col++, getM_Product_ID());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -210,4 +211,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

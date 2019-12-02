@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_ProductChange
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-07-09 19:58:57.907 */
+ *  @version  - 2019-11-29 20:51:52.449 */
 public class X_M_ProductChange extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -152,8 +152,8 @@ public static final String DOCACTION_Void = "VO";
 The targeted status of the document */
 public void setDocAction (String DocAction)
 {
-if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO"));
- else throw new IllegalArgumentException ("DocAction Invalid value - Reference = DOCACTION_AD_Reference_ID - AP - CL - PR - IN - CO - -- - RC - RJ - RA - WC - XL - RE - PO - VO");
+if (DocAction.equals("AP") || DocAction.equals("CL") || DocAction.equals("PR") || DocAction.equals("IN") || DocAction.equals("CO") || DocAction.equals("--") || DocAction.equals("RC") || DocAction.equals("RJ") || DocAction.equals("RA") || DocAction.equals("WC") || DocAction.equals("XL") || DocAction.equals("RE") || DocAction.equals("PO") || DocAction.equals("VO") || ( refContainsValue("CORE-AD_Reference-135", DocAction) ) );
+ else throw new IllegalArgumentException ("DocAction Invalid value: " + DocAction + ".  Valid: " +  refValidOptions("CORE-AD_Reference-135") );
 if (DocAction == null) throw new IllegalArgumentException ("DocAction is mandatory");
 if (DocAction.length() > 2)
 {
@@ -197,8 +197,8 @@ public static final String DOCSTATUS_Reversed = "RE";
 The current status of the document */
 public void setDocStatus (String DocStatus)
 {
-if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE"));
- else throw new IllegalArgumentException ("DocStatus Invalid value - Reference = DOCSTATUS_AD_Reference_ID - VO - NA - IP - CO - AP - CL - WC - WP - ?? - DR - IN - RE");
+if (DocStatus.equals("VO") || DocStatus.equals("NA") || DocStatus.equals("IP") || DocStatus.equals("CO") || DocStatus.equals("AP") || DocStatus.equals("CL") || DocStatus.equals("WC") || DocStatus.equals("WP") || DocStatus.equals("??") || DocStatus.equals("DR") || DocStatus.equals("IN") || DocStatus.equals("RE") || ( refContainsValue("CORE-AD_Reference-131", DocStatus) ) );
+ else throw new IllegalArgumentException ("DocStatus Invalid value: " + DocStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-131") );
 if (DocStatus == null) throw new IllegalArgumentException ("DocStatus is mandatory");
 if (DocStatus.length() > 2)
 {
@@ -468,69 +468,67 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_ProductChange(AD_Client_ID,AD_Org_ID,Cost,CostTo,Created,CreatedBy,DateTrx,Description,DocAction,DocStatus,DocumentNo,IsActive,M_AttributeSetInstance_ID,M_AttributeSetInstanceTo_ID,MaxPriceVariationPerc,M_Inventory_ID,M_Locator_ID,M_Locator_To_ID,M_ProductChange_ID,M_Product_ID,M_Product_To_ID,M_Warehouse_ID,Processed,ProductPrice,ProductQty,ProductToPrice,Updated,UpdatedBy,Void_Inventory_ID) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO M_ProductChange(IsActive,Created,CreatedBy,Updated,UpdatedBy,Description,ProductQty,Processed,DocStatus,DocAction,AD_Client_ID,AD_Org_ID,M_ProductChange_ID,DocumentNo,DateTrx,M_Locator_To_ID,M_Warehouse_ID,M_Inventory_ID,Void_Inventory_ID,M_Locator_ID,M_AttributeSetInstanceTo_ID,M_AttributeSetInstance_ID,M_Product_ID,M_Product_To_ID,MaxPriceVariationPerc,ProductPrice,ProductToPrice,CostTo,Cost," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getCost() == null) sql = sql.replaceFirst("Cost,","").replaceFirst("\\?,", "");
- 		 if (getCostTo() == null) sql = sql.replaceFirst("CostTo,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getDateTrx() == null) sql = sql.replaceFirst("DateTrx,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getDocAction() == null) sql = sql.replaceFirst("DocAction,","").replaceFirst("\\?,", "");
- 		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
- 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstanceTo_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstanceTo_ID,","").replaceFirst("\\?,", "");
- 		 if (getMaxPriceVariationPerc() == null) sql = sql.replaceFirst("MaxPriceVariationPerc,","").replaceFirst("\\?,", "");
- 		 if (getM_Inventory_ID() == 0) sql = sql.replaceFirst("M_Inventory_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_To_ID() == 0) sql = sql.replaceFirst("M_Locator_To_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_ProductChange_ID() == 0) sql = sql.replaceFirst("M_ProductChange_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_To_ID() == 0) sql = sql.replaceFirst("M_Product_To_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Warehouse_ID() == 0) sql = sql.replaceFirst("M_Warehouse_ID,","").replaceFirst("\\?,", "");
- 		 if (getProductPrice() == null) sql = sql.replaceFirst("ProductPrice,","").replaceFirst("\\?,", "");
- 		 if (getProductQty() == null) sql = sql.replaceFirst("ProductQty,","").replaceFirst("\\?,", "");
- 		 if (getProductToPrice() == null) sql = sql.replaceFirst("ProductToPrice,","").replaceFirst("\\?,", "");
+		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getProductQty() == null) sql = sql.replaceFirst("ProductQty,","").replaceFirst("\\?,", "");
+ 		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
+ 		 if (getDocAction() == null) sql = sql.replaceFirst("DocAction,","").replaceFirst("\\?,", "");
+ 		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
+ 		 if (getDateTrx() == null) sql = sql.replaceFirst("DateTrx,","").replaceFirst("\\?,", "");
+ 		 if (getM_Inventory_ID() == 0) sql = sql.replaceFirst("M_Inventory_ID,","").replaceFirst("\\?,", "");
  		 if (getVoid_Inventory_ID() == 0) sql = sql.replaceFirst("Void_Inventory_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_AttributeSetInstanceTo_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstanceTo_ID,","").replaceFirst("\\?,", "");
+ 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
+ 		 if (getMaxPriceVariationPerc() == null) sql = sql.replaceFirst("MaxPriceVariationPerc,","").replaceFirst("\\?,", "");
+ 		 if (getProductPrice() == null) sql = sql.replaceFirst("ProductPrice,","").replaceFirst("\\?,", "");
+ 		 if (getProductToPrice() == null) sql = sql.replaceFirst("ProductToPrice,","").replaceFirst("\\?,", "");
+ 		 if (getCostTo() == null) sql = sql.replaceFirst("CostTo,","").replaceFirst("\\?,", "");
+ 		 if (getCost() == null) sql = sql.replaceFirst("Cost,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getCost() != null) pstmt.setBigDecimal(col++, getCost());
-		 if (getCostTo() != null) pstmt.setBigDecimal(col++, getCostTo());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getDateTrx() != null) pstmt.setTimestamp(col++, getDateTrx());
-		 if (getDescription() != null) pstmt.setString(col++, getDescription());
-		 if (getDocAction() != null) pstmt.setString(col++, getDocAction());
-		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
-		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
 		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_AttributeSetInstanceTo_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstanceTo_ID());
-		 if (getMaxPriceVariationPerc() != null) pstmt.setBigDecimal(col++, getMaxPriceVariationPerc());
-		 if (getM_Inventory_ID() != 0) pstmt.setInt(col++, getM_Inventory_ID());
-		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
-		 if (getM_Locator_To_ID() != 0) pstmt.setInt(col++, getM_Locator_To_ID());
-		 if (getM_ProductChange_ID() != 0) pstmt.setInt(col++, getM_ProductChange_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
-		 if (getM_Product_To_ID() != 0) pstmt.setInt(col++, getM_Product_To_ID());
-		 if (getM_Warehouse_ID() != 0) pstmt.setInt(col++, getM_Warehouse_ID());
-		 pstmt.setString(col++, isProcessed()?"Y":"N");
-		 if (getProductPrice() != null) pstmt.setBigDecimal(col++, getProductPrice());
-		 if (getProductQty() != null) pstmt.setBigDecimal(col++, getProductQty());
-		 if (getProductToPrice() != null) pstmt.setBigDecimal(col++, getProductToPrice());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getCreatedBy());
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 if (getProductQty() != null) pstmt.setBigDecimal(col++, getProductQty());
+		 pstmt.setString(col++, isProcessed()?"Y":"N");
+		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
+		 if (getDocAction() != null) pstmt.setString(col++, getDocAction());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 pstmt.setInt(col++, getM_ProductChange_ID());
+		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
+		 if (getDateTrx() != null) pstmt.setTimestamp(col++, getDateTrx());
+		 pstmt.setInt(col++, getM_Locator_To_ID());
+		 pstmt.setInt(col++, getM_Warehouse_ID());
+		 if (getM_Inventory_ID() != 0) pstmt.setInt(col++, getM_Inventory_ID());
 		 if (getVoid_Inventory_ID() != 0) pstmt.setInt(col++, getVoid_Inventory_ID());
+		 pstmt.setInt(col++, getM_Locator_ID());
+		 if (getM_AttributeSetInstanceTo_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstanceTo_ID());
+		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 pstmt.setInt(col++, getM_Product_ID());
+		 pstmt.setInt(col++, getM_Product_To_ID());
+		 if (getMaxPriceVariationPerc() != null) pstmt.setBigDecimal(col++, getMaxPriceVariationPerc());
+		 if (getProductPrice() != null) pstmt.setBigDecimal(col++, getProductPrice());
+		 if (getProductToPrice() != null) pstmt.setBigDecimal(col++, getProductToPrice());
+		 if (getCostTo() != null) pstmt.setBigDecimal(col++, getCostTo());
+		 if (getCost() != null) pstmt.setBigDecimal(col++, getCost());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -551,4 +549,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

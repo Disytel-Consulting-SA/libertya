@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Inventory
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-11-29 02:08:51.775 */
+ *  @version  - 2019-11-29 20:45:19.829 */
 public class X_I_Inventory extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -495,77 +495,82 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO I_Inventory(AD_Client_ID,AD_Org_ID,Created,CreatedBy,Description,I_ErrorMsg,I_Inventory_ID,I_IsImported,instance_description,Inventory_DocumentNo,IsActive,LocatorValue,Lot,M_AttributeSetInstance_ID,M_Inventory_ID,M_InventoryLine_ID,M_Locator_ID,MovementDate,M_Product_ID,M_Warehouse_ID,OrgValue,Processed,Processing,QtyBook,QtyCount,SerNo,UPC,Updated,UpdatedBy,Value,WarehouseValue,X,Y,Z) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO I_Inventory(I_IsImported,I_Inventory_ID,MovementDate,IsActive,Y,QtyBook,X,M_Product_ID,SerNo,M_Locator_ID,CreatedBy,Value,Description,UPC,M_InventoryLine_ID,UpdatedBy,Updated,Processed,Z,Lot,Processing,M_Warehouse_ID,Created,AD_Client_ID,QtyCount,AD_Org_ID,I_ErrorMsg,WarehouseValue,LocatorValue,M_Inventory_ID,instance_description,M_AttributeSetInstance_ID,OrgValue,Inventory_DocumentNo," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getI_ErrorMsg() == null) sql = sql.replaceFirst("I_ErrorMsg,","").replaceFirst("\\?,", "");
- 		 if (getI_Inventory_ID() == 0) sql = sql.replaceFirst("I_Inventory_ID,","").replaceFirst("\\?,", "");
- 		 if (getinstance_description() == null) sql = sql.replaceFirst("instance_description,","").replaceFirst("\\?,", "");
- 		 if (getInventory_DocumentNo() == null) sql = sql.replaceFirst("Inventory_DocumentNo,","").replaceFirst("\\?,", "");
- 		 if (getLocatorValue() == null) sql = sql.replaceFirst("LocatorValue,","").replaceFirst("\\?,", "");
- 		 if (getLot() == null) sql = sql.replaceFirst("Lot,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Inventory_ID() == 0) sql = sql.replaceFirst("M_Inventory_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InventoryLine_ID() == 0) sql = sql.replaceFirst("M_InventoryLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
- 		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Warehouse_ID() == 0) sql = sql.replaceFirst("M_Warehouse_ID,","").replaceFirst("\\?,", "");
- 		 if (getOrgValue() == null) sql = sql.replaceFirst("OrgValue,","").replaceFirst("\\?,", "");
- 		 if (getQtyBook() == null) sql = sql.replaceFirst("QtyBook,","").replaceFirst("\\?,", "");
- 		 if (getQtyCount() == null) sql = sql.replaceFirst("QtyCount,","").replaceFirst("\\?,", "");
- 		 if (getSerNo() == null) sql = sql.replaceFirst("SerNo,","").replaceFirst("\\?,", "");
- 		 if (getUPC() == null) sql = sql.replaceFirst("UPC,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
- 		 if (getValue() == null) sql = sql.replaceFirst("Value,","").replaceFirst("\\?,", "");
- 		 if (getWarehouseValue() == null) sql = sql.replaceFirst("WarehouseValue,","").replaceFirst("\\?,", "");
- 		 if (getX() == null) sql = sql.replaceFirst("X,","").replaceFirst("\\?,", "");
+		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
  		 if (getY() == null) sql = sql.replaceFirst("Y,","").replaceFirst("\\?,", "");
+ 		 if (getQtyBook() == null) sql = sql.replaceFirst("QtyBook,","").replaceFirst("\\?,", "");
+ 		 if (getX() == null) sql = sql.replaceFirst("X,","").replaceFirst("\\?,", "");
+ 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
+ 		 if (getSerNo() == null) sql = sql.replaceFirst("SerNo,","").replaceFirst("\\?,", "");
+ 		 if (getM_Locator_ID() == 0) sql = sql.replaceFirst("M_Locator_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getValue() == null) sql = sql.replaceFirst("Value,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getUPC() == null) sql = sql.replaceFirst("UPC,","").replaceFirst("\\?,", "");
+ 		 if (getM_InventoryLine_ID() == 0) sql = sql.replaceFirst("M_InventoryLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getZ() == null) sql = sql.replaceFirst("Z,","").replaceFirst("\\?,", "");
+ 		 if (getLot() == null) sql = sql.replaceFirst("Lot,","").replaceFirst("\\?,", "");
+ 		 if (getM_Warehouse_ID() == 0) sql = sql.replaceFirst("M_Warehouse_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getQtyCount() == null) sql = sql.replaceFirst("QtyCount,","").replaceFirst("\\?,", "");
+ 		 if (getI_ErrorMsg() == null) sql = sql.replaceFirst("I_ErrorMsg,","").replaceFirst("\\?,", "");
+ 		 if (getWarehouseValue() == null) sql = sql.replaceFirst("WarehouseValue,","").replaceFirst("\\?,", "");
+ 		 if (getLocatorValue() == null) sql = sql.replaceFirst("LocatorValue,","").replaceFirst("\\?,", "");
+ 		 if (getM_Inventory_ID() == 0) sql = sql.replaceFirst("M_Inventory_ID,","").replaceFirst("\\?,", "");
+ 		 if (getinstance_description() == null) sql = sql.replaceFirst("instance_description,","").replaceFirst("\\?,", "");
+ 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
+ 		 if (getOrgValue() == null) sql = sql.replaceFirst("OrgValue,","").replaceFirst("\\?,", "");
+ 		 if (getInventory_DocumentNo() == null) sql = sql.replaceFirst("Inventory_DocumentNo,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getDescription() != null) pstmt.setString(col++, getDescription());
-		 if (getI_ErrorMsg() != null) pstmt.setString(col++, getI_ErrorMsg());
-		 if (getI_Inventory_ID() != 0) pstmt.setInt(col++, getI_Inventory_ID());
 		 pstmt.setString(col++, isI_IsImported()?"Y":"N");
-		 if (getinstance_description() != null) pstmt.setString(col++, getinstance_description());
-		 if (getInventory_DocumentNo() != null) pstmt.setString(col++, getInventory_DocumentNo());
-		 pstmt.setString(col++, isActive()?"Y":"N");
-		 if (getLocatorValue() != null) pstmt.setString(col++, getLocatorValue());
-		 if (getLot() != null) pstmt.setString(col++, getLot());
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_Inventory_ID() != 0) pstmt.setInt(col++, getM_Inventory_ID());
-		 if (getM_InventoryLine_ID() != 0) pstmt.setInt(col++, getM_InventoryLine_ID());
-		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
+		 pstmt.setInt(col++, getI_Inventory_ID());
 		 if (getMovementDate() != null) pstmt.setTimestamp(col++, getMovementDate());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
-		 if (getM_Warehouse_ID() != 0) pstmt.setInt(col++, getM_Warehouse_ID());
-		 if (getOrgValue() != null) pstmt.setString(col++, getOrgValue());
-		 pstmt.setString(col++, isProcessed()?"Y":"N");
-		 pstmt.setString(col++, isProcessing()?"Y":"N");
-		 if (getQtyBook() != null) pstmt.setBigDecimal(col++, getQtyBook());
-		 if (getQtyCount() != null) pstmt.setBigDecimal(col++, getQtyCount());
-		 if (getSerNo() != null) pstmt.setString(col++, getSerNo());
-		 if (getUPC() != null) pstmt.setString(col++, getUPC());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
-		 if (getValue() != null) pstmt.setString(col++, getValue());
-		 if (getWarehouseValue() != null) pstmt.setString(col++, getWarehouseValue());
-		 if (getX() != null) pstmt.setString(col++, getX());
+		 pstmt.setString(col++, isActive()?"Y":"N");
 		 if (getY() != null) pstmt.setString(col++, getY());
+		 if (getQtyBook() != null) pstmt.setBigDecimal(col++, getQtyBook());
+		 if (getX() != null) pstmt.setString(col++, getX());
+		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 if (getSerNo() != null) pstmt.setString(col++, getSerNo());
+		 if (getM_Locator_ID() != 0) pstmt.setInt(col++, getM_Locator_ID());
+		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
+		 if (getValue() != null) pstmt.setString(col++, getValue());
+		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 if (getUPC() != null) pstmt.setString(col++, getUPC());
+		 if (getM_InventoryLine_ID() != 0) pstmt.setInt(col++, getM_InventoryLine_ID());
+		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 pstmt.setString(col++, isProcessed()?"Y":"N");
 		 if (getZ() != null) pstmt.setString(col++, getZ());
+		 if (getLot() != null) pstmt.setString(col++, getLot());
+		 pstmt.setString(col++, isProcessing()?"Y":"N");
+		 if (getM_Warehouse_ID() != 0) pstmt.setInt(col++, getM_Warehouse_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 if (getQtyCount() != null) pstmt.setBigDecimal(col++, getQtyCount());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 if (getI_ErrorMsg() != null) pstmt.setString(col++, getI_ErrorMsg());
+		 if (getWarehouseValue() != null) pstmt.setString(col++, getWarehouseValue());
+		 if (getLocatorValue() != null) pstmt.setString(col++, getLocatorValue());
+		 if (getM_Inventory_ID() != 0) pstmt.setInt(col++, getM_Inventory_ID());
+		 if (getinstance_description() != null) pstmt.setString(col++, getinstance_description());
+		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 if (getOrgValue() != null) pstmt.setString(col++, getOrgValue());
+		 if (getInventory_DocumentNo() != null) pstmt.setString(col++, getInventory_DocumentNo());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -586,4 +591,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

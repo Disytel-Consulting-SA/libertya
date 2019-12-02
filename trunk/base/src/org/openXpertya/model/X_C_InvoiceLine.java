@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_InvoiceLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-12-30 19:15:36.8 */
+ *  @version  - 2019-11-29 20:37:36.832 */
 public class X_C_InvoiceLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -582,89 +582,88 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_InvoiceLine(A_Asset_ID,AD_Client_ID,AD_Org_ID,C_BPartner_Vendor_ID,C_Charge_ID,C_Invoice_ID,C_InvoiceLine_ID,C_OrderLine_ID,CostPrice,C_Project_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,Description,DocumentDiscountAmt,IsActive,IsDescription,IsPrinted,Line,LineBonusAmt,LineDiscountAmt,LineNetAmount,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_InOutLine_ID,M_Product_ID,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyEntered,QtyInvoiced,Ref_InvoiceLine_ID,S_ResourceAssignment_ID,TaxAmt,Updated,UpdatedBy) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ";
+ 		 String sql = " INSERT INTO C_InvoiceLine(Ref_InvoiceLine_ID,A_Asset_ID,QtyInvoiced,Description,Updated,CreatedBy,UpdatedBy,C_OrderLine_ID,AD_Client_ID,AD_Org_ID,C_InvoiceLine_ID,Created,LineNetAmt,M_InOutLine_ID,IsActive,IsDescription,PriceLimit,Line,Processed,LineTotalAmt,IsPrinted,PriceActual,C_Charge_ID,S_ResourceAssignment_ID,TaxAmt,C_UOM_ID,QtyEntered,C_Tax_ID,M_AttributeSetInstance_ID,C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,C_BPartner_Vendor_ID,CostPrice,M_Product_ID,LineNetAmount,C_Invoice_ID,PriceEntered,PriceList," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getA_Asset_ID() == 0) sql = sql.replaceFirst("A_Asset_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Client_ID() == 0) sql = sql.replaceFirst("AD_Client_ID,","").replaceFirst("\\?,", "");
- 		 if (getAD_Org_ID() == 0) sql = sql.replaceFirst("AD_Org_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_BPartner_Vendor_ID() == 0) sql = sql.replaceFirst("C_BPartner_Vendor_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_InvoiceLine_ID() == 0) sql = sql.replaceFirst("C_InvoiceLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_OrderLine_ID() == 0) sql = sql.replaceFirst("C_OrderLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getCostPrice() == null) sql = sql.replaceFirst("CostPrice,","").replaceFirst("\\?,", "");
- 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
- 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getCreatedBy() == 0) sql = sql.replaceFirst("CreatedBy,","").replaceFirst("\\?,", "");
- 		 if (getC_Tax_ID() == 0) sql = sql.replaceFirst("C_Tax_ID,","").replaceFirst("\\?,", "");
- 		 if (getC_UOM_ID() == 0) sql = sql.replaceFirst("C_UOM_ID,","").replaceFirst("\\?,", "");
- 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
- 		 if (getDocumentDiscountAmt() == null) sql = sql.replaceFirst("DocumentDiscountAmt,","").replaceFirst("\\?,", "");
- 		 if (getLine() == 0) sql = sql.replaceFirst("Line,","").replaceFirst("\\?,", "");
- 		 if (getLineBonusAmt() == null) sql = sql.replaceFirst("LineBonusAmt,","").replaceFirst("\\?,", "");
- 		 if (getLineDiscountAmt() == null) sql = sql.replaceFirst("LineDiscountAmt,","").replaceFirst("\\?,", "");
- 		 if (getLineNetAmount() == null) sql = sql.replaceFirst("LineNetAmount,","").replaceFirst("\\?,", "");
- 		 if (getLineNetAmt() == null) sql = sql.replaceFirst("LineNetAmt,","").replaceFirst("\\?,", "");
- 		 if (getLineTotalAmt() == null) sql = sql.replaceFirst("LineTotalAmt,","").replaceFirst("\\?,", "");
- 		 if (getM_AttributeSetInstance_ID() == 0) sql = sql.replaceFirst("M_AttributeSetInstance_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InOutLine_ID() == 0) sql = sql.replaceFirst("M_InOutLine_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
- 		 if (getPriceActual() == null) sql = sql.replaceFirst("PriceActual,","").replaceFirst("\\?,", "");
- 		 if (getPriceEntered() == null) sql = sql.replaceFirst("PriceEntered,","").replaceFirst("\\?,", "");
- 		 if (getPriceLimit() == null) sql = sql.replaceFirst("PriceLimit,","").replaceFirst("\\?,", "");
- 		 if (getPriceList() == null) sql = sql.replaceFirst("PriceList,","").replaceFirst("\\?,", "");
- 		 if (getQtyEntered() == null) sql = sql.replaceFirst("QtyEntered,","").replaceFirst("\\?,", "");
+		 if (getRef_InvoiceLine_ID() == 0) sql = sql.replaceFirst("Ref_InvoiceLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getA_Asset_ID() == 0) sql = sql.replaceFirst("A_Asset_ID,","").replaceFirst("\\?,", "");
  		 if (getQtyInvoiced() == null) sql = sql.replaceFirst("QtyInvoiced,","").replaceFirst("\\?,", "");
- 		 if (getRef_InvoiceLine_ID() == 0) sql = sql.replaceFirst("Ref_InvoiceLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
+ 		 if (getC_OrderLine_ID() == 0) sql = sql.replaceFirst("C_OrderLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
+ 		 if (getLineNetAmt() == null) sql = sql.replaceFirst("LineNetAmt,","").replaceFirst("\\?,", "");
+ 		 if (getM_InOutLine_ID() == 0) sql = sql.replaceFirst("M_InOutLine_ID,","").replaceFirst("\\?,", "");
+ 		 if (getPriceLimit() == null) sql = sql.replaceFirst("PriceLimit,","").replaceFirst("\\?,", "");
+ 		 if (getLineTotalAmt() == null) sql = sql.replaceFirst("LineTotalAmt,","").replaceFirst("\\?,", "");
+ 		 if (getPriceActual() == null) sql = sql.replaceFirst("PriceActual,","").replaceFirst("\\?,", "");
+ 		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
  		 if (getS_ResourceAssignment_ID() == 0) sql = sql.replaceFirst("S_ResourceAssignment_ID,","").replaceFirst("\\?,", "");
  		 if (getTaxAmt() == null) sql = sql.replaceFirst("TaxAmt,","").replaceFirst("\\?,", "");
- 		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
- 		 if (getUpdatedBy() == 0) sql = sql.replaceFirst("UpdatedBy,","").replaceFirst("\\?,", "");
+ 		 if (getC_UOM_ID() == 0) sql = sql.replaceFirst("C_UOM_ID,","").replaceFirst("\\?,", "");
+ 		 if (getQtyEntered() == null) sql = sql.replaceFirst("QtyEntered,","").replaceFirst("\\?,", "");
+ 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDocumentDiscountAmt() == null) sql = sql.replaceFirst("DocumentDiscountAmt,","").replaceFirst("\\?,", "");
+ 		 if (getLineBonusAmt() == null) sql = sql.replaceFirst("LineBonusAmt,","").replaceFirst("\\?,", "");
+ 		 if (getLineDiscountAmt() == null) sql = sql.replaceFirst("LineDiscountAmt,","").replaceFirst("\\?,", "");
+ 		 if (getC_BPartner_Vendor_ID() == 0) sql = sql.replaceFirst("C_BPartner_Vendor_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCostPrice() == null) sql = sql.replaceFirst("CostPrice,","").replaceFirst("\\?,", "");
+ 		 if (getM_Product_ID() == 0) sql = sql.replaceFirst("M_Product_ID,","").replaceFirst("\\?,", "");
+ 		 if (getLineNetAmount() == null) sql = sql.replaceFirst("LineNetAmount,","").replaceFirst("\\?,", "");
+ 		 if (getPriceEntered() == null) sql = sql.replaceFirst("PriceEntered,","").replaceFirst("\\?,", "");
+ 		 if (getPriceList() == null) sql = sql.replaceFirst("PriceList,","").replaceFirst("\\?,", "");
+ 		 skipAdditionalNullValues(sql);
  
- 		 int col = 1;
+
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
+		 if (getRef_InvoiceLine_ID() != 0) pstmt.setInt(col++, getRef_InvoiceLine_ID());
 		 if (getA_Asset_ID() != 0) pstmt.setInt(col++, getA_Asset_ID());
-		 if (getAD_Client_ID() != 0) pstmt.setInt(col++, getAD_Client_ID());
-		 if (getAD_Org_ID() != 0) pstmt.setInt(col++, getAD_Org_ID());
-		 if (getC_BPartner_Vendor_ID() != 0) pstmt.setInt(col++, getC_BPartner_Vendor_ID());
-		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
-		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
-		 if (getC_InvoiceLine_ID() != 0) pstmt.setInt(col++, getC_InvoiceLine_ID());
-		 if (getC_OrderLine_ID() != 0) pstmt.setInt(col++, getC_OrderLine_ID());
-		 if (getCostPrice() != null) pstmt.setBigDecimal(col++, getCostPrice());
-		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
-		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
-		 if (getCreatedBy() != 0) pstmt.setInt(col++, getCreatedBy());
-		 if (getC_Tax_ID() != 0) pstmt.setInt(col++, getC_Tax_ID());
-		 if (getC_UOM_ID() != 0) pstmt.setInt(col++, getC_UOM_ID());
+		 if (getQtyInvoiced() != null) pstmt.setBigDecimal(col++, getQtyInvoiced());
 		 if (getDescription() != null) pstmt.setString(col++, getDescription());
-		 if (getDocumentDiscountAmt() != null) pstmt.setBigDecimal(col++, getDocumentDiscountAmt());
+		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
+		 pstmt.setInt(col++, getCreatedBy());
+		 pstmt.setInt(col++, getUpdatedBy());
+		 if (getC_OrderLine_ID() != 0) pstmt.setInt(col++, getC_OrderLine_ID());
+		 pstmt.setInt(col++, getAD_Client_ID());
+		 pstmt.setInt(col++, getAD_Org_ID());
+		 pstmt.setInt(col++, getC_InvoiceLine_ID());
+		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
+		 if (getLineNetAmt() != null) pstmt.setBigDecimal(col++, getLineNetAmt());
+		 if (getM_InOutLine_ID() != 0) pstmt.setInt(col++, getM_InOutLine_ID());
 		 pstmt.setString(col++, isActive()?"Y":"N");
 		 pstmt.setString(col++, isDescription()?"Y":"N");
-		 pstmt.setString(col++, isPrinted()?"Y":"N");
-		 if (getLine() != 0) pstmt.setInt(col++, getLine());
-		 if (getLineBonusAmt() != null) pstmt.setBigDecimal(col++, getLineBonusAmt());
-		 if (getLineDiscountAmt() != null) pstmt.setBigDecimal(col++, getLineDiscountAmt());
-		 if (getLineNetAmount() != null) pstmt.setBigDecimal(col++, getLineNetAmount());
-		 if (getLineNetAmt() != null) pstmt.setBigDecimal(col++, getLineNetAmt());
-		 if (getLineTotalAmt() != null) pstmt.setBigDecimal(col++, getLineTotalAmt());
-		 if (getM_AttributeSetInstance_ID() != 0) pstmt.setInt(col++, getM_AttributeSetInstance_ID());
-		 if (getM_InOutLine_ID() != 0) pstmt.setInt(col++, getM_InOutLine_ID());
-		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
-		 if (getPriceActual() != null) pstmt.setBigDecimal(col++, getPriceActual());
-		 if (getPriceEntered() != null) pstmt.setBigDecimal(col++, getPriceEntered());
 		 if (getPriceLimit() != null) pstmt.setBigDecimal(col++, getPriceLimit());
-		 if (getPriceList() != null) pstmt.setBigDecimal(col++, getPriceList());
+		 pstmt.setInt(col++, getLine());
 		 pstmt.setString(col++, isProcessed()?"Y":"N");
-		 if (getQtyEntered() != null) pstmt.setBigDecimal(col++, getQtyEntered());
-		 if (getQtyInvoiced() != null) pstmt.setBigDecimal(col++, getQtyInvoiced());
-		 if (getRef_InvoiceLine_ID() != 0) pstmt.setInt(col++, getRef_InvoiceLine_ID());
+		 if (getLineTotalAmt() != null) pstmt.setBigDecimal(col++, getLineTotalAmt());
+		 pstmt.setString(col++, isPrinted()?"Y":"N");
+		 if (getPriceActual() != null) pstmt.setBigDecimal(col++, getPriceActual());
+		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
 		 if (getS_ResourceAssignment_ID() != 0) pstmt.setInt(col++, getS_ResourceAssignment_ID());
 		 if (getTaxAmt() != null) pstmt.setBigDecimal(col++, getTaxAmt());
-		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
-		 if (getUpdatedBy() != 0) pstmt.setInt(col++, getUpdatedBy());
+		 if (getC_UOM_ID() != 0) pstmt.setInt(col++, getC_UOM_ID());
+		 if (getQtyEntered() != null) pstmt.setBigDecimal(col++, getQtyEntered());
+		 pstmt.setInt(col++, getC_Tax_ID());
+		 pstmt.setInt(col++, getM_AttributeSetInstance_ID());
+		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
+		 if (getDocumentDiscountAmt() != null) pstmt.setBigDecimal(col++, getDocumentDiscountAmt());
+		 if (getLineBonusAmt() != null) pstmt.setBigDecimal(col++, getLineBonusAmt());
+		 if (getLineDiscountAmt() != null) pstmt.setBigDecimal(col++, getLineDiscountAmt());
+		 if (getC_BPartner_Vendor_ID() != 0) pstmt.setInt(col++, getC_BPartner_Vendor_ID());
+		 if (getCostPrice() != null) pstmt.setBigDecimal(col++, getCostPrice());
+		 if (getM_Product_ID() != 0) pstmt.setInt(col++, getM_Product_ID());
+		 if (getLineNetAmount() != null) pstmt.setBigDecimal(col++, getLineNetAmount());
+		 pstmt.setInt(col++, getC_Invoice_ID());
+		 if (getPriceEntered() != null) pstmt.setBigDecimal(col++, getPriceEntered());
+		 if (getPriceList() != null) pstmt.setBigDecimal(col++, getPriceList());
+		 col = setAdditionalInsertValues(col, pstmt);
+ 
 
 		pstmt.executeUpdate();
 
@@ -685,4 +684,23 @@ catch (Exception e2)
 
 }
 
+protected String getAdditionalParamNames() 
+{
+ return "";
+ }
+ 
+protected String getAdditionalParamMarks() 
+{
+ return "";
+ }
+ 
+protected void skipAdditionalNullValues(String sql) 
+{
+  }
+ 
+protected int setAdditionalInsertValues(int col, PreparedStatement pstmt) throws Exception 
+{
+ return col;
+ }
+ 
 }

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-09-26 12:57:07.181 */
+ *  @version  - 2019-11-29 20:38:41.176 */
 public class X_C_OrderLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -830,7 +830,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_OrderLine(QtyReserved,QtyInvoiced,C_Currency_ID,QtyDelivered,Created,IsActive,Line,M_Shipper_ID,DateOrdered,C_OrderLine_ID,AD_Client_ID,DateInvoiced,DatePromised,DateDelivered,C_Order_ID,Description,M_Warehouse_ID,FreightAmt,AD_Org_ID,C_BPartner_ID,UpdatedBy,PriceLimit,IsDescription,Updated,Processed,LineNetAmt,QtyOrdered,PriceList,C_Charge_ID,Discount,S_ResourceAssignment_ID,C_UOM_ID,QtyEntered,OpenMatrix,M_AttributeSetInstance_ID,M_Product_ID,C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,LineTotalAmt,C_Tax_ID,PriceActual,CheckoutPlace,QtyTransferred,PriceEntered,Ref_OrderLine_ID,C_BPartner_Location_ID,CreatedBy,QtyReturned,PriceDiff,PriceReception,QtyDiff,QtyReception,DiffAmt,ReceptionAmt" + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?" + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_OrderLine(QtyReserved,QtyInvoiced,C_Currency_ID,QtyDelivered,Created,IsActive,Line,M_Shipper_ID,DateOrdered,C_OrderLine_ID,AD_Client_ID,DateInvoiced,DatePromised,DateDelivered,C_Order_ID,Description,M_Warehouse_ID,FreightAmt,AD_Org_ID,C_BPartner_ID,UpdatedBy,PriceLimit,IsDescription,Updated,Processed,LineNetAmt,QtyOrdered,PriceList,C_Charge_ID,Discount,S_ResourceAssignment_ID,C_UOM_ID,QtyEntered,OpenMatrix,M_AttributeSetInstance_ID,M_Product_ID,C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,LineTotalAmt,C_Tax_ID,PriceActual,CheckoutPlace,QtyTransferred,PriceEntered,Ref_OrderLine_ID,C_BPartner_Location_ID,CreatedBy,QtyReturned,PriceDiff,QtyDiff,PriceReception,QtyReception,DiffAmt,ReceptionAmt," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getQtyReserved() == null) sql = sql.replaceFirst("QtyReserved,","").replaceFirst("\\?,", "");
  		 if (getQtyInvoiced() == null) sql = sql.replaceFirst("QtyInvoiced,","").replaceFirst("\\?,", "");
@@ -867,15 +867,19 @@ try
  		 if (getRef_OrderLine_ID() == 0) sql = sql.replaceFirst("Ref_OrderLine_ID,","").replaceFirst("\\?,", "");
  		 if (getQtyReturned() == null) sql = sql.replaceFirst("QtyReturned,","").replaceFirst("\\?,", "");
  		 if (getPriceDiff() == null) sql = sql.replaceFirst("PriceDiff,","").replaceFirst("\\?,", "");
- 		 if (getPriceReception() == null) sql = sql.replaceFirst("PriceReception,","").replaceFirst("\\?,", "");
  		 if (getQtyDiff() == null) sql = sql.replaceFirst("QtyDiff,","").replaceFirst("\\?,", "");
+ 		 if (getPriceReception() == null) sql = sql.replaceFirst("PriceReception,","").replaceFirst("\\?,", "");
  		 if (getQtyReception() == null) sql = sql.replaceFirst("QtyReception,","").replaceFirst("\\?,", "");
  		 if (getDiffAmt() == null) sql = sql.replaceFirst("DiffAmt,","").replaceFirst("\\?,", "");
  		 if (getReceptionAmt() == null) sql = sql.replaceFirst("ReceptionAmt,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
- 		 int col = 1;
+ 		 sql = sql.replace(",)", ")");
+ 
+		 sql = sql.replace(",,)", ",");
+ 
+		 int col = 1;
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
@@ -930,8 +934,8 @@ try
 		 pstmt.setInt(col++, getCreatedBy());
 		 if (getQtyReturned() != null) pstmt.setBigDecimal(col++, getQtyReturned());
 		 if (getPriceDiff() != null) pstmt.setBigDecimal(col++, getPriceDiff());
-		 if (getPriceReception() != null) pstmt.setBigDecimal(col++, getPriceReception());
 		 if (getQtyDiff() != null) pstmt.setBigDecimal(col++, getQtyDiff());
+		 if (getPriceReception() != null) pstmt.setBigDecimal(col++, getPriceReception());
 		 if (getQtyReception() != null) pstmt.setBigDecimal(col++, getQtyReception());
 		 if (getDiffAmt() != null) pstmt.setBigDecimal(col++, getDiffAmt());
 		 if (getReceptionAmt() != null) pstmt.setBigDecimal(col++, getReceptionAmt());
