@@ -686,3 +686,91 @@ END
 $BODY$
   LANGUAGE 'plpgsql' VOLATILE;
   
+  
+-- 20191203-094501 Incorporacion de columnas changeloguid y changeloggroupuid a la vista
+drop view ad_changelog_dev;
+CREATE OR REPLACE VIEW ad_changelog_dev AS 
+	SELECT
+		g.ad_changelog_id, 
+		g.changeloggroup_id,
+		g.changeloguid,
+		g.changeloggroupuid,
+		c.name AS client, 
+		o.name AS organization, 
+		g.isactive, 
+		g.created,
+		uc.name AS createdbyuser,
+		g.updated, 
+		uu.name AS updatedbyuser, 
+		operationtype,
+		t.tablename,
+		l.columnname,
+		g.record_id,
+		g.ad_componentobjectuid,
+		g.oldvalue,
+		g.newvalue,
+		g.binaryvalue,
+		p.prefix AS componentprefix,
+		p.publicname AS componentname,
+		v.version AS componentversion,
+		g.ad_componentversion_id,
+		g.createdby,
+		g.updatedby,
+		g.ad_session_id,
+		g.ad_table_id,
+		g.ad_column_id,
+		g.iscustomization,
+		g.redo,
+		g.undo,
+		g.trxname
+	FROM ad_changelog g
+	INNER JOIN ad_client c ON (g.ad_client_id = c.ad_client_id)
+	INNER JOIN ad_org o ON (g.ad_org_id = o.ad_org_id)
+	INNER JOIN ad_user uc ON (g.createdby = uc.ad_user_id)
+	INNER JOIN ad_user uu ON (g.updatedby = uu.ad_user_id)
+	INNER JOIN ad_table t ON (g.ad_table_id = t.ad_table_id)
+	INNER JOIN ad_column l ON (g.ad_column_id = l.ad_column_id)
+	INNER JOIN ad_componentversion v ON (g.ad_componentversion_id = v.ad_componentversion_id)
+	INNER JOIN ad_component p ON (v.ad_component_id = p.ad_component_id)
+	ORDER BY created DESC, changeloggroup_id DESC, ad_changelog_id DESC;
+
+-- Incorporacion de nuevas columnas component_first_changelog_uid, component_last_changelog_uid, component_first_changelog_group_uid, component_last_changelog_group_uid a la vista
+drop view ad_plugin_v;
+CREATE OR REPLACE VIEW ad_plugin_v AS 
+ SELECT 	cv.name, 
+		cv.ad_componentobjectuid, 
+		cv.version, 
+		p.created, 
+		p.updated, 
+		p.createdby, 
+		p.updatedby, 
+		p.component_export_date as export_date, 
+		p.component_last_changelog as last_changelog, 
+		p.component_first_changelog_uid as first_changelog_uid, 
+		p.component_last_changelog_uid as last_changelog_uid, 
+		p.component_first_changelog_group_uid as first_changelog_group_uid, 
+		p.component_last_changelog_group_uid as last_changelog_group_uid
+   FROM ad_plugin p 
+   LEFT JOIN ad_componentversion cv ON p.ad_componentversion_id = cv.ad_componentversion_id
+  ORDER BY p.created;
+  
+-- Incorporacion de las mismas nuevas columnas a la vista de detalle  
+drop view ad_plugin_detail_v;
+create view ad_plugin_detail_v as
+select 	cv.name, 
+	cv.ad_componentobjectuid, 
+	pd.version, 
+	pd.created, 
+	pd.createdby,
+	pd.component_export_date as export_date, 
+	pd.component_first_changelog as first_changelog,
+	pd.component_last_changelog as last_changelog, 
+	pd.component_first_changelog_uid as first_changelog_uid, 
+	pd.component_last_changelog_uid as last_changelog_uid, 
+	pd.component_first_changelog_group_uid as first_changelog_group_uid, 
+	pd.component_last_changelog_group_uid as last_changelog_group_uid,
+	pd.install_details
+from ad_plugin p
+inner join ad_plugin_detail pd on p.ad_plugin_id = pd.ad_plugin_id
+left join ad_componentversion cv on p.ad_componentversion_id = cv.ad_componentversion_id
+order by pd.created asc;
