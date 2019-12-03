@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOut
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-11-29 20:48:47.002 */
+ *  @version  - 2019-12-03 12:09:28.861 */
 public class X_M_InOut extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1298,7 +1298,7 @@ try
 		 if (getInOutDate() != null) pstmt.setTimestamp(col++, getInOutDate());
 		 if (getReceptionDate() != null) pstmt.setTimestamp(col++, getReceptionDate());
 		 if (getInOutReceptionDate() != null) pstmt.setTimestamp(col++, getInOutReceptionDate());
-		 pstmt.setString(col++, isisintrastat()?"Y":"N");
+		 pstmt.setString(col++, isintrastat()?"Y":"N");
 		 if (getPrePrinted_DocNo() != null) pstmt.setString(col++, getPrePrinted_DocNo());
 		 if (getPrintType() != null) pstmt.setString(col++, getPrintType());
 		 pstmt.setInt(col++, getM_Warehouse_ID());
