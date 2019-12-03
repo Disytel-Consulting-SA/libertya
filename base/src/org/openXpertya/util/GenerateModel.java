@@ -998,8 +998,8 @@ public class GenerateModel {
 	            }
 
 	            if( dataType.equals( "Boolean" )) {
-	            	if (columnName.startsWith("Is"))
-	            		columnName = columnName.replaceFirst("Is", "is");
+	            	if (columnName.toLowerCase().startsWith("is"))		// Considera casos IS, Is, iS, is ...  
+	            		columnName = "is" + columnName.substring(2);	// ... y lo pasa a is (ignorando mayusculaes originales)
 	            	else
 	            		columnName = "is" + columnName;
 	            		
