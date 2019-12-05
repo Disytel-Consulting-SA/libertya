@@ -10,6 +10,7 @@ import java.util.Properties;
 
 import org.libertya.ws.bean.parameter.DocumentParameterBean;
 import org.libertya.ws.bean.result.DocumentResultBean;
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MReplicationHost;
 import org.openXpertya.model.X_C_Invoice;
@@ -17,6 +18,7 @@ import org.openXpertya.model.X_C_Order;
 import org.openXpertya.model.X_M_InOut;
 import org.openXpertya.replication.ReplicationConstants;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
@@ -41,6 +43,10 @@ public class RemoteOrderLineIntegrityCheck {
 	/** Preferencia: ¿timeout al crear desde? */
 	public static final String REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM_TIMEOUT_PROPERTY 	= "REMOTE_ORDERLINE_INTEGRITY_CHECK_AT_CREATEFROM_TIMEOUT"; 
 	
+	/** Preferencia: ignorar algun host en particular? Cargar el replicationArrayPos separado por comas.  Por ejemplo 3,8,11 */
+	public static final String REMOTE_ORDERLINE_INTEGRITY_IGNORE_HOST_LIST_PROPERTY				= "REMOTE_ORDERLINE_INTEGRITY_IGNORE_HOST_LIST"; 
+	
+
 	/** Tipo de Error: Error en la conexion remota */
 	public static final int ERROR_TYPE_CONNECTION 	= 1;
 	/** Tipo de Error: Error en el proceso de determinacion de valores */
@@ -67,7 +73,9 @@ public class RemoteOrderLineIntegrityCheck {
 	protected ArrayList<Data> orderLines = new ArrayList<Data>();
 	// Resultado obtenido luego de la invocacion remota 
 	protected Result result = new Result();
-
+	// Nomina de hosts a ignorar
+	protected ArrayList<Integer> hostsToIgnore = null;
+	
 	
 	/** Constructor */
 	public RemoteOrderLineIntegrityCheck(Properties ctx, String trx, Integer orderID, ValidationStage stage) {
@@ -386,7 +394,7 @@ public class RemoteOrderLineIntegrityCheck {
 	/** Deben realizarse validaciones remotas? */
 	public boolean shouldCheckUpdate() {
 		// Unicamente si estamos bajo replicacion y las organizaciones del pedido y local no coinciden, considerar el chequeo de consistencias
-		return shouldValidateStage() && (getThisHostOrg() > 0) && (getRemoteHostOrg() > 0) && (getRemoteHostOrg() != getThisHostOrg());
+		return shouldValidateStage() && (getThisHostOrg() > 0) && (getRemoteHostOrg() > 0) && !ignoreHost(getRemoteHostOrg()) && (getRemoteHostOrg() != getThisHostOrg());
 	}
 
 	/** Retorna la organizacion de este host. Si ya fue invocado, reutiliza el valor de la primera invocacion */
@@ -402,6 +410,29 @@ public class RemoteOrderLineIntegrityCheck {
 			remoteHostOrg = DB.getSQLValue(trx, "SELECT AD_Org_ID FROM C_Order WHERE C_Order_ID = " + orderID);
 		}
 		return remoteHostOrg;
+	}
+	
+	/** Retorna true si el host se encuentra en la nomina de hosts a ignorar, o false en caso contrario */
+	protected boolean ignoreHost(int orgID) {
+		// Cargar configuracion de hosts a ignorar por unica vez
+		try {
+			if (hostsToIgnore==null) {
+				hostsToIgnore = new ArrayList<Integer>();
+				String ignoreHostProp = MPreference.GetCustomPreferenceValue(REMOTE_ORDERLINE_INTEGRITY_IGNORE_HOST_LIST_PROPERTY);
+				if (!Util.isEmpty(ignoreHostProp)) {
+					String[] ignoreHostsList = ignoreHostProp.replace(" ", "").split(",");
+					for (int i=0; i<ignoreHostsList.length; i++) {
+						hostsToIgnore.add(Integer.parseInt(ignoreHostsList[i]));
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		// Validar si el host remoto se encuentra en la nomina de ignorados 
+		int hostPos = MReplicationHost.getReplicationPositionForOrg(orgID, trx);
+		return hostsToIgnore.contains(hostPos);
 	}
 	
 	/** Retorna el time out previo a cancelar la operacion, paar la etapa actual */
@@ -467,4 +498,18 @@ public class RemoteOrderLineIntegrityCheck {
 		protected String correctionColloquial = null;
 	}
 
+	
+	/* === Para pruebas de desarrollo unicamente === */
+	public static void main(String[] args) {
+		// Cargar el entorno basico
+	  	String oxpHomeDir = System.getenv("OXP_HOME");
+	  	System.setProperty("OXP_HOME", oxpHomeDir);
+	  	if (!OpenXpertya.startupEnvironment( false )) 
+	  		System.exit(1);
+	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
+
+	  	RemoteOrderLineIntegrityCheck rolic = new RemoteOrderLineIntegrityCheck(Env.getCtx(), null, 2350433, ValidationStage.AT_PROCESS);
+	  	System.out.println(rolic.shouldCheckUpdate());
+	}
 }
