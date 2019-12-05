@@ -14,6 +14,7 @@ import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrder;
@@ -552,6 +553,21 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		}
 		// Si se encontró entonces lo obtengo y lo seteo localmente
 		if(inoutID > 0){
+			MDocType idt = MDocType.get(getCtx(), getInvoice().getC_DocTypeTarget_ID());
+			if(idt.getDocBaseType().equalsIgnoreCase(MDocType.DOCBASETYPE_ARInvoice)) {
+				// Verificar que no tenga artículos que salieron por depósito
+				String sql = "select count(*) " + 
+						"from m_inoutline iol " + 
+						"join c_orderline ol on ol.c_orderline_id = iol.c_orderline_id " +
+						"join m_inout io on io.m_inout_id = iol.m_inout_id " +
+						"join c_doctype dt on dt.c_doctype_id = io.c_doctype_id " +
+						"where io.m_inout_id = ? and ol.checkoutplace = 'W' and dt.signo_issotrx = '-1' ";
+				int wc = DB.getSQLValue(get_TrxName(), sql, inoutID);
+				if(wc > 0) {
+					throw new Exception(getMsg("RelatedInOutWithWarehouseCheckout"));
+				}
+			}			
+			
 			setInOut(new MInOut(getCtx(), inoutID, get_TrxName()));
 		}
 	}

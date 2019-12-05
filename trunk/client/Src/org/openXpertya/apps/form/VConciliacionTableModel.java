@@ -876,7 +876,6 @@ public class VConciliacionTableModel {
 			brec.setC_BankStatementLine_ID(line.getC_BankStatementLine_ID());
 			
 			brec.setReferenceNo(line.getReferenceNo());
-			line.setIsReconciled(true);
 			
 			saveOk = line.save();
 			
@@ -904,16 +903,6 @@ public class VConciliacionTableModel {
 
 			if (saveOk)
 				saveOk = brec.save();
-		}
-
-		if (pagoValid && saveOk) {
-		    if (pay != null && !pay.isReconciled()) {
-				pay.setIsReconciled(true);
-				saveOk = pay.save();
-			} else if (boleta != null && !boleta.isReconciled()) {
-				boleta.setConciliado(true);
-				saveOk = boleta.save();
-			}
 		}
 		
 		if (!saveOk) {

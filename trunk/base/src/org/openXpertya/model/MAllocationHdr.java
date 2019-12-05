@@ -132,7 +132,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 	/** ContraAllocation: Esta HashMap almacena para cada ID de Payment, el ID del Payment anulado */
 	private	Map<Integer, Integer> paysVoid = new HashMap<Integer, Integer>();
 
-	
+	/** Flag para ignorar validaciones sobre la caja diaria asignada */
+	private boolean ignorePOSJournalAssigned = false;
 	
 	/** Cuenta cuántos allocation hay creados con este pago
 	 * 
@@ -830,6 +831,7 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 		// Si no se encuentra en ninguno de los dos estados, entonces se setea a
 		// 0 para que se asigne la caja diaria actual
 		if (getC_POSJournal_ID() != 0
+				&& !isIgnorePOSJournalAssigned()
 				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
 						getC_POSJournal_ID(), get_TrxName())) {
 			MClientInfo clientInfo = MClientInfo.get(getCtx());
@@ -1889,6 +1891,14 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			}
 		}
 		return debits;
+	}
+
+	public boolean isIgnorePOSJournalAssigned() {
+		return ignorePOSJournalAssigned;
+	}
+
+	public void setIgnorePOSJournalAssigned(boolean ignorePOSJournalAssigned) {
+		this.ignorePOSJournalAssigned = ignorePOSJournalAssigned;
 	}
 }    // MAllocation
 

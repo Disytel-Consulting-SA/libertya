@@ -461,6 +461,19 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
 
             if( line.getC_Payment_ID() != 0 ) {
                 MPayment payment = new MPayment( getCtx(),line.getC_Payment_ID(),get_TrxName());
+				// Si el pago relacionado se encuentra en una boleta de deposito anulada,
+				// entonces error
+            	String sql = "select count(*) " + 
+            			"from m_boletadeposito bd " + 
+            			"join m_boletadepositoline bdl on bd.m_boletadeposito_id = bdl.m_boletadeposito_id " + 
+            			"where bd.docstatus in ('VO','RE') AND (bd.c_boleta_payment_id = "+line.getC_Payment_ID()+" OR bdl.c_depo_payment_id = "+line.getC_Payment_ID()+")";
+            	int pbda = DB.getSQLValue(get_TrxName(), sql);
+            	if(pbda > 0) {
+					setProcessMsg(Msg.getMsg(getCtx(), "BankStatementPaymentInBoletaVoided",
+							new Object[] { line.getLine(), payment.getDocumentNo() }));
+                	return DOCSTATUS_Invalid;
+            	}            	
+            	// Conciliar pago
                 payment.setIsReconciled( true );
                 payment.setUpdateBPBalance(false);
                 if(!payment.save()){
@@ -605,7 +618,6 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
 
                 if( line.getC_Payment_ID() != 0 ) {
                     MPayment payment = new MPayment( getCtx(),line.getC_Payment_ID(),get_TrxName());
-
                     payment.setIsReconciled( false );
                     if(!payment.save()){
                     	setProcessMsg(CLogger.retrieveErrorAsString());
@@ -614,13 +626,11 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
                 }
                 if ( line.getM_BoletaDeposito_ID() != 0 ) {
                 	MBoletaDeposito boleta = new MBoletaDeposito( getCtx(),line.getM_BoletaDeposito_ID(),get_TrxName());
-                	if ( ! boleta.isReconciled() ) {
-                		boleta.setConciliado(false);
-                		if(!boleta.save()){
-                			setProcessMsg(CLogger.retrieveErrorAsString());
-                        	return false;
-                		}
-                	}
+            		boleta.setConciliado(false);
+            		if(!boleta.save()){
+            			setProcessMsg(CLogger.retrieveErrorAsString());
+                    	return false;
+            		}
                 }                
             }
         }

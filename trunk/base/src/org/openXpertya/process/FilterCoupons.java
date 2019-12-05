@@ -1,5 +1,6 @@
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +13,7 @@ import org.openXpertya.model.MPayment;
 import org.openXpertya.model.X_C_BPartner;
 import org.openXpertya.model.X_C_CouponsSettlements;
 import org.openXpertya.model.X_C_CreditCardCouponFilter;
+import org.openXpertya.model.X_C_DocType;
 import org.openXpertya.model.X_C_Payment;
 import org.openXpertya.model.X_M_EntidadFinanciera;
 import org.openXpertya.model.X_M_EntidadFinancieraPlan;
@@ -69,9 +71,13 @@ public class FilterCoupons extends SvrProcess {
 		sql.append("	p.couponbatchnumber, ");
 		sql.append("	p.c_currency_id, ");
 		sql.append("	p.c_payment_id, ");
-		sql.append("	COALESCE(p.a_name, bp.name) as a_name ");
+		sql.append("	COALESCE(p.a_name, bp.name) as a_name, ");
+		sql.append("	dt.c_doctype_id, ");
+		sql.append("	dt.signo_issotrx ");
 		sql.append("FROM ");
 		sql.append("	" + X_C_Payment.Table_Name + " p ");
+		sql.append("	INNER JOIN " + X_C_DocType.Table_Name + " dt ");
+		sql.append("		ON p.c_doctype_id = dt.c_doctype_id ");
 		sql.append("	INNER JOIN " + X_C_BPartner.Table_Name + " bp ");
 		sql.append("		ON p.c_bpartner_id = bp.c_bpartner_id ");
 		sql.append("	LEFT JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id ");
@@ -163,7 +169,11 @@ public class FilterCoupons extends SvrProcess {
 			}
 
 			rs = pstmt.executeQuery();
+			int paymentID;
+			String signo;
 			while (rs.next()) {
+				paymentID = rs.getInt(9);
+				signo = rs.getString("signo_issotrx");
 				X_C_CouponsSettlements couponsSettlements = new X_C_CouponsSettlements(getCtx(), 0, get_TrxName());
 				couponsSettlements.setAD_Org_ID(filter.getAD_Org_ID());
 				couponsSettlements.setC_CreditCardSettlement_ID(filter.getC_CreditCardSettlement_ID());
@@ -171,12 +181,12 @@ public class FilterCoupons extends SvrProcess {
 				couponsSettlements.setM_EntidadFinanciera_ID(rs.getInt(1));
 				couponsSettlements.setM_EntidadFinancieraPlan_ID(rs.getInt(2));
 				couponsSettlements.setTrxDate(rs.getTimestamp(3));
-				couponsSettlements.setAmount(rs.getBigDecimal(4));
+				couponsSettlements.setAmount(rs.getBigDecimal(4).multiply(new BigDecimal(signo)).negate());
 				couponsSettlements.setCouponNo(rs.getString(5));
 				couponsSettlements.setCreditCardNo(rs.getString(6));
 				couponsSettlements.setPaymentBatch(rs.getString(7));
 				couponsSettlements.setC_Currency_ID(rs.getInt(8));
-				couponsSettlements.setC_Payment_ID(rs.getInt(9));
+				couponsSettlements.setC_Payment_ID(paymentID);
 				couponsSettlements.setInclude(false);
 				couponsSettlements.setA_Name(rs.getString(10));
 

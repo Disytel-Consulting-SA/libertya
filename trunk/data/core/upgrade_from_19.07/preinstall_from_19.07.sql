@@ -774,3 +774,80 @@ from ad_plugin p
 inner join ad_plugin_detail pd on p.ad_plugin_id = pd.ad_plugin_id
 left join ad_componentversion cv on p.ad_componentversion_id = cv.ad_componentversion_id
 order by pd.created asc;
+
+--20191205-1235 Nueva columna con el tipo de documento
+CREATE OR REPLACE VIEW c_paymentcoupon_v AS 
+ SELECT p.c_payment_id,
+    p.ad_client_id,
+    p.ad_org_id,
+    p.created,
+    p.createdby,
+    p.updated,
+    p.updatedby,
+    'Y'::character(1) AS isactive,
+    efp.m_entidadfinanciera_id,
+    p.m_entidadfinancieraplan_id,
+    ccs.settlementno,
+    p.c_invoice_id,
+    p.creditcardnumber,
+    p.couponnumber,
+    p.c_bpartner_id,
+    COALESCE(p.a_name, bp.name) AS a_name,
+    p.datetrx,
+    p.couponbatchnumber,
+    p.payamt,
+    p.c_currency_id,
+    p.docstatus,
+    cs.isreconciled,
+    efp.cuotaspago AS totalallocations,
+    ccs.paymentdate AS settlementdate,
+    p.auditstatus,
+    ''::character(1) AS reject,
+    ''::character(1) AS unreject,
+    ef.c_bpartner_id AS m_entidadfinanciera_bp_id,
+    p.c_doctype_id
+   FROM c_payment p
+     JOIN c_bpartner bp ON p.c_bpartner_id = bp.c_bpartner_id
+     LEFT JOIN m_entidadfinancieraplan efp ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id
+     JOIN m_entidadfinanciera ef ON efp.m_entidadfinanciera_id = ef.m_entidadfinanciera_id
+     LEFT JOIN c_couponssettlements cs ON p.c_payment_id = cs.c_payment_id
+     LEFT JOIN c_creditcardsettlement ccs ON cs.c_creditcardsettlement_id = ccs.c_creditcardsettlement_id
+  WHERE p.tendertype = 'C'::bpchar;
+
+ALTER TABLE c_paymentcoupon_v
+  OWNER TO libertya;
+  
+--20191205-1235 Columna Procesado para los cierres fiscales
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_controlador_fiscal_closing_info','processed','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20191205-1235 Responsable de ventas por línea
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoiceline','salesrep_orig_id','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_orderline','salesrep_orig_id','integer'));
+
+--View para el informe de Ventas por Vendedor
+CREATE OR REPLACE VIEW c_invoice_sales_rep_orig_v AS 
+ SELECT i.ad_client_id,
+    i.ad_org_id,
+    i.c_invoice_id,
+    i.documentno,
+    i.dateacct::date AS dateacct,
+    i.dateinvoiced,
+    i.grandtotal,
+    il.salesrep_orig_id,
+    u.name AS salesrep_name,
+    sum(currencybase(il.linenetamt, i.c_currency_id, i.dateacct, i.ad_client_id, i.ad_org_id))::numeric(20,2) AS salesrep_invoice_amt
+   FROM c_invoiceline il
+     JOIN c_invoice i ON i.c_invoice_id = il.c_invoice_id
+     JOIN ad_user u ON u.ad_user_id = il.salesrep_orig_id
+     JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+  WHERE (i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND dt.docbasetype = 'ARI'::bpchar AND dt.doctypekey::text !~~* 'CDN%'::text AND
+        CASE
+            WHEN 'Y'::text = ((( SELECT ad_preference.value
+               FROM ad_preference
+              WHERE ad_preference.attribute::text = 'LOCAL_AR'::text))::text) THEN dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND (dt.iselectronic IS NULL OR dt.iselectronic::text = 'N'::text OR dt.iselectronic::text = 'Y'::text AND i.cae IS NOT NULL)
+            ELSE true
+        END
+  GROUP BY i.ad_client_id, i.ad_org_id, i.c_invoice_id, i.documentno, (i.dateacct::date), i.dateinvoiced, i.grandtotal, il.salesrep_orig_id, u.name;
+
+ALTER TABLE c_invoice_sales_rep_orig_v
+  OWNER TO libertya;

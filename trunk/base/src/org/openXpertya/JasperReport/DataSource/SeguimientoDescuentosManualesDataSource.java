@@ -47,9 +47,10 @@ public class SeguimientoDescuentosManualesDataSource extends QueryDataSource {
 												"cond_vta, " +
 												"dateinvoiced, " +
 												"grandtotal, " +
+												"discountkind, " +
+												"discountPerc as discount_perc, " +
 												"coalesce(sum(discountbaseamt),0.00) as discount_base_amt, " +
-												"coalesce(sum(discountamt),0.00) as discount_amt, " +
-												"coalesce(sum(discountPerc),0.00) as discount_perc " +
+												"coalesce(sum(discountamt),0.00) as discount_amt " +
 											"from (select i.c_invoice_id, " +
 														"i.documentno, " +
 														"i.c_bpartner_id, " +
@@ -60,6 +61,7 @@ public class SeguimientoDescuentosManualesDataSource extends QueryDataSource {
 														"abs(discountamt) as discountamt, " +
 														"(abs(discountamt)/discountbaseamt)::numeric(11,2) as discountPerc, " +
 														"i.dateinvoiced, " +
+														"discountkind, " +
 														"(SELECT payment_medium_name " +
 															"FROM c_allocation_detail_v as ad " +
 															"WHERE ad.c_invoice_id = i.c_invoice_id " +
@@ -79,7 +81,7 @@ public class SeguimientoDescuentosManualesDataSource extends QueryDataSource {
 															"AND discountkind IN ('"+MDocumentDiscount.DISCOUNTKIND_ManualDiscount+"','"+MDocumentDiscount.DISCOUNTKIND_ManualGeneralDiscount+"') " +
 															"AND date_trunc('day',i.dateinvoiced) >= date_trunc('day',?::date) " +
 															"AND date_trunc('day',i.dateinvoiced) <= date_trunc('day',?::date)) as d " +
-											"group by c_invoice_id,	documentno, c_bpartner_id, nombrecli, discount_responsable, dateinvoiced, cond_vta, grandtotal " +
+											"group by c_invoice_id,	documentno, c_bpartner_id, nombrecli, discount_responsable, dateinvoiced, cond_vta, grandtotal, discountkind, discountPerc " +
 											"order by dateinvoiced, documentno) as a " +
 											"where discount_perc >= (?/100)::numeric(11,2) ");
 		

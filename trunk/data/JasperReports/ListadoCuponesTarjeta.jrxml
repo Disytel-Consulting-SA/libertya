@@ -38,9 +38,10 @@ documentno AS nrocupon,
 dateacct AS fechacobro, 
 duedate AS fechavencimiento,
 a_name AS cliente,
-payamt AS importe, 
+payamt * dt.signo_issotrx * -1 AS importe, 
 isreconciled AS conciliado
 FROM c_payment p
+JOIN C_DocType dt ON p.c_doctype_id = dt.c_doctype_id
 INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id)
 INNER JOIN m_entidadfinanciera ef ON (ef.M_EntidadFinanciera_ID = efp.M_EntidadFinanciera_ID)
 INNER JOIN AD_Org org ON (org.AD_Org_ID = p.AD_Org_ID)
@@ -61,9 +62,10 @@ NULL AS nrocupon,
 NULL AS fechacobro, 
 NULL AS fechavencimiento,
 NULL AS cliente,
-SUM(payamt) AS importe, 
+SUM(payamt * dt.signo_issotrx * -1) AS importe, 
 NULL AS conciliado
 FROM c_payment p
+JOIN C_DocType dt ON p.c_doctype_id = dt.c_doctype_id
 INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id)
 INNER JOIN m_entidadfinanciera ef ON (ef.M_EntidadFinanciera_ID = efp.M_EntidadFinanciera_ID)
 WHERE (tendertype = 'C') 

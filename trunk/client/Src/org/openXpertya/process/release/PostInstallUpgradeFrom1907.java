@@ -35,6 +35,25 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String OP_REPORT_UID = "CORE-AD_JasperReport-1000012";
 	protected final static String OP_REPORT_FILENAME = "OrdenPago.jasper";
 	
+	/** Reporte de Cierre de Tarjetas */
+	protected final static String CREDITCARD_CLOSE_REPORT_UID = "CORE-AD_Process-1010444";
+	protected final static String DYNAMIC_CREDITCARD_CLOSE_REPORT_UID = "CORE-AD_Process-1010445";
+	protected final static String CREDITCARD_CLOSE_REPORT_FILENAME = "CreditCardClose.jasper";
+	
+	/** Reporte de Cierre de Tarjetas - Subreporte de Cupones Duplicados */
+	protected final static String CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME = "CreditCardReport-DuplicateSubreport.jasper";
+	
+	/** Reporte de Cierre de Tarjetas - Subreporte de Cupones Inválidos */
+	protected final static String CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME = "CreditCardReport-InvalidSubreport.jasper";
+	
+	/** Informe de Auditoría de Entidades Financieras */
+	protected final static String EntidadFinancieraAudit_FILENAME = "EntidadFinancieraAudit.jasper";
+	protected final static String EntidadFinancieraAudit_UID = "CORE-AD_Process-1010359";
+	
+	/** Listado de Cupones de Tarjeta */
+	protected final static String ListadoCuponesTarjeta_FILENAME = "ListadoCuponesTarjeta.jasper";
+	protected final static String ListadoCuponesTarjeta_UID = "CORE-AD_Process-1010405";
+
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -124,6 +143,95 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 								.readBinaryFromJar(
 										jarFileURL,
 										getBinaryFileURL(OP_REPORT_FILENAME)));
+
+		// Reportes de Cierre de Tarjetas
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CREDITCARD_CLOSE_REPORT_UID,
+				CREDITCARD_CLOSE_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDITCARD_CLOSE_REPORT_FILENAME)));
+		
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				DYNAMIC_CREDITCARD_CLOSE_REPORT_UID,
+				CREDITCARD_CLOSE_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDITCARD_CLOSE_REPORT_FILENAME)));
+		
+		// Cierre de Tarjetas - Subreporte de Duplicados
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CREDITCARD_CLOSE_REPORT_UID,
+				CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME)),
+				false);
+		
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				DYNAMIC_CREDITCARD_CLOSE_REPORT_UID,
+				CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_DUPLICATEDCUPON_REPORT_FILENAME)),
+				false);
+		
+		// Reporte de Cierre de Tarjetas - Subreporte de Cupones Inválidos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				CREDITCARD_CLOSE_REPORT_UID,
+				CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME)), 
+				false);
+		
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				DYNAMIC_CREDITCARD_CLOSE_REPORT_UID,
+				CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(CREDITCARD_CLOSE_SB_INVALIDCUPON_REPORT_FILENAME)), 
+				false);
+		
+		// Informe de Auditoría de Entidades Financieras
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				EntidadFinancieraAudit_UID,
+				EntidadFinancieraAudit_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(EntidadFinancieraAudit_FILENAME)));
+		
+		// Listado de Cupones de Tarjeta
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ListadoCuponesTarjeta_UID,
+				ListadoCuponesTarjeta_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ListadoCuponesTarjeta_FILENAME)));
 		
 		return " ";
 	}

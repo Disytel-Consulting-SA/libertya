@@ -2,7 +2,7 @@
 <!-- Created with iReport - A designer for JasperReports -->
 <!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
 <jasperReport
-		 name="CreditCardReport-DuplicateSubreport"
+		 name="CreditCardReport-InvalidSubreport"
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
@@ -28,8 +28,9 @@
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<parameter name="FechaCierre" isForPrompting="false" class="java.util.Date"/>
 	<queryString><![CDATA[select p.datetrx::date as fecha, p.couponbatchnumber as nrolote, p.couponnumber as nrocupon, p.creditcardnumber as nrotarjeta,
-	pos.name as caja, mefp.name as entidadfinancieraplan, mef.name as entidadfinanciera, p.payamt as importe
+	pos.name as caja, mefp.name as entidadfinancieraplan, mef.name as entidadfinanciera, (p.payamt * (dt.signo_issotrx * -1)) as importe
 from c_payment p 
+join c_doctype dt on dt.c_doctype_id = p.c_doctype_id
 inner join m_entidadfinancieraplan mefp on mefp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 inner join m_entidadfinanciera mef on mef.m_entidadfinanciera_id = mefp.m_entidadfinanciera_id
 left join c_posjournal pj on pj.c_posjournal_id = p.c_posjournal_id
@@ -252,7 +253,7 @@ order by p.c_posjournal_id, p.created]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{entidadfinancieraplan}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="570"
 						y="0"

@@ -2472,6 +2472,7 @@ public class FiscalDocumentPrint {
 		cinfo.setQtyFiscalDocumentBC(dto.qtyfiscaldocumentbc);
 		cinfo.setQtyNoFiscalDocument(dto.qtynofiscaldocument);
 		cinfo.setQtyNoFiscalHomologated(dto.qtynofiscalhomologated);
+		cinfo.setProcessed(true);
 		if(!cinfo.save()){
 			log.saveError("SaveError", CLogger.retrieveErrorAsString());
 		}

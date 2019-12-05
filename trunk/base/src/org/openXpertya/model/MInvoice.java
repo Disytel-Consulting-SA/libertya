@@ -173,6 +173,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 */
 	private Map<Integer, Integer> reversalInvoiceLinesAssociation = null;
 	
+	/** Flag para ignorar validaciones sobre la caja diaria asignada */
+	private boolean ignorePOSJournalAssigned = false;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -4322,6 +4325,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// Si no se encuentra en ninguno de los dos estados, entonces se setea a
 		// 0 para que se asigne la caja diaria actual
 		if (getC_POSJournal_ID() != 0
+				&& !isIgnorePOSJournalAssigned()
 				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
 						getC_POSJournal_ID(), get_TrxName())) {
 			// Si se debe realizar el control obligatorio de apertura y la caja
@@ -4341,6 +4345,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			return STATUS_Invalid;
 		}
 
+		// Eliminar impuestos inválidos
+		deleteInvalidInvoiceTax();
+		
 		// Si es nota de crédito automática se asigna a la factura más vieja y
 		// si es por devolución a la relacionada con el pedido
 		if (!isSkipAutomaticCreditAllocCreation()
@@ -7047,6 +7054,25 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 		}
 	}	
+	
+	/**
+	 * Elimina los impuestos de comprobante inválidos. Las condiciones de los mismos son:
+	 * 1) Tasa de impuesto mayor a 0
+	 * 3) Importe de impuesto = 0
+	 */
+	protected void deleteInvalidInvoiceTax() {
+		String sql = "delete from c_invoicetax it where c_invoice_id = " + getID()
+				+ " and taxamt = 0 and exists (select t.c_tax_id from c_tax t where t.rate <> 0 and it.c_tax_id = t.c_tax_id)";
+		DB.executeUpdate(sql, get_TrxName());
+	}
+	
+	public boolean isIgnorePOSJournalAssigned() {
+		return ignorePOSJournalAssigned;
+	}
+
+	public void setIgnorePOSJournalAssigned(boolean ignorePOSJournalAssigned) {
+		this.ignorePOSJournalAssigned = ignorePOSJournalAssigned;
+	}
 	
 } // MInvoice
 

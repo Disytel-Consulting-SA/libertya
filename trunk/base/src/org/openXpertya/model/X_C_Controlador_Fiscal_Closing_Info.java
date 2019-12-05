@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal_Closing_Info
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-06-07 13:47:47.171 */
+ *  @version  - 2019-12-05 12:32:19.23 */
 public class X_C_Controlador_Fiscal_Closing_Info extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -30,7 +30,7 @@ setCreditNotePerceptionAmt (Env.ZERO);
 setCreditNoteTaxAmt (Env.ZERO);
 setFiscalClosingDate (new Timestamp(System.currentTimeMillis()));
 setFiscalClosingNo (0);
-setFiscalClosingType (null);
+setFiscalClosingType (null);	// Z
 setFiscalDocument_A_LastEmitted (0);
 setFiscalDocumentAmt (Env.ZERO);
 setFiscalDocument_BC_LastEmitted (0);
@@ -42,6 +42,7 @@ setFiscalDocumentNotRegisteredTaxAmt (Env.ZERO);
 setFiscalDocumentPerceptionAmt (Env.ZERO);
 setFiscalDocumentTaxAmt (Env.ZERO);
 setNoFiscalHomologatedAmt (Env.ZERO);
+setProcessed (false);
 setQtyCanceledCreditNote (0);
 setQtyCanceledFiscalDocument (0);
 setQtyCreditNote (0);
@@ -433,6 +434,24 @@ set_Value ("POSName", POSName);
 public String getPOSName() 
 {
 return (String)get_Value("POSName");
+}
+/** Set Processed.
+The document has been processed */
+public void setProcessed (boolean Processed)
+{
+set_Value ("Processed", new Boolean(Processed));
+}
+/** Get Processed.
+The document has been processed */
+public boolean isProcessed() 
+{
+Object oo = get_Value("Processed");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Punto De Venta */
 public void setPuntoDeVenta (int PuntoDeVenta)

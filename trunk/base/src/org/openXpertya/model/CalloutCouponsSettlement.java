@@ -1,5 +1,6 @@
 package org.openXpertya.model;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,9 +44,13 @@ public class CalloutCouponsSettlement extends CalloutEngine {
 			sql.append("	p.M_EntidadFinancieraPlan_ID, ");
 			sql.append("	p.CouponBatchNumber, ");
 			sql.append("	p.DateTrx, ");
-			sql.append("	COALESCE(p.a_name, bp.name) as a_name ");
+			sql.append("	COALESCE(p.a_name, bp.name) as a_name, ");
+			sql.append("	dt.c_doctype_id, ");
+			sql.append("	dt.signo_issotrx ");
 			sql.append("FROM ");
 			sql.append("	" + X_C_Payment.Table_Name + " p ");
+			sql.append("	INNER JOIN " + X_C_DocType.Table_Name + " dt ");
+			sql.append("		ON p.c_doctype_id = dt.c_doctype_id ");
 			sql.append("	LEFT JOIN " + X_M_EntidadFinancieraPlan.Table_Name + " efp ");
 			sql.append("		ON p.m_entidadfinancieraplan_id = efp.m_entidadfinancieraplan_id ");
 			sql.append("	LEFT JOIN " + X_C_AllocationLine.Table_Name + " al ");
@@ -64,10 +69,11 @@ public class CalloutCouponsSettlement extends CalloutEngine {
 				pstmt = DB.prepareStatement(sql.toString());
 				pstmt.setInt(1, C_Payment_ID);
 				rs = pstmt.executeQuery();
-
+				String signo;
 				if (rs.next()) {
+					signo = rs.getString("signo_issotrx");
 					mTab.setValue("AllocationNumber", rs.getString(1));
-					mTab.setValue("Amount", rs.getBigDecimal(2));
+					mTab.setValue("Amount", rs.getBigDecimal(2).multiply(new BigDecimal(signo)).negate());
 					mTab.setValue("C_Currency_ID", rs.getInt(3));
 					mTab.setValue("CouponNo", rs.getString(4));
 					mTab.setValue("CreditCardNo", rs.getString(5));

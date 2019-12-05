@@ -258,8 +258,9 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 			// Se anulan el cheque Contra-Movimiento generado a partir
 			// del Cheque original asociado a la línea.
 			MPayment reversalCheck = line.getReversalPayment();
-			// Se cambia el estado para que el engine permita Anular (si está en Closed no
+			// Se cambia el estado y el conciliado para que el engine permita Anular (si está en Closed no
 			// permite la anulación)
+			reversalCheck.setIgnoreReconciled(true);
 			reversalCheck.setDocStatus(MPayment.STATUS_Completed); 
 			// Se anula el cheque.
 			if (!reversalCheck.processIt(MPayment.ACTION_Void)) {
@@ -296,6 +297,7 @@ public class MBoletaDeposito extends X_M_BoletaDeposito implements DocAction {
 			// en otra boleta.
 			MPayment originalCheck = line.getPayment();
 			originalCheck.setM_BoletaDeposito_ID(0);
+			reversalCheck.setIgnoreReconciled(true);
 			originalCheck.setDocStatus(MPayment.DOCSTATUS_Completed);
 			originalCheck.setDocAction(MPayment.DOCACTION_Close);
 			clearDepositedDescription(originalCheck);
