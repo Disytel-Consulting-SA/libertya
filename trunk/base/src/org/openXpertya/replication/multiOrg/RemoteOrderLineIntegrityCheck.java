@@ -394,7 +394,7 @@ public class RemoteOrderLineIntegrityCheck {
 	/** Deben realizarse validaciones remotas? */
 	public boolean shouldCheckUpdate() {
 		// Unicamente si estamos bajo replicacion y las organizaciones del pedido y local no coinciden, considerar el chequeo de consistencias
-		return shouldValidateStage() && (getThisHostOrg() > 0) && (getRemoteHostOrg() > 0) && !ignoreHost(getRemoteHostOrg()) && (getRemoteHostOrg() != getThisHostOrg());
+		return shouldValidateStage() && (getThisHostOrg() > 0) && (getRemoteHostOrg() > 0) && !isHostIgnored() && (getRemoteHostOrg() != getThisHostOrg());
 	}
 
 	/** Retorna la organizacion de este host. Si ya fue invocado, reutiliza el valor de la primera invocacion */
@@ -413,7 +413,7 @@ public class RemoteOrderLineIntegrityCheck {
 	}
 	
 	/** Retorna true si el host se encuentra en la nomina de hosts a ignorar, o false en caso contrario */
-	protected boolean ignoreHost(int orgID) {
+	protected boolean isHostIgnored() {
 		// Cargar configuracion de hosts a ignorar por unica vez
 		try {
 			if (hostsToIgnore==null) {
@@ -431,7 +431,7 @@ public class RemoteOrderLineIntegrityCheck {
 		}
 
 		// Validar si el host remoto se encuentra en la nomina de ignorados 
-		int hostPos = MReplicationHost.getReplicationPositionForOrg(orgID, trx);
+		int hostPos = MReplicationHost.getReplicationPositionForOrg(getRemoteHostOrg(), trx);
 		return hostsToIgnore.contains(hostPos);
 	}
 	
@@ -501,15 +501,30 @@ public class RemoteOrderLineIntegrityCheck {
 	
 	/* === Para pruebas de desarrollo unicamente === */
 	public static void main(String[] args) {
+		// Se indico un orderID?
+		int orderID = -1;
+		if (args==null || args.length==0) {
+			System.err.println("Debe indicar un orderID");
+			System.exit(1);
+		}
+		try {
+			orderID = Integer.parseInt(args[0]);
+		} catch (Exception e) {
+			System.err.println("Argumento invalido");
+			System.exit(1);
+		}
 		// Cargar el entorno basico
 	  	String oxpHomeDir = System.getenv("OXP_HOME");
 	  	System.setProperty("OXP_HOME", oxpHomeDir);
-	  	if (!OpenXpertya.startupEnvironment( false )) 
+	  	if (!OpenXpertya.startupEnvironment( false )) {
+	  		System.err.println("Error al inicial el entorno");
 	  		System.exit(1);
+	  	}
 	  	Env.setContext(Env.getCtx(), "#AD_Client_ID", DB.getSQLValue(null, " SELECT AD_Client_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
 	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", DB.getSQLValue(null, " SELECT AD_Org_ID FROM AD_ReplicationHost WHERE thisHost = 'Y' "));
 
-	  	RemoteOrderLineIntegrityCheck rolic = new RemoteOrderLineIntegrityCheck(Env.getCtx(), null, 2350433, ValidationStage.AT_PROCESS);
-	  	System.out.println(rolic.shouldCheckUpdate());
+	  	RemoteOrderLineIntegrityCheck rolic = new RemoteOrderLineIntegrityCheck(Env.getCtx(), null, orderID, ValidationStage.AT_PROCESS);
+	  	System.out.println("shouldCheckUpdate: " + rolic.shouldCheckUpdate());
+	  	System.out.println("isHostIgnored: " + rolic.isHostIgnored());
 	}
 }
