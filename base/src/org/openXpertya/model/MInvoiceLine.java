@@ -277,6 +277,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         setC_UOM_ID( oLine.getC_UOM_ID());
 
         setC_Tax_ID( oLine.getC_Tax_ID());
+        setSalesRep_Orig_ID(oLine.getSalesRep_Orig_ID());
+        
         //
         int invoiceCurrencyID = getInvoice().getC_Currency_ID();
         int orderCurrencyID = oLine.getC_Currency_ID();
@@ -1162,6 +1164,24 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			return false;
         }
         
+
+		// Si la tasa de impuesto es mayor a 0 y el importe de impuesto es menor o igual
+		// a 0 | mayor al neto de linea | mayor al total de linea
+        String sql = "select rate from c_tax where c_tax_id = ? ";
+        BigDecimal taxRate = DB.getSQLValueBD(get_TrxName(), sql, getC_Tax_ID());
+        if(!Util.isEmpty(taxRate, true) 
+        		&& getLineNetAmt().compareTo(BigDecimal.ZERO) > 0
+        		&& (getTaxAmt().compareTo(BigDecimal.ZERO) <= 0
+        				|| getTaxAmt().compareTo(getLineNetAmt()) >= 0
+        				|| getTaxAmt().compareTo(getLineNetAmount()) >= 0) 
+        		) {
+			log.saveError("SaveError",
+					Msg.getMsg(getCtx(), "TaxAmtInvalid", new Object[] { taxRate, getTaxAmt(), getLineNetAmount() }));
+        	return false;
+        }
+        
+        
+        
         // Setear el proveedor del artículo actual y el precio de costo
         if(!Util.isEmpty(getM_Product_ID(), true)){    		
 	        MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
@@ -1184,11 +1204,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 						isTaxIncluded(), getTaxRate(), isPerceptionsIncluded(),
 						get_TrxName()));
 	        }
-        }
-        /*
-        String sql = "select rate from c_tax where c_tax_id = " + getC_Tax_ID();
-        PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
-		try {
+        }        	
+        
+		/*try {
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()){
 				BigDecimal vRate = rs.getBigDecimal("rate").divide(new BigDecimal(100));

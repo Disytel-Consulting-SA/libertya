@@ -29,8 +29,9 @@
 	<parameter name="CreditCardReport-DuplicateSubreport" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CreditCardReport-InvalidSubreport" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="RECORD_COUNT" isForPrompting="false" class="java.lang.Integer"/>
-	<queryString><![CDATA[select mef.name as entidadfinanciera,pos.name as caja,SUM(p.payamt) as importe, o.name as organization
+	<queryString><![CDATA[select mef.name as entidadfinanciera,pos.name as caja,SUM(p.payamt * (dt.signo_issotrx * -1)) as importe, o.name as organization
 from c_payment p
+join c_doctype dt on dt.c_doctype_id = p.c_doctype_id
 inner join ad_org o on o.ad_org_id = p.ad_org_id
 inner join m_entidadfinancieraplan mefp on mefp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 inner join m_entidadfinanciera mef on mef.m_entidadfinanciera_id = mefp.m_entidadfinanciera_id

@@ -900,10 +900,10 @@ public class DocumentEngine implements DocAction {
 		
 		return result.equalsIgnoreCase(PluginDocActionHandler.TRUE);
 	}
-
+	
 	/**
 	 * Realiza el procesamiento de un acción sobre el documento y luego guarda
-	 * los cambios.
+	 * los cambios si es que asi se requiere.
 	 * 
 	 * @param document
 	 *            Documento que se quiere procesar
@@ -915,11 +915,15 @@ public class DocumentEngine implements DocAction {
 	 *            {@link DocAction#processIt(String)} sobre el mismo. Es
 	 *            recomendable utilizar esta opción para documentos que aún no
 	 *            han sido guardados en la BD.
+	 * @param saveAfter
+	 *            Si es <code>true</code> realiza un {@link PO#save()}
+	 *            del documento luego de ejecutar correctamente el
+	 *            {@link DocAction#processIt(String)} sobre el mismo. 
 	 * @return <code>true</code> si el procesado y guardado fue satisfactorio,
 	 *         <code>false</code> si hubo error. El mensaje de error se puede
 	 *         obtener luego con el método {@link DocAction#getProcessMsg()}.
 	 */
-	public static boolean processAndSave(DocAction document, String docAction, boolean saveFirst) {
+	public static boolean processAndSave(DocAction document, String docAction, boolean saveFirst, boolean saveAfter) {
 		String errorMsg = null;
 		boolean error = false;
 		
@@ -943,7 +947,7 @@ public class DocumentEngine implements DocAction {
 					errorMsg = document.getProcessMsg();
 					error = true;
 				// Guardado final.
-				} else if (!docPO.save()) {
+				} else if (saveAfter && !docPO.save()) {
 					errorMsg = CLogger.retrieveErrorAsString();
 					error = true;
 				}
@@ -964,6 +968,28 @@ public class DocumentEngine implements DocAction {
 		return !error;
 	}
 
+	/**
+	 * Realiza el procesamiento de un acción sobre el documento y luego guarda
+	 * los cambios.
+	 * 
+	 * @param document
+	 *            Documento que se quiere procesar
+	 * @param docAction
+	 *            Acción a ejecutar
+	 * @param saveFirst
+	 *            Si es <code>true</code> primero realiza un {@link PO#save()}
+	 *            del documento antes de ejecutar el
+	 *            {@link DocAction#processIt(String)} sobre el mismo. Es
+	 *            recomendable utilizar esta opción para documentos que aún no
+	 *            han sido guardados en la BD.
+	 * @return <code>true</code> si el procesado y guardado fue satisfactorio,
+	 *         <code>false</code> si hubo error. El mensaje de error se puede
+	 *         obtener luego con el método {@link DocAction#getProcessMsg()}.
+	 */
+	public static boolean processAndSave(DocAction document, String docAction, boolean saveFirst) {
+		return processAndSave(document, docAction, saveFirst, true);
+	}
+	
 	/**
 	 * Seteo la acción definitiva al documento actual si es que es un PO y la
 	 * columna DocAction no existe.

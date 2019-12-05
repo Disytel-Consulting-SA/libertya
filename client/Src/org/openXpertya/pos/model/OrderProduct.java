@@ -50,6 +50,11 @@ public class OrderProduct {
 	private BigDecimal taxPrice = BigDecimal.ZERO;
 	private BigDecimal otherTaxPrice = BigDecimal.ZERO;
 	
+	/**
+	 * Responsable original, en caso de que sea parte de otro pedido
+	 */
+	private Integer salesRep_Orig_ID = null;
+	
 	public OrderProduct() {
 		super();
 	}
@@ -711,5 +716,13 @@ public class OrderProduct {
 	
 	public BigDecimal getTotalTaxedPrice(boolean includeDocumentDiscount, boolean isTemporal) {
 		return getTotalTaxedPrice(false).subtract(getRealDocumentDiscountAmt(includeDocumentDiscount, isTemporal));
+	}
+
+	public Integer getSalesRep_Orig_ID() {
+		return salesRep_Orig_ID;
+	}
+
+	public void setSalesRep_Orig_ID(Integer salesRep_Orig_ID) {
+		this.salesRep_Orig_ID = salesRep_Orig_ID;
 	}
 }

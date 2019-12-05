@@ -45,9 +45,10 @@ public class ListOfCouponsDataSource extends QueryDataSource {
 		sql.append("	p.couponnumber AS couponno, ");
 		sql.append("	p.datetrx AS trxdate, ");
 		sql.append("	l.name AS auditstatus, ");
-		sql.append("	p.payamt AS amount ");
+		sql.append("	p.payamt * dt.signo_issotrx * -1 AS amount ");
 		sql.append("FROM ");
 		sql.append("	" + MPayment.Table_Name + " p ");
+		sql.append("	JOIN C_DocType dt ON p.c_doctype_id = dt.c_doctype_id ");
 		sql.append("	LEFT JOIN " + MCouponsSettlements.Table_Name + " c ");
 		sql.append("		ON p.c_payment_id = c.c_payment_id ");
 		sql.append("	LEFT JOIN " + MCreditCardSettlement.Table_Name + " s ");

@@ -1,9 +1,11 @@
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.openXpertya.model.MCreditCardClose;
 import org.openXpertya.model.MCreditCardCloseLine;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.CLogger;
@@ -30,6 +32,7 @@ public class UpdateCouponDetail extends SvrProcess {
 			for (PO cupon : cupones) {
 				MPayment cuponAux = (MPayment) cupon;
 				if (!MCreditCardCloseLine.existRecordFor(getCtx(), "c_creditcard_closeline", "C_Payment_ID = ? AND AD_Org_ID = ? ", new Object[]{cuponAux.getC_Payment_ID(), cuponAux.getAD_Org_ID()}, get_TrxName())){
+					MDocType dt = MDocType.get(getCtx(), cuponAux.getC_DocType_ID());
 					MCreditCardCloseLine line = new MCreditCardCloseLine(getCtx(), 0, get_TrxName());
 					line.setAD_Org_ID(cuponAux.getAD_Org_ID());
 					line.setDocumentNo(cuponAux.getDocumentNo());
@@ -37,7 +40,7 @@ public class UpdateCouponDetail extends SvrProcess {
 					line.setCouponNumber(cuponAux.getCouponNumber());
 					line.setCouponBatchNumber(cuponAux.getCouponBatchNumber());
 					line.setCreditCardNumber(cuponAux.getCreditCardNumber());
-					line.setPayAmt(cuponAux.getPayAmt());
+					line.setPayAmt(cuponAux.getPayAmt().multiply(new BigDecimal(dt.getsigno_issotrx())).negate());
 					line.setDescription(cuponAux.getDescription());
 					line.setDateTrx(cuponAux.getCreated()); 
 					line.setC_POSJournal_ID(cuponAux.getC_POSJournal_ID());

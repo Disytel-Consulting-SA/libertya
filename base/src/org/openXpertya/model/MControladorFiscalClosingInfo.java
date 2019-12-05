@@ -4,6 +4,9 @@ import java.sql.ResultSet;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
 public class MControladorFiscalClosingInfo extends X_C_Controlador_Fiscal_Closing_Info {
@@ -43,6 +46,27 @@ public class MControladorFiscalClosingInfo extends X_C_Controlador_Fiscal_Closin
 			String name = DB.getSQLValueString(get_TrxName(), sql, getAD_Client_ID(), getPuntoDeVenta());
 			if(!Util.isEmpty(name, true)){
 				setPOSName(name);
+			}
+		}
+		
+		// Si no está procesado, es manual y se deben realizar las validaciones
+		if(!isProcessed()) {
+			// No es posible mismo punto de venta y mismo número
+			String where = newRecord?"":" AND C_Controlador_Fiscal_Closing_Info_ID <> "+getC_Controlador_Fiscal_Closing_Info_ID();
+			if (existRecordFor(
+					getCtx(), get_TableName(), "puntodeventa = ? AND fiscalclosingno = ? AND fiscalclosingtype = '"
+							+ getFiscalClosingType() + "'" + where,
+					new Object[] { getPuntoDeVenta(), getFiscalClosingNo() }, get_TrxName())) {
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "AlreadyExistsControladorFiscalClosingInfo",
+						new Object[] { getFiscalClosingType() }));
+				return false;
+			}
+			
+			// No se puede guardar un cierre para una fecha posterior a la actual
+			if (getFiscalClosingDate().after(Env.getDate())
+					&& !TimeUtil.isSameDay(getFiscalClosingDate(), Env.getDate())) {
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "InvalidDateControladoFiscalClosingInfo"));
+				return false;
 			}
 		}
 		

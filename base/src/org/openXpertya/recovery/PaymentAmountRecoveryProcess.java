@@ -153,8 +153,7 @@ public class PaymentAmountRecoveryProcess extends PaymentRecoveryStrategyProcess
 	 */
 	protected RecoveryType createRecoveryLess() throws Exception{
 		MInvoice invoiceCredit = createConfigInvoice(getPaymentRecoveryConfig().getC_DocType_Credit_Recovery_ID(),
-				getPaymentRecoveryConfig().getM_Product_Recovery_ID(), getDiffAmt().abs(),
-				getInvoice().getC_POSJournal_ID());
+				getPaymentRecoveryConfig().getM_Product_Recovery_ID(), getDiffAmt().abs());
 		setInvoiceCredit(invoiceCredit);
 		return RecoveryTypeFactory.getInstance(this, RecoveryTypeFactory.RECOVERY_INVOICE);
 	}
@@ -197,8 +196,7 @@ public class PaymentAmountRecoveryProcess extends PaymentRecoveryStrategyProcess
 	
 	protected MInvoice createDocumentHigher() throws Exception{
 		return createConfigInvoice(getPaymentRecoveryConfig().getC_DocType_Recovery_ID(),
-				getPaymentRecoveryConfig().getM_Product_Recovery_ID(), getDiffAmt().abs(), 
-				getInvoice().getC_POSJournal_ID());
+				getPaymentRecoveryConfig().getM_Product_Recovery_ID(), getDiffAmt().abs());
 	}
 	
 	@Override

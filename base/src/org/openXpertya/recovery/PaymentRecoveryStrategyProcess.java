@@ -1,6 +1,7 @@
 package org.openXpertya.recovery;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Map;
 import java.util.Properties;
 
@@ -10,6 +11,7 @@ import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MOrg;
+import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPaymentRecoveryConfig;
 import org.openXpertya.model.MRefList;
@@ -139,7 +141,22 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 	 * @throws Exception
 	 */
 	protected void completeAllocation() throws Exception{
+		Timestamp newDate = null;
+		if(!Util.isEmpty(getPOSJournalID(), true)) {
+			MPOSJournal pj = new MPOSJournal(getCtx(), getPOSJournalID(), getTrxName());
+			newDate = pj.getDateTrx();
+			getAllocGenerator().getAllocationHdr().setC_POSJournal_ID(getPOSJournalID());
+			getAllocGenerator().getAllocationHdr().setIgnorePOSJournalAssigned(true);
+		}
 		getAllocGenerator().completeAllocation();
+		// Guardar
+		if(newDate != null) {
+			getAllocGenerator().getAllocationHdr().setDateTrx(newDate);
+			getAllocGenerator().getAllocationHdr().setDateAcct(newDate);
+			if(!getAllocGenerator().getAllocationHdr().save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
 	}
 	
 	protected void addDebits() throws Exception{
@@ -166,6 +183,12 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 		return (Integer)getParametersValues().get("C_INVOICE_CREDIT_ID");
 	}
 	
+	public Integer getPOSJournalID() {
+		return getParametersValues().get("C_POSJOURNAL_ID") != null
+				? (Integer) getParametersValues().get("C_POSJOURNAL_ID")
+				: getInvoice().getC_POSJournal_ID();
+	}
+	
 	/**
 	 * Crea el documento de recupero en base a los datos de configuración
 	 * parámetro
@@ -178,7 +201,7 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 	 *             en caso de error
 	 */
 	protected MInvoice createConfigInvoice(Integer docTypeID, Integer productID, BigDecimal total) throws Exception{
-		return createConfigInvoice(docTypeID, productID, total, null);
+		return createConfigInvoice(docTypeID, productID, total, getPOSJournalID());
 	}
 	
 	/**
@@ -220,15 +243,27 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 		if(!invoiceLine.save()){
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}
-		// Completar
-		if(!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Complete, false)){
-			throw new Exception(invoice.getProcessMsg());
-		}
+		Timestamp newDate = null;
 		// Seteo la caja diaria origen luego de completar para que no valide si
 		// se encuentra cerrada
 		if(!Util.isEmpty(posJournalID, true)){
+			MPOSJournal pj = new MPOSJournal(getCtx(), posJournalID, getTrxName());
+			newDate = pj.getDateTrx();
 			invoice.setC_POSJournal_ID(posJournalID);
+			invoice.setIgnorePOSJournalAssigned(true);
 			if(!invoice.save()){
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+		// Completar
+		if(!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Complete, false, newDate == null)){
+			throw new Exception(invoice.getProcessMsg());
+		}
+		// Guardar
+		if(newDate != null) {
+			invoice.setDateInvoiced(newDate);
+			invoice.setDateAcct(newDate);
+			if(!invoice.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 		}
@@ -248,6 +283,8 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 		// Obtengo el payment original parámetro
 		MPayment fromPayment = new MPayment(getCtx(), fromPaymentID, getTrxName());
 		MPayment toPayment = new MPayment(getCtx(), 0, getTrxName());
+		Timestamp newDate = null;
+		
 		PO.copyValues(fromPayment, toPayment);
 		// Tipo de documento de devolución
 		String docTypeKey = fromPayment.isReceipt() ? MDocType.DOCTYPE_CustomerReceiptReturn
@@ -258,9 +295,23 @@ public abstract class PaymentRecoveryStrategyProcess implements IRecoverySource 
 		if(!toPayment.save()){
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}
+		if(!Util.isEmpty(getPOSJournalID(), true)) {
+			MPOSJournal pj = new MPOSJournal(getCtx(), getPOSJournalID(), getTrxName());
+			newDate = pj.getDateTrx();
+			toPayment.setC_POSJournal_ID(getPOSJournalID());
+			toPayment.setIgnorePOSJournalAssigned(true);
+		}
 		// Completar
-		if(!DocumentEngine.processAndSave(toPayment, MPayment.DOCACTION_Complete, false)){
+		if (!DocumentEngine.processAndSave(toPayment, MPayment.DOCACTION_Complete, false, newDate == null)) {
 			throw new Exception(CLogger.retrieveErrorAsString());
+		}
+		// Guardar
+		if(newDate != null) {
+			toPayment.setDateTrx(newDate);
+			toPayment.setDateAcct(newDate);
+			if(!toPayment.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
 		}
 		
 		return toPayment;

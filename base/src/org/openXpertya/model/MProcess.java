@@ -870,6 +870,20 @@ public class MProcess extends X_AD_Process {
      * @throws Exception
      */
 	public static void addAttachment(String trxName, Properties ctx, String componentObjectUID, String attachmentName, byte[] data) throws Exception {
+		addAttachment(trxName, ctx, componentObjectUID, attachmentName, data, true);
+	}
+	
+	/**
+     * Guarda un adjunto para este proceso y elimina el anterior dependiendo el flag parámetro 
+     * @param trxName
+     * @param ctx
+     * @param componentObjectUID
+     * @param attachmentName
+     * @param data
+     * @param deleteIfExists
+     * @throws Exception
+     */
+	public static void addAttachment(String trxName, Properties ctx, String componentObjectUID, String attachmentName, byte[] data, boolean deleteIfExists) throws Exception {
 		// Si el attachment parámetro es null no hago nada
     	if(data == null || data.length <= 0){
     		return;
@@ -880,15 +894,17 @@ public class MProcess extends X_AD_Process {
 				"SELECT AD_Process_ID FROM AD_Process WHERE AD_ComponentObjectUID = '"
 						+ componentObjectUID + "'");
 		// Obtener el id del adjunto del proceso
-		int attachmentID = DB
-				.getSQLValue(
-						trxName,
-						"SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?",
-						Table_ID, processID);
-		// Si existe lo elimino
-		if(!Util.isEmpty(attachmentID, true)){
-			DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "
-					+ Table_ID + " AND Record_ID = " + processID, trxName);
+		if(deleteIfExists) {
+			int attachmentID = DB
+					.getSQLValue(
+							trxName,
+							"SELECT AD_Attachment_ID FROM AD_Attachment WHERE AD_Table_ID = ? AND Record_ID = ?",
+							Table_ID, processID);
+			// Si existe lo elimino
+			if(!Util.isEmpty(attachmentID, true)){
+				DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Table_ID = "
+						+ Table_ID + " AND Record_ID = " + processID, trxName);
+			}
 		}
 		// Creo el adjunto y lo guardo
 		MAttachment att  = new MAttachment(ctx, 0, trxName);

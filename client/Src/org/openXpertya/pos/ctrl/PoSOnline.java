@@ -1350,6 +1350,11 @@ public class PoSOnline extends PoSConnectionState {
 			// debe persistir ese dato en al base de datos
 	        line.setCheckoutPlace(op.getCheckoutPlace());
 	       
+	        // Pedido original
+	        if(!Util.isEmpty(op.getSalesRep_Orig_ID(), true)) {
+	        	line.setSalesRep_Orig_ID(op.getSalesRep_Orig_ID());
+	        }
+	        
 	        // unicamente la ultima linea actualizará el encabezado con información de impuestos
 	        line.setShouldUpdateHeader(currentProduct==productCount);
 	        debug("Guardando línea #" + currentProduct);
@@ -2775,7 +2780,7 @@ public class PoSOnline extends PoSConnectionState {
 			if (line.getQtyOrdered().compareTo(BigDecimal.ZERO) == 0)
 				continue;
 
-			order.addOrderProduct(createOrderProduct(line));
+			order.addOrderProduct(createOrderProduct(line, mOrder));
 		}
 	}
 
@@ -2783,9 +2788,10 @@ public class PoSOnline extends PoSConnectionState {
 	 * Crea un <code>OrderProduct</code> a partir de una línea de un pedido
 	 * del sistema (C_OrderLine)
 	 * @param line Línea del pedido.
+	 * @param order pedido
 	 * @return La línea del pedido de TPV.
 	 */
-	private OrderProduct createOrderProduct(MOrderLine line) {
+	private OrderProduct createOrderProduct(MOrderLine line, MOrder order) {
 		int m_Product_ID = line.getM_Product_ID();
 		OrderProduct orderProduct = null;
 		Product product = null; 
@@ -2816,6 +2822,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		orderProduct.setPrice(line.getPriceActual());
 		orderProduct.setLineDescription(line.getDescription());
+		orderProduct.setSalesRep_Orig_ID(order.getSalesRep_ID());
 		return orderProduct;
 	}
 

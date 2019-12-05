@@ -28,9 +28,10 @@
 	<parameter name="AD_CLIENT_ID" isForPrompting="false" class="java.lang.Integer"/>
 	<parameter name="FechaCierre" isForPrompting="false" class="java.util.Date"/>
 	<queryString><![CDATA[select p.datetrx::date as fecha, p.couponbatchnumber as nrolote, p.couponnumber as nrocupon, 	case when char_length(p.creditcardnumber)>4 then (substr(p.creditcardnumber,char_length(p.creditcardnumber)-3,char_length(p.creditcardnumber))) else p.creditcardnumber end as nrotarjeta,
-	pos.name as caja, mefp.name as entidadfinancieraplan, mef.name as entidadfinanciera, p.payamt as importe,p.c_payment_id
+	pos.name as caja, mefp.name as entidadfinancieraplan, mef.name as entidadfinanciera, (p.payamt * (dt.signo_issotrx * -1)) as importe,p.c_payment_id
 from c_creditcard_closeline cccl
 inner join c_payment p on p.c_payment_id = cccl.c_payment_id
+join c_doctype dt on dt.c_doctype_id = p.c_doctype_id
 inner join m_entidadfinancieraplan mefp on mefp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 inner join m_entidadfinanciera mef on mef.m_entidadfinanciera_id = mefp.m_entidadfinanciera_id
 left join c_posjournal pj on pj.c_posjournal_id = p.c_posjournal_id
@@ -40,7 +41,7 @@ where  p.docstatus in ('CO','CL')
 	AND (($P{FechaCierre}::date IS NULL) OR (p.datetrx::date = $P{FechaCierre}::date))
 	AND (($P{AD_CLIENT_ID} IS NULL) OR (p.ad_client_id = $P{AD_CLIENT_ID})) 
 group by p.datetrx, p.couponbatchnumber, p.couponnumber,nrotarjeta,
-		pos.name, mefp.name, mef.name, p.payamt,p.ad_org_id,p.c_payment_id,mef.c_bpartner_id
+		pos.name, mefp.name, mef.name, dt.signo_issotrx, p.payamt,p.ad_org_id,p.c_payment_id,mef.c_bpartner_id
 HAVING (select COUNT(c_creditcard_closeline_id) 
 	from c_creditcard_closeline cl
 	inner join c_payment d on d.c_payment_id = cl.c_payment_id

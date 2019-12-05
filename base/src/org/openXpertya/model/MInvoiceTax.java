@@ -28,6 +28,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -475,6 +476,22 @@ public class MInvoiceTax extends X_C_InvoiceTax {
             log.log( Level.SEVERE,"getTaxAmtFromLines",e );
         }
         return taxAmt;
+    }
+    
+    protected boolean beforeSave( boolean newRecord ) {
+    	// Si la tasa de impuesto es mayor a 0 y el importe de impuesto es menor o igual a 0
+        String sql = "select rate from c_tax where c_tax_id = ? ";
+        BigDecimal taxRate = DB.getSQLValueBD(get_TrxName(), sql, getC_Tax_ID());
+        if(!Util.isEmpty(taxRate, true) 
+        		&& getTaxBaseAmt().compareTo(BigDecimal.ZERO) > 0
+        		&& (getTaxAmt().compareTo(BigDecimal.ZERO) <= 0 
+        				|| getTaxAmt().compareTo(getTaxBaseAmt()) >= 0) 
+        		) {
+			log.saveError("SaveError",
+					Msg.getMsg(getCtx(), "TaxAmtInvalid", new Object[] { taxRate, getTaxAmt(), getTaxBaseAmt() }));
+        	return false;
+        }
+        return true;
     }
 }    // MInvoiceTax
 

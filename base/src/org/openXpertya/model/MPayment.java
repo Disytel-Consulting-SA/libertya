@@ -117,6 +117,12 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 	 */
 	private Timestamp dateForReversalPayment = null;
 	
+	/** Flag para ignorar validaciones sobre la caja diaria asignada */
+	private boolean ignorePOSJournalAssigned = false;
+	
+	/** Flag para ignoarar si se encuentra conciliado */
+	private boolean ignoreReconciled = false;
+	
     /**
      * Descripción de Método
      *
@@ -2135,6 +2141,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 		// Si no se encuentra en ninguno de los dos estados, entonces se setea a
 		// 0 para que se asigne la caja diaria actual
 		if (getC_POSJournal_ID() != 0
+				&& !isIgnorePOSJournalAssigned()
 				&& !MPOSJournal.isPOSJournalOpened(getCtx(),
 						getC_POSJournal_ID(), get_TrxName())) {
 			// Si se debe realizar el control obligatorio de apertura y la caja
@@ -2708,7 +2715,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
          * No se permite anular si el payment se encuentra marcado como conciliado
          * @autor Horacio Alvarez
         */
-        if(isReconciled()){
+        if(!isIgnoreReconciled() && isReconciled()){
         	m_processMsg = "@PaymentReconciled@";
         	return false;        	
         }
@@ -3344,6 +3351,22 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 
 	public void setDateForReversalPayment(Timestamp dateForReversalPayment) {
 		this.dateForReversalPayment = dateForReversalPayment;
+	}
+
+	public boolean isIgnorePOSJournalAssigned() {
+		return ignorePOSJournalAssigned;
+	}
+
+	public void setIgnorePOSJournalAssigned(boolean ignorePOSJournalAssigned) {
+		this.ignorePOSJournalAssigned = ignorePOSJournalAssigned;
+	}
+
+	public boolean isIgnoreReconciled() {
+		return ignoreReconciled;
+	}
+
+	public void setIgnoreReconciled(boolean ignoreReconciled) {
+		this.ignoreReconciled = ignoreReconciled;
 	}
 	
 }   // MPayment

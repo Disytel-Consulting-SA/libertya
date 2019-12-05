@@ -45,9 +45,10 @@ FROM (SELECT o.value as org_value,
 	bp.value as bpartnerValue, 
 	bp.name as bpartnerName, 
 	coalesce(couponbatchnumber,'SIN NRO DE LOTE') as couponbatchnumber, 
-	(CASE WHEN p.isreceipt = 'Y' THEN currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) ELSE 0.00 END) as sales,
-	(CASE WHEN p.isreceipt = 'Y' THEN 0.00 ELSE currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) END) as purchases
+	(CASE WHEN p.isreceipt = 'Y' THEN currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) * dt.signo_issotrx * -1 ELSE 0.00 END) as sales,
+	(CASE WHEN p.isreceipt = 'Y' THEN 0.00 ELSE currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id)  * dt.signo_issotrx * -1 END) as purchases
 FROM c_payment p 
+JOIN C_DocType dt ON p.c_doctype_id = dt.c_doctype_id
 INNER JOIN m_entidadfinancieraplan efp ON efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id
 INNER JOIN m_entidadfinanciera ef ON ef.m_entidadfinanciera_id = efp.m_entidadfinanciera_id
 INNER JOIN c_bpartner as bp ON bp.c_bpartner_id = ef.c_bpartner_id
@@ -383,7 +384,7 @@ ORDER BY org_value, bpartnerValue, couponbatchnumber]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{couponbatchnumber}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0.00;-###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="125"
 						y="0"
@@ -396,7 +397,7 @@ ORDER BY org_value, bpartnerValue, couponbatchnumber]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{sales}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="###0.00;-###0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="330"
 						y="0"
