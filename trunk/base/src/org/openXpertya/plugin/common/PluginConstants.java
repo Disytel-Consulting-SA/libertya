@@ -28,6 +28,9 @@ public class PluginConstants {
 	/** Package donde se almacenan los plugins de reportes jasper dinámicos */
 	public static final String PACKAGE_NAME_DYNAMIC_JASPER_REPORT = "JasperReport";
 	
+	/** Package base para micro componentes  */
+	public static final String PACKAGE_NAME_BASE_MICRO_COMPONENTS = "org.libertya.core.micro";
+	
 	/** --------------------------- PREFIJOS ------------------------------------------- */
 
 	/** Prefijo para clases Callout */
@@ -97,6 +100,9 @@ public class PluginConstants {
 	/** Patch (Y/N) */
 	public static final String PROP_PATCH = "PATCH";
 	
+	/** Micro component (Y/N) */
+	public static final String PROP_MICRO_COMPONENT = "MICROCOMPONENT";
+	
 	/** Copiar la instalación al changelog (Y/N) */
 	public static final String PROP_COPY_TO_CHANGELOG = "COPYTOCHANGELOG";
 
@@ -105,12 +111,27 @@ public class PluginConstants {
 	
 	/** Mapear el changelog copiado a un component version especifico (especificando su UID)  */
 	public static final String PROP_MAP_TO_COMPONENTVERSION_UID = "MAPTOCOMPONENTVERSIONUID";
+
+	/** Propiedad para definir si Debe aplicarse mapeo de UIDs o bien se utilizan los UID originales (Y/N) */
+	public static final String PROP_MAP_UIDS = "MAPUIDS";
 	
 	/** Primer changelog exportado */
 	public static final String PROP_FIRST_CHANGELOG = "FIRST_CHANGELOG";
 	
 	/** Ultimo changelog exportado */
 	public static final String PROP_LAST_CHANGELOG = "LAST_CHANGELOG";
+	
+	/** Primer changelogUID exportado */
+	public static final String PROP_FIRST_CHANGELOG_UID = "FIRST_CHANGELOG_UID";
+	
+	/** Ultimo changelogUID exportado */
+	public static final String PROP_LAST_CHANGELOG_UID = "LAST_CHANGELOG_UID";
+	
+	/** Primer changelogGroupUID exportado */
+	public static final String PROP_FIRST_CHANGELOG_GROUP_UID = "FIRST_CHANGELOG_GROUP_UID";
+	
+	/** Ultimo changelogGroupUID exportado */
+	public static final String PROP_LAST_CHANGELOG_GROUP_UID = "LAST_CHANGELOG_GROUP_UID";
 	
 	/** Fecha y hora de exportación */
 	public static final String PROP_EXPORT_TIMESTAMP = "EXPORT_TIMESTAMP"; 
@@ -150,6 +171,9 @@ public class PluginConstants {
 
 	/** Debe mapearse la instalación a un componente ya existente */
 	public static final String MAP_TO_COMPONENT = "MAP_TO_COMPONENT";
+
+	/** ¿Aplicar mapeos de UIDs? (Por ejemplo FOO2CORE) o no? */
+	public static final String MAP_UIDS = "MAP_UIDS";
 	
 	/** Prefijo original del componente a instalar  */
 	public static final String COMPONENT_SOURCE_PREFIX = "SOURCE_PREFIX";

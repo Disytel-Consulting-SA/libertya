@@ -2769,7 +2769,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				m_IDs[0]);
 
 		// The Delete Statement
-		StringBuffer sql = new StringBuffer("DELETE ").append(
+		StringBuffer sql = new StringBuffer("DELETE FROM ").append(
 				p_info.getTableName()).append(" WHERE ").append(
 				get_WhereClause(false));
 		//
@@ -4126,9 +4126,18 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			List<String> list = new ArrayList<String>();
 			list.add(component.getPrefix());
 			list.add(get_TableName());
-			for (int i = 0; i < m_KeyColumns.length; i++) {
-				list.add(String.valueOf(get_Value(m_KeyColumns[i])));
-			}
+//	COMENTADO EL USO DEL ID COMO PARATE DEL UID   
+//	Se modifica la forma de generacion de los UID, a fin de intentar garantizar un UID unico en desarrollos distribuidos bajo cualquier situacion	
+//			for (int i = 0; i < m_KeyColumns.length; i++) {
+//				list.add(String.valueOf(get_Value(m_KeyColumns[i])));
+//			}
+			list.add(""+Env.getDateTime("yyyyMMddHHmmssSSS"));	// Primer factor de unicidad
+			StringBuffer buf = new StringBuffer();
+			String nt =  "000"+Math.abs(System.nanoTime());
+			String rnd = "000"+Math.random();
+			buf.append(nt.substring(nt.length()-3));
+			buf.append(rnd.substring(rnd.length()-3));
+			list.add(buf.toString());							// Segundo factor de unicidad
 			set_Value(indexUID, makeUID(list));
 		}
 		return ok;

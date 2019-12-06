@@ -72,7 +72,7 @@ public class ChangeLogGroupList {
 		if(getComponentVersionID() == null){
 			throw new Exception("Error de Log: No existe AD_ComponentVersion_ID para determinar la informacion a obtener.");
 		}
-		StringBuffer sql = new StringBuffer(" SELECT log.ad_changelog_id,log.ad_componentObjectuid as uid,log.ad_componentversion_id,	log.ad_table_id,	log.ad_client_id,	log.ad_org_id,	log.created,	log.createdby,	log.updated,	log.updatedby,	log.ad_session_id,	log.record_id,	log.ad_column_id,	log.oldvalue,	log.newvalue,	log.operationtype,	log.binaryvalue,	log.trxname,	log.changeloggroup_id, t.tableName FROM ad_changelog as log ");
+		StringBuffer sql = new StringBuffer(" SELECT log.ad_changelog_id, log.changeloguid, log.ad_componentObjectuid as uid,log.ad_componentversion_id,	log.ad_table_id,	log.ad_client_id,	log.ad_org_id,	log.created,	log.createdby,	log.updated,	log.updatedby,	log.ad_session_id,	log.record_id,	log.ad_column_id,	log.oldvalue,	log.newvalue,	log.operationtype,	log.binaryvalue,	log.trxname,	log.changeloggroup_id, log.changeloggroupuid, t.tableName FROM ad_changelog as log ");
 		sql.append(" INNER JOIN AD_Table t ON (log.ad_table_id = t.ad_table_id)");
 		if(existTableSchema){
 			sql.append(" INNER JOIN ad_tableschemaline AS tsl ON (log.ad_table_id = tsl.ad_table_id) ");
@@ -104,6 +104,7 @@ public class ChangeLogGroupList {
 		ChangeLogElement element = null;
 		Integer ad_table_id = null;
 		Integer changeLogGroupID = null;
+		String changeLogGroupUID = null;
 		String operationType = null;
 		String ad_componentObjectUID = null;
 		String tableName = null;
@@ -130,6 +131,7 @@ public class ChangeLogGroupList {
 				if((group == null) || !equalValue(changeLogGroupID, rs.getInt("changeloggroup_id"))){
 					// Asigno los valores que identifican una transacción
 					changeLogGroupID = rs.getInt("changeloggroup_id");
+					changeLogGroupUID = rs.getString("changeloggroupuid");
 					ad_table_id = rs.getInt("ad_table_id");
 					operationType = rs.getString("operationtype");
 					ad_componentObjectUID = rs.getString("uid");
@@ -139,10 +141,11 @@ public class ChangeLogGroupList {
 					group.setAd_componentObjectUID(ad_componentObjectUID);
 					group.setOperation(operationType);
 					group.setChangelogGroupID(changeLogGroupID);
+					group.setChangeLogGroupUID(changeLogGroupUID);
 					getGroups().add(group);
 				}
 				// Crear el elemento y agregarlo al grupo
-				element = new ChangeLogElement(rs.getInt("ad_column_id"), rs.getString("oldvalue"), rs.getString("newvalue"), rs.getBytes("binaryvalue"), rs.getInt("ad_changelog_id"));
+				element = new ChangeLogElement(rs.getInt("ad_column_id"), rs.getString("oldvalue"), rs.getString("newvalue"), rs.getBytes("binaryvalue"), rs.getInt("ad_changelog_id"), rs.getString("changeloguid"));
 				group.addElement(element);
 			}
 		} catch(Exception e){

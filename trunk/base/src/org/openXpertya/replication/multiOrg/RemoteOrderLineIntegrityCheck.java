@@ -435,7 +435,7 @@ public class RemoteOrderLineIntegrityCheck {
 		return hostsToIgnore.contains(hostPos);
 	}
 	
-	/** Retorna el time out previo a cancelar la operacion, paar la etapa actual */
+	/** Retorna el time out previo a cancelar la operacion, para la etapa actual */
 	protected int getTimeOutMS() {
 		int retValue = (currentStage == ValidationStage.AT_CREATEFROM ? DEFAULT_TIMEOUT_AT_CREATEFROM_MS : DEFAULT_TIMEOUT_AT_PROCESS_MS);
 		try {

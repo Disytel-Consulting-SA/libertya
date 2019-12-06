@@ -9,6 +9,7 @@ import org.openXpertya.model.MProcess;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
@@ -35,6 +36,14 @@ public class ExportPlugin extends SvrProcess{
 	/** AD_ChangeLog_ID fin */
 	
 	private Integer changeLogIDTo = null;
+	
+	/** changeLogUID inicial */
+	
+	private String changeLogUIDFrom = null;  
+	
+	/** changeLogUID final */
+	
+	private String changeLogUIDTo = null;
 	
 	/** Usuario registrado en registros del changelog */
 	
@@ -107,8 +116,15 @@ public class ExportPlugin extends SvrProcess{
 		for (PluginDocumentBuilder docBuilder : getBuilders()) {
 			// Al builder del properties debo indicarle el changelog
 			if (++i == 4) {
+				// Changelog IDs
 				((PluginPropertiesBuilder)docBuilder).setChangelogIDTo(getLastChangelog());
 				((PluginPropertiesBuilder)docBuilder).setChangelogIDFrom(getFirstChangelog());
+				// Changelog UIDs
+				((PluginPropertiesBuilder)docBuilder).setChangeLogUIDTo(getLastChangeLogUID());
+				((PluginPropertiesBuilder)docBuilder).setChangeLogUIDFrom(getFirstChangeLogUID());
+				// ChangelogGroup UIDs
+				((PluginPropertiesBuilder)docBuilder).setChangeLogGroupUIDTo(getLastChangeLogGroupUID());
+				((PluginPropertiesBuilder)docBuilder).setChangeLogGroupUIDFrom(getFirstChangeLogGroupUID());
 			}
 			// Genero el documento
 			docBuilder.generateDocument();
@@ -157,6 +173,22 @@ public class ExportPlugin extends SvrProcess{
 	}
 	
 	/**
+	 * Retorna el ultimo changelogUID del export
+	 */
+	protected String getLastChangeLogUID() 
+	{
+		return DB.getSQLValueString(get_TrxName(), "SELECT changeLogUID FROM AD_Changelog WHERE AD_Changelog_ID = " + getLastChangelog());
+	}
+	
+	/**
+	 * Retorna el ultimo changelogGroupUID del export
+	 */
+	protected String getLastChangeLogGroupUID() 
+	{
+		return DB.getSQLValueString(get_TrxName(), "SELECT changeLogGroupUID FROM AD_Changelog WHERE AD_Changelog_ID = " + getLastChangelog());
+	}
+	
+	/**
 	 * Determina el menor de los changelogs - cual es el primer changelog del export
 	 * Considera la eventual posibilidad de que el install o el postInstall sea -1
 	 * @return
@@ -169,6 +201,22 @@ public class ExportPlugin extends SvrProcess{
 			return -1;
 		return Math.min((firstChangelogID_install<=0	?Integer.MAX_VALUE:firstChangelogID_install), 
 						(firstChangelogID_postInstall<=0?Integer.MAX_VALUE:firstChangelogID_postInstall));  
+	}
+	
+	/**
+	 * Retorna el primer changelogUID del export
+	 */
+	protected String getFirstChangeLogUID() 
+	{
+		return DB.getSQLValueString(get_TrxName(), "SELECT changeLogUID FROM AD_Changelog WHERE AD_Changelog_ID = " + getFirstChangelog());
+	}
+	
+	/**
+	 * Retorna el primer changelogGroupUID del export
+	 */
+	protected String getFirstChangeLogGroupUID() 
+	{
+		return DB.getSQLValueString(get_TrxName(), "SELECT changeLogGroupUID FROM AD_Changelog WHERE AD_Changelog_ID = " + getFirstChangelog());
 	}
 	
 	/**
