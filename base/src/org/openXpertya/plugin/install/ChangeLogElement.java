@@ -37,24 +37,41 @@ public class ChangeLogElement {
 	
 	private int AD_Changelog_ID;
 	
+	/** changeLogUID */
+	
+	private String changeLogUID;
+	
 	// Constructores
 	
+	/** Constructor especifico para almacenar informacion bajo encoding Base64.  
+	 * Este constructor se incorpora para la replicación de binarios bajo dicho encoding. */	
+	public ChangeLogElement(Integer ad_column_id, String newBase64EncodedValue, int changelogID){
+		this(ad_column_id, newBase64EncodedValue, changelogID, null);
+	}
 	
 	/** Constructor especifico para almacenar informacion bajo encoding Base64.  
 	 * Este constructor se incorpora para la replicación de binarios bajo dicho encoding. */
-	public ChangeLogElement(Integer ad_column_id, String newBase64EncodedValue, int changelogID){
+	public ChangeLogElement(Integer ad_column_id, String newBase64EncodedValue, int changelogID, String changeLogUID){
 		setColumnData(ad_column_id);
 		setNewValue(newBase64EncodedValue);
 		setAD_Changelog_ID(changelogID);
+		setChangeLogUID(changeLogUID);
 	}
+	
  	
 	/** Constructor original.  Concebido originalmente para la gestión/instalacion de componentes */
 	public ChangeLogElement(Integer ad_column_id, String oldValue, String newValue, Object binaryValue, int changelogID){
+		this(ad_column_id, oldValue, newValue, binaryValue, changelogID, null);
+	}
+	
+	/** Constructor original.  Concebido originalmente para la gestión/instalacion de componentes */
+	public ChangeLogElement(Integer ad_column_id, String oldValue, String newValue, Object binaryValue, int changelogID, String changeLogUID){
 		setColumnData(ad_column_id);
 		setOldValue(valueFromColumnType(oldValue, AD_Reference_ID));
 		setNewValue(valueFromColumnType(newValue, AD_Reference_ID));
 		setBinaryValue((byte[])binaryValue);
 		setAD_Changelog_ID(changelogID);
+		setChangeLogUID(changeLogUID);
 	}
 	
 	private void setColumnData(int ad_column_id)
@@ -148,6 +165,15 @@ public class ChangeLogElement {
 		AD_Changelog_ID = aDChangelogID;
 	}
 
+	public String getChangeLogUID() {
+		return changeLogUID;
+	}
+
+
+	public void setChangeLogUID(String changeLogUID) {
+		this.changeLogUID = changeLogUID;
+	}
+	
 	public Set<Integer> getTargetOnly() {
 		return targetOnly;
 	}

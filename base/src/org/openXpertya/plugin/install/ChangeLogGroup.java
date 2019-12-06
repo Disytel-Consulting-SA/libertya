@@ -26,6 +26,10 @@ public class ChangeLogGroup {
 	
 	protected int changelogGroupID;
 	
+	/** ChangeLogGroupUID en la BBDD de desarrollo */
+	
+	protected String changeLogGroupUID;
+	
 	
 	/** Elementos del grupo */
 	
@@ -94,5 +98,13 @@ public class ChangeLogGroup {
 
 	public void setChangelogGroupID(int changelogGroupID) {
 		this.changelogGroupID = changelogGroupID;
+	}
+
+	public String getChangeLogGroupUID() {
+		return changeLogGroupUID;
+	}
+
+	public void setChangeLogGroupUID(String changeLogGroupUID) {
+		this.changeLogGroupUID = changeLogGroupUID;
 	}
 }

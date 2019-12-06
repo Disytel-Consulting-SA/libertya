@@ -171,10 +171,16 @@ public class MSession extends X_AD_Session {
         boolean	success	= false;
         MChangeLog	cl = null;
         try {
+        	// Especificar el changeLogUID y changeLogGroupUID
+        	StringBuffer changeLogGroupUID = new StringBuffer();
+        	if (MComponentVersion.getCurrentComponent(getCtx(), get_TrxName())!=null) {
+        		changeLogGroupUID.append(MComponentVersion.getCurrentComponent(getCtx(), get_TrxName()).getPrefix());
+        		changeLogGroupUID.append("-").append(changeLogGroupID);
+        	}
+        	
+            cl	= new MChangeLog(getCtx(), AD_ChangeLog_ID, TrxName, getAD_Session_ID(), AD_Table_ID, AD_Column_ID, Record_ID, AD_Client_ID, AD_Org_ID, OldValue, NewValue, valueUID, valueComponentVersionID, operationType, displayType, changeLogGroupID, changeLogGroupUID.toString(), null);
 
-            cl	= new MChangeLog(getCtx(), AD_ChangeLog_ID, TrxName, getAD_Session_ID(), AD_Table_ID, AD_Column_ID, Record_ID, AD_Client_ID, AD_Org_ID, OldValue, NewValue, valueUID, valueComponentVersionID, operationType, displayType, changeLogGroupID);
-
-            if (!cl.insertDirect()) {
+            if (!cl.insertDirect(MComponentVersion.getCurrentComponent(getCtx(), get_TrxName()).getPrefix())) {
                 throw new Exception("No se pudo registrar el log de cambios");
             }
 

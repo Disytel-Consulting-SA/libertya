@@ -82,7 +82,7 @@ public class MChangeLog extends X_AD_ChangeLog {
      *      @param OldValue old
      *      @param NewValue new
      */
-    public MChangeLog(Properties ctx, int AD_ChangeLog_ID, String TrxName, int AD_Session_ID, int AD_Table_ID, int AD_Column_ID, int Record_ID, int AD_Client_ID, int AD_Org_ID, Object OldValue, Object NewValue, String valueUID, Integer valueComponentVersionID, String operationType, Integer displayType, Integer changeLogGroupID) {
+    public MChangeLog(Properties ctx, int AD_ChangeLog_ID, String TrxName, int AD_Session_ID, int AD_Table_ID, int AD_Column_ID, int Record_ID, int AD_Client_ID, int AD_Org_ID, Object OldValue, Object NewValue, String valueUID, Integer valueComponentVersionID, String operationType, Integer displayType, Integer changeLogGroupID, String changeLogGroupUID, String changeLogUID) {
 
         super(ctx, 0, TrxName);	// out of trx
 
@@ -137,6 +137,11 @@ public class MChangeLog extends X_AD_ChangeLog {
         setAD_ComponentVersion_ID(valueComponentVersionID);
         setOperationType(operationType);
         setChangeLogGroup_ID(changeLogGroupID);
+        
+        setChangeLogGroupUID(changeLogGroupUID);
+        if (changeLogUID!=null)
+        	setChangeLogUID(changeLogUID);
+        
     }		// MChangeLog
 
     /**
@@ -276,6 +281,12 @@ public class MChangeLog extends X_AD_ChangeLog {
     }		// setOldValue
     
     
+    /** Sobrecarga para compatibilidad 
+     *  Sin argumento alguno implica usar la logica general
+     */
+    public boolean insertDirect() {
+    	return insertDirect(null);
+    }
     
     /**
      * Ampliacion especial para performance en persistencia de bitacora
@@ -287,20 +298,24 @@ public class MChangeLog extends X_AD_ChangeLog {
      * 
      * Ejemplo: importacion de I_Bpartner -> 3m45s vs 0m34s
      * 
+     * Si se define el componentPrefix se utilizará para armar el changelogUID
+     * en caso de que ésto no haya sigo cargado originalmente
+     * 
      * @return true si fue posible guardar el registro o false en caso contrario
      */
-    public boolean insertDirect()
+    public boolean insertDirect(String componentPrefix)
     {
     	try  {
 
     		/* Columnas a rellenar en tabla AD_Changelog */
-    		String sql = " INSERT INTO AD_ChangeLog (AD_ChangeLog_ID, AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy, AD_Session_ID, AD_Table_ID, Record_ID, AD_Column_ID, oldValue, newValue, isCustomization, redo, undo, trxName, AD_ComponentObjectUID, operationType, AD_ComponentVersion_ID, binaryValue, ChangelogGroup_ID) " +
-    		      		 "                   VALUES (?,               ?,            ?,         ?,        ?,       ?,         ?,       ?,         ?,             ?,           ?,         ?,            ?,        ?,        ?,               ?,    ?,    ?,       ?,                     ?,             ?,                      ?,           ?                ) ";
+    		String sql = " INSERT INTO AD_ChangeLog (AD_ChangeLog_ID, AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy, AD_Session_ID, AD_Table_ID, Record_ID, AD_Column_ID, oldValue, newValue, isCustomization, redo, undo, trxName, AD_ComponentObjectUID, operationType, AD_ComponentVersion_ID, binaryValue, ChangelogGroup_ID, ChangeLogGroupUID, ChangeLogUID) " +
+    		      		 "                   VALUES (?,               ?,            ?,         ?,        ?,       ?,         ?,       ?,         ?,             ?,           ?,         ?,            ?,        ?,        ?,               ?,    ?,    ?,       ?,                     ?,             ?,                      ?,           ?, 				  ?,			?) ";
     		
     		/* Parametros para cada una de las entradas de registro */
     		int col = 1;
+    		int changelogID = DB.getSQLValue(get_TrxName(), "SELECT nextval('seq_ad_changelog')");
         	CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName() );
-        	pstmt.setInt(col++, DB.getSQLValue(get_TrxName(), "SELECT nextval('seq_ad_changelog')"));
+        	pstmt.setInt(col++, changelogID);
         	pstmt.setInt(col++, getAD_Client_ID());
         	pstmt.setInt(col++, getAD_Org_ID()); 
         	pstmt.setString(col++, isActive()?"Y":"N");
@@ -323,6 +338,8 @@ public class MChangeLog extends X_AD_ChangeLog {
         	pstmt.setInt(col++, getAD_ComponentVersion_ID());
         	pstmt.setBytes(col++, getBinaryValue());
         	pstmt.setInt(col++, getChangeLogGroup_ID());
+        	pstmt.setString(col++, getChangeLogGroupUID());
+        	pstmt.setString(col++, getChangeLogUID() != null ? getChangeLogUID() : (componentPrefix != null ? (componentPrefix+"-"+changelogID) : null) );
 
         	/* Ejecutar consulta y retornar ok */
         	pstmt.executeUpdate();

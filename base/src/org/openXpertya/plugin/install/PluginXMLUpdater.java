@@ -720,8 +720,8 @@ public class PluginXMLUpdater {
 			/* Si estoy insertando un nuevo registro... */
 			if (MChangeLog.OPERATIONTYPE_Insertion.equals(changeGroup.getOperation()))
 			{
-				/* Debo mapear y actualizar el UID del changeGroup */
-				if (!changeGroup.isMapped())
+				/* Debo mapear y actualizar el UID del changeGroup (solo si corresponde, por defecto NO) */
+				if (shouldMapUIDs() && !changeGroup.isMapped())
 				{
 					changeGroup.setMapped(true);
 					newMapUID(changeGroup);
@@ -744,8 +744,8 @@ public class PluginXMLUpdater {
 			/* En caso de modificacion debo determinar si hay que mapear o no (si es un registro insertado en este proceso o uno ya existente) */
 			else
 			{
-				/* Todavia no se mapeo? */
-				if (!changeGroup.isMapped())
+				/* Todavia no se mapeo? (solo si corresponde, por defecto NO) */
+				if (shouldMapUIDs() && !changeGroup.isMapped())
 				{
 					/* Indicar como mapeado (se mapee o no, simplemente es para no volver a ejecutar en todas las columnas */
 					changeGroup.setMapped(true);
@@ -810,16 +810,17 @@ public class PluginXMLUpdater {
 		private String algorithm = null;
 		private String refTable = null;
 		private String refUID = null;
+		private String changeLogUID = null;
 		// Replicacion: Hosts destino unicamente
 		private Set<Integer> targetOnly = new HashSet<Integer>();
 		
-		public Column(String name, String type, String algorithm, String oldValue, String newValue, String refTable, String refUID, Set<Integer> targetOnly) {
-			this(name, type, algorithm, oldValue, newValue, refTable, refUID);
+		public Column(String name, String type, String algorithm, String oldValue, String newValue, String refTable, String refUID, Set<Integer> targetOnly, String changeLogUID) {
+			this(name, type, algorithm, oldValue, newValue, refTable, refUID, changeLogUID);
 			this.targetOnly = targetOnly;
 		}
 		
 		/* Constructor */
-		public Column(String name, String type, String algorithm, String oldValue, String newValue, String refTable, String refUID)
+		public Column(String name, String type, String algorithm, String oldValue, String newValue, String refTable, String refUID, String changeLogUID)
 		{
 			this.name = name;
 			this.type = type;
@@ -828,6 +829,7 @@ public class PluginXMLUpdater {
 			this.refTable = refTable;
 			this.algorithm = algorithm;
 			this.refUID = refUID;
+			this.changeLogUID = changeLogUID;
 		}
 		
 		/* Getters & Setters */
@@ -846,7 +848,9 @@ public class PluginXMLUpdater {
 		public String getRefUID()					{			return refUID;					}
 		public void setRefUID(String refUID) 		{			this.refUID = refUID;			}
 		public Set<Integer> getTargetOnly() 		{			return targetOnly;				}
-		public void setTargetOnly(Set<Integer> targetOnly) {	this.targetOnly = targetOnly;	}
+		public void setTargetOnly(Set<Integer> targetOnly) 	{	this.targetOnly = targetOnly;	}
+		public void setChangeLogUID(String changeLogUID) 	{	this.changeLogUID = changeLogUID;		}
+		public String getChangeLogUID() 			{			return changeLogUID;			}
 	}
 
 
@@ -863,9 +867,10 @@ public class PluginXMLUpdater {
 		private int changelogGroupID = -1;
 		private boolean mapped = false;
 		private boolean processed = false;
+		private String changeLogGroupUID = null;
 		
 		/* Constructor */
-		public ChangeGroup(String tableName, String operation, String uid, int changelogGroupID, Vector<Column> columns)
+		public ChangeGroup(String tableName, String operation, String uid, int changelogGroupID, Vector<Column> columns, String changeLogGroupUID)
 		{
 			this.uid = uid;
 			this.columns = columns;
@@ -873,6 +878,7 @@ public class PluginXMLUpdater {
 			this.operation = operation;
 			this.processed = false;
 			this.changelogGroupID = changelogGroupID;
+			this.changeLogGroupUID = changeLogGroupUID;
 		}
 		
 		/* Retorna una columna a partir del nombre la misma */
@@ -901,6 +907,9 @@ public class PluginXMLUpdater {
 		public void setProcessed(boolean processed)		{			this.processed = processed;		}
 		public int getChangelogGroupID()				{			return changelogGroupID;		}
 		public void setChangelogGroupID(int clgID)		{			this.changelogGroupID = clgID;	}
+		public String getChangeLogGroupUID()			{			return changeLogGroupUID;		}
+		public void setChangeLogGroupUID(String clgUID)	{			this.changeLogGroupUID = clgUID;}
+		
 	}
 	
 	
@@ -960,10 +969,12 @@ public class PluginXMLUpdater {
 		
 			// retornar el changeGroup completo
 			int changelogGroupID = -1;
+			String changeLogGroupUID = null;
 			try { 
 				changelogGroupID = Integer.parseInt(elem.getAttribute("changelogGroupID"));
-			} catch (Exception e) { }
-			ChangeGroup changeGroup = new ChangeGroup(elem.getAttribute("tableName"), elem.getAttribute("operation"), elem.getAttribute("uid"), changelogGroupID, columns);
+				changeLogGroupUID = elem.getAttribute("changeLogGroupUID");
+			} catch (Exception e) { /* EL XML puede no llegar a tener el changeLogGroupUID si se genero con versiones viejas */  }
+			ChangeGroup changeGroup = new ChangeGroup(elem.getAttribute("tableName"), elem.getAttribute("operation"), elem.getAttribute("uid"), changelogGroupID, columns, changeLogGroupUID);
 			return changeGroup;
 		}
 		
@@ -1006,7 +1017,7 @@ public class PluginXMLUpdater {
 			}
 
 			// retornar el changeGroup completo
-			Column aColumn = new Column(elem.getAttribute("name"), elem.getAttribute("type"), elem.getAttribute("algorithm"), oldValue, newValue, refTable, refUID, targetHosts);
+			Column aColumn = new Column(elem.getAttribute("name"), elem.getAttribute("type"), elem.getAttribute("algorithm"), oldValue, newValue, refTable, refUID, targetHosts, elem.getAttribute("changeLogUID"));
 			return aColumn;
 
 		}
@@ -1089,8 +1100,13 @@ public class PluginXMLUpdater {
 			if (MChangeLog.OPERATIONTYPE_Deletion.equals(changeGroup.getOperation())) {
 				// Instanciar y persistir en el changelog
 				MChangeLog aChangeLog = null;
+				// Recupear el changeLogUID
+				String changeLogUID = null;
+				try {
+					changeLogUID = changeGroup.getColumns().get(0).getChangeLogUID();
+				} catch (Exception e) { /* EL XML puede no llegar a tener el changeLogUID si se genero con versiones viejas */}
 				/* DisplayType: usamos siempre String dado que asi esta en el XML. El AD_Column es uno dummy dado que no se requiere en eliminaciones */
-				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName(), m_trxName), DB.getSQLValue(null, "SELECT min(ad_column_id) FROM AD_Column"), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), null, null, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID);
+				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName(), m_trxName), DB.getSQLValue(null, "SELECT min(ad_column_id) FROM AD_Column"), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), null, null, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID, changeGroup.getChangeLogGroupUID(), changeLogUID);
 				if (!aChangeLog.insertDirect())
 					throw new Exception(" Error al guardar el changelog: UID:" + changeGroup.getTableName() + " - OP:" + changeGroup.getOperation());
 				return;
@@ -1125,7 +1141,7 @@ public class PluginXMLUpdater {
 				// Instanciar y persistir en el changelog
 				MChangeLog aChangeLog = null;
 				/* DisplayType: usamos siempre String dado que asi esta en el XML. */
-				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName(), m_trxName), M_Column.getColumnID(m_trxName, column.getName(), changeGroup.getTableName()), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), column.getOldValue(), newValue, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID);
+				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName(), m_trxName), M_Column.getColumnID(m_trxName, column.getName(), changeGroup.getTableName()), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), column.getOldValue(), newValue, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID, changeGroup.getChangeLogGroupUID(), column.getChangeLogUID());
 				if (!aChangeLog.insertDirect())
 					throw new Exception(" Error al guardar el changelog: UID:" + changeGroup.getTableName() + " - OP:" + changeGroup.getOperation() + " - NewValue:" + column.getNewValue());
 			}
@@ -1163,4 +1179,10 @@ public class PluginXMLUpdater {
 		return "Y".equals(Env.getContext(Env.getCtx(), PluginConstants.MAP_TO_COMPONENT));	
 	}
 
+	/** 
+	 *Verifica si debe mapear los UIDs 
+	 */
+	protected boolean shouldMapUIDs() {
+		return "Y".equals(Env.getContext(Env.getCtx(), PluginConstants.MAP_UIDS));
+	}
 }

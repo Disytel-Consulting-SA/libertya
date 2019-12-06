@@ -189,11 +189,11 @@ public class VPluginInstallerUtils  {
 			/* Si hay definido un mapeo del componente en el manifest de la instalacion, utilizar dicho mapeo 
 			 * (tienen que especificarse tanto el UID del component como el UID componentversion) */ 
 			if (m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENT_UID) != null) { 
-				componentEntry = (String)m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENT_UID);
+				componentEntry = ((String)m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENT_UID)).trim();
 				countCheck++;
 			}
 			if (m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENTVERSION_UID) != null) {
-				componentVersionEntry = (String)m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENTVERSION_UID);
+				componentVersionEntry = ((String)m_component_props.get(PluginConstants.PROP_MAP_TO_COMPONENTVERSION_UID)).trim();
 				countCheck++;
 			}
 			/* Si countCheck = 0, no mapear a un componente => instalar uno nuevo de manera tradicional 
@@ -205,6 +205,11 @@ public class VPluginInstallerUtils  {
 			}
 			if (countCheck == 1)
 				throw new Exception("Para instalar copiando al chenglog mapeando valores a un componente existente, es necesario especificar tanto el UID del Componente como el UID del ComponentVersion a utilizar");
+			
+			/* Aplicar mapeo de UIDS? (Por ejemplo FOO2CORE)? Si no se define, NO se realiza (respetando metodologia micro components) */
+			if (m_component_props.get(PluginConstants.PROP_MAP_UIDS) != null && m_component_props.get(PluginConstants.PROP_MAP_UIDS).equals("Y")) {
+				Env.setContext(ctx, PluginConstants.MAP_UIDS, "Y");
+			}
 		}
 		
 		/* Registros de cada tabla (recuperar el ID de ambos) */
@@ -280,6 +285,15 @@ public class VPluginInstallerUtils  {
 		plugin.setComponent_Export_Date((String)m_component_props.get(PluginConstants.PROP_EXPORT_TIMESTAMP));
 		if (m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG) != null && !"-1".equals((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG)))
 			plugin.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
+		if (m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_UID) != null)
+			plugin.setComponent_Last_Changelog_UID((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_UID));
+		if (m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_GROUP_UID) != null)
+			plugin.setComponent_Last_Changelog_Group_UID((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_GROUP_UID));
+		if (m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG_UID) != null)
+			plugin.setComponent_First_Changelog_UID((String)m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG_UID));
+		if (m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG_GROUP_UID) != null)
+			plugin.setComponent_First_Changelog_Group_UID((String)m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG_GROUP_UID));
+		
 		if (!plugin.save())
 			throw new Exception(" - Error al intentar registrar información adicional del plugin ");
 
@@ -292,6 +306,10 @@ public class VPluginInstallerUtils  {
 			pluginDetail.setVersion((String)m_component_props.get(PluginConstants.PROP_VERSION));
 			pluginDetail.setComponent_Export_Date((String)m_component_props.get(PluginConstants.PROP_EXPORT_TIMESTAMP));
 			pluginDetail.setInstall_Details("File: " + jarURL);
+			pluginDetail.setComponent_First_Changelog_UID((String)m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG_UID));
+			pluginDetail.setComponent_First_Changelog_Group_UID((String)m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG_GROUP_UID));
+			pluginDetail.setComponent_Last_Changelog_UID((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_UID));
+			pluginDetail.setComponent_Last_Changelog_Group_UID((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_GROUP_UID));
 			if (!pluginDetail.save())
 				throw new Exception(" - Error al intentar registrar información detallada del plugin ");
 		}

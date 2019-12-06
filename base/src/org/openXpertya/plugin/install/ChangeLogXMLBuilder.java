@@ -126,7 +126,8 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 			setAttribute("tableName", group.getTableName(), groupNode);
 			setAttribute("uid", group.getAd_componentObjectUID(), groupNode);
 			setAttribute("operation", group.getOperation(), groupNode);
-			setAttribute("changelogGroupID", ""+group.getChangelogGroupID(), groupNode);			
+			setAttribute("changelogGroupID", ""+group.getChangelogGroupID(), groupNode);
+			setAttribute("changeLogGroupUID", ""+group.getChangeLogGroupUID(), groupNode);
 			// Si es eliminación va un tag vacío, 
 			// sino se deben crear tags para cada columna  
 			if(!group.getOperation().equals(MChangeLog.OPERATIONTYPE_Deletion)){
@@ -152,6 +153,8 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 					setAttribute("name", element.getColumnName(), columnNode);
 					// Tipo de columna
 					setAttribute("type", String.valueOf(element.getAD_Reference_ID()), columnNode);
+					// ChangelogUID
+					setAttribute("changeLogUID", element.getChangeLogUID(), columnNode);
 					// Si es de tipo referencia a una tabla o de tipo Entero con _ID, 
 					// coloco los atributos específicos
 					isTableReference = isTableReference(element);
@@ -267,6 +270,13 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 					addNode(oldValue, columnNode);
 					addNode(newValue, columnNode);
 					// Agrego el nodo columna al grupo
+					addNode(columnNode, groupNode);
+				}
+			} else {
+				// Para la eliminacion existira solo un elemento.
+				for (ChangeLogElement element : group.getElements()) {
+					columnNode = createElement("column");
+					setAttribute("changeLogUID", element.getChangeLogUID(), columnNode);
 					addNode(columnNode, groupNode);
 				}
 			}
@@ -408,6 +418,9 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 		return lastChangelogID;
 	}
 
+	public String getLastChangeLogUID() {
+		return DB.getSQLValueString(trxName, "SELECT changeLogUID FROM AD_Changelog WHERE AD_Changelog_ID = " + lastChangelogID);
+	}
 
 	public void setLastChangelogID(int lastChangelogID) {
 		this.lastChangelogID = lastChangelogID;
@@ -438,6 +451,10 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 		return firstChangelogID;
 	}
 
+	public String getFirstChangeLogUID() {
+		return DB.getSQLValueString(trxName, "SELECT changeLogUID FROM AD_Changelog WHERE AD_Changelog_ID = " + firstChangelogID);
+	}
+	
 
 	public void setFirstChangelogID(int firstChangelogID) {
 		this.firstChangelogID = firstChangelogID;

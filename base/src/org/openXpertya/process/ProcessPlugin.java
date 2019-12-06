@@ -1,6 +1,7 @@
 package org.openXpertya.process;
 
 import org.openXpertya.model.MComponentVersion;
+import org.openXpertya.model.X_AD_Component;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -36,7 +37,7 @@ public class ProcessPlugin extends SvrProcess {
 		// Procesar plugin
 		processPlugin();
 		// Retornar mensaje
-		return "Plugin actualizado";
+		return responseMessage();
 	}
 	
 	/*
@@ -92,5 +93,21 @@ public class ProcessPlugin extends SvrProcess {
 
 	private MComponentVersion getComponentVersion() {
 		return componentVersion;
+	}
+	
+	/** Mensaje de respuesta al usuario */
+	protected String responseMessage() {
+		// Verificar si ya existen entradas en el changelog con el prefijo especificado, a fin de brindar 
+		// un warning al developer indicando que dicho micro componente ya fue usado previamente
+		X_AD_Component component = new X_AD_Component(getCtx(), getComponentVersion().getAD_Component_ID(), null);
+		if (component.isMicroComponent() && getComponentVersion().isCurrentDevelopment()) {
+			int count = DB.getSQLValue(null, 	" select count(1) " +
+												" from ad_changelog " +
+												" where substring(changeloguid from 1 for position('-' in changeloguid)-1) = '" + component.getPrefix() + "'");
+			if (count>0) {
+				return "Plugin actualizado. WARNING! Existen " + count + " entradas en el changelog con el prefijo de microcomponente " + component.getPrefix();
+			}
+		}
+		return "Plugin actualizado";
 	}
 }

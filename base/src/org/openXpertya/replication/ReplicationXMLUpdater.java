@@ -375,6 +375,11 @@ public class ReplicationXMLUpdater extends PluginXMLUpdater {
 		return false;
 	}
 	
+	/** Override: Replicacion no debe realizar mapeos de UIDs */
+	protected boolean shouldMapUIDs() {
+		return false;
+	}
+	
 	/** Redefinicion, no elevar excepcion si el registro en cuestion ya existía.  Generar sentencia de actualizacion en su lugar */
 	protected StringBuffer handleRecordExistsOnInsert(ChangeGroup changeGroup) throws Exception	{
 		return processInsertModify(changeGroup);
