@@ -26,9 +26,11 @@ import org.openXpertya.process.customImport.centralPos.mapping.CabalPaymentAndMo
 import org.openXpertya.process.customImport.centralPos.mapping.GenericMap;
 import org.openXpertya.process.customImport.centralPos.mapping.extras.CabalMovements;
 import org.openXpertya.process.customImport.centralPos.mapping.extras.CabalPayments;
+import org.openXpertya.process.customImport.centralPos.mapping.extras.CabalRetention;
 import org.openXpertya.process.customImport.centralPos.pojos.cabal.movimientos.CabalMovimientos;
 import org.openXpertya.process.customImport.centralPos.pojos.cabal.pagos.CabalPagos;
 import org.openXpertya.process.customImport.centralPos.pojos.cabal.pagos.Datum;
+import org.openXpertya.process.customImport.centralPos.pojos.cabal.retenciones.CabalRetenciones;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 
@@ -87,8 +89,24 @@ public class ImportCabal extends Import {
 					costo_fin = costo_fin.add(new BigDecimal((String)m.getValue("costo_fin_cup")));
 				}
 				
+				// Obtener las retenciones para adquirir el iva del costo financiero
+				List<CabalRetention> rets = getRetenciones(datum);
+				BigDecimal iva_costo_fin_105 = BigDecimal.ZERO;
+				org.openXpertya.process.customImport.centralPos.pojos.cabal.retenciones.Datum theRetencion = new org.openXpertya.process.customImport.centralPos.pojos.cabal.retenciones.Datum();
+				for (CabalRetention cr : rets) {
+					iva_costo_fin_105 = iva_costo_fin_105.add(safeMultiply((String) cr.getValue("iva_cf_alicuota_10_5"),
+							(String) cr.getValue("signo_iva_cf_alicuota_10_5"), "+"));
+				}
+				
+				// Armar un solo movimiento con el total del IVA 10.5
+				theRetencion.setId(datum.getId());
+				theRetencion.setFecha_pago(datum.getFecha_pago());
+				theRetencion.setNumero_comercio(datum.getNumero_comercio());
+				theRetencion.setNumero_liquidacion(datum.getNumero_liquidacion());
+				theRetencion.setIva_cf_alicuota_10_5(String.valueOf(iva_costo_fin_105));
+				
 				// Armar un solo movimiento con el total del costo financiero para agregarlo al
-				// pago actual 
+				// pago actual
 				theMove.setId(datum.getId());
 				theMove.setFecha_pago(datum.getFecha_pago());
 				theMove.setNumero_comercio(datum.getNumero_comercio());
@@ -98,6 +116,7 @@ public class ImportCabal extends Import {
 				// Guardar el Pago Cabal
 				pam = new CabalPaymentAndMovements(payment);
 				pam.setMovement(new CabalMovements(theMove));
+				pam.setRetention(new CabalRetention(theRetencion));
 				int no = pam.save(ctx, trxName);
 				if (no > 0) {
 					processed += no;
@@ -145,6 +164,36 @@ public class ImportCabal extends Import {
 		return moves;
 	}
 	
+	/**
+	 * Obtener las retenciones de cabal
+	 * 
+	 * @param pago datum del pago actual
+	 * @return lista de retenciones de cabal para el ID parámetro
+	 */
+	private List<CabalRetention> getRetenciones(Datum pago){
+		List<CabalRetention> retenciones = new ArrayList<CabalRetention>();
+		String url = externalService.getAttributeByName("URL Retenciones").getName();
+		//url = url.replace("{id}", pago.getId());
+		Get get = makeGetter(url);
+		// Los filtros deberían ser número de liquidación, fecha y número de comercio
+		get.addQueryParam("numero_liquidacion", pago.getNumero_liquidacion());
+		get.addQueryParam("numero_comercio", pago.getNumero_comercio());
+		get.addQueryParam("fecha_pago", pago.getFecha_pago());
+		
+		CabalRetenciones r = null;
+		try {
+			r = (CabalRetenciones) get.execute(CabalRetenciones.class);
+			if(r.getRetenciones() != null) {
+				for (org.openXpertya.process.customImport.centralPos.pojos.cabal.retenciones.Datum dm : r.getRetenciones()) {
+					retenciones.add(new CabalRetention(dm));
+				}
+			}
+			
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return retenciones;
+	}
 	
 	@Override
 	public void setDateFromParam(Timestamp date) {
@@ -170,6 +219,12 @@ public class ImportCabal extends Import {
 		}
 		
 		String name = "IVA 21";
+		id = getTaxIDByName(ctx, attributes.get(name).getName(), trxName);
+		if (id <= 0) {
+			throw new Exception("No se encontró el concepto "+name);
+		}
+		
+		name = "IVA 10.5";
 		id = getTaxIDByName(ctx, attributes.get(name).getName(), trxName);
 		if (id <= 0) {
 			throw new Exception("No se encontró el concepto "+name);
@@ -402,6 +457,25 @@ public class ImportCabal extends Import {
 			e.printStackTrace();
 		}
 		
+		try {
+			String name = "IVA 10.5";
+			int C_Tax_ID = getTaxIDByName(ctx, attributes.get(name).getName(), trxName);
+			BigDecimal iva = safeMultiply(rs.getString("iva_cf_alicuota_10_5"), rs.getString("signo_iva_cf_alicuota_10_5"), "+");
+			if (iva.compareTo(new BigDecimal(0)) != 0) {
+				MIVASettlements iv = new MIVASettlements(ctx, 0, trxName); 
+				iv.setC_Tax_ID(C_Tax_ID);
+				iv.setC_CreditCardSettlement_ID(settlement.getC_CreditCardSettlement_ID());
+				iv.setAD_Org_ID(settlement.getAD_Org_ID());
+				iv.setAmount(iva);
+				if(!iv.save()){
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+				ivaAmt = ivaAmt.add(iva);
+			}
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		}
+		
 		settlement.setWithholding(withholdingAmt);
 		settlement.setPerception(perceptionAmt);
 		settlement.setExpenses(expensesAmt);
@@ -421,6 +495,7 @@ public class ImportCabal extends Import {
 
 	@Override
 	public String[] getFilteredFields() {
-		return GenericMap.joinArrays(CabalPayments.filteredFields, CabalMovements.filteredFields);
+		return GenericMap.joinArrays(CabalPayments.filteredFields, CabalMovements.filteredFields,
+				CabalRetention.filteredFields);
 	}
 }
