@@ -16,15 +16,17 @@
 
 package org.openXpertya.util;
 
-import java.io.*;
-import java.math.*;
-import java.sql.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Vector;
-import java.util.logging.*;
-import java.util.logging.*;
+import java.util.logging.Level;
 
-import org.openXpertya.*;
-import org.openXpertya.model.*;
+import org.openXpertya.model.MReference;
+import org.openXpertya.model.M_Table;
 import org.openXpertya.plugin.common.PluginConstants;
 
 
@@ -758,7 +760,7 @@ public class GenerateModel {
         // begin vpj-cd e-evolution 01/18/2005
 
         String directory = "C:\\ramaconserti\\dbPort\\src\\org\\openXpertya\\model\\";
-
+        String tableName = "";
 
         // end vpj-cd e-evolution 01/18/2005
         
@@ -772,7 +774,16 @@ public class GenerateModel {
         }
 
         log.info( "Directory: " + directory );
-
+        
+        if( args.length > 1 ) {
+            tableName = args[ 1 ];
+            if( (tableName == null) || (tableName.length() == 0) ) {
+                System.err.println( "No Table Name" );
+                System.exit( 1 );
+            }
+            log.info( "Table Name: " + tableName );
+        }
+        
         // second parameter
         // begin vpj-cd e-evolution 01/18/2005
 
@@ -781,8 +792,8 @@ public class GenerateModel {
         // String packageName = "openXpertya.model";
         // end vpj-cd e-evolution 01/18/2005
 
-        if( args.length > 1 ) {
-            packageName = args[ 1 ];
+        if( args.length > 2 ) {
+            packageName = args[ 2 ];
         }
 
         if( (packageName == null) || (packageName.length() == 0) ) {
@@ -800,8 +811,8 @@ public class GenerateModel {
         // tring entityType = "'U','A'"; //      User, Application
         // end vpj-cd e-evolution 01/18/2005
 
-        if( args.length > 2 ) {
-            entityType = args[ 2 ];
+        if( args.length > 3 ) {
+            entityType = args[ 3 ];
         }
 
         if( (entityType == null) || (entityType.length() == 0) ) {
@@ -822,7 +833,11 @@ public class GenerateModel {
         
         sql.insert( 0,"SELECT AD_Table_ID " + "FROM AD_Table " + "WHERE (TableName IN ('RV_WarehousePrice','RV_BPartner')"    // special views
                 + " OR IsView='N') AND "); 	        
-         
+        
+        if(!Util.isEmpty(tableName, true) && !tableName.equals("*")) {
+        	sql.append(" AND TableName = '").append(tableName).append("' ");
+        }
+        
         sql.append( " ORDER BY TableName" );
 
         //
