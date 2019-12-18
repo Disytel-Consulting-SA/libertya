@@ -851,3 +851,7 @@ CREATE OR REPLACE VIEW c_invoice_sales_rep_orig_v AS
 
 ALTER TABLE c_invoice_sales_rep_orig_v
   OWNER TO libertya;
+
+--20191218-1300 Nuevas columnas para registro del IVA 10.5 sobre importaciones Cabal CentralPOS
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','iva_cf_alicuota_10_5','character varying(32)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','signo_iva_cf_alicuota_10_5','character varying(32)'));

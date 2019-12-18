@@ -153,7 +153,8 @@ public class ImportSettlements extends SvrProcess {
 		sql.append("UPDATE ");
 		sql.append("	" + tableName + " ");
 		sql.append("SET ");
-		sql.append("	i_isimported = 'Y' ");
+		sql.append("	i_isimported = 'Y', ");
+		sql.append("	i_errormsg = null ");
 		sql.append("WHERE ");
 		sql.append("	" + tableName + "_ID = " + id + " ");
 
