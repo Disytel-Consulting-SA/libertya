@@ -855,3 +855,82 @@ ALTER TABLE c_invoice_sales_rep_orig_v
 --20191218-1300 Nuevas columnas para registro del IVA 10.5 sobre importaciones Cabal CentralPOS
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','iva_cf_alicuota_10_5','character varying(32)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','signo_iva_cf_alicuota_10_5','character varying(32)'));
+
+--20191219-1100 Views para exportaciones de percepciones y retenciones sufridas (SIFERE)
+DROP VIEW rv_c_tax_iibb_sufridas;
+ 
+CREATE OR REPLACE VIEW rv_c_tax_iibb_sufridas AS 
+ SELECT it.ad_org_id,
+    it.ad_client_id,
+    COALESCE(rt.jurisdictioncode, r.jurisdictioncode) AS codigojurisdiccion,
+    replace(bp.taxid::text, '-'::text, ''::text) AS cuit,
+    ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script,
+    i.dateacct AS date,
+    i.puntodeventa,
+    lpad(i.puntodeventa::character varying::text, 4, '0'::text) AS numerodesucursal,
+    i.numerocomprobante AS numerodeconstancia,
+        CASE
+            WHEN dt.doctypekey::text ~~ 'VCDN%'::text AND dt.iselectronic::text = 'N'::text THEN 'D'::bpchar
+            WHEN dt.doctypekey::text ~~ 'VI%'::text AND dt.iselectronic::text = 'N'::text THEN 'F'::bpchar
+            WHEN dt.doctypekey::text ~~ 'VCM%'::text AND dt.iselectronic::text = 'N'::text THEN 'C'::bpchar
+            WHEN dt.doctypekey::text ~~ 'VCDN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'I'::bpchar
+            WHEN dt.doctypekey::text ~~ 'VI%'::text AND dt.iselectronic::text = 'Y'::text THEN 'E'::bpchar
+            WHEN dt.doctypekey::text ~~ 'VCM%'::text AND dt.iselectronic::text = 'Y'::text THEN 'H'::bpchar
+            ELSE 'O'::bpchar
+        END AS tipocomprobante,
+    lc.letra AS letracomprobante,
+    (it.taxamt * dt.signo_issotrx::numeric * '-1'::integer::numeric)::numeric(20,2) AS importepercibido
+   FROM c_invoicetax it
+     JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+     JOIN c_invoice i ON it.c_invoice_id = i.c_invoice_id
+     JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+     JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+     JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+     LEFT JOIN c_region r ON r.c_region_id = i.c_region_delivery_id
+     LEFT JOIN c_region rt ON rt.c_region_id = t.c_region_id
+  WHERE (dt.docbasetype = ANY (ARRAY['API'::bpchar, 'APC'::bpchar])) AND (i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND t.ispercepcion = 'Y'::bpchar AND t.perceptiontype = 'B'::bpchar;
+
+ALTER TABLE rv_c_tax_iibb_sufridas
+  OWNER TO libertya;
+
+CREATE OR REPLACE VIEW rv_c_reten_iibb_sufridas AS 
+ SELECT i.ad_org_id,
+    i.ad_client_id,
+    r.jurisdictioncode AS codigojurisdiccion,
+    replace(bp.taxid::text, '-'::text, ''::text) AS cuit,
+    ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script,
+    i.dateacct AS date,
+    i.puntodeventa,
+    lpad(i.puntodeventa::character varying::text, 4, '0'::text) AS numerodesucursal,
+    i.numerocomprobante AS numerodeconstancia,
+        CASE
+            WHEN dt.doctypekey::text ~~ 'CDN%'::text AND dt.iselectronic::text = 'N'::text THEN 'D'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CI%'::text AND dt.iselectronic::text = 'N'::text THEN 'F'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CCN%'::text AND dt.iselectronic::text = 'N'::text THEN 'C'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CDN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'I'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CI%'::text AND dt.iselectronic::text = 'Y'::text THEN 'E'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CCN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'H'::bpchar
+            ELSE 'O'::bpchar
+        END AS tipocomprobante,
+    lc.letra AS letracomprobante,
+    (i.grandtotal * dt.signo_issotrx::numeric)::numeric(20,2) AS importeretenido,
+    COALESCE(src.documentno, ( SELECT ip.documentno
+           FROM c_allocationline al
+             JOIN c_invoice ip ON ip.c_invoice_id = al.c_invoice_id
+          WHERE al.c_allocationhdr_id = ri.c_allocationhdr_id
+          ORDER BY al.created
+         LIMIT 1)) AS orig_invoice_documentno,
+    i.documentno
+   FROM m_retencion_invoice ri
+     JOIN c_invoice i ON i.c_invoice_id = ri.c_invoice_id
+     JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+     JOIN c_retencionschema rs ON rs.c_retencionschema_id = ri.c_retencionschema_id
+     JOIN c_retenciontype rt ON rt.c_retenciontype_id = rs.c_retenciontype_id
+     JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+     LEFT JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+     LEFT JOIN c_region r ON r.c_region_id = rs.c_region_id
+     LEFT JOIN c_invoice src ON src.c_invoice_id = ri.c_invoice_src_id
+  WHERE rt.retentiontype = 'B'::bpchar AND rs.retencionapplication::text = 'S'::text AND (i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]));
+
+ALTER TABLE rv_c_reten_iibb_sufridas
+  OWNER TO libertya;
