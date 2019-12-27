@@ -6,12 +6,12 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MOrderLine;
+
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
-
-import org.openXpertya.model.MOrder;
-import org.openXpertya.model.MOrderLine;
 
 
 public class OrderDataSource implements JRDataSource  {
@@ -20,8 +20,8 @@ public class OrderDataSource implements JRDataSource  {
 	private Properties p_ctx = null;	
 	
 	/** Order	& Lines			*/
-	private MOrder order = null;
-	private MOrderLine orderLine = null;
+	protected MOrder order = null;
+	protected MOrderLine orderLine = null;
 	int m_currentRecord = -1;
 	int total_lines = -1;
 
