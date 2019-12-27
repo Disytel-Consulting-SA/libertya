@@ -122,7 +122,7 @@ public class LaunchOrder extends SvrProcess {
 		
 		MBPartner bpartner = new MBPartner(getCtx(), order.getC_BPartner_ID(), null);
 		
-		OrderDataSource ds = new OrderDataSource(getCtx(), order);
+		OrderDataSource ds = getDS(order);
 		
 		 try {
 				ds.loadData();
@@ -554,5 +554,9 @@ public class LaunchOrder extends SvrProcess {
 
 	public void setAD_Record_ID(int aD_Record_ID) {
 		AD_Record_ID = aD_Record_ID;
+	}
+	
+	protected OrderDataSource getDS(MOrder order) {
+		return new OrderDataSource(getCtx(), order);
 	}
 }
