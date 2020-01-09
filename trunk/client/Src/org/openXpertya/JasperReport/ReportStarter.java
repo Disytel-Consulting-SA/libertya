@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport;
 
+import java.io.ByteArrayInputStream;
+
 /******************************************************************************
  * Product: Adempiere ERP & CRM Smart Business Solution                       *
  * This program is free software; you can redistribute it and/or modify it    *
@@ -1280,7 +1282,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
     }
     
     public void addParameterClientInfo(HashMap<String, Object> params){
-    	final String sql = "SELECT c.AD_Client_ID AS AD_Client_ID, c.description AS CLIENT_DESC, ci.cuit AS CLIENT_CUIT, (address1 || ' - ' || city) AS CLIENT_ADDRESS" +
+    	final String sql = "SELECT c.AD_Client_ID AS AD_Client_ID, c.description AS CLIENT_DESC, ci.cuit AS CLIENT_CUIT, (address1 || ' - ' || city) AS CLIENT_ADDRESS, c.logoimg " +
     			" FROM ad_client c" +
     			" LEFT JOIN AD_ClientInfo ci ON (ci.ad_client_ID = c.ad_client_ID)" +
     			" LEFT JOIN C_Location l ON (ci.C_Location_ID = l.C_Location_ID)" +
@@ -1298,6 +1300,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
         	params.put("CLIENT_DESC", rs.getString("CLIENT_DESC"));
         	params.put("CLIENT_CUIT", rs.getString("CLIENT_CUIT"));
         	params.put("CLIENT_ADDRESS", rs.getString("CLIENT_ADDRESS"));
+        	params.put("CLIENT_LOGO", new ByteArrayInputStream(rs.getBytes("logoimg")));
         }
 
         rs.close();
