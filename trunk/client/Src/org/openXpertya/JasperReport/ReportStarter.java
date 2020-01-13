@@ -1300,7 +1300,9 @@ public class ReportStarter implements ProcessCall // , ClientProcess
         	params.put("CLIENT_DESC", rs.getString("CLIENT_DESC"));
         	params.put("CLIENT_CUIT", rs.getString("CLIENT_CUIT"));
         	params.put("CLIENT_ADDRESS", rs.getString("CLIENT_ADDRESS"));
-        	params.put("CLIENT_LOGO", new ByteArrayInputStream(rs.getBytes("logoimg")));
+        	if(rs.getBytes("logoimg") != null) {
+            	params.put("CLIENT_LOGO", new ByteArrayInputStream(rs.getBytes("logoimg")));
+        	}
         }
 
         rs.close();
