@@ -1,5 +1,7 @@
 package org.openXpertya.JasperReport;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -182,6 +184,10 @@ public class LaunchInOut extends SvrProcess {
 				JasperReportsUtil.coalesce(location.getCity(), ""));
 		jasperwrapper.addParameter("PROVINCIA",
 				JasperReportsUtil.coalesce(location.getRegionName(), ""));
+		jasperwrapper.addParameter("PLAZA",
+				JasperReportsUtil.coalesce(location.getPlaza(), ""));
+		jasperwrapper.addParameter("POSTALCODE",
+				JasperReportsUtil.coalesce(location.getPostal(), ""));
 		jasperwrapper
 				.addParameter("PAIS", JasperReportsUtil.coalesce(location
 						.getCountry().getName(), ""));
@@ -290,6 +296,10 @@ public class LaunchInOut extends SvrProcess {
 		if (!Util.isEmpty(getInout().getAD_OrgTrx_ID(), true)) {
 			jasperwrapper.addParameter("ORGTRX_NAME", JasperReportsUtil
 					.getOrgName(getCtx(), getInout().getAD_OrgTrx_ID()));
+		}
+		if(client.getLogoImg() != null){
+			InputStream logo = new ByteArrayInputStream(client.getLogoImg());
+			jasperwrapper.addParameter("LOGO",(InputStream)logo);
 		}
 		if (!Util.isEmpty(getInout().getAD_User_ID(), true)) {
 			jasperwrapper.addParameter("USER", JasperReportsUtil.getUserName(
