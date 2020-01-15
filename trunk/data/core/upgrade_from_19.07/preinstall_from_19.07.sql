@@ -934,3 +934,146 @@ CREATE OR REPLACE VIEW rv_c_reten_iibb_sufridas AS
 
 ALTER TABLE rv_c_reten_iibb_sufridas
   OWNER TO libertya;
+  
+--20200115-1427 Function y soporte para visualizar log de AD_Changelog (usado en bitacora para auditoria)
+-- Ejemplos de uso:
+-- 		select * from v_audit_detail('where createdby = 101', 'order by ad_changelog_id desc', 'limit 18')
+-- 		select * from v_audit_detail('where operationtype = ''M''', 'order by ad_changelog_id desc', 'limit 200')
+ CREATE TYPE audit_detail_type AS (
+	fecha    timestamp,
+	usuario  varchar,
+	registro varchar,
+	campo    varchar,
+	valor_previo varchar,
+	valor_nuevo varchar
+
+);
+
+
+CREATE OR REPLACE FUNCTION get_record_reference(recordid int, tableid int)
+RETURNS varchar AS
+$BODY$
+DECLARE
+	atablename varchar;
+	identifiercols varchar;
+	aresult varchar;
+	aquery varchar;
+BEGIN
+	BEGIN
+		-- Determinar el nombre de la tabla
+		SELECT INTO atablename tablename FROM AD_Table WHERE AD_Table_ID = tableid;
+
+		-- Buscar los campos identificatorios
+		select INTO identifiercols array_to_string(array_agg(columnname),'||''-''||') from ad_column where isidentifier = 'Y' AND ad_table_id = tableid;
+		EXECUTE 'SELECT (' || identifiercols || ') FROM ' || atablename || ' WHERE ' || atablename  || '_ID = ' || recordid INTO aresult;
+		
+		return aresult;
+	EXCEPTION 
+		WHEN OTHERS THEN return recordid;
+	END;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE;
+ALTER FUNCTION get_record_reference(int, int)
+  OWNER TO libertya;
+
+
+
+CREATE OR REPLACE FUNCTION get_column_reference(avalue varchar, columnid int)
+RETURNS varchar AS
+$BODY$
+DECLARE
+	acolumn record;
+	areference record;
+	areftable record;
+	areflist record;
+	aquery varchar;
+	aresult varchar;
+	ref_info record;
+	ref_table varchar;
+	ref_column_key varchar;
+	ref_column_val varchar;
+	identifiercols varchar;
+BEGIN
+	BEGIN
+		-- Determinar el tipo de columna para saber si es una referencia
+		SELECT INTO acolumn * FROM AD_Column WHERE AD_Column_ID = columnid;
+
+		-- Si no es una referencia, entonces devolver el valor directamente
+		IF (acolumn.ad_reference_ID NOT IN (17, 18, 19, 30)) THEN
+			return avalue;
+		END IF;
+
+		-- Si hay una referencia explicita, entonces usar dicha configuracion
+		IF (acolumn.ad_reference_value_id IS NOT NULL) THEN
+			-- Que tipo de referencia es? (lista, tabla)
+			SELECT INTO areference * FROM AD_Reference WHERE ad_reference_id = acolumn.ad_reference_value_id;
+			-- tabla?
+			IF (areference.validationtype = 'T') THEN 
+				-- Recuperar el ad_ref_table
+				SELECT INTO areftable * FROM AD_Ref_Table WHERE AD_Reference_ID = areference.AD_reference_id;
+				-- Armar el query para determinar el valor
+				SELECT INTO ref_table tablename FROM AD_Table WHERE ad_table_id = areftable.ad_table_id;
+				SELECT INTO ref_column_key columnname FROM AD_Column WHERE ad_column_id = areftable.ad_key;
+				SELECT INTO ref_column_val columnname FROM AD_Column WHERE ad_column_id = areftable.ad_display;
+				EXECUTE 'SELECT ' || ref_column_val || ' FROM ' || ref_table || ' WHERE ' || ref_column_key || ' = ' || avalue INTO aresult;
+				return aresult;
+			END IF;
+			-- lista?
+			IF (areference.validationtype = 'L') THEN 
+				raise notice 'ES L';
+				-- Recuperar el valor correcto de la ad_ref_list_trl
+				SELECT INTO aresult rlt.name FROM AD_Ref_List rl INNER JOIN AD_Ref_List_Trl rlt ON rl.ad_ref_list_id = rlt.ad_ref_list_id WHERE AD_Reference_ID = areference.AD_Reference_id AND rl.value = avalue AND ad_language = 'es_AR';
+				return aresult;
+			END IF;
+		-- No hay una referencia explicita, debe ser tabledir / busqueda		
+		ELSE 
+			-- Buscar la tabla referenciada (por ejemplo C_Invoice_ID -> C_Invoice)
+			SELECT INTO ref_table substring(acolumn.columnname from 1 for (length(acolumn.columnname))-3) FROM AD_Column WHERE AD_Column_ID = columnid;
+			-- Buscar los campos identificatorios
+			select INTO identifiercols array_to_string(array_agg(columnname),'||''-''||') from ad_column where isidentifier = 'Y' AND ad_table_id = (Select ad_table_id from ad_table where tablename = ref_table);
+			EXECUTE 'SELECT (' || identifiercols || ') FROM ' || ref_table || ' WHERE ' || acolumn.columnname  || ' = ' || avalue INTO aresult;
+			return aresult;	
+		END IF;
+	EXCEPTION 
+		WHEN OTHERS THEN return avalue;
+	END;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE;
+ALTER FUNCTION get_column_reference(varchar, int)
+  OWNER TO libertya;
+
+
+
+
+CREATE OR REPLACE FUNCTION v_audit_detail(whereclause varchar, orderclause varchar, limitclause varchar)
+  RETURNS SETOF audit_detail_type AS
+$BODY$
+declare
+	consulta varchar;
+	aRecord audit_detail_type;
+BEGIN
+	consulta = 
+		' select updated::timestamp(0) as fecha, ' ||
+		' (select name from ad_user where ad_user_id = createdby) as usuario, ' ||
+		' get_record_reference(record_id::int, ad_table_id::int), ' ||
+		' (select ct.name from ad_column c inner join ad_column_trl ct on c.ad_column_id = ct.ad_column_id and ad_language = ''es_AR'' where c.ad_column_id = cl.ad_column_id) as campo, ' ||
+		' get_column_reference(oldvalue, ad_column_id) as valor_previo, ' ||
+		' get_column_reference(newvalue, ad_column_id) as valor_nuevo,' ||
+		' ad_column_id,' ||
+		' ad_table_id' ||
+		' from ad_changelog cl ' ||
+		coalesce(whereclause, '') || ' ' ||
+		coalesce(orderclause, '') || ' ' ||
+		coalesce(limitclause, '');
+	FOR aRecord IN EXECUTE consulta LOOP
+		return next aRecord;
+	END LOOP;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION v_audit_detail(varchar, varchar, varchar)
+  OWNER TO libertya;
+  
