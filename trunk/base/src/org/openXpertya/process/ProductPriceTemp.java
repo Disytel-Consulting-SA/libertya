@@ -248,27 +248,27 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private boolean updatePricesMProductPO() {
-        ResultStr = "CorrectingProductPO";
+        setResultStr("CorrectingProductPO");
 
         try {
-			no = DB.executeUpdate("UPDATE M_Product_PO" + " SET PriceList = 0 "
-					+ " WHERE PriceList IS NULL",  null);
-			no += DB.executeUpdate("UPDATE M_Product_PO"
+			setNo(DB.executeUpdate("UPDATE M_Product_PO" + " SET PriceList = 0 "
+					+ " WHERE PriceList IS NULL",  null));
+			setNo(getNo() + DB.executeUpdate("UPDATE M_Product_PO"
 					+ " SET PriceLastPO = 0" + " WHERE PriceLastPo IS NULL",
-					null);
-			no += DB.executeUpdate(
+					null));
+			setNo(getNo() + DB.executeUpdate(
 					"UPDATE M_Product_PO"
 							+ " SET PricePO = PriceLastPO"
 							+ " WHERE (PricePO IS NULL OR PricePO = 0) AND PriceLastPO <> 0",
-							null);
-			no += DB.executeUpdate("UPDATE M_Product_PO" + " SET PricePO = 0"
-					+ " WHERE PricePo IS NULL", null);
-            Message = "Updated " + no + " Prices ";
+							null));
+			setNo(getNo() + DB.executeUpdate("UPDATE M_Product_PO" + " SET PricePO = 0"
+					+ " WHERE PricePo IS NULL", null));
+            setMessage("Updated " + getNo() + " Prices ");
 
             return true;
         } catch( Exception e ) {
-            ResultStr = "ERROR \t" + ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr("ERROR \t" + getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
 
             return false;
         }
@@ -285,7 +285,7 @@ public class ProductPriceTemp extends SvrProcess {
 
     private boolean defaultCurrentVendor() {
     	boolean ok = true;
-        ResultStr = "defaultCurrentVendor";
+        setResultStr("defaultCurrentVendor");
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
@@ -307,26 +307,26 @@ public class ProductPriceTemp extends SvrProcess {
 			// tiene ninguno marcado
         	while(rs.next()){
         		productID = rs.getInt("m_product_id");
-				no += DB.executeUpdate("update m_product_po "
+				setNo(getNo() + DB.executeUpdate("update m_product_po "
 						+ "set iscurrentvendor = 'Y' "
 						+ "where m_product_id = " + productID
 						+ " and c_bpartner_id = (select c_bpartner_id "
 						+ "from m_product_po where isactive = 'Y' and m_product_id = " + productID
 						+ "order by created desc " 
-						+ "limit 1)", null);
+						+ "limit 1)", null));
         	}
-            Message = "Updated " + no + " Current Vendors";
+            setMessage("Updated " + getNo() + " Current Vendors");
         } catch( Exception e ) {
-            ResultStr = "ERROR \t" + ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr("ERROR \t" + getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
             ok = false;
         } finally {
         	try {
         		if(rs != null) rs.close();
 				if(ps != null) ps.close();
 			} catch (Exception e2) {
-				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
-	            log.severe( ResultStr );
+				setResultStr("ERROR \t" + getResultStr() + ":" + e2.getMessage() + " " + getMessage());
+	            log.severe( getResultStr() );
 			}
         }
         return ok;
@@ -338,7 +338,7 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void correctingDuplicates() {
-        ResultStr = "correctingDuplicates";
+        setResultStr("correctingDuplicates");
 
         String sql   = null;
         String c_sql = null;
@@ -372,17 +372,17 @@ public class ProductPriceTemp extends SvrProcess {
                 c_pstmt.setInt(1, rs.getInt("m_product_id"));
                 c_rs    = c_pstmt.executeQuery();
                 if(c_rs.next()){
-					no += DB.executeUpdate("update m_product_po "
+					setNo(getNo() + DB.executeUpdate("update m_product_po "
 							+ "set iscurrentvendor = 'N' "
 							+ "where m_product_id = "
 							+ c_rs.getInt("m_product_id")
 							+ " and c_bpartner_id <> "
-							+ c_rs.getInt("c_bpartner_id"), null);
+							+ c_rs.getInt("c_bpartner_id"), null));
                 }
             }
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         } finally{
         	try {
 				if(c_rs != null)c_rs.close();
@@ -390,8 +390,8 @@ public class ProductPriceTemp extends SvrProcess {
 				if(rs != null)rs.close();
 				if(pstmt != null)pstmt.close();
 			} catch (Exception e2) {
-				ResultStr = ResultStr + ":" + e2.getMessage() + " " + Message;
-	            log.severe( ResultStr );
+				setResultStr(getResultStr() + ":" + e2.getMessage() + " " + getMessage());
+	            log.severe( getResultStr() );
 			}
         }
     }    // CorrectingDuplicates
@@ -404,7 +404,7 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void priceListInfo() {
-        ResultStr = "priceListInfo";
+        setResultStr("priceListInfo");
 
 		String sql = new String("SELECT p.C_Currency_ID, c.StdPrecision"
 				+ " FROM M_PriceList p, M_PriceList_Version v, C_Currency c"
@@ -423,15 +423,15 @@ public class ProductPriceTemp extends SvrProcess {
                 m_StdPrecision = rs.getInt( 2 );
             }
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + sql;
-            log.severe( "ERROR PriceListInfo " + ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + sql);
+            log.severe( "ERROR PriceListInfo " + getResultStr() );
         } finally {
         	try {
         		if(rs != null) rs.close();
 				if(pstmt != null) pstmt.close();
 			} catch (Exception e2) {
-				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
-	            log.severe( ResultStr );
+				setResultStr("ERROR \t" + getResultStr() + ":" + e2.getMessage() + " " + getMessage());
+	            log.severe( getResultStr() );
 			}
         }
     }    // PriceListInfo
@@ -463,13 +463,13 @@ public class ProductPriceTemp extends SvrProcess {
 
         try {
         	// Eliminar solo registros del usuario en cuestión (luego en la importación también se filtra por dicho criterio)
-			no = DB.executeUpdate("DELETE FROM I_ProductPrice WHERE "
-					+ getUserSQLCheck() + " AND m_pricelist_version_id = "+getM_PriceList_Version_ID(), null);
+			setNo(DB.executeUpdate("DELETE FROM I_ProductPrice WHERE "
+					+ getUserSQLCheck() + " AND m_pricelist_version_id = "+getM_PriceList_Version_ID(), null));
             pstmt = DB.prepareStatement( sql, null );
             rs    = pstmt.executeQuery();
 
             while( rs.next()) {
-                ResultStr = " Parameter Seq = " + rs.getInt( "SeqNo" );
+                setResultStr(" Parameter Seq = " + rs.getInt( "SeqNo" ));
                 // Inserción de precios
                 createSelection( rs );
                 if( "N".equals( rs.getString( "IsStrong" ))) {
@@ -483,18 +483,18 @@ public class ProductPriceTemp extends SvrProcess {
                 }
                 // Cálculos de regla de precios
                 calculation( rs );
-                Message = "";
+                setMessage("");
             }
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         } finally {
         	try {
         		if(rs != null) rs.close();
 				if(pstmt != null) pstmt.close();
 			} catch (Exception e2) {
-				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
-	            log.severe( ResultStr );
+				setResultStr("ERROR \t" + getResultStr() + ":" + e2.getMessage() + " " + getMessage());
+	            log.severe( getResultStr() );
 			}
         }
     }            // DiscountLine
@@ -506,8 +506,8 @@ public class ProductPriceTemp extends SvrProcess {
      * @param rs
      */
 
-    private void createSelection( ResultSet rs ) {
-        ResultStr = "create selection";
+    protected void createSelection( ResultSet rs ) {
+        setResultStr("create selection");
 		StringBuffer optionalRestrictions = setOptionalRestrictions(rs,
 				getM_PriceList_Version_Base_ID() == 0); 
         
@@ -537,7 +537,7 @@ public class ProductPriceTemp extends SvrProcess {
                 										" WHERE (p.AD_Client_ID = " + getM_Client_ID() + " OR p.AD_Client_ID = 0 )" + " AND p.IsActive = 'Y' AND po.IsActive = 'Y' AND po.IsCurrentVendor = 'Y' AND p.M_AttributeSet_ID IS NULL " + 
                 										optionalRestrictions.toString() ); 
 
-                no = DB.executeUpdate( sql.toString(), null);
+                setNo(DB.executeUpdate( sql.toString(), null));
             } else {
 
                 // Create Selection from existing PriceList
@@ -561,12 +561,12 @@ public class ProductPriceTemp extends SvrProcess {
                 										" WHERE z.M_PriceList_Version_ID = " + getM_PriceList_Version_Base_ID() + " AND p.IsActive = 'Y' AND z.IsActive = 'Y'" +  
                 										optionalRestrictions.toString());
 
-                no = DB.executeUpdate( sql.toString(), null);
+                setNo(DB.executeUpdate( sql.toString(), null));
             }
-            Message = Message + " @SELECTED@ = " + no;
+            setMessage(getMessage() + " @SELECTED@ = " + getNo());
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         }
     }    // CreateSelection
 
@@ -634,10 +634,10 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void deleteTemporarySelection( ResultSet rs ) {
-        ResultStr = "Delete temporary selection";
+        setResultStr("Delete temporary selection");
 
         try {
-			no = DB.executeUpdate("DELETE I_ProductPrice pp "
+			setNo(DB.executeUpdate("DELETE I_ProductPrice pp "
 					+ " WHERE "
 					+ getUserSQLCheck()
 					+ " AND m_pricelist_version_id =  "+getM_PriceList_Version_ID()
@@ -647,13 +647,13 @@ public class ProductPriceTemp extends SvrProcess {
 					+ " AND m_pricelist_version_id =  "+getM_PriceList_Version_ID()
 					+")"
 					+ " AND M_DiscountSchemaLine_ID <> "
-					+ rs.getInt("M_DiscountSchemaLine_ID"), null);
+					+ rs.getInt("M_DiscountSchemaLine_ID"), null));
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         }
 
-        Message = ", @Deleted@" + no;
+        setMessage(", @Deleted@" + getNo());
     }    // deleteTemporarySelection
 
     /**
@@ -672,7 +672,7 @@ public class ProductPriceTemp extends SvrProcess {
 	    	 // si no hay definido una version base de tarifa, se utiliza la información de M_Product_PO
 	    	 if( getM_PriceList_Version_Base_ID() == 0 ) {
 	    		 // Copy and Convert from Product_PO
-	    		 ResultStr = "CopyPrices_PO";
+	    		 setResultStr("CopyPrices_PO");
 	            	//Nuevo .
 	                //Problema: La consulta de actualizacion, devuelve multiples valores.Hay que hacer la actualizacion para cada
 	                //producto. 
@@ -693,12 +693,12 @@ public class ProductPriceTemp extends SvrProcess {
 		            		+ " PriceLimit=(select COALESCE(currencyconvert( po.PricePO, po.C_Currency_ID, " + m_Currency_ID + ", mdsl.ConversionDate" + ", " + rs.getInt( "C_ConversionType_ID" ) + ", " + getM_Client_ID() + ", " + getM_Org_ID() + ") , 0)" + " FROM M_Product_PO po" + ", M_DiscountSchemaLine mdsl" +",I_ProductPrice tpp" + ", M_Product p WHERE p.M_Product_ID = po.M_Product_ID AND po.M_Product_ID = tpp.M_Product_ID" +" AND tpp.M_Product_ID="+rs1.getInt("m_product_id")+ " AND po.IsCurrentVendor = 'Y' AND po.IsActive = 'Y'" + " AND mdsl.M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" ) + " AND p.M_AttributeSet_ID is null)"
 		            		+" WHERE " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID=" + rs.getInt( "M_DiscountSchemaLine_ID" )+" AND I_ProductPrice.m_product_id= " + rs1.getInt("m_product_id");
 		                
-		                no = DB.executeUpdate( sql, null);
+		                setNo(DB.executeUpdate( sql, null));
 	                }//while
 	        // Si se definió una tarifa base... 
 	        } else {
 	            // Copy and Convert from other PriceList_Version
-	            ResultStr = "CopyPrices_PL";
+	            setResultStr("CopyPrices_PL");
 		    	//Modificado por ConSerti, mal sentencia update para Postgres.
 				String sql = new String("SELECT  ipp.m_product_id, " +
 												"ipp.M_AttributeSetInstance_ID, " +
@@ -774,22 +774,22 @@ public class ProductPriceTemp extends SvrProcess {
 							+ rs.getInt("M_DiscountSchemaLine_ID"));
 					sqlUpdate.append(" AND M_PriceList_Version_ID = ").append(getM_PriceList_Version_ID());
 					
-		    	    no = DB.executeUpdate( sqlUpdate.toString(),null );
+		    	    setNo(DB.executeUpdate( sqlUpdate.toString(),null ));
 		        }//while
 	        }
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         } finally {
         	try {
         		if(rs1 != null) rs1.close();
 				if(pstmt != null) pstmt.close();
 			} catch (Exception e2) {
-				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
-	            log.severe( ResultStr );
+				setResultStr("ERROR \t" + getResultStr() + ":" + e2.getMessage() + " " + getMessage());
+	            log.severe( getResultStr() );
 			}
         }
-        Message = Message + ", @Inserted@ = " + no;
+        setMessage(getMessage() + ", @Inserted@ = " + getNo());
     }    // CopyPrices
 
 	// Subquery para facilitar la actualización de precios
@@ -821,7 +821,7 @@ public class ProductPriceTemp extends SvrProcess {
 
         // Update I_ProductPrice for DiscountSchemaLine strong
 
-        ResultStr = "updateDiscountStrong";
+        setResultStr("updateDiscountStrong");
 
         try {
         	//Modificado por ConSerTi. En Postgres, no es correcta la sintaxis del update.
@@ -857,18 +857,18 @@ public class ProductPriceTemp extends SvrProcess {
             		           +" where " + getUserSQLCheck() + " AND M_DiscountSchemaLine_ID =" + rs.getInt( "M_DiscountSchemaLine_ID" )
             		           +" and M_Product_ID="+ rs1.getInt("M_Product_ID")
             	 			   +" AND m_pricelist_version_id = "+getM_PriceList_Version_ID();
-            	 no = DB.executeUpdate( sql1, null);
+            	 setNo(DB.executeUpdate( sql1, null));
             }
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         } finally {
         	try {
         		if(rs1 != null) rs1.close();
 				if(pstmt != null) pstmt.close();
 			} catch (Exception e2) {
-				ResultStr = "ERROR \t" + ResultStr + ":" + e2.getMessage() + " " + Message;
-	            log.severe( ResultStr );
+				setResultStr("ERROR \t" + getResultStr() + ":" + e2.getMessage() + " " + getMessage());
+	            log.severe( getResultStr() );
 			}
         }
     }
@@ -881,7 +881,7 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void calculation( ResultSet rs ) {
-        ResultStr = "Calculation";
+        setResultStr("Calculation");
 
         try {
             StringBuffer sql = new StringBuffer( "UPDATE I_ProductPrice SET" );
@@ -924,11 +924,11 @@ public class ProductPriceTemp extends SvrProcess {
 					+ " AND M_DiscountSchemaLine_ID = "
 					+ rs.getInt("M_DiscountSchemaLine_ID"));
 			sql.append(" AND m_pricelist_version_id = ").append(getM_PriceList_Version_ID());
-            no = DB.executeUpdate( sql.toString(), null);
+            setNo(DB.executeUpdate( sql.toString(), null));
 
             // Fixed Price overwrite
 
-            ResultStr = ResultStr + ", Fix";
+            setResultStr(getResultStr() + ", Fix");
             sql       = new StringBuffer( "UPDATE I_ProductPrice p SET PriceList = " );
 
             if( rs.getString( "List_Base" ).equalsIgnoreCase("F") ) {
@@ -953,7 +953,7 @@ public class ProductPriceTemp extends SvrProcess {
 					+ " AND p.M_DiscountSchemaLine_ID = "
 					+ rs.getInt("M_DiscountSchemaLine_ID"));
 			sql.append(" AND m_pricelist_version_id = ").append(getM_PriceList_Version_ID());
-            no = DB.executeUpdate( sql.toString(), null);
+            setNo(DB.executeUpdate( sql.toString(), null));
             
 			boolean addTax = rs.getString("List_AddProductTax")
 					.equalsIgnoreCase("Y")
@@ -988,15 +988,15 @@ public class ProductPriceTemp extends SvrProcess {
 	            
 	            sql.append( " WHERE " + getUserSQLCheck() + " AND p.M_DiscountSchemaLine_ID = " + rs.getInt( "M_DiscountSchemaLine_ID" ));
 	            sql.append(" AND m_pricelist_version_id = ").append(getM_PriceList_Version_ID());
-	            no = DB.executeUpdate( sql.toString(), null);				
+	            setNo(DB.executeUpdate( sql.toString(), null));				
 			}
 			
 			// Redondeo al final de todo
             rounding( rs );
 			
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         }
     }    // Calculation
 
@@ -1008,7 +1008,7 @@ public class ProductPriceTemp extends SvrProcess {
      */
 
     private void rounding( ResultSet rs ) {
-        ResultStr = ResultStr + ", Round";
+        setResultStr(getResultStr() + ", Round");
 
         try {
             StringBuffer sql = new StringBuffer( "UPDATE I_ProductPrice p SET " );
@@ -1025,11 +1025,11 @@ public class ProductPriceTemp extends SvrProcess {
 					+ " AND M_DiscountSchemaLine_ID="
 					+ rs.getInt("M_DiscountSchemaLine_ID"));
 			sql.append(" AND m_pricelist_version_id = ").append(getM_PriceList_Version_ID());
-            no      = DB.executeUpdate( sql.toString(), null);
-            Message = Message + ", @Updated@ = " + no;
+            setNo(DB.executeUpdate( sql.toString(), null));
+            setMessage(getMessage() + ", @Updated@ = " + getNo());
         } catch( Exception e ) {
-            ResultStr = ResultStr + ":" + e.getMessage() + " " + Message;
-            log.severe( ResultStr );
+            setResultStr(getResultStr() + ":" + e.getMessage() + " " + getMessage());
+            log.severe( getResultStr() );
         }
     }    // Rounding
     
@@ -1143,6 +1143,30 @@ public class ProductPriceTemp extends SvrProcess {
 
 	protected void setM_Client_ID(int m_Client_ID) {
 		this.m_Client_ID = m_Client_ID;
+	}
+
+	protected int getNo() {
+		return no;
+	}
+
+	protected void setNo(int no) {
+		this.no = no;
+	}
+
+	protected String getResultStr() {
+		return ResultStr;
+	}
+
+	protected void setResultStr(String resultStr) {
+		ResultStr = resultStr;
+	}
+
+	protected String getMessage() {
+		return Message;
+	}
+
+	protected void setMessage(String message) {
+		Message = message;
 	}
 }    // ProductPriceTemp
 
