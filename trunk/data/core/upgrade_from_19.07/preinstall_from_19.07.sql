@@ -1077,3 +1077,65 @@ $BODY$
 ALTER FUNCTION v_audit_detail(varchar, varchar, varchar)
   OWNER TO libertya;
   
+--20200117-0900 Función para conversión de unidades de medida
+CREATE OR REPLACE FUNCTION uom_conversion(
+    product_id integer,
+    uom_from_id integer,
+    uom_to_id integer,
+    qty numeric)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	qtyconverted numeric;
+	rate numeric;
+BEGIN
+	qtyconverted = null;
+
+	--Si alguno de los UOMs parámetro es null, entonces se toma el del artículo
+	IF (uom_from_id is null) THEN
+		-- Unidad de medida actual del artículo parámetro
+		SELECT c_uom_id INTO uom_from_id
+		FROM m_product
+		where m_product_id = product_id;
+	END IF;
+
+	IF (uom_to_id is null) THEN
+		-- Unidad de medida actual del artículo parámetro
+		SELECT c_uom_id INTO uom_to_id
+		FROM m_product
+		where m_product_id = product_id;
+	END IF;
+
+	IF (uom_from_id <> uom_to_id)
+	THEN 
+		-- Buscar la conversión del artículo para las unidades de medida correspondientes
+		select dividerate into rate
+		from C_UOM_Conversion
+		where m_product_id = product_id and c_uom_id = uom_from_id and c_uom_to_id = uom_to_id and isactive = 'Y' 
+		order by created desc 
+		limit 1;
+
+		IF (rate is null) THEN
+			select multiplyrate into rate
+			from C_UOM_Conversion
+			where m_product_id = product_id and c_uom_id = uom_to_id and c_uom_to_id = uom_from_id and isactive = 'Y' 
+			order by created desc 
+			limit 1;
+		END IF;
+
+		IF (rate is not null and rate <> 0) THEN
+			qtyconverted = qty * rate;
+		END IF;
+		
+	ELSE
+		qtyconverted = qty;
+	END IF;
+	
+        RETURN qtyconverted;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION uom_conversion(integer, integer, integer, numeric)
+  OWNER TO libertya;
