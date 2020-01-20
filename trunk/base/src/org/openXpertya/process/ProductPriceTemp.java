@@ -663,7 +663,7 @@ public class ProductPriceTemp extends SvrProcess {
      * @param rs
      */
 
-    private void copyPrices( ResultSet rs ) {
+    protected void copyPrices( ResultSet rs ) {
     	 PreparedStatement pstmt = null;
     	 ResultSet         rs1 = null;
  
@@ -1167,6 +1167,14 @@ public class ProductPriceTemp extends SvrProcess {
 
 	protected void setMessage(String message) {
 		Message = message;
+	}
+
+	public int getM_Currency_ID() {
+		return m_Currency_ID;
+	}
+
+	public void setM_Currency_ID(int m_Currency_ID) {
+		this.m_Currency_ID = m_Currency_ID;
 	}
 }    // ProductPriceTemp
 
