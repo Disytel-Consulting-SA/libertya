@@ -1088,37 +1088,41 @@ $BODY$
 DECLARE
 	qtyconverted numeric;
 	rate numeric;
+	ufi integer;
+	uti integer;
 BEGIN
 	qtyconverted = null;
-
+	ufi = uom_from_id;
+	
 	--Si alguno de los UOMs parámetro es null, entonces se toma el del artículo
 	IF (uom_from_id is null) THEN
 		-- Unidad de medida actual del artículo parámetro
-		SELECT c_uom_id INTO uom_from_id
+		SELECT c_uom_id INTO ufi
 		FROM m_product
 		where m_product_id = product_id;
 	END IF;
 
+	uti = uom_to_id;
 	IF (uom_to_id is null) THEN
 		-- Unidad de medida actual del artículo parámetro
-		SELECT c_uom_id INTO uom_to_id
+		SELECT c_uom_id INTO uti
 		FROM m_product
 		where m_product_id = product_id;
 	END IF;
 
-	IF (uom_from_id <> uom_to_id)
+	IF (ufi <> uti)
 	THEN 
 		-- Buscar la conversión del artículo para las unidades de medida correspondientes
 		select dividerate into rate
 		from C_UOM_Conversion
-		where m_product_id = product_id and c_uom_id = uom_from_id and c_uom_to_id = uom_to_id and isactive = 'Y' 
+		where m_product_id = product_id and c_uom_id = ufi and c_uom_to_id = uti and isactive = 'Y' 
 		order by created desc 
 		limit 1;
 
 		IF (rate is null) THEN
 			select multiplyrate into rate
 			from C_UOM_Conversion
-			where m_product_id = product_id and c_uom_id = uom_to_id and c_uom_to_id = uom_from_id and isactive = 'Y' 
+			where m_product_id = product_id and c_uom_id = uti and c_uom_to_id = ufi and isactive = 'Y' 
 			order by created desc 
 			limit 1;
 		END IF;
@@ -1139,6 +1143,7 @@ $BODY$
   COST 100;
 ALTER FUNCTION uom_conversion(integer, integer, integer, numeric)
   OWNER TO libertya;
+
   
  --20200120-094511 Correcciones sobre funcion de visualizacion registros de auditoria
 CREATE OR REPLACE FUNCTION get_column_reference(avalue varchar, columnid int)
