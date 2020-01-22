@@ -1962,6 +1962,10 @@ public class CalloutOrder extends CalloutEngine {
             return "";
         }
     	
+    	int M_PriceList_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_ID" );
+        int StdPrecision = MPriceList.getStandardPrecision( ctx,M_PriceList_ID );
+        Integer taxID = (Integer)mTab.getValue("C_Tax_ID");
+        
     	BigDecimal enteredQty = (BigDecimal)mTab.getValue("QtyEntered");
     	BigDecimal enteredPrice = (BigDecimal)mTab.getValue("PriceEntered");
     	
@@ -1971,10 +1975,18 @@ public class CalloutOrder extends CalloutEngine {
     	BigDecimal priceDiff = enteredPrice.subtract(receptionPrice);
     	BigDecimal qtyDiff = enteredQty.subtract(receptionQty);
     	
+    	BigDecimal lineNetAmt = (BigDecimal)mTab.getValue("LineNetAmt");
+    	
+    	MPriceList priceList = MPriceList.get(ctx, M_PriceList_ID, null);
+        MTax tax = MTax.get(ctx, taxID, null);
+        
+		BigDecimal lineTaxAmt = tax.calculateTax(lineNetAmt, priceList.isTaxIncluded(), StdPrecision);
+		lineNetAmt = !priceList.isTaxIncluded() ? lineNetAmt : lineNetAmt.subtract(lineTaxAmt);
+    	
     	mTab.setValue("ReceptionAmt", receptionPrice.multiply(receptionQty));
     	mTab.setValue("PriceDiff", priceDiff);
     	mTab.setValue("QtyDiff", qtyDiff);
-    	mTab.setValue("DiffAmt", priceDiff.multiply(qtyDiff));
+		mTab.setValue("DiffAmt", lineNetAmt.subtract(receptionPrice.multiply(receptionQty)));
     	
     	return "";
     }

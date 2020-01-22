@@ -2084,6 +2084,15 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         }
         */
         
+        // Solicitudes de NC
+        if(MDocType.DOCTYPE_Solicitud_NC_Proveedor.equals(dt.getDocTypeKey())) {
+        	// El motivo debe ser obligatorio
+        	if(Util.isEmpty(getCreditRequestType(), true)) {
+        		setProcessMsg("@CreditNoteRequestTypeMandatory@");
+        		return DocAction.STATUS_Invalid;
+        	}
+        }
+        
         // Validación de productos "Comprados" en las líneas del pedido si el documento
         // es un pedido a proveedor.
         if (!isMigrationFlag() && dt.isDocType(MDocType.DOCTYPE_PurchaseOrder)) {

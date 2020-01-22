@@ -470,7 +470,9 @@
 						height="14"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-16"/>
+						key="staticText-16">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -486,7 +488,9 @@
 						height="14"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-17"/>
+						key="staticText-17">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -502,7 +506,9 @@
 						height="22"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-18"/>
+						key="staticText-18">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -519,7 +525,9 @@ RECEP.]]></text>
 						height="21"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-20"/>
+						key="staticText-20">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -579,7 +587,7 @@ DIF.]]></text>
 					</textElement>
 				<text><![CDATA[Factura Orig.:]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="61"
 						y="30"
@@ -592,7 +600,7 @@ DIF.]]></text>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{REQUEST_TYPE_NAME}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="415"
 						y="30"
@@ -614,7 +622,9 @@ DIF.]]></text>
 						height="14"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-38"/>
+						key="staticText-38">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -630,7 +640,9 @@ DIF.]]></text>
 						height="22"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-39"/>
+						key="staticText-39">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -647,7 +659,9 @@ RECEP.]]></text>
 						height="21"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-40"/>
+						key="staticText-40">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -664,7 +678,9 @@ DIF.]]></text>
 						height="21"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-41"/>
+						key="staticText-41">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -681,7 +697,9 @@ DIF.]]></text>
 						height="21"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-42"/>
+						key="staticText-42">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -698,7 +716,63 @@ RECEP.]]></text>
 						height="14"
 						forecolor="#000000"
 						backcolor="#FFFFFF"
-						key="staticText-43"/>
+						key="staticText-43">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[TOTAL]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Transparent"
+						x="43"
+						y="52"
+						width="336"
+						height="14"
+						forecolor="#000000"
+						backcolor="#FFFFFF"
+						key="staticText-44">
+							<printWhenExpression><![CDATA[new Boolean($P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[DESCRIPCIÓN]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Transparent"
+						x="379"
+						y="52"
+						width="79"
+						height="14"
+						forecolor="#000000"
+						backcolor="#FFFFFF"
+						key="staticText-45">
+							<printWhenExpression><![CDATA[new Boolean($P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[CANTIDAD]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Transparent"
+						x="457"
+						y="52"
+						width="77"
+						height="14"
+						forecolor="#000000"
+						backcolor="#FFFFFF"
+						key="staticText-46">
+							<printWhenExpression><![CDATA[new Boolean($P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O"))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
@@ -728,7 +802,9 @@ RECEP.]]></text>
 						y="0"
 						width="32"
 						height="13"
-						key="textField-24"/>
+						key="textField-24">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -742,7 +818,9 @@ RECEP.]]></text>
 						width="155"
 						height="13"
 						key="textField-25"
-						isPrintWhenDetailOverflows="true"/>
+						isPrintWhenDetailOverflows="true">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement verticalAlignment="Top">
 						<font size="7"/>
@@ -755,7 +833,9 @@ RECEP.]]></text>
 						y="0"
 						width="39"
 						height="13"
-						key="textField-26"/>
+						key="textField-26">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -768,7 +848,9 @@ RECEP.]]></text>
 						y="0"
 						width="28"
 						height="13"
-						key="textField-28"/>
+						key="textField-28">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -781,7 +863,9 @@ RECEP.]]></text>
 						y="0"
 						width="37"
 						height="13"
-						key="textField-34"/>
+						key="textField-34">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -794,7 +878,9 @@ RECEP.]]></text>
 						y="0"
 						width="37"
 						height="13"
-						key="textField-35"/>
+						key="textField-35">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -807,7 +893,9 @@ RECEP.]]></text>
 						y="0"
 						width="39"
 						height="13"
-						key="textField-36"/>
+						key="textField-36">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -820,7 +908,9 @@ RECEP.]]></text>
 						y="0"
 						width="37"
 						height="13"
-						key="textField-37"/>
+						key="textField-37">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -833,7 +923,9 @@ RECEP.]]></text>
 						y="0"
 						width="36"
 						height="13"
-						key="textField-38"/>
+						key="textField-38">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
@@ -846,12 +938,60 @@ RECEP.]]></text>
 						y="0"
 						width="41"
 						height="13"
-						key="textField-39"/>
+						key="textField-39">
+							<printWhenExpression><![CDATA[new Boolean(!($P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{DIFFAMT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="43"
+						y="0"
+						width="336"
+						height="13"
+						key="textField-40"
+						isPrintWhenDetailOverflows="true">
+							<printWhenExpression><![CDATA[new Boolean($P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{DESCRIPCION}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="380"
+						y="0"
+						width="79"
+						height="13"
+						key="textField-41">
+							<printWhenExpression><![CDATA[new Boolean($P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{CANTIDAD}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="459"
+						y="0"
+						width="75"
+						height="13"
+						key="textField-42">
+							<printWhenExpression><![CDATA[new Boolean($P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Top">
+						<font size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{IMPORTE}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>

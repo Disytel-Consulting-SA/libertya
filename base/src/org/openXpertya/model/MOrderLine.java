@@ -843,9 +843,9 @@ public class MOrderLine extends X_C_OrderLine {
         	BigDecimal receptionQty = getQtyReception() == null?BigDecimal.ZERO:getQtyReception();
         	BigDecimal receptionPrice = getPriceReception() == null?BigDecimal.ZERO:getPriceReception();
         	setReceptionAmt(receptionPrice.multiply(receptionQty));
-        	setPriceDiff(getPriceEntered().subtract(receptionPrice));
+        	setPriceDiff(getPriceEnteredNet().subtract(receptionPrice));
         	setQtyDiff(getQtyEntered().subtract(receptionQty));
-        	setDiffAmt(getPriceDiff().multiply(getQtyDiff()));
+			setDiffAmt((!o.isTaxIncluded() ? getLineNetAmt() : getTotalPriceEnteredNet()).subtract(getReceptionAmt()));
         }
         else{
         	setQtyReception(BigDecimal.ZERO);
