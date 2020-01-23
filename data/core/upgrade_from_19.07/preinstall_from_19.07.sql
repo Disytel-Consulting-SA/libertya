@@ -939,6 +939,12 @@ ALTER TABLE rv_c_reten_iibb_sufridas
 -- Ejemplos de uso:
 -- 		select * from v_audit_detail('where createdby = 101', 'order by ad_changelog_id desc', 'limit 18')
 -- 		select * from v_audit_detail('where operationtype = ''M''', 'order by ad_changelog_id desc', 'limit 200')
+
+-- Funcion que referencia al tipo
+DROP FUNCTION IF EXISTS v_audit_detail(varchar, varchar, varchar);
+-- Nuevo tipo para la funcion
+DROP TYPE IF EXISTS audit_detail_type ;
+
  CREATE TYPE audit_detail_type AS (
 	fecha    timestamp,
 	usuario  varchar,
