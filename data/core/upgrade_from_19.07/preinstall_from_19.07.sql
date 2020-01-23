@@ -1240,4 +1240,58 @@ $BODY$
   COST 100;
 ALTER FUNCTION v_audit_detail(varchar, varchar, varchar)
   OWNER TO libertya;
-  
+
+--20200123-0850 
+--ID 19204480
+--Evento 3770 - ¿Cómo se deben informar las percepciones de IVA en el Registro de Ventas?
+--27/04/2015 12:00:00 a.m.
+
+--Dado que no se encuentra prevista una columna como en el Registro de Compras, 
+--para consignar las percepciones del IVA, las mismas serán incluidas dentro de las percepciones nacionales. 
+--Fuente: https://www.afip.gob.ar/genericos/guiavirtual/consultas_detalle.aspx?id=19204480 
+CREATE OR REPLACE VIEW reginfo_ventas_cbte_v AS 
+ SELECT i.ad_client_id,
+	i.ad_org_id,
+	i.c_invoice_id,
+	date_trunc('day'::text, i.dateacct) AS date,
+	date_trunc('day'::text, i.dateacct) AS fechadecomprobante,
+	gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva) AS tipodecomprobante,
+	i.puntodeventa,
+	i.numerocomprobante AS nrocomprobante,
+	i.numerocomprobante AS nrocomprobantehasta,
+        CASE
+            WHEN bp.taxidtype = '99'::bpchar AND i.grandtotal > 1000::numeric THEN '96'::bpchar
+            ELSE bp.taxidtype
+        END::character(2) AS codigodoccomprador,
+	gettaxid(bp.taxid, bp.taxidtype, bp.c_categoria_iva_id, i.nroidentificcliente, i.grandtotal)::character varying(20) AS nroidentificacioncomprador,
+	bp.name AS nombrecomprador,
+	currencyconvert(getgrandtotal(i.c_invoice_id, true), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal,
+	0::numeric(20,2) AS impconceptosnoneto,
+	0::numeric(20,2) AS imppercepnocategorizados,
+	currencyconvert(getimporteoperacionexentas(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impopeexentas,
+	currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'N'::bpchar) + gettaxamountbyperceptiontype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac,
+	currencyconvert(gettaxamountbyperceptiontype(i.c_invoice_id, 'B'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb,
+	currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'M'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni,
+	currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos,
+	cu.wsfecode AS codmoneda,
+	currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio,
+        CASE
+            WHEN getimporteoperacionexentas(i.c_invoice_id) <> 0::numeric THEN getcantidadalicuotasiva(i.c_invoice_id) - 1::numeric
+            ELSE getcantidadalicuotasiva(i.c_invoice_id)
+        END AS cantalicuotasiva,
+	getcodigooperacion(i.c_invoice_id)::character varying(1) AS codigooperacion,
+	currencyconvert(getimporteotrostributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos,
+	NULL::timestamp without time zone AS fechavencimientopago
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+  WHERE
+CASE
+    WHEN i.issotrx = 'N'::bpchar THEN i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+    ELSE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar, 'VO'::bpchar, 'RE'::bpchar, '??'::bpchar])
+END AND (i.issotrx = 'Y'::bpchar AND dt.transactiontypefrontliva IS NULL OR dt.transactiontypefrontliva = 'S'::bpchar) AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE reginfo_ventas_cbte_v
+  OWNER TO libertya;
