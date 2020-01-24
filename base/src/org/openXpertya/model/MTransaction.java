@@ -33,6 +33,9 @@ import org.openXpertya.util.Env;
 
 public class MTransaction extends X_M_Transaction {
 
+	/** Preference para determinar si se quiere ignorar el seteo del campo description o no */
+	public static String MTRANSACTION_IGNORE_DESCRIPTION_PREFERENCE = "MTRANSACTION_IGNORE_DESCRIPTION"; 
+	
     /**
      * Constructor de la clase ...
      *
@@ -130,6 +133,15 @@ public class MTransaction extends X_M_Transaction {
 
         return sb.toString();
     }    // toString
+    
+    
+    @Override
+    public void setDescription(String Description) {
+    	if ("Y".equals(MPreference.GetCustomPreferenceValue(MTRANSACTION_IGNORE_DESCRIPTION_PREFERENCE)))
+    		return;
+    	super.setDescription(Description);
+    }
+    
 }    // MTransaction
 
 
