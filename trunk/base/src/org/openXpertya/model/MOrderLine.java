@@ -835,17 +835,13 @@ public class MOrderLine extends X_C_OrderLine {
     	// Rotura de Mercadería
     	// Diferencia de Precio
     	// Devolución
-        if(o.getCreditRequestType() != null
-        		&& (X_C_Order.CREDITREQUESTTYPE_MissingProduct.equals(o.getCreditRequestType())
-        				|| X_C_Order.CREDITREQUESTTYPE_BrokenProduct.equals(o.getCreditRequestType())
-        				|| X_C_Order.CREDITREQUESTTYPE_PriceDifference.equals(o.getCreditRequestType())
-        				|| X_C_Order.CREDITREQUESTTYPE_Return.equals(o.getCreditRequestType()))){
+        if(o.isTotalByDifference()) {
         	BigDecimal receptionQty = getQtyReception() == null?BigDecimal.ZERO:getQtyReception();
         	BigDecimal receptionPrice = getPriceReception() == null?BigDecimal.ZERO:getPriceReception();
         	setReceptionAmt(receptionPrice.multiply(receptionQty));
-        	setPriceDiff(getPriceEnteredNet().subtract(receptionPrice));
+        	setPriceDiff(getPriceEntered().subtract(receptionPrice));
         	setQtyDiff(getQtyEntered().subtract(receptionQty));
-			setDiffAmt((!o.isTaxIncluded() ? getLineNetAmt() : getTotalPriceEnteredNet()).subtract(getReceptionAmt()));
+			setDiffAmt(getLineNetAmt().subtract(getReceptionAmt()));
         }
         else{
         	setQtyReception(BigDecimal.ZERO);
@@ -1138,6 +1134,8 @@ public class MOrderLine extends X_C_OrderLine {
             MOrderTax tax = MOrderTax.get( this,getPrecision(),true,get_TrxName());    // old Tax
 
             if( tax != null ) {
+            	tax.setOrder(getOrder());
+            	
                 if( !tax.calculateTaxFromLines()) {
                     return false;
                 }
@@ -1198,7 +1196,8 @@ public class MOrderLine extends X_C_OrderLine {
     	
         // Recalculate Tax for this Tax
     	MOrderTax tax = MOrderTax.get( this,getPrecision(),false,get_TrxName());    // current Tax
-
+    	tax.setOrder(getOrder());
+    	
         if( !tax.calculateTaxFromLines()) {
             return false;
         }
@@ -1872,6 +1871,17 @@ public class MOrderLine extends X_C_OrderLine {
 		}
 		return amtResult;
 	}
+    
+    
+    public BigDecimal getDiffNetAmt() {
+		return amtByTax(getDiffAmt(), getTaxAmt(getDiffAmt()), isTaxIncluded(), false).setScale(2,
+				BigDecimal.ROUND_HALF_UP);
+    }
+    
+    public BigDecimal getDiffAmtWithTax() {
+		return amtByTax(getDiffAmt(), getTaxAmt(getDiffAmt()), isTaxIncluded(), true).setScale(2,
+				BigDecimal.ROUND_HALF_UP);
+    }
     
     //ADER soporte para caches multi-documnto
     private MProductCache m_prodCache;

@@ -67,6 +67,12 @@ public class LaunchOrder extends SvrProcess {
 	/** Total de descuento de documento de líneas sin impuestos */
 	private BigDecimal linesTotalDocumentDiscountsNetAmt = BigDecimal.ZERO;
 	
+	/** Total neto de importes de diferencia */
+	private BigDecimal linesDiffNetAmt = BigDecimal.ZERO;
+	
+	/** Total de importes de diferencia */
+	private BigDecimal linesDiffTotalAmt = BigDecimal.ZERO;
+	
 	/** Jasper Report Wrapper*/
 	private MJasperReport jasperwrapper;
 	
@@ -230,6 +236,8 @@ public class LaunchOrder extends SvrProcess {
 			jasperwrapper.addParameter("SUBDESC", totalLineDiscounts );
 			jasperwrapper.addParameter("TIPOORIGEN", "ORIGINAL" );
 			jasperwrapper.addParameter("TOTAL", order.getGrandTotal() );
+			jasperwrapper.addParameter("DIFFNETAMT", linesDiffNetAmt);
+			jasperwrapper.addParameter("DIFFAMT_WITHTAX", linesDiffTotalAmt);
 			jasperwrapper.addParameter("DESCRIPTION", order.getDescription());
 			jasperwrapper.addParameter("OBSERVACION", getObservacion(order));
 			jasperwrapper.addParameter("RESPONSABLE", getInitials(salesUserName));
@@ -511,6 +519,10 @@ public class LaunchOrder extends SvrProcess {
 			linesTotalDocumentDiscountsAmt = linesTotalDocumentDiscountsAmt.add(orderLine.getTotalDocumentDiscountUnityAmtWithTax());
 			// Total de descuento de documento sin impuestos
 			linesTotalDocumentDiscountsNetAmt = linesTotalDocumentDiscountsNetAmt.add(orderLine.getTotalDocumentDiscountUnityAmtNet());
+			// Total neto de diferencia
+			linesDiffNetAmt = linesDiffNetAmt.add(orderLine.getDiffNetAmt());
+			// Total de diferencia
+			linesDiffTotalAmt = linesDiffTotalAmt.add(orderLine.getDiffAmtWithTax());
 		}
 	}
 	

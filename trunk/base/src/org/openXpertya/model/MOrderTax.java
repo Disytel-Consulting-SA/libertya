@@ -36,6 +36,9 @@ import org.openXpertya.util.Env;
 
 public class MOrderTax extends X_C_OrderTax {
 
+	/** Pedido de este impuesto */
+	private MOrder order = null;
+	
     /**
      * Descripción de Método
      *
@@ -310,7 +313,11 @@ public class MOrderTax extends X_C_OrderTax {
 	 * @return
 	 */
     public String getSqlOrderLineCalcForTaxBaseAmt(){
-    	return "LineNetAmt-DocumentDiscountAmt";
+    	String tbaSQL = "LineNetAmt-DocumentDiscountAmt";
+    	if(getOrder().isTotalByDifference()) {
+    		tbaSQL = "DiffAmt";
+    	}
+    	return tbaSQL;
     }
     
     /**
@@ -327,6 +334,17 @@ public class MOrderTax extends X_C_OrderTax {
 
         return sb.toString();
     }    // toString
+
+	public MOrder getOrder() {
+		if(order == null) {
+			order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+		}
+		return order;
+	}
+
+	public void setOrder(MOrder order) {
+		this.order = order;
+	}
 }    // MOrderTax
 
 

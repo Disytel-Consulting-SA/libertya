@@ -150,6 +150,8 @@
 	<parameter name="ORIGINAL_INVOICE" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="REQUEST_TYPE_NAME" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="REQUEST_TYPE" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="DIFFNETAMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="DIFFAMT_WITHTAX" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="CODARTICULO" class="java.lang.String">
 		<fieldDescription><![CDATA["041020600026"]]></fieldDescription>
@@ -1172,7 +1174,7 @@ RECEP.]]></text>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{SUBTOTAL}]]></textFieldExpression>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{REQUEST_TYPE} == null || $P{REQUEST_TYPE}.equals("S") || $P{REQUEST_TYPE}.equals("T") || $P{REQUEST_TYPE}.equals("A") || $P{REQUEST_TYPE}.equals("D") || $P{REQUEST_TYPE}.equals("O")? $P{SUBTOTAL}:$P{DIFFNETAMT}]]></textFieldExpression>
 				</textField>
 			</band>
 		</pageFooter>
