@@ -1566,6 +1566,13 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 					((getC_DocTypeTarget_ID()!=0)?getC_DocTypeTarget_ID():getC_DocType_ID()), 
 					false));
 
+		// TODO SI SE MODIFICÓ EL TIPO DE SNCP, ENTONCES HAY QUE CORREGIR TODOS LOS
+		// IMPUESTOS Y EL TOTAL 
+		if(!newRecord && is_ValueChanged("CreditRequestType")) {
+			calculateTaxTotal();
+        	//updateAmounts();
+        }
+		
         return true;
     }    // beforeSave
     
@@ -3169,7 +3176,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
             if( !taxList.contains( taxID )) {
                 MOrderTax oTax = MOrderTax.get( line,getPrecision(),false,get_TrxName());    // current Tax
-
+                oTax.setOrder(this);
                 oTax.setIsTaxIncluded( isTaxIncluded());
 
                 if( !oTax.calculateTaxFromLines()) {
@@ -3183,7 +3190,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
                 taxList.add( taxID );
             }
 
-            totalLines = totalLines.add( line.getLineNetAmt());
+			totalLines = totalLines.add(isTotalByDifference() ? line.getDiffAmt() : line.getLineNetAmt());
         }
 
         // Taxes
@@ -4604,6 +4611,9 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		if(isTPVInstance()){
 			return updateOk;
 		}
+		
+		String lineColumn = isTotalByDifference()?"DiffAmt":"LineNetAmt";
+		
 		PreparedStatement pstmt = null;
 		ResultSet         rs    = null;
 		
@@ -4611,7 +4621,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		dataSql
 			.append("SELECT ")
 			// Suma de los importes netos de las líneas
-			.append(  "(SELECT COALESCE(SUM(LineNetAmt),0) ")
+			.append(  "(SELECT COALESCE(SUM("+lineColumn+"),0) ")
 			.append(   "FROM C_OrderLine ol ")
 			.append(   "WHERE ol.C_Order_ID = o.C_Order_ID) AS TotalLines, ")
 			// Suma de los impuestos de este pedido
@@ -5200,6 +5210,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		}
 	}
 	
+	/**
+	 * @return true si el total del pedido debe tomarse del importe de diferencia de
+	 *         las líneas
+	 */
+	public boolean isTotalByDifference() {
+		return getCreditRequestType() != null
+        		&& (X_C_Order.CREDITREQUESTTYPE_MissingProduct.equals(getCreditRequestType())
+        				|| X_C_Order.CREDITREQUESTTYPE_BrokenProduct.equals(getCreditRequestType())
+        				|| X_C_Order.CREDITREQUESTTYPE_PriceDifference.equals(getCreditRequestType())
+        				|| X_C_Order.CREDITREQUESTTYPE_Return.equals(getCreditRequestType()));
+	}
 }    // MOrder
 
 

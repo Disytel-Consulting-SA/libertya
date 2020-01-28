@@ -17,19 +17,26 @@
 package org.openXpertya.model;
 
 import java.awt.Component;
-import java.math.*;
-
-import java.sql.*;
+import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.MessageFormat;
-
-import java.util.*;
-import java.util.logging.*;
+import java.util.Properties;
+import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
 
-import org.openXpertya.model.MRole;
 import org.openXpertya.model.attribute.RecommendedAtributeInstance;
-import org.openXpertya.util.*;
+import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.HTMLMsg;
+import org.openXpertya.util.Ini;
+import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -1976,12 +1983,6 @@ public class CalloutOrder extends CalloutEngine {
     	BigDecimal qtyDiff = enteredQty.subtract(receptionQty);
     	
     	BigDecimal lineNetAmt = (BigDecimal)mTab.getValue("LineNetAmt");
-    	
-    	MPriceList priceList = MPriceList.get(ctx, M_PriceList_ID, null);
-        MTax tax = MTax.get(ctx, taxID, null);
-        
-		BigDecimal lineTaxAmt = tax.calculateTax(lineNetAmt, priceList.isTaxIncluded(), StdPrecision);
-		lineNetAmt = !priceList.isTaxIncluded() ? lineNetAmt : lineNetAmt.subtract(lineTaxAmt);
     	
     	mTab.setValue("ReceptionAmt", receptionPrice.multiply(receptionQty));
     	mTab.setValue("PriceDiff", priceDiff);
