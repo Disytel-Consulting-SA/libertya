@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_CabalPayments
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-12-18 13:50:25.186 */
+ *  @version  - 2020-01-29 09:08:00.867 */
 public class X_I_CabalPayments extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -258,6 +258,21 @@ public String getiva_cf_alicuota_10_5()
 {
 return (String)get_Value("iva_cf_alicuota_10_5");
 }
+/** Set iva_cf_alicuota_21 */
+public void setiva_cf_alicuota_21 (String iva_cf_alicuota_21)
+{
+if (iva_cf_alicuota_21 != null && iva_cf_alicuota_21.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+iva_cf_alicuota_21 = iva_cf_alicuota_21.substring(0,32);
+}
+set_Value ("iva_cf_alicuota_21", iva_cf_alicuota_21);
+}
+/** Get iva_cf_alicuota_21 */
+public String getiva_cf_alicuota_21() 
+{
+return (String)get_Value("iva_cf_alicuota_21");
+}
 /** Set moneda_pago */
 public void setmoneda_pago (String moneda_pago)
 {
@@ -471,6 +486,21 @@ set_Value ("signo_iva_cf_alicuota_10_5", signo_iva_cf_alicuota_10_5);
 public String getsigno_iva_cf_alicuota_10_5() 
 {
 return (String)get_Value("signo_iva_cf_alicuota_10_5");
+}
+/** Set signo_iva_cf_alicuota_21 */
+public void setsigno_iva_cf_alicuota_21 (String signo_iva_cf_alicuota_21)
+{
+if (signo_iva_cf_alicuota_21 != null && signo_iva_cf_alicuota_21.length() > 32)
+{
+log.warning("Length > 32 - truncated");
+signo_iva_cf_alicuota_21 = signo_iva_cf_alicuota_21.substring(0,32);
+}
+set_Value ("signo_iva_cf_alicuota_21", signo_iva_cf_alicuota_21);
+}
+/** Get signo_iva_cf_alicuota_21 */
+public String getsigno_iva_cf_alicuota_21() 
+{
+return (String)get_Value("signo_iva_cf_alicuota_21");
 }
 /** Set signo_iva_sobre_arancel */
 public void setsigno_iva_sobre_arancel (String signo_iva_sobre_arancel)
