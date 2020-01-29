@@ -1388,3 +1388,78 @@ ALTER TABLE reginfo_compras_cbte_v
 --20200129-0920 Campos para el IVA 21 del costo financiero de Cabal
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','iva_cf_alicuota_21','character varying(32)'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','signo_iva_cf_alicuota_21','character varying(32)'));
+
+--20200129-1326 Funcion audit para ser invocada desde trigger con finalidad de auditoria
+CREATE OR REPLACE FUNCTION audit()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+    viejo text[];
+    nuevo text[];
+    colname varchar;
+    colcant integer;
+    uidvalue varchar;
+    colID integer;
+    tblID integer;
+    recID integer;
+    recUID integer;
+    usrID integer;
+    recIdPos integer;
+    recUIDPos integer;
+    usrIdPos integer;
+BEGIN
+    -- La auditoria no debe invadir la actividad operacional. Ante cualquier error, se omite la auditoria sin intervenir la operatoria
+    BEGIN
+
+		-- verificar si existe la columna retrieveuid
+        EXECUTE 'select ordinal_position from information_schema.columns where lower(table_name) = lower(''' || TG_TABLE_NAME || ''') and lower(column_name) = lower(''retrieveuid'') ' INTO recUIDPos; 
+        
+        -- almacenar en un array los valores viejos y nuevos, quitar los parentesis incial y final
+        -- TODO: si un campo contiene un valor con una coma (,) revienta la validacion
+        select into viejo regexp_split_to_array(substring(ROW(OLD.*)::varchar from 2 for length(ROW(OLD.*)::varchar)-2), ',');
+        select into nuevo regexp_split_to_array(substring(ROW(NEW.*)::varchar from 2 for length(ROW(NEW.*)::varchar)-2), ',');
+        -- verificar si el numero de columnas de los datos coincide con la informacion de postgres
+        EXECUTE 'select max(ordinal_position) from information_schema.columns where lower(table_name) = lower(''' || TG_TABLE_NAME || ''')' INTO colcant;
+        -- Si las columnas no coinciden, al menos almacenar el retrieveuid del registro (si es que existe la columna
+        IF ((recUIDPos IS NOT NULL AND recUIDPos > 0) AND (array_length(viejo, 1) <> colcant OR array_length(nuevo, 1) <> colcant)) THEN
+            -- recuperar informacion a nivel libertya. si no existe en metadatos, usar valor generico
+            EXECUTE 'select coalesce(ad_table_id, 100) from ad_table where lower(tablename) = lower(''' || TG_TABLE_NAME || ''') ' INTO tblID;
+            INSERT INTO AD_CHANGELOG SELECT nextval('seq_ad_changelog'), 0, 0, 'Y', now(), 100, now(), 100, 666, tblID, -1, 100, null, null, 'N', null, null, null, NEW.retrieveuid, 'M', null, null, null;
+            RETURN NEW;
+        END IF;
+
+        -- iterar por cada valor y verificar si hay diferencias (si la longitud del array es apenas 1, interpretamos que se esta intentando almacenar el retrieveuid)
+        FOR i IN 1..array_length(nuevo, 1) LOOP
+            IF (viejo[i]::varchar <> nuevo[i]::varchar OR array_length(nuevo, 1) = 1) THEN
+                -- recuperar la columna a nivel postgres
+                EXECUTE 'select column_name from information_schema.columns where lower(table_name) = lower(''' || TG_TABLE_NAME || ''') and ordinal_position = ' || i INTO colname;
+                -- recuperar informacion a nivel libertya. si no existe en metadatos, usar valor generico
+                EXECUTE 'select coalesce(ad_table_id, 100) from ad_table where lower(tablename) = lower(''' || TG_TABLE_NAME || ''') ' INTO tblID;
+                EXECUTE 'select coalesce(ad_column_id, 100) from ad_column where ad_table_id = ' || tblID || ' and lower(columnname) = lower(''' || colname || ''') ' INTO colID;
+                if (colID is null) THEN colID = 100; END IF;
+                -- recuperar si es posible (solo PK con _id) el id del registro
+                EXECUTE 'select ordinal_position from information_schema.columns where lower(table_name) = lower(''' || TG_TABLE_NAME || ''') and lower(column_name) = lower(''' || TG_TABLE_NAME || '_id'') ' INTO recIdPos;
+                recID = coalesce(nuevo[recIdPos]::integer, -1);
+                -- recuperar el usuario para cargar el updatedby
+                EXECUTE 'select ordinal_position from information_schema.columns where lower(table_name) = lower(''' || TG_TABLE_NAME || ''') and lower(column_name) = ''updatedby''' INTO usrIdPos;
+                usrID = coalesce(nuevo[usrIdPos]::integer, 100);
+                --raise notice '[% % %] % : % %', tblID, colID, recID, colname, viejo[i]::varchar, nuevo[i]::varchar;
+                IF (recUIDPos IS NOT NULL AND recUIDPos > 0) THEN
+			uidvalue = NEW.retrieveuid;
+		ELSE
+			uidvalue = '' || recID::varchar;
+                END IF;
+                INSERT INTO AD_CHANGELOG SELECT nextval('seq_ad_changelog'), 0, 0, 'Y', now(), usrID, now(), usrID, 666, tblID, recID, colID, viejo[i]::varchar, nuevo[i]::varchar, 'N', null, null, null, uidvalue, 'M', null, null, null;
+            END IF;
+        END LOOP;
+    EXCEPTION
+        WHEN OTHERS THEN
+            raise notice 'Error en audit: % %', SQLERRM, SQLSTATE;
+    END;
+    RETURN NEW;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION audit()
+  OWNER TO libertya;
