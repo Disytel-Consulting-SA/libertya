@@ -92,10 +92,13 @@ public class ImportCabal extends Import {
 				// Obtener las retenciones para adquirir el iva del costo financiero
 				List<CabalRetention> rets = getRetenciones(datum);
 				BigDecimal iva_costo_fin_105 = BigDecimal.ZERO;
+				BigDecimal iva_costo_fin_21 = BigDecimal.ZERO;
 				org.openXpertya.process.customImport.centralPos.pojos.cabal.retenciones.Datum theRetencion = new org.openXpertya.process.customImport.centralPos.pojos.cabal.retenciones.Datum();
 				for (CabalRetention cr : rets) {
 					iva_costo_fin_105 = iva_costo_fin_105.add(safeMultiply((String) cr.getValue("iva_cf_alicuota_10_5"),
 							(String) cr.getValue("signo_iva_cf_alicuota_10_5"), "+"));
+					iva_costo_fin_21 = iva_costo_fin_21.add(safeMultiply((String) cr.getValue("iva_cf_alicuota_21"),
+							(String) cr.getValue("signo_iva_cf_alicuota_21"), "+"));
 				}
 				
 				// Armar un solo movimiento con el total del IVA 10.5
@@ -104,6 +107,7 @@ public class ImportCabal extends Import {
 				theRetencion.setNumero_comercio(datum.getNumero_comercio());
 				theRetencion.setNumero_liquidacion(datum.getNumero_liquidacion());
 				theRetencion.setIva_cf_alicuota_10_5(String.valueOf(iva_costo_fin_105));
+				theRetencion.setIva_cf_alicuota_21(String.valueOf(iva_costo_fin_21));
 				
 				// Armar un solo movimiento con el total del costo financiero para agregarlo al
 				// pago actual
@@ -442,6 +446,8 @@ public class ImportCabal extends Import {
 			String name = "IVA 21";
 			int C_Tax_ID = getTaxIDByName(ctx, attributes.get(name).getName(), trxName);
 			BigDecimal iva = safeMultiply(rs.getString("importe_iva_arancel"), rs.getString("signo_iva_sobre_arancel"), "+");
+			BigDecimal ivaCF = safeMultiply(rs.getString("iva_cf_alicuota_21"), rs.getString("signo_iva_cf_alicuota_21"), "+");
+			iva = iva.add(ivaCF);
 			if (iva.compareTo(new BigDecimal(0)) != 0) {
 				MIVASettlements iv = new MIVASettlements(ctx, 0, trxName); 
 				iv.setC_Tax_ID(C_Tax_ID);

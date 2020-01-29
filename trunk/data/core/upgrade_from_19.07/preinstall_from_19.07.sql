@@ -1384,3 +1384,7 @@ END AND (i.issotrx = 'N'::bpchar AND dt.transactiontypefrontliva IS NULL OR dt.t
 
 ALTER TABLE reginfo_compras_cbte_v
   OWNER TO libertya;
+
+--20200129-0920 Campos para el IVA 21 del costo financiero de Cabal
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','iva_cf_alicuota_21','character varying(32)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_cabalpayments','signo_iva_cf_alicuota_21','character varying(32)'));

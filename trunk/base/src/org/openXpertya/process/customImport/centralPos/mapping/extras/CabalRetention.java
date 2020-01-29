@@ -13,7 +13,9 @@ public class CabalRetention extends GenericMap {
 			"numero_liquidacion",
 			"numero_comercio",
 			"iva_cf_alicuota_10_5",
-			"signo_iva_cf_alicuota_10_5"
+			"signo_iva_cf_alicuota_10_5",
+			"iva_cf_alicuota_21",
+			"signo_iva_cf_alicuota_21"
 	};
 	
 	/**
