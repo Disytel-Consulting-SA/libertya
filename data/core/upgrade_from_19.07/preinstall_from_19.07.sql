@@ -1463,3 +1463,18 @@ $BODY$
   COST 100;
 ALTER FUNCTION audit()
   OWNER TO libertya;
+
+--20200130-1525 Las constraints de c_order_id y c_invoice_id en c_documentdiscount se definen como CASCADE al eliminar el registro relacionado
+ALTER TABLE c_documentdiscount DROP CONSTRAINT corder_cdocumentdiscount;
+
+ALTER TABLE c_documentdiscount 
+ADD CONSTRAINT corder_cdocumentdiscount FOREIGN KEY (c_order_id)
+      REFERENCES c_order (c_order_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE;
+
+ALTER TABLE c_documentdiscount DROP CONSTRAINT cinvoice_cdocumentdiscount;
+
+ALTER TABLE c_documentdiscount 
+ADD CONSTRAINT cinvoice_cdocumentdiscount FOREIGN KEY (c_invoice_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE;
