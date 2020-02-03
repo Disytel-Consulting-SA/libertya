@@ -59,6 +59,10 @@ Ejemplos de cambios
     	<!-- 20190909 - Desactivar uso por defecto de JMX-Console -->
     	<copy file="${SOURCE_DIR}/jmx-console-roles.properties" todir="${TARGET_DIR}/jboss/server/openXpertya/conf/props" overwrite="yes" />
     	
+    	<!-- 20200131 - Soprte para replicacion bajo Windows -->
+    	<copy file="${SOURCE_DIR}/query.bat" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/showPendingRecords.bat" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/repClient.bat" todir="${TARGET_DIR}/utils/replicacion" overwrite="yes" />    	
     </target>
     
 </project>
