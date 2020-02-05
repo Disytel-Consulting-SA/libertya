@@ -61,6 +61,10 @@ import org.openXpertya.util.Util;
 
 public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
+	public static MOrder copyFrom( MOrder from,Timestamp dateDoc,int C_DocTypeTarget_ID,boolean isSOTrx,boolean counter,boolean copyASI, String trxName ) {
+    	return copyFrom(from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter, copyASI, true, trxName);
+    }
+	
     /**
      * Descripción de Método
      *
@@ -76,9 +80,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
      * @return
      */
 
-    public static MOrder copyFrom( MOrder from,Timestamp dateDoc,int C_DocTypeTarget_ID,boolean isSOTrx,boolean counter,boolean copyASI,String trxName ) {
-    	//JOptionPane.showMessageDialog( null,"Recien llegado al copyfrom ",null, JOptionPane.INFORMATION_MESSAGE );
-
+    public static MOrder copyFrom( MOrder from,Timestamp dateDoc,int C_DocTypeTarget_ID,boolean isSOTrx,boolean counter,boolean copyASI,boolean copyLines,String trxName ) {
     	MOrder to = new MOrder( from.getCtx(),0,trxName );
         to.set_TrxName( trxName );
         PO.copyValues( from,to,from.getAD_Client_ID(),from.getAD_Org_ID());
@@ -145,7 +147,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         //
        
         if( !to.save( trxName )) {
-            throw new IllegalStateException( "Could not create Order" );
+            throw new IllegalStateException( "Could not create Order."+CLogger.retrieveErrorAsString() );
         }
         
         if( counter ) {
@@ -154,8 +156,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         }
         
         //JOptionPane.showMessageDialog( null,"Antes de crear laslineas la id = "+from.getC_Order_ID(),null, JOptionPane.INFORMATION_MESSAGE );
-        if( to.copyLinesFrom( from,counter,copyASI ) == 0 ) {
-            throw new IllegalStateException( "Could not create Order Lines" );
+        if( copyLines && to.copyLinesFrom( from,counter,copyASI ) == 0 ) {
+            throw new IllegalStateException( "Could not create Order Lines."+CLogger.retrieveErrorAsString() );
         }
 
         return to;
