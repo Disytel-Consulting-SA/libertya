@@ -1478,3 +1478,74 @@ ALTER TABLE c_documentdiscount
 ADD CONSTRAINT cinvoice_cdocumentdiscount FOREIGN KEY (c_invoice_id)
       REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE;
+
+--20200205-1240 Fix de conversión a 4 decimales de la función de conversión de cantidades por unidades de medida
+CREATE OR REPLACE FUNCTION uom_conversion(
+    product_id integer,
+    uom_from_id integer,
+    uom_to_id integer,
+    qty numeric)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+	qtyconverted numeric;
+	rate numeric;
+	ufi integer;
+	uti integer;
+BEGIN
+	qtyconverted = null;
+	ufi = uom_from_id;
+	
+	--Si alguno de los UOMs parámetro es null, entonces se toma el del artículo
+	IF (uom_from_id is null) THEN
+		-- Unidad de medida actual del artículo parámetro
+		SELECT c_uom_id INTO ufi
+		FROM m_product
+		where m_product_id = product_id;
+	END IF;
+
+	uti = uom_to_id;
+	IF (uom_to_id is null) THEN
+		-- Unidad de medida actual del artículo parámetro
+		SELECT c_uom_id INTO uti
+		FROM m_product
+		where m_product_id = product_id;
+	END IF;
+
+	IF (ufi <> uti)
+	THEN 
+		-- Buscar la conversión del artículo para las unidades de medida correspondientes
+		select dividerate into rate
+		from C_UOM_Conversion
+		where m_product_id = product_id and c_uom_id = ufi and c_uom_to_id = uti and isactive = 'Y' 
+		order by created desc 
+		limit 1;
+
+		IF (rate is null) THEN
+			select multiplyrate into rate
+			from C_UOM_Conversion
+			where m_product_id = product_id and c_uom_id = uti and c_uom_to_id = ufi and isactive = 'Y' 
+			order by created desc 
+			limit 1;
+		END IF;
+
+		IF (rate is not null and rate <> 0) THEN
+			qtyconverted = qty * rate;
+		END IF;
+		
+	ELSE
+		qtyconverted = qty;
+	END IF;
+
+	IF (qtyconverted IS NULL) THEN 
+		RETURN NULL;
+        ELSE 
+		RETURN round(qtyconverted,4); 
+	END IF;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION uom_conversion(integer, integer, integer, numeric)
+  OWNER TO libertya;
