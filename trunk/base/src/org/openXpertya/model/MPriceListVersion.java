@@ -18,6 +18,7 @@ package org.openXpertya.model;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -164,6 +165,43 @@ public class MPriceListVersion extends X_M_PriceList_Version {
 		return list;
     } //	getOfPriceList
 
+    /**
+	 * @param ctx
+	 * @param priceListID
+	 * @param compareDate
+	 * @param trxName
+	 * @return la versión válida de la lista de precios parámetro que se corresponde
+	 *         con la fecha parámetro
+	 */
+    public static MPriceListVersion getValid(Properties ctx, int priceListID, Timestamp compareDate, String trxName) {
+    	MPriceListVersion plValid = null;
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+    		String sql = "select * " + 
+    				" from m_pricelist_version  " + 
+    				" where m_pricelist_id = ? and validfrom::date <= ?::date " + 
+    				" order by validfrom desc ";
+			ps = DB.prepareStatement(sql, trxName, true);
+			ps.setInt(1, priceListID);
+			ps.setTimestamp(2, compareDate);
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				plValid = new MPriceListVersion(ctx, rs, trxName);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if(rs != null)rs.close();
+				if(ps != null)ps.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+    	return plValid;
+    }
+    
     /**
      * Descripción de Método
      *
