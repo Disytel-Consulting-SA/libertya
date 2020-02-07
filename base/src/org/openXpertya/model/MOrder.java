@@ -634,6 +634,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             setDeliveryViaRule( ss );
         }
 
+        if(!Util.isEmpty(bp.getM_Shipper_ID(), true)) {
+        	setM_Shipper_ID(bp.getM_Shipper_ID());
+        }
+        
         // Default Invoice/Payment Rule
 
         ss = bp.getInvoiceRule();
@@ -5222,6 +5226,12 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         				|| X_C_Order.CREDITREQUESTTYPE_BrokenProduct.equals(getCreditRequestType())
         				|| X_C_Order.CREDITREQUESTTYPE_PriceDifference.equals(getCreditRequestType())
         				|| X_C_Order.CREDITREQUESTTYPE_Return.equals(getCreditRequestType()));
+	}
+	
+	@Override
+	public void copyInstanceValues(PO to){
+		super.copyInstanceValues(to);
+		((MOrder)to).setTPVInstance(isTPVInstance());
 	}
 }    // MOrder
 
