@@ -47,10 +47,11 @@ public abstract class ExportBankList extends ExportProcess {
 		setBankList(bankList);
 		setExportFormat(getBankListExportFormat());
 		setDocType(new MDocType(ctx, getBankList().getC_DocType_ID(), trxName));
-		Object[] params = new Object[] { Env.getAD_Client_ID(ctx), bankList.getC_DocType_ID() };
-		String whereClause = "ad_client_id = ? AND isactive = 'Y' AND c_doctype_id = ?";
+		Object[] params = new Object[] { Env.getAD_Client_ID(ctx), bankList.getC_DocType_ID(),
+				bankList.getC_BankAccount_ID() }; 
 		String tableName = X_C_BankList_Config.Table_Name;
-		setBankListConfig((X_C_BankList_Config) PO.findFirst(ctx, tableName, whereClause, params, null, trxName));
+		setBankListConfig((X_C_BankList_Config) PO.findFirst(ctx, tableName, getBankListConfigWhereClause(), params,
+				null, trxName));
 		MDocType opDocType = MDocType.getDocType(getCtx(), MDocType.DOCTYPE_Orden_De_Pago, get_TrxName());
 		// Obtener prefijo y sufijo de la secuencia de la OP
 		String opPrefix = MSequence.getPrefix(opDocType.getDocNoSequence_ID(), get_TrxName());
@@ -69,6 +70,11 @@ public abstract class ExportBankList extends ExportProcess {
 	
 	protected abstract void validate() throws Exception;
 
+	protected String getBankListConfigWhereClause() {
+		return "ad_client_id = ? AND isactive = 'Y' AND c_doctype_id = ? "
+				+ " and c_bank_id in (select c_bank_id from c_bankaccount where c_bankaccount_id = ?) ";
+	}
+	
 	@Override
 	protected Map<String, String> initInvalidCaracters(){
 		Map<String, String> invalids = super.initInvalidCaracters();
