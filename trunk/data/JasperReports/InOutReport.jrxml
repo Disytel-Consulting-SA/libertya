@@ -31,7 +31,7 @@
 	<parameter name="M_Warehouse_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="IsSoTrx" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="CURRENT_LANG" isForPrompting="false" class="java.lang.String"/>
-	<queryString><![CDATA[SELECT movementdate, o.name AS organizacion, w.name as almacen, documentno, bp.name as entidadcomercial,
+	<queryString><![CDATA[SELECT movementdate, o.name AS organizacion, w.name as almacen, documentno, bp.name as entidadcomercial, u.name as creado,
 	(select (case when $P{CURRENT_LANG} = 'en_US' then rl.name else rlt.name end) 
 			from ad_ref_list_trl rlt
 			inner join ad_ref_list rl on rl.ad_ref_list_id = rlt.ad_ref_list_id
@@ -43,6 +43,7 @@ FROM m_inout io
 INNER JOIN ad_org o ON (o.ad_org_id = io.ad_org_id)
 INNER JOIN m_warehouse w ON (w.m_warehouse_id = io.m_warehouse_id)
 INNER JOIN c_bpartner bp ON (bp.c_bpartner_id = io.c_bpartner_id)
+INNER JOIN ad_user u ON u.ad_user_id = io.createdby 
 WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_Org_ID}))
 	AND (($P{AD_CLIENT_ID} IS NULL) OR (io.ad_client_id = $P{AD_CLIENT_ID})) 
 	AND (($P{C_BPartner_ID} IS NULL) OR (bp.c_bpartner_id = $P{C_BPartner_ID})) 
@@ -57,6 +58,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 	<field name="documentno" class="java.lang.String"/>
 	<field name="entidadcomercial" class="java.lang.String"/>
 	<field name="docstatus" class="java.lang.String"/>
+	<field name="creado" class="java.lang.String"/>
 
 		<background>
 			<band height="0"  isSplitAllowed="true" >
@@ -122,7 +124,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 						mode="Opaque"
 						x="0"
 						y="106"
-						width="110"
+						width="91"
 						height="10"
 						backcolor="#B9B9B9"
 						key="staticText-12"/>
@@ -135,7 +137,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="110"
+						x="91"
 						y="106"
 						width="40"
 						height="10"
@@ -214,9 +216,9 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="150"
+						x="131"
 						y="106"
-						width="84"
+						width="75"
 						height="10"
 						backcolor="#B9B9B9"
 						key="staticText-61"/>
@@ -229,9 +231,9 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="234"
+						x="206"
 						y="106"
-						width="145"
+						width="124"
 						height="10"
 						backcolor="#B9B9B9"
 						key="staticText-67"/>
@@ -244,9 +246,9 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="379"
+						x="330"
 						y="106"
-						width="112"
+						width="98"
 						height="10"
 						backcolor="#B9B9B9"
 						key="staticText-68"/>
@@ -259,7 +261,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="491"
+						x="428"
 						y="106"
 						width="49"
 						height="10"
@@ -367,6 +369,21 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{entidadcomercial}]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="477"
+						y="106"
+						width="63"
+						height="10"
+						backcolor="#B9B9B9"
+						key="staticText-75"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica-Bold" size="6" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Creado]]></text>
+				</staticText>
 			</band>
 		</columnHeader>
 		<detail>
@@ -375,7 +392,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 					<reportElement
 						x="0"
 						y="0"
-						width="110"
+						width="91"
 						height="10"
 						key="textField-7"
 						stretchType="RelativeToBandHeight"/>
@@ -387,7 +404,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="110"
+						x="91"
 						y="0"
 						width="40"
 						height="10"
@@ -401,9 +418,9 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="150"
+						x="131"
 						y="0"
-						width="84"
+						width="74"
 						height="10"
 						key="textField-81"
 						stretchType="RelativeToBandHeight"/>
@@ -415,9 +432,9 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="234"
+						x="206"
 						y="0"
-						width="145"
+						width="124"
 						height="10"
 						key="textField-89"
 						stretchType="RelativeToBandHeight"/>
@@ -429,9 +446,9 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="379"
+						x="330"
 						y="0"
-						width="112"
+						width="97"
 						height="10"
 						key="textField-90"
 						stretchType="RelativeToBandHeight"/>
@@ -443,7 +460,7 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="491"
+						x="428"
 						y="0"
 						width="49"
 						height="10"
@@ -454,6 +471,20 @@ WHERE (($P{AD_Org_ID} IS NULL) OR (0 = $P{AD_Org_ID}) OR (io.ad_org_id = $P{AD_O
 						<font size="6"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{docstatus}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="477"
+						y="0"
+						width="62"
+						height="10"
+						key="textField-97"
+						stretchType="RelativeToBandHeight"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" rightPadding="1" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font size="6"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{creado}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
