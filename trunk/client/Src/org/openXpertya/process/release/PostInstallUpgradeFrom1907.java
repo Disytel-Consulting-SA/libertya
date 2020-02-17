@@ -54,6 +54,10 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String ListadoCuponesTarjeta_FILENAME = "ListadoCuponesTarjeta.jasper";
 	protected final static String ListadoCuponesTarjeta_UID = "CORE-AD_Process-1010405";
 
+	/** Reporte de Remitos */
+	protected final static String ReporteRemitos_FILENAME = "InOutReport.jasper";
+	protected final static String ReporteRemitos_UID = "CORE-AD_Process-1010422";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -232,6 +236,17 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(ListadoCuponesTarjeta_FILENAME)));
+		
+		// Reporte de Remitos
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ReporteRemitos_UID,
+				ReporteRemitos_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ReporteRemitos_FILENAME)));
 		
 		return " ";
 	}
