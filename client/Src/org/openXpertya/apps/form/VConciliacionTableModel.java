@@ -797,10 +797,7 @@ public class VConciliacionTableModel {
 			line.setPayment(pay);
 			if (lineAmt.compareTo(BigDecimal.ZERO) == 0
 					|| pay.getPayAmt().abs().compareTo(lineAmt.abs()) < 0) {
-				lineAmt = pay.getPayAmt();
-			}
-			else {
-				lineAmt = lineAmt.abs().multiply(new BigDecimal(pay.getPayAmt().signum()));
+				lineAmt = pay.getPayAmt().abs().multiply(new BigDecimal(line.getTrxAmt().signum()));
 			}
 			line.setTrxAmt(lineAmt);
 			line.setStmtAmt(lineAmt);
