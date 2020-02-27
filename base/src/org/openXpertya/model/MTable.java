@@ -1381,7 +1381,8 @@ public class MTable extends AbstractTableModel implements Serializable {
 
         field.setChanged(evt.isChanged());
         
-        evt.setChangedColumn( col );
+        evt.setChangedColumn(col, field.getColumnName());
+        
         fireDataStatusChanged( evt );
         
     }    // setValueAt
