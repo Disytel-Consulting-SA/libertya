@@ -50,7 +50,7 @@ class CreditNotesDataSource extends OPDataSource {
 	protected void setQueryParameters(PreparedStatement pstmt)
 			throws SQLException {
 		int i = 1;
-		pstmt.setInt(i++, getOrdenPagoDataSource().p_C_AllocationHdr_ID);
+		pstmt.setInt(i++, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 	}
 	
 	/**

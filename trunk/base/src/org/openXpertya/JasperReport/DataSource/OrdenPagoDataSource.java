@@ -7,7 +7,7 @@ import net.sf.jasperreports.engine.JRDataSource;
 
 public class OrdenPagoDataSource {
 
-	protected int p_C_AllocationHdr_ID = 0;
+	private int p_C_AllocationHdr_ID = 0;
 	private MAllocationHdr paymentOrder;
 	private String trx;
 
@@ -86,7 +86,7 @@ public class OrdenPagoDataSource {
 				+ " ORDER BY i.DateAcct";
 	}
 
-	protected String getCashNameDescription() {
+	public String getCashNameDescription() {
 		return " NULL::CHARACTER VARYING ";
 	}
 	
@@ -99,6 +99,14 @@ public class OrdenPagoDataSource {
 
 	public String getTrx() {
 		return trx;
+	}
+
+	public int getP_C_AllocationHdr_ID() {
+		return p_C_AllocationHdr_ID;
+	}
+
+	public void setP_C_AllocationHdr_ID(int p_C_AllocationHdr_ID) {
+		this.p_C_AllocationHdr_ID = p_C_AllocationHdr_ID;
 	}
 
 }
