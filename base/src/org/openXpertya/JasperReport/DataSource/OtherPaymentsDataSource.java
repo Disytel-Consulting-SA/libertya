@@ -14,7 +14,7 @@ import net.sf.jasperreports.engine.JRException;
  * subreporte de Otros Pagos del reporte de Orden de Pago.
  * ***********************************************************
  */
-class OtherPaymentsDataSource extends OPDataSource {
+public class OtherPaymentsDataSource extends OPDataSource {
 
 	public Object getFieldValue(String name, Object record)
 			throws JRException {
@@ -159,9 +159,9 @@ class OtherPaymentsDataSource extends OPDataSource {
 	protected void setQueryParameters(PreparedStatement pstmt)
 			throws SQLException {
 		int i = 1;
-		pstmt.setInt(i++, getOrdenPagoDataSource().p_C_AllocationHdr_ID);
-		pstmt.setInt(i++, getOrdenPagoDataSource().p_C_AllocationHdr_ID);
-		pstmt.setInt(i++, getOrdenPagoDataSource().p_C_AllocationHdr_ID);
+		pstmt.setInt(i++, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
+		pstmt.setInt(i++, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
+		pstmt.setInt(i++, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 	}
 
 	/**

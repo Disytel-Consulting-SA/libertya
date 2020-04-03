@@ -7,7 +7,8 @@ public class ReciboClienteDataSource extends OrdenPagoDataSource {
 		super(allocationHdr_ID,trxName);
 	}
 
-	protected String getCashNameDescription()
+	@Override
+	public String getCashNameDescription()
 	{
 		return " p.documentNo ";
 	}

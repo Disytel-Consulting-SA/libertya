@@ -63,7 +63,7 @@ public class DocumentsDataSource extends OPDataSource {
 	@Override
 	protected void setQueryParameters(PreparedStatement pstmt)
 			throws SQLException {
-		pstmt.setInt(1, getOrdenPagoDataSource().p_C_AllocationHdr_ID);
+		pstmt.setInt(1, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 	}
 
 	/**

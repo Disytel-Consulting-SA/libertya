@@ -14,7 +14,7 @@ import net.sf.jasperreports.engine.JRException;
  * Cheques del reporte de Orden de Pago.
  * ***********************************************************
  */
-class ChecksDataSource extends OPDataSource {
+public class ChecksDataSource extends OPDataSource {
 
 	@Override
 	protected Object getFieldValue(String name, Object record)
@@ -82,7 +82,7 @@ class ChecksDataSource extends OPDataSource {
 	@Override
 	protected void setQueryParameters(PreparedStatement pstmt)
 			throws SQLException {
-		pstmt.setInt(1, getOrdenPagoDataSource().p_C_AllocationHdr_ID);
+		pstmt.setInt(1, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 	}
 
 	/**
