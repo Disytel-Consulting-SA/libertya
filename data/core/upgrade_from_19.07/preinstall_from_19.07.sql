@@ -1549,3 +1549,49 @@ $BODY$
   COST 100;
 ALTER FUNCTION uom_conversion(integer, integer, integer, numeric)
   OWNER TO libertya;
+
+--20200414-1111 Fix a la función por nombre de parámetro ambiguo con columna de la tabla
+DROP FUNCTION getproductpricestd(integer, integer, integer, character);
+
+CREATE OR REPLACE FUNCTION getproductpricestd(
+    productid integer,
+    orgid integer,
+    pricelistid integer,
+    p_issopricelist character)
+  RETURNS numeric AS
+$BODY$
+/*************************************************************************
+ * Obtiene el precio del artículo parámetro en la lista parámetro. 
+ * Si la lista parámetro es null, entonces se determina por los restantes 
+ * parámetros:
+ * - Lista con la organización parámetro.
+ * - Lista de venta o compra dependiendo el parámetro isSOPriceList.
+ * La consulta del precio de lista requerido se ordena por 
+ * > Lista de precio por defecto 
+ * > Versión de lista de precio válido desde decreciente 
+ * > Fecha de creación de versión de lista de precios decreciente
+ ************************************************************************/
+DECLARE
+	sql character varying;
+	priceListVersionID integer;
+	pricestd numeric := 0;
+BEGIN
+	
+	SELECT INTO pricestd pp.pricestd
+		from m_pricelist_version as plv 
+		inner join m_pricelist as pl on pl.m_pricelist_id = plv.m_pricelist_id 
+		inner join m_productprice as pp on pp.m_pricelist_version_id = plv.m_pricelist_version_id 
+		where m_product_id = productID 
+			AND (priceListID is null OR priceListID = 0 OR pl.m_pricelist_id = priceListID)
+			AND (p_isSOPriceList is null OR pl.issopricelist = p_isSOPriceList)
+			AND (orgID is null OR orgID = 0 OR pl.ad_org_id = orgID)
+		order by pl.isdefault desc, plv.validfrom desc, plv.created desc 
+		LIMIT 1;
+	if(pricestd is null) then pricestd := 0; end if;
+	return pricestd;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getproductpricestd(integer, integer, integer, character)
+  OWNER TO libertya;
