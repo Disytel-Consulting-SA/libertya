@@ -1595,3 +1595,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION getproductpricestd(integer, integer, integer, character)
   OWNER TO libertya;
+  
+--20200417-0809 Nuevo indice para informe de Facturas Pendientes
+create index M_AuthorizationChainDocument_invoice on M_AuthorizationChainDocument(c_invoice_id);
