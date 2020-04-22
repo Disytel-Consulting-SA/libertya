@@ -131,6 +131,9 @@ public class ConfigurationData {
     
     /** Numero de conexiones a BBDD server-side */
     public static final String	SERVER_DB_CONNECTIONS = "SERVER_DB_CONNECTIONS";
+    
+    /** Numero de conexiones RW a BBDD server-side */
+    public static final String	SERVER_DB_CONNECTIONS_RW = "SERVER_DB_CONNECTIONS_RW";
 
     /** Descripción de Campo */
     public static final String	NOMBRE_BD_OXP	= "NOMBRE_BD_OXP";
@@ -544,6 +547,11 @@ public class ConfigurationData {
         // Default server-side connections
         if (!p_properties.containsKey(SERVER_DB_CONNECTIONS)) {
             p_properties.setProperty(SERVER_DB_CONNECTIONS, "5");
+        }
+        
+        // Default server-side connections RW
+        if (!p_properties.containsKey(SERVER_DB_CONNECTIONS_RW)) {
+            p_properties.setProperty(SERVER_DB_CONNECTIONS_RW, "5");
         }
         
         // Web Alias
