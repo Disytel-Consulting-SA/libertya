@@ -617,13 +617,14 @@ public class ReportStarter implements ProcessCall // , ClientProcess
                 log.severe("ReportStarter.startProcess: Can not run report - "+ e.getMessage());
             } catch (Exception e) {
 	            log.severe("ReportStarter.startProcess: Can not run report - "+ e.getMessage());
-	        } finally {
-            	if (conn != null)
-					try {
-						conn.close();
-					} catch (SQLException e) {
-					}
-            }
+	        }
+//          finally {
+//            	if (conn != null)
+//					try {
+//						conn.close();
+//					} catch (SQLException e) {
+//					}
+//            }
         }
 
         reportResult( AD_PInstance_ID, null, trxName);

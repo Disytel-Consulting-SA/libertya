@@ -62,8 +62,11 @@ import org.postgresql.PGConnection;
 
 public final class DB {
 	
-	/** Nro por defecto de conexiones (si no se especifica otro valor en el properties de configuracion) */
+	/** Nro por defecto de conexiones RO server side (si no se especifica otro valor en el properties de configuracion) */
 	public static final int DEFAULT_SERVER_DB_CONN = 5;
+	
+	/** Nro por defecto de conexiones RW server side (si no se especifica otro valor en el properties de configuracion) */
+	public static final int DEFAULT_SERVER_DB_CONN_RW = 5;
 	
 	/** dREHER, Compatibilidad Jasper Adempiere 
 	 
@@ -110,20 +113,30 @@ public final class DB {
     /** Descripción de Campos */
 
     private static Connection[] s_connections = null;
+    
+    /** Pool de conexiones RW serverside */
+    
+    private static Connection[] s_connectionsRW = null;
 
     /** Descripción de Campos */
 
     private static int s_conCacheSize = Ini.isClient()
             ?1
-            :getServerDBConnectionCount();
+            :getServerDBConnectionsCount(false);
+    
+    /** Numero de cnexiones RW serverside */
+    
+    private static int s_conRWCacheSize = Ini.isClient()
+            ?1
+            :getServerDBConnectionsCount(true);
 
     /** Descripción de Campos */
 
     private static int s_conCount = 0;
-
+    
     /** Descripción de Campos */
 
-    private static Connection s_connectionRW = null;
+    private static int s_conRWCount = 0;
 
     /** Descripción de Campos */
  
@@ -133,17 +146,34 @@ public final class DB {
 
     private static CLogger log = CLogger.getCLogger( DB.class );
 
-    /** Recupera - si es que existe - la configuracion del numero de conexiones server-side alojado en el 
-     *  properties correspondiente.  En caso de no existir o de no encontrarlo, utiliza el valor por defecto */
-    protected static int getServerDBConnectionCount() {
-    	int connectionsNo = DEFAULT_SERVER_DB_CONN;
+    
+    /** Posición actual de asignacion de server connection RO */
+    protected static int serverConnPos = 1;
+    /** Mapeo de server connections RO: SessionID -> connectionNo */
+    protected static CCache<String, Integer> serverConnections = new CCache<String, Integer>("ServerConns", s_conCacheSize, 10);
+    
+    
+    /** Posición actual de asignacion de server connection RW */
+    protected static int serverConnRWPos = 1;
+    /** Mapeo de server connections RW: SessionID -> connectionNo */
+    protected static CCache<String, Integer> serverConnectionsRW = new CCache<String, Integer>("ServerConnsRW", s_conRWCacheSize, 10);
+    
+    
+    /** 
+     * Recupera - si es que existe - la configuracion del numero de conexiones server-side alojado en el 
+     * properties correspondiente.  En caso de no existir o de no encontrarlo, utiliza el valor por defecto 
+     * @param rwConn especifica si debe retornar el numero de conexiones RO (readOnly) o el numero de conexiones RW (rearWrite) 
+     **/
+    protected static int getServerDBConnectionsCount(boolean rwConn) {
+    	int connectionsNo = (rwConn ? DEFAULT_SERVER_DB_CONN_RW : DEFAULT_SERVER_DB_CONN);
     	FileInputStream fis	= null;
     	try {
     		String fileName = Ini.getOXPHome() + File.separator + "LibertyaEnv.properties";
     		fis	= new FileInputStream(fileName);
     		Properties prop = new Properties();
     		prop.load(fis);
-    		connectionsNo = Integer.parseInt(prop.getProperty("SERVER_DB_CONNECTIONS", ""+connectionsNo));
+    		String property = (rwConn ? "SERVER_DB_CONNECTIONS_RW" : "SERVER_DB_CONNECTIONS");
+    		connectionsNo = Integer.parseInt(prop.getProperty(property, ""+connectionsNo));
     	} catch (Exception e) {
     		e.printStackTrace();
     	} finally {
@@ -157,6 +187,7 @@ public final class DB {
     	}
     	return connectionsNo;
     }
+    
     
     /**
      * Descripción de Método
@@ -269,7 +300,7 @@ public final class DB {
         {
             s_cc           = cc;
             s_connections  = null;
-            s_connectionRW = null;
+            s_connectionsRW = null;
         }
 
         s_cc.setDataSource();
@@ -297,6 +328,7 @@ public final class DB {
         return false;
     }    // isConnected
 
+    
     /**
      * Descripción de Método
      *
@@ -306,34 +338,83 @@ public final class DB {
 
     public static Connection getConnectionRW() {
 
+    	synchronized( s_cc )    // use as mutex as s_connection is null the first time
+        {
+    		if( s_connectionsRW == null ) {
+    			s_connectionsRW = createConnections( Connection.TRANSACTION_READ_COMMITTED, true );    // see below
+    		}
+        }
+    	
+        int connectionRWNo = -1;
+        Connection connection = null;
+        if (Ini.isClient()) {
+        	connectionRWNo = (s_conRWCount++) % s_conRWCacheSize;
+        	connection   = s_connectionsRW[ connectionRWNo ];
+        }
+    	
+        /* Logica especial server-side de gestion de conexiones RW para LYWeb:  
+         * Reutilizar la conexion asignada de la sesion por un intervalo de tiempo */
+        if (!Ini.isClient()) {
+        	try {
+        		// Las sesiones sin servlet.sessionID (por ejemplo Proc.Ctble / LYWS) utilizaran la misma conexion 
+        		// De esta manera, las conexiones no webui se gestionan de manera tradicional,
+        		// Y unicamente las englobadas bajo sessionID (webui por ejemplo) tendran asignacion especial incremental
+        		String sessionID = Env.getContext(Env.getCtx(), "servlet.sessionId");
+        		// No hay un sessionID definido? Gestion tradicional de conexiones server-side (posicion 0 del pool de conexiones) 
+        		if (Util.isEmpty(sessionID, true) || s_conRWCacheSize == 1) {
+        			connectionRWNo = 0;
+        			connection = s_connectionsRW[connectionRWNo];
+        		} else {
+        			// Bajo un sessionID, asignar una conexion por sessionID del pool (exceptuando la 0)
+        			// Si originalmente no existe la asociación: sessionID -> connectionNo, generarla
+        			if (serverConnectionsRW.get(sessionID)==null) {
+        				connectionRWNo = serverConnRWPos++ % s_conRWCacheSize;
+        				if (connectionRWNo==0 && s_conRWCacheSize > 1) {
+        					serverConnRWPos++;
+        					connectionRWNo++;
+        				}
+        				connection = s_connectionsRW[connectionRWNo];
+	        			serverConnectionsRW.put(sessionID, connectionRWNo);
+	        		} 
+        			connectionRWNo = serverConnectionsRW.get(sessionID);
+	        		connection = s_connectionsRW[connectionRWNo];
+        		}
+        		log.finest("sessionID:" + sessionID + " - connecioRWNo:" + connectionRWNo + " - backPID:" + ((PGConnection)connection).getBackendPID());
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
+        }
+    	
+    	
         // check health of connection
 
         try {
-            if( s_connectionRW == null ) {
+            if( connection == null ) {
                 ;
-            } else if( s_connectionRW.isClosed()) {
+            } else if( connection.isClosed()) {
                 log.finest( "Closed" );
-                s_connectionRW = null;
-            } else if( (s_connectionRW instanceof OracleConnection) && (( OracleConnection )s_connectionRW ).pingDatabase( 1 ) < 0 ) {
+                connection = null;
+            } else if( (connection instanceof OracleConnection) && (( OracleConnection )connection ).pingDatabase( 1 ) < 0 ) {
                 log.warning( "No ping" );
-                s_connectionRW = null;
+                connection = null;
             } else {
-                if( s_connectionRW.getTransactionIsolation() != Connection.TRANSACTION_READ_COMMITTED ) {
-                    s_connectionRW.setTransactionIsolation( Connection.TRANSACTION_READ_COMMITTED );
+                if( connection.getTransactionIsolation() != Connection.TRANSACTION_READ_COMMITTED ) {
+                	connection.setTransactionIsolation( Connection.TRANSACTION_READ_COMMITTED );
                 }
             }
         } catch( Exception e ) {
-            s_connectionRW = null;
+        	connection = null;
         }
 
         // Get new
 
-        if( s_connectionRW == null ) {
-            s_connectionRW = s_cc.getConnection( true,Connection.TRANSACTION_READ_COMMITTED );
-            log.finest( "Con=" + s_connectionRW );
+        if( connection == null ) {
+        	connection = s_cc.getConnection( true,Connection.TRANSACTION_READ_COMMITTED );
+            log.finest( "Con=" + connection );
+            s_connectionsRW[ connectionRWNo ] = connection;
         }
 
-        if( s_connectionRW == null ) {
+        if( connection == null ) {
             throw new UnsupportedOperationException( "No DBConnection" );
         }
 
@@ -341,9 +422,9 @@ public final class DB {
         // System.err.println ("DB.getConnectionRW - " + s_connectionRW);
         // Trace.printStack();
 
-        return s_connectionRW;
+        return connection;
     }    // getConnectionRW
-
+    
     /**
      * Descripción de Método
      *
@@ -383,17 +464,12 @@ public final class DB {
      */
 
     
-    /** Posición actual de asignacion de server connection */
-    protected static int serverConnPos = 1;
-    /** Mapeo de server connections: SessionID -> connectionNo */
-    protected static CCache<String, Integer> serverConnections = new CCache<String, Integer>("ServerConns", s_conCacheSize, 10);
-    
     public static Connection getConnectionRO() {
         try {
             synchronized( s_cc )    // use as mutex as s_connection is null the first time
             {
                 if( s_connections == null ) {
-                    s_connections = createConnections( Connection.TRANSACTION_READ_COMMITTED );    // see below
+                    s_connections = createConnections( Connection.TRANSACTION_READ_COMMITTED, false );    // see below
                     
                     //ADER: No rechequeos en conexiones (evita accesos SHOW TRANSACTION LEVEL)
                     //modificaciones para crear en modo read only de entrada
@@ -417,7 +493,7 @@ public final class DB {
         	connection   = s_connections[ connectionNo ];
         }
         
-        /* Logica especial server-side de gestion de conexiones para LYWeb:  
+        /* Logica especial server-side de gestion de conexiones RO para LYWeb:  
          * Reutilizar la conexion asignada de la sesion por un intervalo de tiempo */
         if (!Ini.isClient()) {
         	try {
@@ -525,22 +601,19 @@ public final class DB {
         return conn;
     }    // createConnection
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param trxLevel
-     *
-     * @return
+    
+    /** 
+     * Crea el pool de conexiones. 
+     * @param trxLevel nivel de aislamiento
+     * @param rwConn debe ser true si las conexiones son read-write o false si son read-only.
      */
+    private static Connection[] createConnections( int trxLevel, boolean rwConn ) {
+        log.finest( "(" + (rwConn ? s_conRWCacheSize : s_conCacheSize) + ") " + s_cc.getConnectionURL() + ", UserID=" + s_cc.getDbUid() + ", TrxLevel=" + CConnection.getTransactionIsolationInfo( trxLevel ));
 
-    private static Connection[] createConnections( int trxLevel ) {
-        log.finest( "(" + s_conCacheSize + ") " + s_cc.getConnectionURL() + ", UserID=" + s_cc.getDbUid() + ", TrxLevel=" + CConnection.getTransactionIsolationInfo( trxLevel ));
-
-        Connection cons[] = new Connection[ s_conCacheSize ];
+        Connection cons[] = new Connection[ (rwConn ? s_conRWCacheSize : s_conCacheSize) ];
 
         try {
-            for( int i = 0;i < s_conCacheSize;i++ ) {
+            for( int i = 0;i < (rwConn ? s_conRWCacheSize : s_conCacheSize); i++ ) {
                 cons[ i ] = s_cc.getConnection( true,trxLevel );    // auto commit
 
                 if( cons[ i ] == null ) {
@@ -552,8 +625,8 @@ public final class DB {
         }
 
         return cons;
-    }    // createConnections
-
+    }
+    
     /**
      * Descripción de Método
      *
@@ -721,17 +794,22 @@ public final class DB {
         s_connections = null;
 
         // RW connection
+        if( s_connectionsRW != null ) {
+            for( int i = 0;i < s_conRWCacheSize;i++ ) {
+                try {
+                    if( s_connectionsRW[ i ] != null ) {
+                        closed = true;
+                        s_connectionsRW[ i ].close();
+                    }
+                } catch( SQLException e ) {
+                    log.warning( "#" + i + " - " + e.getMessage());
+                }
 
-        try {
-            if( s_connectionRW != null ) {
-                closed = true;
-                s_connectionRW.close();
+                s_connectionsRW[ i ] = null;
             }
-        } catch( SQLException e ) {
-            log.log( Level.SEVERE,"R/W",e );
         }
 
-        s_connectionRW = null;
+        s_connectionsRW = null;
 
         // CConnection
 
