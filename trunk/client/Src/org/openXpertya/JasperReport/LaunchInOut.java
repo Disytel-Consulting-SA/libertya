@@ -183,7 +183,7 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("CIUDAD",
 				JasperReportsUtil.coalesce(location.getCity(), ""));
 		jasperwrapper.addParameter("PROVINCIA",
-				JasperReportsUtil.coalesce(location.getRegionName(), ""));
+				(region != null ? region.getName() : JasperReportsUtil.coalesce(location.getRegionName(), "")));
 		jasperwrapper.addParameter("PLAZA",
 				JasperReportsUtil.coalesce(location.getPlaza(), ""));
 		jasperwrapper.addParameter("POSTALCODE",
