@@ -438,14 +438,19 @@ public class Trx implements VetoableChangeListener {
 		return false;
 	}	//	commit
     
+	
+	/**
+	 * Sobrecarga de metodo con funcionalidad original: al cerrar una conexión realiza el commit si es que corresponde
+	 * @return
+	 */
+	public boolean close() {
+		return close(true);
+	}
+	
     /**
-     * Descripción de Método
-     *
-     *
-     * @return
+     * @param commit si se desea commitear o no la trx (si es que corresponde)
      */
-
-    public boolean close() {
+    public boolean close(boolean commit) {
     	
     	logTrxEvent("CLO: " + m_trxName);
     	
@@ -459,7 +464,7 @@ public class Trx implements VetoableChangeListener {
             return true;
         }
 
-        if( (m_savepoint != null) || isActive()) {
+        if( commit && ((m_savepoint != null) || isActive())) {
             commit();
         }
 
