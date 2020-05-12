@@ -311,7 +311,7 @@ public class AccountsDetail extends SvrProcess {
         sb.append( "	   NULL"); //Procedencia
         sb.append( " FROM Fact_Acct_Balance fa ");
         sb.append( " WHERE " ).append( m_parameterWhere );
-        sb.append( "   AND DateAcct < " ).append( DB.TO_DATE( p_DateAcct_From ));
+        sb.append( "   AND TRUNC(DateAcct) < " ).append( DB.TO_DATE( p_DateAcct_From ));
 
         // Start Beginning of Year
 
@@ -359,7 +359,7 @@ public class AccountsDetail extends SvrProcess {
         sb.append( " INNER JOIN C_ElementValue ev ON (fa.Account_ID = ev.C_ElementValue_ID) ");
         sb.append( " LEFT JOIN AD_Table_trl t ON (fa.ad_table_id = t.ad_table_id) ");
         sb.append( " WHERE " ).append( m_parameterWhere );
-        sb.append( "   AND fa.DateAcct BETWEEN " ).append( DB.TO_DATE( p_DateAcct_From ));
+        sb.append( "   AND TRUNC(fa.DateAcct) BETWEEN " ).append( DB.TO_DATE( p_DateAcct_From ));
         sb.append( "                       AND " ).append( DB.TO_DATE( p_DateAcct_To ));
         sb.append( "   AND t.ad_language = 'es_AR'");
         
