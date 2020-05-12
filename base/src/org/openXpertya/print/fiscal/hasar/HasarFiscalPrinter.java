@@ -661,6 +661,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			int statusCode = getFiscalStatusCodes()[i];
 			if(command.getCommandCode() == CMD_CANCEL_DOCUMENT && statusCode != FST_DOCUMENT_OPEN)
 				continue;
+			if(statusCode == FST_FISCAL_MEMORY_ALMOST_FULL)
+				continue;
 			// Si el comando es de cancelación y no hay ningún documento abierto, se desestima
 			if ((getFiscalStatus() & statusCode) != 0) {
 				FiscalMessage msg = getFiscalStatusMsgs().get(statusCode);
