@@ -217,9 +217,9 @@ public final class CompierePLAF {
 
         String	jVersion	= System.getProperty("java.version");
 
-        if (!(jVersion.startsWith("1.4")) && !(jVersion.startsWith("1.5")) && !(jVersion.startsWith("1.6"))) {
+        if (!(jVersion.startsWith("1.6")) && !(jVersion.startsWith("1.7")) && !(jVersion.startsWith("1.8"))) {
 
-            JOptionPane.showMessageDialog(null, "Require Java Version 1.4 or up - Not " + jVersion, "CompierePLAF - Version Conflict", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Require Java Version 1.6 or up - Not " + jVersion, "CompierePLAF - Version Conflict", JOptionPane.ERROR_MESSAGE);
             System.exit(1);
         }
 

@@ -60,11 +60,12 @@ public class LiquidScrollPaneUI extends BasicScrollPaneUI
      */
     public void installUI(JComponent c) {
         super.installUI(c);
-
-        scrollpane.getHorizontalScrollBar().putClientProperty(LiquidScrollBarUI.FREE_STANDING_PROP,
-            Boolean.FALSE);
-        scrollpane.getVerticalScrollBar().putClientProperty(LiquidScrollBarUI.FREE_STANDING_PROP,
-            Boolean.FALSE);
+        if (scrollpane.getHorizontalScrollBar()!=null) {
+        	scrollpane.getHorizontalScrollBar().putClientProperty(LiquidScrollBarUI.FREE_STANDING_PROP, Boolean.FALSE);
+        }
+        if (scrollpane.getVerticalScrollBar()!=null) {
+        	scrollpane.getVerticalScrollBar().putClientProperty(LiquidScrollBarUI.FREE_STANDING_PROP, Boolean.FALSE);
+        }
     }
 
     /**
