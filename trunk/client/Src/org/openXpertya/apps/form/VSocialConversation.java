@@ -199,11 +199,11 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	    	tblConversation.setRowSelectionAllowed(false);
 	    	
 	    	// Botones
-	    	buttonGoToRecord.setBackground(UIManager.getColor("Button.shadow"));
-	    	buttonMarkAsRead.setBackground(UIManager.getColor("Button.shadow"));
-	    	buttonMarkAsNotRead.setBackground(UIManager.getColor("Button.shadow"));
-	    	buttonSubscribe.setBackground(UIManager.getColor("Button.shadow"));
-	    	buttonUnsubscribe.setBackground(UIManager.getColor("Button.shadow"));
+	    	buttonGoToRecord.setBackground(UIManager.getColor("Button.background"));
+	    	buttonMarkAsRead.setBackground(UIManager.getColor("Button.background"));
+	    	buttonMarkAsNotRead.setBackground(UIManager.getColor("Button.background"));
+	    	buttonSubscribe.setBackground(UIManager.getColor("Button.background"));
+	    	buttonUnsubscribe.setBackground(UIManager.getColor("Button.background"));
 	    	buttonSend.setBackground(new Color(250,120,50));	
 	    	
 	    	// Combos
