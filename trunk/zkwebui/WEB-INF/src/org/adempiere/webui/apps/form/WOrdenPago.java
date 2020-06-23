@@ -1053,7 +1053,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     
     private void cmdProcessActionPerformed(Event evt) {
     	
-    	validatePaymentBlocked();
+    	doBPartnerValidations();
     	
     	final int idx = tabbox.getSelectedIndex();
     	

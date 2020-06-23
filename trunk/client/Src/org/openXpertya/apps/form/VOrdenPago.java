@@ -1903,14 +1903,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      */
     private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
     	
-    	validatePaymentBlocked();
+    	doBPartnerValidations();
     	
     	final int idx = jTabbedPane1.getSelectedIndex();
     	/*
     	 * idx = 0, se encuentra en la pestaña Seleccion de Pago (F2). 
     	 * El botón accionado es "Siguiente (F8)"
     	 */
-    	if (idx == 0) {
+    	if (idx == 0) { 
 
 			// Aviso si la OP tiene pagos parciales
 			if ((m_model.getPartialPayment()) && (!ADialog.ask(m_WindowNo, this,
