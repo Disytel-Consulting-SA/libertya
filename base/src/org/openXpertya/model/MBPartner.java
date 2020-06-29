@@ -1436,8 +1436,8 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
 		
 		// La configuración de lote de pagos debe estar completa
 		if (isVendor() && 
-				(!Util.isEmpty(getBatch_Payment_Rule(), true) && Util.isEmpty(getC_BankAccount_ID(), true))
-				|| (Util.isEmpty(getBatch_Payment_Rule(), true) && !Util.isEmpty(getC_BankAccount_ID(), true))) {
+				((!Util.isEmpty(getBatch_Payment_Rule(), true) && Util.isEmpty(getC_BankAccount_ID(), true))
+				|| (Util.isEmpty(getBatch_Payment_Rule(), true) && !Util.isEmpty(getC_BankAccount_ID(), true)))) {
 			log.saveError("SaveError", Msg.getMsg(getCtx(), "NotValidBatchPaymentVendorConfiguration"));
 			return false;
 		}
