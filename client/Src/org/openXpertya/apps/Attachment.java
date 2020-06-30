@@ -49,9 +49,12 @@ import org.compiere.swing.CPanel;
 import org.compiere.swing.CTextArea;
 import org.openXpertya.model.MAttachment;
 import org.openXpertya.model.MAttachmentEntry;
+import org.openXpertya.model.MPreference;
+import org.openXpertya.model.M_Table;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -679,12 +682,27 @@ public final class Attachment extends JDialog implements ActionListener {
 
         File file = chooser.getSelectedFile();
 
-        // Validacion del tamaño del archivo a incorporar
+        // Validacion de adjuntos locales. Tamaño del archivo a incorporar localmente.  Definicion por tabla
+        // Menor a cero es sin limite.  Mayor a cero es con limite definido.  Igual a cero no permite adjuntos.
+        int tableID = m_attachment.getAD_Table_ID();
+        if (handler==null) {
+        	int maxSize = MAttachment.getMaxSizeAllowedLocal(tableID);
+        	if (maxSize == 0) {
+        		ADialog.error(m_WindowNo, this, "Imposible guardar. El administrador del sistema ha deshabilitado la carga de adjuntos en esta ventana.");
+        		return;
+        	}
+        	if (maxSize >0 && maxSize < file.length()) {
+        		ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + maxSize + " bytes)");
+        		return;
+        	}
+        }
+        
+        // Validacion del tamaño del archivo a incorporar por handler externo
         if (handler!=null && file!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < file.length()) {
         	ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes)");
         	return;
         }
-        
+                
         if( m_attachment.addEntry( file, handler )) {
             cbContent.addItem( fileName );
             cbContent.setSelectedIndex( cbContent.getItemCount() - 1 );
@@ -942,6 +960,7 @@ public final class Attachment extends JDialog implements ActionListener {
      */
 
     public static void main( String[] args ) {}    // main
+
 }    // Attachment
 
 

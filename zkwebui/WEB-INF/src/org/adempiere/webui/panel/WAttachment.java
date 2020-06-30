@@ -524,6 +524,19 @@ public class WAttachment extends Window implements EventListener
 			if (media != null)
 			{
 //				pdfViewer.setContent(media);
+				int tableID = m_attachment.getAD_Table_ID();
+				if (handler==null) {
+					int maxSize = MAttachment.getMaxSizeAllowedLocal(tableID);
+					if (maxSize == 0) {
+						FDialog.error(m_WindowNo, "Imposible guardar. El administrador del sistema ha deshabilitado la carga de adjuntos en esta ventana.");
+						return;
+					}
+					if (maxSize >0 && maxSize < getMediaData(media).length) {
+						FDialog.error(m_WindowNo, "El tamaño del archivo (" + getMediaData(media).length + " bytes) excede el tamaño maximo permitido (" + maxSize + " bytes)");
+						return;
+					}
+				}
+				
 				
 		        // Validacion del tamaño del archivo a incorporar
 				if (handler!=null && media.getByteData()!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < media.getByteData().length) {
