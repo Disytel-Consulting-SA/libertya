@@ -26,6 +26,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.MimeType;
+import org.openXpertya.util.Util;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -810,6 +811,44 @@ public class MAttachment extends X_AD_Attachment {
     /** Visualizar la botonera de adjuntos externos unicamente si la preferencia lo habilita (si no existe, deshabilitado por defecto) */
     public static boolean isExternalAttachmentEnabled() {
     	return "Y".equalsIgnoreCase(MPreference.GetCustomPreferenceValue(EXTERNAL_ATTACHMENT_ENABLED));  
+    }
+    
+    
+    /**
+     * retorna el tamaño maximo permitido para adjuntos locales, para una tabla dada o bien la configuración general si es que existe
+     * @param tableID la tabla sobre la cual buscar en las preferencias, bajo la key LocalAttachmentMaxSize_tableName
+     * @return el tamaño permitido, ya sea el valor general (bajo la key LocalAttachmentMaxSize) o si se redefinó por tabla.  
+     * 			Por convención: <0 es sin limite.  >0 con limite definido.  =0 no permite adjuntos.
+     */
+    public static Integer getMaxSizeAllowedLocal(int tableID) {
+    	// Clave de busqueda
+    	String attribute = "LocalAttachmentMaxSize";
+		// Valor a retornar
+		Integer retValue = null;
+
+		// Resolver nombre de tabla
+		String tableName = M_Table.getTableName(Env.getCtx(), tableID);
+
+		// Recuperar los posibles valores
+		String maxForTable = MPreference.GetCustomPreferenceValue(attribute + "_" + tableName, Env.getAD_Client_ID(Env.getCtx()));
+		String maxGeneral = MPreference.GetCustomPreferenceValue(attribute, Env.getAD_Client_ID(Env.getCtx()));
+		
+		// Primera prioridad: limite por tabla 
+		if (!Util.isEmpty(maxForTable)) {
+			try {
+				retValue = Integer.parseInt(maxForTable);
+			} catch (Exception e) {};
+		}
+		
+		// Segunda prioridad: limite general (siempre que no se haya definido uno por tabla)
+		if (retValue==null && !Util.isEmpty(maxGeneral)) {
+			try {
+				retValue = Integer.parseInt(maxGeneral); 
+			} catch (Exception e) {}
+		}
+		
+		// Retornar valor, y si no se definio ninguno, entonces sin limites
+		return retValue==null?-1:retValue;
     }
 }	// MAttachment
 
