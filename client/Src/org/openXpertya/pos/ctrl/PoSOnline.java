@@ -1426,6 +1426,7 @@ public class PoSOnline extends PoSConnectionState {
 			orderTax.setC_Tax_ID(tax.getId());
 			orderTax.setTaxAmt(tax.getAmount());
 			orderTax.setTaxBaseAmt(tax.getTaxBaseAmt());
+			orderTax.setIsTaxIncluded(mo.isTaxIncluded());
 			throwIfFalse(orderTax.save(), mo);
 		}
 	}
@@ -1589,6 +1590,7 @@ public class PoSOnline extends PoSConnectionState {
 			invoiceTax.setC_Tax_ID(tax.getId());
 			invoiceTax.setTaxAmt(tax.getAmount());
 			invoiceTax.setTaxBaseAmt(tax.getTaxBaseAmt());
+			invoiceTax.setIsTaxIncluded(mi.isTaxIncluded());
 			throwIfFalse(invoiceTax.save(), mi);
 		}
 	}
