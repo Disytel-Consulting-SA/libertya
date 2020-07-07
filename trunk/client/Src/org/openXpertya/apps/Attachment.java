@@ -682,24 +682,25 @@ public final class Attachment extends JDialog implements ActionListener {
 
         File file = chooser.getSelectedFile();
 
-        // Validacion de adjuntos locales. Tamaño del archivo a incorporar localmente.  Definicion por tabla
+        // Validacion de adjuntos . Definicion por tabla del tamaño del archivo a incorporar. 
+        // Adicionalmente, para adjuntos remotos el manejador remoto podra definir sus propios limites. 
         // Menor a cero es sin limite.  Mayor a cero es con limite definido.  Igual a cero no permite adjuntos.
         int tableID = m_attachment.getAD_Table_ID();
-        if (handler==null) {
-        	int maxSize = MAttachment.getMaxSizeAllowedLocal(tableID);
+        if (file!=null) {
+        	int maxSize = MAttachment.getMaxSizeAllowed(tableID, handler==null);
         	if (maxSize == 0) {
-        		ADialog.error(m_WindowNo, this, "Imposible guardar. El administrador del sistema ha deshabilitado la carga de adjuntos en esta ventana.");
+        		ADialog.error(m_WindowNo, this, "Imposible guardar. El administrador del sistema ha deshabilitado la carga de adjuntos " + (handler==null?"locales":"remotos") + " en esta ventana.");
         		return;
         	}
         	if (maxSize >0 && maxSize < file.length()) {
-        		ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + maxSize + " bytes)");
+        		ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + maxSize + " bytes) para adjuntos " + (handler==null?"locales":"remotos"));
         		return;
         	}
         }
         
-        // Validacion del tamaño del archivo a incorporar por handler externo
+        // Validacion del tamaño del archivo a incorporar segun definicion de handler remoto
         if (handler!=null && file!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < file.length()) {
-        	ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes)");
+        	ADialog.error(m_WindowNo, this, "El tamaño del archivo ("+ file.length()+ " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes) segun la configuracion de adjuntos remotos");
         	return;
         }
                 
