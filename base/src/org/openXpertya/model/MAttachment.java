@@ -815,14 +815,16 @@ public class MAttachment extends X_AD_Attachment {
     
     
     /**
-     * retorna el tamaño maximo permitido para adjuntos locales, para una tabla dada o bien la configuración general si es que existe
+     * retorna el tamaño maximo permitido para adjuntos locales o remotos, para una tabla dada o bien la configuración general si es que existe
+     * Adicionalmente el manejador remoto puede definir un limite general para los adjuntos 
      * @param tableID la tabla sobre la cual buscar en las preferencias, bajo la key LocalAttachmentMaxSize_tableName
+     * @param local si debe almacenarse local o remotamente
      * @return el tamaño permitido, ya sea el valor general (bajo la key LocalAttachmentMaxSize) o si se redefinó por tabla.  
      * 			Por convención: <0 es sin limite.  >0 con limite definido.  =0 no permite adjuntos.
      */
-    public static Integer getMaxSizeAllowedLocal(int tableID) {
+    public static Integer getMaxSizeAllowed(int tableID, boolean local) {
     	// Clave de busqueda
-    	String attribute = "LocalAttachmentMaxSize";
+    	String attribute = (local ? "LocalAttachmentMaxSize" : "RemoteAttachmentMaxSize");
 		// Valor a retornar
 		Integer retValue = null;
 

@@ -524,23 +524,26 @@ public class WAttachment extends Window implements EventListener
 			if (media != null)
 			{
 //				pdfViewer.setContent(media);
+				
+		        // Validacion de adjuntos . Definicion por tabla del tamaño del archivo a incorporar. 
+		        // Adicionalmente, para adjuntos remotos el manejador remoto podra definir sus propios limites. 
+		        // Menor a cero es sin limite.  Mayor a cero es con limite definido.  Igual a cero no permite adjuntos.
 				int tableID = m_attachment.getAD_Table_ID();
-				if (handler==null) {
-					int maxSize = MAttachment.getMaxSizeAllowedLocal(tableID);
-					if (maxSize == 0) {
-						FDialog.error(m_WindowNo, "Imposible guardar. El administrador del sistema ha deshabilitado la carga de adjuntos en esta ventana.");
-						return;
-					}
-					if (maxSize >0 && maxSize < getMediaData(media).length) {
-						FDialog.error(m_WindowNo, "El tamaño del archivo (" + getMediaData(media).length + " bytes) excede el tamaño maximo permitido (" + maxSize + " bytes)");
-						return;
-					}
+				int maxSize = MAttachment.getMaxSizeAllowed(tableID, handler==null);
+				if (maxSize == 0) {
+					FDialog.error(m_WindowNo, "Imposible guardar. El administrador del sistema ha deshabilitado la carga de adjuntos " + (handler==null?"locales":"remotos") + " en esta ventana.");
+					return;
+				}
+				byte[] mediaData = getMediaData(media);
+				int mediaSize = mediaData!=null?mediaData.length:0;
+				if (maxSize >0 && maxSize < mediaSize) {
+					FDialog.error(m_WindowNo, "El tamaño del archivo (" + mediaSize + " bytes) excede el tamaño maximo permitido (" + maxSize + " bytes) para adjuntos " + (handler==null?"locales":"remotos"));
+					return;
 				}
 				
-				
-		        // Validacion del tamaño del archivo a incorporar
-				if (handler!=null && media.getByteData()!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < media.getByteData().length) {
-					FDialog.error(m_WindowNo, "El tamaño del archivo ("+ media.getByteData().length + " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes)"); 
+		        // Validacion del tamaño del archivo a incorporar segun definicion de handler remoto
+				if (handler!=null && handler.getMaxSizeAllowed() > 0 && handler.getMaxSizeAllowed() < mediaSize) {
+					FDialog.error(m_WindowNo, "El tamaño del archivo ("+ mediaSize + " bytes) excede el tamaño maximo permitido (" + handler.getMaxSizeAllowed() + " bytes) segun la configuracion de adjuntos remotos"); 
 					return;
 				}
 			}
