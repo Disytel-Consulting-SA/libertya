@@ -22,6 +22,7 @@ import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -35,11 +36,13 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -134,7 +137,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
 
     /** Descripción de Campos */
 
-    private JSplitPane srPane = new JSplitPane();
+    private JSplitPane srPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, UIManager.getBoolean("SplitPane.continuousLayout"), null, null);
 
     /** Descripción de Campos */
 
@@ -1286,6 +1289,7 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
         data.append(header).append("\n").append(body);
     	return data.toString();
     }
+
 }    // GridController
 
 

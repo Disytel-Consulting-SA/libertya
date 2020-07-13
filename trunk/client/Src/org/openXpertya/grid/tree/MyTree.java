@@ -102,7 +102,7 @@ public class MyTree extends JTree {
         	if( image2 != null ) {
         		g.drawImage(image2.getImage(), 0, 0, d.width, d.height, null, null);
         	}
-        	g.drawImage(image1.getImage(), d.width - image1.getIconWidth() - 20, 20, null, null);
+        	g.drawImage(image1.getImage(), d.width - image1.getIconWidth(), 0, null, null);
         }
 
         super.paint( g );

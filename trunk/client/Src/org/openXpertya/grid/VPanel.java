@@ -134,7 +134,7 @@ public final class VPanel extends CPanel {
         if( label != null ) {
             m_gbc.gridwidth = 1;
             m_gbc.insets    = m_labelInset;
-            m_gbc.fill      = GridBagConstraints.HORIZONTAL;    // required for right justified
+            m_gbc.fill      = GridBagConstraints.VERTICAL;    // required for right justified
 
             // Set column #
 

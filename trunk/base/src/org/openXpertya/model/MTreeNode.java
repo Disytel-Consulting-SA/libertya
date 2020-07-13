@@ -176,7 +176,7 @@ public final class MTreeNode extends DefaultMutableTreeNode {
     /** Descripción de Campos */
 
     public static Icon[] IMAGES = new Icon[] {
-        null,Env.getImageIcon( "mWindow.gif" ),Env.getImageIcon( "mReport.gif" ),Env.getImageIcon( "mProcess.gif" ),Env.getImageIcon( "mWorkFlow.gif" ),Env.getImageIcon( "mWorkbench.gif" ),Env.getImageIcon( "mSetVariable.gif" ),Env.getImageIcon( "mUserChoice.gif" ),Env.getImageIcon( "mDocAction.gif" )
+        null,Env.getImageIcon( "mWindow.png" ),Env.getImageIcon( "mReport.gif" ),Env.getImageIcon( "mProcess.png" ),Env.getImageIcon( "mWorkFlow.gif" ),Env.getImageIcon( "mWorkbench.gif" ),Env.getImageIcon( "mSetVariable.gif" ),Env.getImageIcon( "mUserChoice.gif" ),Env.getImageIcon( "mDocAction.gif" )
     };
 
     /**

@@ -32,6 +32,7 @@ import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.logging.Level;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -321,7 +322,11 @@ public final class AEnv {
             iconName = action;
         }
 
-        JMenuItem mi = new JMenuItem( Msg.getMsg( Env.getCtx(),action ),Env.getImageIcon( iconName + "16.gif" ));
+        ImageIcon ic = Env.getImageIcon( iconName + "16.png" );
+        if (ic==null){
+        	ic = Env.getImageIcon( iconName + "16.gif" );
+        }
+        JMenuItem mi = new JMenuItem( Msg.getMsg( Env.getCtx(),action ),ic);
 
         mi.setActionCommand( action );
 
