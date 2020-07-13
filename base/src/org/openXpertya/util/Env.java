@@ -1625,7 +1625,7 @@ public final class Env {
         }
        
         if( url == null ) {
-            s_log.log( Level.SEVERE,"Not found: " + fileNameInImageDir );
+            s_log.log( Level.FINE,"Not found: " + fileNameInImageDir );
 
             return null;
         }

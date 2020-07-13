@@ -51,6 +51,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Enumeration;
+import java.util.TreeMap;
 import java.util.logging.Level;
 
 import javax.swing.BoxLayout;
@@ -84,6 +85,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.openXpertya.wf.MWFNode;
 
 /**
  * Descripción de Clase
@@ -167,12 +169,20 @@ public final class VTreePanel extends CPanel implements ActionListener,DragGestu
 
             Enumeration en = m_root.preorderEnumeration();
 
+            // Cargar las entradas en la map ordenada y luego volcarlas en la bar 
+            TreeMap<String, MTreeNode> entries = new TreeMap<String, MTreeNode>();
             while( en.hasMoreElements()) {
                 MTreeNode nd = ( MTreeNode )en.nextElement();
 
                 if( nd.isOnBar()) {
-                    addToBar( nd );
+                	// Insertar tanto formularios como ventanas en el mismo grupo de ventanas
+                	entries.put(nd.getImageIndiactor().replace(MWFNode.ACTION_UserForm, MWFNode.ACTION_UserWindow) + nd.getName(), nd);
+                    //addToBar( nd );
                 }
+            }
+            
+            for (String key : entries.keySet()) {
+            	addToBar( entries.get(key) );
             }
         }
 
@@ -1116,7 +1126,7 @@ public final class VTreePanel extends CPanel implements ActionListener,DragGestu
         
         
         Font f = CompierePLAF.getFont_Label();
-        f=f.deriveFont(Font.BOLD ,f.getSize()+4);
+//        f=f.deriveFont(Font.BOLD ,f.getSize()+4);
         button.setFont(f);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) );
         button.setBorderPainted(false);

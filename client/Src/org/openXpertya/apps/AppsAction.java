@@ -185,11 +185,19 @@ public final class AppsAction extends AbstractAction {
      */
 
     private ImageIcon getIcon( String name,boolean small ) {
+    	// Buscar versiones png
         String fullName = name + ( small
-                                   ?"16.gif"
-                                   :"24.gif" );
-
-        return Env.getImageIcon( fullName );
+                                   ?"16.png"
+                                   :"24.png" );
+        ImageIcon icon = Env.getImageIcon( fullName );
+    	// Buscar versiones gif si no existe la version png
+        if (icon==null) {
+        	fullName = name + ( small
+                    ?"16.gif"
+                    :"24.gif" );
+        	icon = Env.getImageIcon( fullName );
+        }
+        return icon;
     }    // getIcon
 
     /**

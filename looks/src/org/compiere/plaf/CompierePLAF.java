@@ -49,6 +49,7 @@ import javax.swing.JOptionPane;
 import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.metal.MetalTheme;
 
@@ -152,7 +153,21 @@ public final class CompierePLAF {
 
             // System.err.println("CompierePLAF - Kuststoff not found");
         }
+        
+        // Descubrir e Instalar - Libertya PLAF
+        try {
 
+        	// Existe la clase?
+            Class	c	= Class.forName("org.libertya.plaf.LibertyaLookAndFeel");
+        	// Definir el L&F
+            vp	= new ValueNamePair("org.libertya.plaf.LibertyaLookAndFeel", "Libertya");
+            plafList.add(vp);
+
+        } catch (Exception e) {
+        	e.printStackTrace();
+            // System.err.println("CompierePLAF - Kuststoff not found");
+        }
+  
         // Discover and Install - Kuststoff
         try {
 
@@ -437,6 +452,10 @@ public final class CompierePLAF {
      */
     public static Font getFont_Field() {
 
+   		if ("Libertya".equals(UIManager.getLookAndFeel().getName())) {
+   			return ((Font)UIManager.getLookAndFeelDefaults().get("defaultFont"));
+   		}
+    	
         return CompiereTheme.userFont;
 
         // return UIManager.getFont("TextField.font");
@@ -455,6 +474,10 @@ public final class CompierePLAF {
      */
     public static Font getFont_Header() {
 
+   		if ("Libertya".equals(UIManager.getLookAndFeel().getName())) {
+   			return ((Font)UIManager.getLookAndFeelDefaults().get("defaultFont"));
+   		}
+    	
         return CompiereTheme.windowFont;
 
         // return UIManager.getFont("Label.font");
@@ -467,6 +490,10 @@ public final class CompierePLAF {
      */
     public static Font getFont_Label() {
 
+   		if ("Libertya".equals(UIManager.getLookAndFeel().getName())) {
+   			return ((Font)UIManager.getLookAndFeelDefaults().get("defaultFont"));
+   		}
+    	
         return CompiereTheme.controlFont;
 
         // return UIManager.getFont("Label.font");

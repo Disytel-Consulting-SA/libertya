@@ -316,7 +316,14 @@ public class VEditorFactory {
 
         //
 
-        CLabel label = new CLabel( mField.getHeader(),mField.getDescription());
+        String header = mField.getHeader();
+        
+        // Campos obligatorios: incluir * 
+        if (mField.isMandatory(false) && displayType != DisplayType.YesNo) {
+        	header = mField.getVO().Header + " *";
+        }
+        
+        CLabel label = new CLabel(header, mField.getDescription());
 
         label.setName( mField.getColumnName());
 
