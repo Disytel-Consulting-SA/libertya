@@ -55,7 +55,7 @@ public class LibertyaLookAndFeel extends NimbusLookAndFeel {
         defaults.put("ComboBox[Focused].backgroundPainter", null);
         defaults.put("ComboBox[Pressed].backgroundPainter", null);
         defaults.put("ComboBox[Focused+MouseOver].backgroundPainter", null);
-
+      
         // Font por defecto
         Font laFont = null; 
         try {
@@ -70,6 +70,7 @@ public class LibertyaLookAndFeel extends NimbusLookAndFeel {
        }
         
         defaults.put("TabbedPaneUI", "org.libertya.plaf.LibertyaTabbedPaneUI");
+        defaults.put("ProgressBarUI", "com.birosoft.liquid.LiquidProgressBarUI");
                 
         return defaults;
     }

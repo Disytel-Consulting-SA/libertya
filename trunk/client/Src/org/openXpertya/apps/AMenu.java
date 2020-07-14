@@ -401,7 +401,7 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         memoryBar.setStringPainted( true );
         memoryBar.setOpaque( false );
-        memoryBar.setBorderPainted( false );
+        memoryBar.setBorderPainted( true );
         memoryBar.addMouseListener( new AMenu_MouseAdapter());
 
         //

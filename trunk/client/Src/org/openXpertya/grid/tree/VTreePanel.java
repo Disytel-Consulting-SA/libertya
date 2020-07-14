@@ -71,10 +71,12 @@ import javax.swing.tree.TreePath;
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.swing.CButton;
 import org.compiere.swing.CCheckBox;
+import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CTextField;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.grid.ed.VDate;
+import org.openXpertya.grid.ed.VLine;
 import org.openXpertya.model.MTree;
 import org.openXpertya.model.MTreeNode;
 import org.openXpertya.model.M_Table;
@@ -181,7 +183,18 @@ public final class VTreePanel extends CPanel implements ActionListener,DragGestu
                 }
             }
             
+            // Incluirlos ordenadamente por tipo de entrada, con una separacion entre tipos
+            String lastType = null;
             for (String key : entries.keySet()) {
+            	if (lastType==null) {
+            		lastType = ""+key.charAt(0);
+            	} else {
+            		if (!lastType.equals(""+key.charAt(0))) {
+            			lastType = ""+key.charAt(0);
+            			bar.add(new CLabel(" "));
+                    	
+            		}
+            	}
             	addToBar( entries.get(key) );
             }
         }
