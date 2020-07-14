@@ -117,10 +117,10 @@ public class VLine extends AbstractBorder {
 
         // Line
 
-        g.setColor( Color.darkGray );
+        g.setColor( Color.lightGray );
         g.drawLine( GAP,y,w - GAP,y );
-        g.setColor( Color.white );
-        g.drawLine( GAP,y + 1,w - GAP,y + 1 );    // last part of line
+//        g.setColor( Color.white );
+//        g.drawLine( GAP,y + 1,w - GAP,y + 1 );    // last part of line
 
         if( (m_header == null) || (m_header.length() == 0) ) {
             return;
@@ -128,14 +128,15 @@ public class VLine extends AbstractBorder {
 
         // Header Text
 
-        g.setColor( m_color );
+        g.setColor( Color.darkGray );
         g.setFont( m_font );
 
         int x = GAP;
 
         if( !Language.getLoginLanguage().isLeftToRight()) {}
 
-        g.drawString( m_header,GAP,h - SPACE - 1 );
+        // Indentacion a la derecha 
+        g.drawString( m_header, w - g.getFontMetrics().stringWidth(m_header) - GAP, h - SPACE - 1 );
     }    // paintLine
 
     /**
