@@ -538,6 +538,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
             // Organización de login
             params.put("AD_Org_Login_ID", Env.getAD_Org_ID(ctx));
             params.put("CLIENT_CURRENCY_ID", Env.getC_Currency_ID(ctx));
+            params.put("CLIENT_ACCT_SCHEMA_ID", Env.getContextAsInt(ctx, "$C_AcctSchema_ID"));
             
             log.info("ReportStarter - leo parametros!");
             
