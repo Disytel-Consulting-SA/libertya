@@ -159,7 +159,7 @@ public class CWindowToolbar extends FToolbar implements EventListener
         btnConversation = createButton("Conversation", "Conversation", "Conversation");
         btnConversation.setDisabled(false);
         btnProductInfo = createButton("ProductInfo", "Product", "InfoProduct");
-        btnProductInfo.setVisible(isAllowProductInfo);
+        btnProductInfo.setVisible(false); // Se oculta dado que no tiene verdadera relacion con las ventanas genericas
 
         
         // Help and Exit should always be enabled

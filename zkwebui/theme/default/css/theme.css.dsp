@@ -82,7 +82,8 @@ html,body {
 
 .login-east-panel, .login-west-panel {
 	width: 350px;
-	background-color: #E0EAF7;
+	background-color: #F2F2F2;
+	border-color: #F2F2F2;
 	position: relative;
 }
 
@@ -247,7 +248,7 @@ div.wc-modal, div.wc-modal-none, div.wc-highlighted, div.wc-highlighted-none {
 	-moz-border-radius-bottomleft: 5px;
 	-webkit-border-top-left-radius: 5px;
 	-webkit-border-bottom-left-radius: 5px;
-	background-color: #d1e7f6 !important;
+	background-color: #FFFFFF !important;
 	background-image: url(../images/adtab-left-bg.png);
 	background-repeat: repeat-y;
 	background-position: top right;

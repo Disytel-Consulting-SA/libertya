@@ -19,13 +19,14 @@ Copyright (C) 2009 Idalica Corporation
 <![CDATA[
 <style>
 	.versionInfoBox {
-		background-color: #9CBDFF;
+		background-color: #FFFFFF;
 		margin: 5px;
 		padding: 3px;
 		margin-top: 20px;
 		-moz-border-radius: 5px;
 		-webkit-border-radius: 5px;
 		font-size: 8pt;
+		font-family: Arial;
 	}
 </style>
 <div class="versionInfoBox">
