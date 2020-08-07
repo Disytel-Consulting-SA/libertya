@@ -22,16 +22,15 @@ package org.openXpertya;
 
 import java.awt.Image;
 import java.awt.Toolkit;
-
 import java.io.File;
-
 import java.net.URL;
 
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
+import javax.swing.UIManager;
 
 import org.compiere.plaf.CompierePLAF;
 import org.compiere.plaf.CompiereTheme;
-
 import org.openXpertya.db.CConnection;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MSystem;
@@ -45,6 +44,7 @@ import org.openXpertya.util.Ini;
 import org.openXpertya.util.Login;
 import org.openXpertya.util.Splash;
 import org.openXpertya.util.Util;
+import org.openXpertya.util.ValueNamePair;
 
 /**
  *  Clase principal de control de openXpertya 
@@ -631,6 +631,25 @@ public final class OpenXpertya {
 
         Splash.getSplash();
         startup(true);		// error exit and initUI
+        
+        try {
+	        // Novedades bajo LY20.08: Visualizar el mensaje por unica vez
+        	String property = "LY.NEWS.RELEASE.20.08";
+	        String plaf = UIManager.getLookAndFeel().getName();
+	        if (!"Libertya".equals(plaf) && !"Y".equals(Ini.getProperty(property))) {
+	        	// Forzar el uso del nuevo look & feel al menos en la primer ejecucion de la nueva version
+	        	ValueNamePair lyplaf = new ValueNamePair("org.libertya.plaf.LibertyaLookAndFeel", "Libertya");
+	        	CompierePLAF.setPLAF(lyplaf, null, null);
+	        	
+	        	// Notificar una unica vez por usuario
+	        	JOptionPane.showMessageDialog(null, " Novedades Libertya 20.08 \n\n " +
+	        										" Hemos renovado la interfaz de usuario de Libertya. \n " +
+	        										" Si quieres volver a la interfaz anterior puedes hacerlo desde \n " + 
+	        			 							" Herramientas -> Preferencias -> Tema del Interfaz del Usuario");
+	        	Ini.setProperty(property, true);
+	        	Ini.saveProperties(true);
+	        }
+        } catch (Exception e) { /* Nada que hacer */ }
 
         // Start with class as argument - or if nothing provided with Client
         String	className	= "org.openXpertya.apps.AMenu";
