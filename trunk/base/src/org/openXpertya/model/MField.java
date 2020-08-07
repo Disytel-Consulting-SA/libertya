@@ -675,12 +675,15 @@ public class MField implements Serializable,Evaluatee {
          * Cambios para que tome primero los valores por defecto del campo y despues 
          * los valores del sistema
          */
-        defStr = Env.getPreference( m_vo.ctx,m_vo.AD_Window_ID,m_vo.ColumnName,true );
-
-        if( !defStr.equals( "" )) {
-            log.fine( "[SystemPreference] " + m_vo.ColumnName + "=" + defStr );
-
-            return createDefault( defStr );
+        // Si el campo es cuenta bancaria, no se agrega el valor por defecto del contexto
+        if(m_vo.ColumnName != null && !m_vo.ColumnName.equals("C_BankAccount_ID")) {
+	        defStr = Env.getPreference( m_vo.ctx,m_vo.AD_Window_ID,m_vo.ColumnName,true );
+	
+	        if( !defStr.equals( "" )) {
+	            log.fine( "[SystemPreference] " + m_vo.ColumnName + "=" + defStr );
+	
+	            return createDefault( defStr );
+	        }
         }
         
         /*
