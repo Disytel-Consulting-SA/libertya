@@ -16,9 +16,11 @@
 
 package org.openXpertya.grid.ed;
 
+import java.awt.Color;
 import java.util.logging.Level;
 
 import org.compiere.swing.CLabel;
+import org.libertya.plaf.LibertyaLookAndFeel;
 import org.openXpertya.model.MAccountLookup;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MLocationLookup;
@@ -321,6 +323,7 @@ public class VEditorFactory {
         // Campos obligatorios: incluir * 
         if (mField.isMandatory(false) && displayType != DisplayType.YesNo) {
         	header = mField.getVO().Header + " *";
+        	
         }
         
         CLabel label = new CLabel(header, mField.getDescription());
@@ -330,6 +333,11 @@ public class VEditorFactory {
         // label.setFont(CompierePLAF.getFont_Label());
         // label.setForeground(CompierePLAF.getTextColor_Label());
 
+        // Campos obligatorios: sugerir color (solo para Libertya L&F)
+        if (LibertyaLookAndFeel.isActive() && mField.isMandatory(false) && displayType != DisplayType.YesNo) {
+        	label.setForeground(LibertyaLookAndFeel.mandatFieldLabelColor);
+        }
+        
         return label;
     }    // getLabel
 
