@@ -10,15 +10,11 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.MAcctSchemaElement;
 import org.openXpertya.model.MClient;
-import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MElementValue;
 import org.openXpertya.model.MPeriod;
-import org.openXpertya.print.MPrintFormat;
-import org.openXpertya.report.FinBalance;
 import org.openXpertya.report.MReportTree;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.Ini;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 
@@ -359,8 +355,8 @@ public class AccountsDetail extends SvrProcess {
         sb.append( " INNER JOIN C_ElementValue ev ON (fa.Account_ID = ev.C_ElementValue_ID) ");
         sb.append( " LEFT JOIN AD_Table_trl t ON (fa.ad_table_id = t.ad_table_id) ");
         sb.append( " WHERE " ).append( m_parameterWhere );
-        sb.append( "   AND TRUNC(fa.DateAcct) BETWEEN " ).append( DB.TO_DATE( p_DateAcct_From ));
-        sb.append( "                       AND " ).append( DB.TO_DATE( p_DateAcct_To ));
+        sb.append( "   AND TRUNC(fa.DateAcct) BETWEEN " ).append( "trunc("+DB.TO_DATE( p_DateAcct_From )+")");
+        sb.append( "                       AND " ).append( "trunc("+DB.TO_DATE( p_DateAcct_To )+")");
         sb.append( "   AND t.ad_language = 'es_AR'");
         
         int no = DB.executeUpdate( sb.toString(), get_TrxName());
