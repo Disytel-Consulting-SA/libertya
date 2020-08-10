@@ -307,7 +307,7 @@ public class AccountsDetail extends SvrProcess {
         sb.append( "	   NULL"); //Procedencia
         sb.append( " FROM Fact_Acct_Balance fa ");
         sb.append( " WHERE " ).append( m_parameterWhere );
-        sb.append( "   AND TRUNC(DateAcct) < " ).append( DB.TO_DATE( p_DateAcct_From ));
+        sb.append( "   AND TRUNC(DateAcct) < " ).append( "trunc("+DB.TO_DATE( p_DateAcct_From )+")");
 
         // Start Beginning of Year
 
