@@ -21,6 +21,8 @@ public class LibertyaLookAndFeel extends NimbusLookAndFeel {
 	
 	public static final Color mandatFieldLabelColor = new Color(150,0,0);
 	
+	public static final Color readOnlyFieldLabelColor = new Color(100,100,100);
+	
 	public static boolean isActive() {
 		return ("Libertya".equals(UIManager.getLookAndFeel().getName()));
 	}
