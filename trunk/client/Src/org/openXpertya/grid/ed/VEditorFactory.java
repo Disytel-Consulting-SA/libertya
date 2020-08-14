@@ -337,6 +337,10 @@ public class VEditorFactory {
         if (LibertyaLookAndFeel.isActive() && mField.isMandatory(false) && displayType != DisplayType.YesNo) {
         	label.setForeground(LibertyaLookAndFeel.mandatFieldLabelColor);
         }
+        // Campos solo lectura: sugerir color (solo para Libertya L&F)
+        if (LibertyaLookAndFeel.isActive() && mField.isReadOnly()) {
+        	label.setForeground(LibertyaLookAndFeel.readOnlyFieldLabelColor);
+        }
         
         return label;
     }    // getLabel
