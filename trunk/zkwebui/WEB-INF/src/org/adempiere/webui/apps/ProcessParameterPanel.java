@@ -42,11 +42,11 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.window.FDialog;
-import org.openXpertya.model.MField;
-import org.openXpertya.model.MFieldVO;
 import org.openXpertya.model.CalloutProcess;
 import org.openXpertya.model.IProcessParameter;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MField;
+import org.openXpertya.model.MFieldVO;
 import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
@@ -364,10 +364,12 @@ implements ValueChangeListener, IProcessParameter
 			 */
 			StringBuffer sb = new StringBuffer();
 			int size = m_mFields.size();
+			boolean isDisplayed;
 			for (int i = 0; i < size; i++)
 			{
 				MField field = (MField)m_mFields.get(i);
-				if (field.isMandatory(true))        //  check context
+				isDisplayed = field.isDisplayed(true);
+				if (field.isMandatory(true) && isDisplayed)        //  check context
 				{
 					WEditor wEditor = (WEditor)m_wEditors.get(i);
 					Object data = wEditor.getValue();
@@ -399,6 +401,14 @@ implements ValueChangeListener, IProcessParameter
 							field2.setError(false);
 					}   //  range field
 				}   //  mandatory
+				else if(!isDisplayed){
+					field.setValue(null, true);
+					WEditor vEditor2 = ( WEditor )m_wEditors2.get( i );
+	                if( vEditor2 != null ) {
+	                    MField field2 = ( MField )m_mFields2.get( i );
+	                    field2.setValue(null,true);
+	                }
+				}
 			}   //  field loop
 
 
