@@ -49,14 +49,6 @@ import java.util.logging.Level;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JRParameter;
-import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-import net.sf.jasperreports.engine.util.JRLoader;
-
 import org.openXpertya.db.CConnection;
 import org.openXpertya.model.MAttachment;
 import org.openXpertya.model.MAttachmentEntry;
@@ -78,6 +70,14 @@ import org.openXpertya.util.Ini;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
+
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JRParameter;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
+import net.sf.jasperreports.engine.util.JRLoader;
 
 //import org.compiere.db.CConnection;
 //import org.compiere.interfaces.MD5;
@@ -1285,7 +1285,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
     }
     
     public void addParameterClientInfo(HashMap<String, Object> params){
-    	final String sql = "SELECT c.AD_Client_ID AS AD_Client_ID, c.description AS CLIENT_DESC, ci.cuit AS CLIENT_CUIT, (address1 || ' - ' || city) AS CLIENT_ADDRESS, c.logoimg " +
+    	final String sql = "SELECT c.AD_Client_ID AS AD_Client_ID, c.description AS CLIENT_DESC, c.name as CLIENT_NAME, ci.cuit AS CLIENT_CUIT, (address1 || ' - ' || city) AS CLIENT_ADDRESS, c.logoimg " +
     			" FROM ad_client c" +
     			" LEFT JOIN AD_ClientInfo ci ON (ci.ad_client_ID = c.ad_client_ID)" +
     			" LEFT JOIN C_Location l ON (ci.C_Location_ID = l.C_Location_ID)" +
@@ -1303,6 +1303,7 @@ public class ReportStarter implements ProcessCall // , ClientProcess
         	params.put("CLIENT_DESC", rs.getString("CLIENT_DESC"));
         	params.put("CLIENT_CUIT", rs.getString("CLIENT_CUIT"));
         	params.put("CLIENT_ADDRESS", rs.getString("CLIENT_ADDRESS"));
+        	params.put("CLIENT_NAME", rs.getString("CLIENT_NAME"));
         	if(rs.getBytes("logoimg") != null) {
             	params.put("CLIENT_LOGO", new ByteArrayInputStream(rs.getBytes("logoimg")));
         	}
