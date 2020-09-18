@@ -2,10 +2,7 @@ package org.openXpertya.pos.view.table;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Vector;
-import javax.swing.table.AbstractTableModel;
 
 import org.openXpertya.pos.model.Payment;
 
@@ -29,7 +26,7 @@ public class PaymentTableModel extends AbstractPoSTableModel {
 			case 0: 
 				return payment.getTypeName();
 			case 1: 
-			return (payment.getAmount().compareTo(payment.getRealAmount()) > 0 ? payment.getAmount()
+			return (payment.getAmount().compareTo(payment.getRealAmount()) != 0 ? payment.getAmount()
 					: payment.getRealAmount())
 					.setScale(2, BigDecimal.ROUND_HALF_UP)
 					.add(payment.isCreditCardPayment() ? payment.getChangeAmt()
