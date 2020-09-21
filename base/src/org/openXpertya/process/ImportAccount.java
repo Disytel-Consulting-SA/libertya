@@ -121,7 +121,7 @@ public class ImportAccount extends SvrProcess {
 
         if( m_deleteOldImported ) {
             sql = new StringBuffer( "DELETE FROM I_ElementValue " + "WHERE I_IsImported='Y'" ).append( clientCheck );
-            no = DB.executeUpdate( sql.toString());
+            no = DB.executeUpdate( sql.toString(), get_TrxName());
             log.fine( "Delete Old Imported =" + no );
         }
 
@@ -226,7 +226,7 @@ public class ImportAccount extends SvrProcess {
 
         // Disable Trigger Updateing Description
 
-        no = DB.executeUpdate( "ALTER TABLE C_ValidCombination DISABLE TRIGGER ALL" );
+        no = DB.executeUpdate( "ALTER TABLE C_ValidCombination DISABLE TRIGGER ALL" , get_TrxName());
         log.fine( "Disable Description Update =" + no );
 
         // -------------------------------------------------------------------
