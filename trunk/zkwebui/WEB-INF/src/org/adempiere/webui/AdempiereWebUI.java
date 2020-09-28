@@ -233,7 +233,11 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 					if (appDesktop != null) {
 						//re-attach root components
 						for (Component component : rootComponents) {
-							component.setPage(this.getPage());
+							try {
+								component.setPage(this.getPage());
+							} catch (Exception e) {
+								/* Ignore error  */
+							}
 						}
 						appDesktop.setPage(this.getPage());
 						currSess.setAttribute(EXECUTION_CARRYOVER_SESSION_KEY, current);
