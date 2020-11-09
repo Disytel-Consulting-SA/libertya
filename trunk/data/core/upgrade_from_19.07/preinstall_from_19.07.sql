@@ -1685,3 +1685,6 @@ $BODY$
   COST 100;
 ALTER FUNCTION uom_conversion(integer, integer, integer, numeric)
   OWNER TO libertya;
+  
+--20201027-0925 Indice para mejora de performance, entre otros el informe de Balance
+CREATE INDEX fact_acct_element_value on fact_acct(account_id);
