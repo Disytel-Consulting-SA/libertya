@@ -25,6 +25,7 @@ import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MElectronicInvoice;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MInvoicePaySchedule;
@@ -529,6 +530,10 @@ public class LaunchInvoice extends SvrProcess {
 
 		// Tasa de Cambio
 		jasperwrapper.addParameter("CURRENCY_RATE", getCurrencyRate(invoice));
+		
+		// Código de Comprobante
+		jasperwrapper.addParameter("COD_CBANTE",
+				MElectronicInvoice.getRefTablaComprobantes(getCtx(), docType.getID(), get_TrxName()));
 	}
 	
 	

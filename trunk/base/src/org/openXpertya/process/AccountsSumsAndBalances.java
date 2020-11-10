@@ -19,6 +19,9 @@ public class AccountsSumsAndBalances extends AccountsGeneralBalance {
 		// Bypass para que no actualice el saldo ya que la tabla temporal de
 		// esta clase no posee la columna balance y se rompe
 		updateBalance = false;
+		// Bypass para que no actualice los datos ajustados por índice de inflación
+		manageAdjustedAmts = false;
+		applyInflationIndexes = false;
 		super.doIt();
 		
 		// Se borran las líneas que tiene Debe y Haber igual a cero.
