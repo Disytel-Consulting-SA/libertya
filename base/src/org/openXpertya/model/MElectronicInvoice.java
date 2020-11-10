@@ -26,6 +26,26 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	public static final String impuestoIIBB = "IIBB";
 	public static final String exento = "E";
 	
+	public static int getRefTablaComprobantes(Properties ctx, int id, String trxName) throws SQLException{
+		// Instancio mdoctype para recuperar el name del tipo de documento de factura
+		MDocType doctype = new MDocType(ctx, id, trxName);
+		int cod = 0;
+		
+		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TablaComprobantes +"' and '"+doctype.getDocTypeKey()+"' ILIKE '%' || clave_busqueda || '%' ";
+		PreparedStatement pstmt = DB.prepareStatement(sql.toString(), trxName);
+		ResultSet rs = pstmt.executeQuery();
+		
+		if (rs.next()){
+			X_E_ElectronicInvoiceRef ref = new X_E_ElectronicInvoiceRef(ctx, rs, trxName);
+			cod = Integer.parseInt(ref.getCodigo());
+		}
+		
+		rs.close();
+		pstmt.close();
+		
+		return cod;
+	}
+	
 	public MElectronicInvoice(Properties ctx, int E_ElectronicInvoice_ID,	String trxName) {
 		super(ctx, E_ElectronicInvoice_ID, trxName);
 	}
@@ -203,6 +223,9 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			return rs.getInt("cant_alicuotas");
 		}
 		
+		rs.close();
+		pstmt.close();
+	
 		return 0;
 	}
 	
@@ -251,6 +274,7 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 	private int getRefTablaTipoResponsable(int c_Categoria_Iva_ID) throws SQLException{
 		// Instancio mcategoria para recuperar el codigo de la categoria de iva
 		MCategoriaIva catIva = new MCategoriaIva(getCtx(), c_Categoria_Iva_ID, get_TrxName());
+		int cod = 0; 
 		
 		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TipoResponsable +"' and clave_busqueda = '"+catIva.getCodigo()+"'";
 		PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
@@ -258,57 +282,74 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		
 		if (rs.next()){
 			X_E_ElectronicInvoiceRef ref = new X_E_ElectronicInvoiceRef(getCtx(), rs, get_TrxName());
-			return Integer.parseInt(ref.getCodigo());
+			cod = Integer.parseInt(ref.getCodigo());
 		}
 		
-		return 0;
+		rs.close();
+		pstmt.close();
+		
+		return cod;
 		
 	}
 	
 	private int getRefTablaComprobantes(int id) throws SQLException{
 		// Instancio mdoctype para recuperar el name del tipo de documento de factura
 		MDocType doctype = new MDocType(getCtx(), id, get_TrxName());
-				
+		int cod = 0;
+		
 		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TablaComprobantes +"' and '"+doctype.getDocTypeKey()+"' ILIKE '%' || clave_busqueda || '%' ";
 		PreparedStatement pstmt = DB.prepareStatement(sql.toString(), get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
 		
 		if (rs.next()){
 			X_E_ElectronicInvoiceRef ref = new X_E_ElectronicInvoiceRef(getCtx(), rs, get_TrxName());
-			return Integer.parseInt(ref.getCodigo());
+			cod = Integer.parseInt(ref.getCodigo());
 		}
-		return 0;
+		
+		rs.close();
+		pstmt.close();
+		
+		return cod;
 	}
 	
 	private String getRefTablaMoneda(int id) throws SQLException{
 		MCurrency currency = new MCurrency(getCtx(), id, get_TrxName());
 		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_CodigosMoneda +"' and clave_busqueda = '"+currency.getISO_Code()+"'";
+		String cod = null;
+		
 		PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
 		
 		if (rs.next()){
 			X_E_ElectronicInvoiceRef ref = new X_E_ElectronicInvoiceRef(getCtx(), rs, get_TrxName());
-			return ref.getCodigo();
+			cod = ref.getCodigo();
 		}
 		
-		return null;
+		rs.close();
+		pstmt.close();
+		
+		return cod;
 	}
 	
 	private String getRefTablaImpuestosIIBB() throws SQLException{
-		
+		String cod = null;
 		String	sql = " SELECT * FROM E_ElectronicInvoiceRef Where tabla_ref = '"+FiscalDocumentExport.TABLAREF_TablaImpuestos +"' and clave_busqueda = '"+impuestoIIBB+"'";
 		PreparedStatement pstmt = DB.prepareStatement(sql, get_TrxName());
 		ResultSet rs = pstmt.executeQuery();
 		
 		if (rs.next()){
 			X_E_ElectronicInvoiceRef ref = new X_E_ElectronicInvoiceRef(getCtx(), rs, get_TrxName());
-			return ref.getCodigo();
+			cod = ref.getCodigo();
 		}
 		
-		return null;
+		rs.close();
+		pstmt.close();
+		
+		return cod;
 	}
 	
 	private BigDecimal getImpuestoIIBB(String nombre, int id) throws SQLException{
+		BigDecimal taxAmt = BigDecimal.ZERO; 
 		String sqlTax = " SELECT * FROM C_Tax Where name = '"+ nombre +"'";
 		PreparedStatement pstmtTax = DB.prepareStatement(sqlTax, get_TrxName());
 		ResultSet rsTax = pstmtTax.executeQuery();
@@ -318,10 +359,16 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 			PreparedStatement pstmt	= DB.prepareStatement(sql, get_TrxName());
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()){
-				return rs.getBigDecimal("taxamt");
+				taxAmt = rs.getBigDecimal("taxamt");
 			}
+			rs.close();
+			pstmt.close();
 		}
-		return BigDecimal.ZERO;
+		
+		rsTax.close();
+		pstmtTax.close();
+		
+		return taxAmt;
 	}
 	
 	private BigDecimal getInvoiceTaxBaseAmt(int id) throws SQLException{
@@ -333,6 +380,10 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		   MInvoiceTax invoiceTax = new MInvoiceTax(getCtx(), rs, get_TrxName());
 		   sumTaxBaseAmt = sumTaxBaseAmt.add(invoiceTax.getTaxBaseAmt());
 		 } 
+		
+		rs.close();
+		pstmt.close();
+		
 		return sumTaxBaseAmt;
 	}
 	
@@ -345,6 +396,10 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 		   MInvoiceTax invoiceTax = new MInvoiceTax(getCtx(), rs, get_TrxName());
 		   sumTaxAmt = sumTaxAmt.add(invoiceTax.getTaxAmt());
 		 } 
+		 
+		rs.close();
+		pstmt.close();
+		
 		return sumTaxAmt;
 	}
 	
@@ -360,7 +415,11 @@ public class MElectronicInvoice extends X_E_ElectronicInvoice {
 				 sumTaxAmt = sumTaxAmt.add(invoiceTax.getTaxBaseAmt());
 			 }
 		 } 
-		 return sumTaxAmt;
+		 
+		rs.close();
+		pstmt.close();
+		
+		return sumTaxAmt;
 	}
 	
 	private int getCodJurisdiccionIIBB(String iibb){

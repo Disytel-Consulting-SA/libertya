@@ -25,6 +25,8 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	protected boolean applyInflationIndexes = false;
 	/** Tabla origen de los datos */
 	protected String p_factAcctTable = "Fact_Acct";
+	/** Gestionar los datos de ajuste */
+	protected boolean manageAdjustedAmts = true;
 	
 	@Override
 	protected boolean loadParameter(String name, ProcessInfoParameter param) {
@@ -96,14 +98,17 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 			log.fine("T_Acct_Balance Debit/Credit update OK = " + no);
 			
 			// Actualizo el débito y crédito ajustado
-			StringBuffer sqlUpdateBalance = new StringBuffer();
-			sqlUpdateBalance.append(" UPDATE ").append(getReportTableName()).append(" t ");
-			sqlUpdateBalance.append(" SET DebitAdjusted = Debit, CreditAdjusted = Credit ");
-			sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? ");
-			i = 1;
-			pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
-			pstmt.setInt     (i++, getAD_PInstance_ID());
-			no = pstmt.executeUpdate();
+			StringBuffer sqlUpdateBalance;
+			if(manageAdjustedAmts) {
+				sqlUpdateBalance = new StringBuffer();
+				sqlUpdateBalance.append(" UPDATE ").append(getReportTableName()).append(" t ");
+				sqlUpdateBalance.append(" SET DebitAdjusted = Debit, CreditAdjusted = Credit ");
+				sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? ");
+				i = 1;
+				pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
+				pstmt.setInt     (i++, getAD_PInstance_ID());
+				no = pstmt.executeUpdate();
+			}
 			
 			// Actualización de saldo
 			if(updateBalance){
@@ -150,14 +155,14 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 					no = pstmt.executeUpdate();
 					log.fine("T_Acct_Balance Adjusted Amts update OK = " + no);
 				}
-				else {
-					
-				}
+				
 				// Actualización del SALDO en base al debe y el haber
 				sqlUpdateBalance = new StringBuffer();
 				sqlUpdateBalance.append(" UPDATE ").append(getReportTableName());
-				sqlUpdateBalance.append(" SET Balance = Debit - Credit, ");
-				sqlUpdateBalance.append(" BalanceAdjusted = DebitAdjusted - CreditAdjusted ");
+				sqlUpdateBalance.append(" SET Balance = Debit - Credit ");
+				if(manageAdjustedAmts) {
+					sqlUpdateBalance.append(" , BalanceAdjusted = DebitAdjusted - CreditAdjusted ");
+				}
 				if (p_C_ElementValue_To_ID != null) {
 					sqlUpdateBalance.append(", ");
 					sqlUpdateBalance.append(" c_elementvalue_to_id = " + p_C_ElementValue_To_ID );
@@ -172,8 +177,10 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 				// Ajustar el saldo del totalizado, sería el índice 0
 				sqlUpdateBalance = new StringBuffer();
 				sqlUpdateBalance.append(" UPDATE ").append(getReportTableName());
-				sqlUpdateBalance.append(" SET BalanceAdjusted = (select sum(BalanceAdjusted) FROM ").append(getReportTableName()).append(" t JOIN c_elementvalue ev on ev.c_elementvalue_id = t.c_elementvalue_id WHERE AD_PInstance_ID = ? and subindex <> 0 and ev.issummary = 'N'), ");
-				sqlUpdateBalance.append(" Balance = (select sum(Balance) FROM ").append(getReportTableName()).append(" t JOIN c_elementvalue ev on ev.c_elementvalue_id = t.c_elementvalue_id WHERE AD_PInstance_ID = ? and subindex <> 0 and ev.issummary = 'N') ");
+				sqlUpdateBalance.append(" SET Balance = (select sum(Balance) FROM ").append(getReportTableName()).append(" t JOIN c_elementvalue ev on ev.c_elementvalue_id = t.c_elementvalue_id WHERE AD_PInstance_ID = ? and subindex <> 0 and ev.issummary = 'N') ");
+				if(manageAdjustedAmts) {
+					sqlUpdateBalance.append(" , BalanceAdjusted = (select sum(BalanceAdjusted) FROM ").append(getReportTableName()).append(" t JOIN c_elementvalue ev on ev.c_elementvalue_id = t.c_elementvalue_id WHERE AD_PInstance_ID = ? and subindex <> 0 and ev.issummary = 'N') ");
+				}
 				sqlUpdateBalance.append(" WHERE AD_PInstance_ID = ? and subindex = 0 ");
 				pstmt = DB.prepareStatement(sqlUpdateBalance.toString(), get_TrxName(), true);
 				i = 1;

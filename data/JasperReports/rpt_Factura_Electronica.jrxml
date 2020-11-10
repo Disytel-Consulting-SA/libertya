@@ -176,6 +176,8 @@
 	<parameter name="LOGO" isForPrompting="false" class="java.io.InputStream"/>
 	<parameter name="IIBB_DATE_CLIENT" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="VCTO_DATE" isForPrompting="false" class="java.sql.Timestamp"/>
+	<parameter name="CLIENT_LOCATION_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="COD_CBANTE" isForPrompting="false" class="java.lang.Integer"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -299,8 +301,8 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Center">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="16" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[!$P{DOC_STATUS}.equalsIgnoreCase("Completo") && !$P{DOC_STATUS}.equalsIgnoreCase("Cerrado") ?
-"LA FACTURA SE ENCUENTRA EN ESTADO '" + $P{DOC_STATUS} + "'. NO SE DEBE IMPRIMIR LA FACTURA ESTANDO EN ESTE ESTADO. COMPLETE EL DOCUMENTO ANTES DE IMPRIMIR" : ""]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DOC_STATUS}.equalsIgnoreCase("Completo") || $P{DOC_STATUS}.equalsIgnoreCase("Cerrado") || ($P{DOC_STATUS}.equalsIgnoreCase("Anulado") && $P{CAE} != null && $P{CAE}.trim().length() > 0) ? "":
+"LA FACTURA SE ENCUENTRA EN ESTADO '" + $P{DOC_STATUS} + "'. NO SE DEBE IMPRIMIR LA FACTURA ESTANDO EN ESTE ESTADO. COMPLETE EL DOCUMENTO ANTES DE IMPRIMIR"]]></textFieldExpression>
 				</textField>
 			</band>
 		</background>
@@ -342,7 +344,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						x="1"
 						y="21"
 						width="231"
-						height="91"
+						height="78"
 						key="image-1"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -440,18 +442,20 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$V{FORMATTED_NRO_COMPROBANTE}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="245"
 						y="64"
 						width="48"
 						height="12"
-						key="textField-60"/>
+						key="textField-60">
+							<printWhenExpression><![CDATA[new Boolean($P{COD_CBANTE} != null && $P{COD_CBANTE}.intValue() > 0)]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Top">
 						<font size="6"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$V{COD_CBANTE}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Cod "+($P{COD_CBANTE} != null && $P{COD_CBANTE}.intValue() > 9?"":"0")+$P{COD_CBANTE}]]></textFieldExpression>
 				</textField>
 				<line direction="TopDown">
 					<reportElement
@@ -514,6 +518,23 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{IIBB_DATE_CLIENT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="99"
+						width="232"
+						height="13"
+						key="textField-80"
+						isRemoveLineWhenBlank="true"
+						isPrintWhenDetailOverflows="true">
+							<printWhenExpression><![CDATA[new Boolean($P{CLIENT_LOCATION_DESCRIPTION} != null || $P{ORG_LOCATION_DESCRIPTION} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Arial" size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{ORG_LOCATION_DESCRIPTION} != null?$P{ORG_LOCATION_DESCRIPTION}:$P{CLIENT_LOCATION_DESCRIPTION}]]></textFieldExpression>
 				</textField>
 			</band>
 		</pageHeader>
@@ -852,7 +873,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement verticalAlignment="Top">
 						<font fontName="Arial" size="9"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION}.replaceAll("()", "").replaceAll(". .", "")]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DIRECCION}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
