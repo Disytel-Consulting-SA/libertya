@@ -1688,3 +1688,10 @@ ALTER FUNCTION uom_conversion(integer, integer, integer, numeric)
   
 --20201027-0925 Indice para mejora de performance, entre otros el informe de Balance
 CREATE INDEX fact_acct_element_value on fact_acct(account_id);
+
+--20201110-1106 Masterizacion de micro componente: org.libertya.core.micro.r2885.fix.parentprocessed 
+--(20201110-0930 Actualización de validaciones del modelo en Compañía incorporando el de registros procesados)
+update ad_client
+set modelvalidationclasses = modelvalidationclasses || ';org.openXpertya.model.ParentProcessedValidator'
+where ad_client_id = 1010016;
+
