@@ -333,7 +333,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	public void addCreditCard(MPOSPaymentMedium paymentMedium,
 			MEntidadFinancieraPlan plan, String creditCardNo, String couponNo,
 			BigDecimal amt, String bank, int cuotasCount, BigDecimal cuotaAmt,
-			Integer campaignID, Integer projectID, Integer monedaOriginalID) throws Exception {
+			Integer campaignID, Integer projectID, Integer monedaOriginalID,
+			String couponBatchNo) throws Exception {
 		// Validaciones iniciales
 		if (amt == null || amt.compareTo(BigDecimal.ZERO) <= 0)
 			throw new Exception("@NoAmountError@");
@@ -358,6 +359,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		tarjetaCredito.setDiscountSchemaToApply(getCurrentGeneralDiscount());
 		tarjetaCredito.setAccountName(getBPartner().getName());
 		tarjetaCredito.setMonedaOriginalID(monedaOriginalID);
+		tarjetaCredito.setCouponBatchNo(couponBatchNo);
 		addMedioPago(tarjetaCredito);
 	}
 
@@ -434,6 +436,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			pay.setC_Project_ID(tarjeta.getProject() == null?0:tarjeta.getProject());
 			pay.setC_Campaign_ID(tarjeta.getCampaign() == null?0:tarjeta.getCampaign());
 			pay.setM_EntidadFinancieraPlan_ID(tarjeta.getEntidadFinancieraPlan().getID());
+			pay.setCouponBatchNumber(tarjeta.getCouponBatchNo());
 			tarjeta.setPayment(pay);
 		}
 		pay.setC_POSPaymentMedium_ID(mp.getPaymentMedium().getID());

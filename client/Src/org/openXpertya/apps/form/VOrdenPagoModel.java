@@ -712,6 +712,7 @@ public class VOrdenPagoModel {
 		private MPayment payment;
 		private String bank;
 		private String accountName;
+		private String couponBatchNo;
 
 		@Override
 		public int getBankAccountID() {
@@ -829,6 +830,14 @@ public class VOrdenPagoModel {
 		@Override
 		public BigDecimal getImporteMonedaOriginal() {
 			return amt;
+		}
+
+		public String getCouponBatchNo() {
+			return couponBatchNo;
+		}
+
+		public void setCouponBatchNo(String couponBatchNo) {
+			this.couponBatchNo = couponBatchNo;
 		}
 
 	}
