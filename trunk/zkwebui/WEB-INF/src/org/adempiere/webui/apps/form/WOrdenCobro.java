@@ -92,6 +92,7 @@ public class WOrdenCobro extends WOrdenPago {
 	protected WTableDirEditor cboCreditCardBank;
 	protected WStringEditor txtCreditCardNo;
 	protected WStringEditor txtCreditCardCouponNo;
+	protected WStringEditor txtCreditCardCouponBatchNo;
 	protected WStringEditor txtCuotasCount;
 	protected WStringEditor txtCuotaAmt;
 	protected WStringEditor txtCreditCardAmt = new WStringEditor();
@@ -505,6 +506,7 @@ public class WOrdenCobro extends WOrdenPago {
 		
 		txtCreditCardNo = new WStringEditor();
 		txtCreditCardCouponNo = new WStringEditor();
+		txtCreditCardCouponBatchNo = new WStringEditor();
 		txtCuotasCount = new WStringEditor();
 		txtCuotaAmt = new WStringEditor();
 		txtCreditCardAmt = new WStringEditor();
@@ -512,6 +514,9 @@ public class WOrdenCobro extends WOrdenPago {
 		lblCreditCardPlan = new Label(getMsg("CreditCardPlan"));
 		txtCreditCardNo.getLabel().setValue(getMsg("CreditCardNumber"));
 		txtCreditCardCouponNo.getLabel().setValue(getMsg("CouponNumber"));
+		
+		txtCreditCardCouponBatchNo.getLabel().setValue(getMsg("CouponBatchNumber"));
+		
 		txtCuotasCount.getLabel().setValue(getMsg("CuotasCount"));
 		txtCuotaAmt.getLabel().setValue(getMsg("CuotaAmt"));
 		txtCreditCardAmt.getLabel().setValue(getMsg("Amt"));
@@ -568,23 +573,26 @@ public class WOrdenCobro extends WOrdenPago {
 		Row row = rows.newRow();
 		row.appendChild(lblCreditCardReceiptMedium.rightAlign());
 		row.appendChild(cboCreditCardReceiptMedium);
-		row.appendChild(lblCreditCardPlan.rightAlign());
-		row.appendChild(cboEntidadFinancieraPlans);
 		Row row2 = rows.newRow();
+		row2.appendChild(lblCreditCardPlan.rightAlign());
+		row2.appendChild(cboEntidadFinancieraPlans);
 		row2.appendChild(cboCreditCardBank.getLabel().rightAlign());
 		row2.appendChild(cboCreditCardBank.getComponent());
-		row2.appendChild(txtCreditCardNo.getLabel().rightAlign());
-		row2.appendChild(txtCreditCardNo.getComponent());
 		Row row3 = rows.newRow();
 		row3.appendChild(txtCreditCardCouponNo.getLabel().rightAlign());
 		row3.appendChild(txtCreditCardCouponNo.getComponent());
-		row3.appendChild(txtCreditCardAmt.getLabel().rightAlign());
-		row3.appendChild(txtCreditCardAmt.getComponent());
+		row3.appendChild(txtCreditCardCouponBatchNo.getLabel().rightAlign());
+		row3.appendChild(txtCreditCardCouponBatchNo.getComponent());
 		Row row4 = rows.newRow();
-		row4.appendChild(txtCuotasCount.getLabel().rightAlign());
-		row4.appendChild(txtCuotasCount.getComponent());
-		row4.appendChild(txtCuotaAmt.getLabel().rightAlign());
-		row4.appendChild(txtCuotaAmt.getComponent());
+		row4.appendChild(txtCreditCardNo.getLabel().rightAlign());
+		row4.appendChild(txtCreditCardNo.getComponent());
+		row4.appendChild(txtCreditCardAmt.getLabel().rightAlign());
+		row4.appendChild(txtCreditCardAmt.getComponent());
+		Row row5 = rows.newRow();
+		row5.appendChild(txtCuotasCount.getLabel().rightAlign());
+		row5.appendChild(txtCuotasCount.getComponent());
+		row5.appendChild(txtCuotaAmt.getLabel().rightAlign());
+		row5.appendChild(txtCuotaAmt.getComponent());
 		
         panelCreditCard.appendChild(gridpanel);
 		return panelCreditCard;
@@ -923,6 +931,7 @@ public class WOrdenCobro extends WOrdenPago {
 			txtCreditCardCouponNo.setValue("");
 			txtCreditCardNo.setValue("");
 			txtCuotaAmt.setValue(Integer.toString(0));
+			txtCreditCardCouponBatchNo.setValue("");
 		}
 		if (retencSchema == null)
 			return;
@@ -1021,7 +1030,8 @@ public class WOrdenCobro extends WOrdenPago {
 				Util.isEmpty(txtCuotasCount.getValue().toString()) ? 0 : Integer
 						.parseInt(txtCuotasCount.getValue().toString()),
 				getModel().numberParse(txtCuotaAmt.getValue().toString()), getC_Campaign_ID(),
-				getC_Project_ID(), (Integer) cboCurrency.getValue());
+				getC_Project_ID(), (Integer) cboCurrency.getValue(),
+				txtCreditCardCouponBatchNo.getValue().toString());
 	}
 
 	@Override
@@ -1198,6 +1208,7 @@ public class WOrdenCobro extends WOrdenPago {
 					+ tarjeta.getEntidadFinancieraPlan().getCuotasPago());
 			txtCuotaAmt.setValue(getModel().numberFormat(tarjeta.getCuotaAmt()));
 			cboCreditCardBank.setValue(tarjeta.getBank());
+			txtCreditCardCouponBatchNo.setValue(tarjeta.getCouponBatchNo());
 		} else {
 			super.loadMedioPago(mp);
 			Combobox comboReceiptMedium = tenderTypeIndexsCombos.get(mpTabbox.getSelectedIndex()); // .get(jTabbedPane2.getSelectedIndex());

@@ -78,6 +78,7 @@ public class VOrdenCobro extends VOrdenPago {
 	protected javax.swing.JLabel lblCreditCardBank;
 	protected javax.swing.JLabel lblCreditCardNo;
 	protected javax.swing.JLabel lblCreditCardCouponNo;
+	protected javax.swing.JLabel lblCreditCardCouponBatchNo;
 	protected javax.swing.JLabel lblCuotasCount;
 	protected javax.swing.JLabel lblCuotaAmt;
 	protected javax.swing.JLabel lblCreditCardPlan;
@@ -109,6 +110,7 @@ public class VOrdenCobro extends VOrdenPago {
 	protected VLookup cboCreditCardBank;
 	protected javax.swing.JTextField txtCreditCardNo;
 	protected javax.swing.JTextField txtCreditCardCouponNo;
+	protected javax.swing.JTextField txtCreditCardCouponBatchNo;
 	protected javax.swing.JTextField txtCuotasCount;
 	protected JFormattedTextField txtCuotaAmt;
 	protected VNumber txtCreditCardAmt;
@@ -1230,6 +1232,9 @@ public class VOrdenCobro extends VOrdenPago {
 		lblCreditCardBank = new javax.swing.JLabel(getMsg("C_Bank_ID"));
 		lblCreditCardNo = new javax.swing.JLabel(getMsg("CreditCardNumber"));
 		lblCreditCardCouponNo = new javax.swing.JLabel(getMsg("CouponNumber"));
+		
+		lblCreditCardCouponBatchNo = new javax.swing.JLabel(getMsg("CouponBatchNumber"));
+		
 		lblCuotasCount = new javax.swing.JLabel(getMsg("CuotasCount"));
 		lblCuotaAmt = new javax.swing.JLabel(getMsg("CuotaAmt"));
 		lblCreditCardAmt = new javax.swing.JLabel(getMsg("Amt"));
@@ -1238,6 +1243,9 @@ public class VOrdenCobro extends VOrdenPago {
 				"C_POSPaymentMedium", m_WindowNo, DisplayType.List);
 		txtCreditCardNo = new javax.swing.JTextField();
 		txtCreditCardCouponNo = new javax.swing.JTextField();
+		
+		txtCreditCardCouponBatchNo = new javax.swing.JTextField();
+		
 		txtCuotasCount = new javax.swing.JTextField();
 		txtCuotaAmt = new JFormattedTextField();
 		initFormattedTextField(txtCuotaAmt);
@@ -1300,6 +1308,7 @@ public class VOrdenCobro extends VOrdenPago {
 										.add(lblCreditCardBank)
 										.add(lblCreditCardNo)
 										.add(lblCreditCardCouponNo)
+										.add(lblCreditCardCouponBatchNo)
 										.add(lblCreditCardAmt)
 										.add(lblCuotasCount).add(lblCuotaAmt))
 								.addPreferredGap(
@@ -1320,6 +1329,9 @@ public class VOrdenCobro extends VOrdenPago {
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												160, Short.MAX_VALUE)
 										.add(txtCreditCardCouponNo,
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												160, Short.MAX_VALUE)
+										.add(txtCreditCardCouponBatchNo,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												160, Short.MAX_VALUE)
 										.add(txtCreditCardAmt,
@@ -1384,6 +1396,16 @@ public class VOrdenCobro extends VOrdenPago {
 												org.jdesktop.layout.GroupLayout.BASELINE)
 										.add(lblCreditCardCouponNo)
 										.add(txtCreditCardCouponNo,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+								.addPreferredGap(
+										org.jdesktop.layout.LayoutStyle.RELATED)
+								.add(jPanelCreditCardLayout
+										.createParallelGroup(
+												org.jdesktop.layout.GroupLayout.BASELINE)
+										.add(lblCreditCardCouponBatchNo)
+										.add(txtCreditCardCouponBatchNo,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -2242,6 +2264,7 @@ public class VOrdenCobro extends VOrdenPago {
 			txtCreditCardCouponNo.setText("");
 			txtCreditCardNo.setText("");
 			txtCuotaAmt.setValue(0);
+			txtCreditCardCouponBatchNo.setText("");
 		}
 		if (retencSchema == null)
 			return;
@@ -2331,7 +2354,8 @@ public class VOrdenCobro extends VOrdenPago {
 				Util.isEmpty(txtCuotasCount.getText()) ? 0 : Integer
 						.parseInt(txtCuotasCount.getText()),
 				(BigDecimal) txtCuotaAmt.getValue(), getC_Campaign_ID(),
-				getC_Project_ID(), (Integer) cboCurrency.getValue());
+				getC_Project_ID(), (Integer) cboCurrency.getValue(),
+				txtCreditCardCouponBatchNo.getText());
 	}
 
 	@Override
@@ -2497,6 +2521,7 @@ public class VOrdenCobro extends VOrdenPago {
 					+ tarjeta.getEntidadFinancieraPlan().getCuotasPago());
 			txtCuotaAmt.setValue(tarjeta.getCuotaAmt());
 			cboCreditCardBank.setValue(tarjeta.getBank());
+			txtCreditCardCouponBatchNo.setText(tarjeta.getCouponBatchNo());
 		} else {
 			super.loadMedioPago(mp);
 			CComboBox comboReceiptMedium = tenderTypeIndexsCombos
