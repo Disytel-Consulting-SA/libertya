@@ -278,7 +278,9 @@ public class MFieldVO implements Serializable {
 					&& !Util.isEmpty(fieldAccess.getAD_Val_Rule_ID(), true);
 			boolean hasNotDisplayLogicFieldAccess = MFieldAccess.ACCESSTYPE_NotDisplayed.equals(roleFieldAccess)
 					&& !Util.isEmpty(fieldAccess.getAD_Val_Rule_ID(), true);
-
+			boolean hasVisibleLogicFieldAccess = MFieldAccess.ACCESSTYPE_Visible.equals(roleFieldAccess)
+					&& !Util.isEmpty(fieldAccess.getAD_Val_Rule_ID(), true);
+			
             for (int i = 1; i <= rsmd.getColumnCount(); i++) {
 
                 String	columnName	= rsmd.getColumnName(i);
@@ -364,6 +366,10 @@ public class MFieldVO implements Serializable {
                     vo.AD_Reference_Value_ID	= rs.getInt(i);
                 } else if (columnName.equalsIgnoreCase("ValidationCode")) {
                     vo.ValidationCode	= rs.getString(i);
+                    if(hasVisibleLogicFieldAccess){
+						X_AD_Val_Rule valRule = new X_AD_Val_Rule(vo.ctx, fieldAccess.getAD_Val_Rule_ID(), null);
+                		vo.ValidationCode = valRule.getCode();
+                	}
                 } else if (columnName.equalsIgnoreCase("ColumnSQL")) {
                     vo.ColumnSQL	= rs.getString(i);
                 }
