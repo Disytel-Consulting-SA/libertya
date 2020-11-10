@@ -1694,4 +1694,157 @@ CREATE INDEX fact_acct_element_value on fact_acct(account_id);
 update ad_client
 set modelvalidationclasses = modelvalidationclasses || ';org.openXpertya.model.ParentProcessedValidator'
 where ad_client_id = 1010016;
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2885.fix.parentprocessed
+
+--20201110-1150 Masterizacion de micro componente: org.libertya.core.micro.r2862.dev.infoauditac 
+--(20200505-1234 Creacion de indices de soporte para lograr tiempos de respuesta aceptabels del informe si se va a ejecutar  en periodos de varios dias)
+update ad_system set dummy = (SELECT addindexifnotexists('ad_session_created',				'ad_session',			'created'));
+update ad_system set dummy = (SELECT addindexifnotexists('ad_pinstance_created',			'ad_pinstance',			'created'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_order_created',					'c_order',				'created'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_invoice_created',				'c_invoice',			'created'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_allocationhdr_created',			'c_allocationhdr',		'created'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_creditcardsettlement_created',	'c_creditcardsettlement','created'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_bankstatement_created',			'c_bankstatement',		'created'));
+update ad_system set dummy = (SELECT addindexifnotexists('ad_session_createdby',			'ad_session',			'createdby'));
+update ad_system set dummy = (SELECT addindexifnotexists('ad_pinstance_createdby',			'ad_pinstance',			'createdby'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_order_createdby',				'c_order',				'createdby'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_invoice_createdby',				'c_invoice',			'createdby'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_allocationhdr_createdby',		'c_allocationhdr',		'createdby'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_creditcardsettlement_createdby','c_creditcardsettlement','createdby'));
+update ad_system set dummy = (SELECT addindexifnotexists('c_bankstatement_createdby',		'c_bankstatement',		'createdby'));
+
+--(20200505-1249 Funcion de soporte para la funview de auditoria. Se arma la clausula where de esta manera (en lugar de ad_user_id IN (...)) para ayudar al query planner)
+CREATE OR REPLACE FUNCTION v_audit_activity_users(p_prefix varchar, p_role_id int) RETURNS varchar AS
+$BODY$
+declare
+	query varchar;
+	result varchar;
+	usuarios record;
+BEGIN
+	result = '';
+	query = ' SELECT AD_User_ID From ad_user_roles where ad_role_id = ' || p_role_id;
+	FOR usuarios IN EXECUTE query LOOP
+		result = result || p_prefix || 'createdby = ' || usuarios.ad_user_id || ' or ';
+	END LOOP;
+	result = result || ' 1 = 0 ';
+
+	return result;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE;
+  
+--(20200505-1249 Nuevo tipo que retorna la funview de auditoria de actividad) 
+CREATE TYPE v_audit_activity_type AS
+(
+	created date,
+	ad_user_id int,
+	usuario varchar,
+	cant_conexiones int,
+	primer_sesion varchar,
+	ultima_sesion varchar,
+	ultima_desconexion varchar,
+	cant_informes_procesos bigint,
+	cant_pedidos bigint,
+	cant_facturas bigint,
+	cant_op_opa bigint,
+	cant_liq_tarjeta bigint,
+	cant_extractos bigint
+);
+
+--(20200505-1250 Funview de auditoria de actividad)
+CREATE OR REPLACE FUNCTION v_audit_activity(p_user_id int, p_role_id int, p_date_from date, p_date_to date)
+RETURNS SETOF v_audit_activity_type AS
+$BODY$
+declare
+	sql_columnas varchar;
+	sql_alltable varchar;
+	sql_wherecla varchar;
+	sql_groupbyq varchar;
+	sql_orderbyq varchar;	
+	sql_finalSQL varchar;
+	anauditrecord v_audit_activity_type;
+	test date;
+	usuarioss varchar;
+	usuarios varchar;
+BEGIN
+
+	select into usuarioss * from v_audit_activity_users('s.', p_role_id);
+	select into usuarios * from v_audit_activity_users('', p_role_id);
+
+
+	sql_columnas = 
+		' SELECT ' || 
+		' s.created::date, ' ||
+		' u.ad_user_id, ' ||
+		' u.name as usuario, ' ||
+		' count(distinct s.ad_session_id) as cant_conexiones, ' ||
+		' to_char(min(s.created), ''HH24:MI'')::varchar as primer_sesion, ' ||
+		' to_char(max(s.created), ''HH24:MI'')::varchar as ultima_sesion, ' ||
+		' to_char(max(s.updated), ''HH24:MI'')::varchar as ultima_desconexion, ' ||
+		' pi.cant as cant_informes_procesos, ' ||
+		' o.cant as cant_pedidos, ' ||
+		' i.cant as cant_facturas, ' ||
+		' ah.cant as cant_op_opa, ' ||
+		' ccs.cant as cant_liq_tarjeta, ' ||
+		' bs.cant as cant_extractos';
+
+	sql_alltable = 
+		' from ad_user u ' ||
+		' inner join ad_session s on s.createdby = u.ad_user_id and ( ' || usuarioss || ' ) ' ||
+		' left join ( select createdby, created::date, coalesce(count(1),0) as cant from ad_pinstance 		where ( ' || usuarios || ' )  and created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59'' group by createdby ,created::date ) as pi on pi.createdby = s.createdby and pi.created::date = s.created::date ' ||
+		' left join ( select createdby, created::date, coalesce(count(1),0) as cant from c_order 			where ( ' || usuarios || ' )  and created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59'' group by createdby,created::date) as o on o.createdby = s.createdby and o.created::date = s.created::date ' ||
+		' left join ( select createdby, created::date, coalesce(count(1),0) as cant from c_invoice 			where ( ' || usuarios || ' )  and created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59'' group by createdby,created::date) as i on i.createdby = s.createdby and i.created::date = s.created::date  ' ||
+		' left join ( select createdby, created::date, coalesce(count(1),0) as cant from c_allocationhdr 		where ( ' || usuarios || ' )  and created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59'' group by createdby,created::date) as ah on ah.createdby = s.createdby and ah.created::date = s.created::date ' ||
+		' left join ( select createdby, created::date, coalesce(count(1),0) as cant from c_creditcardsettlement 	where ( ' || usuarios || ' )  and created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59'' group by createdby ,created::date) as ccs on ccs.createdby = s.createdby and ccs.created::date = s.created::date ' ||
+		' left join ( select createdby, created::date, coalesce(count(1),0) as cant from c_bankstatement 		where ( ' || usuarios || ' )  and created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59'' group by createdby,created::date) as bs on bs.createdby = s.createdby and bs.created::date = s.created::date ';
+
+	sql_wherecla = 
+		' where s.created between ''' || p_date_from || ' 00:00:00'' and ''' || p_date_to || ' 23:59:59''';		
+	if (p_user_id is not null AND p_user_id > 0) then
+		sql_wherecla = sql_wherecla ||
+		' and u.ad_user_id = ' || p_user_id;
+	end if;
+
+	sql_groupbyq =
+		' group by s.created::date, u.name, u.ad_user_id, pi.cant, o.cant, i.cant, ah.cant, ccs.cant, bs.cant';
+
+	sql_orderbyq =	
+		' order by s.created::date, u.name';
+
+	sql_finalSQL = sql_columnas || sql_alltable || sql_wherecla || sql_groupbyq || sql_orderbyq;
+
+	raise notice '%', sql_finalSQL;
+	FOR anauditrecord IN EXECUTE sql_finalSQL LOOP
+		return next anauditrecord;
+	END LOOP;
+
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE;
+
+--(20200505-1313 Tabla temporal para generacion de la informacion)
+create table T_InfoAuditActivity 
+(
+	ad_pinstance_id integer NOT NULL,
+	ad_client_id integer NOT NULL,
+	ad_org_id integer NOT NULL,
+	reportline integer,
+	dateactivity date,
+	ad_user_id int,
+	ad_role_id int,
+	usuario varchar,
+	cant_conexiones int,
+	primer_sesion varchar,
+	ultima_sesion varchar,
+	ultima_desconexion varchar,
+	cant_informes_procesos bigint,
+	cant_pedidos bigint,
+	cant_facturas bigint,
+	cant_op_opa bigint,
+	cant_liq_tarjeta bigint,
+	cant_extractos bigint,
+	sortcriteria char(1),
+    datecreated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone
+);
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2862.dev.infoauditac
 
