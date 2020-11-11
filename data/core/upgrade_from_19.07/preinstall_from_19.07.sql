@@ -1848,3 +1848,55 @@ create table T_InfoAuditActivity
 );
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2862.dev.infoauditac
 
+--20201111-1028 Masterizacion de micro componente: org.libertya.core.micro.r2861.dev.credeball
+CREATE TABLE c_debitcreditallocation
+(
+  c_debitcreditallocation_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  docaction character(2) NOT NULL,
+  docstatus character(2) NOT NULL,
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  documentno character varying(30) NOT NULL,
+  c_bpartner_id integer NOT NULL,
+  c_invoice_credit_id integer,
+  c_invoice_debit_id integer NOT NULL,
+  c_allocationhdr_anticipated_id integer,
+  imputationdate date NOT NULL,
+  amount numeric(20,2) NOT NULL DEFAULT 0,
+  c_currency_id integer NOT NULL,
+  pendingdebitamount numeric(20,2) NOT NULL DEFAULT 0,
+  description character varying(255),
+  c_allocationhdr_id integer,
+  CONSTRAINT c_debitcreditallocation_pk PRIMARY KEY (c_debitcreditallocation_id),
+  CONSTRAINT cbpartner_cinvoice FOREIGN KEY (c_bpartner_id)
+      REFERENCES c_bpartner (c_bpartner_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT ccurrency_debitcreditallocation FOREIGN KEY (c_currency_id)
+      REFERENCES c_currency (c_currency_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT fk_c_invoice_credit_debitcreditallocation FOREIGN KEY (c_invoice_credit_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT fk_c_invoice_debit_debitcreditallocation FOREIGN KEY (c_invoice_debit_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT fk_client_debitcreditallocation FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT fk_org_debitcreditallocation FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE c_debitcreditallocation
+  OWNER TO libertya;
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2861.dev.credeball
+
