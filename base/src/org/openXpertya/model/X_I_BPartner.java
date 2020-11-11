@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-11-14 11:00:54.413 */
+ *  @version  - 2020-08-03 18:44:33.289 */
 public class X_I_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -592,6 +592,32 @@ public String getIIBB()
 {
 return (String)get_Value("IIBB");
 }
+public static final int IIBBTYPE_AD_Reference_ID = MReference.getReferenceID("IIBB Type");
+/** Local = 1 */
+public static final String IIBBTYPE_Local = "1";
+/** Convenio Multilateral = 2 */
+public static final String IIBBTYPE_ConvenioMultilateral = "2";
+/** No inscripto = 4 */
+public static final String IIBBTYPE_NoInscripto = "4";
+/** Reg.Simplificado = 5 */
+public static final String IIBBTYPE_RegSimplificado = "5";
+/** Set IIBB Type */
+public void setIIBBType (String IIBBType)
+{
+if (IIBBType == null || IIBBType.equals("1") || IIBBType.equals("2") || IIBBType.equals("4") || IIBBType.equals("5") || ( refContainsValue("CORE-AD_Reference-1010262", IIBBType) ) );
+ else throw new IllegalArgumentException ("IIBBType Invalid value: " + IIBBType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010262") );
+if (IIBBType != null && IIBBType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+IIBBType = IIBBType.substring(0,1);
+}
+set_Value ("IIBBType", IIBBType);
+}
+/** Get IIBB Type */
+public String getIIBBType() 
+{
+return (String)get_Value("IIBBType");
+}
 /** Set Imported.
 Has this import been processed */
 public void setI_IsImported (boolean I_IsImported)
@@ -982,8 +1008,8 @@ public static final String SOCREDITSTATUS_CreditDisabled = "D";
 Business Partner Credit Status */
 public void setSOCreditStatus (String SOCreditStatus)
 {
-if (SOCreditStatus == null || SOCreditStatus.equals("S") || SOCreditStatus.equals("O") || SOCreditStatus.equals("H") || SOCreditStatus.equals("X") || SOCreditStatus.equals("W") || SOCreditStatus.equals("D"));
- else throw new IllegalArgumentException ("SOCreditStatus Invalid value - Reference = SOCREDITSTATUS_AD_Reference_ID - S - O - H - X - W - D");
+if (SOCreditStatus == null || SOCreditStatus.equals("S") || SOCreditStatus.equals("O") || SOCreditStatus.equals("H") || SOCreditStatus.equals("X") || SOCreditStatus.equals("W") || SOCreditStatus.equals("D") || ( refContainsValue("CORE-AD_Reference-289", SOCreditStatus) ) );
+ else throw new IllegalArgumentException ("SOCreditStatus Invalid value: " + SOCreditStatus + ".  Valid: " +  refValidOptions("CORE-AD_Reference-289") );
 if (SOCreditStatus != null && SOCreditStatus.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -1092,8 +1118,8 @@ public static final String TAXIDTYPE_SinIDTipoDocumento = "99";
 /** Set Tax Id Type */
 public void setTaxIdType (String TaxIdType)
 {
-if (TaxIdType == null || TaxIdType.equals("80") || TaxIdType.equals("86") || TaxIdType.equals("87") || TaxIdType.equals("89") || TaxIdType.equals("90") || TaxIdType.equals("91") || TaxIdType.equals("92") || TaxIdType.equals("93") || TaxIdType.equals("95") || TaxIdType.equals("96") || TaxIdType.equals("94") || TaxIdType.equals("00") || TaxIdType.equals("01") || TaxIdType.equals("07") || TaxIdType.equals("08") || TaxIdType.equals("09") || TaxIdType.equals("10") || TaxIdType.equals("11") || TaxIdType.equals("12") || TaxIdType.equals("13") || TaxIdType.equals("14") || TaxIdType.equals("16") || TaxIdType.equals("17") || TaxIdType.equals("18") || TaxIdType.equals("19") || TaxIdType.equals("20") || TaxIdType.equals("02") || TaxIdType.equals("03") || TaxIdType.equals("04") || TaxIdType.equals("05") || TaxIdType.equals("06") || TaxIdType.equals("21") || TaxIdType.equals("22") || TaxIdType.equals("23") || TaxIdType.equals("24") || TaxIdType.equals("25") || TaxIdType.equals("99"));
- else throw new IllegalArgumentException ("TaxIdType Invalid value - Reference = TAXIDTYPE_AD_Reference_ID - 80 - 86 - 87 - 89 - 90 - 91 - 92 - 93 - 95 - 96 - 94 - 00 - 01 - 07 - 08 - 09 - 10 - 11 - 12 - 13 - 14 - 16 - 17 - 18 - 19 - 20 - 02 - 03 - 04 - 05 - 06 - 21 - 22 - 23 - 24 - 25 - 99");
+if (TaxIdType == null || TaxIdType.equals("80") || TaxIdType.equals("86") || TaxIdType.equals("87") || TaxIdType.equals("89") || TaxIdType.equals("90") || TaxIdType.equals("91") || TaxIdType.equals("92") || TaxIdType.equals("93") || TaxIdType.equals("95") || TaxIdType.equals("96") || TaxIdType.equals("94") || TaxIdType.equals("00") || TaxIdType.equals("01") || TaxIdType.equals("07") || TaxIdType.equals("08") || TaxIdType.equals("09") || TaxIdType.equals("10") || TaxIdType.equals("11") || TaxIdType.equals("12") || TaxIdType.equals("13") || TaxIdType.equals("14") || TaxIdType.equals("16") || TaxIdType.equals("17") || TaxIdType.equals("18") || TaxIdType.equals("19") || TaxIdType.equals("20") || TaxIdType.equals("02") || TaxIdType.equals("03") || TaxIdType.equals("04") || TaxIdType.equals("05") || TaxIdType.equals("06") || TaxIdType.equals("21") || TaxIdType.equals("22") || TaxIdType.equals("23") || TaxIdType.equals("24") || TaxIdType.equals("25") || TaxIdType.equals("99") || ( refContainsValue("CORE-AD_Reference-1010201", TaxIdType) ) );
+ else throw new IllegalArgumentException ("TaxIdType Invalid value: " + TaxIdType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010201") );
 if (TaxIdType != null && TaxIdType.length() > 2)
 {
 log.warning("Length > 2 - truncated");

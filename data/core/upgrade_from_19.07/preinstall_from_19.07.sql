@@ -2015,3 +2015,8 @@ ALTER TABLE libro_iva_digital_comp_anulados_v
   
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','ad_process_id','integer'));
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2867.dev.libro_iva_digital
+
+--20201111-12229 Masterizacion de micro componente: org.libertya.core.micro.r2878.fix.importbpartner_iibbtype
+--(20200722-1640 Nuevas columnas para la Unidad de Medida de Compra en la importación de artículos)
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','iibbtype','character(1)'));
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2878.fix.importbpartner_iibbtype
