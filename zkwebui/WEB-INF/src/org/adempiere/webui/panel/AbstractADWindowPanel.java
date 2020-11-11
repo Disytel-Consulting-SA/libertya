@@ -2163,7 +2163,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 			form.setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
 			form.setAttribute(Window.INSERT_POSITION_KEY, Window.INSERT_NEXT);
 			SessionManager.getAppDesktop().showWindow(form);
-			onRefresh(false);
+			curTab.dataRefresh(false);
+	        focusToActivePanel();
 		}
 		else
 		{
@@ -2177,7 +2178,8 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 				dialog.setPosition("center");
 				AEnv.showWindow(dialog);
 			}
-			onRefresh(false);
+			curTab.dataRefresh(false);
+	        focusToActivePanel();
 		}
 	} // actionButton
 
