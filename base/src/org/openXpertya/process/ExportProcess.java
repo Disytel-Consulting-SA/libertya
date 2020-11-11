@@ -261,14 +261,17 @@ public class ExportProcess extends SvrProcess {
 		sql = sql.deleteCharAt(sql.lastIndexOf(","));
 		// FROM
 		sql.append(" FROM ");
-		sql.append(M_Table.getTableName(getCtx(), getExportFormat()
-				.getAD_Table_ID()));
+		sql.append(getFrom());
 		// WHERE
 		sql.append(" WHERE ");
 		sql.append(getWhereClause());
 		// ORDER BY 
 		sql.append(getOrderByClause());
 		return sql.toString();
+	}
+	
+	protected String getFrom() {
+		return M_Table.getTableName(getCtx(), getExportFormat().getAD_Table_ID());
 	}
 	
 	protected String getWhereClause(){

@@ -3,6 +3,7 @@ package org.openXpertya.process.release;
 import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
+import org.openXpertya.util.DB;
 import org.openXpertya.utils.JarHelper;
 
 public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
@@ -248,6 +249,11 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 								jarFileURL,
 								getBinaryFileURL(ReporteRemitos_FILENAME)));
 		
+		// Masterizacion de org.libertya.core.micro.r2867.dev.libro_iva_digital 
+		// Setear a vacío todo los puntos decimales que hayan quedado con un espacio vacío
+		DB.executeUpdate("update ad_expformat_row " + 
+						"set decimalpoint = null " + 
+						"where decimalpoint = ' ' and nodecimalpoint = 'Y'", get_TrxName());		
 		return " ";
 	}
 	

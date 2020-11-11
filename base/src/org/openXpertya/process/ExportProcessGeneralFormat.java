@@ -1,7 +1,6 @@
 package org.openXpertya.process;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -23,16 +22,16 @@ public class ExportProcessGeneralFormat extends ExportProcess {
 	/** Dato Info de los Parámetros del proceso */
 	private Map<String, Integer> parametersClass;
 
-	public ExportProcessGeneralFormat(java.util.Properties ctx, int expFor,
-			HashMap<String, Object> param, List<String> parametersNames,
-			HashMap<String, Integer> parametersClass, String trxName) {
+	public ExportProcessGeneralFormat(java.util.Properties ctx, Integer expFor,
+			Map<String, Object> param, List<String> parametersNames,
+			Map<String, Integer> parametersClass, String trxName) {
 		setExportFormat(new MExpFormat(ctx, expFor, trxName));
 		setParametersValues(param);
 		this.localCtx = ctx;
 		this.localTrxName = trxName;
 
 		int processID = DB.getSQLValue(null,
-				"SELECT AD_Process_ID FROM AD_Process WHERE ad_expformat_id='"
+				"SELECT AD_Process_ID FROM AD_ExpFormat WHERE ad_expformat_id='"
 						+ expFor + "' LIMIT 1 ");
 		if(processID > 0){
 			this.localProcessInfo = new ProcessInfo(trxName, processID);
