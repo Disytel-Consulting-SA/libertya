@@ -60,11 +60,10 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.part.MultiTabPart;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MFieldVO;
-import org.openXpertya.model.MTab;
 import org.openXpertya.model.MLookupFactory;
-import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.MTab;
 import org.openXpertya.model.MUserQuery;
 import org.openXpertya.model.X_AD_Column;
 import org.openXpertya.util.CLogger;
@@ -814,12 +813,12 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
                 if ("btnOkSimple".equals(btn.getName()))
                 {
                     cmd_ok_Simple();
-                    dispose();
+                    //dispose();
                 }
                 else if ("btnOkAdv".equals(btn.getName()))
                 {
                     cmd_ok_Advanced();
-                    dispose();
+                    //dispose();
                 }
                 else if("btnCancel".equals(btn.getName()))
                 {
@@ -840,12 +839,12 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
             if (winLookupRecord.equals(event.getTarget()))
             {
                 cmd_ok_Simple();
-                dispose();
+                //dispose();
             }
             else if (winAdvanced.equals(event.getTarget()))
             {
                 cmd_ok_Advanced();
-                dispose();
+                //dispose();
             }
         }
 
@@ -1531,9 +1530,9 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
             log.log(Level.SEVERE, finalSQL, e);
         }
         MRole role = MRole.getDefault();
-        //  No Records
-      /*  if (m_total == 0 && alertZeroRecords)
-            FDialog.warn(m_targetWindowNo, this, "FindZeroRecords");*/
+        //  No Records 
+        if (m_total == 0 && alertZeroRecords)
+            FDialog.warn(m_targetWindowNo, this, "FindZeroRecords", "");
         //  More then allowed
         if (query != null && role.isQueryMax(m_total))
         {

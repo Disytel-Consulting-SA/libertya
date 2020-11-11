@@ -670,8 +670,8 @@ public class DB_PostgreSQL implements BaseDatosOXP {
 	
 	@Override
 	public String addPagingSQL(String sql, int start, int end) {
-		String newSql = sql + " " + NATIVE_MARKER + "LIMIT " + ( end - start + 1 )
-				+ "  " + NATIVE_MARKER + "OFFSET " + (start - 1);
+		String newSql = sql + " LIMIT " + ( end - start + 1 )
+				+ " OFFSET " + (start - 1);
 		return newSql;
 	}
 

@@ -135,6 +135,8 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
             info = new InfoPOSJournalPanel(WindowNo, value, multiSelection, whereClause);
         else if (tableName.equals("C_AllocationHdr"))
         	info = new InfoAllocationHdrPanel(WindowNo,value,isSoTrx ,multiSelection, whereClause);
+        else if (tableName.equals("M_EntidadFinancieraPlan"))
+        	info = new InfoEntidadFinancieraPlanPanel(WindowNo, value, multiSelection, whereClause);
         else
             info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, isSoTrx, multiSelection, whereClause);
         //
@@ -1155,8 +1157,10 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	}
 
 	private void hideBusyDialog() {
-		progressWindow.dispose();
-		progressWindow = null;
+		if(progressWindow != null) {
+			progressWindow.dispose();
+			progressWindow = null;
+		}
 	}
 
     public void onQueryCallback()
@@ -1166,6 +1170,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
             	executeQuery();
                 renderItems();
             }
+    	catch(Exception e) {
+    		e.printStackTrace();
+    	}
     	finally
     	{
     		hideBusyDialog();

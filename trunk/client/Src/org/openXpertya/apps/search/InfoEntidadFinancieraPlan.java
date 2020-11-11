@@ -61,7 +61,7 @@ public class InfoEntidadFinancieraPlan extends Info {
 	public InfoEntidadFinancieraPlan(Frame frame, boolean modal, int WindowNo, String tableName, String keyColumn,
 			boolean multiSelection, String whereClause) {
 		super(frame, modal, WindowNo, tableName, keyColumn, multiSelection, whereClause);
-		setTitle( Msg.getMsg( Env.getCtx(),"InfoPOSJournal" ));
+		setTitle( Msg.getMsg( Env.getCtx(),"InfoEntidadFinancieraPlan" ));
 		
 		statInit();
         initInfo();
