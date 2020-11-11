@@ -59,6 +59,10 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String ReporteRemitos_FILENAME = "InOutReport.jasper";
 	protected final static String ReporteRemitos_UID = "CORE-AD_Process-1010422";
 	
+	/** UID del informe de Análisis de Ventas por Esquema de Descuento */
+	protected final static String SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_UID = "TEHLBY-AD_Process-20200319164902392-923485";
+	protected final static String SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_FILENAME = "SalesByDiscountSchema.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -253,7 +257,19 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 		// Setear a vacío todo los puntos decimales que hayan quedado con un espacio vacío
 		DB.executeUpdate("update ad_expformat_row " + 
 						"set decimalpoint = null " + 
-						"where decimalpoint = ' ' and nodecimalpoint = 'Y'", get_TrxName());		
+						"where decimalpoint = ' ' and nodecimalpoint = 'Y'", get_TrxName());
+		
+		// Análisis de Ventas por Esquema de Descuento
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_UID,
+				SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_FILENAME)));
+		
 		return " ";
 	}
 	
