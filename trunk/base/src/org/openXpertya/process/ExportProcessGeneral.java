@@ -1,12 +1,17 @@
 package org.openXpertya.process;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
+import org.openXpertya.model.MExpFormat;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Util;
 
 public class ExportProcessGeneral extends SvrProcess {
 
@@ -34,7 +39,7 @@ public class ExportProcessGeneral extends SvrProcess {
 	}
 
 	protected String doIt() throws Exception {
-		HashMap<String, Object> parameters = new HashMap<String, Object>();
+		Map<String, Object> parameters = new HashMap<String, Object>();
 		List<String> parametersNames = new ArrayList<String>();
 		HashMap<String, Integer> parametersClass = new HashMap<String, Integer>();
 		
@@ -55,10 +60,26 @@ public class ExportProcessGeneral extends SvrProcess {
 			parametersClass.put("Date_To", DisplayType.Date);
 		}
 
-		ExportProcessGeneralFormat exportProcess = new ExportProcessGeneralFormat(
-				getCtx(), getAD_ExpFormat_ID(), parameters, parametersNames,
-				parametersClass, get_TrxName());
-
+		// TODO Instanciar la clase del proceso configurado en el formato de exportación
+		// Debe existir ese contructor
+		String className = "org.openXpertya.process.ExportProcessGeneralFormat";
+		MExpFormat ef = new MExpFormat(getCtx(), getAD_ExpFormat_ID(), get_TrxName());
+		if(!Util.isEmpty(ef.getAD_Process_ID(), true)) {
+			MProcess p = MProcess.get(getCtx(), ef.getAD_Process_ID());
+			className = p.getClassname();
+		}
+		ExportProcessGeneralFormat exportProcess;
+		Class<?> clazz = Class.forName(className);
+		Constructor<?> constructor = clazz.getDeclaredConstructor(
+				new Class[] { Properties.class, Integer.class, Map.class, List.class, Map.class, String.class });
+		if(constructor != null) {
+			exportProcess = (ExportProcessGeneralFormat) constructor.newInstance(new Object[] {
+					getCtx(), getAD_ExpFormat_ID(), parameters, parametersNames, parametersClass, get_TrxName() });
+		}
+		else {
+			exportProcess = (ExportProcessGeneralFormat) clazz.newInstance();
+		}
+		
 		return exportProcess.doIt();
 	}
 

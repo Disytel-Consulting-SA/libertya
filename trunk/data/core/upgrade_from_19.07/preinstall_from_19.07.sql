@@ -1900,3 +1900,118 @@ ALTER TABLE c_debitcreditallocation
   OWNER TO libertya;
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2861.dev.credeball
 
+--20201111-1142 Masterizacion de micro componente: org.libertya.core.micro.r2867.dev.libro_iva_digital
+--(20200610-1130 Libro IVA Digital - Formatos Ventas, Compras, Alícuotas y Anulados)
+CREATE TYPE liva_digital_comp_anulados_type AS (ad_client_id integer, ad_org_id integer, "date" timestamp, tipodecomprobante character varying, 
+						letra character(1), puntodeventa integer, nrocomprobante integer);
+
+CREATE OR REPLACE FUNCTION libro_iva_digital_comp_anulados(clientID integer, orgID integer, datefrom date, dateto date)
+  RETURNS SETOF liva_digital_comp_anulados_type AS
+$BODY$
+declare
+	inv record;
+	adocument liva_digital_comp_anulados_type;
+	old_doctype_id integer;
+	old_nro_comprobante integer;
+	actual_doctype_id integer;
+	actual_nro_comprobante integer;
+	aux_nro_comp integer;
+	consulta varchar;
+	whereDateFrom varchar;
+	whereDateTo varchar;
+	whereOrg varchar;
+	whereClause varchar;
+BEGIN
+	old_doctype_id := -1;
+	old_nro_comprobante := -1;
+
+	--Filtros
+	whereDateFrom := '';
+	whereDateTo := '';
+	whereOrg := '';
+	
+	if (orgID is not null AND orgID > 0) then
+		whereOrg := ' AND i.AD_Org_ID = '|| orgID;
+	end if;
+	
+	if (dateFrom is not null) then
+		whereDateFrom := ' AND i.dateacct::date >= ''' || dateFrom || '''::date ';
+	end if;
+	
+	if (dateTo is not null) then
+		whereDateTo := ' AND i.dateacct::date <= ''' || dateTo || '''::date ';
+	end if;
+
+	whereClause := ' AND i.AD_Client_ID = ' || clientID || whereOrg || whereDateFrom || whereDateTo;
+
+	consulta := 'SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, dt.c_doctype_id, i.puntodeventa, i.numerocomprobante, 
+		i.dateinvoiced, i.dateacct, i.issotrx, dt.transactiontypefrontliva, dt.doctypekey, lc.letra
+	FROM c_invoice i
+	JOIN c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id
+	JOIN c_letra_comprobante lc on lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+	WHERE i.docstatus not in (''DR'',''IP'') 
+		and dt.isfiscal = ''Y'' 
+		and i.fiscalalreadyprinted = ''Y''
+		AND (i.issotrx = ''Y'' AND dt.transactiontypefrontliva IS NULL OR dt.transactiontypefrontliva = ''S'') 
+		AND i.isactive = ''Y''
+	 '|| whereClause ||' 
+	ORDER BY i.ad_client_id, dt.c_doctype_id, i.puntodeventa, i.numerocomprobante';
+	
+	-- Iterar por las facturas de ventas que sean impresas fiscales, los agujeros son los faltantes
+	FOR inv IN EXECUTE consulta 	
+	LOOP
+		actual_doctype_id = inv.c_doctype_id;
+		actual_nro_comprobante = inv.numerocomprobante;
+		IF(old_doctype_id != actual_doctype_id) THEN 
+			old_doctype_id = -1;
+			-- Si hay una fecha de inicio con la cual consultar, el primer último comprobante es el último de fechas anteriores
+			-- Esto permite rellenar agujeros que queden en períodos diferentes, 
+			-- por ejemplo si se ejecuta mensualmente, entre el último día del mes anterior y el primero del actual 
+			-- puede quedar un espacio de datos sin consultar
+			if (dateFrom is not null) then
+				select into old_nro_comprobante max(i.numerocomprobante)
+								FROM c_invoice i
+								WHERE i.docstatus not in ('DR','IP') 
+									and i.fiscalalreadyprinted = 'Y'
+									AND i.isactive = 'Y'
+									AND i.c_doctypetarget_id = actual_doctype_id
+									AND i.dateacct::date < dateFrom::date;
+			else
+				old_nro_comprobante = -1;
+			end if;
+		END IF;
+
+		-- Si el tipo de documento es el mismo que el anterior y el comprobante es diferente al anterior + 1, significa que se pasó en la numeración
+		if (actual_doctype_id = old_doctype_id AND actual_nro_comprobante > (old_nro_comprobante+1)) then
+			aux_nro_comp := (old_nro_comprobante+1);
+			-- Registrar los faltantes
+			while (aux_nro_comp < actual_nro_comprobante) 
+			loop
+				select into adocument inv.ad_client_id, inv.ad_org_id, inv.dateacct::date, 
+							gettipodecomprobante(inv.doctypekey, inv.letra, inv.issotrx, inv.transactiontypefrontliva),
+							inv.letra, inv.puntodeventa, aux_nro_comp;
+				return next adocument;
+				aux_nro_comp = aux_nro_comp + 1;
+			end loop;
+		end if;
+
+		old_doctype_id = actual_doctype_id;
+		old_nro_comprobante = actual_nro_comprobante;
+		
+	END LOOP;
+END
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100
+  ROWS 1000;
+ALTER FUNCTION libro_iva_digital_comp_anulados(integer, integer, date, date)
+  OWNER TO libertya;
+
+CREATE OR REPLACE VIEW libro_iva_digital_comp_anulados_v AS 
+SELECT * FROM libro_iva_digital_comp_anulados(0, 0, null::date, null::date);
+
+ALTER TABLE libro_iva_digital_comp_anulados_v
+  OWNER TO libertya;
+  
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','ad_process_id','integer'));
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2867.dev.libro_iva_digital

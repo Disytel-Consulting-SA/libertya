@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ExpFormat
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-05-09 09:52:19.323 */
+ *  @version  - 2020-06-10 10:03:12.12 */
 public class X_AD_ExpFormat extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -93,6 +93,22 @@ set_ValueNoCheck ("AD_ExpFormat_ID", new Integer(AD_ExpFormat_ID));
 public int getAD_ExpFormat_ID() 
 {
 Integer ii = (Integer)get_Value("AD_ExpFormat_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Process.
+Process or Report */
+public void setAD_Process_ID (int AD_Process_ID)
+{
+if (AD_Process_ID <= 0) set_Value ("AD_Process_ID", null);
+ else 
+set_Value ("AD_Process_ID", new Integer(AD_Process_ID));
+}
+/** Get Process.
+Process or Report */
+public int getAD_Process_ID() 
+{
+Integer ii = (Integer)get_Value("AD_Process_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
