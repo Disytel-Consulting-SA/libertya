@@ -406,6 +406,7 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
         setNAICS( impBP.getNAICS());
         setC_BP_Group_ID( impBP.getC_BP_Group_ID());
         setIIBB(impBP.getIIBB());
+        setIIBBType(impBP.getIIBBType());
         setC_Categoria_Iva_ID(impBP.getC_Categoria_Iva_ID());
         setTaxIdType(impBP.getTaxIdType());
         

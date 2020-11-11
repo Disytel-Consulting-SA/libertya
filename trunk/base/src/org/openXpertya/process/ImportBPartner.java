@@ -41,7 +41,7 @@ import org.openXpertya.util.Msg;
  * @author     Equipo de Desarrollo de openXpertya    
  */
 
-public class ImportBPartner extends SvrProcess {
+public class ImportBPartner extends SvrProcess  {
 
     /** Descripción de Campos */
 
@@ -289,8 +289,9 @@ public class ImportBPartner extends SvrProcess {
         			",Updated=current_timestamp"+
         			",UpdatedBy=aux.UpdatedBy" +
         			",IIBB=aux.IIBB" +
+        			",IIBBType=aux.IIBBType" +
         			",ismulticuit=aux.ismulticuit" +
-        			" from (SELECT Value,Name,Name2,Description,DUNS,TaxID,TaxIdType,NAICS,C_BP_Group_ID,UpdatedBy,IIBB,ismulticuit FROM I_BPartner WHERE I_BPartner_ID=?) as aux" 
+        			" from (SELECT Value,Name,Name2,Description,DUNS,TaxID,TaxIdType,NAICS,C_BP_Group_ID,UpdatedBy,IIBB,IIBBType,ismulticuit FROM I_BPartner WHERE I_BPartner_ID=?) as aux" 
         			+ " WHERE C_BPartner_ID=?" );
             
             log.info("En importBPartbner despues de hacer el update en c_BPartner");
