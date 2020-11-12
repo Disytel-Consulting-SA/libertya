@@ -49,6 +49,8 @@ public class ImportPaymentNews extends SvrProcess {
 			log.fine("Delete Old Imported =" + no);
 		}
 		
+		no = 0;
+		
 		//1 - Obtengo registros sin importar
 		for (X_I_PaymentBankNews news : getRecords()) {
 			//2 - Recupero la lista donde fue enviado el pago

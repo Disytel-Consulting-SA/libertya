@@ -2097,3 +2097,13 @@ ALTER TABLE c_invoice_percepciones_v
 --(20200604-1230 Nueva columna para registrar el número de exportación por día)
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','dateexportno','integer NOT NULL DEFAULT 0'));
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+
+--20201111-2200 Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+--(20200701-1500 Importación de Novedades de Pagos Electrónicos Galicia E-Check. Incorporación de soporte para bitácora de estados de pagos electrónicos)
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankpaymentstatus','ad_componentobjectuid','character varying(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankpaymentstatus','ad_componentversion_id','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankpaymentstatusassociation','ad_componentobjectuid','character varying(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankpaymentstatusassociation','ad_componentversion_id','integer'));
+
+ALTER TABLE i_paymentbanknews ALTER COLUMN payment_status TYPE character varying(40);
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
