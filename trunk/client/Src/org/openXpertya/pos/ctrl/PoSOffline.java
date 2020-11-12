@@ -345,4 +345,10 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public boolean regenerateCAE(Order order) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 }

@@ -6,10 +6,12 @@ import java.util.Properties;
 import org.openXpertya.print.fiscal.FiscalPrinter;
 import org.openXpertya.print.fiscal.FiscalPrinterLoggerManager;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
+import org.openXpertya.print.fiscal.comm.PrinterServiceComm;
 import org.openXpertya.print.fiscal.comm.SpoolerTCPComm;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 public class MControladorFiscal extends X_C_Controlador_Fiscal {
 
@@ -34,7 +36,7 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 	public static MControladorFiscal getOfDocType(int docType_ID) {
 		MControladorFiscal cFiscal = null;
 		MDocType docType = new MDocType(Env.getCtx(), docType_ID, null);
-		if(docType.isFiscal())
+		if ((docType.isFiscal() || docType.iselectronic()) && !Util.isEmpty(docType.getC_Controlador_Fiscal_ID(), true))
 			cFiscal = new MControladorFiscal(Env.getCtx(), docType.getC_Controlador_Fiscal_ID(), null);
 		return cFiscal;
 	}
@@ -83,9 +85,7 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 			} catch (Exception e) {
 				throw new Exception(Msg.translate(ctx,"FiscalPrinterInstanciationError"), e);
 			}
-			String host = gethost();
-			int port = getPort();
-			FiscalComm fiscalComm = new SpoolerTCPComm(host, port);
+			FiscalComm fiscalComm = getPrinterCommByType();
 			fiscalPrinter.setFiscalComm(fiscalComm);
 			fiscalPrinter.setCancelBeforePrint(isCmdCancelBeforePrintDocument());
 			fiscalPrinter.setAskWhenError(isAskWhenError());
@@ -97,6 +97,18 @@ public class MControladorFiscal extends X_C_Controlador_Fiscal {
 		}
 		return fiscalPrinter;
 		
+	}
+
+	
+	private FiscalComm getPrinterCommByType() {
+		FiscalComm fiscalComm = null;
+		if(getConnectionType().equals(X_C_Controlador_Fiscal.CONNECTIONTYPE_TCP)) {
+			fiscalComm = new SpoolerTCPComm(gethost(), getPort());
+		}
+		else if(getConnectionType().equals(X_C_Controlador_Fiscal.CONNECTIONTYPE_PrintService)) {
+			fiscalComm = new PrinterServiceComm(getPrinterName());
+		}
+		return fiscalComm;
 	}
 	
 }

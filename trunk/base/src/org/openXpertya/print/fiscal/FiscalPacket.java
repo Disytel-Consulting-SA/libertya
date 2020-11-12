@@ -59,7 +59,13 @@ public interface FiscalPacket extends Serializable
 
 	/** Replace field with empty byte array. */
 	public void clear(int field);
-
+	/** Adds a field */
+	public void add(byte[] value);
+	/** Adds an integer field */
+	public void add(int value);
+	/** Adds an string field */
+	public void add(String value);
+	
 	/** Set the value of a field. A reference to the passed value is kept (value is not copied). */
 	public void set(int field, byte[] value);
 	/** Get the value of a field. A reference to the value is returned (the value is not copied). */

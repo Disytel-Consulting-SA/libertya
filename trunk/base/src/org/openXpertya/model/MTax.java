@@ -509,7 +509,7 @@ public class MTax extends X_C_Tax {
         if( isZeroTax(rate)) {
             return Env.ZERO;
         }
-        BigDecimal multiplier = rate.divide( ONEHUNDRED,10,BigDecimal.ROUND_HALF_UP );
+        BigDecimal multiplier = rate.divide( ONEHUNDRED,10,BigDecimal.ROUND_HALF_DOWN );
         BigDecimal tax = null;
 
         if( !taxIncluded || perceptionIncluded)    // $100 * 6 / 100 == $6 == $100 * 0.06
@@ -518,7 +518,7 @@ public class MTax extends X_C_Tax {
         } else                // $106 - ($106 / (100+6)/100) == $6 == $106 - ($106/1.06)
         {
             multiplier = multiplier.add( Env.ONE );
-            BigDecimal base = amount.divide( multiplier,10,BigDecimal.ROUND_HALF_UP );
+            BigDecimal base = amount.divide( multiplier,10,BigDecimal.ROUND_HALF_DOWN );
             tax = amount.subtract( base );
         }
         
@@ -527,7 +527,7 @@ public class MTax extends X_C_Tax {
         	finalTax = tax.setScale( scale,BigDecimal.ROUND_DOWN );	
         }
         else{
-        	finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );	
+        	finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_DOWN );	
         }
         
         return finalTax;
@@ -561,7 +561,7 @@ public class MTax extends X_C_Tax {
         } else                // $106 - ($106 / (100+6)/100) == $6 == $106 - ($106/1.06)
         {
             multiplier = multiplier.add( Env.ONE );
-            BigDecimal base = amount.divide( multiplier,10,BigDecimal.ROUND_HALF_UP );
+            BigDecimal base = amount.divide( multiplier,10,BigDecimal.ROUND_HALF_DOWN );
             tax = amount.subtract( base );
         }
         BigDecimal finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );

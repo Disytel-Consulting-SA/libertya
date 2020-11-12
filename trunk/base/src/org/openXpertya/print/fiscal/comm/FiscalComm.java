@@ -36,4 +36,12 @@ public interface FiscalComm {
 	 * @throws IllegalArgumentException si request == response. 
 	 */
 	public void execute(FiscalPacket request, FiscalPacket response) throws IOException;
+	
+	/**
+	 * Método que permmite realizar acciones al finalizar con una impresión de un
+	 * documento
+	 * 
+	 * @throws Exception
+	 */
+	public void finishPrint() throws Exception;
 }

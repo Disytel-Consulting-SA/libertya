@@ -62,6 +62,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 	// flag especial para indicar si el remito es una anulación
 	protected boolean isReversal = false;
 		
+	// flag especial para indicar si el remito debe omitir las validaciones de
+	// cierre de depósito
+	private boolean bypassWarehouseCloseValidation = false;
+	
     /**
      * Creación desde Pedido.
      * 
@@ -1465,10 +1469,9 @@ public class MInOut extends X_M_InOut implements DocAction {
         }
 
         // Std Period open?
-
-		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType(),
-				getM_Warehouse_ID(), 
-				isTPVInstance() || !dt.isWarehouseClosureControl() || isReversal())) {
+		boolean bypassWarehouseClose = isBypassWarehouseCloseValidation() || isTPVInstance()
+				|| !dt.isWarehouseClosureControl() || isReversal();
+		if (!MPeriod.isOpen(getCtx(), getDateAcct(), dt.getDocBaseType(), getM_Warehouse_ID(), bypassWarehouseClose)) {
             if (MWarehouseClose.isWarehouseCloseControlActivated()) {
             	m_processMsg = "@PeriodClosedOrWarehouseClosed@";
             } else {
@@ -3423,6 +3426,14 @@ public class MInOut extends X_M_InOut implements DocAction {
 	public void copyInstanceValues(PO to){
 		super.copyInstanceValues(to);
 		((MInOut)to).setReversal(isReversal());
+	}
+
+	public boolean isBypassWarehouseCloseValidation() {
+		return bypassWarehouseCloseValidation;
+	}
+
+	public void setBypassWarehouseCloseValidation(boolean bypassWarehouseCloseValidation) {
+		this.bypassWarehouseCloseValidation = bypassWarehouseCloseValidation;
 	}
 }    // MInOut
 

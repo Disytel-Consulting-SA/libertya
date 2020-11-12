@@ -50,6 +50,7 @@ setPOSNumber (0);
 setReturnedCashInCNControl (false);
 setSalesRep_ID (0);
 setVoidDocuments (false);
+setVoidDocuments_EF (false);
 }
  */
 }
@@ -723,8 +724,8 @@ public static final String OPERATIONMODE_POSJournal = "J";
 Operation Mode */
 public void setOperationMode (String OperationMode)
 {
-if (OperationMode.equals("S") || OperationMode.equals("J"));
- else throw new IllegalArgumentException ("OperationMode Invalid value - Reference = OPERATIONMODE_AD_Reference_ID - S - J");
+if (OperationMode.equals("S") || OperationMode.equals("J") || ( refContainsValue("CORE-AD_Reference-1010148", OperationMode) ) );
+ else throw new IllegalArgumentException ("OperationMode Invalid value: " + OperationMode + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010148") );
 if (OperationMode == null) throw new IllegalArgumentException ("OperationMode is mandatory");
 if (OperationMode.length() > 1)
 {
@@ -825,6 +826,22 @@ Can void documents. If it is not checked, ask user and pass for voiding */
 public boolean isVoidDocuments() 
 {
 Object oo = get_Value("VoidDocuments");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Void Documents Electronic Fiscal */
+public void setVoidDocuments_EF (boolean VoidDocuments_EF)
+{
+set_Value ("VoidDocuments_EF", new Boolean(VoidDocuments_EF));
+}
+/** Get Void Documents Electronic Fiscal */
+public boolean isVoidDocuments_EF() 
+{
+Object oo = get_Value("VoidDocuments_EF");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

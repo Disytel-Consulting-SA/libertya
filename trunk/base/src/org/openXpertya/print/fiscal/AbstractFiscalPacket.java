@@ -1,7 +1,13 @@
 package org.openXpertya.print.fiscal;
 
-import java.math.*;
-import java.util.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 import org.openXpertya.print.fiscal.util.ByteFormatter;
 
@@ -45,8 +51,8 @@ public abstract class AbstractFiscalPacket implements FiscalPacket
 		AbstractFiscalPacket p;
 		try { p = (AbstractFiscalPacket) super.clone(); }
 		catch (CloneNotSupportedException e) { throw new Error(e.toString()); }
-		List f = new ArrayList(fields.size());
-		Iterator i = fields.iterator();
+		List f = new ArrayList(getFields().size());
+		Iterator i = getFields().iterator();
 		while (i.hasNext())
 		{
 			byte[] x = (byte[]) i.next();
@@ -55,7 +61,7 @@ public abstract class AbstractFiscalPacket implements FiscalPacket
 			System.arraycopy(x, 0, y, 0, l);
 			f.add(y);
 		}
-		p.fields = f;
+		p.setFields(f);
 		p.setFiscalPrinter(getFiscalPrinter());
 		return p;
 	}
@@ -90,50 +96,58 @@ public abstract class AbstractFiscalPacket implements FiscalPacket
 
 	// Size
 
-	public void clear() { fields.clear(); }
+	public void clear() { getFields().clear(); }
 
 	public void setSize(int size)
 	{
-		int s = fields.size();
+		int s = getFields().size();
 		if (s < size)
 		{
-			do { fields.add(EMPTY_FIELD); s++; }
+			do { getFields().add(EMPTY_FIELD); s++; }
 			while (s < size);
 		}
 		else if (s > size)
 		{
 			if (size > 0)
 			{
-				do { s--; fields.remove(s); }
+				do { s--; getFields().remove(s); }
 				while (s > size);
 			}
 			else
 			{
-				if (size == 0) fields.clear();
+				if (size == 0) getFields().clear();
 				else throw new IndexOutOfBoundsException();
 			}
 		}
 	}
 
-	public int getSize() { return fields.size(); }
+	public int getSize() { return getFields().size(); }
 
 	// Fields
 
 	public void clear(int field) { set(field, EMPTY_FIELD); }
 
+	public void add(byte[] value) {
+		getFields().add(value);
+	}
+	
+	public void add(int value) {
+		add(new byte[] { (byte) value });
+	}
+	
 	public void set(int field, byte[] value)
 	{
 		if (value == null) throw new NullPointerException();
-		int s = fields.size();
-		if (field < s) fields.set(field, value);
+		int s = getFields().size();
+		if (field < s) getFields().set(field, value);
 		else
 		{
-			while (field > s) { fields.add(EMPTY_FIELD); s++; }
-			fields.add(value);
+			while (field > s) { getFields().add(EMPTY_FIELD); s++; }
+			getFields().add(value);
 		}
 	}
 
-	public byte[] get(int field) { return (byte[]) fields.get(field); }
+	public byte[] get(int field) { return (byte[]) getFields().get(field); }
 
 	public int getLength(int field) { return get(field).length; }
 
@@ -431,5 +445,13 @@ public abstract class AbstractFiscalPacket implements FiscalPacket
 	
 	public void decode(String packetStr) {
 		decode(packetStr.getBytes());		
+	}
+
+	protected List getFields() {
+		return fields;
+	}
+
+	protected void setFields(List fields) {
+		this.fields = fields;
 	}
 }

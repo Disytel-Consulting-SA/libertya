@@ -377,57 +377,112 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     	Integer tmpPrecision = 10;
 		List<MDocumentDiscount> lineDiscounts = MDocumentDiscount.get(
 				"C_OrderLine_ID = ? AND cumulativelevel = '" + MDiscountSchema.CUMULATIVELEVEL_Line+"'",
-				new Object[] { orderLine.getC_OrderLine_ID() }, getCtx(), get_TrxName());
+				new Object[] { orderLine.getC_OrderLine_ID() }, "DiscountKind, DiscountApplication, Description, M_DiscountSchema_ID, C_Payment_ID", 
+				getCtx(), get_TrxName());
 		BigDecimal totalPriceList = (updatePrice ? getPriceList() : getPriceEntered()).multiply(getQtyInvoiced());
-		BigDecimal lineDiscountAmt = BigDecimal.ZERO;
-		BigDecimal bonusDiscountAmt = BigDecimal.ZERO;
-		BigDecimal discountAmt;
+		BigDecimal totalLineDiscountAmt = BigDecimal.ZERO, totalLineDiscountBaseAmt = BigDecimal.ZERO;
+		BigDecimal totalBonusDiscountAmt = BigDecimal.ZERO, totalBonusDiscountBaseAmt = BigDecimal.ZERO;
 		// Existen descuentos configurados en la línea del pedido, entonces
 		// itero por ellos y los aplico a la línea de factura
 		if(lineDiscounts.size() > 0){
 			int signToCompare = isDragLineDiscountAmts() && isDragLineSurchargesAmts() ? 0
 					: (isDragLineDiscountAmts() ? 1 : -1);
+			/*String keyDD = null, oldKeyDD = null;
+			String dk = null, da = null, d = null;
+			Integer ds = 0, p = 0;*/
 			for (MDocumentDiscount mDocumentDiscount : lineDiscounts) {
 				// Se debe verificar si se debe arrastrar el descuento o recargo
 				// dependiendo de la configuración
 				if(signToCompare == 0 || mDocumentDiscount.getDiscountAmt().signum() == signToCompare){
-					discountAmt = Util.getRatedAmt(totalPriceList, mDocumentDiscount.getDiscountAmt(),
-							mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision);
-					// Si es Bonificación, acumulo en el bonus amt
+					/*keyDD = mDocumentDiscount.getDiscountKind()+"_"+mDocumentDiscount.getDiscountApplication()+"_"+mDocumentDiscount.getDescription()+"_"
+							+(Util.isEmpty(mDocumentDiscount.getM_DiscountSchema_ID(), true)?"0":mDocumentDiscount.getM_DiscountSchema_ID())
+							+(Util.isEmpty(mDocumentDiscount.getC_Payment_ID(), true)?"0":mDocumentDiscount.getC_Payment_ID());
+					// Si es diferente al anterior, se guarda el document discount 
+					if(oldKeyDD != null && !oldKeyDD.equals(keyDD)) {
+						BigDecimal discountAmt = Util.getRatedAmt(totalPriceList, totalDiscountAmt,
+								totalDiscountBaseAmt, tmpPrecision);
+						BigDecimal propAmt = Util.getProportionalAmt(discountAmt, totalPriceList, totalDiscountBaseAmt);
+						// Si es Bonificación, acumulo en el bonus amt
+						if (MDocumentDiscount.DISCOUNTAPPLICATION_Bonus.equals(da)) {
+							bonusDiscountAmt = bonusDiscountAmt.add(propAmt);
+						}
+						// Sino en el de línea
+						else{
+							lineDiscountAmt = lineDiscountAmt.add(propAmt);				
+						}
+						createDocumentDiscountToSave(ds, d, totalPriceList, propAmt, 
+								MDiscountSchema.CUMULATIVELEVEL_Line, da, dk, p, true);
+					}
+					
+					oldKeyDD = keyDD;
+					dk = mDocumentDiscount.getDiscountKind();
+					da = mDocumentDiscount.getDiscountApplication();
+					ds = mDocumentDiscount.getM_DiscountSchema_ID();
+					p = mDocumentDiscount.getC_Payment_ID();
+					d = mDocumentDiscount.getDescription();*/
+
 					if (MDocumentDiscount.DISCOUNTAPPLICATION_Bonus.equals(mDocumentDiscount.getDiscountApplication())) {
-						bonusDiscountAmt = bonusDiscountAmt.add(discountAmt);
+						totalBonusDiscountBaseAmt = totalBonusDiscountBaseAmt.add(mDocumentDiscount.getDiscountBaseAmt());
+						totalBonusDiscountAmt = totalBonusDiscountAmt.add(mDocumentDiscount.getDiscountAmt());
 					}
 					// Sino en el de línea
 					else{
-						lineDiscountAmt = lineDiscountAmt.add(discountAmt);				
+						totalLineDiscountBaseAmt = totalLineDiscountBaseAmt.add(mDocumentDiscount.getDiscountBaseAmt());
+						totalLineDiscountAmt = totalLineDiscountAmt.add(mDocumentDiscount.getDiscountAmt());				
 					}
-					// Registro el descuento para luego guardar
-					createDocumentDiscountToSave(mDocumentDiscount, totalPriceList, discountAmt, true);
 				}
 			}
+			
+			// Se guardan los document discount
+			// Bonus
+			if(totalBonusDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
+				BigDecimal discountBonusAmt = Util.getRatedAmt(totalPriceList, totalBonusDiscountAmt,
+						totalBonusDiscountBaseAmt, tmpPrecision);
+				
+				// Si es Bonificación, guardo la bonificación
+				if (discountBonusAmt.compareTo(BigDecimal.ZERO) != 0) {
+					createDocumentDiscountToSave(0, getProductName(), totalPriceList, discountBonusAmt, 
+							MDiscountSchema.CUMULATIVELEVEL_Line, MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
+							MDocumentDiscount.DISCOUNTKIND_DiscountLine, 0, true);
+				}
+				totalBonusDiscountAmt = discountBonusAmt;
+			}
+			// Descuentos de línea
+			if(totalLineDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
+				BigDecimal discountLineAmt = Util.getRatedAmt(totalPriceList, totalLineDiscountAmt,
+						totalLineDiscountBaseAmt, tmpPrecision);
+				// Sino en el de línea
+				if (discountLineAmt.compareTo(BigDecimal.ZERO) != 0) {
+					createDocumentDiscountToSave(0, getProductName(), totalPriceList, discountLineAmt, 
+							MDiscountSchema.CUMULATIVELEVEL_Line, MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+							MDocumentDiscount.DISCOUNTKIND_DiscountLine, 0, true);
+				}
+				totalLineDiscountAmt = discountLineAmt;
+			}
+			
 		}
 		// DEPRECATED: En caso que no existan, se deja el código anterior, tomando en cuenta
 		// los importes de descuento de las líneas
 		else{
-			lineDiscountAmt = Util.getRatedAmt(totalPriceList, orderLine.getLineDiscountAmt(),
+			totalLineDiscountAmt = Util.getRatedAmt(totalPriceList, orderLine.getLineDiscountAmt(),
 					orderLine.getPriceList().multiply(orderLine.getQtyOrdered()), tmpPrecision);
-			if(!Util.isEmpty(lineDiscountAmt, true)){
-				createDocumentDiscountToSave(0, getProductName(), totalPriceList, lineDiscountAmt,
+			if(!Util.isEmpty(totalLineDiscountAmt, true)){
+				createDocumentDiscountToSave(0, getProductName(), totalPriceList, totalLineDiscountAmt,
 						MDocumentDiscount.CUMULATIVELEVEL_Line, MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
 						MDocumentDiscount.DISCOUNTKIND_DiscountLine, 0, true);
 			}
 			
-			bonusDiscountAmt = Util.getRatedAmt(totalPriceList, orderLine.getLineBonusAmt(),
+			totalBonusDiscountAmt = Util.getRatedAmt(totalPriceList, orderLine.getLineBonusAmt(),
 					orderLine.getPriceList().multiply(orderLine.getQtyOrdered()), tmpPrecision);
-			if(!Util.isEmpty(bonusDiscountAmt, true)){
-				createDocumentDiscountToSave(0, getProductName(), totalPriceList, bonusDiscountAmt,
+			if(!Util.isEmpty(totalBonusDiscountAmt, true)){
+				createDocumentDiscountToSave(0, getProductName(), totalPriceList, totalBonusDiscountAmt,
 						MDocumentDiscount.CUMULATIVELEVEL_Line, MDocumentDiscount.DISCOUNTAPPLICATION_Bonus,
 						MDocumentDiscount.DISCOUNTKIND_DiscountLine, 0, true);
 			}
 		}
 		
-		setLineBonusAmt(bonusDiscountAmt.setScale(scale, BigDecimal.ROUND_HALF_UP));
-		setLineDiscountAmt(lineDiscountAmt.setScale(scale, BigDecimal.ROUND_HALF_UP));
+		setLineBonusAmt(totalBonusDiscountAmt.setScale(scale, BigDecimal.ROUND_HALF_DOWN));
+		setLineDiscountAmt(totalLineDiscountAmt.setScale(scale, BigDecimal.ROUND_HALF_DOWN));
 		
 		// Actualizar el precio
 		if(updatePrice && !isDragOrderPrice()){
@@ -477,9 +532,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 						parentDocumentDiscounts.put(mDocumentDiscount.getC_DocumentDiscount_Parent_ID(), parent);
 					}
 					discountAmt = discountAmt.multiply(totalPriceList
-							.divide(mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision, BigDecimal.ROUND_HALF_UP));
+							.divide(mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision, BigDecimal.ROUND_HALF_DOWN));
 							*/
-					documentDiscountAmt = documentDiscountAmt.add(discountAmt.setScale(2, BigDecimal.ROUND_HALF_UP));
+					documentDiscountAmt = documentDiscountAmt.add(discountAmt.setScale(2, BigDecimal.ROUND_HALF_DOWN));
 					// Registro el descuento para luego guardar
 					createDocumentDiscountToSave(mDocumentDiscount, totalPriceList, discountAmt, true);
 				}
@@ -497,7 +552,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			}
 		}
 		
-		setDocumentDiscountAmt(documentDiscountAmt.setScale(scale, BigDecimal.ROUND_HALF_UP));
+		setDocumentDiscountAmt(documentDiscountAmt.setScale(scale, BigDecimal.ROUND_HALF_DOWN));
     }
     
     /**
@@ -688,7 +743,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         if( getQtyEntered().compareTo( getQtyInvoiced()) == 0 ) {
             setPriceEntered( getPriceActual());
         } else {
-            setPriceEntered( getPriceActual().multiply( getQtyInvoiced().divide( getQtyEntered(),BigDecimal.ROUND_HALF_UP )));    // no precision
+            setPriceEntered( getPriceActual().multiply( getQtyInvoiced().divide( getQtyEntered(),BigDecimal.ROUND_HALF_DOWN )));    // no precision
         }
 
         //
@@ -832,7 +887,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         BigDecimal net = getPriceActual().multiply( getQtyInvoiced());
 
         if( net.scale() > getPrecision()) {
-            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_DOWN );
         }
 
         super.setLineNetAmt( net );
@@ -1337,17 +1392,19 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 				: getPriceActual();
 		BigDecimal lineDiscountAmtUnit = priceList.multiply(
 				generalManualDiscount).divide(HUNDRED, scale,
-				BigDecimal.ROUND_HALF_UP);
+				BigDecimal.ROUND_HALF_DOWN);
 		// Seteo el precio ingresado con el precio de lista - monto de
 		// descuento
 		setPrice(priceList.subtract(lineDiscountAmtUnit));
 		setLineDiscountAmt(lineDiscountAmtUnit.multiply(getQtyEntered()));
-		setTaxAmt(BigDecimal.ZERO);
+		//setTaxAmt(BigDecimal.ZERO);
+		setLineNetAmt();
+		setTaxAmt();
     }
     
     public BigDecimal getDiscountAmt(BigDecimal baseAmt, BigDecimal discountPerc, Integer scale){
 		return getDiscountAmt(baseAmt, discountPerc.divide(HUNDRED, scale,
-				BigDecimal.ROUND_HALF_UP));
+				BigDecimal.ROUND_HALF_DOWN));
     }
     
     public BigDecimal getDiscountAmt(BigDecimal baseAmt, BigDecimal discountRate){
@@ -1871,7 +1928,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     public BigDecimal getUnityAmt(BigDecimal amt){
 		return amt.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : amt
 				.divide(getQtyEntered(), amt.scale(),
-						BigDecimal.ROUND_HALF_EVEN);
+						BigDecimal.ROUND_HALF_DOWN);
     }
 
 	/**
@@ -2217,12 +2274,12 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         else{
         	// Si la Tarifa tiene solo impuesto incluido, pero sin percepciones incluidas, el neto se calcula haciendo: monto / (1 + Tasa de Impuesto)
         	if(isTaxIncluded()){
-        		net = net.divide( (BigDecimal.ONE.add(tax)), 2, BigDecimal.ROUND_HALF_UP );
+        		net = net.divide( (BigDecimal.ONE.add(tax)), 2, BigDecimal.ROUND_HALF_DOWN );
         	}
         }
 
         if( net.scale() > getPrecision()) {
-            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_DOWN );
         }
 
         super.setLineNetAmount(net);
@@ -2236,7 +2293,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     public void updateLineNetAmt() {
         BigDecimal net = getLineNetAmount().add(getTaxAmt());
         if( net.scale() > getPrecision()) {
-            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+            net = net.setScale( getPrecision(),BigDecimal.ROUND_HALF_DOWN );
         }
         super.setLineNetAmt(net);
     }    // setLineNetAmt
@@ -2247,7 +2304,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
      *
      */
     public void updateTaxAmt() {
-    	BigDecimal tax = getTaxRate().divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_UP);
+    	BigDecimal tax = getTaxRate().divide(new BigDecimal(100), 2, BigDecimal.ROUND_HALF_DOWN);
     	BigDecimal net = getLineNetAmt();
          
     	GeneratorPercepciones generator = new GeneratorPercepciones(getCtx(), getInvoice().getDiscountableWrapper(), get_TrxName());
@@ -2266,7 +2323,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     	
         BigDecimal taxAmt = net.multiply(tax);
         if( taxAmt.scale() > getPrecision()) {
-        	taxAmt = taxAmt.setScale( getPrecision(),BigDecimal.ROUND_HALF_UP );
+        	taxAmt = taxAmt.setScale( getPrecision(),BigDecimal.ROUND_HALF_DOWN );
         }
         super.setTaxAmt(taxAmt);
     }    // setLineNetAmt

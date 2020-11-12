@@ -31,6 +31,7 @@ import org.openXpertya.pos.model.Tax;
 import org.openXpertya.pos.model.User;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
+import org.openXpertya.process.ElectronicEventListener;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.AUserAuthModel;
 import org.openXpertya.util.CLogger;
@@ -158,6 +159,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 			Integer beforeCheckDeadLineFrom, Integer beforeCheckDeadLineTo,
 			Integer actualCheckDeadLine); 
 	
+	public abstract boolean regenerateCAE(Order order);
+	
 	public int getClientCurrencyID() {
 		return getPoSCOnfig().getCurrencyID();
 	}
@@ -179,7 +182,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	private DocActionStatusListener docActionStatusListener;
 	private FiscalDocumentPrintListener fiscalDocumentPrintListener;
 	private FiscalPrinterEventListener fiscalPrinterEventListener;
-
+	private ElectronicEventListener electronicEventListener;
+	
 	/**
 	 * @return the fiscalDocumentPrintListener
 	 */
@@ -224,5 +228,13 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	 */
 	public void setProcessListener(ASyncProcess processListener) {
 		this.processListener = processListener;
+	}
+
+	public ElectronicEventListener getElectronicEventListener() {
+		return electronicEventListener;
+	}
+
+	public void setElectronicEventListener(ElectronicEventListener electronicEventListener) {
+		this.electronicEventListener = electronicEventListener;
 	}
 }

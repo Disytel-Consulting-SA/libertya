@@ -2,6 +2,7 @@ package org.openXpertya.print.fiscal.document;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,11 +62,20 @@ public abstract class Document implements Serializable{
 	private List<DiscountLine> documentDiscounts = null;
 	/** Impuestos adicionales */
 	private List<Tax> otherTaxes = null;
+	/** Impuestos */
+	private List<Tax> taxes = null;
+	
 	/**
 	 * El documento tiene el impuesto incluído? Esto se determina en base a la
 	 * tarifa asociada
 	 */
 	private boolean isTaxIncluded = false;
+	/** Información de la compañía y organización */
+	private ClientOrgInfo clientOrgInfo = null;
+	/** CAE */
+	private String cae;
+	/** Fecha de Vto de CAE */
+	private Timestamp caeDueDate;
 	
 	public Document() {
 		super();
@@ -75,6 +85,8 @@ public abstract class Document implements Serializable{
 		footerObservations = new ArrayList<String>();
 		documentDiscounts = new ArrayList<DiscountLine>();
 		otherTaxes = new ArrayList<Tax>();
+		setClientOrgInfo(new ClientOrgInfo());
+		setTaxes(new ArrayList<Tax>());
 	}
 	
 	/**
@@ -250,6 +262,23 @@ public abstract class Document implements Serializable{
 		if(hasGeneralDiscount())
 			sum = sum.add(getGeneralDiscount().getAmount());
 		
+		// Sumo otros impuestos
+		for (Tax otherTax : getOtherTaxes()) {
+			sum = sum.add(otherTax.getAmt());
+		}
+		
+		return sum;
+	}
+	
+	/**
+	 * @return Retorna el monto neto del documento.
+	 */
+	public BigDecimal getNetAmount() {
+		BigDecimal sum = BigDecimal.ZERO;
+		// Se suma el total de cada línea.
+		for (DocumentLine docLine : getLines()) {
+			sum = sum.add(docLine.getSubtotalNet());
+		}
 		return sum;
 	}
 	
@@ -374,5 +403,37 @@ public abstract class Document implements Serializable{
 
 	public void setTaxIncluded(boolean isTaxIncluded) {
 		this.isTaxIncluded = isTaxIncluded;
+	}
+
+	public ClientOrgInfo getClientOrgInfo() {
+		return clientOrgInfo;
+	}
+
+	public void setClientOrgInfo(ClientOrgInfo clientOrgInfo) {
+		this.clientOrgInfo = clientOrgInfo;
+	}
+
+	public String getCae() {
+		return cae;
+	}
+
+	public void setCae(String cae) {
+		this.cae = cae;
+	}
+
+	public Timestamp getCaeDueDate() {
+		return caeDueDate;
+	}
+
+	public void setCaeDueDate(Timestamp caeDueDate) {
+		this.caeDueDate = caeDueDate;
+	}
+
+	public List<Tax> getTaxes() {
+		return taxes;
+	}
+
+	public void setTaxes(List<Tax> taxes) {
+		this.taxes = taxes;
 	}
 }

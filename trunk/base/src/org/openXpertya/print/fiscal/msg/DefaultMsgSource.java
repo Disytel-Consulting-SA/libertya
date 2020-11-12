@@ -109,6 +109,20 @@ public class DefaultMsgSource implements MsgSource {
 		msgs.put("PstPrinterCoverOpenDesc","No es posible continuar hasta que la tapa sea cerrada.");
 		msgs.put("PstMoneyDrawerClosedTitle","Cajón de dinero cerrado o ausente");
 		msgs.put("PstMoneyDrawerClosedDesc","");
+		
+		// Mensajes de estado de impresoras ESC/POS
+		msgs.put("Pst_ESCPOS_MoneyDrawerTitle","Error debido al cajón de dinero");
+		msgs.put("Pst_ESCPOS_MoneyDrawerDesc","La señal del cajón de dinero es baja (conector/pin 3).");
+		msgs.put("Pst_ESCPOS_PaperTitle","Error de papel");
+		msgs.put("Pst_ESCPOS_PaperFeedButtonDesc","El papel está siendo alimentado por el botón FEED.");
+		msgs.put("Pst_ESCPOS_PrintingStoppedTitle","Impresión interrumpida");
+		msgs.put("Pst_ESCPOS_PrintingStoppedDesc","La impresión se vió interrupida por algún factor.");
+		msgs.put("Pst_ESCPOS_CutterTitle","Error de cutter");
+		msgs.put("Pst_ESCPOS_CutterDesc","Ocurrió un error debido a problemas con el cutter de la impresora.");
+		msgs.put("Pst_ESCPOS_UnrecoverableDesc","Ocurrió un error irrecuperable en la impresora.");
+		msgs.put("Pst_ESCPOS_AutorecoverableDesc","Ocurrió un error recuperable en la impresora.");
+		msgs.put("PstPaperAlmostOutDesc","El sensor de papel indica que está a punto de agotarse.");
+		msgs.put("PstPaperOutDesc","El sensor de papel indica que falta papel.");
 	}
 	
 	public String get(String key) {
