@@ -47,6 +47,35 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_BankPaymentStatus[").append(getID()).append("]");
 return sb.toString();
 }
+/** Set AD_ComponentObjectUID */
+public void setAD_ComponentObjectUID (String AD_ComponentObjectUID)
+{
+if (AD_ComponentObjectUID != null && AD_ComponentObjectUID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+AD_ComponentObjectUID = AD_ComponentObjectUID.substring(0,100);
+}
+set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
+}
+/** Get AD_ComponentObjectUID */
+public String getAD_ComponentObjectUID() 
+{
+return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Component Version Identifier */
+public void setAD_ComponentVersion_ID (int AD_ComponentVersion_ID)
+{
+if (AD_ComponentVersion_ID <= 0) set_Value ("AD_ComponentVersion_ID", null);
+ else 
+set_Value ("AD_ComponentVersion_ID", new Integer(AD_ComponentVersion_ID));
+}
+/** Get Component Version Identifier */
+public int getAD_ComponentVersion_ID() 
+{
+Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Bank Payment Status ID */
 public void setC_BankPaymentStatus_ID (int C_BankPaymentStatus_ID)
 {

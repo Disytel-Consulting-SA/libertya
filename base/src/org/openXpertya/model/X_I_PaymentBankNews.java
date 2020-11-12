@@ -187,10 +187,10 @@ return (String)get_Value("Payment_Order");
 /** Set Payment_Status */
 public void setPayment_Status (String Payment_Status)
 {
-if (Payment_Status != null && Payment_Status.length() > 2)
+if (Payment_Status != null && Payment_Status.length() > 40)
 {
-log.warning("Length > 2 - truncated");
-Payment_Status = Payment_Status.substring(0,2);
+log.warning("Length > 40 - truncated");
+Payment_Status = Payment_Status.substring(0,40);
 }
 set_Value ("Payment_Status", Payment_Status);
 }
