@@ -17,7 +17,7 @@ public class HasarFiscalPacket extends AbstractFiscalPacket
 {
 	private static final byte FS = 0x1C;
 	private static final byte NL  = 0x0D;
-	private final String encoding;
+	private String encoding;
 	private final int baseRolloverYear;
 	private final int baseRolloverCentury;
 	private final int rolloverYear;
@@ -221,6 +221,15 @@ public class HasarFiscalPacket extends AbstractFiscalPacket
 		byte[] newPacketBytes = ArrayUtils.append(cmdBytes,packetBytes);
 		decode(newPacketBytes);
 	}
-	
-	
+
+	@Override
+	public void add(String value) {
+		byte[] f;
+		try {
+			f = value.getBytes(getEncoding());
+		} catch (Exception e) {
+			throw new RuntimeException("Unsupported encoding (" + getEncoding() + ")");
+		}
+		add(f);
+	}
 }

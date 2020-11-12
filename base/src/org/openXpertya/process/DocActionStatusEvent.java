@@ -17,6 +17,8 @@ public class DocActionStatusEvent extends EventObject {
 	public static final int ST_REVERSE_CORRECT_DOCUMENT = 2;
 	/** DocActionStatus: Printing the document with fiscal printer */
 	public static final int ST_FISCAL_PRINT_DOCUMENT = 3;
+	/** DocActionStatus: Generating CAE */
+	public static final int ST_GENERATING_CAE = 4;
 	
 	/** DocAction Status */
 	private int docActionStatus;

@@ -216,7 +216,7 @@ public class OrderProduct {
 		BigDecimal price = getPrice();
 		if (excludeBonus) {
 			price = (getPrice().multiply(getCount()).add(getLineBonusAmt()))
-					.divide(getCount(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
+					.divide(getCount(), price.scale(), BigDecimal.ROUND_HALF_DOWN);
 		}
 		return getTaxedPrice(price);
 	}
@@ -261,7 +261,7 @@ public class OrderProduct {
 		BigDecimal netAmount = amount;
 
 		if (getProduct().isTaxIncludedInPrice()){
-			netAmount = amount.divide(getTax().getTaxRateDivisor(), 6, BigDecimal.ROUND_HALF_UP);
+			netAmount = amount.divide(getTax().getTaxRateDivisor(), 6, BigDecimal.ROUND_HALF_DOWN);
 		}
 		
 		return scaleAmount(netAmount);
@@ -282,12 +282,12 @@ public class OrderProduct {
 		
 		if (!getProduct().isTaxIncludedInPrice()){
 			rateMultipliers = rateMultipliers.add(getTax().getTaxRateMultiplier());
-			price = price.divide(BigDecimal.ONE.add(rateMultipliers),20, BigDecimal.ROUND_HALF_UP);
+			price = price.divide(BigDecimal.ONE.add(rateMultipliers),20, BigDecimal.ROUND_HALF_DOWN);
 		}
 		else{
 			// Determino el neto
 			BigDecimal rateMultipliersAux = rateMultipliers.add(getTax().getTaxRateMultiplier());
-			BigDecimal priceAux = price.divide(BigDecimal.ONE.add(rateMultipliersAux),20, BigDecimal.ROUND_HALF_UP);
+			BigDecimal priceAux = price.divide(BigDecimal.ONE.add(rateMultipliersAux),20, BigDecimal.ROUND_HALF_DOWN);
 			// Le aplico las tasas de los impuestos adicionales para saber qué
 			// parte del precio es de impuesto adicional, luego se lo resto al
 			// precio parámetro
@@ -304,7 +304,7 @@ public class OrderProduct {
 	 */
 	/*public BigDecimal getNetPrice(BigDecimal taxedPrice){
 		BigDecimal netPrice = taxedPrice.divide(getTax().getTaxRateDivisor(),
-				20, BigDecimal.ROUND_HALF_UP);		
+				20, BigDecimal.ROUND_HALF_DOWN);		
 		
 		return scalePrice(netPrice);
 	}*/
@@ -319,7 +319,7 @@ public class OrderProduct {
 		BigDecimal netPrice = taxedPrice.divide(
 				BigDecimal.ONE.add(getTax().getTaxRateMultiplier().add(
 						getOrder().getSumOtherTaxesRateMultipliers())), 20,
-				BigDecimal.ROUND_HALF_UP);		
+				BigDecimal.ROUND_HALF_DOWN);		
 		
 		return scalePrice(netPrice);
 	}*/
@@ -340,11 +340,12 @@ public class OrderProduct {
 		discount = calculateDiscount(getPrice());
 	}
 	
-	public BigDecimal calculateDiscount(BigDecimal price) {
+	public BigDecimal calculateDiscount(BigDecimal taxedPrice) {
 		BigDecimal cDiscount = BigDecimal.ZERO;
 		if(getPriceList().compareTo(BigDecimal.ZERO) != 0) {
-			BigDecimal diff = getPricesDiff(getPriceList(), price);
-			cDiscount = diff.multiply(new BigDecimal(100)).divide(getPriceList(),10,BigDecimal.ROUND_HALF_UP);
+			BigDecimal taxedPriceList = getTaxedPrice(getPriceList());
+			BigDecimal diff = getPricesDiff(taxedPriceList, taxedPrice);
+			cDiscount = diff.multiply(new BigDecimal(100)).divide(taxedPriceList,10,BigDecimal.ROUND_HALF_DOWN);
 		}
 		return cDiscount;
 	}
@@ -356,7 +357,7 @@ public class OrderProduct {
 	public BigDecimal calculatePrice(BigDecimal discount, boolean decompose) {
 		BigDecimal cPrice = getPriceList();
 		if(discount != null) {
-			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_UP)));
+			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_DOWN)));
 		}
 		if(decompose){
 			cPrice = decomposePrice(cPrice);
@@ -375,7 +376,7 @@ public class OrderProduct {
 		BigDecimal includedTaxesDivisors = getAllIncludedTaxesMultipliers();
 		
 		netPrice = basePrice.divide(BigDecimal.ONE.add(includedTaxesDivisors), basePrice.scale(),
-				BigDecimal.ROUND_HALF_UP);
+				BigDecimal.ROUND_HALF_DOWN);
 		if(getProduct().isTaxIncludedInPrice()){
 			taxPrice = netPrice.multiply(getTax().getTaxRateMultiplier()).setScale(basePrice.scale(),
 					BigDecimal.ROUND_HALF_UP);
@@ -388,7 +389,17 @@ public class OrderProduct {
 		BigDecimal thePrice = netPrice.add(taxPrice).add(otherTaxPrice);
 		BigDecimal diff = basePrice.subtract(thePrice);
 		
-		netPrice = netPrice.add(diff);
+		if(diff.compareTo(BigDecimal.ZERO) != 0) {
+			if(getProduct().isPerceptionIncludedInPrice()){
+				otherTaxPrice = otherTaxPrice.add(diff);
+			}
+			else if(getProduct().isTaxIncludedInPrice()){
+				taxPrice = taxPrice.add(diff);
+			}
+			else {
+				netPrice = netPrice.add(diff);
+			}
+		}
 		
 		return netPrice.add(taxPrice).add(otherTaxPrice);
 	}
@@ -587,7 +598,7 @@ public class OrderProduct {
 		BigDecimal price = getPrice();
 		if (excludeBonus) {
 			price = (getPrice().multiply(getCount()).add(getLineBonusAmt()))
-					.divide(getCount(), price.scale(), BigDecimal.ROUND_HALF_EVEN);
+					.divide(getCount(), price.scale(), BigDecimal.ROUND_HALF_DOWN);
 		}
 		return price;
 	}
@@ -691,7 +702,7 @@ public class OrderProduct {
 		
 		BigDecimal otherTaxMultiplier = otherTax == null? 
 				new BigDecimal(1)
-				: otherTax.getTaxRateMultiplier().divide(allMultipliers, 6, BigDecimal.ROUND_HALF_UP);
+				: otherTax.getTaxRateMultiplier().divide(allMultipliers, 6, BigDecimal.ROUND_HALF_DOWN);
 		
 		return scaleAmount(
 				getTaxBaseAmt(includeDocumentDiscount, isTemporal).multiply(otherTax == null ? allMultipliers : otherTax.getTaxRateMultiplier()));

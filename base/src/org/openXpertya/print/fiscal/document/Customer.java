@@ -65,8 +65,12 @@ public class Customer implements Serializable{
 	private int identificationType = SIN_CALIFICADOR;
 	/** Número de identificación del cliente */
 	private String identificationNumber = null;
+	/** Nombre del tipo de identificación */
+	private String identificationName = null;
 	/** Responsabilidad frente al IVA del cliente */ 
 	private int ivaResponsibility = NO_CATEGORIZADO;
+	/** Nombre de la responsabilidad ante el iva */
+	private String ivaResponsibilityName = null;
 	/** Domicilio legal del cliente */
 	private String location = null;
 	/** Estado de Crédito */
@@ -280,5 +284,21 @@ public class Customer implements Serializable{
 
 	public String getValue() {
 		return value;
+	}
+
+	public String getIvaResponsibilityName() {
+		return ivaResponsibilityName;
+	}
+
+	public void setIvaResponsibilityName(String ivaResponsibilityName) {
+		this.ivaResponsibilityName = ivaResponsibilityName;
+	}
+
+	public String getIdentificationName() {
+		return identificationName;
+	}
+
+	public void setIdentificationName(String identificationName) {
+		this.identificationName = identificationName;
 	}
 }

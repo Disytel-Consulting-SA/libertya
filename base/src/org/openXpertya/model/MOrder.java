@@ -1549,7 +1549,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 							pp.getPriceList().multiply(
 									orderLine.getDiscount().divide(
 											Env.ONEHUNDRED, 4,
-											BigDecimal.ROUND_HALF_UP))));
+											BigDecimal.ROUND_HALF_DOWN))));
 					if(!orderLine.save()){
 						log.saveError("SaveError", CLogger.retrieveErrorAsString());
 						return false;
@@ -3259,6 +3259,9 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 				grandTotal = grandTotal.add( orderTax.getTaxAmt() ); 
 		}
 
+        // Previamente actualizar el total de chargeamt
+        updateChargeAmt();
+        
         // Recalculo el total a partir del importe del cargo
         grandTotal = grandTotal.add(getChargeAmt());
         
@@ -3796,7 +3799,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             ioLine.setQty( MovementQty );
 
             if( oLine.getQtyEntered().compareTo( oLine.getQtyOrdered()) != 0 ) {
-                ioLine.setQtyEntered( MovementQty.multiply( oLine.getQtyEntered()).divide( oLine.getQtyOrdered(),BigDecimal.ROUND_HALF_UP ));
+                ioLine.setQtyEntered( MovementQty.multiply( oLine.getQtyEntered()).divide( oLine.getQtyOrdered(),BigDecimal.ROUND_HALF_DOWN ));
             }
 
             if( !ioLine.save( get_TrxName())) {
@@ -3923,7 +3926,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
                 if( oLine.getQtyOrdered().compareTo( oLine.getQtyEntered()) == 0 ) {
                     iLine.setQtyEntered( iLine.getQtyInvoiced());
                 } else {
-                    iLine.setQtyEntered( iLine.getQtyInvoiced().multiply( oLine.getQtyEntered()).divide( oLine.getQtyOrdered(),BigDecimal.ROUND_HALF_UP ));
+                    iLine.setQtyEntered( iLine.getQtyInvoiced().multiply( oLine.getQtyEntered()).divide( oLine.getQtyOrdered(),BigDecimal.ROUND_HALF_DOWN ));
                 }
 
                 if( !iLine.save( get_TrxName())) {
@@ -4665,11 +4668,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		// Se obtuvieron ambos importes
 		} else {
 			// Actualización del monto de descuento de la cabecera del pedido
-			if(isUpdateChargeAmt()){
-				BigDecimal chargeAmt = getTotalDocumentDiscountAmtFromLines();
-				chargeAmt = Util.isEmpty(chargeAmt, true)?BigDecimal.ZERO:chargeAmt.negate(); 
-				setChargeAmt(chargeAmt);
-			}
+			updateChargeAmt();
+			
 			BigDecimal grandTotal = null;    // Total del pedido calculado
 			BigDecimal chargeAmt =           // Importe del cargo (descuentos) 
 				getChargeAmt() != null ? getChargeAmt() : BigDecimal.ZERO;
@@ -5232,6 +5232,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	public void copyInstanceValues(PO to){
 		super.copyInstanceValues(to);
 		((MOrder)to).setTPVInstance(isTPVInstance());
+	}
+	
+	protected void updateChargeAmt() {
+		if(isUpdateChargeAmt()){
+			BigDecimal chargeAmt = getTotalDocumentDiscountAmtFromLines();
+			chargeAmt = Util.isEmpty(chargeAmt, true)?BigDecimal.ZERO:chargeAmt.negate(); 
+			setChargeAmt(chargeAmt);
+		}
 	}
 }    // MOrder
 

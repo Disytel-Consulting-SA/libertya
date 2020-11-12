@@ -538,7 +538,7 @@ public class DiscountCalculator {
 		// respecto del importe base. (e.d., cuanto representa la línea dentro
 		// del importe base a aplicar)
 		BigDecimal ratio = baseAmt.divide(documentTotalAmt, 20,
-				BigDecimal.ROUND_HALF_EVEN);
+				BigDecimal.ROUND_HALF_DOWN);
 
 		// Precio de la línea. Se obtiene teniendo en cuenta el nivel del
 		// esquema de descuento.
@@ -606,7 +606,7 @@ public class DiscountCalculator {
 		BigDecimal discountAmt = BigDecimal.ZERO;
 		if (price != null && discountPercentage != null) {
 			BigDecimal discountRate = discountPercentage.divide(
-					BigDecimal.valueOf(100), 20, BigDecimal.ROUND_HALF_EVEN);
+					BigDecimal.valueOf(100), 20, BigDecimal.ROUND_HALF_DOWN);
 			discountAmt = scaleAmount(price.multiply(discountRate));
 		}
 		return discountAmt;
@@ -1178,7 +1178,7 @@ public class DiscountCalculator {
 		BigDecimal newPrice = (documentLine.getPriceList()
 				.multiply(documentLine.getQty()).subtract(lineBonusAmt)
 				.subtract(lineDiscountAmt)).divide(documentLine.getQty(), 20,
-				BigDecimal.ROUND_HALF_EVEN);
+				BigDecimal.ROUND_HALF_DOWN);
 		documentLine.setPrice(scalePrice(newPrice));
 	}
 
@@ -1980,7 +1980,7 @@ public class DiscountCalculator {
 		BigDecimal newPrice = price;
 		if (isApplyScale()) {
 			int scale = MCurrency.get(getCtx(), getCurrencyID()).getCostingPrecision();
-			newPrice = price.setScale(scale, BigDecimal.ROUND_HALF_UP);
+			newPrice = price.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
 		}
 		return newPrice;
 	}
@@ -1997,7 +1997,7 @@ public class DiscountCalculator {
 		BigDecimal newAmount = amount;
 		if (isApplyScale()) {
 			int scale = MCurrency.get(getCtx(), getCurrencyID()).getStdPrecision();
-			newAmount = amount.setScale(scale, BigDecimal.ROUND_HALF_UP);
+			newAmount = amount.setScale(scale, BigDecimal.ROUND_HALF_DOWN);
 		}
 		return newAmount;
 	}
@@ -2527,7 +2527,7 @@ public class DiscountCalculator {
 		if (appBaseAmt == null) {
 			appBaseAmt = documentTotalAmt;
 		}
-		return appBaseAmt.divide(documentTotalAmt, 6, BigDecimal.ROUND_HALF_EVEN);
+		return appBaseAmt.divide(documentTotalAmt, 6, BigDecimal.ROUND_HALF_DOWN);
 	}
 
 	/**
@@ -3296,7 +3296,7 @@ public class DiscountCalculator {
 				appBaseAmt = documentTotalAmt;
 			}
 			return appBaseAmt.divide(documentTotalAmt, 20,
-					BigDecimal.ROUND_HALF_EVEN);
+					BigDecimal.ROUND_HALF_DOWN);
 		}
 		
 		/**

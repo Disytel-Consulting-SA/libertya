@@ -110,4 +110,9 @@ public abstract class AbstractFiscalComm implements FiscalComm {
 		this.writer = writer;
 	}
 
+	@Override
+	public void finishPrint() throws Exception {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -21,12 +21,22 @@ public class NonFiscalDocument {
 	/** Cantidad de copias que se imprimen */
 	private int copies = 0;
 	
+	/** Información de la compañía y organización */
+	private ClientOrgInfo clientOrgInfo = null;
+	
+	/**
+	 * Observaciones o descripciones del documento para el pie de la
+	 * impresión
+	 */
+	private List<String> footerObservations;
+	
 	/**
 	 * Constructor por defecto de la clase.
 	 */
 	public NonFiscalDocument() {
 		super();
 		lines = new ArrayList<String>();
+		footerObservations = new ArrayList<String>();
 	}
 
 	/**
@@ -76,6 +86,28 @@ public class NonFiscalDocument {
 	public void setCopies(int copies) {
 		this.copies = copies;
 	}
+
+	public ClientOrgInfo getClientOrgInfo() {
+		return clientOrgInfo;
+	}
+
+	public void setClientOrgInfo(ClientOrgInfo clientOrgInfo) {
+		this.clientOrgInfo = clientOrgInfo;
+	}
 	
+	public List<String> getFooterObservations() {
+		return footerObservations;
+	}
 	
+	public void setFooterObservations(List<String> observations){
+		this.footerObservations = observations;
+	}
+	
+	/**
+	 * Agrega una observación del pie del documento.
+	 * @param observation Texto de la observación.
+	 */
+	public void addFooterObservation(String observation) {
+		footerObservations.add(observation);
+	}
 }

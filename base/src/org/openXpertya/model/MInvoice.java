@@ -41,6 +41,7 @@ import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.print.ReportEngine;
 import org.openXpertya.process.DocAction;
+import org.openXpertya.process.DocActionStatusEvent;
 import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.process.ProcessorWSFE;
 import org.openXpertya.reflection.CallResult;
@@ -175,6 +176,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	
 	/** Flag para ignorar validaciones sobre la caja diaria asignada */
 	private boolean ignorePOSJournalAssigned = false;
+
+	/** Flag para ignorar la generación de CAE */
+	private boolean ignoreCAEGeneration = false;
 	
 	/**
 	 * Descripción de Método
@@ -2557,7 +2561,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		// de los descuentos
 		BigDecimal discountManualPerc = totalLineDiscountAmt.multiply(
 				new BigDecimal(100)).divide(getGrandTotal(), scale,
-				BigDecimal.ROUND_HALF_UP);
+				BigDecimal.ROUND_HALF_DOWN);
 		setManualGeneralDiscount(discountManualPerc);
 	}
 
@@ -4164,6 +4168,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 			// Recargar el pedido
 			order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+			order.setUpdateChargeAmt(true);
 			// Completarlo
 			if (!order.processIt(MOrder.DOCACTION_Complete)) {
 				setProcessMsg("Error reactivating order to update qty: "
@@ -4389,6 +4394,22 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			getAditionalWorkResult().put(this, result.getResult());
 		}
 
+		/**
+		 * @agregado: Horacio Alvarez - Servicios Digitales S.A.
+		 * @fecha: 2009-06-16
+		 * @fecha: 2011-06-25 modificado para soportar WSFEv1.0
+		 * 
+		 */
+		if (requireCAEGeneration() && !isIgnoreCAEGeneration()) {
+			CallResult callResult = doCAEGeneration();
+			if (callResult.isError()) {
+				setcaeerror(callResult.getMsg());
+				log.log(Level.SEVERE, callResult.getMsg());
+				m_processMsg = callResult.getMsg();
+				return STATUS_Invalid;
+			}
+		}
+		
 		// LOCALIZACION ARGENTINA
 		// Emisión de la factura por controlador fiscal
 		if (requireFiscalPrint() && !isIgnoreFiscalPrint()) {
@@ -4398,57 +4419,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return STATUS_Invalid;
 			}
 		}
-
-		/**
-		 * @agregado: Horacio Alvarez - Servicios Digitales S.A.
-		 * @fecha: 2009-06-16
-		 * @fecha: 2011-06-25 modificado para soportar WSFEv1.0
-		 * 
-		 */
-		if (localeARActive
-				& MDocType.isElectronicDocType(getC_DocTypeTarget_ID())) {
-			
-			// === Lógica adicional para evitar doble notificación a AFIP. ===
-			// Si tiene CAE asignado, no debe generarlo nuevamente
-			if ((getcae() == null || getcae().length() == 0) && getcaecbte() != getNumeroComprobante()) {
-				// Se intenta obtener un proveedor de WSFE, en caso de no encontrarlo se utiliza la vieja version (via pyafipws) 
-				ElectronicInvoiceInterface processor = ElectronicInvoiceProvider.getImplementation(this);
-				if (processor==null) {
-					processor = new ProcessorWSFE(this);
-				} 
-				String errorMsg = processor.generateCAE();
-				if (Util.isEmpty(processor.getCAE())) {
-					setcaeerror(errorMsg);
-					m_processMsg = errorMsg;
-					log.log(Level.SEVERE, "CAE Error: " + errorMsg);
-					return DocAction.STATUS_Invalid;
-				} else {
-					setcae(processor.getCAE());
-					setvtocae(processor.getDateCae());
-					setcaeerror(errorMsg);
-					int nroCbte = Integer.parseInt(processor.getNroCbte());
-					boolean updateDocumentNo = getNumeroComprobante()!= nroCbte && this.skipAfterAndBeforeSave;
-					this.setNumeroComprobante(nroCbte);
-					
-					if(updateDocumentNo)
-						setDocumentNo(CalloutInvoiceExt
-								.GenerarNumeroDeDocumento(getPuntoDeVenta(),
-										getNumeroComprobante(), getLetra(),
-										isSOTrx(), false));
-
-					// Actualizar la secuencia del tipo de documento de la
-					// factura en función del valor recibido en el WS de AFIP
-					MDocType dt = MDocType.get(getCtx(), getC_DocType_ID(),
-							get_TrxName());
-					MSequence.setFiscalDocTypeNextNroComprobante(
-							dt.getDocNoSequence_ID(), nroCbte + 1,
-							get_TrxName());
-
-					log.log(Level.SEVERE, "CAE: " + processor.getCAE());
-					log.log(Level.SEVERE, "DATE CAE: " + processor.getDateCae());
-				}
-			}
-		}
+		
 		MPriceList pl = new MPriceList(getCtx(), getM_PriceList_ID(),
 				get_TrxName());
 		if (pl.isActualizarPreciosConFacturaDeCompra()) {
@@ -5236,7 +5207,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		
 		// Seteo la bandera que indica si se trata de una anulación.
 		reversal.setVoidProcess(voidProcess);
-
+		
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
 		// Para la localización argentina es necesario contemplar el tipo
@@ -5255,6 +5226,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			// imprima fiscalmente, pero no exista en la base de datos por
 			// alg+un error eventual
 			reversal.setIgnoreFiscalPrint(true);
+			// Se ignora la generación de CAE en este punto por el mismo caso que el
+			// anterior descrito para la impresión fiscal
+			reversal.setIgnoreCAEGeneration(true);
 		}
 
 		// Si el docType = reversalDocType, entonces se utilizará el mismo
@@ -5336,6 +5310,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				.isEmpty(voidDocumentFiscalDesc, true) ? null
 				: voidDocumentFiscalDesc);
 		reversal.setC_Order_Orig_ID(0);
+		reversal.setUpdateOrderQty(isUpdateOrderQty());
 		if (!reversal.processIt(DocAction.ACTION_Complete)) {
 			m_processMsg = "@ReversalError@: " + reversal.getProcessMsg();
 
@@ -5504,6 +5479,15 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 		}
 
+		// Generar CAE si es que el comprobante original asi lo tiene
+		if (localeARActive && isSOTrx() && !Util.isEmpty(getcae(), true)) {
+			CallResult callResult = reversal.doCAEGeneration();
+			if (callResult.isError()) {
+				m_processMsg = callResult.getMsg();
+				return false;
+			}
+		}
+		
 		// Imprimir fiscalmente el documento reverso si es que así lo requiere y
 		// si el documento a revertir también se imprimió fiscalmente
 		if (localeARActive && isSOTrx() && isFiscalAlreadyPrinted()) {
@@ -5978,7 +5962,8 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 */
 	public boolean requireFiscalPrint() {
 		return CalloutInvoiceExt.ComprobantesFiscalesActivos()
-				&& MDocType.isFiscalDocType(getC_DocTypeTarget_ID());
+				&& (MDocType.isFiscalDocType(getC_DocTypeTarget_ID())
+						|| isThermalFiscalPrint(getC_DocTypeTarget_ID()));
 	}
 
 	/**
@@ -7072,6 +7057,111 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 	public void setIgnorePOSJournalAssigned(boolean ignorePOSJournalAssigned) {
 		this.ignorePOSJournalAssigned = ignorePOSJournalAssigned;
+	}
+	
+	/**
+	 * El tipo de documento está configurado para impresión por impresora térmica
+	 * 
+	 * @param docTypeID id de tipo de documento
+	 * @return true si la impresora configurada en el tipo de documento es de tipo
+	 *         termica, false caso contrario
+	 */
+	public boolean isThermalFiscalPrint(int docTypeID) {
+		boolean isThermalPrint = false;
+		if(!Util.isEmpty(docTypeID, true)) {
+			MDocType dt = MDocType.get(getCtx(), docTypeID);
+			if(!Util.isEmpty(dt.getC_Controlador_Fiscal_ID(), true)) {
+				MControladorFiscal cf = new MControladorFiscal(getCtx(), dt.getC_Controlador_Fiscal_ID(),
+						get_TrxName());
+				isThermalPrint = MControladorFiscal.CONTROLADORFISCALTYPE_Thermal.equals(cf.getControladorFiscalType());
+			}
+		}
+		return isThermalPrint;
+	}
+
+	/**
+	 * @return true si este comprobante requiere generación de CAE, false caso
+	 *         contrario
+	 */
+	public boolean requireCAEGeneration() {
+		return CalloutInvoiceExt.ComprobantesFiscalesActivos() 
+				&& MDocType.isElectronicDocType(getC_DocTypeTarget_ID());
+	}
+	
+	public boolean isIgnoreCAEGeneration() {
+		return ignoreCAEGeneration;
+	}
+
+	public void setIgnoreCAEGeneration(boolean ignoreCAEGeneration) {
+		this.ignoreCAEGeneration = ignoreCAEGeneration;
+	} 
+
+	/**
+	 * Registrar FE y generar CAE
+	 * 
+	 * @return resultado de la llamada
+	 */
+	public CallResult doCAEGeneration() {
+		return doCAEGeneration(false);
+	}
+	
+	/**
+	 * Registrar FE y generar CAE
+	 * 
+	 * @param saveInvoice boolean que determina si se debe guardar o no la factura si el proceso fue existoso
+	 * @return resultado de la llamada
+	 */
+	public CallResult doCAEGeneration(boolean saveInvoice) {
+		CallResult cr = new CallResult();
+		// === Lógica adicional para evitar doble notificación a AFIP. ===
+		// Si tiene CAE asignado, no debe generarlo nuevamente
+		if (requireCAEGeneration() 
+				&& (getcae() == null || getcae().length() == 0) 
+				&& getcaecbte() != getNumeroComprobante()) {
+			// Se intenta obtener un proveedor de WSFE, en caso de no encontrarlo se utiliza la vieja version (via pyafipws) 
+			ElectronicInvoiceInterface processor = ElectronicInvoiceProvider.getImplementation(this);
+			if (processor==null) {
+				processor = new ProcessorWSFE(this);
+			} 
+			fireDocActionStatusChanged(
+					new DocActionStatusEvent(this, DocActionStatusEvent.ST_GENERATING_CAE, new Object[] { processor }));
+			String errorMsg = processor.generateCAE();
+			if (Util.isEmpty(processor.getCAE())) {
+				cr.setMsg(errorMsg, true);
+			} else {
+				setcae(processor.getCAE());
+				setvtocae(processor.getDateCae());
+				setcaeerror(errorMsg);
+				int nroCbte = Integer.parseInt(processor.getNroCbte());
+				boolean updateDocumentNo = getNumeroComprobante()!= nroCbte && this.skipAfterAndBeforeSave;
+				this.setNumeroComprobante(nroCbte);
+				
+				if(updateDocumentNo)
+					setDocumentNo(CalloutInvoiceExt
+							.GenerarNumeroDeDocumento(getPuntoDeVenta(),
+									getNumeroComprobante(), getLetra(),
+									isSOTrx(), false));
+
+				// Actualizar la secuencia del tipo de documento de la
+				// factura en función del valor recibido en el WS de AFIP
+				MDocType dt = MDocType.get(getCtx(), getC_DocType_ID(),
+						get_TrxName());
+				MSequence.setFiscalDocTypeNextNroComprobante(
+						dt.getDocNoSequence_ID(), nroCbte + 1,
+						get_TrxName());
+
+				log.log(Level.SEVERE, "CAE: " + processor.getCAE());
+				log.log(Level.SEVERE, "DATE CAE: " + processor.getDateCae());
+				
+				// Guardar la factura
+				if(saveInvoice && !save()) {
+					cr.setMsg(CLogger.retrieveErrorAsString(), true);
+				}
+				
+				
+			}
+		}
+		return cr;
 	}
 	
 } // MInvoice

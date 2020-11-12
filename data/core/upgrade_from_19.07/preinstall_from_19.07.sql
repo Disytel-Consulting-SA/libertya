@@ -2107,3 +2107,28 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_bankpaymentstatusas
 
 ALTER TABLE i_paymentbanknews ALTER COLUMN payment_status TYPE character varying(40);
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+
+--20201112-1300 Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+--(20200624-1950 Nuevos campos para soporte de impresoras térmicas mediante comandos ESC/POS)
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal','connectiontype','character(1)'));
+
+UPDATE C_Controlador_Fiscal
+SET connectiontype = 'T';
+
+ALTER TABLE C_Controlador_Fiscal ALTER COLUMN connectiontype SET NOT NULL;
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal','printername','character varying(100)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Controlador_Fiscal','controladorfiscaltype','character(1)'));
+
+UPDATE c_controlador_fiscal
+set controladorfiscaltype = 'F'
+where controladorfiscaltype is null;
+
+ALTER TABLE c_controlador_fiscal ALTER COLUMN controladorfiscaltype SET NOT NULL;
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_pos','voiddocuments_ef','character(1) NOT NULL DEFAULT ''Y''::bpchar'));
+
+--(20201020-1636 Eliminación de NOT NULL de campos. Migración de revisión ESCPOS 4781)
+ALTER TABLE c_controlador_fiscal ALTER COLUMN host DROP NOT NULL;
+ALTER TABLE c_controlador_fiscal ALTER COLUMN port DROP NOT NULL;
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby

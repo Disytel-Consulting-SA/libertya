@@ -73,6 +73,7 @@ import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.PrintInfo;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
+import org.openXpertya.pos.exceptions.GeneratingCAEError;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
 import org.openXpertya.pos.exceptions.InvalidOrderException;
@@ -109,6 +110,7 @@ import org.openXpertya.print.ReportEngine;
 import org.openXpertya.print.View;
 import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
 import org.openXpertya.process.DocAction;
+import org.openXpertya.process.ElectronicEventListener;
 import org.openXpertya.process.InvoiceGlobalVoiding;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.reflection.CallResult;
@@ -473,6 +475,54 @@ public class PoSOnline extends PoSConnectionState {
 			orderTPV.save();
 		}
 		
+		// Generación de CAE
+		doGenerateCAE();
+		
+		// Impresión Fiscal
+		doFiscalPrint();
+		
+		try {
+			// Impresión del ticket convencional (solo si no fue emitido por
+			// controlador fiscal)
+			printTicket();
+			// Impresión del documento de artículos a retirar por almacén
+			printWarehouseDeliveryTicket(order);
+			// Impresión del documento con datos del cliente en cuenta corriente
+			printCurrentAccountTicket(order);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Realizar la generación de CAE
+	 * @throws PosException
+	 */
+	public void doGenerateCAE() throws PosException {
+		// Aquí estamos fuera de la transacción. Ahora sí registramos la FE
+		if (getShouldCreateInvoice() && invoice.requireCAEGeneration()) {
+			debug("Registro de FE");
+			getElectronicEventListener().electronicStatus(ElectronicEventListener.GENERATING_CAE);
+			// Recargamos la factura con TRX NULL. Si usamos la MInvoice con un
+			// nombre de transacción entonces obtendríamos los mismos bloqueos.
+			MInvoice tmpInvoice = new MInvoice(getCtx(), invoice.getC_Invoice_ID(), null);
+			tmpInvoice.addDocActionStatusListener(getDocActionStatusListener());
+			// Registro de FE
+			CallResult callResult = tmpInvoice.doCAEGeneration(true);
+			if (callResult.isError()) {
+				getElectronicEventListener().electronicStatus(ElectronicEventListener.GENERATING_CAE_ERROR);
+				getElectronicEventListener().errorOcurred("", callResult.getMsg());
+				throw new GeneratingCAEError();
+			}
+			getElectronicEventListener().electronicStatus(ElectronicEventListener.GENERATING_CAE_OK);
+		}
+	}
+	
+	/**
+	 * Realizar la impresión fiscal
+	 * @throws FiscalPrintException
+	 */
+	public void doFiscalPrint() throws FiscalPrintException{
 		// Aquí estamos fuera de la transacción. Ahora sí emitimos la factura
 		// por el controlador fiscal en caso de ser necesario.
 		if (getShouldCreateInvoice() && invoice.requireFiscalPrint()) {
@@ -486,20 +536,8 @@ public class PoSOnline extends PoSConnectionState {
 			// Lanza la impresión fiscal
 			CallResult callResult = tmpInvoice.doFiscalPrint(true);
 			if (callResult.isError()) {
-				throw new FiscalPrintException();				
+				throw new FiscalPrintException(callResult.getMsg());				
 			}
-		}
-		
-		try {
-			// Impresión del ticket convencional (solo si no fue emitido por
-			// controlador fiscal)
-			printTicket();
-			// Impresión del documento de artículos a retirar por almacén
-			printWarehouseDeliveryTicket(order);
-			// Impresión del documento con datos del cliente en cuenta corriente
-			printCurrentAccountTicket(order);
-		} catch (Exception e) {
-			
 		}
 	}
 	
@@ -513,7 +551,7 @@ public class PoSOnline extends PoSConnectionState {
 				// Impresión del documento con datos del cliente en cuenta corriente
 				printCurrentAccountTicket(order);
 			} catch (Exception e) {
-				
+				e.printStackTrace();
 			}
 		}
 		return success;
@@ -793,8 +831,8 @@ public class PoSOnline extends PoSConnectionState {
 		// sumaProductos tenga una escala mayor a la utilizada por la moneda, y
 		// la comparación puede fallar erróneamente
 		int stdScale = priceList.getStandardPrecision();
-		sumaProductos = sumaProductos.setScale(stdScale, BigDecimal.ROUND_HALF_UP);
-		sumaPagos = sumaPagos.setScale(stdScale, BigDecimal.ROUND_HALF_UP);
+		sumaProductos = sumaProductos.setScale(stdScale, BigDecimal.ROUND_HALF_DOWN);
+		sumaPagos = sumaPagos.setScale(stdScale, BigDecimal.ROUND_HALF_DOWN);
 		
 		// Si no alcanzan los pagos para pagar los productos, no deja procesar.
 		if (!VerificarSaldo(sumaProductos, sumaPagos))
@@ -1568,6 +1606,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Ignora la impresión fiscal al completar. Se hace luego fuera de la transacción. 
 		inv.setIgnoreFiscalPrint(true);
+		inv.setIgnoreCAEGeneration(true);
 		inv.skipAfterAndBeforeSave = true;
 		
 		throwIfFalse(inv.processIt(DocAction.ACTION_Complete), inv, InvoiceCreateException.class);
@@ -1646,14 +1685,6 @@ public class PoSOnline extends PoSConnectionState {
 //		}
 		
 		return inv;
-	}
-	
-	/**
-	 * Indica si la factura debe ser emitida mediante un controlador fiscal.
-	 * @param invoice Factura a evaluar.
-	 */
-	private boolean needFiscalPrint(MInvoice invoice) {
-		return MDocType.isFiscalDocType(invoice.getC_DocTypeTarget_ID()) && LOCAL_AR_ACTIVE;
 	}
 	
 	private MInOut createOxpInOut(Order order) throws PosException {
@@ -2519,9 +2550,11 @@ public class PoSOnline extends PoSConnectionState {
 
 		// Lanza el informe determinado en caso de existir.
         if( processID > 0 ) {
+        	debug("Imprimiendo ticket por informe");
 	        ProcessInfo pi = new ProcessInfo("TPV", processID, tableID, recordID);	            
 	        ProcessCtl.process(getProcessListener(), 0, pi, null );    // calls lockUI, unlockUI
         } else {
+        	debug("Imprimiendo ticket por formato de impresión");
 			// Método antoguo. En caso de que no se haya podido determinar un
 			// Informe (AD_Process) se intenta imprimir un informe a partir de
 			// los formatos de impresión.
@@ -3223,6 +3256,7 @@ public class PoSOnline extends PoSConnectionState {
 		if (getPoSCOnfig().isPrintWarehouseDeliverDocument()  
 				&& invoice != null 
 				&& order.getWarehouseCheckoutProductsCount() > 0) {
+			debug("Imprimiendo salida por deposito");
 			// El tipo de documento de la factura debe ser fiscal y tener asociado
 			// un controlador fiscal.
 			MDocType docType = MDocType.get(ctx, invoice.getC_DocType_ID());
@@ -3235,7 +3269,7 @@ public class PoSOnline extends PoSConnectionState {
 				MOrder orderAux = new MOrder(getCtx(), morder.getID(), null);
 				MInvoice invoiceAux = new MInvoice(getCtx(), invoice.getID(), null);
 				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), orderAux, invoiceAux)) {
-					
+					log.severe("Error en impresion de salida por deposito");
 				}
 			}
 			// Impresión del comprobante Jasper que muestra los artículos que 
@@ -3248,7 +3282,7 @@ public class PoSOnline extends PoSConnectionState {
 						.getWarehouseDeliverDocumentProcessID(null),
 						params, null);
 				if(info.isError()){
-					
+					log.severe("Error en impresion de salida por deposito");
 				}
 			}
 		}
@@ -3272,6 +3306,7 @@ public class PoSOnline extends PoSConnectionState {
 				&& (!Util.isEmpty(currentAccountSalesConditions.keySet()) || (order
 						.getBusinessPartner().isAutomaticCreditNote() && sumaCreditNotePayments
 						.compareTo(BigDecimal.ZERO) > 0))) {
+			debug("Imprimiendo aceptacion cuenta corriente");
 			MBPartner partner = new MBPartner(getCtx(), order
 					.getBusinessPartner().getId(), null);
 			// Itero por las condiciones de venta de cuenta corriente
@@ -3314,7 +3349,7 @@ public class PoSOnline extends PoSConnectionState {
 				MInvoice invoiceAux = new MInvoice(getCtx(), invoice.getID(), null);
 				if (!fdp.printCurrentAccountDocument(
 						docType.getC_Controlador_Fiscal_ID(), partner, invoiceAux, infos)) {
-					
+					log.severe("Error en impresion de aceptacion de cuenta corriente");
 				}
 			}
 			else{
@@ -3341,7 +3376,7 @@ public class PoSOnline extends PoSConnectionState {
 						.getCurrentAccountDocumentProcessID(null),
 						params, null);
 				if(info.isError()){
-					
+					log.severe("Error en impresion de aceptacion de cuenta corriente");
 				}
 			}
 		}
@@ -4108,5 +4143,29 @@ public class PoSOnline extends PoSConnectionState {
 
 	public void setAuthorizationModel(AUserAuthModel authorizationModel) {
 		this.authorizationModel = authorizationModel;
+	}
+
+	@Override
+	public boolean regenerateCAE(Order order) {
+		boolean result = true;
+		try{
+			// Generación de CAE
+			doGenerateCAE();
+			
+			// Impresión Fiscal
+			doFiscalPrint();
+			
+			// Impresión del ticket convencional (solo si no fue emitido por
+			// controlador fiscal)
+			printTicket();
+			// Impresión del documento de artículos a retirar por almacén
+			printWarehouseDeliveryTicket(order);
+			// Impresión del documento con datos del cliente en cuenta corriente
+			printCurrentAccountTicket(order);
+			
+		} catch(Exception e) {
+			result = false;
+		}
+		return result;
 	}
 }

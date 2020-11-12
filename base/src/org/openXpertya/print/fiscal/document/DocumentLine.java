@@ -123,6 +123,18 @@ public class DocumentLine implements Serializable{
 	}
 	
 	/**
+	 * @return precio unitario neto
+	 */
+	public BigDecimal getUnitPriceNet() {
+		BigDecimal np = getUnitPrice();
+		if(isPriceIncludeIva()) {
+			np = np.divide(BigDecimal.ONE.add(getIvaRate().divide(new BigDecimal(100), 4, BigDecimal.ROUND_HALF_UP)), 4,
+					BigDecimal.ROUND_HALF_DOWN);
+		}
+		return np;
+	}
+	
+	/**
 	 * @param unitPrice
 	 *            The unitPrice to set.
 	 */
@@ -184,6 +196,13 @@ public class DocumentLine implements Serializable{
 		if(hasDiscount())
 			lineTotal = lineTotal.add(getDiscount().getAmount());
 		return lineTotal;
+	}
+	
+	/**
+	 * @return el subtotal neto de la línea
+	 */
+	public BigDecimal getSubtotalNet() {
+		return getUnitPriceNet().multiply(getQuantity()).setScale(2, BigDecimal.ROUND_HALF_DOWN);
 	}
 	
 	/**

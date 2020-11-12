@@ -670,6 +670,8 @@ public class MDocType extends X_C_DocType {
 			}
 		}
 		
+		String controladorFiscalType = X_C_Controlador_Fiscal.CONTROLADORFISCALTYPE_Thermal;
+		
 		/**
 		 * Se codifica siguiendo la siguiente definicion:
 		 *                | Libro de IVA    | Impres.Fiscal |              |
@@ -685,26 +687,36 @@ public class MDocType extends X_C_DocType {
 			setIsFiscalDocument(false);
 			setIsFiscal(false);//fiscal printed
 			setiselectronic(false);
-			setC_Controlador_Fiscal_ID(0);
 		}
 		else if(DOCSUBTYPEINV_Fiscal.equals(getdocsubtypeinv())){
 			setIsFiscalDocument(true);
 			setIsFiscal(false);//fiscal printed
-			setiselectronic(false);
-			setC_Controlador_Fiscal_ID(0);
-			
+			setiselectronic(false);			
 		}
 		else if(DOCSUBTYPEINV_Electronico.equals(getdocsubtypeinv())){
 			setIsFiscalDocument(true);
 			setIsFiscal(false);//fiscal printed
 			setiselectronic(true);
-			setC_Controlador_Fiscal_ID(0);
 		}
 		else if(DOCSUBTYPEINV_ImpresoFiscal.equals(getdocsubtypeinv())){
 			setIsFiscalDocument(true);
 			setIsFiscal(true);//fiscal printed
 			setiselectronic(false);
+			controladorFiscalType = X_C_Controlador_Fiscal.CONTROLADORFISCALTYPE_Fiscal;
 		}		
+		
+		// Si tiene impresora fiscal relacionada, entonces se debe verificar que si la
+		// impresora es fiscal, entonces el tipo de documento asi debe ser también
+		if(!Util.isEmpty(getC_Controlador_Fiscal_ID(), true)) {
+			int cid = DB.getSQLValue(get_TrxName(),
+					"SELECT c_controlador_fiscal_id from c_controlador_fiscal where c_controlador_fiscal_id = "
+							+ getC_Controlador_Fiscal_ID() + " and controladorfiscaltype = '" + controladorFiscalType
+							+ "'");
+			if(cid <= 0) {
+				log.saveError("SaveError", "El subtipo del tipo de documento no permite configurar ese tipo de impresión fiscal.");
+				return false;
+			}
+		}
 		
 /*		// Si no es un documento fiscal, se limpian los campos que son especificos
 		// de documentos fiscales.

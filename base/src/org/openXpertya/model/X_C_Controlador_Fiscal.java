@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Controlador_Fiscal
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-04-08 10:30:28.518 */
+ *  @version  - 2020-11-12 12:56:25.973 */
 public class X_C_Controlador_Fiscal extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,13 +20,13 @@ setAskWhenError (false);
 setC_Controlador_Fiscal_ID (0);
 setC_Controlador_Fiscal_Type_ID (0);
 setCmdCancelBeforePrintDocument (false);
-sethost (null);
+setConnectionType (null);
+setControladorFiscalType (null);	// F
 setIsRemote (false);
 setName (null);
 setOnlyLineDescription (false);
 setOnPrintProductFormat (null);
 setOnPrintUseProductReference (false);
-setPort (0);
 }
  */
 }
@@ -128,6 +128,54 @@ if (oo != null)
 }
 return false;
 }
+public static final int CONNECTIONTYPE_AD_Reference_ID = MReference.getReferenceID("Fiscal Printer Connection Type");
+/** Port = P */
+public static final String CONNECTIONTYPE_Port = "P";
+/** Print Service = S */
+public static final String CONNECTIONTYPE_PrintService = "S";
+/** TCP = T */
+public static final String CONNECTIONTYPE_TCP = "T";
+/** Set Connection Type */
+public void setConnectionType (String ConnectionType)
+{
+if (ConnectionType.equals("P") || ConnectionType.equals("S") || ConnectionType.equals("T") || ( refContainsValue("ESCPOS-AD_Reference-20200624191030330-053318", ConnectionType) ) );
+ else throw new IllegalArgumentException ("ConnectionType Invalid value: " + ConnectionType + ".  Valid: " +  refValidOptions("ESCPOS-AD_Reference-20200624191030330-053318") );
+if (ConnectionType == null) throw new IllegalArgumentException ("ConnectionType is mandatory");
+if (ConnectionType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ConnectionType = ConnectionType.substring(0,1);
+}
+set_Value ("ConnectionType", ConnectionType);
+}
+/** Get Connection Type */
+public String getConnectionType() 
+{
+return (String)get_Value("ConnectionType");
+}
+public static final int CONTROLADORFISCALTYPE_AD_Reference_ID = MReference.getReferenceID("Controlador Fiscal Types");
+/** Fiscal = F */
+public static final String CONTROLADORFISCALTYPE_Fiscal = "F";
+/** Thermal = T */
+public static final String CONTROLADORFISCALTYPE_Thermal = "T";
+/** Set Controlador Fiscal Type */
+public void setControladorFiscalType (String ControladorFiscalType)
+{
+if (ControladorFiscalType.equals("F") || ControladorFiscalType.equals("T") || ( refContainsValue("ESCPOS-AD_Reference-20200624192228593-652916", ControladorFiscalType) ) );
+ else throw new IllegalArgumentException ("ControladorFiscalType Invalid value: " + ControladorFiscalType + ".  Valid: " +  refValidOptions("ESCPOS-AD_Reference-20200624192228593-652916") );
+if (ControladorFiscalType == null) throw new IllegalArgumentException ("ControladorFiscalType is mandatory");
+if (ControladorFiscalType.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ControladorFiscalType = ControladorFiscalType.substring(0,1);
+}
+set_Value ("ControladorFiscalType", ControladorFiscalType);
+}
+/** Get Controlador Fiscal Type */
+public String getControladorFiscalType() 
+{
+return (String)get_Value("ControladorFiscalType");
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -148,8 +196,7 @@ return (String)get_Value("Description");
 /** Set host */
 public void sethost (String host)
 {
-if (host == null) throw new IllegalArgumentException ("host is mandatory");
-if (host.length() > 100)
+if (host != null && host.length() > 100)
 {
 log.warning("Length > 100 - truncated");
 host = host.substring(0,100);
@@ -187,8 +234,8 @@ public static final String LOGTYPERECORDED_OnlyErrors = "E";
 /** Set Log Type Recorded */
 public void setLogTypeRecorded (String LogTypeRecorded)
 {
-if (LogTypeRecorded == null || LogTypeRecorded.equals("A") || LogTypeRecorded.equals("E"));
- else throw new IllegalArgumentException ("LogTypeRecorded Invalid value - Reference = LOGTYPERECORDED_AD_Reference_ID - A - E");
+if (LogTypeRecorded == null || LogTypeRecorded.equals("A") || LogTypeRecorded.equals("E") || ( refContainsValue("CORE-AD_Reference-1010240", LogTypeRecorded) ) );
+ else throw new IllegalArgumentException ("LogTypeRecorded Invalid value: " + LogTypeRecorded + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010240") );
 if (LogTypeRecorded != null && LogTypeRecorded.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -251,8 +298,8 @@ public static final String ONPRINTPRODUCTFORMAT_ValueName = "VN";
 /** Set OnPrintProductFormat */
 public void setOnPrintProductFormat (String OnPrintProductFormat)
 {
-if (OnPrintProductFormat.equals("N") || OnPrintProductFormat.equals("V") || OnPrintProductFormat.equals("NV") || OnPrintProductFormat.equals("VN"));
- else throw new IllegalArgumentException ("OnPrintProductFormat Invalid value - Reference = ONPRINTPRODUCTFORMAT_AD_Reference_ID - N - V - NV - VN");
+if (OnPrintProductFormat.equals("N") || OnPrintProductFormat.equals("V") || OnPrintProductFormat.equals("NV") || OnPrintProductFormat.equals("VN") || ( refContainsValue("CORE-AD_Reference-1010171", OnPrintProductFormat) ) );
+ else throw new IllegalArgumentException ("OnPrintProductFormat Invalid value: " + OnPrintProductFormat + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010171") );
 if (OnPrintProductFormat == null) throw new IllegalArgumentException ("OnPrintProductFormat is mandatory");
 if (OnPrintProductFormat.length() > 2)
 {
@@ -304,6 +351,23 @@ Integer ii = (Integer)get_Value("Port");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Printer Name.
+Name of the Printer */
+public void setPrinterName (String PrinterName)
+{
+if (PrinterName != null && PrinterName.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+PrinterName = PrinterName.substring(0,100);
+}
+set_Value ("PrinterName", PrinterName);
+}
+/** Get Printer Name.
+Name of the Printer */
+public String getPrinterName() 
+{
+return (String)get_Value("PrinterName");
+}
 public static final int STATUS_AD_Reference_ID = MReference.getReferenceID("Controlador_Fiscal_Status");
 /** BUSY = BSY */
 public static final String STATUS_BUSY = "BSY";
@@ -314,8 +378,8 @@ public static final String STATUS_IDLE = "IDL";
 /** Set Status */
 public void setStatus (String Status)
 {
-if (Status == null || Status.equals("BSY") || Status.equals("ERR") || Status.equals("IDL"));
- else throw new IllegalArgumentException ("Status Invalid value - Reference = STATUS_AD_Reference_ID - BSY - ERR - IDL");
+if (Status == null || Status.equals("BSY") || Status.equals("ERR") || Status.equals("IDL") || ( refContainsValue("CORE-AD_Reference-1000078", Status) ) );
+ else throw new IllegalArgumentException ("Status Invalid value: " + Status + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000078") );
 if (Status != null && Status.length() > 3)
 {
 log.warning("Length > 3 - truncated");

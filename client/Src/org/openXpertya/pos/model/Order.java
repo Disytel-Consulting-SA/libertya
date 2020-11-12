@@ -449,12 +449,12 @@ public class Order  {
 						.getDiscountSchema().getDiscountContextType())) {
 			discount = getDiscountCalculator().calculateDiscount(
 					payment.getDiscountSchema(), constantAmt);
-			rate = discount.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_EVEN);
+			rate = discount.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_DOWN);
 		}
 		// Calcula el importe real del pago a partir del importe original y la
 		// tasa calculada.
 		paymentRealAmt = paymentAmt.divide(BigDecimal.ONE.subtract(rate), SCALE,
-				BigDecimal.ROUND_HALF_EVEN);
+				BigDecimal.ROUND_HALF_DOWN);
 		
 		// Obtiene el pendiente y lo compara con el importe real del pago. Si
 		// hay una diferencia mínima de centavos agrega esta diferencia al pago
@@ -542,12 +542,12 @@ public class Order  {
 						.getDiscountSchema().getDiscountContextType())) {
 			discount = getDiscountCalculator().calculateDiscount(
 					paymentMediumInfo.getDiscountSchema(), constantAmt);
-			rate = discount.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_EVEN);
+			rate = discount.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_DOWN);
 		}
 		// Calcula el importe real del pago a partir del importe original y la
 		// tasa calculada.
 		paymentRealAmt = paymentAmt.divide(BigDecimal.ONE.subtract(rate), SCALE,
-				BigDecimal.ROUND_HALF_EVEN);
+				BigDecimal.ROUND_HALF_DOWN);
 		
 		return paymentRealAmt;
 	}
@@ -859,7 +859,7 @@ public class Order  {
 								paymentMediumInfo.getDiscountSchema(), realBaseAmt);
 				// Excedente de los otros impuestos a sumar al final
 				discountAmt = otherTaxesRatio.compareTo(BigDecimal.ZERO) > 0?
-						scaleAmount(discountAmt.divide(otherTaxesRatio, getStdPrecision(), BigDecimal.ROUND_HALF_EVEN))
+						scaleAmount(discountAmt.divide(otherTaxesRatio, getStdPrecision(), BigDecimal.ROUND_HALF_DOWN))
 						: discountAmt;
 				//BigDecimal otherTaxesAmt = getTotalOtherTaxesAmt(false, true);				
 				//BigDecimal temporalOtherTaxesAmt = getTotalOtherTaxesAmt(true, true);
@@ -891,7 +891,7 @@ public class Order  {
 		BigDecimal totalOrderOtherTaxes = getOrderProductsTotalAmt(true, false);
 		BigDecimal ratio = BigDecimal.ZERO;
 		if(!Util.isEmpty(totalOrderOtherTaxes, true)){
-			ratio = totalOrder.divide(totalOrderOtherTaxes, 6, BigDecimal.ROUND_HALF_EVEN);
+			ratio = totalOrder.divide(totalOrderOtherTaxes, 6, BigDecimal.ROUND_HALF_DOWN);
 		}
 		return ratio;
 	}
@@ -901,7 +901,7 @@ public class Order  {
 		for (Tax otherTax : getOtherTaxes()) {
 			allTaxes = allTaxes.add(otherTax.getRate());
 		}
-		return allTaxes.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_UP);
+		return allTaxes.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_DOWN);
 	}
 	
 	
@@ -1155,7 +1155,7 @@ public class Order  {
 	 * @return
 	 */
 	public BigDecimal scaleAmount(BigDecimal amount) {
-		return amount.setScale(getStdPrecision(), BigDecimal.ROUND_HALF_UP);
+		return amount.setScale(getStdPrecision(), BigDecimal.ROUND_HALF_DOWN);
 	}
 	
 	/**
@@ -1164,7 +1164,7 @@ public class Order  {
 	 * @return
 	 */
 	public BigDecimal scalePrice(BigDecimal price) {
-		return price.setScale(getCostingPresicion(), BigDecimal.ROUND_HALF_UP);
+		return price.setScale(getCostingPresicion(), BigDecimal.ROUND_HALF_DOWN);
 	}
 
 	/**
@@ -1330,7 +1330,7 @@ public class Order  {
 		BigDecimal psia = BigDecimal.ZERO;
 		psia = taxedPrice.divide(
 				BigDecimal.ONE.add(getSumOtherTaxesRateMultipliers()), 6,
-				BigDecimal.ROUND_HALF_EVEN);
+				BigDecimal.ROUND_HALF_DOWN);
 		return scaleAmount(psia);
 	}
 	
@@ -1344,7 +1344,7 @@ public class Order  {
 		BigDecimal netPrice = taxedPrice.divide(
 				BigDecimal.ONE.add(op.getTax().getTaxRateMultiplier().add(
 						getSumOtherTaxesRateMultipliers())), 
-						6, BigDecimal.ROUND_HALF_EVEN);		
+						6, BigDecimal.ROUND_HALF_DOWN);		
 		
 		return scalePrice(netPrice);
 	}

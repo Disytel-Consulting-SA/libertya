@@ -46,6 +46,7 @@ import org.openXpertya.print.fiscal.msg.FiscalMessages;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 @SuppressWarnings("serial")
 public class AInfoFiscalPrinter extends CDialog implements ActionListener, FiscalPrinterEventListener, FiscalDocumentPrintListener {
@@ -69,8 +70,8 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	private static final String ACTION_VOID = ConfirmPanel.A_REFRESH;
 	private static final String ACTION_EXPAND_INFO = ConfirmPanel.A_ZOOM;
 	
-    private APanel parent;
-	private ConfirmPanel confirmPanel = new ConfirmPanel(true,true,true,false,false,true,false,ConfirmPanel.ALIGN_RIGHT);
+    protected APanel parent;
+	protected ConfirmPanel confirmPanel;
     private CLabel iconLabel = new CLabel();
     private FlowLayout westLayout = new FlowLayout();
     private CTextPane infoDetail = new CTextPane();
@@ -105,6 +106,12 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	 * estado de impresora fiscal
 	 */
 	private boolean throwExceptionInCancelCheckStatus = false;
+	
+	/** Mensaje que permite cancelar */
+	private String msgAllowingClose = null;
+	
+	/** Mensaje de confirmación para realizar la anulación del comprobante */
+	private String voidDocumentsConfirmationMsg = null;
 	
     /**
      * Constructor de la clase ...    
@@ -195,8 +202,8 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
      *
      */    
     
-    private void jbInit() throws Exception {
-
+    protected void jbInit() throws Exception {
+    	confirmPanel = createConfirmPanel();
         westPanel.setLayout( westLayout );
         westPanel.setName( "westPanel" );
         westPanel.setRequestFocusEnabled( false );
@@ -394,13 +401,21 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
     	});
     }    
     
+    protected ConfirmPanel createConfirmPanel() {
+    	return new ConfirmPanel(true,true,true,false,false,true,false,ConfirmPanel.ALIGN_RIGHT);
+    }
+    
     public void actionPerformed( ActionEvent e ) {
         // log.finest( "ADialogDialog.actionPerformed - " + e);
         if( e.getActionCommand().equals(ACTION_REPRINT)) {
         	fireReprintAction();
         } else if( e.getActionCommand().equals(ACTION_VOID))  {
-        	fireVoidAction();
-            dispose();
+        	// Reconfirmar la anulación de comprobantes si el comprobante se registró electrónicamente
+			if (Util.isEmpty(getVoidDocumentsConfirmationMsg(), true)
+					|| ADialog.ask(getWindowNo(), this, "", getVoidDocumentsConfirmationMsg())) {
+	        	fireVoidAction();
+	            dispose();
+			}
         } else if( e.getActionCommand().equals(ACTION_EXPAND_INFO))  {
         	infoDetail.setVisible(!infoDetail.isVisible());
         	pack();
@@ -409,8 +424,10 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
             dispose();
         } else if( e.getActionCommand().equals( ConfirmPanel.A_CANCEL ))  {
         	getFiscalDocumentPrint().setCancelWaiting(true);
-        	if(!isThrowExceptionInCancelCheckStatus()){
+			if (!isThrowExceptionInCancelCheckStatus() || (!Util.isEmpty(getMsgAllowingClose(), true)
+					&& ADialog.ask(getWindowNo(), this, "", getMsgAllowingClose()))) {
         		dispose();
+        		firePrintOKAction();
         	}
         } else if( e.getSource() == mPrintScreen ) {
             printScreen();
@@ -429,7 +446,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
         }
     }
     
-	private void setErrorStatus(){
+	protected void setErrorStatus(){
 		setInfoIcon(JOptionPane.ERROR_MESSAGE);
 		getReprintButton().setVisible(reprintButtonActive);
 		getVoidButton().setVisible(voidButtonActive);
@@ -437,7 +454,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getCancelButton().setVisible(!voidButtonActive);
 	}
 	
-	private void setBusyStatus() {
+	protected void setBusyStatus() {
 		iconLabel.setIcon(i_busy);
 		confirmPanel.getCancelButton().setVisible(true);
 		//confirmPanel.getOKButton().setEnabled(false);
@@ -446,7 +463,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getOkButton().setVisible(false);
 	}
 	
-	private void setPrintingStatus() {
+	protected void setPrintingStatus() {
 		setInfoIcon(JOptionPane.INFORMATION_MESSAGE);
 		getReprintButton().setVisible(false);
 		getVoidButton().setVisible(false);
@@ -638,7 +655,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	 * @param sync Indica si la invoicación se debe hacer sincrónica o asincrónica.
 	 * (<code>SwingUtilities.invoikeAndWait</code> o <code>SwingUtilities.invokeLater</code>).
 	 */
-	private void invoke(Runnable action, boolean sync) {
+	protected void invoke(Runnable action, boolean sync) {
 		try {
 			if(sync)
 				SwingUtilities.invokeAndWait(action);
@@ -911,5 +928,21 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 			}
 		};
 		invoke(doDocumentPrintAsk, false);	
+	}
+
+	public String getMsgAllowingClose() {
+		return msgAllowingClose;
+	}
+
+	public void setMsgAllowingClose(String msgAllowingClose) {
+		this.msgAllowingClose = msgAllowingClose;
 	}	
+	
+	public String getVoidDocumentsConfirmationMsg() {
+		return voidDocumentsConfirmationMsg;
+	}
+
+	public void setVoidDocumentsConfirmationMsg(String voidDocumentsConfirmationMsg) {
+		this.voidDocumentsConfirmationMsg = voidDocumentsConfirmationMsg;
+	}
 }

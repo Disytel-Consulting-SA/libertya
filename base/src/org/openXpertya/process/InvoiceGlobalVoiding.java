@@ -329,8 +329,8 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	 */
 	protected void voidInOut() throws Exception{
 		if(getInOut() != null){
-			// Lo seteo como instancia de tpv para que no valide cierres de depósito
-			getInOut().setTPVInstance(true);
+			// Lo seteo para que no valide cierres de depósito
+			getInOut().setBypassWarehouseCloseValidation(true);
 			if (!DocumentEngine.processAndSave(getInOut(), MInOut.DOCACTION_Void,
 					false)) {
 				throw new Exception("@InOutVoidError@ # "

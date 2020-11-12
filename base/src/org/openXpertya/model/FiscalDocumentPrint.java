@@ -27,6 +27,7 @@ import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.print.fiscal.FiscalPrinterLogRecord;
 import org.openXpertya.print.fiscal.document.CashPayment;
 import org.openXpertya.print.fiscal.document.CashRetirementPayment;
+import org.openXpertya.print.fiscal.document.ClientOrgInfo;
 import org.openXpertya.print.fiscal.document.CreditNote;
 import org.openXpertya.print.fiscal.document.CurrentAccountInfo;
 import org.openXpertya.print.fiscal.document.Customer;
@@ -547,6 +548,8 @@ public class FiscalDocumentPrint {
 		fireActionStarted(FiscalDocumentPrintListener.AC_PRINT_DOCUMENT);
 		// Crea el documento no fiscal y luego obtiene todas las líneas del pedido
 		NonFiscalDocument nonFiscalDocument = new NonFiscalDocument();
+		// Información de la compañía/organización
+		nonFiscalDocument.setClientOrgInfo(getClientOrgInfo(invoice));
 		MOrderLine[] orderLines = order.getLines(true);
 		String line = null;
 		nonFiscalDocument.addLine("****************************************");
@@ -570,6 +573,12 @@ public class FiscalDocumentPrint {
 				nonFiscalDocument.addLine(line);
 			}
 		}
+		nonFiscalDocument.addLine("****************************************");
+		nonFiscalDocument.addLine(" ");
+		
+		// Comentarios del pie del ticket
+		setStdFooterObservations(invoice, nonFiscalDocument);
+		
 		// Manda a imprimir el documento en la impresora fiscal
 		getFiscalPrinter().printDocument(nonFiscalDocument);
 		
@@ -647,6 +656,8 @@ public class FiscalDocumentPrint {
 		fireActionStarted(FiscalDocumentPrintListener.AC_PRINT_DOCUMENT);
 		// Crea el documento no fiscal y luego obtiene todas las líneas del pedido
 		NonFiscalDocument nonFiscalDocument = new NonFiscalDocument();
+		// Información de la compañía/organización
+		nonFiscalDocument.setClientOrgInfo(getClientOrgInfo(invoice));
 		// Cargar datos del cliente que se obtiene de por lo menos el primer
 		// registro de los balances. Se sabe que para todos es el mismo cliente
 		Customer customer = infos.get(0).getCustomer();
@@ -694,6 +705,10 @@ public class FiscalDocumentPrint {
 		nonFiscalDocument.addLine(" ");
 		nonFiscalDocument.addLine("--------------------------");
 		nonFiscalDocument.addLine(Msg.getMsg(ctx, "SignatureAndClarification"));
+		nonFiscalDocument.addLine(" ");
+		// Comentarios del pie del ticket
+		setStdFooterObservations(invoice, nonFiscalDocument);
+		
 		// FIXME Excepciones de crédito?
 		// Manda a imprimir el documento en la impresora fiscal
 		getFiscalPrinter().printDocument(nonFiscalDocument);
@@ -880,6 +895,30 @@ public class FiscalDocumentPrint {
 	}
 
 	/**
+	 * Agrega las observaciones standard a la cola del ticket no fical para ser
+	 * imprimibles
+	 */
+	protected void setStdFooterObservations(MInvoice invoice, NonFiscalDocument nfd){
+		// Si tiene relacionado una caja diaria, entonces se agrega el nombre de
+		// la config del tpv y el usuario asociados a la caja		
+		if(!Util.isEmpty(invoice.getC_POSJournal_ID(), true)){
+			MPOSJournal posJournal = new MPOSJournal(ctx,
+					invoice.getC_POSJournal_ID(), getTrxName());
+			MPOS pos = MPOS.get(ctx, posJournal.getC_POS_ID());
+			MUser salesRep = MUser.get(ctx, posJournal.getAD_User_ID());
+			
+			nfd.addFooterObservation("Cajero:" + salesRep.getName()
+					+ "|Caja:" + pos.getName());
+		}
+		// Sino busca el usuario de ventas desde el documento
+		else{
+			// Setear el nombre del responsable de ventas
+			MUser salesRep = MUser.get(ctx, invoice.getSalesRep_ID());
+			nfd.addFooterObservation("Resp. Ventas: "+ salesRep.getName());
+		}
+	}
+	
+	/**
 	 * Reordenación de leyendas al pie del ticket
 	 * @param document
 	 */
@@ -939,13 +978,20 @@ public class FiscalDocumentPrint {
 	 */
 	public Invoice createInvoice(MInvoice mInvoice){
 		Invoice invoice = new Invoice();
+		// Información de la compañía/organización
+		invoice.setClientOrgInfo(getClientOrgInfo(mInvoice));
 		// Se asigna el cliente.
 		invoice.setCustomer(getCustomer(mInvoice.getC_BPartner_ID()));
 		// Se asigna la letra de la factura.
 		invoice.setLetter(mInvoice.getLetra());
+		invoice.setDocumentNo(mInvoice.getDocumentNo());
 		
 		// Se setea la inclusión del impuesto en el precio
 		invoice.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
+		
+		// CAE
+		invoice.setCae(mInvoice.getcae());
+		invoice.setCaeDueDate(mInvoice.getvtocae());
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, invoice);
@@ -991,6 +1037,9 @@ public class FiscalDocumentPrint {
 		// Se asignan los descuentos de la factura
 		loadDocumentDiscounts(invoice, mInvoice.getDiscounts());
 		
+		// Cargar impuestos automáticos
+		loadAutomaticTaxes(invoice, mInvoice);
+		
 		// Cargar impuestos adicionales 
 		loadOtherTaxes(invoice,mInvoice);
 		
@@ -1007,13 +1056,20 @@ public class FiscalDocumentPrint {
 	 */
 	public DebitNote createDebitNote(MInvoice mInvoice){
 		DebitNote debitNote = new DebitNote();
+		// Información de la compañía/organización
+		debitNote.setClientOrgInfo(getClientOrgInfo(mInvoice));
 		// Se asigna el cliente.
 		debitNote.setCustomer(getCustomer(mInvoice.getC_BPartner_ID()));
 		// Se asigna la letra de la nota de débito.
 		debitNote.setLetter(mInvoice.getLetra());
+		debitNote.setDocumentNo(mInvoice.getDocumentNo());
 		
 		// Se setea la inclusión del impuesto en el precio
 		debitNote.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
+		
+		// CAE
+		debitNote.setCae(mInvoice.getcae());
+		debitNote.setCaeDueDate(mInvoice.getvtocae());
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, debitNote);
@@ -1027,6 +1083,9 @@ public class FiscalDocumentPrint {
 		// TODO: Se asigna el número de remito en caso de existir.
 		// Descuentos
 		loadDocumentDiscounts(debitNote, mInvoice.getDiscounts());
+		
+		// Cargar impuestos automáticos
+		loadAutomaticTaxes(debitNote, mInvoice);
 		
 		// Cargar impuestos adicionales 
 		loadOtherTaxes(debitNote,mInvoice);
@@ -1049,13 +1108,20 @@ public class FiscalDocumentPrint {
 	 */
 	public CreditNote createCreditNote(MInvoice mInvoice, MInvoice originalInvoice){
 		CreditNote creditNote = new CreditNote();
+		// Información de la compañía/organización
+		creditNote.setClientOrgInfo(getClientOrgInfo(mInvoice));
 		// Se asigna el cliente.
 		creditNote.setCustomer(getCustomer(mInvoice.getC_BPartner_ID()));
 		// Se asigna la letra de la nota de crédito.
 		creditNote.setLetter(mInvoice.getLetra());
+		creditNote.setDocumentNo(mInvoice.getDocumentNo());
 		
 		// Se setea la inclusión del impuesto en el precio
 		creditNote.setTaxIncluded(MPriceList.get(ctx, mInvoice.getM_PriceList_ID(), getTrxName()).isTaxIncluded());
+		
+		// CAE
+		creditNote.setCae(mInvoice.getcae());
+		creditNote.setCaeDueDate(mInvoice.getvtocae());
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, creditNote);
@@ -1141,6 +1207,9 @@ public class FiscalDocumentPrint {
 		
 		// Se asignan los descuentos de la factura
 		loadDocumentDiscounts(creditNote, mInvoice.getDiscounts());
+		
+		// Cargar impuestos automáticos
+		loadAutomaticTaxes(creditNote, mInvoice);
 		
 		// Cargar impuestos adicionales 
 		loadOtherTaxes(creditNote,mInvoice);
@@ -1252,6 +1321,7 @@ public class FiscalDocumentPrint {
 				customer.setValue("");
 				customer.setIdentificationNumber(mInvoice.getNroIdentificCliente());
 				customer.setLocation(mInvoice.getInvoice_Adress());
+				customer.setIdentificationName("D.N.I.");
 			} else {
 				// Si no es factura a consumidor final 
 				
@@ -1266,6 +1336,7 @@ public class FiscalDocumentPrint {
 				if (bPartner.getTaxID() != null && !bPartner.getTaxID().trim().equals("")) {
 					customer.setIdentificationType(Customer.CUIT);
 					customer.setIdentificationNumber(bPartner.getTaxID());
+					customer.setIdentificationName("C.U.I.T.");
 				}
 			}
 			
@@ -1276,9 +1347,62 @@ public class FiscalDocumentPrint {
 			// que se tome directamente desde la factura antes de hacer el
 			// cambio
 			customer.setLocation(mInvoice.getInvoice_Adress());
+			customer.setIvaResponsibilityName(categoriaIva.getName());
 		}
 		
 		return customer;
+	}
+	
+	/***
+	 * Obtener información de la compañía y organización
+	 * 
+	 * @param invoice comprobante a imprimir
+	 * @return info de la compañía y organización
+	 */
+	private ClientOrgInfo getClientOrgInfo(MInvoice invoice) {
+		ClientOrgInfo coi = new ClientOrgInfo();
+		// Compañía
+		MClient client = MClient.get(invoice.getCtx(), invoice.getAD_Client_ID());
+		MClientInfo ci = client.getInfo();
+		MOrg org = MOrg.get(invoice.getCtx(), invoice.getAD_Org_ID());
+		MOrgInfo oi = org.getInfo();
+		Integer ivaID = Util.isEmpty(oi.getC_Categoria_IVA_ID(), true) ? ci.getC_Categoria_Iva_ID()
+				: oi.getC_Categoria_IVA_ID();
+		String categoriaIVAName = "";
+		if(!Util.isEmpty(ivaID, true)) {
+			MCategoriaIva iva = new MCategoriaIva(invoice.getCtx(), ivaID,null);
+			categoriaIVAName = iva.getName();
+		}
+		Integer locationID = Util.isEmpty(oi.getC_Location_ID(), true) ? ci.getC_Location_ID() : oi.getC_Location_ID();
+		String address = "";
+		String city = "";
+		String postalCode = "";
+		String regionName = "";
+		String countryName = "";
+		if(!Util.isEmpty(locationID, true)) {
+			MLocation l = MLocation.get(invoice.getCtx(), locationID, null);
+			address = l.getAddress1();
+			city = l.getCity();
+			postalCode = l.getPostal();
+			if(!Util.isEmpty(l.getC_Region_ID(), true)) {
+				MRegion r = MRegion.get(ctx, l.getC_Region_ID());
+				regionName = r.getName();
+			}
+			if(!Util.isEmpty(l.getC_Country_ID(), true)) {
+				MCountry c = MCountry.get(ctx, l.getC_Country_ID());
+				countryName = c.getName();
+			}
+		}
+		// Setear la info
+		coi.setClientName(client.getName());
+		coi.setOrgName(org.getName());
+		coi.setCuit(!Util.isEmpty(oi.getCUIT(), true)?oi.getCUIT():client.getCUIT());
+		coi.setIIBB(ci.getIIBB());
+		coi.setCategoriaIVA(categoriaIVAName);
+		coi.setAddress(address);
+		coi.setCity(city);
+		coi.setRegionName(regionName);
+		return coi;
 	}
 	
 	/**
@@ -1603,32 +1727,33 @@ public class FiscalDocumentPrint {
 	}
 	
 	/**
-	 * Carga los impuestos adicionales
+	 * Carga y devuelve impuestos 
 	 * @param doc
 	 * @param mInvoice
 	 */
-	private void loadOtherTaxes(Document doc, MInvoice mInvoice){
+	private List<org.openXpertya.print.fiscal.document.Tax> loadTaxes(Document doc, MInvoice mInvoice, boolean manualTaxes){
 		String sql = "SELECT t.c_tax_id, t.name, t.rate, it.taxbaseamt, it.taxamt, t.ispercepcion, t.PerceptionType "
 					+ "FROM c_invoicetax as it "
 					+ "INNER JOIN c_tax as t ON it.c_tax_id = t.c_tax_id "
 					+ "INNER JOIN c_taxcategory as tc ON t.c_taxcategory_id = tc.c_taxcategory_id "
-					+ "WHERE (c_invoice_id = ?) AND (ismanual = 'Y')";
+					+ "WHERE (c_invoice_id = ?) AND (ismanual = '"+(manualTaxes?"Y":"N")+"') "
+					+ "ORDER BY t.name ";
 		PreparedStatement ps = null;
 		ResultSet rs = null;
-		List<org.openXpertya.print.fiscal.document.Tax> otherTaxes = new ArrayList<Tax>();
-		org.openXpertya.print.fiscal.document.Tax otherTax = null;
+		List<org.openXpertya.print.fiscal.document.Tax> taxes = new ArrayList<Tax>();
+		org.openXpertya.print.fiscal.document.Tax tax = null;
 		try{
 			ps = DB.prepareStatement(sql, getTrxName());
 			ps.setInt(1, mInvoice.getID());
 			rs = ps.executeQuery();
 			while (rs.next()) {
-				otherTax = new Tax(rs.getInt("c_tax_id"), rs.getString("name"),
+				tax = new Tax(rs.getInt("c_tax_id"), rs.getString("name"),
 						rs.getBigDecimal("rate"),
 						rs.getBigDecimal("taxbaseamt"),
 						rs.getBigDecimal("taxamt"), 
 						rs.getString("ispercepcion").equals("Y"), 
 						rs.getString("PerceptionType"));
-				otherTaxes.add(otherTax);
+				taxes.add(tax);
 			}
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Error getting invoice taxes", e);
@@ -1638,7 +1763,25 @@ public class FiscalDocumentPrint {
 				if (ps != null) ps.close();
 			} catch (Exception e) {}
 		}
-		doc.setOtherTaxes(otherTaxes);
+		return taxes;
+	}
+	
+	/**
+	 * Carga los impuestos adicionales
+	 * @param doc
+	 * @param mInvoice
+	 */
+	private void loadOtherTaxes(Document doc, MInvoice mInvoice){
+		doc.setOtherTaxes(loadTaxes(doc, mInvoice, true));
+	}
+	
+	/**
+	 * Carga los impuestos automáticos
+	 * @param doc
+	 * @param mInvoice
+	 */
+	private void loadAutomaticTaxes(Document doc, MInvoice mInvoice){
+		doc.setTaxes(loadTaxes(doc, mInvoice, false));
 	}
 	
 	/**
@@ -1740,19 +1883,23 @@ public class FiscalDocumentPrint {
 				document.setDocumentNo(String.valueOf(lastNro));
 			}
 			
-			int receiptNo = Integer.parseInt(document.getDocumentNo());
-			// Solo se actualiza el documento de oxp en caso de que el 
-			// número de comprobante emitido por la impresora fiscal
-			// sead distinto al que le había asignado oxp.
-			if(receiptNo != oxpDocument.getNumeroComprobante()) {
-				oxpDocument.setNumeroComprobante(receiptNo);
-				// Se modifica el número de documento de OXP acorde al número de 
-				// comprobante fiscal.
-				String documentNo = CalloutInvoiceExt.GenerarNumeroDeDocumento(
-						oxpDocument.getPuntoDeVenta(), receiptNo, oxpDocument.getLetra(), oxpDocument.isSOTrx());
-				oxpDocument.setDocumentNo(documentNo);
+			try {
+				int receiptNo = Integer.parseInt(document.getDocumentNo());
+				// Solo se actualiza el documento de oxp en caso de que el 
+				// número de comprobante emitido por la impresora fiscal
+				// sead distinto al que le había asignado oxp.
+				if(receiptNo != oxpDocument.getNumeroComprobante()) {
+					oxpDocument.setNumeroComprobante(receiptNo);
+					// Se modifica el número de documento de OXP acorde al número de 
+					// comprobante fiscal.
+					String documentNo = CalloutInvoiceExt.GenerarNumeroDeDocumento(
+							oxpDocument.getPuntoDeVenta(), receiptNo, oxpDocument.getLetra(), oxpDocument.isSOTrx());
+					oxpDocument.setDocumentNo(documentNo);
+				}
+			} catch(NumberFormatException nfe) {
+				// Error al parsear el nro a entero, esto significa que ya tiene un número
+				// asignado, probablemente tenga letras
 			}
-
 		}
 		
 		/////////////////////////////////////////////////////////////////
@@ -2021,14 +2168,16 @@ public class FiscalDocumentPrint {
 	private void updateDocTypeSequence(MInvoice mInvoice) {
 		// Se actualiza la secuencia del tipo de documento del documento
 		// emitido recientemento por la impresora fiscal.
-		Integer lastDocumentNo = new Integer(getFiscalPrinter().getLastDocumentNo());
-		MDocType docType = MDocType.get(ctx, mInvoice.getC_DocTypeTarget_ID());
-		// Se obtiene la secuencia del tipo de documento...
-		if(docType.getDocNoSequence_ID() != 0 && docType.isFiscalDocument()) {
-			// Actualiza la secuencia con el nuevo número de documento
-			MSequence.setFiscalDocTypeNextNroComprobante(
-					docType.getDocNoSequence_ID(), lastDocumentNo + 1,
-					getTrxName());
+		if(!mInvoice.isThermalFiscalPrint(mInvoice.getC_DocTypeTarget_ID())) {
+			MDocType docType = MDocType.get(ctx, mInvoice.getC_DocTypeTarget_ID());
+			Integer lastDocumentNo = new Integer(getFiscalPrinter().getLastDocumentNo());
+			// Se obtiene la secuencia del tipo de documento...
+			if(docType.getDocNoSequence_ID() != 0 && docType.isFiscalDocument()) {
+				// Actualiza la secuencia con el nuevo número de documento
+				MSequence.setFiscalDocTypeNextNroComprobante(
+						docType.getDocNoSequence_ID(), lastDocumentNo + 1,
+						getTrxName());
+			}
 		}
 	}
 		
@@ -2342,7 +2491,7 @@ public class FiscalDocumentPrint {
 		//
 			unitPrice = (mLine.getPriceList().multiply(mLine.getQtyEntered())
 					.subtract(mLine.getLineDiscountAmt())).divide(
-					mLine.getQtyEntered(), scale, RoundingMode.HALF_UP);
+					mLine.getQtyEntered(), scale, RoundingMode.HALF_DOWN);
 		}
 		return unitPrice;
 	}
