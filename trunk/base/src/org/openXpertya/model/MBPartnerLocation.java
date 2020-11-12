@@ -24,6 +24,9 @@ import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.EMailUtil;
+import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -35,6 +38,9 @@ import org.openXpertya.util.DB;
 
 public class MBPartnerLocation extends X_C_BPartner_Location {
 
+	/** Nombre de preference para controlar el email válido dependiendo la EC o todos */
+	private static final String EMAIL_VALID_BPLOCATION_PREFERENCE_NAME = "EmailValidControl_BPLocation";
+	
     /**
      * Descripción de Método
      *
@@ -194,6 +200,26 @@ public class MBPartnerLocation extends X_C_BPartner_Location {
             return false;
         }
 
+        String emailPreference = MPreference.searchCustomPreferenceValue(EMAIL_VALID_BPLOCATION_PREFERENCE_NAME,
+				getAD_Client_ID(), 0, Env.getAD_User_ID(getCtx()), true);
+        boolean controlEmail = true;
+        if(!Util.isEmpty(emailPreference, true) && !emailPreference.equals("A")) {
+        	if(Util.isEmpty(getC_BPartner_ID(), true)) {
+        		controlEmail = false;
+        	}
+        	else {
+        		MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+				controlEmail = (emailPreference.equals("C") && bp.isCustomer())
+						|| (emailPreference.equals("V") && bp.isVendor()); 
+        	}
+        }
+		
+        // Validación de formato de email
+        if(controlEmail && !EMailUtil.isEmailAddressFormatValid(getEMail())) {
+        	log.saveError("EmailAddressFormatError", "");
+        	return false;
+        }
+        
         // Set New Name
 
         if( !newRecord ) {
