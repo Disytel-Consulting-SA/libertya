@@ -298,6 +298,13 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 	 * @return Devuelve el filtro que se aplica al Lookup de remitos.
 	 */
 	public static String getShipmentFilter(String isSOTrx) {
+    	return getShipmentFilter(isSOTrx, 0);
+	}
+
+	/**
+	 * @return Devuelve el filtro que se aplica al Lookup de remitos.
+	 */
+	public static String getShipmentFilter(String isSOTrx, int sign) {
     	StringBuffer filter = new StringBuffer();
 
      	filter
@@ -310,6 +317,11 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 	     	.append(   "WHERE sl.M_InOut_ID = M_InOut.M_InOut_ID ") // Los M_InOut que devuelve la query interna luego tienen que respetar el criterio de la query externa, por lo tanto este filtrado mejora la performance de la query interna
 	     	.append(   "GROUP BY sl.M_InOut_ID,mi.M_InOutLine_ID,sl.MovementQty ")
 	     	.append(   "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL) OR mi.M_InOutLine_ID IS NULL) ");
+     	
+		filter.append(sign == 0 ? ""
+				: " and M_InOut.C_DocType_ID IN (select c_doctype_id from c_doctype dt where dt.docbasetype in ('"
+						+ MDocType.DOCBASETYPE_MaterialReceipt + "','" + MDocType.DOCBASETYPE_MaterialDelivery
+						+ "') and signo_issotrx = '" + sign + "') ");
      	
      	return filter.toString();
 	}

@@ -329,7 +329,16 @@ public class VCreateFromInvoice extends VCreateFrom {
 	 * Inicializa el lookup de remitos
 	 */
 	private void initShipmentLookup() {
-    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx()); 
+		// Determinar el signo de la factura actual
+		MDocType dt = new MDocType(getCtx(), getInvoice().getC_DocTypeTarget_ID(), getTrxName());
+		int sign = 0;
+		try {
+			sign = Integer.parseInt(dt.getsigno_issotrx());
+			sign = sign * -1;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx(), sign); 
 		shipmentField = VComponentsFactory.VLookupFactory("M_InOut_ID", "M_InOut", p_WindowNo, DisplayType.Search,
 				whereClause, false, addSecurityValidation());
     	shipmentField.addVetoableChangeListener(new VetoableChangeListener() {

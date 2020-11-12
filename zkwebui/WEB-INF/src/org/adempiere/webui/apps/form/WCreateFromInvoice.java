@@ -289,7 +289,16 @@ public class WCreateFromInvoice extends WCreateFrom {
 	 * Inicializa el lookup de remitos
 	 */
 	private void initShipmentLookup() {
-    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx());     	
+		// Determinar el signo de la factura actual
+		MDocType dt = new MDocType(getCtx(), getInvoice().getC_DocTypeTarget_ID(), getTrxName());
+		int sign = 0;
+		try {
+			sign = Integer.parseInt(dt.getsigno_issotrx());
+			sign = sign * -1;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx(), sign);     	
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3521; 	// M_InOut.M_InOut_ID
 		MLookupInfo info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(), p_WindowNo, p_mTab.getTabNo(), colID,
