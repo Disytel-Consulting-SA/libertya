@@ -96,6 +96,10 @@ public class PercepcionCABA extends PercepcionStandard {
 			arcibaNormCode = codigo_De_Norma_Padron_Alto_Riesgo;
 			minimumNetAmount = getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónDeAltoRiesgoCABA);
 		}
+		
+		if(percepcionPercToApply == null) {
+			percepcionPercToApply = BigDecimal.ZERO;
+		}
 	}
 
 	private BigDecimal getPerception(String padronType) {
