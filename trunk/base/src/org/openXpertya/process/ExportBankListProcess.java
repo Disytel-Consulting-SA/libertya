@@ -21,6 +21,8 @@ public class ExportBankListProcess extends AbstractSvrProcess {
 			exporter = new ExportListaHSBCProveedores(getCtx(), bankList, get_TrxName());
 			exporter.export();
 			exporter = new ExportListaHSBC(getCtx(), bankList, get_TrxName());
+		} else if (MDocType.DOCTYPE_Lista_Galicia_E_Check.equals(bankListDocType.getDocTypeKey())) {
+			exporter = new ExportListaGaliciaECheck(getCtx(), bankList, get_TrxName());
 		}
 		
 		return exporter.export();

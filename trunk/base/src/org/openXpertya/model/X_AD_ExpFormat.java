@@ -19,6 +19,7 @@ super (ctx, AD_ExpFormat_ID, trxName);
 setAD_ExpFormat_ID (0);
 setAD_Table_ID (0);
 setConcatenateTimestamp (false);
+setDateExportNo (0);
 setEncodingType (null);	// U
 setEndLineType (null);	// W
 setExtension (null);	// C
@@ -143,6 +144,18 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Date Export Number */
+public void setDateExportNo (int DateExportNo)
+{
+set_Value ("DateExportNo", new Integer(DateExportNo));
+}
+/** Get Date Export Number */
+public int getDateExportNo() 
+{
+Integer ii = (Integer)get_Value("DateExportNo");
+if (ii == null) return 0;
+return ii.intValue();
 }
 /** Set Delimiter */
 public void setDelimiter (String Delimiter)
