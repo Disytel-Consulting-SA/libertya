@@ -2020,3 +2020,75 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','ad_pro
 --(20200722-1640 Nuevas columnas para la Unidad de Medida de Compra en la importación de artículos)
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_bpartner','iibbtype','character(1)'));
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2878.fix.importbpartner_iibbtype
+
+--20201111-2108 Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+--(20200518-1834 View para la cabecera de percepciones La Pampa)
+CREATE OR REPLACE VIEW c_percepciones_la_pampa_cabecera AS 
+  SELECT max(i.ad_client_id) AS ad_client_id, max(i.ad_org_id) AS ad_org_id, 
+	to_char(i.dateinvoiced, 'YYYYmm'::text) AS mesanio, min(date_trunc('day'::text, i.dateinvoiced)) AS date, it.c_tax_id
+  FROM c_invoicetax it
+  JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+  JOIN c_tax t on t.c_tax_id = it.c_tax_id
+  WHERE i.issotrx = 'Y' and t.ispercepcion = 'Y'
+  GROUP BY to_char(i.dateinvoiced, 'YYYYmm'::text), it.c_tax_id;
+ 
+ALTER TABLE c_percepciones_la_pampa_cabecera
+  OWNER TO libertya;
+
+--20200603-1200 Mejoras a la view de percepciones, incorporando la columna de tipo de registro de la pampa
+DROP VIEW c_invoice_percepciones_v;
+
+CREATE OR REPLACE VIEW c_invoice_percepciones_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, dt.c_doctype_id, dt.name AS doctypename, 
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 'F'::text
+            ELSE 'C'::text
+        END AS doctypechar, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'F'::text
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'NC'::text
+            ELSE 'ND'::text
+        END AS doctypenameshort, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 'T'::character(1)
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 'R'::character(1)
+            ELSE 'D'::character(1)
+        END AS doctypenameshort_aditional, 
+        CASE
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CI'::text THEN 1
+            WHEN "substring"(dt.doctypekey::text, 1, 2) = 'CC'::text THEN 102
+            ELSE 2
+        END AS tipo_de_documento_reg_neuquen, dt.docbasetype, i.c_invoice_id, i.documentno, date_trunc('day'::text, i.dateinvoiced) AS dateinvoiced, date_trunc('day'::text, i.dateacct) AS dateacct, date_trunc('day'::text, i.dateinvoiced) AS date, lc.letra, i.puntodeventa, i.numerocomprobante, currencyconvert(i.grandtotal, i.c_currency_id, 118, i.dateacct::timestamp with time zone, i.c_conversiontype_id, i.ad_client_id, i.ad_org_id) AS grandtotal, bp.c_bpartner_id, bp.value AS bpartner_value, bp.name AS bpartner_name, replace(bp.taxid::text, '-'::text, ''::text) AS taxid, replace(bp.iibb::text, '-'::text, ''::text) AS iibb, 
+        CASE
+            WHEN length(bp.iibb::text) > 7 THEN 1
+            ELSE 0
+        END AS tipo_contribuyente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script, COALESCE(i.nombrecli, bp.name) AS nombrecli, COALESCE(i.nroidentificcliente, bp.taxid) AS nroidentificcliente, ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS nroidentificcliente_with_script, ( SELECT l.address1
+           FROM c_bpartner_location bpl
+      JOIN c_location l ON l.c_location_id = bpl.c_location_id
+     WHERE bpl.c_bpartner_id = bp.c_bpartner_id
+     ORDER BY bpl.updated DESC
+    LIMIT 1) AS address1, t.c_tax_id, t.name AS percepcionname, currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, i.c_conversiontype_id, i.ad_client_id, i.ad_org_id) AS taxbaseamt, currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, i.c_conversiontype_id, i.ad_client_id, i.ad_org_id) AS taxamt, (currencyconvert(it.taxbaseamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, i.c_conversiontype_id, i.ad_client_id, i.ad_org_id) * dt.signo_issotrx::numeric)::numeric(20,2) AS taxbaseamt_with_sign, (currencyconvert(it.taxamt, i.c_currency_id, 118, i.dateacct::timestamp with time zone, i.c_conversiontype_id, i.ad_client_id, i.ad_org_id) * dt.signo_issotrx::numeric)::numeric(20,2) AS taxamt_with_sign, 
+        CASE
+            WHEN it.taxbaseamt <> 0::numeric THEN it.taxamt * 100::numeric / it.taxbaseamt
+            ELSE 0::numeric
+        END::numeric(20,2) AS alicuota, lo.city AS org_city, lo.postal AS org_postal_code, r.jurisdictioncode, translate(i.documentno::text, lc.letra::text, ''::text)::character varying(30) AS documentno_without_letter, 
+        CASE
+            WHEN i.issotrx = 'Y'::bpchar THEN 'E'::text
+            ELSE 'S'::text
+        END AS aplicacion, c.iso_code, t.rate, i.issotrx, 
+        (CASE WHEN (i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) THEN 'R' ELSE 'A' END)::character(1) as tipo_registro_la_pampa
+   FROM c_invoicetax it
+   JOIN c_invoice i ON i.c_invoice_id = it.c_invoice_id
+   JOIN c_currency c ON c.c_currency_id = i.c_currency_id
+   JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_tax t ON t.c_tax_id = it.c_tax_id
+   JOIN ad_orginfo oi ON oi.ad_org_id = i.ad_org_id
+   LEFT JOIN c_location lo ON lo.c_location_id = oi.c_location_id
+   LEFT JOIN c_region r ON r.c_region_id = lo.c_region_id
+  WHERE t.ispercepcion = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CL'::bpchar, 'CO'::bpchar])) OR (i.docstatus = ANY (ARRAY['VO'::bpchar, 'RE'::bpchar])) AND dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar);
+
+ALTER TABLE c_invoice_percepciones_v
+  OWNER TO libertya;
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
