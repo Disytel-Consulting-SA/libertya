@@ -31,6 +31,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
 public class ExportProcess extends SvrProcess {
@@ -201,7 +202,7 @@ public class ExportProcess extends SvrProcess {
 	 * @return Path absoluto del archivo exportado
 	 */
 	protected String getFilePath(){
-		StringBuffer filepath = new StringBuffer(getExportFormat().getFileName());
+		StringBuffer filepath = new StringBuffer(getFileName());
 		if(getExportFormat().isConcatenateTimestamp()){
 			SimpleDateFormat dateFormat = new SimpleDateFormat(
 					getExportFormat().getTimestampPattern());
@@ -211,6 +212,13 @@ public class ExportProcess extends SvrProcess {
 		}
 		filepath.append(".").append(getFileExtension());
 		return filepath.toString();
+	}
+	
+	/**
+	 * @return el nombre del archivo
+	 */
+	protected String getFileName() {
+		return getExportFormat().getFileName();
 	}
 	
 	/**
@@ -347,11 +355,25 @@ public class ExportProcess extends SvrProcess {
 		}
 	}
 	
+	/**
+	 * @return el número de exportación del día del mismo formato de exportación
+	 */
+	protected Integer getDayExportNo() {
+		int exportNo = 0;
+		if (getExportFormat().getLastExportedDate() != null
+				&& TimeUtil.isSameDay(Env.getDate(), getExportFormat().getLastExportedDate())) {
+			exportNo = getExportFormat().getDateExportNo();
+		}
+		exportNo++;
+		return exportNo;
+	}
+	
 	protected void saveDocument() throws Exception {
 		// Cierro el archivo
 		getFileWriter().close();
 		// Guardo la última fecha de exportación del formato
 		if(getExportFormat() != null){
+			getExportFormat().setDateExportNo(getDayExportNo());
 			getExportFormat().setLastExportedDate(Env.getTimestamp());
 			if(!getExportFormat().save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
@@ -641,5 +663,18 @@ public class ExportProcess extends SvrProcess {
 		Map<String, String> invalids = new HashMap<String,String>();
 		invalids.put("\"",null);
 		return invalids;
+	}
+	
+	/**
+	 * Si el tamaño del parámetro data es mayor a maxLength, entonces devuelve el
+	 * substring de 0 a maxLength
+	 * 
+	 * @param data      datos
+	 * @param maxLength longitud máxima de los datos
+	 * @return data si la longitud del mismo supera maxLength, substring de 0 a
+	 *         maxLength caso contrario
+	 */
+	protected String truncField(String data, int maxLength) {
+		return !Util.isEmpty(data, true) && data.length() > maxLength ? data.substring(0, maxLength) : data;
 	}
 }

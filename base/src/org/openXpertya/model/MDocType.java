@@ -219,6 +219,9 @@ public class MDocType extends X_C_DocType {
     /** Lista Galicia */
     public static final String DOCTYPE_Lista_Galicia = "LG";
 
+    /** Lista Galicia */
+    public static final String DOCTYPE_Lista_Galicia_E_Check = "LGECHECK";
+    
     /** Lista Patagonia */
     public static final String DOCTYPE_Lista_Patagonia = "LP";
 

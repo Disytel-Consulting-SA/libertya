@@ -2092,3 +2092,8 @@ CREATE OR REPLACE VIEW c_invoice_percepciones_v AS
 ALTER TABLE c_invoice_percepciones_v
   OWNER TO libertya;
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+
+--20201111-2144 Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+--(20200604-1230 Nueva columna para registrar el número de exportación por día)
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_expformat','dateexportno','integer NOT NULL DEFAULT 0'));
+--FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
