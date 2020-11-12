@@ -63,6 +63,10 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_UID = "TEHLBY-AD_Process-20200319164902392-923485";
 	protected final static String SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_FILENAME = "SalesByDiscountSchema.jasper";
 	
+	/** UID de la impresión de la Lista de Banco */
+	protected final static String BANK_LIST_PRINT_JASPER_REPORT_UID = "CORE-AD_Process-1010549";
+	protected final static String BANK_LIST_PRINT_JASPER_REPORT_FILENAME = "BankListPrint.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -269,6 +273,17 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(SALES_ANALYSIS_BY_DISCOUNT_SCHEMA_JASPER_REPORT_FILENAME)));
+		
+		// Impresión de Lista de Banco
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				BANK_LIST_PRINT_JASPER_REPORT_UID,
+				BANK_LIST_PRINT_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(BANK_LIST_PRINT_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
