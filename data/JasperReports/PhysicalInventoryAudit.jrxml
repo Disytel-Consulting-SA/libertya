@@ -31,6 +31,7 @@
 	<parameter name="M_Inventory_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="M_Product_Lines_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="VISUAL_OPTION_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="PriceType" isForPrompting="false" class="java.lang.String"/>
 	<queryString><![CDATA[select ad_client_id,
 	ad_org_id,
 	m_product_lines_id,
@@ -69,7 +70,7 @@ from (select il.ad_client_id,
 		il.qtycount,
 		il.qtybook,
 		il.qtycount - il.qtybook as diff,
-		determineproductpricestd(p.m_product_id, il.ad_org_id, 'N') as costo
+		coalesce((CASE WHEN $P{PriceType} = 'P' THEN determineproductpricestd(p.m_product_id, il.ad_org_id, 'N') ELSE il.cost END),0) as costo
 	from m_inventoryline il
 	inner join m_product p on p.m_product_id = il.m_product_id
 	inner join m_product_category pc on pc.m_product_category_id = p.m_product_category_id
@@ -250,7 +251,7 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 			</band>
 		</background>
 		<title>
-			<band height="95"  isSplitAllowed="true" >
+			<band height="109"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
@@ -425,6 +426,33 @@ order by product_lines_value, product_gamas_value, product_category_value, produ
 						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{Diff_Amt}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="0"
+						y="90"
+						width="80"
+						height="15"
+						key="staticText-19"
+						isRemoveLineWhenBlank="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font size="9"/>
+					</textElement>
+				<text><![CDATA[Tipo de Precio:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="80"
+						y="90"
+						width="480"
+						height="15"
+						key="textField-6"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PriceType}.equals("H")?"Precio Histórico":"Precio de Tarifa"]]></textFieldExpression>
 				</textField>
 			</band>
 		</title>

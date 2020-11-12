@@ -71,6 +71,10 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 	protected final static String PRODUCT_ACCTS_JASPER_REPORT_UID = "TEHLBY-AD_Process-20200720171849643-475519";
 	protected final static String PRODUCT_ACCTS_JASPER_REPORT_FILENAME = "ProductAccounts.jasper";
 	
+	/** UID del informe de Auditoría de Inventario Físico */
+	protected final static String PIA_JASPER_REPORT_UID = "CORE-AD_Process-1010369";
+	protected final static String PIA_JASPER_REPORT_FILENAME = "PhysicalInventoryAudit.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -299,6 +303,17 @@ public class PostInstallUpgradeFrom1907 extends PluginPostInstallProcess {
 						.readBinaryFromJar(
 								jarFileURL,
 								getBinaryFileURL(PRODUCT_ACCTS_JASPER_REPORT_FILENAME)));
+		
+		// Auditoría de Inventario Físico
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				PIA_JASPER_REPORT_UID,
+				PIA_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(PIA_JASPER_REPORT_FILENAME)));
 		
 		return " ";
 	}
