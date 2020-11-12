@@ -21,6 +21,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.openXpertya.model.MClient;
 
@@ -376,6 +378,25 @@ public class EMailUtil {
 
         return "localhost";
     }    // getCurrentSmtpHost
+    
+    /**
+	 * Validación de formato de correo electrónico
+	 * 
+	 * @param email correo electrónico
+	 * @return true si el formato es válido, false caso contrario
+	 */
+    public static boolean isEmailAddressFormatValid(String email) {
+    	if(Util.isEmpty(email, true)) {
+    		return true;
+    	}
+    	// Patrón para validar el email
+        Pattern pattern = Pattern
+                .compile("^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                        + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$");
+
+        Matcher mather = pattern.matcher(email);
+        return mather.find();
+    }
 }    // EMailUtil
 
 

@@ -38,6 +38,7 @@ import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.util.CCache;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.EMailUtil;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
@@ -51,6 +52,9 @@ import org.openXpertya.util.Util;
  */
 
 public class MUser extends X_AD_User {
+	
+	/** Nombre de preference para controlar el email válido dependiendo la EC o todos */
+	private static final String EMAIL_VALID_USER_PREFERENCE_NAME = "EmailValidControl_User";
 	
     /**
      * Descripción de Método
@@ -759,6 +763,26 @@ public class MUser extends X_AD_User {
             	log.saveError("PasswordInvalidError", "");
             	return false;
             }	
+        }
+        
+		String emailPreference = MPreference.searchCustomPreferenceValue(EMAIL_VALID_USER_PREFERENCE_NAME,
+				getAD_Client_ID(), 0, Env.getAD_User_ID(getCtx()), true);
+        boolean controlEmail = true;
+        if(!Util.isEmpty(emailPreference, true) && !emailPreference.equals("A")) {
+        	if(Util.isEmpty(getC_BPartner_ID(), true)) {
+        		controlEmail = false;
+        	}
+        	else {
+        		MBPartner bp = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+				controlEmail = (emailPreference.equals("C") && bp.isCustomer())
+						|| (emailPreference.equals("V") && bp.isVendor()); 
+        	}
+        }
+		
+        // Validación de formato de email
+        if(controlEmail && !EMailUtil.isEmailAddressFormatValid(getEMail())) {
+        	log.saveError("EmailAddressFormatError", "");
+        	return false;
         }
         
         return true;
