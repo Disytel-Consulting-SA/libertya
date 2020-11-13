@@ -332,6 +332,7 @@ public class ESCPOSPrinter extends BasicFiscalPrinter implements ESCPOSCommands,
 	 */
 	private void loadAutomaticTaxes(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
 		if(Document.DOC_LETTER_A.equals(document.getLetter())) {
+			execute(cmdFeed(1));
 			execute(setTextRight());
 			execute(printLF(truncDescription("Subtotal") + fillAmount(document.getNetAmount())));
 			execute(setTextLeft());
