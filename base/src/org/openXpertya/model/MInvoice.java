@@ -5481,7 +5481,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 		// Generar CAE si es que el comprobante original asi lo tiene
 		if (localeARActive && isSOTrx() && !Util.isEmpty(getcae(), true)) {
-			CallResult callResult = reversal.doCAEGeneration();
+			CallResult callResult = reversal.doCAEGeneration(true);
 			if (callResult.isError()) {
 				m_processMsg = callResult.getMsg();
 				return false;
