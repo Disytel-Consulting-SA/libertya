@@ -176,7 +176,7 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 	 *         encontraron descuentos con el filtro indicado
 	 */
 	public static List<MDocumentDiscount> get(String filter, Object[] parameters, Properties ctx, String trxName) {
-		return get(filter, parameters, "DiscountKind, TaxRate ASC", ctx, trxName);
+		return get(filter, parameters, "DiscountKind, M_DiscountSchema_ID, TaxRate ASC", ctx, trxName);
 	}
 
 	/**
