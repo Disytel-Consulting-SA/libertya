@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.openXpertya.print.fiscal.exception.DocumentException;
+import org.openXpertya.util.Util;
 
 /**
  * Clase que representa un documento fiscal/no fiscal a imprimir en una
@@ -76,6 +77,8 @@ public abstract class Document implements Serializable{
 	private String cae;
 	/** Fecha de Vto de CAE */
 	private Timestamp caeDueDate;
+	/** Importe del cargo que permite determinar el total real del comprobante */
+	private BigDecimal chargeAmt = null;
 	
 	public Document() {
 		super();
@@ -258,9 +261,11 @@ public abstract class Document implements Serializable{
 		for (DocumentLine docLine : getLines()) {
 			sum = sum.add(docLine.getLineTotal());
 		}
-		// Se suma el descuento en caso de existir.
-		if(hasGeneralDiscount())
-			sum = sum.add(getGeneralDiscount().getAmount());
+		// Se suma el importe del cargo en caso de existir, el cual tiene recargos y
+		// descuentos incluídos
+		for (DiscountLine dd : getDocumentDiscounts()) {
+			sum = sum.add(dd.getAmount());
+		}
 		
 		// Sumo otros impuestos
 		for (Tax otherTax : getOtherTaxes()) {
@@ -435,5 +440,13 @@ public abstract class Document implements Serializable{
 
 	public void setTaxes(List<Tax> taxes) {
 		this.taxes = taxes;
+	}
+
+	public BigDecimal getChargeAmt() {
+		return chargeAmt;
+	}
+
+	public void setChargeAmt(BigDecimal chargeAmt) {
+		this.chargeAmt = chargeAmt;
 	}
 }
