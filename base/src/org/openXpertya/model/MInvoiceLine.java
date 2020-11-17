@@ -515,14 +515,26 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		if(documentDiscounts.size() > 0){
 			int signToCompare = isDragDocumentDiscountAmts() && isDragDocumentSurchargesAmts() ? 0
 					: (isDragDocumentDiscountAmts() ? 1 : -1);
-			Map<Integer, MDocumentDiscount> parentDocumentDiscounts = new HashMap<Integer, MDocumentDiscount>();
-			MDocumentDiscount parent;
+			BigDecimal accDiscountAmt = BigDecimal.ZERO;
+			BigDecimal accDiscountBaseAmt = BigDecimal.ZERO;
+			MDocumentDiscount old_dd = null;
 			for (MDocumentDiscount mDocumentDiscount : documentDiscounts) {
 				// Se debe verificar si se debe arrastrar el descuento o recargo
 				// dependiendo de la configuración
 				if(signToCompare == 0 || mDocumentDiscount.getDiscountAmt().signum() == signToCompare){
-					discountAmt = Util.getRatedAmt(totalPriceList, mDocumentDiscount.getDiscountAmt(),
-							mDocumentDiscount.getDiscountBaseAmt(), tmpPrecision);
+					
+					// Si es el mismo descuento, lo sumo al acumulado y sigo
+					if(old_dd == null 
+							|| old_dd.getDiscountKind() != mDocumentDiscount.getDiscountKind()
+							|| old_dd.getM_DiscountSchema_ID() != mDocumentDiscount.getM_DiscountSchema_ID()) {
+						old_dd = mDocumentDiscount;
+						accDiscountBaseAmt = accDiscountBaseAmt.add(mDocumentDiscount.getDiscountBaseAmt());
+						accDiscountAmt = accDiscountAmt.add(mDocumentDiscount.getDiscountAmt());
+						continue;
+					}
+					
+					discountAmt = Util.getRatedAmt(totalPriceList, accDiscountAmt, accDiscountBaseAmt, tmpPrecision);
+					
 					// Determinar el ratio correspondiente a esta línea para
 					// saber cuanto es realmente el descuento
 					/*parent = parentDocumentDiscounts.get(mDocumentDiscount.getC_DocumentDiscount_Parent_ID());
@@ -536,9 +548,20 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 							*/
 					documentDiscountAmt = documentDiscountAmt.add(discountAmt.setScale(2, BigDecimal.ROUND_HALF_DOWN));
 					// Registro el descuento para luego guardar
-					createDocumentDiscountToSave(mDocumentDiscount, totalPriceList, discountAmt, true);
+					createDocumentDiscountToSave(old_dd, totalPriceList, discountAmt, true);
+					accDiscountAmt = BigDecimal.ZERO;
+					accDiscountBaseAmt = BigDecimal.ZERO;
+					old_dd = null;
 				}
+				
 			}
+			if(old_dd != null) {
+				discountAmt = Util.getRatedAmt(totalPriceList, accDiscountAmt, accDiscountBaseAmt, tmpPrecision);
+				documentDiscountAmt = documentDiscountAmt.add(discountAmt.setScale(2, BigDecimal.ROUND_HALF_DOWN));
+				// Registro el descuento para luego guardar
+				createDocumentDiscountToSave(old_dd, totalPriceList, discountAmt, true);
+			}
+			
 		}
 		else{
 			// DEPRECATED En caso que no existan, se deja el código anterior, tomando en cuenta
