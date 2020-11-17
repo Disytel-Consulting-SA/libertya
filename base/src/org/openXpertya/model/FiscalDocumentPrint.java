@@ -993,6 +993,9 @@ public class FiscalDocumentPrint {
 		invoice.setCae(mInvoice.getcae());
 		invoice.setCaeDueDate(mInvoice.getvtocae());
 		
+		// Importe del cargo
+		invoice.setChargeAmt(mInvoice.getChargeAmt());
+		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, invoice);
 		
@@ -1071,6 +1074,9 @@ public class FiscalDocumentPrint {
 		debitNote.setCae(mInvoice.getcae());
 		debitNote.setCaeDueDate(mInvoice.getvtocae());
 		
+		// Importe del cargo
+		debitNote.setChargeAmt(mInvoice.getChargeAmt());
+		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, debitNote);
 		
@@ -1122,6 +1128,9 @@ public class FiscalDocumentPrint {
 		// CAE
 		creditNote.setCae(mInvoice.getcae());
 		creditNote.setCaeDueDate(mInvoice.getvtocae());
+		
+		// Importe del cargo
+		creditNote.setChargeAmt(mInvoice.getChargeAmt());
 		
 		// Setear los mensajes a la cola de la impresión
 		setStdFooterObservations(mInvoice, creditNote);
