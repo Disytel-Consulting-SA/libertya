@@ -490,7 +490,7 @@ public class PoSOnline extends PoSConnectionState {
 			// Impresión del documento con datos del cliente en cuenta corriente
 			printCurrentAccountTicket(order);
 		} catch (Exception e) {
-			e.printStackTrace();
+			
 		}
 	}
 	
@@ -536,7 +536,7 @@ public class PoSOnline extends PoSConnectionState {
 			// Lanza la impresión fiscal
 			CallResult callResult = tmpInvoice.doFiscalPrint(true);
 			if (callResult.isError()) {
-				throw new FiscalPrintException(callResult.getMsg());				
+				throw new FiscalPrintException();				
 			}
 		}
 	}

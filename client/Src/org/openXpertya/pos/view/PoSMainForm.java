@@ -68,6 +68,7 @@ import org.compiere.swing.CTabbedPane;
 import org.compiere.swing.CTextField;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
+import org.openXpertya.apps.AInfoElectronic;
 import org.openXpertya.apps.AInfoFiscalPrinter;
 import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.StatusBar;
@@ -90,6 +91,7 @@ import org.openXpertya.pos.ctrl.AddPOSPaymentValidations;
 import org.openXpertya.pos.ctrl.PoSConfig;
 import org.openXpertya.pos.ctrl.PoSModel;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
+import org.openXpertya.pos.exceptions.GeneratingCAEError;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
 import org.openXpertya.pos.exceptions.InsufficientCreditException;
 import org.openXpertya.pos.exceptions.InvalidOrderException;
@@ -515,6 +517,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private String MSG_TAXES;
 	private String MSG_TAX;
 	private String MSG_PROMOTIONS;
+	private String MSG_CAE_GENERATED;
+	private String MSG_CAE_GENERATED_VOID;
 	
 	/**
 	 * This method initializes 
@@ -569,6 +573,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// Necesario hacerlo aquí porque se requiere el windowsNo para que
 			// se comporte correctamente el foco
 			createInfoFiscalPrinter();
+			createInfoElectronic();
 			
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "PoSMainForm.init", e);
@@ -827,6 +832,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_TAX = getMsg("Tax");
 		MSG_PROMOTIONS = getMsg("Promotions");
 		MSG_CREDIT_CARD_REPEATED = getMsg("POSCreditCardPaymentRepeated");
+		MSG_CAE_GENERATED = getMsg("DocumentNoPrintedCAEGeneratedAskMsg");
+		MSG_CAE_GENERATED_VOID = getMsg("DocumentVoidCAEGeneratedAskMsg");
 		
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
@@ -5425,6 +5432,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		SwingWorker worker = new SwingWorker() {
 			
 			private final String FISCAL_PRINT_ERROR = "FiscalPrintError";
+			private final String GENERATING_CAE_ERROR = "GeneratingCAEError";
 			private String errorMsg = null;
 			private String errorDesc = null;
 				
@@ -5435,6 +5443,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				try {
 					getModel().setDocActionStatusListener(docActionStatusListener);
 					getModel().setFiscalPrintListeners(infoFiscalPrinter, infoFiscalPrinter);
+					getModel().setElectronicListener(infoElectronic);
 					CPreparedStatement.setNoConvertSQL(true);
 					getModel().setAuthorizationModel(getAuthDialog().getUserAuth().getUserAuthModel());
 					getModel().completeOrder();
@@ -5453,10 +5462,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					errorDesc = getMsg(e.getMessage());
 				} catch (FiscalPrintException e) {
 					errorMsg = FISCAL_PRINT_ERROR;
+				} catch (GeneratingCAEError e) {
+					errorMsg = GENERATING_CAE_ERROR;
 				} catch (PosException e) {
 					errorMsg = MSG_FATAL_ERROR;
 					if (e.getMessage() != null && e.getMessage().length() > 0)
 						errorDesc = getMsg(e.getMessage());
+					log.severe(e.toString());
 					e.printStackTrace();
 				}
 				finally
@@ -5470,9 +5482,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			public void finished() {
 				boolean success = (Boolean)getValue();
 				boolean fiscalPrintError = errorMsg != null && errorMsg.equals(FISCAL_PRINT_ERROR);
+				boolean generatingCAEError = errorMsg != null && errorMsg.equals(GENERATING_CAE_ERROR);
 				if(success) {
 					newOrder();
-				} else if (!fiscalPrintError) {
+				} else if (!fiscalPrintError && !generatingCAEError) {
 					if(errorDesc == null)
 						errorMsg(errorMsg);
 					else
@@ -5481,7 +5494,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					//waitingDialog.setVisible(false);
 					//getFrame().setEnabled(true);
 				}
-				if (!fiscalPrintError) {
+				if (!fiscalPrintError && !generatingCAEError) {
 					getFrame().setBusy(false);
 					mNormal();
 					updateProcessing(false);
@@ -5507,6 +5520,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (infoFiscalPrinter != null) {
 			infoFiscalPrinter.setVisible(false);
 			infoFiscalPrinter.clearDetail();
+		}
+		if (infoElectronic != null) {
+			infoElectronic.setVisible(false);
+			infoElectronic.clearDetail();
 		}
 		getManualDiscountAuthOperation().setAuthorized(true);
 		getManualDiscountAuthOperation().setAuthTime(null);
@@ -5843,7 +5860,37 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		    	// Se muestra la ventana en el thread de Swing.
 		    	SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
+						// Si la info electrónica está visible, significa que se generó el CAE
+						// correctamente, por lo tanto verificar en la config si se debe mostrar el
+						// botón de Anulación de Comprobantes ya que anular los comprobantes luego de un
+						// error en la fiscal, genera una anulación en FE
+						infoFiscalPrinter.setVoidButtonActive(true);
+						infoFiscalPrinter.setMsgAllowingClose(null);
+						infoFiscalPrinter.setVoidDocumentsConfirmationMsg(null);
+						if(infoElectronic.isVisible()) {
+							infoFiscalPrinter.setVoidButtonActive(getModel().getPoSConfig().isVoidDocuments_EF());
+							if(!getModel().getPoSConfig().isVoidDocuments_EF()) {
+								infoFiscalPrinter.setMsgAllowingClose(MSG_CAE_GENERATED);
+							}
+							else {
+								infoFiscalPrinter.setVoidDocumentsConfirmationMsg(MSG_CAE_GENERATED_VOID);
+							}
+						}
+						infoElectronic.setVisible(false);
+						infoElectronic.clearDetail();
 						infoFiscalPrinter.setVisible(true);
+					}
+		    	});
+			}
+			
+			// Evento: Generación de CAE 
+			if(event.getDocActionStatus() == DocActionStatusEvent.ST_GENERATING_CAE) {
+		    	// Se muestra la ventana en el thread de Swing.
+		    	SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						infoElectronic.setMsgAllowingClose(null);
+						infoElectronic.setVoidDocumentsConfirmationMsg(null);
+						infoElectronic.setVisible(true);
 					}
 		    	});
 			}
@@ -5855,7 +5902,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	// Se crea la ventana que muestra el estado de la impresora fiscal.
 	protected AInfoFiscalPrinter infoFiscalPrinter = null;
 
-
+	// Se crea la ventana que muestra el estado de la impresora fiscal.
+	protected AInfoElectronic infoElectronic = null;
+	
     /**
      * Agrega el pedido de cliente actualmente cargado al pedido del TPV (agrega los artículos
      * del pedido de cliente al pedido del TPV).
@@ -6636,6 +6685,46 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		infoFiscalPrinter.setThrowExceptionInCancelCheckStatus(true);
 	}
 
+	protected void createInfoElectronic() {
+		infoElectronic = new AInfoElectronic(
+				null,
+				getWindowNo(),
+				Msg.parseTranslation(Env.getCtx(),"@CAEGeneration@")		
+		);
+		
+		infoElectronic
+				.setDialogActionListener(new AInfoElectronic.ElectronicDialogActionListener() {
+					
+				@Override
+				public void actionVoidPerformed() {
+					// Anulación de los documentos.
+					voidDocuments();
+				}
+				
+				@Override
+				public void actionReprintPerformed(FiscalDocumentPrint fdp) {
+					// No hace nada ya que no es una impresión fiscal
+				}
+				
+				@Override
+				public void actionPrintFinishOK() {
+					// No hace nada ya que no es impresión fiscal
+				}
+				
+				@Override
+				public void actionReGenerateCAE() {
+					// TODO Auto-generated method stub
+					regenerateCAE();
+				}
+
+		});
+		
+		infoElectronic.setReprintButtonActive(false);
+		infoElectronic.setVoidButtonActive(true);
+		infoElectronic.setOkButtonActive(false);
+		infoElectronic.setThrowExceptionInCancelCheckStatus(true);
+	}
+	
 	/**
 	 * Invoca la anulación de los documentos generados debido a un error en la
 	 * impresión fiscal
@@ -6714,6 +6803,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private void reprintDocument(FiscalDocumentPrint fdp) {
 		SwingWorkerRePrintDocument worker = new SwingWorkerRePrintDocument();		
 		worker.setFiscalDocumentPrint(fdp);
+		worker.start();
+	}
+	
+	private void regenerateCAE() {
+		SwingWorkerReGenerateCAE worker = new SwingWorkerReGenerateCAE();
 		worker.start();
 	}
 	
@@ -6985,8 +7079,23 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 		
 	}
+	
+	private class SwingWorkerReGenerateCAE extends SwingWorker{
+		
+		@Override
+		public Object construct() {
+			return getModel().regenerateCAE();
+		}
+
+		@Override
+		public void finished() {
+			boolean success = (Boolean)getValue();
+		}
+		
+	}
 
 	public boolean isForPos() {
 		return true;
 	}
+
 }  //  @jve:decl-index=0:visual-constraint="10,10"
