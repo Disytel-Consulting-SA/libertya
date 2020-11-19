@@ -490,7 +490,7 @@ public class PoSOnline extends PoSConnectionState {
 			// Impresión del documento con datos del cliente en cuenta corriente
 			printCurrentAccountTicket(order);
 		} catch (Exception e) {
-			
+			e.printStackTrace();
 		}
 	}
 	
@@ -536,7 +536,7 @@ public class PoSOnline extends PoSConnectionState {
 			// Lanza la impresión fiscal
 			CallResult callResult = tmpInvoice.doFiscalPrint(true);
 			if (callResult.isError()) {
-				throw new FiscalPrintException();				
+				throw new FiscalPrintException(callResult.getMsg());				
 			}
 		}
 	}
@@ -1417,9 +1417,6 @@ public class PoSOnline extends PoSConnectionState {
 			orderLine.setShouldUpdateHeader(currentProduct==productCount);
 		}
 		
-		// Cargar los impuestos adicionales en C_Order_Tax
-		createOXPOrderTaxes(mo, order);
-		
 		// Crea un calculador de descuentos a partir del calculador de
 		// descuentos asociado al pedido de TPV, asociando al nuevo calculador
 		// el pedido MOrder creado (wrapper). Luego aplica los descuentos.
@@ -1427,6 +1424,10 @@ public class PoSOnline extends PoSConnectionState {
 		debug("Aplicando descuentos al Pedido (DiscountCalculator)");
 		discountCalculator.applyDiscounts();
 		debug("Guardando el Pedido nuevamente (luego de aplicar descuentos)");
+		
+		// Cargar los impuestos adicionales en C_Order_Tax
+		
+		createOXPOrderTaxes(mo, order);
 		
 		// Actualizar los importes finales de cabecera
 		mo.calculateTotalAmounts();
@@ -1437,6 +1438,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		mo = new MOrder(ctx, mo.getID(), getTrxName());
 		
+		mo.setTPVInstance(true);
 		setCaches(mo); //caches
 		// Se reserva stock solo si el remito realizado desde tpv se genera en
 		// borrador
@@ -1466,6 +1468,16 @@ public class PoSOnline extends PoSConnectionState {
 			orderTax.setTaxBaseAmt(tax.getTaxBaseAmt());
 			orderTax.setIsTaxIncluded(mo.isTaxIncluded());
 			throwIfFalse(orderTax.save(), mo);
+		}
+		MTax t;
+		for (MOrderTax ot : mo.getTaxes(true)) {
+			t = MTax.get(getCtx(), ot.getC_Tax_ID(), getTrxName());
+			if(!t.isPercepcion()) {
+				ot.calculateTaxFromLines();
+				if(!ot.save()) {
+					throw new PosException(CLogger.retrieveErrorAsString());
+				}
+			}
 		}
 	}
 	
@@ -1571,11 +1583,13 @@ public class PoSOnline extends PoSConnectionState {
 		// Crear los impuestos adicionales a la factura
 		createOXPInvoiceTaxes(inv, order);
 		
-		// Recargar la factura
-		inv = new MInvoice(ctx, inv.getID(), getTrxName());
-		
 		// Actualizar los importes finales de cabecera
 		inv.calculateTotalAmounts();
+		
+		throwIfFalse(inv.save(), inv, InvoiceCreateException.class);
+		
+		// Recargar la factura
+		inv = new MInvoice(ctx, inv.getID(), getTrxName());
 		
 		// Seteo el bypass de la factura para que no chequee el saldo del
 		// cliente porque ya lo chequea el tpv
@@ -1631,6 +1645,17 @@ public class PoSOnline extends PoSConnectionState {
 			invoiceTax.setTaxBaseAmt(tax.getTaxBaseAmt());
 			invoiceTax.setIsTaxIncluded(mi.isTaxIncluded());
 			throwIfFalse(invoiceTax.save(), mi);
+		}
+		for (MInvoiceTax it : mi.getTaxes(true)) {
+			it.calculateTaxFromLines();
+			if(!it.save()) {
+				throw new PosException(CLogger.retrieveErrorAsString());
+			}
+		}
+		try {
+			mi.recalculatePercepciones();
+		} catch(Exception e) {
+			throw new PosException(e.getMessage());
 		}
 	}
 	
