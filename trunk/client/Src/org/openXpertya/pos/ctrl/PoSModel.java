@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.openXpertya.apps.AInfoElectronic.ElectronicDialogActionListener;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MPOSJournal;
@@ -43,6 +44,7 @@ import org.openXpertya.pos.model.Tax;
 import org.openXpertya.pos.model.User;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
+import org.openXpertya.process.ElectronicEventListener;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.AUserAuthModel;
@@ -926,5 +928,17 @@ public class PoSModel {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Regeneración del CAE
+	 * @return true si fue exitoso, false caso contrario
+	 */
+	public boolean regenerateCAE(){
+		return getConnectionState().regenerateCAE(getOrder());
+	}
+	
+	public void setElectronicListener(ElectronicEventListener evl) {
+		getConnectionState().setElectronicEventListener(evl);
 	}
 }
