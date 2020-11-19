@@ -6829,6 +6829,9 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				automaticTaxesAmt = automaticTaxesAmt.add(rs.getBigDecimal("taxamt"));
 			}
 			
+			rs.close();
+			ps.close();
+			
 			// Impuestos manuales
 			ps = DB.prepareStatement(
 					SalesUtil.getSQLTaxAmountsForTotals(X_C_InvoiceTax.Table_Name, "c_invoice_id", getID(), true),
