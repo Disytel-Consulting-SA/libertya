@@ -2132,3 +2132,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_pos','voiddocuments
 ALTER TABLE c_controlador_fiscal ALTER COLUMN host DROP NOT NULL;
 ALTER TABLE c_controlador_fiscal ALTER COLUMN port DROP NOT NULL;
 --FIN Masterizacion de micro componente: org.libertya.core.micro.r2855.dev.tehlby
+
+--20201116-0920 Versionado de BBDD para release
+UPDATE ad_system SET version = '16-11-2020' WHERE ad_system_id = 0;
