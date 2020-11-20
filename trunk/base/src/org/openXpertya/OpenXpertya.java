@@ -60,13 +60,13 @@ public final class OpenXpertya {
     static public final String	ID	= "$Id: OpenXpertya.java,v 2.2 $";
 
     /** Descripción de Campo */
-    static public final String	MAIN_VERSION	= "Versi\u00f3n 19.07";
+    static public final String	MAIN_VERSION	= "Versi\u00f3n 21.0";
 
     /** Descripción de Campo */
-    static public final String	DATE_VERSION	= "31-07-2019";
+    static public final String	DATE_VERSION	= "16-11-2020";
 
     /** Descripción de Campo */
-    static public final String	DB_VERSION	= "31-07-2019";
+    static public final String	DB_VERSION	= "16-11-2020";
 
     /** Descripción de Campo */
     static public final String	NAME	= "Libertya \u00AE";
@@ -97,7 +97,7 @@ public final class OpenXpertya {
     static public final String	OXP_R	= "Libertya\u00AE";
 
     /** Descripción de Campo */
-    static public final String	COPYRIGHT	= "\u00A9 2019 DISYTEL";
+    static public final String	COPYRIGHT	= "\u00A9 2020 DISYTEL";
 
     /** Descripción de Campo */
     static private String	s_ImplementationVersion	= null;
@@ -633,8 +633,8 @@ public final class OpenXpertya {
         startup(true);		// error exit and initUI
         
         try {
-	        // Novedades bajo LY20.08: Visualizar el mensaje por unica vez
-        	String property = "LY.NEWS.RELEASE.20.08";
+	        // Novedades bajo LY21.0: Visualizar el mensaje por unica vez
+        	String property = "LY.NEWS.RELEASE.21.0";
 	        String plaf = UIManager.getLookAndFeel().getName();
 	        if (!"Libertya".equals(plaf) && !"Y".equals(Ini.getProperty(property))) {
 	        	// Forzar el uso del nuevo look & feel al menos en la primer ejecucion de la nueva version
@@ -642,7 +642,7 @@ public final class OpenXpertya {
 	        	CompierePLAF.setPLAF(lyplaf, null, null);
 	        	
 	        	// Notificar una unica vez por usuario
-	        	JOptionPane.showMessageDialog(null, " Novedades Libertya 20.08 \n\n " +
+	        	JOptionPane.showMessageDialog(null, " Novedades Libertya 21.0 \n\n " +
 	        										" Hemos renovado la interfaz de usuario de Libertya. \n " +
 	        										" Si quieres volver a la interfaz anterior puedes hacerlo desde \n " + 
 	        			 							" Herramientas -> Preferencias -> Tema del Interfaz del Usuario");

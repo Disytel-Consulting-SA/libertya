@@ -153,6 +153,7 @@
   	<unjar src="lib/commons-logging-1.2.jar" dest="construirOXPLIB" />
   	<unjar src="lib/commons-codec-1.9.jar" dest="construirOXPLIB" />
   	<unjar src="lib/lyws.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/fonts.jar" dest="construirOXPLIB" />
 
     <!--fin cambios para PostgreSQL -->    
     <unjar src="lib/${TIPO_APPS_OXP}.jar" dest="construirOXPLIB" />
@@ -499,10 +500,10 @@
 		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="Libertya"/>
-		<attribute name="Specification-Version" value="V19.07"/>
-		<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+		<attribute name="Specification-Version" value="V21.0"/>
+		<attribute name="Specification-Vendor" value="(C) 2020 DISYTEL."/>
 		<attribute name="Implementation-Title" value="libertya"/>
-		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Version" value="V21.0 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
 		<!--attribute name="Class-Path" value="OXPRoot.jar OXP.jar OXPSLib.jar"/-->
 	  	<attribute name="Class-Path" value="OXPRoot.jar OXP.jar OXPSLib.jar"/>
@@ -519,10 +520,10 @@
 		 includes="OXPApps.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="ServidorAplicacionesLibertya"/>
-		<attribute name="Specification-Version" value="V2"/>
-		<attribute name="Specification-Vendor" value="(C) 2005-2007 FUNDESLE."/>
+		<attribute name="Specification-Version" value="V21.0"/>
+		<attribute name="Specification-Vendor" value="(C) 2020 DISYTEL."/>
 		<attribute name="Implementation-Title" value="ServidorAplicacionesLibertya"/>
-		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Version" value="V21.0 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
 	  	<!--attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/-->
 	  	<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
@@ -539,10 +540,10 @@
 		includes="TiendaWebOXP.war,OXP.jar,OXPSLib.jar,OXPApps.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="TiendaWebLibertya"/>
-		<attribute name="Specification-Version" value="v2"/>
-		<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+		<attribute name="Specification-Version" value="V21.0"/>
+		<attribute name="Specification-Vendor" value="(C) 2020 DISYTEL."/>
 		<attribute name="Implementation-Title" value="TiendaWebLibertya"/>
-		<attribute name="Implementation-Version" value="V2 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Version" value="V21.0 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
 	  	<!--attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/-->
 	  	<attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/>
