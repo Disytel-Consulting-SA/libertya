@@ -269,7 +269,7 @@ public class AccountsDetail extends SvrProcess {
     protected String doIt() {
 
 		// delete all rows older than a week
-		DB.executeUpdate("DELETE FROM T_Acct_Detail WHERE Created < ('now'::text)::timestamp(6) - interval '7 days'", get_TrxName());		
+		DB.executeUpdate("DELETE FROM T_Acct_Detail WHERE Created < ('now'::text)::timestamp(6) - interval '1 day'", get_TrxName());		
 		// delete all rows in table with the given ad_pinstance_id
 		DB.executeUpdate("DELETE FROM T_Acct_Detail WHERE AD_PInstance_ID = " + getAD_PInstance_ID(), get_TrxName());
     	
