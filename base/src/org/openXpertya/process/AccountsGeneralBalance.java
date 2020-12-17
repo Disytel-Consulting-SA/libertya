@@ -120,10 +120,9 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 					sqlUpdateBalance.append(" 	    (SELECT COALESCE(SUM(thesum),0.0) AS thesum ");
 					
 					sqlUpdateBalance.append(" 	    FROM ( ")
-							.append(getSQLView("AmtAcctDr * (CASE WHEN "
-									+ inflationIndex.getInflationIndex() + " = 0 THEN 0 ELSE ((inflationindex - "
-									+ inflationIndex.getInflationIndex() + ") / " + inflationIndex.getInflationIndex()
-									+ ") END)", true))
+							.append(getSQLView("AmtAcctDr * (CASE WHEN inflationindex = 0 THEN 0 ELSE (("
+									+ inflationIndex.getInflationIndex() + " - inflationindex) / inflationindex) END)",
+									true))
 							.append(" ) v ");
 					sqlUpdateBalance.append(" 	    WHERE  v.HierarchicalCode LIKE t.HierarchicalCode || '%' ");
 					sqlUpdateBalance.append("     ), ");
@@ -131,10 +130,8 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 					sqlUpdateBalance.append(" 	    (SELECT COALESCE(SUM(thesum),0.0) AS thesum ");
 					
 					sqlUpdateBalance.append(" 	    FROM ( ")
-					.append(getSQLView("AmtAcctCr * (CASE WHEN "
-									+ inflationIndex.getInflationIndex() + " = 0 THEN 0 ELSE ((inflationindex - "
-									+ inflationIndex.getInflationIndex() + ") / " + inflationIndex.getInflationIndex()
-									+ ") END) ", true))
+					.append(getSQLView("AmtAcctCr * (CASE WHEN inflationindex = 0 THEN 0 ELSE (("
+									+ inflationIndex.getInflationIndex() + " - inflationindex) / inflationindex) END)", true))
 							.append(" ) v ");
 					sqlUpdateBalance.append(" 	    WHERE  v.HierarchicalCode LIKE t.HierarchicalCode || '%' ");
 					sqlUpdateBalance.append("     ) ");
@@ -405,7 +402,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 			validationInflationIndex();
 			
 			// Obtener el indice de inflación entre fecha desde y hasta
-			int inflationIndexFromID = getInflationIndexID(p_DateAcct_From);
+			int inflationIndexFromID = getInflationIndexID(p_DateAcct_To);
 			if(inflationIndexFromID > 0){
 				fiFrom = new MInflationIndex(getCtx(), inflationIndexFromID, get_TrxName());
 			}
