@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.openXpertya.print.fiscal.exception.DocumentException;
-import org.openXpertya.util.Util;
 
 /**
  * Clase que representa un documento fiscal/no fiscal a imprimir en una
@@ -261,10 +260,14 @@ public abstract class Document implements Serializable{
 		for (DocumentLine docLine : getLines()) {
 			sum = sum.add(docLine.getLineTotal());
 		}
-		// Se suma el importe del cargo en caso de existir, el cual tiene recargos y
-		// descuentos incluídos
+		// Se tienen en cuenta los descuentos
 		for (DiscountLine dd : getDocumentDiscounts()) {
 			sum = sum.add(dd.getAmount());
+		}
+		
+		// Se tiene en cuenta descuento general
+		if(hasGeneralDiscount()) {
+			sum = sum.add(getGeneralDiscount().getAmount());
 		}
 		
 		// Sumo otros impuestos
