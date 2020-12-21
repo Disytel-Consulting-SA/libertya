@@ -158,7 +158,7 @@ public class ExportListaGaliciaECheck extends ExportBankList {
 		fh.append(getFieldSeparator());
 		fh.append(dateFormat_local_ddMMyyyy.format(paymentDate));
 		fh.append(getFieldSeparator());
-		fh.append(dateFormat_local_ddMMyyyy.format(paymentDate));
+		fh.append(dateFormat_local_ddMMyyyy.format(rs.getTimestamp("duedate")));
 		fh.append(getFieldSeparator());
 		
 		fh.append(truncField(rs.getString("bpartner_name"), 50));
