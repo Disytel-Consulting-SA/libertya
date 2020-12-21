@@ -37,6 +37,9 @@ import org.openXpertya.util.Msg;
 @SuppressWarnings("serial")
 public class MProductionOrderline extends X_C_Production_Orderline {
 
+	/** Flag para controlar cantidades mayor a 0 */
+	private boolean controlQty = true; 
+	
     /**
      * Constructor de la clase ...
      *
@@ -386,7 +389,7 @@ public class MProductionOrderline extends X_C_Production_Orderline {
         // Calculations & Rounding
 
         // Qty greather than zero
-        if (getQtyEntered().compareTo(BigDecimal.ZERO) <= 0) {
+        if (isControlQty() && getQtyEntered().compareTo(BigDecimal.ZERO) <= 0) {
         	log.saveError("SaveError", Msg.getMsg(getCtx(),"FieldMustBePositive", new Object[] { Msg.translate(getCtx(), "Qty") }));
         	return false;
         }
@@ -530,6 +533,14 @@ public class MProductionOrderline extends X_C_Production_Orderline {
         	throw new Exception("@ProductsIncomeLineCreateError@: " + MProductionOrder.getError());
         }
     }
+
+	public boolean isControlQty() {
+		return controlQty;
+	}
+
+	public void setControlQty(boolean controlQty) {
+		this.controlQty = controlQty;
+	}
     
 }    // MOrderLine
 
