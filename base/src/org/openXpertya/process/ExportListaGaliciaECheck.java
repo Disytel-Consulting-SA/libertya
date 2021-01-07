@@ -105,7 +105,6 @@ public class ExportListaGaliciaECheck extends ExportBankList {
 		fh.append(String.valueOf(res));
 		fh.append(getFieldSeparator());
 		fh.append(String.valueOf(dp));
-		fh.append(getFieldSeparator());
 
 		return fh.toString();
 	}
@@ -172,7 +171,6 @@ public class ExportListaGaliciaECheck extends ExportBankList {
 		fh.append(truncField(rs.getString("description"), 30));
 		fh.append(getFieldSeparator());
 		fh.append(truncField(rs.getString("email"), 150));
-		fh.append(getFieldSeparator());
 		write(fh.toString());
 	}
 	
