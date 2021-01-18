@@ -83,8 +83,7 @@ public class LaunchMayor extends SvrProcess {
 	protected String doIt() throws Exception {
 		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
 		
-		DiarioMayorJasperDataSource ds = new DiarioMayorJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To,
-				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable, orgID);
+		DiarioMayorJasperDataSource ds = getDS();
 		
 		try {
 			ds.loadData();
@@ -110,6 +109,71 @@ public class LaunchMayor extends SvrProcess {
 		
 		return "";
 
+	}
+	
+	protected DiarioMayorJasperDataSource getDS() {
+		return new DiarioMayorJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To,
+				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable, orgID);
+	}
+
+
+
+	protected int getOrgID() {
+		return orgID;
+	}
+
+
+
+	protected void setOrgID(int orgID) {
+		this.orgID = orgID;
+	}
+
+
+
+	protected int getP_1_ElementValue_ID() {
+		return p_1_ElementValue_ID;
+	}
+
+
+
+	protected void setP_1_ElementValue_ID(int p_1_ElementValue_ID) {
+		this.p_1_ElementValue_ID = p_1_ElementValue_ID;
+	}
+
+
+
+	protected int getP_2_ElementValue_ID() {
+		return p_2_ElementValue_ID;
+	}
+
+
+
+	protected void setP_2_ElementValue_ID(int p_2_ElementValue_ID) {
+		this.p_2_ElementValue_ID = p_2_ElementValue_ID;
+	}
+
+
+
+	protected Timestamp getP_DateAcct_From() {
+		return p_DateAcct_From;
+	}
+
+
+
+	protected void setP_DateAcct_From(Timestamp p_DateAcct_From) {
+		this.p_DateAcct_From = p_DateAcct_From;
+	}
+
+
+
+	protected Timestamp getP_DateAcct_To() {
+		return p_DateAcct_To;
+	}
+
+
+
+	protected void setP_DateAcct_To(Timestamp p_DateAcct_To) {
+		this.p_DateAcct_To = p_DateAcct_To;
 	}
 	
 }
