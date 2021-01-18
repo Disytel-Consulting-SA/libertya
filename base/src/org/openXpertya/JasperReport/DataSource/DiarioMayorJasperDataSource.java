@@ -72,7 +72,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		return p_factAcctTable;
 	}
 	
-	private String getReportDSViewName(){
+	protected String getReportDSViewName(){
 		return p_factAcctTable.equalsIgnoreCase("Fact_Acct_Balance")?
 				"v_diariomayor_balance":
 				"v_diariomayor";
@@ -82,7 +82,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	 * Obtiene la SQL para obtener los datos de los movimientos
 	 * @return
 	 */
-	private String  getSQLData()	{
+	protected String  getSQLData()	{
 		StringBuffer sql = new StringBuffer();
 		sql.append( " SELECT C_ElementValue_ID, Name, Value, JournalNo, DateAcct, DateDoc, Description, sum(Debe) as Debe, sum(Haber) as Haber ");
 		sql.append(" FROM ").append(getReportDSViewName()); 
@@ -119,7 +119,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	 * Devuelve la SQL para obtener los saldos anteriores de las cuentas.
 	 * @return
 	 */
-	private String getSQLSaldos()	{
+	protected String getSQLSaldos()	{
 		StringBuffer sql = new StringBuffer();
 		
 		sql.append(" SELECT ac.account_id as C_ElementValue_ID, ev.name, ev.value, sum(ac.amtacctdr) as debe, sum(ac.amtacctcr) as haber");
@@ -150,7 +150,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	}
 	
 	
-	private  void loadSaldos()	{
+	protected  void loadSaldos()	{
 		m_saldos = new HashMap();
 		
 		try	{
@@ -280,6 +280,54 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		}
 		
 		return true;
+	}
+
+	protected int getP_1_ElementValue_ID() {
+		return p_1_ElementValue_ID;
+	}
+
+	protected void setP_1_ElementValue_ID(int p_1_ElementValue_ID) {
+		this.p_1_ElementValue_ID = p_1_ElementValue_ID;
+	}
+
+	protected int getP_2_ElementValue_ID() {
+		return p_2_ElementValue_ID;
+	}
+
+	protected void setP_2_ElementValue_ID(int p_2_ElementValue_ID) {
+		this.p_2_ElementValue_ID = p_2_ElementValue_ID;
+	}
+
+	protected Timestamp getP_DateAcct_From() {
+		return p_DateAcct_From;
+	}
+
+	protected void setP_DateAcct_From(Timestamp p_DateAcct_From) {
+		this.p_DateAcct_From = p_DateAcct_From;
+	}
+
+	protected Timestamp getP_DateAcct_To() {
+		return p_DateAcct_To;
+	}
+
+	protected void setP_DateAcct_To(Timestamp p_DateAcct_To) {
+		this.p_DateAcct_To = p_DateAcct_To;
+	}
+
+	protected Properties getP_ctx() {
+		return p_ctx;
+	}
+
+	protected void setP_ctx(Properties p_ctx) {
+		this.p_ctx = p_ctx;
+	}
+
+	protected int getOrgID() {
+		return orgID;
+	}
+
+	protected void setOrgID(int orgID) {
+		this.orgID = orgID;
 	}
 
 }
