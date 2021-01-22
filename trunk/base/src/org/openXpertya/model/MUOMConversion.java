@@ -576,7 +576,7 @@ public class MUOMConversion extends X_C_UOM_Conversion {
         BigDecimal retValue  = null;
         int        precision = 2;
         String     sql       = "SELECT c.MultiplyRate, uomTo.StdPrecision, uomTo.CostingPrecision " + "FROM C_UOM_Conversion c" + " INNER JOIN C_UOM uomTo ON (c.C_UOM_TO_ID=uomTo.C_UOM_ID) " + "WHERE c.IsActive='Y' AND c.C_UOM_ID=? AND c.C_UOM_TO_ID=? "    // #1/2
-                               + " AND c.M_Product_ID IS NULL" + "ORDER BY c.AD_Client_ID DESC, c.AD_Org_ID DESC";
+                               + " AND c.M_Product_ID IS NULL" + " ORDER BY c.AD_Client_ID DESC, c.AD_Org_ID DESC";
         PreparedStatement pstmt = null;
 
         try {
