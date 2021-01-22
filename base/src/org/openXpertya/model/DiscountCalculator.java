@@ -3025,7 +3025,7 @@ public class DiscountCalculator {
 	 * Estructura interna que mantiene la información de un descuento asociado a
 	 * este calculador.
 	 */
-	private class Discount {
+	public class Discount {
 		
 		/** ID del descuento */
 		private Integer id = null;
