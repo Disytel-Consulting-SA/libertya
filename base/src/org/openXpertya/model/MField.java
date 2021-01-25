@@ -806,7 +806,7 @@ public class MField implements Serializable,Evaluatee {
                 m_error = true;
                 return false;
             }    
-            
+            	m_error = false;
                 return true;
             
         }
