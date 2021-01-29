@@ -345,5 +345,7 @@
 	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.42-bin.jar"/>
 	<classpathentry kind="lib" path="utils/replicacion/lib/lyws.jar"/>
 	<classpathentry kind="lib" path="lib/fonts.jar"/>
+	<classpathentry kind="lib" path="lib/core-3.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/javase-3.3.1.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>

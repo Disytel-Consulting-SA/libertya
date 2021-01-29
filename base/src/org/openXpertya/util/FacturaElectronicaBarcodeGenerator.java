@@ -3,7 +3,9 @@ package org.openXpertya.util;
 import java.text.SimpleDateFormat;
 
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MExternalService;
 import org.openXpertya.model.MInvoice;
+import org.openXpertya.model.PO;
 import org.openXpertya.print.pdf.text.pdf.Barcode;
 import org.openXpertya.print.pdf.text.pdf.BarcodeInter25;
 
@@ -60,6 +62,8 @@ public class FacturaElectronicaBarcodeGenerator extends BarcodeGenerator {
 	
 	private String caeDueDate;
 	
+	protected MExternalService extService = null;
+	
 	public FacturaElectronicaBarcodeGenerator() {
 		// TODO Auto-generated constructor stub
 	}
@@ -68,6 +72,7 @@ public class FacturaElectronicaBarcodeGenerator extends BarcodeGenerator {
 		this();
 		setClientCuit(clientCUIT);
 		initializeCodeParts(invoice, docType);
+		loadExternalService(invoice);
 	}
 	
 	public void initializeCodeParts(MInvoice invoice, MDocType docType){
@@ -284,4 +289,27 @@ public class FacturaElectronicaBarcodeGenerator extends BarcodeGenerator {
 		return new BarcodeInter25();
 	}
 
+	/** Visualizar o no el Barcode 
+	 *  Busca el atributo del servicio WSFEQRCODE, bajo el value DisplayBarcode
+	 *  De no encontrarlo retorna false */
+	public boolean isDisplayed() {
+		try {
+			return "Y".equalsIgnoreCase((extService.getAttributeByName("DisplayBarcode")).getName());
+		} catch (Exception e) {
+			getLog().warning("Atributo DisplayBarcode para servicio externo WSFEQRCODE no encontrado");
+			return false;
+		}
+	}
+	
+	/** Recupera el servicio asociado a qrcode */
+	protected void loadExternalService(MInvoice invoice) {
+		try {
+			// Configuracion y preferencias del servicio referenciado
+			int [] qrcs = PO.getAllIDs("C_ExternalService", "value = 'WSFEQRCODE' AND isactive = 'Y'", null);
+			extService = new MExternalService(invoice.getCtx(), qrcs[0], null);
+		} catch (Exception e) {
+			getLog().warning("Servicio externo WSFEQRCODE no encontrado. Default a N.");
+		}
+	}
+	
 }

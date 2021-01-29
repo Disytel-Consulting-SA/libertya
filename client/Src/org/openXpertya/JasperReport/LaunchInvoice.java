@@ -48,6 +48,7 @@ import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.FacturaElectronicaBarcodeGenerator;
+import org.openXpertya.util.FacturaElectronicaQRCodeGenerator;
 import org.openXpertya.util.Util;
 
 public class LaunchInvoice extends SvrProcess {
@@ -516,6 +517,9 @@ public class LaunchInvoice extends SvrProcess {
 		// Código de barras de Factura Electrónica
 		addElectronicInvoiceBarcode(jasperwrapper, invoice, docType, clientCUIT);
 		
+		// Código QR de Factura Electrónica
+		addElectronicInvoiceQRCode(jasperwrapper, invoice, docType, clientCUIT);
+		
 		// Subreporte de otros tributos/percepciones
 		MJasperReport perceptionSubreport = getPerceptionSubreport();
 		if(perceptionSubreport != null && perceptionSubreport.getBinaryData() != null){
@@ -663,11 +667,33 @@ public class LaunchInvoice extends SvrProcess {
 	 */
 	protected void addElectronicInvoiceBarcode(MJasperReport jasperWrapper, MInvoice invoice, MDocType docType, String clientCUIT){
 		if(MDocType.isElectronicDocType(invoice.getC_DocTypeTarget_ID())){
-			FacturaElectronicaBarcodeGenerator feBarcodeGenerator = new FacturaElectronicaBarcodeGenerator(
-					invoice, docType, clientCUIT);
-			jasperWrapper.addParameter("FACTURA_ELECTRONICA_BARCODE",
-					feBarcodeGenerator.getBarcodeImage(true));
-			jasperWrapper.addParameter("FACTURA_ELECTRONICA_CODE", feBarcodeGenerator.getCode());
+			FacturaElectronicaBarcodeGenerator feBarcodeGenerator = new FacturaElectronicaBarcodeGenerator(invoice, docType, clientCUIT);
+			if (feBarcodeGenerator.isDisplayed()) { 
+				jasperWrapper.addParameter("FACTURA_ELECTRONICA_BARCODE", feBarcodeGenerator.getBarcodeImage(true));
+				jasperWrapper.addParameter("FACTURA_ELECTRONICA_CODE", feBarcodeGenerator.getCode());
+			}
+		}
+	}
+	
+	/**
+	 * Agrega la imagen de código QR de FE como parámetro al reporte si
+	 * es que la factura es electrónica
+	 * 
+	 * @param jasperWrapper
+	 *            reporte jasper
+	 * @param invoice
+	 *            factura
+	 * @param docType
+	 *            tipo de documento de la factura
+	 * @param clientCUIT
+	 *            cuit emisora
+	 */
+	protected void addElectronicInvoiceQRCode(MJasperReport jasperWrapper, MInvoice invoice, MDocType docType, String clientCUIT){
+		if(MDocType.isElectronicDocType(invoice.getC_DocTypeTarget_ID())){
+			FacturaElectronicaQRCodeGenerator feQRCodeGenerator = new FacturaElectronicaQRCodeGenerator(invoice, docType, clientCUIT);
+			if (feQRCodeGenerator.isDisplayed()) {
+				jasperWrapper.addParameter("FACTURA_ELECTRONICA_QRCODE", feQRCodeGenerator.getQRCode());
+			}
 		}
 	}
 	
