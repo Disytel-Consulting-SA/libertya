@@ -51,6 +51,8 @@ Ejemplos de cambios
 		<!-- Nomina de cambios a continuación -->
 		<!-- ================================ -->
 		
+    	<!-- 20210129 - Soporte para uso de librerias relacioandas a QRCode bajo webui   -->
+    	<copy file="${SOURCE_DIR}/install/ServidorOXP/build.xml" todir="${TARGET_DIR}/install/ServidorOXP" overwrite="yes" />
  	
     </target>
     

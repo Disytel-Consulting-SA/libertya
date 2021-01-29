@@ -178,6 +178,7 @@
 	<parameter name="VCTO_DATE" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="CLIENT_LOCATION_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="COD_CBANTE" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="FACTURA_ELECTRONICA_QRCODE" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -1442,23 +1443,23 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="3"
-						y="127"
-						width="220"
-						height="14"
+						x="100"
+						y="140"
+						width="131"
+						height="16"
 						key="staticText-37"
 						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Oblique" size="8" isItalic="true"/>
+						<font fontName="Arial" pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
 					</textElement>
-				<text><![CDATA[FACTURA ELECTRONICA]]></text>
+				<text><![CDATA[Comprobante Autorizado]]></text>
 				</staticText>
 				<image  scaleImage="RetainShape" vAlign="Top" hAlign="Left" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Opaque"
-						x="91"
-						y="165"
+						x="176"
+						y="166"
 						width="360"
 						height="50"
 						forecolor="#000000"
@@ -1514,6 +1515,36 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_PERCEPCIONES_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_PERCEPCIONES}]]></subreportExpression>
 				</subreport>
+				<image  evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="5"
+						y="125"
+						width="90"
+						height="90"
+						key="image-2"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<graphicElement stretchType="NoStretch"/>
+					<imageExpression class="java.awt.Image"><![CDATA[com.google.zxing.client.j2se.MatrixToImageWriter.toBufferedImage(
+    new com.google.zxing.qrcode.QRCodeWriter().encode(
+        $P{FACTURA_ELECTRONICA_QRCODE},
+        com.google.zxing.BarcodeFormat.QR_CODE, 500, 500
+    )
+)]]></imageExpression>
+				</image>
+				<staticText>
+					<reportElement
+						x="100"
+						y="156"
+						width="436"
+						height="10"
+						key="staticText-59"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font fontName="Arial" pdfFontName="Helvetica-Oblique" size="8" isBold="false" isItalic="true"/>
+					</textElement>
+				<text><![CDATA[Esta Administración Federal no se responsabiliza por los datos ingresados en el detalle de la operación]]></text>
+				</staticText>
 			</band>
 		</lastPageFooter>
 		<summary>
