@@ -4,9 +4,23 @@ import org.openXpertya.process.PluginPostInstallProcess;
 
 public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	
+	/** Listado de OC */
+	protected final static String LISTADO_DE_OC_JASPER_REPORT_UID = "CORE-AD_Process-1010433";
+	protected final static String LISTADO_DE_OC_JASPER_REPORT_FILENAME = "PurchaseOrderReport.jasper";
+	
+	/** Listado de OC Vencidas o Sin Novedades */
+	protected final static String ORDERS_DUE_JASPER_REPORT_UID = "CORE-AD_Process-1010432";
+	protected final static String ORDERS_DUE_JASPER_REPORT_FILENAME = "ListOfPurchaseOrdersDue.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
+		
+		// Listado de OC
+		updateReport(LISTADO_DE_OC_JASPER_REPORT_UID, LISTADO_DE_OC_JASPER_REPORT_FILENAME);
+		
+		// Listado de OC Vencidas o Sin Novedades
+		updateReport(ORDERS_DUE_JASPER_REPORT_UID, ORDERS_DUE_JASPER_REPORT_FILENAME);
 		
 		/*
 		 * Actualizacion de binarios
