@@ -30,9 +30,6 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
-
-import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -676,7 +673,9 @@ public class MField implements Serializable,Evaluatee {
          * los valores del sistema
          */
         // Si el campo es cuenta bancaria, no se agrega el valor por defecto del contexto
-        if(m_vo.ColumnName != null && !m_vo.ColumnName.equals("C_BankAccount_ID")) {
+        if(m_vo.ColumnName != null 
+        		&& !m_vo.ColumnName.equals("C_BankAccount_ID")
+        		&& !m_vo.ColumnName.equals("M_Product_Category_ID")) {
 	        defStr = Env.getPreference( m_vo.ctx,m_vo.AD_Window_ID,m_vo.ColumnName,true );
 	
 	        if( !defStr.equals( "" )) {
