@@ -1,6 +1,8 @@
 package org.openXpertya.JasperReport;
 
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -467,6 +469,11 @@ public class LaunchOrder extends SvrProcess {
 					order.getCreditRequestType());
 				jasperwrapper.addParameter("REQUEST_TYPE_NAME", creditRequestTypenName);
 				jasperwrapper.addParameter("REQUEST_TYPE", order.getCreditRequestType());
+			}
+
+			if(client.getLogoImg() != null){
+				InputStream logo = new ByteArrayInputStream(client.getLogoImg());
+				jasperwrapper.addParameter("LOGO",(InputStream)logo);
 			}
 			
 			try {
