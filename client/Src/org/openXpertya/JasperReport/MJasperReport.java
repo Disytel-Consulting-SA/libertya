@@ -8,13 +8,6 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Properties;
 
-import net.sf.jasperreports.engine.JRDataSource;
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperExportManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-
 import org.jfree.util.Log;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.apps.ADialog;
@@ -29,6 +22,13 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
+
+import net.sf.jasperreports.engine.JRDataSource;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperReport;
 
 
 public class MJasperReport extends X_AD_JasperReport
@@ -295,7 +295,7 @@ public class MJasperReport extends X_AD_JasperReport
     		PluginUtils.appendStatus("WARNING: Informe Jasper " + componentObjectUID + " no encontrado en BBDD.  Imposible actualizar. ");
     		return;
     	}
-		MJasperReport libroIvaJR = new MJasperReport(ctx, reportID, trxName);
+		X_AD_JasperReport libroIvaJR = new X_AD_JasperReport(ctx, reportID, trxName);
 		
 		// Setear el contenido binario correspondiente
 		libroIvaJR.setBinaryData(data);
