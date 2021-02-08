@@ -1,15 +1,18 @@
 package org.openXpertya.process;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.X_AD_JasperReport;
 import org.openXpertya.model.X_AD_Process;
 import org.openXpertya.plugin.common.PluginConstants;
+import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdaterPostInstall;
-import org.openXpertya.utils.JarHelper;
 
 public class PluginPostInstallProcess extends SvrProcess {
 
@@ -65,6 +68,39 @@ public class PluginPostInstallProcess extends SvrProcess {
 	}
 
 	/**
+	 * Lee el contenido de un archivo binario ubicado dentro de un jar
+	 * @param jarURL jarURL ubicación en el file system
+	 * @param resource resource recurso a leer dentro del jar
+	 * @return el array de bytes correspondiente
+	 * @throws Exception en caso de error
+	 */
+	public static byte[] readBinaryFromJar(String jarURL, String resource) throws Exception
+	{
+	       JarFile jarFile = new JarFile(jarURL);
+	       JarEntry entry = jarFile.getJarEntry(resource);
+	       
+	       /* Si no existe el archivo, elevar la excepción */
+	       if (entry == null) {
+	    	   PluginUtils.appendStatus("WARNING: Recurso " + resource + " no encontrado en archivo " + jarURL);
+	    	   return null;
+	       }
+	       
+	       /* Obtener el contenido del archivo */
+	       InputStream input = jarFile.getInputStream(entry);
+	       ByteArrayOutputStream output	= new ByteArrayOutputStream();
+	       byte[]			buffer	= new byte[1024 * 8];		// 8kB
+           int				length	= -1;
+           
+           /* Escribir a la salida para luego convertir a array de bytes */
+           while ((length = input.read(buffer)) != -1) {
+               output.write(buffer, 0, length);
+           }
+	       
+	       /* Retornar el bytearray */
+	       return output.toByteArray();
+	}
+	
+	/**
 	 * Actualiza el jasper report parámetro
 	 * 
 	 * @param uid      UID del Jasper Report
@@ -72,7 +108,7 @@ public class PluginPostInstallProcess extends SvrProcess {
 	 */
 	protected void updateJasperReport(String uid, String filename) throws Exception {
 		MJasperReport.updateBinaryData(get_TrxName(), getCtx(), uid,
-				JarHelper.readBinaryFromJar(jarFileURL, getBinaryFileURL(filename)));
+				readBinaryFromJar(jarFileURL, getBinaryFileURL(filename)));
 	}
 	
 	/**
@@ -83,7 +119,7 @@ public class PluginPostInstallProcess extends SvrProcess {
 	 */
 	protected void updateAttachment(String uid, String filename) throws Exception {
 		MProcess.addAttachment(get_TrxName(), getCtx(), uid, filename,
-				JarHelper.readBinaryFromJar(jarFileURL, getBinaryFileURL(filename)));
+				readBinaryFromJar(jarFileURL, getBinaryFileURL(filename)));
 	}
 	
 	/**
