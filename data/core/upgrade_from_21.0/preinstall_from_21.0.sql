@@ -71,3 +71,5 @@ CREATE OR REPLACE VIEW v_diariomayor AS
 ALTER TABLE v_diariomayor
   OWNER TO libertya;
 
+--20210217-1241 Cambio de lookups en vistas C_POSJournalInvoices_V C_POSJournalPayments_V y C_POSJournalPayments_V_Simple de TableDir a Busqueda para reduccion en tiempos de respuesta al abrir la ventana
+update ad_column set ad_reference_id = 30 where ad_componentobjectuid in ('CORE-AD_Column-1014931', 'CORE-AD_Column-1014922', 'CORE-AD_Column-1014921', 'CORE-AD_Column-1014939', 'CORE-AD_Column-1014932', 'CORE-AD_Column-1014930', 'CORE-AD_Column-1016938', 'CORE-AD_Column-1016929', 'CORE-AD_Column-1016928', 'CORE-AD_Column-1016946', 'CORE-AD_Column-1016939',	'CORE-AD_Column-1016937', 'CORE-AD_Column-1014899', 'CORE-AD_Column-1014911', 'CORE-AD_Column-1014900', 'CORE-AD_Column-1014902');
