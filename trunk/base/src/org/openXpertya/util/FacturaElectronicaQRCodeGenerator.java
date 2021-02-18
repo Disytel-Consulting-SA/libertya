@@ -21,47 +21,51 @@ public class FacturaElectronicaQRCodeGenerator extends FacturaElectronicaBarcode
 		this.invoice = invoice;
 	}
 	
-	public String getQRCode(){
-		
-		MBPartner bPartner = new MBPartner(invoice.getCtx(), invoice.getC_BPartner_ID(), invoice.get_TrxName()); 
-		
-		/* Segun https://www.afip.gob.ar/fe/qr/especificaciones.asp */
-		FacturaElectronicaQRData qrData = new FacturaElectronicaQRData();
-		
-		// OBLIGATORIO – versión del formato de los datos del comprobante
-		qrData.setVer(getVer()); 
-		// OBLIGATORIO – Fecha de emisión del comprobante
-		qrData.setFecha(getFecha());
-		// OBLIGATORIO – Cuit del Emisor del comprobante
-		qrData.setCuit(getClientCUIT());
-		// OBLIGATORIO – Punto de venta utilizado para emitir el comprobante
-		qrData.setPtoVta(getPtoVta());
-		// OBLIGATORIO – tipo de comprobante
-		qrData.setTipoCmp(getTipoCmp());
-		// OBLIGATORIO – Número del comprobante
-		qrData.setNroCmp(getNroCmp());
-		// OBLIGATORIO – Importe Total del comprobante (en la moneda en la que fue emitido)
-		qrData.setImporte(getImporte());
-		// OBLIGATORIO – Moneda del comprobante
-		qrData.setMoneda(getMoneda(invoice)); 
-		// Cotización en pesos argentinos de la moneda utilizada (1 cuando la moneda sea pesos)
-		qrData.setCtz(getCotizacion(invoice)); 
-		// DE CORRESPONDER – Código del Tipo de documento del receptor
-		if (getTipoDocRec(bPartner)>0)
-			qrData.setTipoDocRec(getTipoDocRec(bPartner));
-		// DE CORRESPONDER – Número de documento del receptor correspondiente al tipo de documento indicado
-		if (getNroDocRec()!=null)
-			qrData.setNroDocRec(getNroDocRec());
-		// OBLIGATORIO – “A” para comprobante autorizado por CAEA, “E” para comprobante autorizado por CAE
-		qrData.setTipoCodAut(getTipoCodAut());  
-		// OBLIGATORIO – Código de autorización otorgado por AFIP para el comprobante
-		qrData.setCodAut(getCodAut());
-		
-		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		String jsonData = gson.toJson(qrData, FacturaElectronicaQRData.class);
-		String base64Data = Base64.encodeBase64String(jsonData.getBytes());
-					
-		return getBaseURL() + base64Data;
+	public String getQRCode(){	
+		try {
+			MBPartner bPartner = new MBPartner(invoice.getCtx(), invoice.getC_BPartner_ID(), invoice.get_TrxName()); 
+			
+			/* Segun https://www.afip.gob.ar/fe/qr/especificaciones.asp */
+			FacturaElectronicaQRData qrData = new FacturaElectronicaQRData();
+			
+			// OBLIGATORIO – versión del formato de los datos del comprobante
+			qrData.setVer(getVer()); 
+			// OBLIGATORIO – Fecha de emisión del comprobante
+			qrData.setFecha(getFecha());
+			// OBLIGATORIO – Cuit del Emisor del comprobante
+			qrData.setCuit(getClientCUIT());
+			// OBLIGATORIO – Punto de venta utilizado para emitir el comprobante
+			qrData.setPtoVta(getPtoVta());
+			// OBLIGATORIO – tipo de comprobante
+			qrData.setTipoCmp(getTipoCmp());
+			// OBLIGATORIO – Número del comprobante
+			qrData.setNroCmp(getNroCmp());
+			// OBLIGATORIO – Importe Total del comprobante (en la moneda en la que fue emitido)
+			qrData.setImporte(getImporte());
+			// OBLIGATORIO – Moneda del comprobante
+			qrData.setMoneda(getMoneda(invoice)); 
+			// Cotización en pesos argentinos de la moneda utilizada (1 cuando la moneda sea pesos)
+			qrData.setCtz(getCotizacion(invoice)); 
+			// DE CORRESPONDER – Código del Tipo de documento del receptor
+			if (getTipoDocRec(bPartner)>0)
+				qrData.setTipoDocRec(getTipoDocRec(bPartner));
+			// DE CORRESPONDER – Número de documento del receptor correspondiente al tipo de documento indicado
+			if (getNroDocRec()!=null)
+				qrData.setNroDocRec(getNroDocRec());
+			// OBLIGATORIO – “A” para comprobante autorizado por CAEA, “E” para comprobante autorizado por CAE
+			qrData.setTipoCodAut(getTipoCodAut());  
+			// OBLIGATORIO – Código de autorización otorgado por AFIP para el comprobante
+			qrData.setCodAut(getCodAut());
+			
+			Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			String jsonData = gson.toJson(qrData, FacturaElectronicaQRData.class);
+			String base64Data = Base64.encodeBase64String(jsonData.getBytes());
+						
+			return getBaseURL() + base64Data;
+		} catch (Exception e) {
+			// Ante cualquier error, el mismo se guardara en el log, pero no se visualizara el QRCode
+			return null;
+		}
 	}
 	
 	/** Visualizar o no el Barcode
