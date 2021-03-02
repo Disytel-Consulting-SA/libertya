@@ -26,6 +26,7 @@ import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MElectronicInvoice;
+import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MInvoicePaySchedule;
@@ -169,6 +170,10 @@ public class LaunchInvoice extends SvrProcess {
 		if(!Util.isEmpty(invoice.getC_Order_ID(), true)){
 			order = new MOrder(getCtx(), invoice.getC_Order_ID(), get_TrxName());
 		}
+		else {
+			// Buscar el pedido en base al pedido que está en la líneas si así existe
+			order = getMOrderByLines(invoice);
+		}
 		
 		if(client.getLogoImg() != null){
 			InputStream logo = new ByteArrayInputStream(client.getLogoImg());
@@ -262,6 +267,14 @@ public class LaunchInvoice extends SvrProcess {
 			int i = 1;
 			for (String idocumentNo : inouts) {
 				jasperwrapper.addParameter("NROREMITO_"+(i++), idocumentNo);
+			}
+			// Si no existen remitos asociados en la inversa, desde el remito, 
+			// se toman desde las líneas de la factura
+			if(inouts.size() == 0) {
+				MInOut io = getMInOutByLines(invoice);
+				if(io != null) {
+					jasperwrapper.addParameter("NROREMITO_1", io.getDocumentNo());
+				}
 			}
 		} catch(Exception e){
 			log.severe("Error loading invoice in outs");
@@ -744,5 +757,39 @@ public class LaunchInvoice extends SvrProcess {
 				invoice.getDateAcct(),
 				invoice.getAD_Org_ID(),
 				getCtx());	
+	}
+	
+	/**
+	 * @param invoice factura
+	 * @return pedido relacionado a la factura desde las líneas
+	 */
+	protected MOrder getMOrderByLines(MInvoice invoice) {
+		MOrder order = null;
+		String sql = "select ol.c_order_id "
+					+ "from c_invoiceline il "
+					+ "join c_orderline ol on il.c_orderline_id = ol.c_orderline_id "
+					+ "where il.c_invoice_id = ? limit 1";
+		Integer orderID = DB.getSQLValue(get_TrxName(), sql, invoice.getID());
+		if(orderID > 0) {
+			order = new MOrder(getCtx(), orderID, get_TrxName());
+		}
+		return order;
+	}
+	
+	/**
+	 * @param invoice factura
+	 * @return remito relacionado a la factura desde las líneas
+	 */
+	protected MInOut getMInOutByLines(MInvoice invoice) {
+		MInOut io = null;
+		String sql = "select iol.m_inout_id "
+					+ "from c_invoiceline il "
+					+ "join m_inoutline iol on iol.m_inoutline_id = il.m_inoutline_id "
+					+ "where il.c_invoice_id = ? limit 1";
+		Integer ioID = DB.getSQLValue(get_TrxName(), sql, invoice.getID());
+		if(ioID > 0) {
+			io = new MInOut(getCtx(), ioID, get_TrxName());
+		}
+		return io;
 	}
 } 
