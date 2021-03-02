@@ -503,7 +503,15 @@ public class MLookupFactory {
                 realSQL.append(TableName).append(".Value || '-' || ");
             }
 
-            realSQL.append(TableName).append("_Trl.").append(DisplayColumn).append(",").append(TableName).append(".IsActive");
+            if (DisplayColumn.equals("C_Location_ID")) {
+            	realSQL.append("(SELECT coalesce(location.Address1,'') || ', ' || coalesce(location.City,'') || ', ' || coalesce(location.postal,'') ");
+            	realSQL.append(" FROM C_Location location WHERE location.C_Location_ID = ");
+            	realSQL.append(TableName).append(".").append("C_Location_ID").append(")");
+            } else {
+            	realSQL.append(TableName).append("_Trl.").append(DisplayColumn);
+            }
+
+            realSQL.append(",").append(TableName).append(".IsActive");
             realSQL.append(" FROM ").append(TableName).append(" INNER JOIN ").append(TableName).append("_TRL ON (").append(TableName).append(".").append(KeyColumn).append("=").append(TableName).append("_Trl.").append(KeyColumn).append(" AND ").append(TableName).append("_Trl.AD_Language='").append(language.getAD_Language()).append("')");
         }
 
@@ -521,7 +529,7 @@ public class MLookupFactory {
             }
 
             if (DisplayColumn.equals("C_Location_ID")) {
-            	realSQL.append("(SELECT location.Address1 || ', ' || location.City || ', ' || location.postal ");
+            	realSQL.append("(SELECT coalesce(location.Address1,'') || ', ' || coalesce(location.City,'') || ', ' || coalesce(location.postal,'') ");
             	realSQL.append(" FROM C_Location location WHERE location.C_Location_ID = ");
             	realSQL.append(TableName).append(".").append("C_Location_ID").append(")");
             } else {
