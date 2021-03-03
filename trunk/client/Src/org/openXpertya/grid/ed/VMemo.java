@@ -157,7 +157,7 @@ public class VMemo extends CTextArea implements VEditor,KeyListener,FocusListene
 
         // Always position Top
 
-        setCaretPosition( 0 );
+        //setCaretPosition( 0 );
     }    // setValue
 
     /**
@@ -196,7 +196,7 @@ public class VMemo extends CTextArea implements VEditor,KeyListener,FocusListene
             setValue( s );
 
             try {
-                fireVetoableChange( m_columnName,null,getText());
+                fireVetoableChange( m_columnName,m_oldText,getText());
                 m_oldText = getText();
             } catch( PropertyVetoException pve ) {
             }
@@ -257,7 +257,7 @@ public class VMemo extends CTextArea implements VEditor,KeyListener,FocusListene
             try {
                 String text = getText();
 
-                fireVetoableChange( m_columnName,text,null );    // No data committed - done when focus lost !!!
+                fireVetoableChange( m_columnName,m_oldText,text );    // No data committed - done when focus lost !!!
             } catch( PropertyVetoException pve ) {
             }
         }    // firstChange
@@ -338,7 +338,7 @@ public class VMemo extends CTextArea implements VEditor,KeyListener,FocusListene
             try {
                 String text = getText();
 
-                fireVetoableChange( m_columnName,null,text );
+                fireVetoableChange( m_columnName,m_oldText,text );
                 m_oldText = text;
 
                 return true;
