@@ -263,6 +263,7 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 		invoice.setCurrentAccountVerified(true);
 		// Monto inicial de cuenta corriente
 		invoice.setInitialCurrentAccountAmt(getCheck().getPayAmt());
+		invoice.setSkipExtraValidations(true);
 		if(!invoice.save()){
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}
