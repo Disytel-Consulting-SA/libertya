@@ -802,6 +802,10 @@ public class VBPartner extends CDialog implements ActionListener {
 
         return m_partner.getC_BPartner_ID();
     }    // getBPartner_ID
+    
+    protected MBPartner getMBPartner() {
+    	return m_partner;
+    }
 
 	protected VLookup getfTaxIdType() {
 		return fTaxIdType;
