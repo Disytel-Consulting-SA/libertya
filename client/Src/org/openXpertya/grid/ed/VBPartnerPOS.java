@@ -19,4 +19,13 @@ public class VBPartnerPOS extends VBPartnerQuick {
 		MCategoriaIva cfiva = MCategoriaIva.get(getCtx(), MCategoriaIva.CONSUMIDOR_FINAL, getTrxName());
 		fCategoriaIVA.setValue(cfiva.getID());
 	}
+	
+	@Override
+	public boolean loadBPartner( int C_BPartner_ID ) {
+		boolean loaded = super.loadBPartner(C_BPartner_ID);
+		if(loaded && getMBPartner() != null && getMBPartner().getValue().equals("CF")) {
+			fAddress.setReadWrite(false);
+		}
+		return loaded;
+	}
 }
