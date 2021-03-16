@@ -1,6 +1,8 @@
 package org.openXpertya.process.release;
 
+import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.process.PluginPostInstallProcess;
+import org.openXpertya.utils.JarHelper;
 
 public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	
@@ -12,6 +14,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String ORDERS_DUE_JASPER_REPORT_UID = "CORE-AD_Process-1010432";
 	protected final static String ORDERS_DUE_JASPER_REPORT_FILENAME = "ListOfPurchaseOrdersDue.jasper";
 	
+	/** Impresión de FE */
+	protected final static String FE_REPORT_UID = "CORE-AD_JasperReport-1010118";
+	protected final static String FE_REPORT_FILENAME = "rpt_Factura_Electronica.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -21,6 +27,9 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		
 		// Listado de OC Vencidas o Sin Novedades
 		updateReport(ORDERS_DUE_JASPER_REPORT_UID, ORDERS_DUE_JASPER_REPORT_FILENAME);
+		
+		// Impresión de FE
+		updateReport(FE_REPORT_UID, FE_REPORT_FILENAME);
 		
 		/*
 		 * Actualizacion de binarios
