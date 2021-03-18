@@ -21,9 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -864,8 +862,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 
             MTax tax = new MTax( getCtx(),getC_Tax_ID(),get_TrxName());
 
-            if((getTaxAmt() == null || (getTaxAmt() != null && getTaxAmt().compareTo(BigDecimal.ZERO) == 0))
-            		&& tax.getRate().compareTo(BigDecimal.ZERO) > 0){
+            if (getTaxAmt() == null || getTaxAmt().compareTo(BigDecimal.ZERO) == 0 || getInvoice().isSOTrx()) {
             	TaxAmt = tax.calculateTax(getTaxBaseAmtToEvaluateTax(),isTaxIncluded(),getPrecision());
             }
             else{
