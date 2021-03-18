@@ -509,7 +509,7 @@ public class MTax extends X_C_Tax {
         if( isZeroTax(rate)) {
             return Env.ZERO;
         }
-        BigDecimal multiplier = rate.divide( ONEHUNDRED,10,BigDecimal.ROUND_HALF_DOWN );
+        BigDecimal multiplier = rate.divide( ONEHUNDRED,10,BigDecimal.ROUND_HALF_UP );
         BigDecimal tax = null;
 
         if( !taxIncluded || perceptionIncluded)    // $100 * 6 / 100 == $6 == $100 * 0.06
@@ -524,10 +524,10 @@ public class MTax extends X_C_Tax {
         
         BigDecimal finalTax;
         if (perceptionIncluded) {
-        	finalTax = tax.setScale( scale,BigDecimal.ROUND_DOWN );	
+        	finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );	
         }
         else{
-        	finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_DOWN );	
+        	finalTax = tax.setScale( scale,BigDecimal.ROUND_HALF_UP );	
         }
         
         return finalTax;
