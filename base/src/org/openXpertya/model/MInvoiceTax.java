@@ -482,7 +482,9 @@ public class MInvoiceTax extends X_C_InvoiceTax {
     	// Si la tasa de impuesto es mayor a 0 y el importe de impuesto es menor o igual a 0
         String sql = "select rate from c_tax where c_tax_id = ? ";
         BigDecimal taxRate = DB.getSQLValueBD(get_TrxName(), sql, getC_Tax_ID());
-        if(!Util.isEmpty(taxRate, true) 
+        MInvoice factura = new MInvoice(getCtx(), getC_Invoice_ID() , get_TrxName());
+        if(factura.isSOTrx()
+        		&& !Util.isEmpty(taxRate, true) 
         		&& getTaxBaseAmt().compareTo(BigDecimal.ZERO) > 0
         		&& (getTaxAmt().compareTo(BigDecimal.ZERO) <= 0 
         				|| getTaxAmt().compareTo(getTaxBaseAmt()) >= 0) 
