@@ -1244,7 +1244,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		// a 0 | mayor al neto de linea | mayor al total de linea
         String sql = "select rate from c_tax where c_tax_id = ? ";
         BigDecimal taxRate = DB.getSQLValueBD(get_TrxName(), sql, getC_Tax_ID());
-        if(!Util.isEmpty(taxRate, true) 
+        if(getInvoice().isSOTrx()
+        		&& !Util.isEmpty(taxRate, true) 
         		&& getLineNetAmt().compareTo(BigDecimal.ZERO) > 0
         		&& (getTaxAmt().compareTo(BigDecimal.ZERO) <= 0
         				|| getTaxAmt().compareTo(getLineNetAmt()) >= 0
