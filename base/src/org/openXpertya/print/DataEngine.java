@@ -942,7 +942,9 @@ public class DataEngine {
                 // new row ---------------------------------------------------
 
                 printRunningTotal( pd,levelNo,rowNo++ );
-                pd.addRow( false,levelNo );
+				// Se comenta la línea siguiente ya que es la responsable del interlineado
+				// innecesario de los reportes
+                //pd.addRow( false,levelNo );
 
 				// Si es PageBreak, el primer argumanto, is FunctionColumn debe ser true
 				pd.addRow(isPageBreak, levelNo, isBold, indentLevel, isPageBreak);
