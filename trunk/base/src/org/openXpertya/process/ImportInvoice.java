@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.openXpertya.model.CalloutInvoiceExt;
+import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.X_I_Invoice;
@@ -626,6 +627,7 @@ public class ImportInvoice extends SvrProcess {
 			//
 
 			MInvoice invoice = null;
+			MBPartner bp;
 			int      lineNo  = 0;
 
 			while( rs.next()) {
@@ -682,9 +684,8 @@ public class ImportInvoice extends SvrProcess {
 					}
 					
 					//
-
-					invoice.setC_BPartner_ID( imp.getC_BPartner_ID());
-					invoice.setC_BPartner_Location_ID( imp.getC_BPartner_Location_ID());
+					bp = new MBPartner(getCtx(), imp.getC_BPartner_ID(), get_TrxName());
+					invoice.setBPartner(bp);
 
 					if( imp.getAD_User_ID() != 0 ) {
 						invoice.setAD_User_ID( imp.getAD_User_ID());
