@@ -176,9 +176,10 @@ public final class VTreePanel extends CPanel implements ActionListener,DragGestu
             while( en.hasMoreElements()) {
                 MTreeNode nd = ( MTreeNode )en.nextElement();
 
-                if( nd.isOnBar()) {
-                	// Insertar tanto formularios como ventanas en el mismo grupo de ventanas
-                	entries.put(nd.getImageIndiactor().replace(MWFNode.ACTION_UserForm, MWFNode.ACTION_UserWindow) + nd.getName(), nd);
+                // No incorporar folders a la bar
+                if( nd.isOnBar() && !nd.isSummary()) {
+                	// Insertar tanto formularios como ventanas en el mismo grupo de ventanas, contemplar posible NPE en imageIndicator
+                	entries.put(nd.getImageIndiactor()==null ? MWFNode.ACTION_UserChoice : nd.getImageIndiactor().replace(MWFNode.ACTION_UserForm, MWFNode.ACTION_UserWindow) + nd.getName(), nd);
                     //addToBar( nd );
                 }
             }
