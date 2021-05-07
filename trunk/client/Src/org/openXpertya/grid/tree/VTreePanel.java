@@ -829,7 +829,7 @@ public final class VTreePanel extends CPanel implements ActionListener,DragGestu
             {
                 MTreeNode nd = ( MTreeNode )tree.getSelectionPath().getLastPathComponent();
 
-                // if (nd.isLeaf())                    //  only leaves
+                if (nd.isLeaf())                    //  only leaves
 
                 {
                     Rectangle r = tree.getPathBounds( tree.getSelectionPath());
