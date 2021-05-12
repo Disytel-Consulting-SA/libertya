@@ -32,7 +32,7 @@
 	<parameter name="C_BP_Group_ID" isForPrompting="false" class="java.math.BigDecimal"/>
 	<parameter name="Mostrar" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="C_BPartner_ID" isForPrompting="false" class="java.math.BigDecimal"/>
-	<queryString><![CDATA[ select c_allocationhdr_id,
+	<queryString><![CDATA[select c_allocationhdr_id,
 ad_client_id,
 organization,
 grupo_ec,
@@ -959,7 +959,7 @@ order by c_allocationhdr_id]]></queryString>
 						</crosstabTotalColumnHeader>
 					</columnGroup>
 
-					<measure name="monto_Sum" class="java.math.BigDecimal">
+					<measure name="monto_Sum" class="java.math.BigDecimal" calculation="Sum">
 						<measureExpression><![CDATA[$F{monto}]]></measureExpression>
 					</measure>
 					<measure name="restante" class="java.math.BigDecimal">

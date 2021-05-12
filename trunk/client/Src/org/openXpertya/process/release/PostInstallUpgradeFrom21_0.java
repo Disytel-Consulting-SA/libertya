@@ -18,6 +18,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String FE_REPORT_UID = "CORE-AD_JasperReport-1010118";
 	protected final static String FE_REPORT_FILENAME = "rpt_Factura_Electronica.jasper";
 	
+	/** Informe de Cobranza y Pagos */
+	protected final static String COBRANZAS_PAGOS_REPORT_UID = "CORE-AD_Process-1010401";
+	protected final static String COBRANZAS_PAGOS_REPORT_FILENAME = "InformeDeCobranzasYPagos.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -30,6 +34,9 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		
 		// Impresión de FE
 		updateReport(FE_REPORT_UID, FE_REPORT_FILENAME);
+		
+		// Informe de Cobranza y Pagos
+		updateReport(COBRANZAS_PAGOS_REPORT_UID, COBRANZAS_PAGOS_REPORT_FILENAME);
 		
 		/*
 		 * Actualizacion de binarios
