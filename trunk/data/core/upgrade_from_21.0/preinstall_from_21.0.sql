@@ -197,3 +197,46 @@ CREATE OR REPLACE VIEW c_payment_movements_v AS
 
 ALTER TABLE c_payment_movements_v
   OWNER TO libertya;
+  
+--20210513-1325 Las retenciones sufridas no van negativas
+CREATE OR REPLACE VIEW rv_c_reten_iibb_sufridas AS 
+ SELECT i.ad_org_id,
+    i.ad_client_id,
+    r.jurisdictioncode AS codigojurisdiccion,
+    replace(bp.taxid::text, '-'::text, ''::text) AS cuit,
+    ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script,
+    i.dateacct AS date,
+    i.puntodeventa,
+    lpad(i.puntodeventa::character varying::text, 4, '0'::text) AS numerodesucursal,
+    i.numerocomprobante AS numerodeconstancia,
+        CASE
+            WHEN dt.doctypekey::text ~~ 'CDN%'::text AND dt.iselectronic::text = 'N'::text THEN 'D'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CI%'::text AND dt.iselectronic::text = 'N'::text THEN 'F'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CCN%'::text AND dt.iselectronic::text = 'N'::text THEN 'C'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CDN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'I'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CI%'::text AND dt.iselectronic::text = 'Y'::text THEN 'E'::bpchar
+            WHEN dt.doctypekey::text ~~ 'CCN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'H'::bpchar
+            ELSE 'O'::bpchar
+        END AS tipocomprobante,
+    lc.letra AS letracomprobante,
+    i.grandtotal AS importeretenido,
+    COALESCE(src.documentno, ( SELECT ip.documentno
+           FROM c_allocationline al
+             JOIN c_invoice ip ON ip.c_invoice_id = al.c_invoice_id
+          WHERE al.c_allocationhdr_id = ri.c_allocationhdr_id
+          ORDER BY al.created
+         LIMIT 1)) AS orig_invoice_documentno,
+    i.documentno
+   FROM m_retencion_invoice ri
+     JOIN c_invoice i ON i.c_invoice_id = ri.c_invoice_id
+     JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+     JOIN c_retencionschema rs ON rs.c_retencionschema_id = ri.c_retencionschema_id
+     JOIN c_retenciontype rt ON rt.c_retenciontype_id = rs.c_retenciontype_id
+     JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+     LEFT JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+     LEFT JOIN c_region r ON r.c_region_id = rs.c_region_id
+     LEFT JOIN c_invoice src ON src.c_invoice_id = ri.c_invoice_src_id
+  WHERE rt.retentiontype = 'B'::bpchar AND rs.retencionapplication::text = 'S'::text AND (i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]));
+
+ALTER TABLE rv_c_reten_iibb_sufridas
+  OWNER TO libertya;
