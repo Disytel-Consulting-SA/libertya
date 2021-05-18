@@ -31,6 +31,9 @@ public class PluginConstants {
 	/** Package base para micro componentes  */
 	public static final String PACKAGE_NAME_BASE_MICRO_COMPONENTS = "org.libertya.core.micro";
 	
+	/** Package prefijo de todas las clases */
+	public static final String PACKAGE_NAME_PREFIXX_CORE = "org.openXpertya";
+	
 	/** --------------------------- PREFIJOS ------------------------------------------- */
 
 	/** Prefijo para clases Callout */
