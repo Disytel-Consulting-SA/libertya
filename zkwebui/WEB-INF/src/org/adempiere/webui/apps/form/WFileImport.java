@@ -22,6 +22,9 @@
 package org.adempiere.webui.apps.form;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
@@ -43,12 +46,18 @@ import org.adempiere.webui.util.ReaderInputStream;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.impexp.ImpFormat;
 import org.openXpertya.impexp.ImpFormatRow;
+import org.openXpertya.model.MPInstance;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MRole;
+import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.process.ProcessInfoParameter;
+import org.openXpertya.process.ProcessInfoUtil;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Trx;
 import org.zkoss.util.media.Media;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -99,6 +108,7 @@ public class WFileImport extends ADForm implements EventListener
 	private Button bPrevious = new Button();
 
 	private InputStream m_file_istream;
+	private Media media = null;
 	
 	private Textbox rawData = new Textbox();
 	private Textbox[] m_fields;
@@ -306,8 +316,15 @@ public class WFileImport extends ADForm implements EventListener
 			return;			
 		}
 		
-		if (m_data != null && m_data.size()	> 0					//	file loaded
-			&& m_format != null && m_format.getRowCount() > 0)	//	format loaded
+		boolean hasProcess = m_format != null && m_format.getM_AD_Process_ID() > 0;
+		boolean hasFormatRows = m_format != null && m_format.getRowCount() > 0;
+
+		// Archivo correcto: No nulo y con al menos una linea.
+		boolean fileLoaded = m_data != null && m_data.size() > 0;
+		// Formato correcto: Formato con campos definidos, o formato con proceso asociado.
+		boolean validFormat = hasFormatRows || hasProcess;
+		
+		if (fileLoaded && validFormat) 
 			confirmPanel.getButton("Ok").setEnabled(true);
 		else
 			confirmPanel.getButton("Ok").setEnabled(false);
@@ -318,9 +335,7 @@ public class WFileImport extends ADForm implements EventListener
 	 */
 	
 	private void cmd_loadFile()
-	{
-		Media media = null;
-		
+	{		
 		try 
 		{
 			media = Fileupload.get();
@@ -330,21 +345,8 @@ public class WFileImport extends ADForm implements EventListener
 			e.printStackTrace();
 		}
 	
-		if (media == null)
-			return;
-		
-		if (media.isBinary()) {
-			m_file_istream = media.getStreamData();
-		}
-		else {
-			ListItem listitem = fCharset.getSelectedItem();
-			if (listitem == null) {
-				m_file_istream = new ReaderInputStream(media.getReaderData());
-			} else {
-				Charset charset = (Charset)listitem.getValue();
-				m_file_istream = new ReaderInputStream(media.getReaderData(), charset.name());
-			}
-		}
+		// Realiza el procesamiento del archivo para obtener el InputStream
+		processISFile();
 		
 		log.config(media.getName());
 		bFile.setLabel(media.getName());
@@ -534,17 +536,115 @@ public class WFileImport extends ADForm implements EventListener
 		
 		log.config(m_format.getName());
 
-		//	For all rows - update/insert DB table
+		int processID = m_format.getM_AD_Process_ID();
 		
-		int row = 0;
-		int imported = 0;
-		
-		for (row = 0; row < m_data.size(); row++)
-			if (m_format.updateDB(Env.getCtx(), m_data.get(row).toString(), null))
-				imported++;
-		
-		FDialog.info(m_WindowNo, this, "FileImportR/I", row + " / " + imported + "#");
+		// Si hay un proceso definido para el formato, ejecuta dicho proceso.
+		// Caso contrario, continúa con el procedimiento normal, linea por linea.
+		if (processID > 0) {
+			// Guarda el archivo subido al servidor para que sea utilizado por el proceso de
+			// importación custom
+			File upFileTemp = saveTempFile();
+			if(upFileTemp == null) {
+				return;
+			}
+			
+			String m_trx = Trx.createTrxName("WfileImportRunProcess");
+
+			Trx.getTrx(m_trx).start();
+
+			MPInstance instance = new MPInstance(Env.getCtx(), processID, 0, null);
+			if (!instance.save()) {
+				return;
+			}
+
+			ProcessInfo pi = new ProcessInfo("FileImport", processID);
+			pi.setAD_PInstance_ID(instance.getAD_PInstance_ID());
+			
+			ProcessInfoParameter aParam = new ProcessInfoParameter("File", upFileTemp, null, null, null);
+			pi.setParameter(ProcessInfoUtil.addToArray(pi.getParameter(), aParam));
+
+			MProcess process = new MProcess(Env.getCtx(), processID, m_trx);
+			MProcess.execute(Env.getCtx(), process, pi, m_trx);
+
+			Trx.getTrx(m_trx).commit();
+			Trx.getTrx(m_trx).close();
+
+			FDialog.info(m_WindowNo, this, pi.getSummary());
+		} else {		
+			//	For all rows - update/insert DB table
+			
+			int row = 0;
+			int imported = 0;
+			
+			for (row = 0; row < m_data.size(); row++)
+				if (m_format.updateDB(Env.getCtx(), m_data.get(row).toString(), null))
+					imported++;
+			
+			FDialog.info(m_WindowNo, this, "FileImportR/I", row + " / " + imported + "#");
+		}
 		
 		SessionManager.getAppDesktop().closeActiveWindow();
 	}	//	cmd_process
+	
+	/**
+	 * Recarga el InputStream del archivo subido
+	 */
+	protected void processISFile() {
+		if (media == null)
+			return;
+		
+		if (media.isBinary()) {
+			m_file_istream = media.getStreamData();
+		}
+		else {
+			ListItem listitem = fCharset.getSelectedItem();
+			if (listitem == null) {
+				m_file_istream = new ReaderInputStream(media.getReaderData());
+			} else {
+				Charset charset = (Charset)listitem.getValue();
+				m_file_istream = new ReaderInputStream(media.getReaderData(), charset.name());
+			}
+		}
+	}
+	
+	/**
+	 * Guarda el archivo temporal al servidor
+	 * 
+	 * @return archivo temporal guardado en el servidor
+	 */
+	protected File saveTempFile() {
+		// Le paso al proceso, el archivo como parámetro.
+		int extIndex = media.getName().lastIndexOf(".");
+		File upFileTemp = null;
+        FileOutputStream out = null;
+		try {
+			upFileTemp = File.createTempFile(media.getName().substring(0, extIndex - 1),
+					media.getName().substring(extIndex, media.getName().length()));
+	        out = new FileOutputStream(upFileTemp);
+	        processISFile();
+            int n;
+            // read() function to read the
+            // byte of data
+            while ((n = m_file_istream.read()) != -1) {
+                // write() function to write
+                // the byte of data
+                out.write(n);
+            }
+            
+		} catch(IOException ioe) {
+			FDialog.error(m_WindowNo, this, ioe.getMessage());
+		} finally {
+			try {
+	            if (m_file_istream != null) {
+	            	m_file_istream.close();
+	            }
+	            if (out != null) {
+	                out.close();
+	            }
+			} catch(IOException ioe) {
+				FDialog.error(m_WindowNo, this, ioe.getMessage());
+			}
+        }
+		return upFileTemp;
+	}
 }
