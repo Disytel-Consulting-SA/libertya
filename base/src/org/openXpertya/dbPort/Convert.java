@@ -1164,7 +1164,9 @@ public class Convert {
 
         // Convert all decode parts
 
-        while( retValue.indexOf( "DECODE" ) != -1 ) {
+        // Pude ocurrir que un query contenga la cadena DECODE (por ejemplo un nombre de articulo)
+        // el cual no tiene relación alguna con la invocacion a DECODE()
+        while( retValue.replace(" ", "").indexOf( "DECODE(" ) != -1 ) {
             retValue = convertDecode( retValue );
         }
 		/**
@@ -1244,6 +1246,28 @@ public class Convert {
         return retValue;
     }    // convertComplexStatement
 
+    protected int getDecodeIndex(String statement) {
+    	int retValue = 0;
+        boolean found = false;
+        while (!found) {
+        	// Posicion de DECODE 
+            int index = statement.indexOf( "DECODE" );
+            // Si el DECODE encontrado no es un llamado a DECODE( dado que no 
+            // contiene el parentesis de apertura entonces buscar siguiente entrada.
+            // Se debe contemplar una potencial invocacion con espacios entre
+            // la cadena DECODE y el parentesis, por ejemplo: DECODE (  o bien: DECODE  (
+            if (!statement.substring(index).replace(" ", "").startsWith("DECODE(")) {
+            	// Recortar la cadena en busqueda del siguente DECODE
+            	statement = statement.substring(index + "DECODE".length());
+            	retValue = retValue + index + "DECODE".length();
+            } else {
+            	found = true;
+            	retValue = retValue + index;
+            }
+        }
+        return retValue;
+    }
+    
     /**
      * Descripción de Método Converts Decode.
 	 *  <pre>
@@ -1261,7 +1285,7 @@ public class Convert {
 
         String       statement = sqlStatement;
         StringBuffer sb        = new StringBuffer( "CASE" );
-        int          index     = statement.indexOf( "DECODE" );
+        int          index     = getDecodeIndex(statement); // statement.indexOf( "DECODE" );
         String       firstPart = statement.substring( 0,index );
 
         // find the opening (
