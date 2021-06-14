@@ -22,6 +22,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String COBRANZAS_PAGOS_REPORT_UID = "CORE-AD_Process-1010401";
 	protected final static String COBRANZAS_PAGOS_REPORT_FILENAME = "InformeDeCobranzasYPagos.jasper";
 	
+	/** UID del Informe de Compras por Region */
+	protected final static String COMPRAS_POR_REGION_REPORT_UID = "CORE-AD_Process-1010400";
+	protected final static String COMPRAS_POR_REGION_REPORT_FILENAME = "ComprasPorRegion.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -37,6 +41,9 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		
 		// Informe de Cobranza y Pagos
 		updateReport(COBRANZAS_PAGOS_REPORT_UID, COBRANZAS_PAGOS_REPORT_FILENAME);
+		
+		// Compras por Región
+		updateReport(COMPRAS_POR_REGION_REPORT_UID, COMPRAS_POR_REGION_REPORT_FILENAME);
 		
 		/*
 		 * Actualizacion de binarios
