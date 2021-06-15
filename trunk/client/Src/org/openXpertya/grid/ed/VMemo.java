@@ -261,6 +261,14 @@ public class VMemo extends CTextArea implements VEditor,KeyListener,FocusListene
             } catch( PropertyVetoException pve ) {
             }
         }    // firstChange
+        
+        if(e.getKeyCode() == KeyEvent.VK_UP
+        		|| e.getKeyCode() == KeyEvent.VK_DOWN
+        		|| e.getKeyCode() == KeyEvent.VK_RIGHT
+        		|| e.getKeyCode() == KeyEvent.VK_LEFT){
+        	m_firstChange = false;
+        	return;
+        }
     }        // keyReleased
 
     /**
