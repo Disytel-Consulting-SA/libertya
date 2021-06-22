@@ -240,3 +240,6 @@ CREATE OR REPLACE VIEW rv_c_reten_iibb_sufridas AS
 
 ALTER TABLE rv_c_reten_iibb_sufridas
   OWNER TO libertya;
+  
+--20210622-0943 Ampliar capacidad de log del scheduler
+alter table ad_schedulerlog  alter column summary type varchar(10000);
