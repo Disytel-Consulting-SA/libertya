@@ -142,10 +142,10 @@ return (String)get_Value("Reference");
 Textual summary of this request */
 public void setSummary (String Summary)
 {
-if (Summary != null && Summary.length() > 2000)
+if (Summary != null && Summary.length() > 10000)
 {
-log.warning("Length > 2000 - truncated");
-Summary = Summary.substring(0,1999);
+log.warning("Length > 10000 - truncated");
+Summary = Summary.substring(0,9999);
 }
 set_Value ("Summary", Summary);
 }
