@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Categoria_Iva
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-10-31 20:28:17.793 */
+ *  @version  - 2021-06-23 12:10:51.641 */
 public class X_C_Categoria_Iva extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -115,6 +115,18 @@ Tax identifier */
 public int getC_Tax_ID() 
 {
 Integer ii = (Integer)get_Value("C_Tax_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Fiscal Printer Code */
+public void setFiscalPrinterCodigo (int FiscalPrinterCodigo)
+{
+set_Value ("FiscalPrinterCodigo", new Integer(FiscalPrinterCodigo));
+}
+/** Get Fiscal Printer Code */
+public int getFiscalPrinterCodigo() 
+{
+Integer ii = (Integer)get_Value("FiscalPrinterCodigo");
 if (ii == null) return 0;
 return ii.intValue();
 }
