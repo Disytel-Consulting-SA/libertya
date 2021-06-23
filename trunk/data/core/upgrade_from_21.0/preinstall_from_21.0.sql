@@ -243,3 +243,13 @@ ALTER TABLE rv_c_reten_iibb_sufridas
   
 --20210622-0943 Ampliar capacidad de log del scheduler
 alter table ad_schedulerlog  alter column summary type varchar(10000);
+
+--20210623-1415 Nueva columna para registrar el código de categoría de iva para impresoras fiscales 
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_categoria_iva','fiscalprintercodigo','integer'));
+
+update c_categoria_iva
+set fiscalprintercodigo = codigo;
+
+update c_categoria_iva
+set fiscalprintercodigo = 2
+where codigo = 5;

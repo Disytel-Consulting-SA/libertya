@@ -1317,7 +1317,7 @@ public class FiscalDocumentPrint {
 
 			// Se asigna la categoría de iva del cliente.
 			MCategoriaIva categoriaIva = new MCategoriaIva(Env.getCtx(),bPartner.getC_Categoria_Iva_ID(), getTrxName());
-			customer.setIvaResponsibility(traduceIvaResponsibility(categoriaIva.getCodigo()));
+			customer.setIvaResponsibility(traduceIvaResponsibility(categoriaIva.getFiscalPrinterCodigo()));
 			MInvoice mInvoice = (MInvoice)getOxpDocument();
 			
 			// Si es una factura a consumidor final, los datos del cliente se
