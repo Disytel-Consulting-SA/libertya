@@ -80,6 +80,12 @@ public class Customer implements Serializable{
 	/** Saldo */
 	private BigDecimal creditBalance = BigDecimal.ZERO;
 
+	/**
+	 * Descripción fiscal correspondiente a la categoría de IVA (por lo pronto va
+	 * por preference)
+	 */
+	private String categoriaIVAFiscalDescription = null;
+	
 	public Customer(){
 		super();
 	}
@@ -300,5 +306,13 @@ public class Customer implements Serializable{
 
 	public void setIdentificationName(String identificationName) {
 		this.identificationName = identificationName;
+	}
+
+	public String getCategoriaIVAFiscalDescription() {
+		return categoriaIVAFiscalDescription;
+	}
+
+	public void setCategoriaIVAFiscalDescription(String categoriaIVAFiscalDescription) {
+		this.categoriaIVAFiscalDescription = categoriaIVAFiscalDescription;
 	}
 }

@@ -99,8 +99,8 @@ public class MPreference extends X_AD_Preference {
 				
 				if (Value == null)
 					Value = "";
-				
-				s_CustomPreferences.put(Key, Value);
+				else
+					s_CustomPreferences.put(Key, Value);
 			}
 		}
 		

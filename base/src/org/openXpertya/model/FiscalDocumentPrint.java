@@ -105,6 +105,9 @@ public class FiscalDocumentPrint {
 	/** Preference que permite abrir siempre el cajón de dinero */
 	protected static final String ALWAYS_OPEN_DRAWER_PREFERENCE_VALUE = "FiscalPrinter_Always_Open_Drawer";
 	
+	/** Prefijo de la Preference de descripción fiscal de la categoría de iva */
+	protected static final String CATEGORIAIVA_LEYENDAFISCAL_PREFIX_PREFERENCE_NAME = "CategoriaIVA_LeyendaFiscal_";
+	
 	/** Manejador de eventos de la impresora fiscal */
 	private FiscalPrinterEventListener printerEventListener;
 	/** Manejador de eventos del estado del Controlador Fiscal de OXP */
@@ -892,6 +895,12 @@ public class FiscalDocumentPrint {
 				document.addFooterObservation(Util.isEmpty(token, true)?"-":token);
 			}
 		}
+		// Agregar la descripción para responsables monotributos
+		if (document.getCustomer() != null) {
+			document.addFooterObservation(
+					Util.isEmpty(document.getCustomer().getCategoriaIVAFiscalDescription(), true) ? "-"
+							: document.getCustomer().getCategoriaIVAFiscalDescription());
+		}
 	}
 
 	/**
@@ -1357,6 +1366,9 @@ public class FiscalDocumentPrint {
 			// cambio
 			customer.setLocation(mInvoice.getInvoice_Adress());
 			customer.setIvaResponsibilityName(categoriaIva.getName());
+			
+			// Descripción fiscal de la categoría de IVA
+			customer.setCategoriaIVAFiscalDescription(getCategoriaIVAFiscalDescription(categoriaIva.getCodigo()));
 		}
 		
 		return customer;
@@ -2636,6 +2648,22 @@ public class FiscalDocumentPrint {
 		}
 	}
 
+	/**
+	 * Obtiene la descripción fiscal de la categoría de iva definida como preference
+	 * con la siguiente nomenclatura:
+	 * CategoriaIVA_LeyendaFiscal_<codigo_categoria_iva>, donde
+	 * <codigo_categoria_iva> es el código numérico de la categoría de iva.
+	 * 
+	 * @param codigoCategoriaIVA
+	 * @return descripción fiscal de la categoría de iva
+	 * 
+	 */
+	protected String getCategoriaIVAFiscalDescription(int codigoCategoriaIVA) {
+		return MPreference.searchCustomPreferenceValue(
+				CATEGORIAIVA_LEYENDAFISCAL_PREFIX_PREFERENCE_NAME + codigoCategoriaIVA, Env.getAD_Client_ID(ctx),
+				Env.getAD_Org_ID(ctx), Env.getAD_User_ID(ctx), false);
+	}
+	
 	public boolean isThrowExceptionInCancelCheckStatus() {
 		return throwExceptionInCancelCheckStatus;
 	}
