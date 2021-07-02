@@ -477,7 +477,7 @@ public class LaunchOrder extends SvrProcess {
 			}
 			
 			try {
-				jasperwrapper.fillReport(ds);
+				jasperwrapper.fillReport(ds, this);
 				jasperwrapper.showReport(getProcessInfo());
 			}
 				

@@ -92,12 +92,13 @@ public abstract class JasperReportLaunch extends SvrProcess {
 	protected String doIt() throws Exception {
 		// Se cargan los parámetros específicos del reporte.
 		loadReportParameters();
+		
 		// Se crea el data source para el reporte y se cargan los datos del mismo.
 		OXPJasperDataSource dataSource = createReportDataSource();
 		dataSource.loadData();
 		// Se rellena el reporte con el data source y se muestra.
 		try {
-			getReportWrapper().fillReport(dataSource);
+			getReportWrapper().fillReport(dataSource, this);
 			getReportWrapper().showReport(getProcessInfo());
 		} catch (RuntimeException e) {
 			throw new Exception ("@JasperReportFillError@", e);

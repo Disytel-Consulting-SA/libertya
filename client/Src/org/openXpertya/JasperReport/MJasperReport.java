@@ -12,10 +12,16 @@ import org.jfree.util.Log;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MTable;
+import org.openXpertya.model.M_Tab;
+import org.openXpertya.model.M_Table;
+import org.openXpertya.model.PO;
 import org.openXpertya.model.X_AD_JasperReport;
 import org.openXpertya.plugin.common.PluginUtils;
+import org.openXpertya.plugin.report.PluginReportUtils;
 import org.openXpertya.print.CPrinter;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.process.SvrProcess;
 import org.openXpertya.process.ProcessInfo.JasperReportDTO;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -135,20 +141,30 @@ public class MJasperReport extends X_AD_JasperReport
     	Parameters.put(parametro, valor);
     }
 	
+	/** RetroCompatibilidad (sin soporte Components) */
+	public void fillReport(JRDataSource dataSource) throws RuntimeException 
+	{
+		fillReport(dataSource, null);
+	}
+	
 	/**
      * Rellenamos el informe almacenado en base de datos con C_JasperReport
      * con los datos del JRDataSource dataSource
      * 
-     * @param C_JasperReport_ID
      * @param dataSource
+     * @param owner es el SvrProcess quien invoca la ejecucion  
      * @throws RuntimeException
      */
-    public void fillReport(JRDataSource dataSource) throws RuntimeException
+    public void fillReport(JRDataSource dataSource, SvrProcess owner) throws RuntimeException
     {  
-        // Rellenamos el informe
         try
         {
+    		// Logica para soporte de plugins: incorporacion de posibles parametros adicionales
+        	if (owner!=null) {
+        		PluginReportUtils.injectParameters(owner.getClass().getSimpleName(), this, owner.getJasperReportPO());
+        	}
         	
+            // Rellenamos el informe        	
         	byte[] report = getBinaryData();
         	if (report == null)	{
         		throw new RuntimeException("No se ha podido cargar el informe precompilado.");
@@ -165,6 +181,10 @@ public class MJasperReport extends X_AD_JasperReport
         {
         	throw new RuntimeException("Null PointerException rellenando el report.", fexception);
         }
+        catch (Exception e) 
+        {
+        	throw new RuntimeException("Excepcion general rellenando el report. " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -173,7 +193,7 @@ public class MJasperReport extends X_AD_JasperReport
      * @param C_JasperReport_ID
      * @param conn
      * @throws RuntimeException
-     */
+     */  
     public void fillReport(Connection conn) throws RuntimeException
     {
         // Rellenamos el informe

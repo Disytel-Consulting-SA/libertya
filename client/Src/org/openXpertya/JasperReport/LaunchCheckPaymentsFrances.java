@@ -74,7 +74,7 @@ public class LaunchCheckPaymentsFrances extends SvrProcess {
 		addReportParameters(jasperwrapper, checkPrinting);
 
 		try {
-			jasperwrapper.fillReport(ds);
+			jasperwrapper.fillReport(ds, this);
 			jasperwrapper.showReport(getProcessInfo());
 		} catch (RuntimeException e) {
 			throw new RuntimeException("No se ha podido rellenar el informe.", e);

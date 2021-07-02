@@ -28,6 +28,9 @@ public class PluginConstants {
 	/** Package donde se almacenan los plugins de reportes jasper dinámicos */
 	public static final String PACKAGE_NAME_DYNAMIC_JASPER_REPORT = "JasperReport";
 	
+	/** Package donde se almacenan los report providers */
+	public static final String PACKAGE_REPORT_PROVIDER_PROCESS = "reportProvider";
+	
 	/** Package base para micro componentes  */
 	public static final String PACKAGE_NAME_BASE_MICRO_COMPONENTS = "org.libertya.core.micro";
 	

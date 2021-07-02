@@ -29,6 +29,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_AD_Process;
 import org.openXpertya.plugin.common.PluginUtils;
@@ -698,6 +699,17 @@ public abstract class SvrProcess implements ProcessCall {
 	 */
 	protected int getDeleteOldRecordsBackDays(){
 		return 7;
+	}
+	
+	/** 
+	 *  PO usado como base para la impresion de un documento (factura, remito, etc.) 
+	 * 	Para los casos en que se este imprimiendo un informe/listado (no existe un recordID en particular), no es necesario redefinir este metodo.
+	 */
+	public PO getJasperReportPO() {
+		if (getRecord_ID()<=0 || getTable_ID()<=0)
+			return null;
+		M_Table table = new M_Table(getCtx(), getTable_ID(), get_TrxName());
+		return table.getPO(getRecord_ID(), get_TrxName());
 	}
 }    // SvrProcess
 

@@ -135,7 +135,7 @@ public class LaunchOrdenPago extends SvrProcess {
 		loadReportParameters(jasperWrapper);
 
 		try {
-			jasperWrapper.fillReport(new JREmptyDataSource());
+			jasperWrapper.fillReport(new JREmptyDataSource(), this);
 			jasperWrapper.showReport(getProcessInfo());
 		} catch (RuntimeException e) {
 			throw new Exception("No se han podido rellenar el informe.", e);

@@ -97,7 +97,7 @@ public class LaunchReplenish extends SvrProcess {
 		
 		
 		try {
-			jasperwrapper.fillReport(ds);
+			jasperwrapper.fillReport(ds, this);
 			if(!sendMail) {
 				jasperwrapper.showReport(getProcessInfo());
 			} else {

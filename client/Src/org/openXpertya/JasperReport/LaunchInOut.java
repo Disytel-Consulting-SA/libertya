@@ -134,7 +134,7 @@ public class LaunchInOut extends SvrProcess {
 		addReportParameter(jasperwrapper, bpartner);
 		
 		try {
-			jasperwrapper.fillReport(ds);
+			jasperwrapper.fillReport(ds, this);
 			jasperwrapper.showReport(getProcessInfo());
 		}
 

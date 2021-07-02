@@ -470,7 +470,7 @@ public class WSFEConsultarComprobanteProcess extends SvrProcess {
 		jasperwrapper.addParameter("P_TIPO_CBTE", cbteTipoNombre);
 		
 		try {
-			jasperwrapper.fillReport(ds);
+			jasperwrapper.fillReport(ds, this);
 			jasperwrapper.showReport(getProcessInfo());
 		} catch (RuntimeException e) {
 			throw new RuntimeException("No se ha podido rellenar el informe: " + e.getMessage(), e);
