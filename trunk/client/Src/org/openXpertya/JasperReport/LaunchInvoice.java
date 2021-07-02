@@ -133,7 +133,7 @@ public class LaunchInvoice extends SvrProcess {
 			addReportParameter(jasperwrapper, invoice, bpartner);
 			
 			try {
-				jasperwrapper.fillReport(ds);
+				jasperwrapper.fillReport(ds, this);
 				jasperwrapper.showReport(getProcessInfo());
 			}
 				

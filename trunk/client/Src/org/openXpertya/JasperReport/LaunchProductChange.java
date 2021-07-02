@@ -160,7 +160,7 @@ public class LaunchProductChange extends SvrProcess {
 		
 		
 		try {
-			jasperwrapper.fillReport(new JREmptyDataSource());
+			jasperwrapper.fillReport(new JREmptyDataSource(), this);
 			jasperwrapper.showReport(getProcessInfo());
 		}
 

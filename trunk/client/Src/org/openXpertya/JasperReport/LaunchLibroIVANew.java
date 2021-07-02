@@ -168,7 +168,7 @@ import org.openXpertya.util.Util;
 			jasperwrapper.addParameter("TIPOLIBRO", p_tipoLibro);
 			
 			try {
-				jasperwrapper.fillReport(ds);
+				jasperwrapper.fillReport(ds, this);
 				jasperwrapper.showReport(getProcessInfo());
 			}
 				

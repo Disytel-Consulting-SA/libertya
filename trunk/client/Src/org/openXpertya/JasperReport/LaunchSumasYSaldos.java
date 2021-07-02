@@ -90,7 +90,7 @@ public class LaunchSumasYSaldos extends SvrProcess {
 			jasperwrapper.addParameter("orgName", (MClient.get(getCtx())).getName());
 			
 			try {
-				jasperwrapper.fillReport(ds);
+				jasperwrapper.fillReport(ds, this);
 				
 				jasperwrapper.showReport(getProcessInfo());
 			}
