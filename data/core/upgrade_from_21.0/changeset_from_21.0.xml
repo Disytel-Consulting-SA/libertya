@@ -53,6 +53,9 @@ Ejemplos de cambios
 		
     	<!-- 20210129 - Soporte para uso de librerias relacioandas a QRCode bajo webui   -->
     	<copy file="${SOURCE_DIR}/install/ServidorOXP/build.xml" todir="${TARGET_DIR}/install/ServidorOXP" overwrite="yes" />
+    	
+    	<!-- 20210702 - Invocacion de clases desde consola para Windows -->
+    	<copy file="${SOURCE_DIR}/CallClass.bat" todir="${TARGET_DIR}/utils" overwrite="yes" />
  	
     </target>
     
