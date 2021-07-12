@@ -17,6 +17,7 @@
 package org.openXpertya.report.core;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -158,8 +159,8 @@ class RModelData {
         m_rows.clear();
 
         try {
-            Statement stmt = DB.createStatement();
-            ResultSet rs   = stmt.executeQuery( finalSQL );
+            PreparedStatement stmt = DB.prepareStatement(finalSQL, null, true);
+            ResultSet rs   = stmt.executeQuery();
 
             while( rs.next()) {
                 ArrayList row = new ArrayList( size );
