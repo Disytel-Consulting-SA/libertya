@@ -14,6 +14,7 @@
 
 package org.openXpertya.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -159,6 +160,33 @@ public final class StringUtil {
     
     public static String valueOrDefault(Object value, String defaultValue){
     	return (value != null)?value.toString():defaultValue;
+    }
+    
+    /**
+	 * Splittea una línea basado en el caracter de split y devuelve tantas líneas
+	 * como maxLengthPerLine lo indique. Es decir, ajusta texto a un máximo de
+	 * tamaño.
+	 * 
+	 * @param baseString       línea base
+	 * @param splitter         caracter de spliteado
+	 * @param maxLengthPerLine tamaño máximo de línea
+	 * @return lista de líneas con el ajuste de texto correspondiente
+	 */
+    public static List<String> splitLines(String baseString, String splitter, int maxLengthPerLine) {
+    	String auxLine = "";
+    	String[] baseSplitted = baseString.split(splitter);
+    	List<String> splittedLines = new ArrayList<String>();
+    	for (String bs : baseSplitted) {
+			if(maxLengthPerLine < (auxLine.length() + bs.length() + 1)) {
+				splittedLines.add(auxLine);
+				auxLine = "";
+			}
+			auxLine += bs+" ";
+		}
+    	if(auxLine.length() > 0) {
+    		splittedLines.add(auxLine);
+    	}
+    	return splittedLines;
     }
 }
 

@@ -20,4 +20,8 @@ public class HasarPrinterP441F extends HasarPrinterP715F_v2 {
 		// TODO Auto-generated constructor stub
 	}
 
+	@Override
+	public int getFooterTrailerMaxLength() {
+		return 45;
+	}
 }

@@ -123,4 +123,9 @@ public class HasarPrinterP322F extends HasarFiscalPrinter {
 		return super.cmdGeneralDiscount(description, amount, substract, baseAmount,
 				0);
 	}
+	
+	@Override
+	public int getFooterTrailerMaxLength() {
+		return 120;
+	}
 }

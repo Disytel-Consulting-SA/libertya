@@ -1625,4 +1625,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		return fid;
 	}
 	
+	@Override
+	public int getFooterTrailerMaxLength() {
+		// Tamaño similar a todas las impresoras fiscales, cada subclase debe redefinir
+		// este método
+		return 40;
+	}
 }

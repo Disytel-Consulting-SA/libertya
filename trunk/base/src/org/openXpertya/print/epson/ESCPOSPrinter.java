@@ -1094,4 +1094,10 @@ public class ESCPOSPrinter extends BasicFiscalPrinter implements ESCPOSCommands,
 		this.paperStatusCodes = paperStatusCodes;
 	}
 
+	@Override
+	public int getFooterTrailerMaxLength() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }
