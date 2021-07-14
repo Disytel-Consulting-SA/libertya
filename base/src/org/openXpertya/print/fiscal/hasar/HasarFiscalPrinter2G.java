@@ -503,4 +503,9 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		fid.activityDate = getInitDataResponse.getDate(10);
 		return fid;
 	}
+	
+	@Override
+	public int getFooterTrailerMaxLength() {
+		return 120;
+	}
 }

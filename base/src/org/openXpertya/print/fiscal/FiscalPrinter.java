@@ -284,4 +284,9 @@ public interface FiscalPrinter {
 	 * @return dto con los datos decodificados por impresora
 	 */
 	public FiscalInitData decodeInitData(FiscalPacket getInitDataResponse);
+	
+	/**
+	 * @return tamaño máximo de cada línea de pie de ticket
+	 */
+	public abstract int getFooterTrailerMaxLength();
 }

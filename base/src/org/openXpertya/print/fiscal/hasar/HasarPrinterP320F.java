@@ -110,4 +110,8 @@ public class HasarPrinterP320F extends HasarFiscalPrinter {
 				0);
 	}
 
+	@Override
+	public int getFooterTrailerMaxLength() {
+		return 120;
+	}
 }

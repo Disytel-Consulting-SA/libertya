@@ -50,6 +50,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.ReservedUtil;
+import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
 
@@ -895,11 +896,21 @@ public class FiscalDocumentPrint {
 				document.addFooterObservation(Util.isEmpty(token, true)?"-":token);
 			}
 		}
-		// Agregar la descripción para responsables monotributos
+		// Agregar la descripción para categorías de iva
 		if (document.getCustomer() != null) {
-			document.addFooterObservation(
-					Util.isEmpty(document.getCustomer().getCategoriaIVAFiscalDescription(), true) ? "-"
-							: document.getCustomer().getCategoriaIVAFiscalDescription());
+			if (!Util.isEmpty(document.getCustomer().getCategoriaIVAFiscalDescription(), true)) {
+				if(getFiscalPrinter().getFooterTrailerMaxLength() > 0) {
+					List<String> lines = StringUtil.splitLines(
+							document.getCustomer().getCategoriaIVAFiscalDescription(), " ",
+							getFiscalPrinter().getFooterTrailerMaxLength());
+					for (String l : lines) {
+						document.addFooterObservation(l);
+					}
+				}
+				else {
+					document.addFooterObservation(document.getCustomer().getCategoriaIVAFiscalDescription());
+				}
+			}
 		}
 	}
 
