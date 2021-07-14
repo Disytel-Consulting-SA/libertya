@@ -3,17 +3,16 @@ package org.openXpertya.process;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.X_AD_JasperReport;
 import org.openXpertya.model.X_AD_Process;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.plugin.install.PluginXMLUpdaterPostInstall;
-import org.openXpertya.util.DB;
 
 public class PluginPostInstallProcess extends SvrProcess {
 
@@ -102,44 +101,14 @@ public class PluginPostInstallProcess extends SvrProcess {
 	}
 	
 	/**
-     * Actualiza el contenido del campo que contiene el precompilado de un informe Jasper
-     * @param trxName transacción a utilizar
-     * @param ctx contexto
-     * @param componentObjectUID identificador universal
-     * @param data el .jasper precompilado
-     * @throws Exception
-     */
-    public static void updateBinaryData(String trxName, Properties ctx, String componentObjectUID, byte[] data) throws Exception {
-    	// Si el .jasper parámetro es null no hago nada
-    	if(data == null || data.length <= 0){
-    		return;
-    	}
-    	
-    	// recuperar un Jasper a partir de su UID
-    	String getIDFromUID = " SELECT AD_JasperReport_ID FROM AD_JasperReport WHERE AD_ComponentObjectUID = ? ";
-    	int reportID = DB.getSQLValue(trxName, getIDFromUID, componentObjectUID);
-    	if (reportID <= 0) {
-    		PluginUtils.appendStatus("WARNING: Informe Jasper " + componentObjectUID + " no encontrado en BBDD.  Imposible actualizar. ");
-    		return;
-    	}
-		X_AD_JasperReport libroIvaJR = new X_AD_JasperReport(ctx, reportID, trxName);
-		
-		// Setear el contenido binario correspondiente
-		libroIvaJR.setBinaryData(data);
-		
-		// Persistir y elevar excepción en caso de error
-		if (!libroIvaJR.save())
-			throw new Exception ("Error al actualizar reporte " + libroIvaJR.getName());
-    }
-	
-	/**
 	 * Actualiza el jasper report parámetro
 	 * 
 	 * @param uid      UID del Jasper Report
 	 * @param filename Nombre del archivo
 	 */
 	protected void updateJasperReport(String uid, String filename) throws Exception {
-		updateBinaryData(get_TrxName(), getCtx(), uid, readBinaryFromJar(jarFileURL, getBinaryFileURL(filename)));
+		MJasperReport.updateBinaryData(get_TrxName(), getCtx(), uid,
+				readBinaryFromJar(jarFileURL, getBinaryFileURL(filename)));
 	}
 	
 	/**
