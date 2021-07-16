@@ -72,8 +72,7 @@ public abstract class AUserAuthModel {
 		String notAuthorizedUserMsg = Msg.getMsg(ctx,
 				"NotAllowedUserToCompleteOperation",
 				new Object[] { UserAuthConstants.getProcessValue(userAuthData
-						.getAuthOperations().toString().replaceAll("]", "")
-						.replaceAll("\\[", "")) });
+						.getAuthOperations().get(0).getOperation()) });
 		String notAuthorizedUserShortMsg = Msg.getMsg(ctx,
 				"NotAllowedUserToCompleteOperationShort");
 		// La validación de perfil de Supervidor en el TPV pisa el permiso por
