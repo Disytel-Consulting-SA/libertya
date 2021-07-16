@@ -376,13 +376,14 @@ public class PoSOnline extends PoSConnectionState {
 				createOxpPayments(order);
 				debug("Completando el allocation");
 				doCompleteAllocation();
+				
+				// Guardar las autorizaciones de usuario
+				getAuthorizationModel().confirmAuthorizationsDone(trxName, invoice.getID());
 			}
 
 			// Validaciones extras al finalizar
 			getCompleteOrderPOSValidations().validateEndCompleteOrder(this, order);
 			
-			// Guardar las autorizaciones de usuario
-			getAuthorizationModel().confirmAuthorizationsDone(trxName, invoice.getID());
 			
 			// Realizar las tareas de cuenta corriente antes de finalizar
 			if (shouldUpdateBPBalance) {
