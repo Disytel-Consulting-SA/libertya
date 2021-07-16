@@ -55,7 +55,10 @@ Ejemplos de cambios
     	<copy file="${SOURCE_DIR}/install/ServidorOXP/build.xml" todir="${TARGET_DIR}/install/ServidorOXP" overwrite="yes" />
     	
     	<!-- 20210702 - Invocacion de clases desde consola para Windows -->
-    	<copy file="${SOURCE_DIR}/CallClass.bat" todir="${TARGET_DIR}/utils" overwrite="yes" />
+    	<copy file="${SOURCE_DIR}/utils/CallClass.bat" todir="${TARGET_DIR}/utils" overwrite="yes" />
+    	
+    	<!-- 20210716 - Iteracion en daemon finalizador de conexiones IDLE in transaction -->
+    	<copy file="${SOURCE_DIR}/utils/trxTimeOut.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
  	
     </target>
     
