@@ -168,7 +168,7 @@ public class RetencionManual extends SvrProcess {
 		recaudador_fac.setDocAction(MInvoice.DOCACTION_Complete);
 		recaudador_fac.setC_BPartner_Location_ID(locationID);
 		recaudador_fac.setCUIT(null);
-		recaudador_fac.setPaymentRule(MInvoice.PAYMENTRULE_Check);
+		recaudador_fac.setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
 		recaudador_fac.setC_Project_ID(0);
 		recaudador_fac.setC_Campaign_ID(0);
 		recaudador_fac.setAD_Org_ID(AD_Org_ID);
@@ -249,7 +249,7 @@ public class RetencionManual extends SvrProcess {
 		credito_prov.setDocStatus(MInvoice.DOCSTATUS_Drafted);
 		credito_prov.setDocAction(MInvoice.DOCACTION_Complete);
 		credito_prov.setC_BPartner_Location_ID(locationID);
-		credito_prov.setPaymentRule(MInvoice.PAYMENTRULE_Check);
+		credito_prov.setPaymentRule(MInvoice.PAYMENTRULE_OnCredit);
 		credito_prov.setC_Project_ID(0);
 		credito_prov.setC_Campaign_ID(0);
 		credito_prov.setAD_Org_ID(AD_Org_ID);
