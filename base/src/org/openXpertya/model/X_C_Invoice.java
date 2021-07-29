@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-11-29 20:37:08.507 */
+ *  @version  - 2021-07-29 09:46:30.501 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1544,6 +1544,122 @@ BigDecimal bd = (BigDecimal)get_Value("OldGrandTotal");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set OrigInvFecha */
+public void setOrigInvFecha (Timestamp OrigInvFecha)
+{
+set_Value ("OrigInvFecha", OrigInvFecha);
+}
+/** Get OrigInvFecha */
+public Timestamp getOrigInvFecha() 
+{
+return (Timestamp)get_Value("OrigInvFecha");
+}
+/** Set OrigInvNro */
+public void setOrigInvNro (int OrigInvNro)
+{
+set_Value ("OrigInvNro", new Integer(OrigInvNro));
+}
+/** Get OrigInvNro */
+public int getOrigInvNro() 
+{
+Integer ii = (Integer)get_Value("OrigInvNro");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set OrigInvPtoVta */
+public void setOrigInvPtoVta (int OrigInvPtoVta)
+{
+set_Value ("OrigInvPtoVta", new Integer(OrigInvPtoVta));
+}
+/** Get OrigInvPtoVta */
+public int getOrigInvPtoVta() 
+{
+Integer ii = (Integer)get_Value("OrigInvPtoVta");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int ORIGINVTIPO_AD_Reference_ID = MReference.getReferenceID("DocSubTypeCae");
+/** Facturas A = 01 */
+public static final String ORIGINVTIPO_FacturasA = "01";
+/** Notas de Debito A = 02 */
+public static final String ORIGINVTIPO_NotasDeDebitoA = "02";
+/** Notas de Credito A = 03 */
+public static final String ORIGINVTIPO_NotasDeCreditoA = "03";
+/** Recibos A = 04 */
+public static final String ORIGINVTIPO_RecibosA = "04";
+/** Notas de Venta al Contado A = 05 */
+public static final String ORIGINVTIPO_NotasDeVentaAlContadoA = "05";
+/** Facturas B = 06 */
+public static final String ORIGINVTIPO_FacturasB = "06";
+/** Notas de Debito B = 07 */
+public static final String ORIGINVTIPO_NotasDeDebitoB = "07";
+/** Notas de Credito B = 08 */
+public static final String ORIGINVTIPO_NotasDeCreditoB = "08";
+/** Recibos B = 09 */
+public static final String ORIGINVTIPO_RecibosB = "09";
+/** Notas de Venta al contado B = 10 */
+public static final String ORIGINVTIPO_NotasDeVentaAlContadoB = "10";
+/** Nota de Débito por Operaciones en el Exterior = 20 */
+public static final String ORIGINVTIPO_NotaDeDébitoPorOperacionesEnElExterior = "20";
+/** Factura de Exportación E = 19 */
+public static final String ORIGINVTIPO_FacturaDeExportaciónE = "19";
+/** Nota de Crédito por Operaciones en el Exterior = 21 */
+public static final String ORIGINVTIPO_NotaDeCréditoPorOperacionesEnElExterior = "21";
+/** Facturas C = 11 */
+public static final String ORIGINVTIPO_FacturasC = "11";
+/** Notas de Credito C = 13 */
+public static final String ORIGINVTIPO_NotasDeCreditoC = "13";
+/** Notas de Debito C = 12 */
+public static final String ORIGINVTIPO_NotasDeDebitoC = "12";
+/** Notas de Venta al contado C = 16 */
+public static final String ORIGINVTIPO_NotasDeVentaAlContadoC = "16";
+/** Recibos C = 15 */
+public static final String ORIGINVTIPO_RecibosC = "15";
+/** Notas de Debito MiPyME A = 202 */
+public static final String ORIGINVTIPO_NotasDeDebitoMiPyMEA = "202";
+/** Notas de Debito MiPyME B = 207 */
+public static final String ORIGINVTIPO_NotasDeDebitoMiPyMEB = "207";
+/** Notas de Debito MiPyME C = 212 */
+public static final String ORIGINVTIPO_NotasDeDebitoMiPyMEC = "212";
+/** Notas de Credito MiPyME A = 203 */
+public static final String ORIGINVTIPO_NotasDeCreditoMiPyMEA = "203";
+/** Notas de Credito MiPyME B = 208 */
+public static final String ORIGINVTIPO_NotasDeCreditoMiPyMEB = "208";
+/** Notas de Credito MiPyME C = 213 */
+public static final String ORIGINVTIPO_NotasDeCreditoMiPyMEC = "213";
+/** Facturas MiPyME A = 201 */
+public static final String ORIGINVTIPO_FacturasMiPyMEA = "201";
+/** Facturas MiPyME B = 206 */
+public static final String ORIGINVTIPO_FacturasMiPyMEB = "206";
+/** Facturas MiPyME C = 211 */
+public static final String ORIGINVTIPO_FacturasMiPyMEC = "211";
+/** Facturas M = 51 */
+public static final String ORIGINVTIPO_FacturasM = "51";
+/** Notas de Debito M = 52 */
+public static final String ORIGINVTIPO_NotasDeDebitoM = "52";
+/** Notas de Credito M = 53 */
+public static final String ORIGINVTIPO_NotasDeCreditoM = "53";
+/** Facturas de Exportacion Simplificado = 22 */
+public static final String ORIGINVTIPO_FacturasDeExportacionSimplificado = "22";
+/** Remito R = 91 */
+public static final String ORIGINVTIPO_RemitoR = "91";
+/** Set OrigInvTipo */
+public void setOrigInvTipo (String OrigInvTipo)
+{
+if (OrigInvTipo == null || OrigInvTipo.equals("01") || OrigInvTipo.equals("02") || OrigInvTipo.equals("03") || OrigInvTipo.equals("04") || OrigInvTipo.equals("05") || OrigInvTipo.equals("06") || OrigInvTipo.equals("07") || OrigInvTipo.equals("08") || OrigInvTipo.equals("09") || OrigInvTipo.equals("10") || OrigInvTipo.equals("20") || OrigInvTipo.equals("19") || OrigInvTipo.equals("21") || OrigInvTipo.equals("11") || OrigInvTipo.equals("13") || OrigInvTipo.equals("12") || OrigInvTipo.equals("16") || OrigInvTipo.equals("15") || OrigInvTipo.equals("202") || OrigInvTipo.equals("207") || OrigInvTipo.equals("212") || OrigInvTipo.equals("203") || OrigInvTipo.equals("208") || OrigInvTipo.equals("213") || OrigInvTipo.equals("201") || OrigInvTipo.equals("206") || OrigInvTipo.equals("211") || OrigInvTipo.equals("51") || OrigInvTipo.equals("52") || OrigInvTipo.equals("53") || OrigInvTipo.equals("22") || OrigInvTipo.equals("91") || ( refContainsValue("CORE-AD_Reference-1010096", OrigInvTipo) ) );
+ else throw new IllegalArgumentException ("OrigInvTipo Invalid value: " + OrigInvTipo + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010096") );
+if (OrigInvTipo != null && OrigInvTipo.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+OrigInvTipo = OrigInvTipo.substring(0,10);
+}
+set_Value ("OrigInvTipo", OrigInvTipo);
+}
+/** Get OrigInvTipo */
+public String getOrigInvTipo() 
+{
+return (String)get_Value("OrigInvTipo");
+}
 public static final int PAYMENTRULE_AD_Reference_ID = MReference.getReferenceID("All_Payment Rule");
 /** Transfer = Tr */
 public static final String PAYMENTRULE_Transfer = "Tr";
@@ -1874,9 +1990,20 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Invoice(Ref_Invoice_ID,IsPayScheduleValid,vtocae,C_Invoice_ID,cae,idcae,caeerror,C_Activity_ID,Description,DocAction,Posted,C_Order_ID,C_DocType_ID,GenerateTo,C_Campaign_ID,DocStatus,POReference,DateOrdered,Created,C_Currency_ID,IsTransferred,GrandTotal,C_Project_ID,C_Payment_ID,TotalLines,IsPaid,DateAcct,AD_Client_ID,Processing,IsActive,UpdatedBy,DatePrinted,IsSOTrx,AD_Org_ID,C_Charge_ID,CopyFrom,Processed,Updated,IsSelfService,CreateFrom,IsDiscountPrinted,AD_OrgTrx_ID,SalesRep_ID,ChargeAmt,IsTaxIncluded,IsInDispute,SendEMail,C_CashLine_ID,C_ConversionType_ID,IsPrinted,NumeroDeDocumento,C_Invoice_Orig_ID,PuntoDeVenta,Invoice_Adress,NombreCli,C_Letra_Comprobante_ID,DateInvoiced,CAI,CUIT,DateCAI,Caja,NumeroComprobante,ImportClearance,FiscalAlreadyPrinted,C_BPartner_ID,M_PriceList_ID,PaymentRule,caecbte,CreateCashLine,IsCopy,AuthCode,AuthMatch,C_POSJournal_ID,ManualGeneralDiscount,IsApproved,NotExchangeableCredit,C_DocTypeTarget_ID,InitialCurrentAccountAmt,C_POSPaymentMedium_ID,ManageDragOrderDiscounts,IsExchange,DocumentNo,ManualDocumentNo,ApplyPercepcion,TipoComprobante,M_RMA_ID,NetAmount,C_POSPaymentMedium_Credit_ID,FiscalDescription,PrintType,UpdateOrderQty,C_Region_Delivery_ID,IsVoidable,DateRecepted,SkipIPNoCaeValidation,ManageElectronicInvoice,Authorize,OldGrandTotal,M_AuthorizationChain_ID,M_InOutTransport_ID,CreatedBy,AD_User_ID,C_BPartner_Location_ID,C_Region_ID,User1_ID,User2_ID,AuthorizationChainStatus,FechadeTCparaActualizarPrecios,C_PaymentTerm_ID,ManageDragOrderSurcharges,NroIdentificCliente,C_Order_Orig_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_Invoice(CreateCashLine,IsCopy,AuthCode,AuthMatch,C_POSJournal_ID,ManualGeneralDiscount,ImportClearance,SkipIPNoCaeValidation,ManageElectronicInvoice,Authorize,OldGrandTotal,M_AuthorizationChain_ID,NotExchangeableCredit,InitialCurrentAccountAmt,C_POSPaymentMedium_ID,ManageDragOrderDiscounts,IsExchange,ManualDocumentNo,ApplyPercepcion,TipoComprobante,Ref_Invoice_ID,IsPayScheduleValid,vtocae,C_Invoice_ID,cae,idcae,caeerror,C_Activity_ID,Description,DocAction,Posted,C_Order_ID,C_DocType_ID,GenerateTo,C_Campaign_ID,DocStatus,POReference,DateOrdered,Created,C_Currency_ID,IsTransferred,GrandTotal,C_Project_ID,C_Payment_ID,TotalLines,IsPaid,DateAcct,AD_Client_ID,Processing,IsActive,UpdatedBy,DatePrinted,IsSOTrx,AD_Org_ID,C_Charge_ID,CopyFrom,Processed,Updated,IsSelfService,CreateFrom,IsDiscountPrinted,AD_OrgTrx_ID,SalesRep_ID,ChargeAmt,IsTaxIncluded,IsInDispute,SendEMail,C_CashLine_ID,C_ConversionType_ID,IsPrinted,NumeroDeDocumento,C_Invoice_Orig_ID,PuntoDeVenta,Invoice_Adress,NombreCli,C_Letra_Comprobante_ID,DateInvoiced,CAI,CUIT,DateCAI,Caja,NumeroComprobante,FiscalAlreadyPrinted,C_BPartner_ID,M_PriceList_ID,PaymentRule,caecbte,IsApproved,C_DocTypeTarget_ID,DocumentNo,CreatedBy,C_BPartner_Location_ID,AD_User_ID,C_Region_ID,User1_ID,User2_ID,C_PaymentTerm_ID,NroIdentificCliente,FiscalDescription,M_RMA_ID,NetAmount,C_POSPaymentMedium_Credit_ID,PrintType,UpdateOrderQty,C_Region_Delivery_ID,IsVoidable,DateRecepted,FechadeTCparaActualizarPrecios,M_InOutTransport_ID,AuthorizationChainStatus,ManageDragOrderSurcharges,C_Order_Orig_ID,OrigInvFecha,OrigInvNro,OrigInvPtoVta,OrigInvTipo," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getRef_Invoice_ID() == 0) sql = sql.replaceFirst("Ref_Invoice_ID,","").replaceFirst("\\?,", "");
+		 if (getAuthCode() == null) sql = sql.replaceFirst("AuthCode,","").replaceFirst("\\?,", "");
+ 		 if (getC_POSJournal_ID() == 0) sql = sql.replaceFirst("C_POSJournal_ID,","").replaceFirst("\\?,", "");
+ 		 if (getManualGeneralDiscount() == null) sql = sql.replaceFirst("ManualGeneralDiscount,","").replaceFirst("\\?,", "");
+ 		 if (getImportClearance() == null) sql = sql.replaceFirst("ImportClearance,","").replaceFirst("\\?,", "");
+ 		 if (getManageElectronicInvoice() == null) sql = sql.replaceFirst("ManageElectronicInvoice,","").replaceFirst("\\?,", "");
+ 		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
+ 		 if (getOldGrandTotal() == null) sql = sql.replaceFirst("OldGrandTotal,","").replaceFirst("\\?,", "");
+ 		 if (getM_AuthorizationChain_ID() == 0) sql = sql.replaceFirst("M_AuthorizationChain_ID,","").replaceFirst("\\?,", "");
+ 		 if (getInitialCurrentAccountAmt() == null) sql = sql.replaceFirst("InitialCurrentAccountAmt,","").replaceFirst("\\?,", "");
+ 		 if (getC_POSPaymentMedium_ID() == 0) sql = sql.replaceFirst("C_POSPaymentMedium_ID,","").replaceFirst("\\?,", "");
+ 		 if (getTipoComprobante() == null) sql = sql.replaceFirst("TipoComprobante,","").replaceFirst("\\?,", "");
+ 		 if (getRef_Invoice_ID() == 0) sql = sql.replaceFirst("Ref_Invoice_ID,","").replaceFirst("\\?,", "");
  		 if (getvtocae() == null) sql = sql.replaceFirst("vtocae,","").replaceFirst("\\?,", "");
  		 if (getcae() == null) sql = sql.replaceFirst("cae,","").replaceFirst("\\?,", "");
  		 if (getidcae() == null) sql = sql.replaceFirst("idcae,","").replaceFirst("\\?,", "");
@@ -1916,36 +2043,29 @@ try
  		 if (getCUIT() == null) sql = sql.replaceFirst("CUIT,","").replaceFirst("\\?,", "");
  		 if (getDateCAI() == null) sql = sql.replaceFirst("DateCAI,","").replaceFirst("\\?,", "");
  		 if (getCaja() == null) sql = sql.replaceFirst("Caja,","").replaceFirst("\\?,", "");
- 		 if (getImportClearance() == null) sql = sql.replaceFirst("ImportClearance,","").replaceFirst("\\?,", "");
  		 if (getPaymentRule() == null) sql = sql.replaceFirst("PaymentRule,","").replaceFirst("\\?,", "");
  		 if (getcaecbte() == 0) sql = sql.replaceFirst("caecbte,","").replaceFirst("\\?,", "");
- 		 if (getAuthCode() == null) sql = sql.replaceFirst("AuthCode,","").replaceFirst("\\?,", "");
- 		 if (getC_POSJournal_ID() == 0) sql = sql.replaceFirst("C_POSJournal_ID,","").replaceFirst("\\?,", "");
- 		 if (getManualGeneralDiscount() == null) sql = sql.replaceFirst("ManualGeneralDiscount,","").replaceFirst("\\?,", "");
- 		 if (getInitialCurrentAccountAmt() == null) sql = sql.replaceFirst("InitialCurrentAccountAmt,","").replaceFirst("\\?,", "");
- 		 if (getC_POSPaymentMedium_ID() == 0) sql = sql.replaceFirst("C_POSPaymentMedium_ID,","").replaceFirst("\\?,", "");
  		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
- 		 if (getTipoComprobante() == null) sql = sql.replaceFirst("TipoComprobante,","").replaceFirst("\\?,", "");
- 		 if (getM_RMA_ID() == 0) sql = sql.replaceFirst("M_RMA_ID,","").replaceFirst("\\?,", "");
- 		 if (getNetAmount() == null) sql = sql.replaceFirst("NetAmount,","").replaceFirst("\\?,", "");
- 		 if (getC_POSPaymentMedium_Credit_ID() == 0) sql = sql.replaceFirst("C_POSPaymentMedium_Credit_ID,","").replaceFirst("\\?,", "");
- 		 if (getFiscalDescription() == null) sql = sql.replaceFirst("FiscalDescription,","").replaceFirst("\\?,", "");
- 		 if (getPrintType() == null) sql = sql.replaceFirst("PrintType,","").replaceFirst("\\?,", "");
- 		 if (getC_Region_Delivery_ID() == 0) sql = sql.replaceFirst("C_Region_Delivery_ID,","").replaceFirst("\\?,", "");
- 		 if (getDateRecepted() == null) sql = sql.replaceFirst("DateRecepted,","").replaceFirst("\\?,", "");
- 		 if (getManageElectronicInvoice() == null) sql = sql.replaceFirst("ManageElectronicInvoice,","").replaceFirst("\\?,", "");
- 		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
- 		 if (getOldGrandTotal() == null) sql = sql.replaceFirst("OldGrandTotal,","").replaceFirst("\\?,", "");
- 		 if (getM_AuthorizationChain_ID() == 0) sql = sql.replaceFirst("M_AuthorizationChain_ID,","").replaceFirst("\\?,", "");
- 		 if (getM_InOutTransport_ID() == 0) sql = sql.replaceFirst("M_InOutTransport_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_User_ID() == 0) sql = sql.replaceFirst("AD_User_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Region_ID() == 0) sql = sql.replaceFirst("C_Region_ID,","").replaceFirst("\\?,", "");
  		 if (getUser1_ID() == 0) sql = sql.replaceFirst("User1_ID,","").replaceFirst("\\?,", "");
  		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
- 		 if (getAuthorizationChainStatus() == null) sql = sql.replaceFirst("AuthorizationChainStatus,","").replaceFirst("\\?,", "");
- 		 if (getFechadeTCparaActualizarPrecios() == null) sql = sql.replaceFirst("FechadeTCparaActualizarPrecios,","").replaceFirst("\\?,", "");
  		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
+ 		 if (getFiscalDescription() == null) sql = sql.replaceFirst("FiscalDescription,","").replaceFirst("\\?,", "");
+ 		 if (getM_RMA_ID() == 0) sql = sql.replaceFirst("M_RMA_ID,","").replaceFirst("\\?,", "");
+ 		 if (getNetAmount() == null) sql = sql.replaceFirst("NetAmount,","").replaceFirst("\\?,", "");
+ 		 if (getC_POSPaymentMedium_Credit_ID() == 0) sql = sql.replaceFirst("C_POSPaymentMedium_Credit_ID,","").replaceFirst("\\?,", "");
+ 		 if (getPrintType() == null) sql = sql.replaceFirst("PrintType,","").replaceFirst("\\?,", "");
+ 		 if (getC_Region_Delivery_ID() == 0) sql = sql.replaceFirst("C_Region_Delivery_ID,","").replaceFirst("\\?,", "");
+ 		 if (getDateRecepted() == null) sql = sql.replaceFirst("DateRecepted,","").replaceFirst("\\?,", "");
+ 		 if (getFechadeTCparaActualizarPrecios() == null) sql = sql.replaceFirst("FechadeTCparaActualizarPrecios,","").replaceFirst("\\?,", "");
+ 		 if (getM_InOutTransport_ID() == 0) sql = sql.replaceFirst("M_InOutTransport_ID,","").replaceFirst("\\?,", "");
+ 		 if (getAuthorizationChainStatus() == null) sql = sql.replaceFirst("AuthorizationChainStatus,","").replaceFirst("\\?,", "");
  		 if (getC_Order_Orig_ID() == 0) sql = sql.replaceFirst("C_Order_Orig_ID,","").replaceFirst("\\?,", "");
+ 		 if (getOrigInvFecha() == null) sql = sql.replaceFirst("OrigInvFecha,","").replaceFirst("\\?,", "");
+ 		 if (getOrigInvNro() == 0) sql = sql.replaceFirst("OrigInvNro,","").replaceFirst("\\?,", "");
+ 		 if (getOrigInvPtoVta() == 0) sql = sql.replaceFirst("OrigInvPtoVta,","").replaceFirst("\\?,", "");
+ 		 if (getOrigInvTipo() == null) sql = sql.replaceFirst("OrigInvTipo,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -1957,6 +2077,26 @@ try
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
+		 pstmt.setString(col++, isCreateCashLine()?"Y":"N");
+		 pstmt.setString(col++, isCopy()?"Y":"N");
+		 if (getAuthCode() != null) pstmt.setString(col++, getAuthCode());
+		 pstmt.setString(col++, isAuthMatch()?"Y":"N");
+		 if (getC_POSJournal_ID() != 0) pstmt.setInt(col++, getC_POSJournal_ID());
+		 if (getManualGeneralDiscount() != null) pstmt.setBigDecimal(col++, getManualGeneralDiscount());
+		 if (getImportClearance() != null) pstmt.setString(col++, getImportClearance());
+		 pstmt.setString(col++, isSkipIPNoCaeValidation()?"Y":"N");
+		 if (getManageElectronicInvoice() != null) pstmt.setString(col++, getManageElectronicInvoice());
+		 if (getAuthorize() != null) pstmt.setString(col++, getAuthorize());
+		 if (getOldGrandTotal() != null) pstmt.setBigDecimal(col++, getOldGrandTotal());
+		 if (getM_AuthorizationChain_ID() != 0) pstmt.setInt(col++, getM_AuthorizationChain_ID());
+		 pstmt.setString(col++, isNotExchangeableCredit()?"Y":"N");
+		 if (getInitialCurrentAccountAmt() != null) pstmt.setBigDecimal(col++, getInitialCurrentAccountAmt());
+		 if (getC_POSPaymentMedium_ID() != 0) pstmt.setInt(col++, getC_POSPaymentMedium_ID());
+		 pstmt.setString(col++, isManageDragOrderDiscounts()?"Y":"N");
+		 pstmt.setString(col++, isExchange()?"Y":"N");
+		 pstmt.setString(col++, isManualDocumentNo()?"Y":"N");
+		 pstmt.setString(col++, isApplyPercepcion()?"Y":"N");
+		 if (getTipoComprobante() != null) pstmt.setString(col++, getTipoComprobante());
 		 if (getRef_Invoice_ID() != 0) pstmt.setInt(col++, getRef_Invoice_ID());
 		 pstmt.setString(col++, isPayScheduleValid()?"Y":"N");
 		 if (getvtocae() != null) pstmt.setTimestamp(col++, getvtocae());
@@ -2019,56 +2159,40 @@ try
 		 if (getDateCAI() != null) pstmt.setTimestamp(col++, getDateCAI());
 		 if (getCaja() != null) pstmt.setString(col++, getCaja());
 		 pstmt.setInt(col++, getNumeroComprobante());
-		 if (getImportClearance() != null) pstmt.setString(col++, getImportClearance());
 		 pstmt.setString(col++, isFiscalAlreadyPrinted()?"Y":"N");
 		 pstmt.setInt(col++, getC_BPartner_ID());
 		 pstmt.setInt(col++, getM_PriceList_ID());
 		 if (getPaymentRule() != null) pstmt.setString(col++, getPaymentRule());
 		 if (getcaecbte() != 0) pstmt.setInt(col++, getcaecbte());
-		 pstmt.setString(col++, isCreateCashLine()?"Y":"N");
-		 pstmt.setString(col++, isCopy()?"Y":"N");
-		 if (getAuthCode() != null) pstmt.setString(col++, getAuthCode());
-		 pstmt.setString(col++, isAuthMatch()?"Y":"N");
-		 if (getC_POSJournal_ID() != 0) pstmt.setInt(col++, getC_POSJournal_ID());
-		 if (getManualGeneralDiscount() != null) pstmt.setBigDecimal(col++, getManualGeneralDiscount());
 		 pstmt.setString(col++, isApproved()?"Y":"N");
-		 pstmt.setString(col++, isNotExchangeableCredit()?"Y":"N");
 		 pstmt.setInt(col++, getC_DocTypeTarget_ID());
-		 if (getInitialCurrentAccountAmt() != null) pstmt.setBigDecimal(col++, getInitialCurrentAccountAmt());
-		 if (getC_POSPaymentMedium_ID() != 0) pstmt.setInt(col++, getC_POSPaymentMedium_ID());
-		 pstmt.setString(col++, isManageDragOrderDiscounts()?"Y":"N");
-		 pstmt.setString(col++, isExchange()?"Y":"N");
 		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
-		 pstmt.setString(col++, isManualDocumentNo()?"Y":"N");
-		 pstmt.setString(col++, isApplyPercepcion()?"Y":"N");
-		 if (getTipoComprobante() != null) pstmt.setString(col++, getTipoComprobante());
+		 pstmt.setInt(col++, getCreatedBy());
+		 pstmt.setInt(col++, getC_BPartner_Location_ID());
+		 if (getAD_User_ID() != 0) pstmt.setInt(col++, getAD_User_ID());
+		 if (getC_Region_ID() != 0) pstmt.setInt(col++, getC_Region_ID());
+		 if (getUser1_ID() != 0) pstmt.setInt(col++, getUser1_ID());
+		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
+		 pstmt.setInt(col++, getC_PaymentTerm_ID());
+		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
+		 if (getFiscalDescription() != null) pstmt.setString(col++, getFiscalDescription());
 		 if (getM_RMA_ID() != 0) pstmt.setInt(col++, getM_RMA_ID());
 		 if (getNetAmount() != null) pstmt.setBigDecimal(col++, getNetAmount());
 		 if (getC_POSPaymentMedium_Credit_ID() != 0) pstmt.setInt(col++, getC_POSPaymentMedium_Credit_ID());
-		 if (getFiscalDescription() != null) pstmt.setString(col++, getFiscalDescription());
 		 if (getPrintType() != null) pstmt.setString(col++, getPrintType());
 		 pstmt.setString(col++, isUpdateOrderQty()?"Y":"N");
 		 if (getC_Region_Delivery_ID() != 0) pstmt.setInt(col++, getC_Region_Delivery_ID());
 		 pstmt.setString(col++, isVoidable()?"Y":"N");
 		 if (getDateRecepted() != null) pstmt.setTimestamp(col++, getDateRecepted());
-		 pstmt.setString(col++, isSkipIPNoCaeValidation()?"Y":"N");
-		 if (getManageElectronicInvoice() != null) pstmt.setString(col++, getManageElectronicInvoice());
-		 if (getAuthorize() != null) pstmt.setString(col++, getAuthorize());
-		 if (getOldGrandTotal() != null) pstmt.setBigDecimal(col++, getOldGrandTotal());
-		 if (getM_AuthorizationChain_ID() != 0) pstmt.setInt(col++, getM_AuthorizationChain_ID());
-		 if (getM_InOutTransport_ID() != 0) pstmt.setInt(col++, getM_InOutTransport_ID());
-		 pstmt.setInt(col++, getCreatedBy());
-		 if (getAD_User_ID() != 0) pstmt.setInt(col++, getAD_User_ID());
-		 pstmt.setInt(col++, getC_BPartner_Location_ID());
-		 if (getC_Region_ID() != 0) pstmt.setInt(col++, getC_Region_ID());
-		 if (getUser1_ID() != 0) pstmt.setInt(col++, getUser1_ID());
-		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
-		 if (getAuthorizationChainStatus() != null) pstmt.setString(col++, getAuthorizationChainStatus());
 		 if (getFechadeTCparaActualizarPrecios() != null) pstmt.setTimestamp(col++, getFechadeTCparaActualizarPrecios());
-		 pstmt.setInt(col++, getC_PaymentTerm_ID());
+		 if (getM_InOutTransport_ID() != 0) pstmt.setInt(col++, getM_InOutTransport_ID());
+		 if (getAuthorizationChainStatus() != null) pstmt.setString(col++, getAuthorizationChainStatus());
 		 pstmt.setString(col++, isManageDragOrderSurcharges()?"Y":"N");
-		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
 		 if (getC_Order_Orig_ID() != 0) pstmt.setInt(col++, getC_Order_Orig_ID());
+		 if (getOrigInvFecha() != null) pstmt.setTimestamp(col++, getOrigInvFecha());
+		 if (getOrigInvNro() != 0) pstmt.setInt(col++, getOrigInvNro());
+		 if (getOrigInvPtoVta() != 0) pstmt.setInt(col++, getOrigInvPtoVta());
+		 if (getOrigInvTipo() != null) pstmt.setString(col++, getOrigInvTipo());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 
