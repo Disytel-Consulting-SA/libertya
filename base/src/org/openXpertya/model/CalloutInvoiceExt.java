@@ -209,7 +209,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 //        }
 
         try {
-            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, s.prefix, s.suffix " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
+            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, s.prefix, s.suffix, d.DocTypeKey, d.docsubtypeinv " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
                          + " AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
             PreparedStatement pstmt = DB.prepareStatement( SQL );
 
@@ -247,6 +247,14 @@ public class CalloutInvoiceExt extends CalloutInvoice {
                 String s = rs.getString( 5 );
                 
                 Env.setContext( ctx,WindowNo,"DocBaseType",s );
+                
+                String dk = rs.getString( "DocTypeKey" );
+
+                Env.setContext( ctx,WindowNo,"DocTypeKey",dk );
+                
+                String dsi = rs.getString( "docsubtypeinv" );
+
+                Env.setContext( ctx,WindowNo,"docsubtypeinv", dsi);
 
                 // AP Check & AR Credit Memo
 				// Si el campo de forma de pago contiene un valor por defecto,
