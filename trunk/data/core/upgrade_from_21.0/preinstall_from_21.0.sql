@@ -253,3 +253,9 @@ set fiscalprintercodigo = codigo;
 update c_categoria_iva
 set fiscalprintercodigo = 2
 where codigo = 5;
+
+--20210729-0857 Nuevos campos para definición manual de comprobante original
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvTipo','varchar(10)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvPtoVta','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvNro','integer'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvFecha','date'));
