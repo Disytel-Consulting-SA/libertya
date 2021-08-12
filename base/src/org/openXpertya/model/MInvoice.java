@@ -3991,6 +3991,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			MCashLine cl = new MCashLine(cash);
 
 			cl.setInvoice(this);
+			cl.setIgnoreInvoiceDocStatus(true);
 			// 1. Crea la línea en la BD
 			if (!cl.save()) {
 				m_processMsg = "@CashLineCreateError@: "

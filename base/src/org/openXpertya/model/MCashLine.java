@@ -108,6 +108,9 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 	/** Libro de caja a asignar a líneas de caja reversas */
 	private int reverseCashID = 0;
     
+	/** Ignorar el estado del comprobante */
+	private boolean ignoreInvoiceDocStatus = false;
+	
     /**
      * Constructor de la clase ...
      *
@@ -613,7 +616,7 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 			// se puede asociar una línea de caja a un comprobante en otro
 			// estado
 			MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
-			if(!invoice.isInvoiceCompletedOrClosed()){
+			if(!isIgnoreInvoiceDocStatus() && !invoice.isInvoiceCompletedOrClosed()){
 				m_processMsg = Msg.getMsg(getCtx(), "DocumentStatus", new Object[] { invoice.getDocumentNo(),
 						MRefList.getListName(getCtx(), DOCSTATUS_AD_Reference_ID, invoice.getDocStatus()) });
 				return DocAction.STATUS_Invalid;
@@ -1517,6 +1520,14 @@ public class MCashLine extends X_C_CashLine implements DocAction, CurrentAccount
 
 	public void setReverseCashID(int reverseCashID) {
 		this.reverseCashID = reverseCashID;
+	}
+
+	public boolean isIgnoreInvoiceDocStatus() {
+		return ignoreInvoiceDocStatus;
+	}
+
+	public void setIgnoreInvoiceDocStatus(boolean ignoreInvoiceDocStatus) {
+		this.ignoreInvoiceDocStatus = ignoreInvoiceDocStatus;
 	}
 
 	
