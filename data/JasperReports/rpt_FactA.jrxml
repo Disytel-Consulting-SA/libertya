@@ -147,6 +147,7 @@
 	<parameter name="NROREMITO_2" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="NROREMITO_3" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="PERCEPCION_TOTAL_AMT" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="CURRENCY_RATE" isForPrompting="false" class="java.math.BigDecimal"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -559,7 +560,7 @@
 					<reportElement
 						mode="Transparent"
 						x="5"
-						y="3"
+						y="20"
 						width="585"
 						height="2"
 						forecolor="#FFFFFF"
@@ -569,7 +570,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="531"
-						y="14"
+						y="31"
 						width="55"
 						height="12"
 						key="textField-23"/>
@@ -582,7 +583,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="531"
-						y="73"
+						y="90"
 						width="55"
 						height="12"
 						key="textField-26"/>
@@ -595,7 +596,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="531"
-						y="61"
+						y="78"
 						width="55"
 						height="12"
 						key="textField-27"/>
@@ -608,7 +609,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="472"
-						y="61"
+						y="78"
 						width="26"
 						height="12"
 						key="textField-29"/>
@@ -621,7 +622,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="472"
-						y="73"
+						y="90"
 						width="26"
 						height="12"
 						key="textField-30"/>
@@ -634,7 +635,7 @@
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="462"
-						y="103"
+						y="120"
 						width="120"
 						height="19"
 						key="textField-31"/>
@@ -647,7 +648,7 @@
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="30"
-						y="1"
+						y="18"
 						width="413"
 						height="31"
 						key="textField-33"/>
@@ -655,12 +656,12 @@
 					<textElement>
 						<font fontName="8Pin Matrix" size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["SON PESOS: " + $P{LETRA_PESOS}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA["SON: " + $P{LETRA_PESOS}.replaceFirst("PESOS", $P{CURRENCY}.startsWith("USD") ? "DOLARES" : "PESOS")]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="531"
-						y="32"
+						y="49"
 						width="55"
 						height="12"
 						key="textField"/>
@@ -673,7 +674,7 @@
 				<staticText>
 					<reportElement
 						x="452"
-						y="32"
+						y="49"
 						width="79"
 						height="12"
 						key="staticText-2"/>
@@ -686,7 +687,7 @@
 				<staticText>
 					<reportElement
 						x="452"
-						y="44"
+						y="61"
 						width="79"
 						height="12"
 						key="staticText-3"/>
@@ -699,7 +700,7 @@
 				<staticText>
 					<reportElement
 						x="452"
-						y="14"
+						y="31"
 						width="70"
 						height="12"
 						key="staticText-4"/>
@@ -712,7 +713,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="531"
-						y="44"
+						y="61"
 						width="55"
 						height="12"
 						key="textField"/>
@@ -725,7 +726,7 @@
 				<staticText>
 					<reportElement
 						x="452"
-						y="85"
+						y="102"
 						width="79"
 						height="12"
 						key="staticText-5">
@@ -740,7 +741,7 @@
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="531"
-						y="85"
+						y="102"
 						width="55"
 						height="12"
 						key="textField-36">
@@ -751,6 +752,22 @@
 						<font size="9"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{PERCEPCION_TOTAL_AMT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="30"
+						y="2"
+						width="538"
+						height="11"
+						key="textField-37"
+						positionType="Float"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Comprobante expresado en " + $P{CURRENCY} + ($P{CURRENCY}.startsWith("ARS") ? "" : ". A los fines contables e impositivos el tipo de cambio es  1 " + $P{CURRENCY_SIMBOL} + " = $ " + $P{CURRENCY_RATE})
+]]></textFieldExpression>
 				</textField>
 			</band>
 		</lastPageFooter>
