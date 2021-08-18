@@ -32,9 +32,9 @@ ul li a:hover {
 }
 #wrap {
 	position: absolute;
-	top: 50%;
+	top: 40%;
 	left: 50%;
-	height: 400px;
+	height: 620px;
 	width: 740px;
 	margin-top: -200px;
 	margin-left: -370px;
