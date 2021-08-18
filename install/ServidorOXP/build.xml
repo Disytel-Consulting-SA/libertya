@@ -45,6 +45,10 @@
 
 	<echo message="Windows=${isWindows} JBoss=${isAppsJBoss}"/>
 
+  	<!-- Necesario para incluirlo posteriormente en OXPRoot.war  -->
+    <copy file="utils/Libertya.sh"
+       tofile="lib/Libertya.sh" filtering="yes" overwrite="yes"/>
+
   </target>
 
   <!-- ==================================================== -->
@@ -493,7 +497,7 @@
 		 		includes="ClienteLBY.zip,OXP.jar,OXPXLib.jar,*.jnlp,*.0,*.html"
 				prefix="OXPHome"/-->
 			<zipfileset dir="${basedir}/lib" 
-				includes="ClienteLBY.zip,OXP.jar,OXPXLib.jar,*.jnlp,*.0,*.html,JasperReports.jar"
+				includes="ClienteLBY.zip,OXP.jar,OXPXLib.jar,*.jnlp,*.0,*.html,JasperReports.jar,Libertya.sh,libertya.exe"
 				prefix="OXPHome"/>
 	</zip>
 

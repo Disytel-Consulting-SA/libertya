@@ -6,6 +6,42 @@
 <link href="standard.css" rel="stylesheet" type="text/css">
 <link href="favicon.png" rel="icon" type="image/png">
 </head>
+<script>
+function download(filename, location, winVer) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(winVer ? getContentWin(location) : getContentLinux(location)));
+  element.setAttribute('download', filename);
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
+function getContentWin(location) {
+  return getContentCommon(location, "wget.exe") + 
+  		 "libertya.exe \n";
+}
+
+function getContentLinux(location) {
+  return getContentCommon(location, "wget") +
+		 "chmod ugo+x Libertya.sh \n" +
+		 "./Libertya.sh \n";
+}
+
+function getContentCommon(location, appExec) {
+var baseUrl = location.substring(0, location.lastIndexOf("/")+1);
+return  "mkdir ClienteLBY \n" +
+  	 	"cd ClienteLBY \n" +
+  	 	"mkdir lib \n" +
+  	 	"cd lib \n" +
+	    appExec + " -N " + baseUrl + "OXPHome/OXP.jar \n" +
+     	appExec + " -N " + baseUrl + "OXPHome/OXPXLib.jar \n" +
+     	appExec + " -N " + baseUrl + "OXPHome/JasperReports.jar \n" +
+     	"cd .. \n" +
+     	appExec + " -N " + baseUrl + "OXPHome/libertya.exe \n";
+     	appExec + " -N " + baseUrl + "OXPHome/Libertya.sh \n";
+}
+</script>
 
 <body>
 <div id="wrap">
@@ -28,14 +64,16 @@
 		</ul>	
 	</div>
 	<div id="content">
-		<h1>Comience aqu&iacute; a utilizar Libertya</h1>
+		<h1>Comience a utilizar Libertya</h1>
 		<!-- <p align="justify">Libertya, es una soluci&oacute;n empresarial global de <strong>ERP</strong> y <strong>CRM</strong>, con soporte de EDI y OLAP y con un moderno sistema de comercio electr&oacute;nico B2B y B2C integrado. Si todav&iacute;a no sabe que significan estas siglas, no se preocupe, a medida que aprenda a utilizar la aplicaci&oacute;n se ir&aacute; familiarizando con ellas y las utilizar&aacute; m&aacute;s a menudo de lo que piensa en su desarrollo profesional cotidiano.</p> -->
 		<p align="justify">Existen muchas maneras de trabajar con Libertya. Actualmente disponemos de clientes para virtualmente cualquier sistema operativo. Para simplificar el acceso a los nuevos usuarios, todas las posibilidades aparecen enlazadas a continuaci&oacute;n. En el men&uacute; de la izquierda dispone de enlaces adicionales a aquellas herramientas que podr&iacute;a necesitar instalar en su m&aacute;quina, as&iacute; como de los enlaces para que encuentre el soporte adecuado o nos lo solicite, y enlaces a herramientas de control y gesti&oacute;n de su servidor de aplicaciones.</p>
 		
 		<div id="button_wrap">
-			<a href="libertya.jnlp" title="Cliente ligero Java Web Start"><div class="button" id="webstart"><img src="blank.png" width="64" height="64" border="0" /><p id="message1">Acceso a Libertya mediante cliente ligero <em>Java Web Start</em>. Se descargar&aacute;n los archivos necesarios para el uso de la la aplicaci&oacute;n.</p></div></a>
 			<!-- <a href="OXPHome/ClienteLBY.zip" title="Cliente pesado Java"><div class="button" id="zipclient"><img src="blank.png" width="64" height="64" border="0" /><p id="message2">Acceso a Libertya mediante el cliente pesado Java, comprimido, disponible para su descarga en uno o varios equipos.</p></div></a> -->
-			<a href="webui" title="Cliente Web"><div class="button" id="webclient"><img src="blank.png" width="64" height="64" border="0" /><p id="message2">Acceso a Libertya mediante el cliente web, sin necesidad de descargar ning&uacute;n archivo</p></div></a>
+			<a href="webui" title="Cliente Web"><div class="button" id="webclient"><img src="blank.png" width="64" height="64" border="0" /><p id="message2">Acceso a Libertya mediante el cliente web, sin necesidad de descargar ning&uacute;n archivo.</p></div></a>
+			<div class="button" id="webstart" onclick="download('LYStart.sh', window.location.href, false);"><img src="blank.png" width="64" height="64" border="0" /><p id="message2">Acceso a Libertya mediante el cliente de escritorio para Linux. Requiere contar con <em>wget</em>. En la mayor&iacute;a de distribuciones de Linux ya viene instalado por defecto.</p></div>
+			<div class="button" id="webstart" onclick="download('LYStart.bat', window.location.href, true);"><img src="blank.png" width="64" height="64" border="0" /><p id="message2">Acceso a Libertya mediante el cliente de escritorio para Windows. Requiere contar con <em>wget for Windows</em> instalado y configurado en el PATH. (Ver http://gnuwin32.sourceforge.net/packages/wget.htm)</p></div>
+			<a href="libertya.jnlp" title="Cliente ligero Java Web Start"><div class="button" id="webstart"><img src="blank.png" width="64" height="64" border="0" /><p id="message1">Acceso a Libertya mediante cliente ligero <em>Java Web Start</em>. Requiere versi&oacute;n de Java con soporte para JNLP.</p></div></a>			
 		</div>
 		
 	</div>
