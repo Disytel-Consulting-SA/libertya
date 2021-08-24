@@ -19,13 +19,15 @@ function download(filename, location, winVer) {
 
 function getContentWin(location) {
   return getContentCommon(location, "wget.exe") + 
-  		 "libertya.exe \n";
+  		 "libertya.exe \n" +
+		 "cd .. \n";
 }
 
 function getContentLinux(location) {
   return getContentCommon(location, "wget") +
 		 "chmod ugo+x Libertya.sh \n" +
-		 "./Libertya.sh \n";
+		 "./Libertya.sh \n" +
+		 "cd .. \n";
 }
 
 function getContentCommon(location, appExec) {
@@ -38,7 +40,7 @@ return  "mkdir ClienteLBY \n" +
      	appExec + " -N " + baseUrl + "OXPHome/OXPXLib.jar \n" +
      	appExec + " -N " + baseUrl + "OXPHome/JasperReports.jar \n" +
      	"cd .. \n" +
-     	appExec + " -N " + baseUrl + "OXPHome/libertya.exe \n";
+     	appExec + " -N " + baseUrl + "OXPHome/libertya.exe \n" +
      	appExec + " -N " + baseUrl + "OXPHome/Libertya.sh \n";
 }
 </script>
