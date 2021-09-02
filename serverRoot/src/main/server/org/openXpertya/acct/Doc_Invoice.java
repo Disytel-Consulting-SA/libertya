@@ -666,10 +666,10 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
         // select
 
-        + "(SELECT currencyConvert(il.PriceActual,i.C_Currency_ID,po.C_Currency_ID,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID) " + "FROM C_Invoice i, C_InvoiceLine il " + 
+        + "coalesce((SELECT currencyConvert(il.PriceActual,i.C_Currency_ID,po.C_Currency_ID,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID) " + "FROM C_Invoice i, C_InvoiceLine il " + 
         "WHERE i.C_Invoice_ID=il.C_Invoice_ID" +
         " AND po.M_Product_ID=il.M_Product_ID AND po.C_BPartner_ID=i.C_BPartner_ID" + 
-        " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( " LIMIT 1 )" )
+        " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( " LIMIT 1 ),0)" )
 
         // update
 
@@ -688,7 +688,7 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
         // select
 
-        + "(SELECT currencyConvert(il.PriceActual,i.C_Currency_ID,a.C_Currency_ID,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID) " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID  AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( " limit 1) " )
+        + "coalesce((SELECT currencyConvert(il.PriceActual,i.C_Currency_ID,a.C_Currency_ID,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID) " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID  AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( " limit 1),0) " )
 
         // update
 
@@ -699,11 +699,11 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
         sql = new StringBuffer( "UPDATE M_Product_Costing pc " + "SET TotalInvAmt = "
 
                 // select		
-		+ "(SELECT  currencyConvert(il.LineNetAmt,i.C_Currency_ID,a.C_Currency_ID,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID) " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( " limit 1 ) " )
+		+ "coalesce((SELECT  currencyConvert(il.LineNetAmt,i.C_Currency_ID,a.C_Currency_ID,i.DateInvoiced,i.C_ConversionType_ID,i.AD_Client_ID,i.AD_Org_ID) " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( " limit 1 ), 0) " )
 		
 		// update
 		
-		.append( "WHERE EXISTS (SELECT * " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID" + " AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( ")" );
+		.append( "WHERE EXISTS (SELECT * " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID" + " AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( ") " );
 		no = DB.executeUpdate( sql.toString(),getTrxName());
 		
 		
@@ -711,10 +711,10 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 		
 		// select
 		
-		+ "(SELECT il.QtyInvoiced FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID  AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append(  " limit 1 ) " )		
+		+ "coalesce((SELECT il.QtyInvoiced FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID  AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append(  " limit 1 ), 0) " )		
 		// update
 		
-		.append( "WHERE EXISTS (SELECT * " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID" + " AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( ")" );
+		.append( "WHERE EXISTS (SELECT * " + "FROM C_Invoice i, C_InvoiceLine il, C_AcctSchema a " + "WHERE i.C_Invoice_ID=il.C_Invoice_ID" + " AND pc.M_Product_ID=il.M_Product_ID AND pc.C_AcctSchema_ID=a.C_AcctSchema_ID" + " AND pc.C_AcctSchema_ID=" ).append( C_AcctSchema_ID ).append( " AND i.C_Invoice_ID=" ).append( getRecord_ID()).append( ") " );
         no = DB.executeUpdate( sql.toString(),getTrxName());
 
         
