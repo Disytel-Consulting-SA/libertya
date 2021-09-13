@@ -72,6 +72,10 @@ public final class UserPreference implements Serializable {
 	public static final String P_MENU_COLLAPSED = "MenuCollapsed";
 	public static final String DEFAULT_MENU_COLLAPSED = "N";
 
+	/** Compact Mode */
+	public static final String P_COMPACT_MODE = "CompactMode";
+	public static final String DEFAULT_COMPACT_MODE = "N";
+	
 	/** Ini Properties */
 	private static final String[] PROPERTIES = new String[] {
 		P_LANGUAGE,
@@ -83,7 +87,8 @@ public final class UserPreference implements Serializable {
 		P_AUTO_NEW,
 		P_WINDOW_TAB_PLACEMENT,
 		P_WINDOW_TAB_COLLAPSIBLE,
-		P_MENU_COLLAPSED};
+		P_MENU_COLLAPSED,
+		P_COMPACT_MODE};
 	/** Ini Property Values */
 	private static final String[] VALUES = new String[] {
 		DEFAULT_LANGUAGE,
@@ -95,7 +100,8 @@ public final class UserPreference implements Serializable {
 		DEFAULT_AUTO_NEW,
 		DEFAULT_WINDOW_TAB_PLACEMENT,
 		DEFAULT_WINDOW_TAB_COLLAPSIBLE,
-		DEFAULT_MENU_COLLAPSED};
+		DEFAULT_MENU_COLLAPSED,
+		DEFAULT_COMPACT_MODE};
 
 	/** Container for Properties */
 	private Properties props = new Properties();

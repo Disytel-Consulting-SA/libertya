@@ -1,9 +1,13 @@
+@font-face {
+    font-family: "OpenSans";
+    src: url(OpenSans-Regular.ttf) format("truetype");
+}
 body {
 	margin: 0px;
-	font-family: Verdana, Arial, Helvetica, sans-serif;
-	font-size: 11px;
-	color: #333333;
-	background-color: #747B84;
+	font-family: "OpenSans", Verdana, Arial, Helvetica, sans-serif;
+	font-size: 14px;
+	color: black;
+	background-color: lightslategray;
 }
 h1 {
 	font-size: 14px;
@@ -31,14 +35,15 @@ ul li a:hover {
 	text-decoration: none;	
 }
 #wrap {
+	padding-top: 10px;
 	position: absolute;
-	top: 40%;
+	top: 35%;
 	left: 50%;
-	height: 620px;
+	height: 610px;
 	width: 740px;
 	margin-top: -200px;
 	margin-left: -370px;
-	border: 8px solid #454851;
+	border: 1px solid #454851;
 	background: #FFFFFF;
 }
 #logo {
@@ -53,7 +58,7 @@ ul li a:hover {
 	margin: 0px;
 	padding-top:80px;
 	padding-left: 10px;
-	background: url(images/menu_background.gif) repeat-x #FFFFFF;
+	/* background: url(images/menu_background.gif) repeat-x #FFFFFF; */
 }
 
 #content {
@@ -82,7 +87,10 @@ ul li a:hover {
 	vertical-align: center;	
 }
 #webstart {
-	background-image: url(images/boton_java.jpg);
+	background-image: url(images/boton_java.png);
+}
+#lystart {
+	background-image: url(images/boton_lystart.jpg);
 }
 #zipclient {
 	background-image: url(images/boton_download.jpg);

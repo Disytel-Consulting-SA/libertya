@@ -408,7 +408,7 @@ public class LoginPanel extends Window implements EventListener
         
         KeyNamePair rolesKNPairs[] = login.getRoles(userId, userPassword);
         if(rolesKNPairs == null || rolesKNPairs.length == 0)
-            throw new WrongValueException("User Id or Password invalid!!!");
+            throw new WrongValueException("Usuario o clave invalidas!!!");
 
         else
         {

@@ -52,8 +52,12 @@ public class Label extends org.zkoss.zul.Label
 	}
 
 	public void setMandatory(boolean mandatory) {
+		setMandatory(mandatory, false);
+	}
+	
+	public void setMandatory(boolean mandatory, boolean forceCreateDecorator) {
 		this.mandatory = mandatory;
-		setupMandatoryDecorator();
+		setupMandatoryDecorator(forceCreateDecorator);
 	}
 
 	public Component getDecorator() {
@@ -79,7 +83,11 @@ public class Label extends org.zkoss.zul.Label
 	}
 
 	private void setupMandatoryDecorator() {
-		if (decorator == null)
+		setupMandatoryDecorator(false);
+	}
+	
+	private void setupMandatoryDecorator(boolean forceCreate) {
+		if (decorator == null || forceCreate)
 			createMandatoryDecorator();
 		String value = getValue();
 		if (mandatory && value != null && value.trim().length() > 0) {

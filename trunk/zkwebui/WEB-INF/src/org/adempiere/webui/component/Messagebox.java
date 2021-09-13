@@ -45,7 +45,7 @@ public class Messagebox extends Window implements EventListener
 	 * generated serial version ID
 	 */
 	private static final long serialVersionUID = -4957498533838144942L;
-	private static final String MESSAGE_PANEL_STYLE = "text-align:left; word-break: break-all; overflow: auto; max-height: 350pt; min-width: 230pt; max-width: 450pt;";	
+	private static final String MESSAGE_PANEL_STYLE = "font-family: OpenSans, Verdana, Arial, Helvetica, sans-serif; text-align:left; word-break: break-all; overflow: auto; max-height: 350pt; min-width: 230pt; max-width: 450pt;";	
 	private String msg = new String("");
 	private String imgSrc = new String("");
 

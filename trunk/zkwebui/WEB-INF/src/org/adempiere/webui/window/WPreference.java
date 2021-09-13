@@ -44,6 +44,7 @@ public class WPreference extends Popup implements EventListener {
 	private WYesNoEditor autoNew;
 	private WYesNoEditor tabCollapsible;
 	private Listbox tabPlacement;
+	private WYesNoEditor compactMode;
 
 	ToolBarButton usrDataBtn;
 	ToolBarButton btn;
@@ -92,6 +93,14 @@ public class WPreference extends Popup implements EventListener {
 		div.appendChild(tabPlacement);
 		this.appendChild(div);
 
+		compactMode = new WYesNoEditor("CompactMode", Msg.getMsg(Env.getCtx(), "Modo Compacto", true),
+				null, false, false, true);
+		compactMode.getComponent().setTooltiptext(Msg.getMsg(Env.getCtx(), "Visualizacion para dispositivos con menor resolucion", false));
+		div = new Div();
+		div.setStyle("background-color: transparent !important; border: none; margin: 5px;");
+		div.appendChild(compactMode.getComponent());
+		this.appendChild(div);
+		
 		Separator separator = new Separator();
 		separator.setSpacing("20px");
 		div = new Div();
@@ -122,6 +131,7 @@ public class WPreference extends Popup implements EventListener {
 		autoNew.setValue(preference.getProperty(UserPreference.P_AUTO_NEW));
 		tabCollapsible.setValue(preference.getProperty(UserPreference.P_WINDOW_TAB_COLLAPSIBLE));
 		tabPlacement.setValue(preference.getProperty(UserPreference.P_WINDOW_TAB_PLACEMENT));
+		compactMode.setValue(preference.getProperty(UserPreference.P_COMPACT_MODE));
 	}
 
 	public void onEvent(Event event) throws Exception {
@@ -145,6 +155,8 @@ public class WPreference extends Popup implements EventListener {
 				(Boolean)tabCollapsible.getValue() ? "Y" : "N");
 		preference.setProperty(UserPreference.P_WINDOW_TAB_PLACEMENT,
 				(String)tabPlacement.getSelectedItem().getValue());
+		preference.setProperty(UserPreference.P_COMPACT_MODE,
+				(Boolean)compactMode.getValue() ? "Y" : "N");
 
 		preference.savePreference();
 

@@ -454,7 +454,7 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
         	//can't stretch bandbox & datebox
         	if (!(getComponent() instanceof Bandbox) &&
         		!(getComponent() instanceof Datebox)) {
-        		String width = "100%";
+        		String width = "99%";
         		if (getComponent() instanceof Button) {
         			Button btn = (Button) getComponent();
         			String zclass = btn.getZclass();

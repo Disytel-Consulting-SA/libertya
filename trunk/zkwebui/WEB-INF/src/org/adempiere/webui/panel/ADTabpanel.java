@@ -45,7 +45,9 @@ import org.adempiere.webui.editor.WEditor;
 import org.adempiere.webui.editor.WEditorPopupMenu;
 import org.adempiere.webui.editor.WebEditorFactory;
 import org.adempiere.webui.event.ContextMenuListener;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.GridTabDataBinder;
+import org.adempiere.webui.util.UserPreference;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.model.DataStatusEvent;
 import org.openXpertya.model.DataStatusListener;
@@ -242,6 +244,8 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
     	if (uiCreated) return;
 
     	uiCreated = true;
+    	
+    	boolean compactMode = "Y".equals(SessionManager.getSessionApplication().getUserPreference().getProperty(UserPreference.P_COMPACT_MODE));
 
     	//setup columns
     	Columns columns = new Columns();
@@ -393,7 +397,7 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
             		}
             	}
 
-                if (!field.isSameLine() || field.isLongField())
+                if (!field.isSameLine() || field.isLongField() || compactMode)
                 {
                 	//next line
                 	if(row.getChildren().size() > 0)
@@ -436,17 +440,30 @@ DataStatusListener, IADTabpanel, VetoableChangeListener
                     }
                     else
                     {
-                    	Div div = new Div();
-                        div.setAlign("right");
-                        Label label = editor.getLabel();
-	                    div.appendChild(label);
-	                    if (label.getDecorator() != null)
-	                    	div.appendChild(label.getDecorator());
-	                    row.appendChild(div);
+                    	if (compactMode) {
+	                    	Row labelRow = new Row();
+	                    	labelRow.setSpans("5");
+	                    	Div div = new Div();
+	                        div.setAlign("left");
+	                        Label label = editor.getLabel();
+		                    div.appendChild(label);
+		                    if (label.getDecorator() != null)
+		                    	div.appendChild(label.getDecorator());
+		                    labelRow.appendChild(div);
+		                    rows.appendChild(labelRow);
+                    	} else {
+                        	Div div = new Div();
+                            div.setAlign("right");
+                            Label label = editor.getLabel();
+    	                    div.appendChild(label);
+    	                    if (label.getDecorator() != null)
+    	                    	div.appendChild(label.getDecorator());
+    	                    row.appendChild(div);
+                    	}
                     }
                     row.appendChild(editor.getComponent());
-                    if (field.isLongField()) {
-                    	row.setSpans("1,3,1");
+                    if (field.isLongField() || compactMode) {
+                    	row.setSpans(compactMode ? "5" : "1,3,1");
                     	row.appendChild(createSpacer());
                     	rows.appendChild(row);
                     	if (rowList != null)

@@ -211,12 +211,12 @@ public class WLocationDialog extends Window implements EventListener
 
 		lstRegion    = new Listbox();
 		lstRegion.setMold("select");
-		lstRegion.setWidth("154px");
+		lstRegion.setWidth("100%");
 		lstRegion.setRows(0);
 
 		lstCountry  = new Listbox();
 		lstCountry.setMold("select");
-		lstCountry.setWidth("154px");
+		lstCountry.setWidth("100%");
 		lstCountry.setRows(0);
 
 		btnOk = new Button();

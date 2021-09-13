@@ -29,8 +29,11 @@ Copyright (C) 2009 Idalica Corporation
 		font-family: Arial;
 	}
 </style>
-<div class="versionInfoBox">
-	<table border="0">
+
+<div class="versionInfoBox" id="infobox" align=center>
+	Libertya ${mainVersion} - Binaries: ${dateVersion} - DB: ${dbVersion} - Build: ${vendorVersion} - DB: ${dbInfo} - Host: ${desktop.execution.localName} - JVM: ${jvm}   
+<!-- 
+	<table border="0" align="center">
 		<tr>
 			<td align="right">Main Version</td>
 			<td>:</td>
@@ -77,6 +80,7 @@ Copyright (C) 2009 Idalica Corporation
 			<td aligh="left">${desktop.execution.localName}</td>
 		</tr>
 	</table>
+-->
 </div>
 ]]>
 </html>

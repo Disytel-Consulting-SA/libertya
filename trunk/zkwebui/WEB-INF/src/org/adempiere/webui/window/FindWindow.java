@@ -1179,7 +1179,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
     private void addRowEditor(Component component, ListCell listcell)
     {
         listcell.setLabel("");
-        listcell.getChildren().clear();
+        listcell.getChildren().clear(); 
         listcell.appendChild(component);
      }   //  addComponent
 
