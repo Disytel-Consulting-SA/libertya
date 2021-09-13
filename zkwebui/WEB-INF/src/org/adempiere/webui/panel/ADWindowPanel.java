@@ -80,6 +80,8 @@ public class ADWindowPanel extends AbstractADWindowPanel
 
 	private Keylistener keyListener;
 
+//	boolean compactMode = "Y".equals(SessionManager.getSessionApplication().getUserPreference().getProperty(UserPreference.P_COMPACT_MODE));
+	
     public ADWindowPanel(Properties ctx, int windowNo)
     {
         super(ctx, windowNo);
@@ -110,6 +112,9 @@ public class ADWindowPanel extends AbstractADWindowPanel
 	        n.setParent(layout);
 	        n.setCollapsible(false);
 	        n.setHeight("30px");
+// Prueba preliminar	        
+//	        n.setHeight(compactMode ? "60px" : "30px");
+//	        toolbar.setHeight(compactMode ? "60px" : "30px");
 	        toolbar.setHeight("30px");
 	        toolbar.setParent(n);
 	        toolbar.setWindowNo(getWindowNo());

@@ -12,7 +12,7 @@
 		PGStatementUtils.getInstance().removeAllStatements(mSession.getAD_Session_ID());
 	}
 	
-	var continueText = Msg.getMsg(Env.getCtx(),"continue");
+	var continueText = Msg.getMsg(Env.getCtx(),"Continuar");
 ]]>
 </zscript>
 <window width="60%" mode="highlighted">

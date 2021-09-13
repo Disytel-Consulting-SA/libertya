@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.event.ToolbarListener;
 import org.adempiere.webui.session.SessionManager;
+import org.adempiere.webui.util.UserPreference;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
@@ -56,6 +57,8 @@ public class CWindowToolbar extends FToolbar implements EventListener
 	private static final long serialVersionUID = -8259762910508209764L;
 
 	private static final String TOOLBAR_BUTTON_STYLE = "background-color: transparent; display:inline-block; margin-left: 1px; margin-right: 1px; width: 26px; height: 24px;";
+	
+	private static final String TOOLBAR_BUTTON_LARGE_STYLE = "background-color: transparent; display:inline-block; margin-left: 1px; margin-right: 1px; width: 52px; height: 48px;";
 
 	private static final String EMBEDDED_TOOLBAR_BUTTON_STYLE = "background-color: transparent; display:inline-block; margin-left: 1px; margin-right: 1px; width: 20px; height: 18px;";
 	
@@ -103,6 +106,8 @@ public class CWindowToolbar extends FToolbar implements EventListener
 	private long prevKeyEventTime = 0;
 
 	private KeyEvent prevKeyEvent;
+	
+//	boolean compactMode = "Y".equals(SessionManager.getSessionApplication().getUserPreference().getProperty(UserPreference.P_COMPACT_MODE));
 
 	/**	Last Modifier of Action Event					*/
 //	public int 				lastModifiers;
@@ -208,6 +213,9 @@ public class CWindowToolbar extends FToolbar implements EventListener
         {
         	btn.setStyle(TOOLBAR_BUTTON_STYLE);
         	btn.setSclass("toolbar-button");
+// Prueba preliminar
+//        	btn.setStyle(compactMode ? TOOLBAR_BUTTON_LARGE_STYLE : TOOLBAR_BUTTON_STYLE);
+//        	btn.setSclass(compactMode ? "toolbar-button-large" : "toolbar-button");
         }
         buttons.put(name, btn);
         this.appendChild(btn);

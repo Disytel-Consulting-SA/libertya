@@ -23,7 +23,7 @@ public interface ITheme {
 	//theme key in MSysConfig
 	public static final String ZK_THEME = "ZK_THEME";
 	//default theme
-	public static final String ZK_THEME_DEFAULT = "default";
+	public static final String ZK_THEME_DEFAULT = "default";	// Se realiza override de default mediante theme.css.dsp  
 	//theme resource url prefix
 	public static final String THEME_PATH_PREFIX = "/theme/";
 

@@ -284,7 +284,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		pickPriceList.setRows(0);
 		pickPriceList.setMultiple(false);
 		pickPriceList.setMold("select");
-		pickPriceList.setWidth("150px");
+		pickPriceList.setWidth("100%");
 		pickPriceList.addEventListener(Events.ON_SELECT, this);
 
 		// Elaine 2008/11/21
@@ -292,21 +292,21 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		pickProductCategory.setRows(0);
 		pickProductCategory.setMultiple(false);
 		pickProductCategory.setMold("select");
-		pickProductCategory.setWidth("150px");
+		pickProductCategory.setWidth("100%");
 		pickProductCategory.addEventListener(Events.ON_SELECT, this);
 		//
 		pickAS = new Listbox();
 		pickAS.setRows(0);
 		pickAS.setMultiple(false);
 		pickAS.setMold("select");
-		pickAS.setWidth("150px");
+		pickAS.setWidth("100%");
 		pickAS.addEventListener(Events.ON_SELECT, this);
 
 		pickWarehouse = new Listbox();
 		pickWarehouse.setRows(0);
 		pickWarehouse.setMultiple(false);
 		pickWarehouse.setMold("select");
-		pickWarehouse.setWidth("150px");
+		pickWarehouse.setWidth("100%");
 		pickWarehouse.addEventListener(Events.ON_SELECT, this);
 
 		fieldVendor = new Textbox();

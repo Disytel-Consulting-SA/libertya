@@ -41,6 +41,8 @@ import org.adempiere.webui.editor.WebEditorFactory;
 import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.session.SessionManager;
+import org.adempiere.webui.util.UserPreference;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.model.CalloutProcess;
 import org.openXpertya.model.IProcessParameter;
@@ -52,8 +54,11 @@ import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.zkoss.zk.ui.Component;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Label;
+import org.zkoss.zul.Space;
 
 /**
  *	Process Parameter Panel, based on existing ProcessParameter dialog.
@@ -273,6 +278,8 @@ implements ValueChangeListener, IProcessParameter
 		 */
 		private void createField (ResultSet rs, Rows rows)
 		{
+			boolean compactMode = "Y".equals(SessionManager.getSessionApplication().getUserPreference().getProperty(UserPreference.P_COMPACT_MODE));
+			
 			//  Create Field
 			MFieldVO voF = MFieldVO.createParameter(Env.getCtx(), m_WindowNo, rs);
 			MField mField = new MField (voF);
@@ -286,6 +293,14 @@ implements ValueChangeListener, IProcessParameter
 			WEditor editor = WebEditorFactory.getEditor(mField, false);
 			editor.addValueChangeListener(this);
 			editor.dynamicDisplay();
+
+			// Parametro obligatorio?
+			if (mField.isMandatory(true)) {
+				editor.getLabel().setMandatory(true, true);
+			}
+			
+			// ((Label)editor.getLabel().getDecorator()).getSclass()
+			
 			//  MField => VEditor - New Field value to be updated to editor
 			mField.addPropertyChangeListener(editor);
 			//  Set Default
@@ -303,7 +318,32 @@ implements ValueChangeListener, IProcessParameter
 			//
 			m_wEditors.add (editor);                   //  add to Editors
 			
-			row.appendChild(editor.getLabel().rightAlign());
+			if (compactMode) {
+				Row labelRow = new Row();
+				labelRow.appendChild(new Space());
+            	Div div = new Div();
+                div.setAlign("left");
+				Label label = editor.getLabel();
+				div.appendChild(label);
+				// Incluir decorator?
+	            if (editor.getLabel().getDecorator() != null && editor.getLabel().getDecorator().isVisible()) {
+	            	div.appendChild(editor.getLabel().getDecorator());
+	            }
+	            labelRow.appendChild(div);
+                rows.appendChild(labelRow);
+			} else {
+				Div div = new Div();
+				div.setAlign("right");
+	            Label label = editor.getLabel();
+	            div.appendChild(label);
+	            // Incluir decorator?
+	            if (editor.getLabel().getDecorator() != null && editor.getLabel().getDecorator().isVisible()) {
+	            	div.appendChild(editor.getLabel().getDecorator());
+	            }
+	            row.appendChild(div);
+			}
+			//row.appendChild(editor.getLabel().rightAlign());
+
 			//
 			if (voF.isRange)
 			{
@@ -336,10 +376,16 @@ implements ValueChangeListener, IProcessParameter
 				m_separators.add(separator);
 				box.appendChild(separator);
 				box.appendChild(editor2.getComponent());
+				if (compactMode) {
+					row.appendChild(new Space());
+				}
 				row.appendChild(box);
 			}
 			else
 			{
+				if (compactMode) {
+					row.appendChild(new Space());
+				}
 				row.appendChild(editor.getComponent());
 				m_mFields2.add (null);
 				m_wEditors2.add (null);
