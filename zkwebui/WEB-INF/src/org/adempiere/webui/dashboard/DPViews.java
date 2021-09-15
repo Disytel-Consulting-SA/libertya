@@ -168,9 +168,9 @@ public class DPViews extends DashboardPanel implements EventListener {
         		{
         			InfoPanel.showAsset(WindowNo);
         		}
-        		else if (actionCommand.equals("InfoAccount") && 
+        		else if (actionCommand.equals("InfoAccount")/* && // Ya validado en la createViewPanel
         				  MRole.getDefault().isShowAcct() &&
-        				  AEnv.canAccessInfo("ACCOUNT"))
+        				  AEnv.canAccessInfo("ACCOUNT")*/)
         		{
         			new org.adempiere.webui.acct.WAcctViewer();
         		}

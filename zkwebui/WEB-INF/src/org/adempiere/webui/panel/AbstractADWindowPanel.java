@@ -984,7 +984,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		if (!adTab.updateSelectedIndex(oldTabIndex, newTabIndex))
 		{
-		    FDialog.warn(curWindowNo, "TabSwitchJumpGo", title);
+		    // FDialog.warn(curWindowNo, "TabSwitchJumpGo", title);  // Omitir el aviso
 		    return false;
 		}
 
@@ -2068,7 +2068,7 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		//  Posting -----
 
-		else if (col.equals("Posted") && MRole.getDefault().isShowAcct())
+		else if (col.equals("Posted") /*&& MRole.getDefault().isShowAcct()*/)  // // Ya validado en la creacion
 		{
 			//  Check Doc Status
 
