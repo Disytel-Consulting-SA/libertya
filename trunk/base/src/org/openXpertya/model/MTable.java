@@ -2373,7 +2373,9 @@ public class MTable extends AbstractTableModel implements Serializable {
                 
                 // Target == DB (changed by trigger to new value already)
 
-                || ( (value == null) && (dbValue == null) ) || ( (value != null) && String.valueOf(value).equalsIgnoreCase( String.valueOf(dbValue) ))) {
+                || ( (value == null) && (dbValue == null) ) || ( (value != null) && String.valueOf(value).equalsIgnoreCase( String.valueOf(dbValue) ))
+                
+                || ( dbValue == null && field.getDisplayType() == DisplayType.YesNo) ) {
                     po.set_ValueNoCheck( columnName,value );
                 }
 
