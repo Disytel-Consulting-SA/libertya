@@ -262,8 +262,8 @@ div.wc-modal, div.wc-modal-none, div.wc-highlighted, div.wc-highlighted-none {
 	text-align: right;
 	-moz-border-radius-topleft: 5px;
 	-moz-border-radius-bottomleft: 5px;
-	-webkit-border-top-left-radius: 5px;
-	-webkit-border-bottom-left-radius: 5px;
+	-webkit-border-top-left-radius: 0px;
+	-webkit-border-bottom-left-radius: 0px;
 	background-color: #FFFFFF !important;
 	background-image: url(../images/adtab-left-bg.png);
 	background-repeat: repeat-y;
@@ -276,8 +276,8 @@ div.wc-modal, div.wc-modal-none, div.wc-highlighted, div.wc-highlighted-none {
 	text-align: left;
 	-moz-border-radius-topright: 5px;
 	-moz-border-radius-bottomright: 5px;
-	-webkit-border-top-right-radius: 5px;
-	-webkit-border-bottom-right-radius: 5px;
+	-webkit-border-top-right-radius: 0px;
+	-webkit-border-bottom-right-radius: 0px;
 	background-color: white !important;
 	background-image: none;
 	background-repeat: repeat-y;
@@ -285,14 +285,14 @@ div.wc-modal, div.wc-modal-none, div.wc-highlighted, div.wc-highlighted-none {
 }
 
 .adwindow-navbtn-uns {
-	background-color: #C4DCFB;
+	background-color: #e3e3e3;
 	font-weight: normal;
 	color: #274D5F;
 	cursor: pointer;
 }
 
 .adwindow-navbtn-dis {
-	background-color: #C4DCFB;
+	background-color: #e3e3e3;
 }
 
 .adwindow-navbtn-uns, .adwindow-navbtn-dis {
@@ -306,8 +306,8 @@ div.wc-modal, div.wc-modal-none, div.wc-highlighted, div.wc-highlighted-none {
 	text-align: right;
 	-moz-border-radius-topleft: 5px;
 	-moz-border-radius-bottomleft: 5px;
-	-webkit-border-top-left-radius: 5px;
-	-webkit-border-bottom-left-radius: 5px;
+	-webkit-border-top-left-radius: 0px;
+	-webkit-border-bottom-left-radius: 0px;
 }
 
 .adwindow-right-navbtn-uns, .adwindow-right-navbtn-dis {
@@ -316,8 +316,8 @@ div.wc-modal, div.wc-modal-none, div.wc-highlighted, div.wc-highlighted-none {
 	text-align: left;
 	-moz-border-radius-topright: 5px;
 	-moz-border-radius-bottomright: 5px;
-	-webkit-border-top-right-radius: 5px;
-	-webkit-border-bottom-right-radius: 5px;
+	-webkit-border-top-right-radius: 0px;
+	-webkit-border-bottom-right-radius: 0px;
 }
 
 <%-- ad tab --%>
@@ -554,49 +554,49 @@ td.z-button-tl td.z-button-tm td.z-button-tr td.z-button-bm td.z-button-br td.z-
 .z-textbox {
 	background-color: white;
 	border: 1px solid #E9E9E9;
-	border-radius: 4px;
+	border-radius: 0px;
 	width: 98%
 }
 
 .z-textbox:focus {
 	border: 1px solid black;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .z-combobox-inp {
 	background: white;
 	background-color: white;
 	border: 1px solid #E9E9E9;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .z-combobox-inp:focus {
 	border: 1px solid black;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .z-decimalbox {
 	background-color: white;
 	border: 1px solid #E9E9E9;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .z-decimalbox:focus {
 	border: 1px solid black;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .z-datebox-inp {
 	background: none;
 	background-color: white;
 	border: 1px solid #E9E9E9;
-	border-radius: 4px;
+	border-radius: 0px;
 
 }
 
 .z-datebox-inp:focus {
 	border: 1px solid black;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .adwindow-right-navbtn-sel {
@@ -797,7 +797,7 @@ td.z-row-inner, td.z-group-foot-inner {
 	background: white;
 	background-color: white;
 	border: 1px solid #E9E9E9;
-	border-radius: 4px;
+	border-radius: 0px;
 }
 
 .z-list-header-cnt {

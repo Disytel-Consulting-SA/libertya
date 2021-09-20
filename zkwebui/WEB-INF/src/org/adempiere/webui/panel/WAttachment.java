@@ -229,15 +229,15 @@ public class WAttachment extends Window implements EventListener
 		northPanel.appendChild(div);
 		
 		bSave.setEnabled(false);
-		bSave.setImage("/images/Export24.png");
+		bSave.setImage("/images/Export24W.png");
 		bSave.setTooltiptext(Msg.getMsg(Env.getCtx(), "AttachmentSave"));
 		bSave.addEventListener(Events.ON_CLICK, this);
 
-		bLoad.setImage("/images/Import24.png");
+		bLoad.setImage("/images/Import24W.png");
 		bLoad.setTooltiptext(Msg.getMsg(Env.getCtx(), "Load"));
 		bLoad.addEventListener(Events.ON_CLICK, this);
 
-		bDelete.setImage("/images/Delete24.png");
+		bDelete.setImage("/images/Delete24W.png");
 		bDelete.setTooltiptext(Msg.getMsg(Env.getCtx(), "Delete"));
 		bDelete.addEventListener(Events.ON_CLICK, this);
 
@@ -270,10 +270,10 @@ public class WAttachment extends Window implements EventListener
 		bOk.setImage("/images/Ok24.png");
 		bOk.addEventListener(Events.ON_CLICK, this);
 		
-		bDeleteAll.setImage("/images/Delete24.png");
+		bDeleteAll.setImage("/images/Delete24W.png");
 		bDeleteAll.addEventListener(Events.ON_CLICK, this);
 		
-		bRefresh.setImage("/images/Refresh24.png");
+		bRefresh.setImage("/images/Refresh24W.png");
 		bRefresh.addEventListener(Events.ON_CLICK, this);
 		
 		confirmPanel.appendChild(bDeleteAll);
