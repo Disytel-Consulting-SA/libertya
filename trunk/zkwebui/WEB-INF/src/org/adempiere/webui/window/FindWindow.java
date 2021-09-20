@@ -260,7 +260,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
 
         Button btnNew = new Button();
         btnNew.setName("btnNew");
-        btnNew.setImage("/images/New24.png");
+        btnNew.setImage("/images/New24W.png");
         btnNew.addEventListener(Events.ON_CLICK,this);
         LayoutUtils.addSclass("action-button", btnNew);
 

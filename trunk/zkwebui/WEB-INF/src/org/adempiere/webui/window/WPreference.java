@@ -110,9 +110,11 @@ public class WPreference extends Popup implements EventListener {
 
 		ToolBar toolbar = new ToolBar();
 		toolbar.setAlign("end");
+		toolbar.setStyle("background-color: transparent !important; border: none; margin: 5px;");
 		this.appendChild(toolbar);
 		
         usrDataBtn = new ToolBarButton("");
+        usrDataBtn.setStyle("background-color: transparent !important; border: none; margin: 5px;");
         usrDataBtn.setName("btnUserData");
         usrDataBtn.setImage("/images/Preference24.png");
         usrDataBtn.setTooltiptext(Msg.getMsg(Env.getCtx(),"ChangePassword"));
@@ -120,6 +122,7 @@ public class WPreference extends Popup implements EventListener {
         toolbar.appendChild(usrDataBtn);
         
 		btn = new ToolBarButton("");
+		btn.setStyle("background-color: transparent !important; border: none; margin: 5px;");
         btn.setName("btnSave");
         btn.setImage("/images/Save24.png");
         btn.setTooltiptext(Msg.getMsg(Env.getCtx(),"Save"));
