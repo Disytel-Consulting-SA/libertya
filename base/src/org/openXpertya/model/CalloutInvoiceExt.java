@@ -408,17 +408,26 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			+ "WHERE CATEGORIA_CUSTOMER = ? AND CATEGORIA_VENDOR = ?";
 
 		PreparedStatement pstmt = DB.prepareStatement(sq1);
+		ResultSet rs = null;
 		try {
 			pstmt.setInt(1, categoriaIvaCustomer);
 			pstmt.setInt(2, categoriaIvaVendor);
 		
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			if (rs.next()) {
 				letraId = new Integer(rs.getInt("C_Letra_comprobante_ID"));
 			} 
 		} catch (SQLException e) {
 			return null;
-		}		
+		} finally {
+			try {
+				if(rs != null)rs.close();
+				if(pstmt != null)pstmt.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+				return null;
+			}
+		}
 		return letraId;
 	}
 	
