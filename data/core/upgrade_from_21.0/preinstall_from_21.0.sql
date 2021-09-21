@@ -259,3 +259,11 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvTi
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvPtoVta','integer'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvNro','integer'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Invoice','OrigInvFecha','date'));
+
+--20210921-1900 Nueva columna para relacionar un artículo en proveedor para creación de comprobantes automáticos
+-- Merge de Micro TEHLBY2 versión 4.0
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','m_product_related_id','integer'));
+ALTER TABLE c_bpartner ADD CONSTRAINT productrelated_cbpartner 
+	FOREIGN KEY (m_product_related_id) 
+	REFERENCES m_product (m_product_id) 
+	MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
