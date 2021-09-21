@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-10-21 13:15:27.508 */
+ *  @version  - 2021-09-21 19:01:06.726 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -1172,6 +1172,23 @@ Unique identifier of a Price List */
 public int getM_PriceList_ID() 
 {
 Integer ii = (Integer)get_Value("M_PriceList_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int M_PRODUCT_RELATED_ID_AD_Reference_ID = MReference.getReferenceID("M_Product (all)");
+/** Set Product Related.
+Product related for invoice automatic creation */
+public void setM_Product_Related_ID (int M_Product_Related_ID)
+{
+if (M_Product_Related_ID <= 0) set_Value ("M_Product_Related_ID", null);
+ else 
+set_Value ("M_Product_Related_ID", new Integer(M_Product_Related_ID));
+}
+/** Get Product Related.
+Product related for invoice automatic creation */
+public int getM_Product_Related_ID() 
+{
+Integer ii = (Integer)get_Value("M_Product_Related_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
