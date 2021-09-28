@@ -345,6 +345,9 @@ public class WFileImport extends ADForm implements EventListener
 			e.printStackTrace();
 		}
 	
+		if (media==null)
+			return;
+		
 		// Realiza el procesamiento del archivo para obtener el InputStream
 		processISFile();
 		
