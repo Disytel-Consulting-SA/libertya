@@ -31,6 +31,8 @@ public class WUserDataChange extends Window  implements EventListener {
 	
 	// Buttons
 	Button okButton;
+	// Cancel
+	Button cancelButton;	
 	
 	public WUserDataChange() {
 		this(0);
@@ -48,8 +50,8 @@ public class WUserDataChange extends Window  implements EventListener {
 		// Titulo y tamaño de la ventana
 		this.setTitle(getMsg("ChangeUserPassword"));
 		this.setWidth("500px");
-		this.setHeight("130px");
-		this.setClosable(true);
+		this.setHeight("170px");
+		this.setClosable(false);
 		
 		// Panel principal				
 		Grid mainPanel = new Grid();
@@ -69,6 +71,9 @@ public class WUserDataChange extends Window  implements EventListener {
     	okButton = new Button(getMsg("SaveShort"));
     	okButton.addEventListener(Events.ON_CLICK, this);
     	
+    	cancelButton = new Button(getMsg("Cancel"));
+    	cancelButton.addEventListener(Events.ON_CLICK, this);
+    	
     	// Incorporacion de los componentes al panel
     	Rows rows = mainPanel.newRows();
     	Row row = rows.newRow();
@@ -84,8 +89,8 @@ public class WUserDataChange extends Window  implements EventListener {
     	row.appendChild(repeatPasswordText.getComponent());
     	
     	row = rows.newRow();
-    	row.appendChild(new Space());
-    	row.appendChild(okButton);
+    	row.appendChild(okButton);  	
+    	row.appendChild(cancelButton);
     	
 	}
 	
@@ -98,6 +103,8 @@ public class WUserDataChange extends Window  implements EventListener {
 		if (Events.ON_CLICK.equals(event.getName())) {
 			if (event.getTarget()==okButton) {
 				changePassword();
+			} else if (event.getTarget()==cancelButton) {
+				setVisible(false);
 			}
 		}
 	}

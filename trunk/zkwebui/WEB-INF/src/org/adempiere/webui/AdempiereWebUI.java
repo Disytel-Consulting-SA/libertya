@@ -35,6 +35,8 @@ import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.BrowserToken;
 import org.adempiere.webui.util.UserPreference;
+import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.WUserDataChange;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSession;
 import org.openXpertya.model.MSysConfig;
@@ -43,6 +45,7 @@ import org.openXpertya.model.MUser;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
+import org.openXpertya.util.Msg;
 import org.openXpertya.util.PGStatementUtils;
 import org.zkoss.zk.au.Command;
 import org.zkoss.zk.ui.Component;
@@ -272,6 +275,17 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 		else
 		{
 			BrowserToken.remove();
+		}
+		
+    	// Validar si la clave expiró
+		if (MUser.isPasswordExpired(ctx, MUser.get(ctx).getAD_User_ID(), null)) {
+			FDialog.info(0, this, Msg.getMsg(Env.getCtx(), "PasswordExpired")); 
+			WUserDataChange dialog = new WUserDataChange();
+			AEnv.showWindow(dialog);
+			// Si el usuario modifico la contraseña, ya no se encuentra expirada, en caso contrario el usuario presionó el boton cancelar
+			if (MUser.isPasswordExpired(ctx, MUser.get(ctx).getAD_User_ID(), null)) {
+				logout();
+			}
 		}
     }
 
