@@ -9,7 +9,8 @@ public class ExternalAttachmentProductsOnlyReplicationFilter extends ExternalAtt
 	@Override
 	public void applyFilter(String trxName, ChangeLogGroupReplication group) throws Exception {
 		// Solo replicar adjuntos para la tabla de articulos
-		if (!X_M_Product.Table_Name.equals(group.getTableName())) {
+		int tableID = Integer.parseInt((String)getNewValueForElement(group, "AD_Table_ID"));
+		if (!(X_M_Product.Table_ID == tableID)) {
 			repArraySetValueAllPositions(group, ReplicationConstantsWS.REPLICATION_CONFIGURATION_NO_ACTION);
 			return;
 		}	
