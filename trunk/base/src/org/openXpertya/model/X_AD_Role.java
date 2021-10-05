@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Role
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-11-28 13:59:56.761 */
+ *  @version  - 2021-10-05 14:03:13.497 */
 public class X_AD_Role extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -488,6 +488,23 @@ public BigDecimal getAmtApproval()
 BigDecimal bd = (BigDecimal)get_Value("AmtApproval");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Read Only Role.
+Apply read only to all the components related to the role */
+public void setApplyReadOnly (String ApplyReadOnly)
+{
+if (ApplyReadOnly != null && ApplyReadOnly.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ApplyReadOnly = ApplyReadOnly.substring(0,1);
+}
+set_Value ("ApplyReadOnly", ApplyReadOnly);
+}
+/** Get Read Only Role.
+Apply read only to all the components related to the role */
+public String getApplyReadOnly() 
+{
+return (String)get_Value("ApplyReadOnly");
 }
 /** Set Currency.
 The Currency for this record */
