@@ -267,3 +267,7 @@ ALTER TABLE c_bpartner ADD CONSTRAINT productrelated_cbpartner
 	FOREIGN KEY (m_product_related_id) 
 	REFERENCES m_product (m_product_id) 
 	MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;
+	
+--20211005-1430 Botón para Perfil Sólo Lectura
+-- Merge de Micro RORO versión 1.0
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_role','applyreadonly','character(1)'));
