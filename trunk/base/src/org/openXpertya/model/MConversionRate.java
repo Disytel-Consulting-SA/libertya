@@ -337,7 +337,7 @@ public class MConversionRate extends X_C_Conversion_Rate {
         String	sql	= "(SELECT MultiplyRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
                           + " AND C_Currency_ID_To=?"			// #2
                           + " AND C_ConversionType_ID=?"		// #3
-                          + " AND ? BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
+                          + " AND ?::date BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
                           + " AND AD_Client_ID IN (0,?)"	// #5
                           + " AND AD_Org_ID IN (0,?) "		// #6
                           + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)"
@@ -345,7 +345,7 @@ public class MConversionRate extends X_C_Conversion_Rate {
                           + "(SELECT DivideRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
 					      + " AND C_Currency_ID_To=?"			// #2
 					      + " AND C_ConversionType_ID=?"		// #3
-					      + " AND ? BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
+					      + " AND ?::date BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
 					      + " AND AD_Client_ID IN (0,?)"	// #5
 					      + " AND AD_Org_ID IN (0,?) "		// #6
 					      + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)";
@@ -355,7 +355,7 @@ public class MConversionRate extends X_C_Conversion_Rate {
 
         try {
 
-            pstmt	= DB.prepareStatement(sql);
+            pstmt	= DB.prepareStatement(sql, null, true);
             pstmt.setInt(1, CurFrom_ID);
             pstmt.setInt(2, CurTo_ID);
             pstmt.setInt(3, C_ConversionType_ID);
