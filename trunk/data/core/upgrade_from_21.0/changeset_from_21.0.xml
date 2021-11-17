@@ -59,6 +59,9 @@ Ejemplos de cambios
     	
     	<!-- 20210716 - Iteracion en daemon finalizador de conexiones IDLE in transaction -->
     	<copy file="${SOURCE_DIR}/utils/trxTimeOut.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
+    	
+    	<!-- 20211117 - Invocacion desde terminal a CallProcess.sh -->
+    	<copy file="${SOURCE_DIR}/utils/CallProcess.sh" todir="${TARGET_DIR}/utils" overwrite="yes" />
  	
     </target>
     
