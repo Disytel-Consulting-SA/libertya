@@ -22,8 +22,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
@@ -67,11 +65,11 @@ import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MCurrency;
-import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -80,6 +78,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -92,6 +91,9 @@ import org.openXpertya.util.Trx;
 public class VAllocation extends CPanel implements FormPanel, ActionListener,
 		TableModelListener, VetoableChangeListener {
 
+	/** Nombre de Preference para filtrar por organización */
+	protected static String VALLOCATION_ONLY_ORG_LOGIN_PREFERENCE_NAME = "VAllocation_LoginOrgTrx";
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -108,6 +110,9 @@ public class VAllocation extends CPanel implements FormPanel, ActionListener,
 																	// to no
 		m_C_Currency_ID = Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"); // default
 
+		// Obtiene la preference si existe para filter por organización de login a todas las transacciones
+		initOrgLoginConfigPreference();
+		
 		//
 
 		log.info("Currency=" + m_C_Currency_ID);
@@ -340,7 +345,8 @@ public class VAllocation extends CPanel implements FormPanel, ActionListener,
 	
 	private Map<Integer,String> debitDocTypes = new HashMap<Integer,String>();
 	
-	
+	/** Flag para utilizar solo las transacciones de la organización de login */
+	private boolean useOrgLoginForTrx = false;
 
 	/**
 	 * Descripción de Método
@@ -488,6 +494,17 @@ public class VAllocation extends CPanel implements FormPanel, ActionListener,
 		
 	} // jbInit
 
+	/**
+	 * Inicializa la preference para determinar si se debe filtrar por la org de
+	 * login, valores Y o N
+	 */
+	protected void initOrgLoginConfigPreference() {
+		String orgLoginPreference = MPreference.searchCustomPreferenceValue(
+				VALLOCATION_ONLY_ORG_LOGIN_PREFERENCE_NAME, Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()), Env.getAD_User_ID(Env.getCtx()), false);
+		setUseOrgLoginForTrx(!Util.isEmpty(orgLoginPreference, true) && orgLoginPreference.equals("Y"));
+	}
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -783,7 +800,7 @@ public class VAllocation extends CPanel implements FormPanel, ActionListener,
 																	// Applied
 	}
 
-private Vector getCreditColumnNames() {
+	private Vector getCreditColumnNames() {
     	Vector columnNames = new Vector();
     	columnNames = new Vector();
             	
@@ -1002,7 +1019,9 @@ private Vector getCreditColumnNames() {
 				"WHERE p.IsAllocated='N' AND p.Processed='Y' " +
 				"  AND p.C_Charge_ID IS NULL " + // Prepayments OK
 				"  AND p.C_BPartner_ID=? " +
-				"  AND d.signo_isSOTrx=? "
+				"  AND d.signo_isSOTrx=? " +
+				appendLoginOrgFilter("p") +
+				appendPaymentQueryAdditionalClause()
 		);
 		
 		parameters.add(m_C_Currency_ID);
@@ -1050,7 +1069,10 @@ private Vector getCreditColumnNames() {
 										     // OK
 				"  AND i.IsPaid='N' AND i.Processed='Y' " +
 				"  AND i.C_BPartner_ID = ? " +
-				"  AND d.signo_isSOTrx = ? "
+				"  AND d.signo_isSOTrx = ? " + 
+				appendLoginOrgFilter("i") + 
+				appendInvoiceQueryAdditionalClause()
+				
 		);
 		
 		parameters.add(m_C_Currency_ID); // gandtotal currency
@@ -1933,6 +1955,26 @@ private Vector getCreditColumnNames() {
 		return result;
 	}
 	
+	/**
+	 * @param tableAlias alias de la consulta actual
+	 * @return Condicion para filtrar por la organización actual
+	 */
+	protected String appendLoginOrgFilter(String tableAlias) {
+		return isUseOrgLoginForTrx() ? "  AND " + tableAlias + ".ad_org_id = " + Env.getAD_Org_ID(Env.getCtx()) : "";
+	}
+	
+	/**
+	 * Posibilidad de extensión de consulta de payments
+	 * @return condiciones adicionales para payments
+	 */
+	protected String appendPaymentQueryAdditionalClause() { return ""; }
+	
+	/**
+	 * Posibilidad de extensión de consulta de invoices
+	 * @return condiciones adicionales para invoices
+	 */
+	protected String appendInvoiceQueryAdditionalClause() { return ""; }
+	
 	private BigDecimal round(BigDecimal number) {
 		return number.setScale(2,BigDecimal.ROUND_HALF_UP);
 	}
@@ -1951,6 +1993,14 @@ private Vector getCreditColumnNames() {
 
 	private void setDebitDocTypes(Map<Integer, String> debitDocTypes) {
 		this.debitDocTypes = debitDocTypes;
+	}
+
+	protected boolean isUseOrgLoginForTrx() {
+		return useOrgLoginForTrx;
+	}
+
+	protected void setUseOrgLoginForTrx(boolean useOrgLoginForTrx) {
+		this.useOrgLoginForTrx = useOrgLoginForTrx;
 	}
 
 } // VAllocation
