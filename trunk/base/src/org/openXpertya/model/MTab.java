@@ -47,6 +47,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Evaluatee;
 import org.openXpertya.util.Evaluator;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 
 /**
@@ -59,6 +60,12 @@ import org.openXpertya.util.ValueNamePair;
 
 public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
+	/**
+	 * Nombre de Preference que permite o no mostrar la info en la barra de estado
+	 * de la factura de ventas
+	 */
+	protected static String SHOW_SALES_INVOICE_STATUS_BAR_INFO_PREFERENCE_NAME = "Show_Status_Bar_Info_Sales_Invoice";
+	
 	// Context property names:
 	public static final String CTX_KeyColumnName = "_TabInfo_KeyColumnName";
 	public static final String CTX_LinkColumnName = "_TabInfo_LinkColumnName";
@@ -87,7 +94,8 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         m_mTable = new MTable( m_vo.ctx,m_vo.AD_Table_ID,m_vo.TableName,m_vo.WindowNo,m_vo.TabNo,true );
         m_mTable.setReadOnly( m_vo.IsReadOnly || m_vo.IsView );
         m_mTable.setDeleteable( m_vo.IsDeleteable );
-
+        initStatusBarInfoSalesInvoicePreference();
+        
         // Load Tab
         // if (vo.TabNo == 0)
 
@@ -211,6 +219,12 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
     protected String currentRecordWarning = null;
 
+	/**
+	 * Flag para determinar si se debe mostrar o no la información de facturas de
+	 * ventas
+	 */
+    private boolean showStatusBarInfo_Sales_Invoice = true;
+    
     /**
      * Descripción de Clase
      *
@@ -1984,7 +1998,18 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             int     Record_ID;
             boolean isOrder = m_vo.TableName.startsWith( "C_Order" );
 
-            //
+            // Visualizar la información de la barra de estado de la factura
+            if (!isOrder && !isShowStatusBarInfo_SalesInvoice()) {
+            	Record_ID = Env.getContextAsInt( m_vo.ctx,m_vo.WindowNo,"C_Invoice_ID" );
+            	if(Record_ID > 0) {
+	                MInvoice invoice = new MInvoice(Env.getCtx(), Record_ID, null);
+					if (!Util.isEmpty(invoice.getDocStatus(), true)
+							&& invoice.getDocStatus().equals(MInvoice.DOCSTATUS_Drafted)
+							&& invoice.isSOTrx()) {
+	               	 	return " ";
+	                }
+            	}
+            }
 
             StringBuffer sql = new StringBuffer( "SELECT COUNT(*) AS Lines,c.ISO_Code,o.TotalLines,o.GrandTotal," + "currencyBase(o.GrandTotal,o.C_Currency_ID,o.DateAcct, o.AD_Client_ID,o.AD_Org_ID) AS ConvAmt " );
 
@@ -3417,7 +3442,27 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 		return false;
 	}	//	isQueryNewRecord
 
-	
+	/**
+	 * Inicializa la preference para determinar si se debe mostrar la información en
+	 * la barra de tareas para facturas de ventas
+	 */
+	protected void initStatusBarInfoSalesInvoicePreference() {
+		String showStatusSalesInvoicePreference = MPreference.searchCustomPreferenceValue(
+				SHOW_SALES_INVOICE_STATUS_BAR_INFO_PREFERENCE_NAME, 
+				Env.getAD_Client_ID(Env.getCtx()),
+				Env.getAD_Org_ID(Env.getCtx()), 
+				Env.getAD_User_ID(Env.getCtx()), false);
+		setShowStatusBarInfo_SalesInvoice(!Util.isEmpty(showStatusSalesInvoicePreference, true) 
+				&& showStatusSalesInvoicePreference.equals("Y"));
+	}
+
+	protected boolean isShowStatusBarInfo_SalesInvoice() {
+		return showStatusBarInfo_Sales_Invoice;
+	}
+
+	protected void setShowStatusBarInfo_SalesInvoice(boolean showStatusBarInfo_Sales_Invoice) {
+		this.showStatusBarInfo_Sales_Invoice = showStatusBarInfo_Sales_Invoice;
+	}
 }    // MTab
 
 
