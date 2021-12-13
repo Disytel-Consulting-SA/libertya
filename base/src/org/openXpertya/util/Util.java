@@ -42,6 +42,7 @@ import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
+import org.openXpertya.model.MTax;
 import org.openXpertya.plugin.common.PluginPOUtils;
 
 /**
@@ -701,6 +702,68 @@ public class Util {
 		return BigDecimal.ONE.subtract(getDiscountRate(baseAmt, discountAmt, scale));
 	}
 	
+	/**
+	 * Obtengo el monto por unidad, o sea, se toma el monto parámetro y se divide
+	 * por la cantidad ingresada
+	 * 
+	 * @param amt monto a dividir (dividendo)
+	 * @param qty cantidad total (divisor)
+	 * @return monto por unidad
+	 */
+    public static BigDecimal getUnityAmt(BigDecimal amt, BigDecimal qty){
+		return amt.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : amt
+				.divide(qty, amt.scale(), BigDecimal.ROUND_HALF_DOWN);
+    }
+    
+    /**
+	 * Extraigo o agrego el monto de impuesto parámetro al importe parámetro,
+	 * dependiento si la tasa está incluída en el precio y si se debe obtener el
+	 * precio con impuesto o no.
+	 * 
+	 * @param amt
+	 *            importe
+	 * @param taxAmt
+	 *            monto de impuesto
+	 * @param taxIncluded
+	 *            impuesto incluído en el precio
+	 * @param withTax
+	 *            true si se debe obtener el importe con impuestos, false si el
+	 *            neto
+	 * @return monto neto o con impuestos dependiendo del parámetro withTax
+	 */
+    public static BigDecimal amtByTax(BigDecimal amt, BigDecimal taxAmt, boolean taxIncluded, boolean withTax){
+		BigDecimal amtResult = amt;
+		if(taxIncluded){
+			if(!withTax){
+				amtResult = amtResult.subtract(taxAmt);
+			}
+		}
+		else{
+			if(withTax){
+				amtResult = amtResult.add(taxAmt);
+			}
+		}
+		return amtResult;
+	}
+	
+    /**
+	 * Obtengo el monto de impuesto para un importe parámetro, verificando si ese
+	 * importe tiene impuesto incluído o no. Se determina el importe base y se
+	 * retorna el monto del impuesto configurado en la línea, a su vez se determina
+	 * si el impuesto está incluído en el precio a partir de la tarifa de la
+	 * cabecera de la factura.
+	 * 
+	 * @param amt           importe con o sin impuestos
+	 * @param isTaxIncluded true si el impuesto esta incluído en el importe
+	 *                      parametro, false caso contrario
+	 * @param taxRate       tasa de impuesto
+	 * @return monto de impuesto a partir del monto parámetro, determinando su
+	 *         importe base
+	 */
+    public static BigDecimal getTaxAmt(BigDecimal amt, boolean isTaxIncluded, BigDecimal taxRate){
+    	return MTax.calculateTax(amt, isTaxIncluded, false, taxRate, amt.scale());
+    }
+    
 	public static String cleanAmp (String in)
 	{
 		if (in == null || in.length() == 0)
