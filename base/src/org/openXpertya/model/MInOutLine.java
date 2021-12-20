@@ -1433,6 +1433,19 @@ public class MInOutLine extends X_M_InOutLine {
 		this.stopSearchingInvoiceLine = stopSearchingInvoiceLine;
 	}
 
+	/**
+	 * @return el número del despacho de importación para esta línea.
+	 * NO MODIFICAR FIRMA, SE USA EN LA IMPRESIÓN DE LA FACTURA
+	 */
+	public String getClearanceNumber() {
+		String cn = null;
+		if(!Util.isEmpty(getM_Import_Clearance_ID(), true)) {
+			cn = DB.getSQLValueString(get_TrxName(),
+					"select clearancenumber from m_import_clearance where m_import_clearance_id = ?",
+					getM_Import_Clearance_ID());
+		}
+		return cn;
+	}
 } // MInOutLine
 
 /*

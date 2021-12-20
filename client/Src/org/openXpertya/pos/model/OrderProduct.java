@@ -55,6 +55,9 @@ public class OrderProduct {
 	 */
 	private Integer salesRep_Orig_ID = null;
 	
+	/** Precio de tarifa */
+	private BigDecimal priceList = null;
+	
 	public OrderProduct() {
 		super();
 	}
@@ -128,7 +131,7 @@ public class OrderProduct {
 	 */
 	public BigDecimal getPriceList() {
 		// En TPV, el precio de Tarifa es el precio STD.
-		return getProduct().getStdPrice();
+		return this.priceList;
 	}
 	
 	/**
@@ -184,6 +187,7 @@ public class OrderProduct {
 	 */
 	public void setProduct(Product product) {
 		this.product = product;
+		setPriceList(product.getStdPrice());
 	}
 	
 	/**
@@ -355,16 +359,20 @@ public class OrderProduct {
 	}
 
 	public BigDecimal calculatePrice(BigDecimal discount, boolean decompose) {
-		BigDecimal cPrice = getPriceList();
+		return calculatePrice(getPriceList(), discount, decompose);
+	}
+
+	public BigDecimal calculatePrice(BigDecimal price, BigDecimal discount, boolean decompose) {
+		BigDecimal cPrice = price;
 		if(discount != null) {
-			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_DOWN)));
+			cPrice = cPrice.subtract(cPrice.multiply(discount.divide(new BigDecimal(100),4,BigDecimal.ROUND_HALF_UP)));
 		}
 		if(decompose){
 			cPrice = decomposePrice(cPrice);
 		}
 		return cPrice;
 	}
-
+	
 	/**
 	 * Descomponer el precio parámetro en importe neto, importe de impuesto
 	 * incluído, importe de percepciones incluídas.
@@ -689,33 +697,8 @@ public class OrderProduct {
 				getTaxBaseAmt(includeDocumentDiscount, isTemporal).multiply(getTax().getTaxRateMultiplier()));
 	}
 	
-	public BigDecimal getTotalOtherTaxAmt(){
-		return getTotalOtherTaxAmt(true, false);
-	}
-	
-	public BigDecimal getTotalOtherTaxAmt(boolean includeDocumentDiscount, boolean isTemporal){
-		return getTotalOtherTaxAmt(null, includeDocumentDiscount, isTemporal);
-	}
-	
-	public BigDecimal getTotalOtherTaxAmt(Tax otherTax, boolean includeDocumentDiscount, boolean isTemporal){
-		BigDecimal allMultipliers = getOrder().getSumOtherTaxesRateMultipliers();
-		
-		BigDecimal otherTaxMultiplier = otherTax == null? 
-				new BigDecimal(1)
-				: otherTax.getTaxRateMultiplier().divide(allMultipliers, 6, BigDecimal.ROUND_HALF_DOWN);
-		
-		return scaleAmount(
-				getTaxBaseAmt(includeDocumentDiscount, isTemporal).multiply(otherTax == null ? allMultipliers : otherTax.getTaxRateMultiplier()));
-	}
-	
 	public BigDecimal getTotalAmt(){
 		return scaleAmount(price.multiply(getCount()));
-	}
-	
-	public BigDecimal getAllTotalAmt(boolean includeTax, boolean includeOtherTax, boolean includeDocumentDiscount, boolean isTemporal){
-		return scaleAmount(getTotalNetAmt(includeDocumentDiscount, isTemporal)
-							.add(includeTax ? getTotalTaxAmt(includeDocumentDiscount, isTemporal) : BigDecimal.ZERO)
-							.add(includeOtherTax ? getTotalOtherTaxAmt(includeDocumentDiscount, isTemporal) : BigDecimal.ZERO));
 	}
 	
 	/**
@@ -735,5 +718,10 @@ public class OrderProduct {
 
 	public void setSalesRep_Orig_ID(Integer salesRep_Orig_ID) {
 		this.salesRep_Orig_ID = salesRep_Orig_ID;
+	}
+
+
+	public void setPriceList(BigDecimal priceList) {
+		this.priceList = priceList;
 	}
 }

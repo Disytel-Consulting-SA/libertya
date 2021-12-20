@@ -31,31 +31,29 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 	/**
 	 * Consulta para carga de envios
 	 */
-	public StringBuffer loadShipmentQuery() {
+	public StringBuffer loadShipmentQuery(String remainingSQLQueryLine) {
 
         StringBuffer sql  = new StringBuffer();
         sql.append("SELECT ")
-           .append(   "l.M_InOutLine_ID, ")
-           .append(   "l.Line, ")
-           .append(   "l.M_Product_ID, ")
+           .append(   "iol.M_InOutLine_ID, ")
+           .append(   "iol.Line, ")
+           .append(   "iol.M_Product_ID, ")
            .append(   "p.Name AS ProductName, ")
            .append("p.value AS ItemCode, ")
-           .append(   "l.C_UOM_ID, ")
-           .append(   "l.MovementQty, ")
-           .append(   "l.MovementQty-SUM(NVL(mi.Qty,0)) AS RemainingQty, ")
-           .append(   "l.QtyEntered/l.MovementQty AS Multiplier, ")
-           .append(   "COALESCE(l.C_OrderLine_ID,0) AS C_OrderLine_ID, ")  
-           .append("l.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
+           .append(   "iol.C_UOM_ID, ")
+           .append(   "iol.MovementQty, ")
+		   .append(" ( CASE WHEN (iol.C_OrderLine_ID IS NULL OR dtio.InOut_Allow_Greater_QtyOrdered = 'Y') THEN iol.movementqty ELSE " + remainingSQLQueryLine + " END ) AS RemainingQty, ")
+           .append(   "iol.QtyEntered/iol.MovementQty AS Multiplier, ")
+           .append(   "COALESCE(iol.C_OrderLine_ID,0) AS C_OrderLine_ID, ")  
+           .append("iol.M_AttributeSetInstance_ID AS AttributeSetInstance_ID ")
            
-           .append("FROM M_InOutLine l, M_Product p, M_MatchInv mi " )
-           .append("WHERE l.M_Product_ID=p.M_Product_ID " )
-           // begin vpj-cd e-evolution 03/15/2005
-	       // .append(" AND l.M_InOutLine_ID=mi.M_InOutLine_ID(+)")
-	       .append(  "AND l.M_InOutLine_ID=mi.M_InOutLine_ID(+) " )
-	       // end vpj-cd e-evolution 03/15/2005
-	       .append(  "AND l.M_InOut_ID=? " )    // #1
-           .append("GROUP BY l.MovementQty, l.QtyEntered/l.MovementQty, l.C_UOM_ID, l.M_Product_ID, p.Name, l.M_InOutLine_ID, l.Line, l.C_OrderLine_ID, p.value,l.M_AttributeSetInstance_ID " )
-           .append("ORDER BY l.Line" );
+           .append("FROM M_InOutLine iol " )
+           .append("JOIN M_InOut io ON io.m_inout_id = iol.m_inout_id " )
+           .append("JOIN C_DocType dtio ON dtio.c_doctype_id = io.c_doctype_id " )
+           .append("JOIN M_Product p ON p.m_product_id = iol.m_product_id " )
+           .append("LEFT JOIN C_OrderLine l ON l.c_orderline_id = iol.c_orderline_id " )
+           .append("WHERE iol.M_InOut_ID=? " )    // #1
+           .append("ORDER BY iol.Line" );
         
         return sql;
 	}
@@ -123,10 +121,14 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 				invoice.setManualGeneralDiscount(BigDecimal.ZERO);
 				invoice.setSkipManualGeneralDiscountValidation(true);
 			}
+			else {
+				invoice.setManualGeneralDiscount(p_order.getManualGeneralDiscount());
+			}
 			invoice.setIsExchange(p_order.isExchange());
 			if(!Util.isEmpty(getPaymentRule(), true)){
 				invoice.setPaymentRule(getPaymentRule());
 			}
+			invoice.setCreateFrom("Y");
             if (!invoice.save()) {
             	String msg = CLogger.retrieveErrorAsString();
 				msg = Util.isEmpty(msg, true) ? Msg.parseTranslation(Env.getCtx(),
@@ -238,10 +240,10 @@ public class CreateFromInvoiceModel extends CreateFromModel {
             // Order Info
 
             if( orderLine != null) {
-                invoiceLine.setOrderLine( orderLine );    // overwrites
-                
                 // Este metodo es redefinido por un plugin
                 handler.customMethod(orderLine,invoiceLine);
+                
+                invoiceLine.setOrderLine( orderLine );    // overwrites
 
                 if( orderLine.getQtyEntered().compareTo( orderLine.getQtyOrdered()) != 0 ) {
                     invoiceLine.setQtyInvoiced( QtyEntered.multiply( orderLine.getQtyOrdered()).divide( orderLine.getQtyEntered(),BigDecimal.ROUND_HALF_UP ));
@@ -252,6 +254,7 @@ public class CreateFromInvoiceModel extends CreateFromModel {
                 invoiceLine.setTax();
             }
 
+            invoiceLine.setTaxAmt(BigDecimal.ZERO);
             if( !invoiceLine.save()) {
                 throw new CreateFromSaveException(
              		   "@InvoiceLineSaveError@ (# " + docLine.lineNo + "):<br>" + 
@@ -297,31 +300,28 @@ public class CreateFromInvoiceModel extends CreateFromModel {
 	/**
 	 * @return Devuelve el filtro que se aplica al Lookup de remitos.
 	 */
-	public static String getShipmentFilter(String isSOTrx) {
-    	return getShipmentFilter(isSOTrx, 0);
-	}
-
-	/**
-	 * @return Devuelve el filtro que se aplica al Lookup de remitos.
-	 */
-	public static String getShipmentFilter(String isSOTrx, int sign) {
+	public static String getShipmentFilter(String isSOTrx, String orderFilter) {
     	StringBuffer filter = new StringBuffer();
 
      	filter
 	     	.append("M_InOut.IsSOTrx='").append(isSOTrx).append("' AND ")
 	     	.append("M_InOut.DocStatus IN ('CL','CO') AND ") 
-	     	.append("M_InOut.M_InOut_ID IN (")
+	     	.append(" (CASE WHEN 'N'='").append(isSOTrx).append("' THEN ")
+	     	.append(" M_InOut.M_InOut_ID IN (")
 	     	.append(   "SELECT sl.M_InOut_ID ")
 	     	.append(   "FROM M_InOutLine sl ")
 	     	.append(   "LEFT OUTER JOIN M_MatchInv mi ON (sl.M_InOutLine_ID=mi.M_InOutLine_ID) ")
 	     	.append(   "WHERE sl.M_InOut_ID = M_InOut.M_InOut_ID ") // Los M_InOut que devuelve la query interna luego tienen que respetar el criterio de la query externa, por lo tanto este filtrado mejora la performance de la query interna
 	     	.append(   "GROUP BY sl.M_InOut_ID,mi.M_InOutLine_ID,sl.MovementQty ")
-	     	.append(   "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL) OR mi.M_InOutLine_ID IS NULL) ");
-     	
-		filter.append(sign == 0 ? ""
-				: " and M_InOut.C_DocType_ID IN (select c_doctype_id from c_doctype dt where dt.docbasetype in ('"
-						+ MDocType.DOCBASETYPE_MaterialReceipt + "','" + MDocType.DOCBASETYPE_MaterialDelivery
-						+ "') and signo_issotrx = '" + sign + "') ");
+	     	.append(   "HAVING (sl.MovementQty<>SUM(mi.Qty) AND mi.M_InOutLine_ID IS NOT NULL) OR mi.M_InOutLine_ID IS NULL) ")
+     		.append(" ELSE ")
+     		.append(" M_InOut.C_Order_ID IN (")
+	     	.append(   "SELECT C_Order.C_Order_ID ") 
+	     	.append(   "FROM C_Order ")
+	     	.append(   "WHERE (")
+	     	.append(   orderFilter).append(")")
+	     	.append(") END ) ");
+     		
      	
      	return filter.toString();
 	}

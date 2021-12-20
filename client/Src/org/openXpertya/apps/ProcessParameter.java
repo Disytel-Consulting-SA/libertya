@@ -35,15 +35,14 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -57,17 +56,13 @@ import org.openXpertya.grid.GridController;
 import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VEditor;
 import org.openXpertya.grid.ed.VEditorFactory;
-import org.openXpertya.model.Callout;
 import org.openXpertya.model.CalloutProcess;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MFieldVO;
+import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MultiMap;
-import org.openXpertya.plugin.CalloutPluginEngine;
-import org.openXpertya.plugin.MPluginStatus;
-import org.openXpertya.plugin.MPluginStatusCallout;
-import org.openXpertya.plugin.common.PluginCalloutUtils;
 import org.openXpertya.plugin.common.PluginUtils;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
@@ -175,11 +170,11 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
     /** Descripción de Campos */
 
-    private ArrayList m_mFields = new ArrayList();
+    private List<MField> m_mFields = new ArrayList();
 
     /** Descripción de Campos */
 
-    private ArrayList m_mFields2 = new ArrayList();
+    private List<MField> m_mFields2 = new ArrayList();
 
     //
 
@@ -216,6 +211,8 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
     private String help;
     
     private Map<String, MField> fields = new HashMap<String, MField>();
+
+    protected MultiMap m_depOnField = new MultiMap();
     
     /**
      * Descripción de Método
@@ -249,6 +246,8 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
         m_vEditors2.clear();
         m_mFields.clear();
         m_mFields2.clear();
+        fields.clear();
+        m_depOnField.clear();
         this.removeAll();
         super.dispose();
     }    // dispose
@@ -333,7 +332,9 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
             centerPanel.add( Box.createVerticalStrut( 10 ),gbc );      // bottom gap
             gbc.gridx = 3;
             centerPanel.add( Box.createHorizontalStrut( 12 ),gbc );    // right gap
+            setDefaultValues();
             processCallouts();
+            processDependencies();
             updateComponents(true);
             AEnv.positionCenterWindow( m_frame,this );
         } else {
@@ -416,6 +417,9 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
         m_mFields.add( mField );    // add to Fields
         fields.put(mField.getColumnName(), mField);
+
+        // Dependientes
+        initDependants(mField);
         
         // Label Preparation
 
@@ -458,15 +462,6 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
         mField.addPropertyChangeListener( vEditor );
 
-        // Set Default
-
-        Object defaultObject = mField.getDefault();
-
-        
-        mField.setValue( defaultObject, true, true );
-        
-        //
-
         centerPanel.add(( Component )vEditor,gbc );
         m_vEditors.add( vEditor );    // add to Editors
 
@@ -508,14 +503,6 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
             mField2.addPropertyChangeListener( vEditor2 );
 
-            // Set Default
-
-            Object defaultObject2 = mField2.getDefault();
-
-            mField2.setValue( defaultObject2, true, true );
-
-            //
-
             centerPanel.add(( Component )vEditor2,gbc );
             m_vEditors2.add( vEditor2 );
         } else {
@@ -524,6 +511,26 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
         }
     }    // createField
 
+    protected void setDefaultValues() {
+    	setDefaultValues(m_mFields);
+    	setDefaultValues(m_mFields2);
+    }
+    
+    protected void setDefaultValues(List<MField> fields) {
+    	Object defaultObject;
+    	for (MField field : fields) {
+    		if(field != null) {
+    			// Obtiene el default
+    			defaultObject = field.getDefault();
+    			// Refresca el lookup para que busque los datos que posee el parámetro 
+    			field.refreshLookup();
+    			// Setea el valor
+        		field.setValue( defaultObject, true, true );
+    		}
+		}
+    }
+    
+    
     /**
      * Descripción de Método
      *
@@ -575,7 +582,9 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 		 }
 
 		 Env.setContext( Env.getCtx(),m_WindowNo,evt.getPropertyName(),valueStr );
+		 fields.get(evt.getPropertyName()).setValue(evt.getNewValue(), true, false);
 		 processCallout(fields.get(evt.getPropertyName()), evt.getNewValue());
+		 processDependencies(fields.get(evt.getPropertyName()));
 		 updateComponents(false);
     }    // vetoableChange
 
@@ -585,6 +594,22 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 				false, true, true);
 		pack();
     }
+    
+    private void initDependants(MField field) {
+    	ArrayList list = field.getDependentOn();
+
+        for( int i = 0;i < list.size();i++ ) {
+            m_depOnField.put( list.get( i ),field );    // ColumnName, Field
+        }
+    }
+
+    public ArrayList getDependantList( String columnName ) {
+        return m_depOnField.getValues( columnName );
+    }    // getDependentFieldList
+    
+    public boolean hasDependants( String columnName ) {
+        return m_depOnField.containsKey( columnName );
+    }    // isDependentOn
     
     /**
      * Descripción de Método
@@ -872,6 +897,41 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
 
         return "";
     }    // processCallout
+	
+	protected void processDependencies(){
+		Set<String> keys = fields.keySet();
+		for (String columnName : keys) {
+			processDependencies(fields.get(columnName));
+		}
+	}
+	
+	public void processDependencies( MField changedField ) {
+        String columnName = changedField.getColumnName();
+
+        if( !hasDependants( columnName )) {
+            return;
+        }
+
+        ArrayList list = getDependantList( columnName );
+
+        for( int i = 0;i < list.size();i++ ) {
+            MField dependentField = ( MField )list.get( i );
+            if( (dependentField != null) && (dependentField.getLookup() instanceof MLookup) ) {
+                MLookup mLookup = ( MLookup )dependentField.getLookup();
+                if( mLookup.getValidation().indexOf( "@" + columnName + "@" ) != -1 ) {
+                    log.fine( columnName + " changed - " + dependentField.getColumnName() + " set to null" );
+
+                    dependentField.setValue(null, true);
+                    
+                    /*if(dependentField.getLookup() != null) {
+                    	dependentField.getLookup().removeAllElements();
+                    	dependentField.getLookup().fillComboBox(dependentField.getVO().IsMandatory, false, false, false);
+                    }*/
+                    dependentField.refreshLookup();
+                }
+            }
+        }    // for all dependent fields
+    }        // processDependencies
 }    // ProcessParameter
 
 

@@ -172,12 +172,6 @@ public class VComboBox extends CComboBox {
      */
 
     public String getDisplay() {
-        if( getSelectedIndex() == -1 ) {
-            return "";
-        }
-
-        //
-
         NamePair p = ( NamePair )getSelectedItem();
 
         if( p == null ) {

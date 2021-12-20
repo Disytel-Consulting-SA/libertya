@@ -22,7 +22,6 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.openXpertya.apps.ProcessCtl;
-import org.openXpertya.apps.form.VModelHelper;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
 import org.openXpertya.cc.CurrentAccountManager;
@@ -858,6 +857,7 @@ public class VOrdenPagoModel {
 			columnNames.add(Msg.translate(Env.getCtx(), "openAmt"));
 			columnNames.add(Msg.translate(Env.getCtx(), "GrandTotal").concat(" ").concat(mCurency.getISO_Code()));
 			columnNames.add(Msg.translate(Env.getCtx(), "openAmt").concat(" ").concat(mCurency.getISO_Code()));
+			columnNames.add(Msg.translate(Env.getCtx(), "openAmtWithDisc").concat(" ").concat(mCurency.getISO_Code()));
 			// La columna toPay permite ingresar el monto en la moneda de la
 			// factura
 			columnNames.add(Msg.translate(Env.getCtx(), "ToPay"));
@@ -873,9 +873,9 @@ public class VOrdenPagoModel {
 		public int getOpenCurrentAmtColIdx() {
 			return 9;
 		}
-
+		
 		public int getCurrencyColIdx() {
-			return 11;
+			return 12;
 		}
 
 		public int getIdColIdx() {
@@ -947,6 +947,7 @@ public class VOrdenPagoModel {
 		private BigDecimal paymentTermDiscount = new BigDecimal(0);
 
 		private String isexchange = "N";
+		private boolean toPayWithPaymentTerm = true;
 
 		public ResultItemFactura(ResultSet rs) throws Exception {
 			VModelHelper.GetInstance().super(rs);
@@ -983,14 +984,22 @@ public class VOrdenPagoModel {
 		public void setManualAmtClientCurrency(BigDecimal manualAmtClientCurrency) {
 			this.manualAmtClientCurrency = manualAmtClientCurrency;
 		}
+		
+		public boolean isToPayWithPaymentTerm() {
+			return toPayWithPaymentTerm;
+		}
 
-		public BigDecimal getToPayAmt(boolean withPaymentTermDiscount) {
+		public void setToPayWithPaymentTerm(boolean toPayWithPaymentTerm) {
+			this.toPayWithPaymentTerm = toPayWithPaymentTerm;
+		}
+
+		public BigDecimal getToPayAmt() {
 			BigDecimal toPay = (BigDecimal) getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
-			if (withPaymentTermDiscount) {
+			if (isToPayWithPaymentTerm()) {
 				toPay = toPay.subtract(getPaymentTermDiscount());
 			}
 			return toPay;
-		}
+		}		
 	}
 
 	// Se recorren las facturas y verificando que exista una tasa de cambio
@@ -1091,10 +1100,14 @@ public class VOrdenPagoModel {
 		// initTrx(); <-- COMENTADO: La trx debe iniciarse al confirmar el pago
 		// unicamente
 		m_facturasTableModel = getInvoicesTableModel();
-		setPoGenerator(new POCRGenerator(getCtx(), getPOCRType(), getTrxName()));
+		setPoGenerator(createAllocationGenerator());
 		setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
 	}
 
+	protected POCRGenerator createAllocationGenerator() {
+		return new POCRGenerator(getCtx(), getPOCRType(), getTrxName());
+	}
+	
 	/**
 	 * @return un nuevo table model para la tabla de facturas
 	 */
@@ -1364,7 +1377,7 @@ public class VOrdenPagoModel {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append(
-				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, openTotal,  sum(convertedamt) as convertedamtsum, sum(openamt) as openAmtSum, isexchange, C_Currency_ID, paymentrule FROM ");
+				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, openTotal,  sum(convertedamt) as convertedamtsum, sum(openamt) as openAmtSum, sum(openamt) - sum(discount) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule FROM ");
 		sql.append(
 				"  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
 		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
@@ -1372,7 +1385,8 @@ public class VOrdenPagoModel {
 		sql.append(
 				"    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"
 						+ m_fechaTrx
-						+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule ");
+						+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule, ");
+		sql.append(" ROUND(getdiscount(i.c_invoice_id, ips.c_payschedule_id, i.dateinvoiced, ips.duedate, '" + m_fechaTrx + "', i.grandtotal), 2) AS discount ");
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
 		sql.append(
@@ -1421,6 +1435,7 @@ public class VOrdenPagoModel {
 				ps.setTimestamp(i++, m_fechaFacturas);
 
 			rs = ps.executeQuery();
+			
 			// int ultimaFactura = -1;
 			while (rs.next()) {
 				ResultItemFactura rif = new ResultItemFactura(rs);
@@ -1447,7 +1462,7 @@ public class VOrdenPagoModel {
 		m_facturasTableModel.fireChanged(false);
 
 	}
-
+	
 	// Added by Lucas Hernandez - Kunan
 	public boolean buscarPagos(Integer bpartner) {
 
@@ -2543,7 +2558,9 @@ public class VOrdenPagoModel {
 				? BigDecimal.ZERO
 				: (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
 		// Sumar o restar algún monto custom
-		openAmt = openAmt.subtract(rif.getPaymentTermDiscount());
+		if (rif.isToPayWithPaymentTerm()) {
+			openAmt = openAmt.subtract(rif.getPaymentTermDiscount());
+		}
 		// Setear el monto pendiente de la factura si se indicó 0
 		// Comentado: si al ser cero completa con el pendiente, nunca puede
 		// volver a setearse cero!
@@ -2818,7 +2835,7 @@ public class VOrdenPagoModel {
 	/**
 	 * Actualiza el AllocationHdr que representa el encabezado de una OP u OPA.
 	 */
-	private void updateAllocationHdr(MAllocationHdr hdr) {
+	protected void updateAllocationHdr(MAllocationHdr hdr) {
 		String HdrDescription = getAllocHdrDescription(hdr);
 
 		hdr.setC_BPartner_ID(C_BPartner_ID);
@@ -3006,10 +3023,11 @@ public class VOrdenPagoModel {
 				// de pago y no se encuentra en cartera, con lo cual no se debe
 				// permitir
 				// seleccionarlo nuevamente.
-		" AND DocStatus IN ('CO')" + " AND C_Currency_ID = @C_Currency_ID@ ";
+		" AND DocStatus IN ('CO')" + " AND C_Currency_ID = @C_Currency_ID@ " +
+		" AND (CheckStatus is null OR CheckStatus <> '"+MPayment.CHECKSTATUS_Rejected+"') ";
 	}
 
-	public BigDecimal getChequeAmt(int paymentID) {
+	public BigDecimal getPaymentAmt(int paymentID) {
 		try {
 			BigDecimal amtToConvert = (BigDecimal) DB.getSQLObject(null,
 					"SELECT PayAmt FROM C_Payment WHERE C_Payment_ID = ?", new Object[] { paymentID });
@@ -3017,6 +3035,19 @@ public class VOrdenPagoModel {
 					DB.getSQLValue(null, "SELECT C_Currency_ID From C_Payment where C_Payment_ID = " + paymentID),
 					getC_Currency_ID(),
 					// new Timestamp(new java.util.Date().getTime()));
+					m_fechaTrx);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public BigDecimal getCashLineAmt(int cashLineID) {
+		try {
+			BigDecimal amtToConvert = (BigDecimal) DB.getSQLObject(null,
+					"SELECT Amount FROM C_CashLine WHERE C_CashLine_ID = ?", new Object[] { cashLineID });
+			return currencyConvert(amtToConvert,
+					DB.getSQLValue(null, "SELECT C_Currency_ID From C_CashLine where C_CashLine_ID = " + cashLineID),
+					getC_Currency_ID(),
 					m_fechaTrx);
 		} catch (Exception e) {
 			return null;
@@ -3527,7 +3558,7 @@ public class VOrdenPagoModel {
 		int i = 0;
 		for (; i < totalInvoices; i++) {
 			fac = (ResultItemFactura) m_facturas.get(i);
-			amt = payAll ? fac.getToPayAmt(true) : BigDecimal.ZERO;
+			amt = payAll ? fac.getToPayAmt() : BigDecimal.ZERO;
 			// Solamente cambio el valor cuando no estamos en el momento de
 			// pagar
 			if (!toPayMoment) {
@@ -3543,7 +3574,7 @@ public class VOrdenPagoModel {
 	public BigDecimal updatePayInvoice(boolean pay, int row, boolean toPayMoment) {
 		BigDecimal totalAmt = BigDecimal.ZERO;
 		ResultItemFactura fac = (ResultItemFactura) m_facturas.get(row);
-		BigDecimal amt = pay ? fac.getToPayAmt(true) : BigDecimal.ZERO;
+		BigDecimal amt = pay ? fac.getToPayAmt() : BigDecimal.ZERO;
 		// Solamente cambio el valor cuando no estamos en el momento de
 		// pagar
 		if (!toPayMoment) {
@@ -3759,7 +3790,7 @@ public class VOrdenPagoModel {
 				for (ResultItem x : m_facturas) {
 					ResultItemFactura rif = (ResultItemFactura) x;
 					if (rif.getManualAmtClientCurrency().compareTo(BigDecimal.ZERO) == 1) {
-						if (rif.getManualAmtClientCurrency().compareTo(rif.getToPayAmt(true)) == -1)
+						if (rif.getManualAmtClientCurrency().compareTo(rif.getToPayAmt()) == -1)
 							return true;
 					}
 				}

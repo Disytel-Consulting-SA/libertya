@@ -291,48 +291,6 @@ public class MMatchInv extends X_M_MatchInv {
         return true;
     }    // beforeDelete
 
-    /**
-     * Descripción de Método
-     *
-     *
-     * @param success
-     *
-     * @return
-     */
-
-    protected boolean afterDelete( boolean success ) {
-        if( success ) {
-
-            // Get Order and decrease invoices
-
-            MInvoiceLine iLine = new MInvoiceLine( getCtx(),getC_InvoiceLine_ID(),get_TrxName());
-            int C_OrderLine_ID = iLine.getC_OrderLine_ID();
-
-            if( C_OrderLine_ID == 0 ) {
-                MInOutLine ioLine = new MInOutLine( getCtx(),getM_InOutLine_ID(),get_TrxName());
-
-                C_OrderLine_ID = ioLine.getC_OrderLine_ID();
-            }
-
-            // No Order Found
-
-            if( C_OrderLine_ID == 0 ) {
-                return success;
-            }
-
-            // Find MatchPO
-
-            MMatchPO[] matches = MMatchPO.get( getCtx(),C_OrderLine_ID,getC_InvoiceLine_ID(),get_TrxName());
-
-            for( int i = 0;i < matches.length;i++ ) {
-                MMatchPO matchPO = matches[ i ];
-
-                matchPO.delete( true );
-            }
-        }
-
-        return success;
-    }    // afterDelete
 }    // MMatchInv
 
 

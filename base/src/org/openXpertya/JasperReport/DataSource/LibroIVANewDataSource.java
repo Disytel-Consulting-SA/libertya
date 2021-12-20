@@ -57,7 +57,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 	private BigDecimal groupCFInvoicesAmt;
 
 	/** Tipo de transaccion */
-	private String p_transactionType;
+	protected String p_transactionType;
 
 	private MLibroIVALine libroIVALine = null;
 
@@ -79,16 +79,19 @@ public class LibroIVANewDataSource implements JRDataSource {
 	private BigDecimal totalGravado;
 	private BigDecimal totalNoGravado;
 	private BigDecimal totalIVA;
-	private Integer signOfSign;
+	private BigDecimal totalTributos;
+	protected Integer signOfSign;
 
 	/** Utilizado para mapear los campos con las invocaciones de los metodos */
 	HashMap<String, String> methodMapper = new HashMap<String, String>();
 	
 	/** Data Sources */
-	private TaxDataSource taxDataSource;
-	private DocumentsDataSource documentsDataSource;
-	private DebitsDataSource debitsDataSource;
-	private CreditsDataSource creditsDataSource;
+	protected TaxDataSource automaticTaxDataSource;
+	protected TaxDataSource manualTaxDataSource;
+	protected TaxDataSource percepcionesTaxDataSource;
+	protected DocumentsDataSource documentsDataSource;
+	protected DebitsDataSource debitsDataSource;
+	protected CreditsDataSource creditsDataSource;
 
 	public LibroIVANewDataSource(Properties ctx, Date p_dateFrom,
 			Date p_dateTo, String p_transactionType, int p_OrgID,
@@ -155,6 +158,8 @@ public class LibroIVANewDataSource implements JRDataSource {
 						+ "			ct.taxindicator, " 
 						+ "			ct.sopotype, " 
 						+ "			ct.taxtype, "
+						+ "			ct.ispercepcion, "
+						+ "			ct.perceptiontype, "
 						+ "			coalesce(inv.puntodeventa,0) as puntodeventa, "
 						+ "			cdt.c_doctype_id, "
 						+ "			cdt.docbasetype, "
@@ -211,7 +216,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 				+ "					 FROM c_invoicetax) cit ON cit.c_invoice_id = inv.c_invoice_id "
 				+ "		INNER JOIN ( SELECT c_doctype.c_doctype_id, c_doctype.name AS c_doctype_name, c_doctype.docbasetype, c_doctype.signo_issotrx AS signo, c_doctype.doctypekey, c_doctype.printname, c_doctype.isfiscaldocument, c_doctype.isfiscal, c_doctype.iselectronic "
 				+ " 				FROM c_doctype ) cdt ON cdt.c_doctype_id = inv.c_doctype_id "
-				+ "		INNER JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, c_tax.c_taxcategory_id, c_tax.rate, taxindicator, sopotype, taxtype "
+				+ "		INNER JOIN ( SELECT c_tax.c_tax_id, c_tax.name AS c_tax_name, c_tax.c_taxcategory_id, c_tax.rate, taxindicator, sopotype, taxtype, ispercepcion, perceptiontype "
 				+ " 				FROM c_tax) ct ON ct.c_tax_id = cit.c_tax_id "
 				+ "		INNER JOIN ( SELECT c_taxcategory_id, c_taxcategory.ismanual "
 				+ "					FROM c_taxcategory) ctc ON ctc.c_taxcategory_id = ct.c_taxcategory_id"	
@@ -260,6 +265,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 			totalGravado = new BigDecimal(0);
 			totalFacturado = new BigDecimal(0);
 			totalIVA = new BigDecimal(0);
+			totalTributos = new BigDecimal(0);
 			Map<String, MLibroIVALine> groupedInvoicesByIVA = new HashMap<String, MLibroIVALine>();
 			Integer oldDocTypeID = null;
 			Integer actualDocTypeID = null;
@@ -270,17 +276,23 @@ public class LibroIVANewDataSource implements JRDataSource {
 			MLibroIVALine lineAux;
 
 			Map<String, M_Tax> allByCategoriaIVA = new HashMap<String, M_Tax>();
+			Map<String, M_Tax> automaticByCategoriaIVA = new HashMap<String, M_Tax>();
+			Map<String, M_Tax> manualByCategoriaIVA = new HashMap<String, M_Tax>();
+			Map<String, M_Tax> percepcionByCategoriaIVA = new HashMap<String, M_Tax>();
 			Map<String, M_Tax> debitsByCategoriaIVA = new HashMap<String, M_Tax>();
 			Map<String, M_Tax> creditsByCategoriaIVA = new HashMap<String, M_Tax>();
 			
-			Map<String, BigDecimal> allTotalsTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
+			Map<String, BigDecimal> allTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
+			Map<String, BigDecimal> automaticTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
+			Map<String, BigDecimal> manualTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
+			Map<String, BigDecimal> percepcionTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
 			Map<String, BigDecimal> debitsTotalsTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
 			Map<String, BigDecimal> creditsTotalsTaxBaseAmtByCategoriaIVA = new HashMap<String, BigDecimal>();
 			
 			Date dateinvoiced, dateAcct;
 			String docBaseType, tipodocname, documentno, c_bpartner_name, taxid, ismanual, c_categoria_via_name, item, isSoTrx, categoriaIVA;  
 			BigDecimal netoNoGravado, netoGravado, neto, importe, realTotal, total;
-			boolean manualTax, isCredit;
+			boolean manualTax, isCredit, isPercepcion;
 			
 			while (rs.next()) {
 				dateinvoiced = rs.getDate("dateinvoiced");
@@ -306,6 +318,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 				taxid = rs.getString("taxid");
 				ismanual = rs.getString("ismanual");
 				manualTax = ismanual.equals("Y");
+				isPercepcion = rs.getString("ispercepcion").equals("Y");
 				if (Util.isEmpty(taxid, true)) {
 					String nroIdentificCliente = rs
 							.getString("nroidentificcliente");
@@ -337,6 +350,10 @@ public class LibroIVANewDataSource implements JRDataSource {
 				if (lastInvoiceID == invoiceID) {
 					total = null;
 				}
+				
+				// Método para customizaciones de procesamiento de datos
+				customRecord(rs);
+				
 				// Si el actual es distinto al anterior tipo de documento,
 				// entonces se agregan los datos del anterior como líneas
 				if (groupCFInvoices
@@ -396,26 +413,40 @@ public class LibroIVANewDataSource implements JRDataSource {
 				}
 				totalFacturado = totalFacturado
 						.add(total == null ? BigDecimal.ZERO : total);
-				totalIVA = totalIVA.add(importe);
 				categoriaIVA = rs.getString("c_categoria_iva_name");
-				addTaxLine(categoriaIVA, item, allByCategoriaIVA, allTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
-						rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
-						rs.getString("taxtype"), manualTax);
-				if(!isCredit){
-					addTaxLine(categoriaIVA, item, debitsByCategoriaIVA, debitsTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
-							rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
-							rs.getString("taxtype"), manualTax);
-				}
-				else{
-					addTaxLine(categoriaIVA, item, creditsByCategoriaIVA, creditsTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
-							rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
-							rs.getString("taxtype"), manualTax);
-				}
-				
 				// El totalNoGravado y el totalGravado no debe sumar Persepciones
 				if (!manualTax) {
+					addTaxLine(categoriaIVA, item, allByCategoriaIVA, allTaxBaseAmtByCategoriaIVA, neto, importe,
+							rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
+							rs.getString("taxtype"), manualTax);
+					addTaxLine(categoriaIVA, item, automaticByCategoriaIVA, automaticTaxBaseAmtByCategoriaIVA, neto, importe,
+							rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
+							rs.getString("taxtype"), manualTax);
+					if(!isCredit){
+						addTaxLine(categoriaIVA, item, debitsByCategoriaIVA, debitsTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
+								rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
+								rs.getString("taxtype"), manualTax);
+					}
+					else{
+						addTaxLine(categoriaIVA, item, creditsByCategoriaIVA, creditsTotalsTaxBaseAmtByCategoriaIVA, neto, importe,
+								rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
+								rs.getString("taxtype"), manualTax);
+					}
 					totalNoGravado = totalNoGravado.add(netoNoGravado);
-					totalGravado = totalGravado.add(netoGravado);					
+					totalGravado = totalGravado.add(netoGravado);	
+					totalIVA = totalIVA.add(importe);
+				}
+				else if (isPercepcion) {
+					addTaxLine(categoriaIVA, item, percepcionByCategoriaIVA, percepcionTaxBaseAmtByCategoriaIVA, neto, importe,
+							rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
+							rs.getString("taxtype"), manualTax);
+					totalTributos = totalTributos.add(importe);
+				}
+				else {
+					addTaxLine(categoriaIVA, item, manualByCategoriaIVA, manualTaxBaseAmtByCategoriaIVA, neto, importe,
+							rs.getBigDecimal("rate"), rs.getString("taxindicator"), rs.getString("sopotype"),
+							rs.getString("taxtype"), manualTax);
+					totalTributos = totalTributos.add(importe);
 				}
 
 				lastInvoiceID = invoiceID;
@@ -441,39 +472,45 @@ public class LibroIVANewDataSource implements JRDataSource {
 			// impuestos, luego cuando se resuelva la diferencia de decimales
 			// entre neto + impuestos vs grandtotal, se deberá analizar si
 			// dejamos la suma de los grandtotal
-			totalFacturado = totalNeto.add(totalIVA);
+			totalFacturado = totalNeto.add(totalIVA).add(totalTributos);
 			total_lines = m_lines.size();
 			// Crear los data sources de los subreportes
 			// Tabla de Impuestos
-			taxDataSource = new TaxDataSource();
-			loadTaxBaseAmtTotals(allByCategoriaIVA, allTotalsTaxBaseAmtByCategoriaIVA);
-			List<M_Tax> allByCategoriaIVAList = new ArrayList<M_Tax>(allByCategoriaIVA.values());
-			Collections.sort(allByCategoriaIVAList);
-			taxDataSource.setReportLines(allByCategoriaIVAList);
+			automaticTaxDataSource = new TaxDataSource();
+			buildDS(automaticTaxDataSource, automaticByCategoriaIVA, automaticTaxBaseAmtByCategoriaIVA);
 			
 			// Resumen por categoría de iva para todos los documentos
 			documentsDataSource = new DocumentsDataSource();
-			documentsDataSource.setReportLines(allByCategoriaIVAList);
+			buildDS(documentsDataSource, allByCategoriaIVA, allTaxBaseAmtByCategoriaIVA);
 			
 			// Resumen por categoría de iva para los débitos
 			debitsDataSource = new DebitsDataSource();
-			loadTaxBaseAmtTotals(debitsByCategoriaIVA, debitsTotalsTaxBaseAmtByCategoriaIVA);
-			List<M_Tax> debitsByCategoriaIVAList = new ArrayList<M_Tax>(debitsByCategoriaIVA.values());
-			Collections.sort(debitsByCategoriaIVAList);
-			debitsDataSource.setReportLines(debitsByCategoriaIVAList);
+			buildDS(debitsDataSource, debitsByCategoriaIVA, debitsTotalsTaxBaseAmtByCategoriaIVA);
 			
 			// Resumen por categoría de iva para los créditos
 			creditsDataSource = new CreditsDataSource();
-			loadTaxBaseAmtTotals(creditsByCategoriaIVA, creditsTotalsTaxBaseAmtByCategoriaIVA);
-			List<M_Tax> creditsByCategoriaIVAList = new ArrayList<M_Tax>(creditsByCategoriaIVA.values());
-			Collections.sort(creditsByCategoriaIVAList);
-			creditsDataSource.setReportLines(creditsByCategoriaIVAList);
+			buildDS(creditsDataSource, creditsByCategoriaIVA, creditsTotalsTaxBaseAmtByCategoriaIVA);
 			
-			allByCategoriaIVA = null;
+			// Percepciones
+			percepcionesTaxDataSource = new TaxDataSource();
+			buildDS(percepcionesTaxDataSource, percepcionByCategoriaIVA, percepcionTaxBaseAmtByCategoriaIVA);
+
+			// Manuales
+			manualTaxDataSource = new TaxDataSource();
+			buildDS(manualTaxDataSource, manualByCategoriaIVA, manualTaxBaseAmtByCategoriaIVA);
+
+			// Customizaciones para el final del procesamiento
+			customEndProcessing();
+			
+			automaticByCategoriaIVA = null;
+			manualByCategoriaIVA = null;
+			percepcionByCategoriaIVA = null;
 			debitsByCategoriaIVA = null;
 			creditsByCategoriaIVA = null;
 			
-			allTotalsTaxBaseAmtByCategoriaIVA = null;
+			automaticTaxBaseAmtByCategoriaIVA = null;
+			manualTaxBaseAmtByCategoriaIVA = null;
+			percepcionTaxBaseAmtByCategoriaIVA = null;
 			debitsTotalsTaxBaseAmtByCategoriaIVA = null;
 			creditsTotalsTaxBaseAmtByCategoriaIVA = null;
 		
@@ -669,14 +706,12 @@ public class LibroIVANewDataSource implements JRDataSource {
 		taxLine.addTaxAmt(taxAmt);
 		taxLine.addTaxBaseAmt(taxBaseAmt);
 		// Total neto por categoria de iva e impuesto sólo si no es manual
-		if(!isManualTax){
-			BigDecimal allTaxAmount = allTaxAmountByCategoriaIVA.get(categoriaIVAName);
-			if(allTaxAmount == null){
-				allTaxAmount = BigDecimal.ZERO;
-			}
-			allTaxAmount = allTaxAmount.add(taxBaseAmt);
-			allTaxAmountByCategoriaIVA.put(categoriaIVAName, allTaxAmount);
+		BigDecimal allTaxAmount = allTaxAmountByCategoriaIVA.get(categoriaIVAName);
+		if(allTaxAmount == null){
+			allTaxAmount = BigDecimal.ZERO;
 		}
+		allTaxAmount = allTaxAmount.add(taxBaseAmt);
+		allTaxAmountByCategoriaIVA.put(categoriaIVAName, allTaxAmount);
 		allByCategoriaIVA.put(key, taxLine);
 	}
 
@@ -688,19 +723,27 @@ public class LibroIVANewDataSource implements JRDataSource {
 		}
 	}
 	
-	public JRDataSource getTaxDataSource() {
-		return taxDataSource;
+	public TaxDataSource getAutomaticTaxDataSource() {
+		return automaticTaxDataSource;
 	}
 	
-	public JRDataSource getTotalGeneralDataSource() {
+	public TaxDataSource getManualTaxDataSource() {
+		return manualTaxDataSource;
+	}
+	
+	public TaxDataSource getPercepcionesTaxDataSource() {
+		return percepcionesTaxDataSource;
+	}
+	
+	public TaxDataSource getTotalGeneralDataSource() {
 		return documentsDataSource;
 	}
 	
-	public JRDataSource getTotalCreditsDataSource() {
+	public TaxDataSource getTotalCreditsDataSource() {
 		return creditsDataSource;
 	}
 	
-	public JRDataSource getTotalDebitsDataSource() {
+	public TaxDataSource getTotalDebitsDataSource() {
 		return debitsDataSource;
 	}
 
@@ -712,24 +755,45 @@ public class LibroIVANewDataSource implements JRDataSource {
 		this.trxName = trxName;
 	}
 
+	/**
+	 * Método que permite customizar cada registro de la consulta. Permite realizar
+	 * extensible el procesamiento
+	 * 
+	 * @param rs registro de consulta
+	 * @throws Exception en caso de error
+	 */
+	protected void customRecord(ResultSet rs) throws Exception{
+		
+	}
+	
+	/**
+	 * Método que permite customizar el final del procesamiento
+	 * 
+	 * @throws Exception en caso de error
+	 */
+	protected void customEndProcessing() throws Exception{
+		
+	}
+	
 	/*
 	 *  *********************************************************** /
 	 * OPDataSource: Clase que contiene la funcionalidad común a todos los
 	 * DataSource de los subreportes del reporte.
 	 * ***********************************************************
 	 */
-	class TaxDataSource implements JRDataSource {
+	public class TaxDataSource implements JRDataSource {
 		/** Lineas del informe */
 		private List<M_Tax> m_reportLines;
 		/** Registro Actual */
 		private int m_currentRecord = -1; // -1 porque lo primero que se hace es
 											// un ++
-
-		protected void setReportLines(List<M_Tax> reportLines){
+		public TaxDataSource() {}
+		
+		public void setReportLines(List<M_Tax> reportLines){
 			m_reportLines = reportLines;
 		}
 		
-		protected List<M_Tax> getReportLines(){
+		public List<M_Tax> getReportLines(){
 			return m_reportLines;
 		}
 		
@@ -780,11 +844,11 @@ public class LibroIVANewDataSource implements JRDataSource {
 		protected String taxName;
 		protected BigDecimal taxAmount = BigDecimal.ZERO;
 		protected String taxIndicator;
-		protected BigDecimal rate;
+		public BigDecimal rate;
 		protected String sopoType;
 		protected String taxType;
-		private BigDecimal taxBaseAmount = BigDecimal.ZERO;
-		private String categoriaIVAName;
+		public BigDecimal taxBaseAmount = BigDecimal.ZERO;
+		public String categoriaIVAName;
 		private BigDecimal totalTaxBaseAmtByCategoriaIVA = BigDecimal.ZERO;
 		
 		public M_Tax(String taxName, BigDecimal taxAmount,
@@ -807,15 +871,15 @@ public class LibroIVANewDataSource implements JRDataSource {
 			this.categoriaIVAName = categoriaIVAName;
 		}
 
-		protected void addTaxAmt(BigDecimal taxAmt){
+		public void addTaxAmt(BigDecimal taxAmt){
 			taxAmount = taxAmount.add(taxAmt);
 		}
 		
-		protected void addTaxBaseAmt(BigDecimal taxBaseAmt){
+		public void addTaxBaseAmt(BigDecimal taxBaseAmt){
 			taxBaseAmount = taxBaseAmount.add(taxBaseAmt);
 		}
 		
-		protected void addTotalTaxBaseAmtByCategoriaIVA(BigDecimal totalTaxBaseAmt){
+		public void addTotalTaxBaseAmtByCategoriaIVA(BigDecimal totalTaxBaseAmt){
 			totalTaxBaseAmtByCategoriaIVA = totalTaxBaseAmtByCategoriaIVA.add(totalTaxBaseAmt);
 		}
 
@@ -825,7 +889,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 		}		
 	}
 	
-	class DocumentsDataSource extends TaxDataSource{
+	protected class DocumentsDataSource extends TaxDataSource{
 		
 		@Override
 		protected Object getFieldValue(String name, Object record)
@@ -844,7 +908,7 @@ public class LibroIVANewDataSource implements JRDataSource {
 		}		
 	}
 	
-	class DebitsDataSource extends DocumentsDataSource{
+	protected class DebitsDataSource extends DocumentsDataSource{
 		
 		@Override		
 		protected String getAdditionalCategoriaIVANameDescription(){
@@ -852,13 +916,28 @@ public class LibroIVANewDataSource implements JRDataSource {
 		}
 	}
 	
-	class CreditsDataSource extends DocumentsDataSource{
+	protected class CreditsDataSource extends DocumentsDataSource{
 		
 		@Override		
 		protected String getAdditionalCategoriaIVANameDescription(){
 			return " - CREDITOS";
 		}
 	}
+	
+	/**
+	 * Armar el data source 
+	 * @param ds data source
+	 * @param dataByCategoriaIVA datos por categoría de IVA
+	 * @param dataBaseByCategoriaIVA datos de importe base por categoría de IVA
+	 */
+	protected void buildDS(TaxDataSource ds, Map<String, M_Tax> dataByCategoriaIVA,
+			Map<String, BigDecimal> dataBaseByCategoriaIVA) {
+		loadTaxBaseAmtTotals(dataByCategoriaIVA, dataBaseByCategoriaIVA);
+		List<M_Tax> civalist = new ArrayList<M_Tax>(dataByCategoriaIVA.values());
+		Collections.sort(civalist);
+		ds.setReportLines(civalist);
+	}
+	
 }
 
 class MLibroIVALine {
@@ -1091,5 +1170,5 @@ class MLibroIVALine {
 	public void setActive(boolean isActive) {
 		this.isActive = isActive;
 	}
-
+	
 }

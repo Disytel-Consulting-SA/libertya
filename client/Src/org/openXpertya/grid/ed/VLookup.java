@@ -179,6 +179,22 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     }
     
     public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup, MTab mtab, boolean multiSelect, boolean controlByRoleForBPartnerCreateMenu ) {
+    	this(columnName, mandatory, isReadOnly, isUpdateable, lookup, mtab, multiSelect, controlByRoleForBPartnerCreateMenu, null);
+    }
+    
+    /**
+     * Rescritura método para agregar constructor Info personalizado por nombre de clase, por reflection (JACOFER)
+     * @param columnName
+     * @param mandatory
+     * @param isReadOnly
+     * @param isUpdateable
+     * @param lookup
+     * @param mtab
+     * @param multiSelect
+     * @param controlByRoleForBPartnerCreateMenu
+     * @param infoClassName
+     */
+    public VLookup( String columnName,boolean mandatory,boolean isReadOnly,boolean isUpdateable,Lookup lookup, MTab mtab, boolean multiSelect, boolean controlByRoleForBPartnerCreateMenu, String infoClassName ) {
         super();
         super.setName( columnName );
         m_combo.setName( columnName );
@@ -187,6 +203,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         m_lookup = lookup;
         m_tab=mtab;
         m_multiSelect = multiSelect;
+        this.infoClassName = infoClassName;
         boolean showCreateMenuBPartner = true;
         if(controlByRoleForBPartnerCreateMenu){
         	MRole role = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx()));
@@ -435,6 +452,8 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
     private LookupMenuCreateFactory menuCreateFactory;
     
     private boolean allowBPartnerCreationMenu = true;
+    
+    private String infoClassName;
     
     /**
      * Descripción de Método
@@ -1804,7 +1823,7 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
 
 			Info ig = Info.create(frame, true, m_lookup.getWindowNo(),
 					m_tableName, m_keyColumnName, queryValue, m_multiSelect,
-					whereClause, m_lookup.addSecurityValidation());
+					whereClause, m_lookup.addSecurityValidation(), infoClassName);
 
             ig.setVisible(true);
             cancelled = ig.isCancelled();

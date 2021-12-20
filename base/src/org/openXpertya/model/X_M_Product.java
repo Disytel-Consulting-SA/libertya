@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_Product
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2014-05-20 23:56:00.362 */
+ *  @version  - 2021-12-14 10:23:03.137 */
 public class X_M_Product extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -108,8 +108,8 @@ public static final String CHECKOUTPLACE_WarehousePOS = "B";
 Product Checkout Place */
 public void setCheckoutPlace (String CheckoutPlace)
 {
-if (CheckoutPlace.equals("W") || CheckoutPlace.equals("P") || CheckoutPlace.equals("B"));
- else throw new IllegalArgumentException ("CheckoutPlace Invalid value - Reference = CHECKOUTPLACE_AD_Reference_ID - W - P - B");
+if (CheckoutPlace.equals("W") || CheckoutPlace.equals("P") || CheckoutPlace.equals("B") || ( refContainsValue("CORE-AD_Reference-1010123", CheckoutPlace) ) );
+ else throw new IllegalArgumentException ("CheckoutPlace Invalid value: " + CheckoutPlace + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010123") );
 if (CheckoutPlace == null) throw new IllegalArgumentException ("CheckoutPlace is mandatory");
 if (CheckoutPlace.length() > 1)
 {
@@ -647,6 +647,37 @@ Integer ii = (Integer)get_Value("LowLevel");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set marketingblocked */
+public void setmarketingblocked (boolean marketingblocked)
+{
+set_Value ("marketingblocked", new Boolean(marketingblocked));
+}
+/** Get marketingblocked */
+public boolean ismarketingblocked() 
+{
+Object oo = get_Value("marketingblocked");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set marketingblockeddescr */
+public void setmarketingblockeddescr (String marketingblockeddescr)
+{
+if (marketingblockeddescr != null && marketingblockeddescr.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+marketingblockeddescr = marketingblockeddescr.substring(0,255);
+}
+set_Value ("marketingblockeddescr", marketingblockeddescr);
+}
+/** Get marketingblockeddescr */
+public String getmarketingblockeddescr() 
+{
+return (String)get_Value("marketingblockeddescr");
+}
 /** Set Attribute Set.
 Product Attribute Set */
 public void setM_AttributeSet_ID (int M_AttributeSet_ID)
@@ -816,8 +847,8 @@ public static final String PRODUCTTYPE_Assets = "A";
 Type of product */
 public void setProductType (String ProductType)
 {
-if (ProductType.equals("I") || ProductType.equals("S") || ProductType.equals("E") || ProductType.equals("O") || ProductType.equals("R") || ProductType.equals("A"));
- else throw new IllegalArgumentException ("ProductType Invalid value - Reference = PRODUCTTYPE_AD_Reference_ID - I - S - E - O - R - A");
+if (ProductType.equals("I") || ProductType.equals("S") || ProductType.equals("E") || ProductType.equals("O") || ProductType.equals("R") || ProductType.equals("A") || ( refContainsValue("CORE-AD_Reference-270", ProductType) ) );
+ else throw new IllegalArgumentException ("ProductType Invalid value: " + ProductType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-270") );
 if (ProductType == null) throw new IllegalArgumentException ("ProductType is mandatory");
 if (ProductType.length() > 1)
 {
@@ -847,6 +878,34 @@ public int getR_MailText_ID()
 Integer ii = (Integer)get_Value("R_MailText_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Minimum Sales Order Qty.
+Minimum sales order quantity in UOM */
+public void setSales_Order_Min (BigDecimal Sales_Order_Min)
+{
+set_Value ("Sales_Order_Min", Sales_Order_Min);
+}
+/** Get Minimum Sales Order Qty.
+Minimum sales order quantity in UOM */
+public BigDecimal getSales_Order_Min() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Sales_Order_Min");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Sales Order Pack Qty.
+Package sales order size in UOM (e.g. order set of 5 units) */
+public void setSales_Order_Pack (BigDecimal Sales_Order_Pack)
+{
+set_Value ("Sales_Order_Pack", Sales_Order_Pack);
+}
+/** Get Sales Order Pack Qty.
+Package sales order size in UOM (e.g. order set of 5 units) */
+public BigDecimal getSales_Order_Pack() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Sales_Order_Pack");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 public static final int SALESREP_ID_AD_Reference_ID = MReference.getReferenceID("AD_User - SalesRep");
 /** Set Sales Representative.
@@ -1065,36 +1124,5 @@ public int getYearLife()
 Integer ii = (Integer)get_Value("YearLife");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set marketingblocked*/
-public void setmarketingblocked(boolean marketingblocked)
-{
-set_Value ("marketingblocked", new Boolean(marketingblocked));
-}
-/** Get marketingblocked*/
-public boolean ismarketingblocked() 
-{
-Object oo = get_Value("marketingblocked");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
-}
-/** Set marketingblockeddescr */
-public void setmarketingblockeddescr (String marketingblockeddescr)
-{
-if (marketingblockeddescr != null && marketingblockeddescr.length() > 255)
-{
-log.warning("Length > 255 - truncated");
-marketingblockeddescr = marketingblockeddescr.substring(0,255);
-}
-set_Value ("marketingblockeddescr", marketingblockeddescr);
-}
-/** Get marketingblockeddescr */
-public String getmarketingblockeddescr() 
-{
-return (String)get_Value("marketingblockeddescr");
 }
 }

@@ -387,4 +387,9 @@ public class InvoiceLine extends DiscountableDocumentLine implements Cloneable, 
 		return MProductPO.getBPartnerIDsOfProduct(getInvoice().getCtx(), getProductID(), true,
 				getInvoice().getTrxName());
 	}
+
+	@Override
+	public BigDecimal getNetAmt() {
+		return getRealInvoiceLine().getNetTaxBaseAmt();
+	}
 }

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_DiscountConfig
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-10-03 12:03:41.069 */
+ *  @version  - 2021-12-14 10:23:02.365 */
 public class X_M_DiscountConfig extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -16,6 +16,7 @@ public X_M_DiscountConfig (Properties ctx, int M_DiscountConfig_ID, String trxNa
 super (ctx, M_DiscountConfig_ID, trxName);
 /** if (M_DiscountConfig_ID == 0)
 {
+setApplyPaymentTerm (false);
 setBPartner_DiscountProduct_ID (0);
 setBPartner_SurchargeProduct_ID (0);
 setCharge_DiscountProduct_ID (0);
@@ -87,6 +88,22 @@ public int getAD_ComponentVersion_ID()
 Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Apply Payment Term */
+public void setApplyPaymentTerm (boolean ApplyPaymentTerm)
+{
+set_Value ("ApplyPaymentTerm", new Boolean(ApplyPaymentTerm));
+}
+/** Get Apply Payment Term */
+public boolean isApplyPaymentTerm() 
+{
+Object oo = get_Value("ApplyPaymentTerm");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int BPARTNER_DISCOUNTPRODUCT_ID_AD_Reference_ID = MReference.getReferenceID("C_Product");
 /** Set BPartner Discount Product */

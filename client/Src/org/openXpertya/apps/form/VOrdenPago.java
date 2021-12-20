@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.swing.AbstractAction;
-import javax.swing.DefaultCellEditor;
+import javax.swing.AbstractCellEditor;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -71,6 +71,7 @@ import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoAdelantado;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
@@ -80,6 +81,7 @@ import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VComboBox;
 import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
+import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
@@ -114,64 +116,46 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
 	private BigDecimal maxPaymentAllowed = null;
 	
-	public class DecimalEditor extends DefaultCellEditor {
-	    JFormattedTextField ftf;
-	    NumberFormat decFormat;
-	    private BigDecimal minimum, maximum;
+	public class DecimalEditor extends AbstractCellEditor implements TableCellEditor {
 
-	    public DecimalEditor(BigDecimal min, BigDecimal max, NumberFormat nf) {
-	        super(new JFormattedTextField());
-	        ftf = (JFormattedTextField)getComponent();
-	        minimum = min;
-	        maximum = max;
-
-	        //Set up the editor for the integer cells.
-	        decFormat = nf != null ? nf : NumberFormat.getNumberInstance();
-	        NumberFormatter intFormatter = new NumberFormatter(decFormat);
-	        intFormatter.setFormat(decFormat);
-	        intFormatter.setMinimum(minimum);
-	        intFormatter.setMaximum(maximum);
-
-	        ftf.setFormatterFactory(
-	                new DefaultFormatterFactory(intFormatter));
-	        ftf.setValue(minimum);
-	        ftf.setHorizontalAlignment(JTextField.TRAILING);
-	        ftf.setFocusLostBehavior(JFormattedTextField.REVERT);
-
-	        //React when the user presses Enter while the editor is
-	        //active.  (Tab is handled as specified by
-	        //JFormattedTextField's focusLostBehavior property.)
-	        ftf.getInputMap().put(KeyStroke.getKeyStroke(
-	                                        KeyEvent.VK_ENTER, 0),
-	                                        "check");
-	        ftf.getActionMap().put("check", new AbstractAction() {
-	            public void actionPerformed(ActionEvent e) {
-					if (!ftf.isEditValid()) { // The text is invalid.
-						ftf.postActionEvent(); // inform the editor
-					} else {
-						try { // The text is valid,
-							ftf.commitEdit(); // so use it.
-							ftf.postActionEvent(); // stop editing
-						} catch (java.text.ParseException exc) {}
-					}
+		private VNumber vn;
+		
+	    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+	    	if(vn == null) {
+	    		vn = new VNumber();
+	    	}
+	    	vn.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					stopCellEditing();
 				}
-	        });
-	    }
-
+			});
+			return vn;
+        }
+	    
 	    // Override to invoke setValue on the formatted text field.
 	    public Component getTableCellEditorComponent(JTable table,
 	            Object value, boolean isSelected,
 	            int row, int column) {
-	        JFormattedTextField ftf =
+	    	if(vn == null) {
+	    		vn = new VNumber();
+	    	}
+	        vn.setValue(value);
+	        return vn;
+	    	/*JFormattedTextField ftf =
 	            (JFormattedTextField)super.getTableCellEditorComponent(
 	                table, value, isSelected, row, column);
 	        ftf.setValue(value);
-	        return ftf;
+	        return ftf;*/
 	    }
 
 	    public Object getCellEditorValue() {
-	        JFormattedTextField ftf = (JFormattedTextField)getComponent();
-	        Object o = ftf.getValue();
+	    	if(vn == null) {
+	    		vn = new VNumber();
+	    	}
+	    	return vn.getValue();
+	        /*Object o = ftf.getValue();
 	        if (o instanceof BigDecimal) {
 	            return o;
 	        } else if (o instanceof Number) {
@@ -182,20 +166,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	            } catch (ParseException exc) {
 	                return null;
 	            }
-	        }
-	    }
-
-	    public boolean stopCellEditing() {
-	        JFormattedTextField ftf = (JFormattedTextField)getComponent();
-	        if (ftf.isEditValid()) {
-	            try {
-	                ftf.commitEdit();
-	            } catch (java.text.ParseException exc) { }
-		    
-	        } else { //text is invalid
-		        return false; //don't let the editor go away
-	        }
-	        return super.stopCellEditing();
+	        }*/
 	    }
 	}
 	
@@ -299,13 +270,40 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				}
 			}
 		});
+		
+		/*ftf.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent e) {
+				// TODO Auto-generated method stub
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+				ftf.getText().contains()
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				// Modificar el agrupador por el decimal
+				/*if(DecimalFormatSymbols.getInstance().getGroupingSeparator() == e.getKeyChar()) {
+					e.setKeyChar(DecimalFormatSymbols.getInstance().getDecimalSeparator());
+					e.setKeyCode((DecimalFormatSymbols.getInstance().getGroupingSeparator() == '.') ? KeyEvent.VK_COMMA
+							: KeyEvent.VK_PERIOD);
+				}
+			}
+		});*/
 	}
 	
     /** Creates new form VOrdenPago */
     public VOrdenPago() {
-
+    	setModel(createModel());
+    	m_trxName = getModel().getTrxName();
     }
     
+    protected VOrdenPagoModel createModel() {
+    	return new VOrdenPagoModel();
+    }
     
     /** This method is called from within the constructor to
      * initialize the form.
@@ -338,19 +336,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		lblDocumentType = new javax.swing.JLabel();
 		cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),false);
 		lblDateTrx = new javax.swing.JLabel();
-		dateTrx = VComponentsFactory.VDateFactory();
-		dateTrx.setValue(new Date());
-		dateTrx.setMandatory(true);
-		dateTrx.addVetoableChangeListener(new VetoableChangeListener() {
-			
-			@Override
-			public void vetoableChange(PropertyChangeEvent evt)
-					throws PropertyVetoException {
-				m_model.setFechaOP(dateTrx.getTimestamp());
-				m_model.actualizarFacturas();
-				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
-			}
-		});
+		createDate();
 		
 		lblPaymentRule = new javax.swing.JLabel();
 		cboPaymentRule = createPaymentRuleCombo();
@@ -363,7 +349,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		});
 		
         tblFacturas = new javax.swing.JTable(getFacturasTableModel());
-        txtTotalPagar1 = new JFormattedTextField();
+        txtTotalPagar1 = new VNumber();
         lblTotalPagar1 = new javax.swing.JLabel();
         rInvoiceAll = new javax.swing.JRadioButton();
         rInvoiceDate = new javax.swing.JRadioButton();
@@ -373,7 +359,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         jTree1 = new javax.swing.JTree(getMediosPagoTreeModel());
         cmdEliminar = new javax.swing.JButton();
         cmdEditar = new javax.swing.JButton();
-        txtSaldo = new javax.swing.JTextField();
+        txtSaldo = new VNumber();
         txtDifCambio = new javax.swing.JTextField();
         lblSaldo = new javax.swing.JLabel();
         txtMedioPago2 = new javax.swing.JTextField();
@@ -389,7 +375,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblEfectivoLibroCaja = new javax.swing.JLabel();
         efectivoLibroCaja = VComponentsFactory.VLookupFactory("C_Cash_ID", "C_Cash", m_WindowNo, DisplayType.Search, m_model.getEfectivoLibroCajaSqlValidation() ); 
         lblEfectivoImporte = new javax.swing.JLabel();
-        txtEfectivoImporte = new JFormattedTextField();
+        txtEfectivoImporte = new VNumber();
         jPanel6 = new javax.swing.JPanel();
         lblTransfCtaBancaria = new javax.swing.JLabel();
         lblTransfNroTransf = new javax.swing.JLabel();
@@ -397,7 +383,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblTransfFecha = new javax.swing.JLabel();
         transfCtaBancaria = VComponentsFactory.VLookupFactory("C_BankAccount_ID", "C_BankAccount", m_WindowNo, DisplayType.Search, m_model.getTransfCtaBancariaSqlValidation());
         txtTransfNroTransf = new javax.swing.JTextField();
-        txtTransfImporte = new JFormattedTextField();
+        txtTransfImporte = new VNumber();
         transFecha = VComponentsFactory.VDateFactory();
         jPanel7 = new javax.swing.JPanel();
         lblChequeChequera = new javax.swing.JLabel();
@@ -411,7 +397,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblChequeDescripcion = new javax.swing.JLabel();
         //chequeChequera = VComponentsFactory.VLookupFactory("C_BankAccountDoc_ID", "C_BankAccountDoc", m_WindowNo, DisplayType.TableDir , m_model.getChequeChequeraSqlValidation() );
         chequeChequera = createChequeChequeraLookup(); 
-        txtChequeImporte = new JFormattedTextField();
+        txtChequeImporte = new VNumber();
         chequeFechaEmision = VComponentsFactory.VDateFactory();
         chequeFechaPago = VComponentsFactory.VDateFactory();
         txtChequeALaOrden = new javax.swing.JTextField();
@@ -438,10 +424,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				m_model.getCreditSqlValidation(), true, 
 				m_model.addSecurityValidationToNC(), true);
         lblCreditAvailable = new javax.swing.JLabel();
-        txtCreditAvailable = new JFormattedTextField();
-        txtCreditAvailable.setEditable(false);
+        txtCreditAvailable = new VNumber();
+        txtCreditAvailable.setReadWrite(false);
         lblCreditImporte = new javax.swing.JLabel();
-        txtCreditImporte = new JFormattedTextField();
+        txtCreditImporte = new VNumber();
         
         checkPayAll = new VCheckBox();
         checkPayAll.setText("Pagar Todo");
@@ -536,8 +522,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         // tblFacturas.setModel(new javax.swing.table.DefaultTableModel());
         jScrollPane1.setViewportView(tblFacturas);
 
-        txtTotalPagar1.setText("TOTAL A PAGAR");
-
         lblTotalPagar1.setText("TOTAL A PAGAR");
 
         buttonGroup2.add(rInvoiceAll);
@@ -582,7 +566,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
             }
         });
 
-        txtSaldo.setEditable(false);
+        txtSaldo.setReadWrite(false);
         
         txtDifCambio.setEditable(false);
 
@@ -833,6 +817,23 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         customKeyBindingsInit();
     }
     
+    
+    protected void createDate() {
+    	dateTrx = VComponentsFactory.VDateFactory();
+		dateTrx.setValue(new Date());
+		dateTrx.setMandatory(true);
+		dateTrx.addVetoableChangeListener(new VetoableChangeListener() {
+			
+			@Override
+			public void vetoableChange(PropertyChangeEvent evt)
+					throws PropertyVetoException {
+				m_model.setFechaOP(dateTrx.getTimestamp());
+				m_model.actualizarFacturas();
+				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
+			}
+		});
+    }
+    
     protected void setActionEnabled(String action, boolean enabled) {
 		String kAction = (enabled?action:"none");
         KeyStroke keyStroke = getActionKeys().get(action);
@@ -1040,7 +1041,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	jPanel5.setOpaque(false);
         lblEfectivoLibroCaja.setText("LIBRO DE CAJA");
         lblEfectivoImporte.setText("IMPORTE");
-        txtEfectivoImporte.setText("0");
+        txtEfectivoImporte.setValue(BigDecimal.ZERO);
 
         org.jdesktop.layout.GroupLayout jPanel5Layout = new org.jdesktop.layout.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -1084,7 +1085,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         lblTransfNroTransf.setText("NRO TRANSFERENCIA");
         lblTransfImporte.setText("IMPORTE");
         lblTransfFecha.setText("FECHA");
-        txtTransfImporte.setText("0");
+        txtTransfImporte.setValue(BigDecimal.ZERO);
 
         org.jdesktop.layout.GroupLayout jPanel6Layout = new org.jdesktop.layout.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -1228,8 +1229,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	lblCreditInvoice.setText("CREDITO");        
         lblCreditAvailable.setText("DISPONIBLE");        
         lblCreditImporte.setText("IMPORTE");        
-        txtCreditAvailable.setText("0");        
-        txtCreditImporte.setText("0");
+        txtCreditAvailable.setValue(BigDecimal.ZERO); 
+        txtCreditImporte.setValue(BigDecimal.ZERO);
         
         org.jdesktop.layout.GroupLayout jPanel11Layout = new org.jdesktop.layout.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -1405,12 +1406,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		lblPagoAdelantado.setText(getModel().isSOTrx()?"COBRO":"PAGO");
         lblPagoAdelantadoImporte = new JLabel();
         lblPagoAdelantadoImporte.setText("IMPORTE");
-        txtPagoAdelantadoImporte = new JFormattedTextField();
-        txtPagoAdelantadoImporte.setText("0");
-        initFormattedTextField((JFormattedTextField)txtPagoAdelantadoImporte);
-        pagoAdelantado = VComponentsFactory.VLookupFactory("C_Payment_ID", "C_Payment", m_WindowNo, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation());
-        
-        cashAdelantado = VComponentsFactory.VLookupFactory("C_CashLine_ID", "C_CashLine", m_WindowNo, DisplayType.Search, getModel().getCashAnticipadoSqlValidation());
+        txtPagoAdelantadoImporte = new VNumber();
+        txtPagoAdelantadoImporte.setValue(BigDecimal.ZERO);
+        //initFormattedTextField((JFormattedTextField)txtPagoAdelantadoImporte);
+        pagoAdelantado = VComponentsFactory.VLookupFactory("C_Payment_ID",
+				"C_Payment", m_WindowNo, DisplayType.Search, getModel()
+						.getPagoAdelantadoSqlValidation());
+
+		cashAdelantado = VComponentsFactory.VLookupFactory("C_CashLine_ID",
+				"C_CashLine", m_WindowNo, DisplayType.Search, getModel()
+						.getCashAnticipadoSqlValidation());
         lblPagoAdelantadoType = new JLabel();
         lblPagoAdelantadoType.setText("TIPO");
         cboPagoAdelantadoType = new VComboBox(new Object[] {
@@ -1427,8 +1432,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         });
         pagoAdelantadoTypePanel = new JPanel();
         pagoAdelantadoTypePanel.setLayout(new BorderLayout());
-        txtPagoAdelantadoAvailable = new JFormattedTextField();
-        txtPagoAdelantadoAvailable.setEditable(false);
+        txtPagoAdelantadoAvailable = new VNumber();
+        txtPagoAdelantadoAvailable.setReadWrite(false);
         lblPagoAdelantadoAvailable = new JLabel();
         lblPagoAdelantadoAvailable.setText("PENDIENTE");
         
@@ -1504,7 +1509,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	    		break;
 	    	case 4:
 				// Adelantado
-	    		mp = savePagoAdelantadoMedioPago();
+	    		List<VOrdenPagoModel.MedioPago> mpas = savePagoAdelantadoMedioPago();
+	    		for (VOrdenPagoModel.MedioPago unMP : mpas)
+	    			savePMFinalize(unMP);
 	    		break;
 	    	default:
 	    		cmdCustomSaveMedioPago(jTabbedPane2.getSelectedIndex());
@@ -1526,7 +1533,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     }//GEN-LAST:event_cmdSavePMActionPerformed
     
     
-    private void savePMFinalize(VOrdenPagoModel.MedioPago mp) throws Exception {
+    protected void savePMFinalize(VOrdenPagoModel.MedioPago mp) throws Exception {
     	if(mp != null){
     		if (!m_model.validateCurrentConversionRate((Integer) cboCurrency.getValue()))
     			throw new InterruptedException("@NoCurrencyConvertError@");
@@ -1547,7 +1554,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			throw new Exception(cboCurrency.getValue().toString());
 		}
 		try {
-			mpe.importe = numberParse(txtEfectivoImporte.getText());
+			mpe.importe = (BigDecimal)txtEfectivoImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception(lblEfectivoImporte.getText());
 		}		
@@ -1560,7 +1567,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			throw new Exception(lblEfectivoImporte.getText());
 
 		// La fecha de la caja debe ser del mismo día de la operación
-		if(!TimeUtil.isSameDay(mpe.getDateAcct(), getModel().m_fechaTrx)){
+		if(!TimeUtil.isSameDay(mpe.getDateAcct(), getModel().getFechaOP())){
 			throw new Exception(Msg.parseTranslation(m_ctx,
 					"@NotAllowedCashWithDiferentDate@: \n - @DateTrx@ "
 							+ getModel().getSimpleDateFormat().format(getModel().m_fechaTrx) + " \n - @Date@ @C_Cash_ID@ "
@@ -1588,7 +1595,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		}		
 		mpt.fechaTransf = transFecha.getTimestamp();		
 		try {
-			mpt.importe = numberParse(txtTransfImporte.getText());
+			mpt.importe = (BigDecimal)txtTransfImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception(lblTransfImporte.getText());
 		}		
@@ -1626,7 +1633,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		mpc.fechaEm = chequeFechaEmision.getTimestamp();
 		mpc.fechaPago = chequeFechaPago.getTimestamp();
 		try {	    		
-			mpc.importe = numberParse(txtChequeImporte.getText());
+			mpc.importe = (BigDecimal)txtChequeImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception(lblChequeImporte.getText());
 		}		
@@ -1678,7 +1685,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
     	int count = 0;
     	boolean isMultiSelect = false;
-    	double saldo = getModel().numberParse(txtSaldo.getText()).doubleValue();
+    	BigDecimal saldo = (BigDecimal)txtSaldo.getValue();
     	ArrayList<MedioPagoCredito> retValue = new ArrayList<MedioPagoCredito>();
     	try {
     		// Es multiSeleccion?
@@ -1691,8 +1698,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	
 		// Multiseleccion: Si ya no queda saldo por cancelar, entonces no es correcto intentar asignar mas NCs
 		if (isMultiSelect) {
-			double totalCreditsOpenAmt = getModel().numberParse(txtCreditAvailable.getText()).doubleValue();
-			if (totalCreditsOpenAmt > saldo)
+			BigDecimal totalCreditsOpenAmt = (BigDecimal)txtCreditAvailable.getValue();
+			if (totalCreditsOpenAmt.compareTo(saldo) > 0)
 				throw new Exception("El monto de la multi selección ($" + totalCreditsOpenAmt + ") es mayor que el monto a cancelar ($" + saldo + ")" );
 		}
     	
@@ -1723,13 +1730,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar
 					try {
 						double min = Math.min(	getModel().getCreditAvailableAmt(mpcm.getC_invoice_ID()).doubleValue(),
-												saldo);
+												saldo.doubleValue());
 						mpcm.setImporte(BigDecimal.valueOf(min));
-						saldo=saldo-min;
+						saldo= BigDecimal.valueOf(saldo.doubleValue()-min);
 					} catch (Exception ex) { }
 				}
 				else {
-					mpcm.setImporte(numberParse(txtCreditImporte.getText()));
+					mpcm.setImporte((BigDecimal)txtCreditImporte.getValue());
 				}
 			} catch (Exception e) {
 				throw new InterruptedException(lblCreditImporte.getText());
@@ -1746,27 +1753,69 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		return retValue;
     }
     
-	protected MedioPago savePagoAdelantadoMedioPago() throws Exception {
-		// Obtengo los datos de la interfaz
+	protected List<MedioPago> savePagoAdelantadoMedioPago() throws Exception {
 		boolean isCash = cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX;
+		int count = 0;
+    	boolean isMultiSelect = false;
+    	BigDecimal saldo = (BigDecimal)txtSaldo.getValue();
+    	ArrayList<MedioPago> retValue = new ArrayList<MedioPago>();
+    	Object[] adelantados = null;
+    	try {
+    		// Es multiSeleccion?
+    		adelantados = 
+    				isCash ? ((Object[]) cashAdelantado.getValue())
+    						: ((Object[]) pagoAdelantado.getValue()); 
+			count = adelantados.length;
+    		isMultiSelect = true;
+    	} catch (Exception e) { 
+    		/* No es multiselect */
+    		count = 1;
+    	} 
+    	
+		// Multiseleccion: Si ya no queda saldo por cancelar, entonces no es correcto
+		// intentar asignar mas adelantos
+		if (isMultiSelect) {
+			BigDecimal totalAdelantosOpenAmt = (BigDecimal)txtPagoAdelantadoAvailable.getValue();
+			if (totalAdelantosOpenAmt.compareTo(saldo) > 0)
+				throw new Exception("El monto de la multi selección ($" + totalAdelantosOpenAmt
+						+ ") es mayor que el monto a cancelar ($" + saldo + ")");
+		}
+    	
 		Integer payID = null;
 		BigDecimal amount = null;
 		Integer monedaOriginalID;
-		
-		payID = (Integer)(isCash ? cashAdelantado.getValue() : pagoAdelantado.getValue());
-		
+		BigDecimal toAllocAmt; 
+		BigDecimal auxAmount = BigDecimal.ZERO;
 		try {
-			monedaOriginalID = (Integer) cboCurrency.getValue();
-		} catch (Exception e) {
-			throw new Exception(cboCurrency.getValue().toString());
-		}
-		try {
-			amount = numberParse(txtPagoAdelantadoImporte.getText());
+			auxAmount = (BigDecimal)txtPagoAdelantadoImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
-		// Se agrega el cobro adelantado como medio de cobro
-		return getModel().addPagoAdelantado(payID, amount, isCash, monedaOriginalID);		
+    	for (int i = 0; i < count && auxAmount.compareTo(BigDecimal.ZERO) > 0; i++) {
+			// Obtengo los datos de la interfaz
+			payID = isMultiSelect ? (Integer) adelantados[i]
+					: (Integer) (isCash ? cashAdelantado.getValue() 
+										: pagoAdelantado.getValue());
+			
+			try {
+				monedaOriginalID = (Integer) cboCurrency.getValue();
+			} catch (Exception e) {
+				throw new Exception(cboCurrency.getValue().toString());
+			}
+			try {
+				toAllocAmt = !isMultiSelect? auxAmount : 
+						(isCash ? getModel().getCashAdelantadoAvailableAmt(payID)
+								: getModel().getPagoAdelantadoAvailableAmt(payID));
+				toAllocAmt = toAllocAmt.compareTo(auxAmount) > 0?auxAmount:toAllocAmt;
+			} catch (Exception e) {
+				throw new Exception("@Invalid@ @Amount@");
+			}
+			
+			// Se agrega el cobro adelantado como medio de cobro
+			retValue.add(getModel().addPagoAdelantado(payID, toAllocAmt, isCash, monedaOriginalID));
+			auxAmount = auxAmount.subtract(toAllocAmt);
+    	}
+		return retValue;
 	}
     
     
@@ -1827,12 +1876,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
     		tblFacturas.setEnabled(true);
-    		txtTotalPagar1.setEditable(false);
+    		txtTotalPagar1.setReadWrite(false);
     		rInvoiceAll.setEnabled(true);
     		rInvoiceDate.setEnabled(true);
     	} else {
     		tblFacturas.setEnabled(false);
-    		txtTotalPagar1.setEditable(true);
+    		txtTotalPagar1.setReadWrite(true);
     		rInvoiceAll.setSelected(true);
     		rInvoiceAll.setEnabled(true);
     		rInvoiceDate.setEnabled(false);
@@ -1903,14 +1952,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      */
     private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
     	
-    	doBPartnerValidations();
+    	validatePaymentBlocked();
     	
     	final int idx = jTabbedPane1.getSelectedIndex();
     	/*
     	 * idx = 0, se encuentra en la pestaña Seleccion de Pago (F2). 
     	 * El botón accionado es "Siguiente (F8)"
     	 */
-    	if (idx == 0) { 
+    	if (idx == 0) {
 
 			// Aviso si la OP tiene pagos parciales
 			if ((m_model.getPartialPayment()) && (!ADialog.ask(m_WindowNo, this,
@@ -1924,11 +1973,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		
     		try {
     			monto = (BigDecimal)txtTotalPagar1.getValue();
+    			setToPayAmtContext(monto);
     		} catch (Exception e) {
     			showError("@SaveErrorNotUnique@ \n\n" + lblTotalPagar1.getText());
     			
         		txtTotalPagar1.requestFocusInWindow();
-        		txtTotalPagar1.select(0, txtTotalPagar1.getText().length() - 1);
+        		//txtTotalPagar1.select(0, txtTotalPagar1.getText().length() - 1);
         		
         		return;
     		}
@@ -2257,25 +2307,25 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected VLookup transfCtaBancaria;
     protected javax.swing.JTextField txtDescription;
     protected javax.swing.JTextField txtChequeALaOrden;
-    protected JFormattedTextField txtChequeImporte;
+    protected VNumber txtChequeImporte;
     protected javax.swing.JTextField txtChequeNroCheque;
     protected javax.swing.JTextField txtChequeDescripcion;
-    protected JFormattedTextField txtEfectivoImporte;
+    protected VNumber txtEfectivoImporte;
     protected javax.swing.JTextField txtMedioPago2;
     protected javax.swing.JTextField txtRetenciones2;
-    protected javax.swing.JTextField txtSaldo;
+    protected VNumber txtSaldo;
     protected javax.swing.JTextField txtDifCambio;
-    protected JFormattedTextField txtTotalPagar1;
+    protected VNumber txtTotalPagar1;
     protected javax.swing.JTextField txtTotalPagar2;
-    protected JFormattedTextField txtTransfImporte;
+    protected VNumber txtTransfImporte;
     protected javax.swing.JTextField txtTransfNroTransf;
     // Fin de declaraci�n de variables//GEN-END:variables
     protected JLabel lblCreditInvoice;
     protected VLookup creditInvoice;
     protected JLabel lblCreditImporte;
-    protected JFormattedTextField txtCreditImporte;
+    protected VNumber txtCreditImporte;
     protected JLabel lblCreditAvailable;
-    protected JFormattedTextField txtCreditAvailable;
+    protected VNumber txtCreditAvailable;
 	protected javax.swing.JLabel lblChequeBanco;
 	protected javax.swing.JLabel lblChequeCUITLibrador;
 	protected javax.swing.JTextField txtChequeBanco;
@@ -2285,13 +2335,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected javax.swing.JPanel panelPagoAdelantado;
     protected javax.swing.JLabel lblPagoAdelantado;
     protected javax.swing.JLabel lblPagoAdelantadoImporte;
-    protected JFormattedTextField txtPagoAdelantadoImporte;
+    protected VNumber txtPagoAdelantadoImporte;
     protected VLookup pagoAdelantado;
     protected VLookup cashAdelantado;
     protected VComboBox cboPagoAdelantadoType;
     protected JLabel lblPagoAdelantadoType;
     protected JLabel lblPagoAdelantadoAvailable;
-    protected JFormattedTextField txtPagoAdelantadoAvailable;
+    protected VNumber txtPagoAdelantadoAvailable;
     protected javax.swing.JPanel pagoAdelantadoTypePanel;
     
     protected static final int PAGO_ADELANTADO_TYPE_PAYMENT_INDEX = 0;
@@ -2307,7 +2357,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private javax.swing.JLabel lblChequeTerceroDescripcion;
     private VLookup chequeTerceroCuenta;
     private VLookup chequeTercero;
-    private JFormattedTextField txtChequeTerceroImporte;
+    private VNumber txtChequeTerceroImporte;
     private javax.swing.JTextField txtChequeTerceroDescripcion;
     
     // Variables //
@@ -2320,9 +2370,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
     private static CLogger log = CLogger.getCLogger( VOrdenPago.class );
-    protected VOrdenPagoModel m_model = new VOrdenPagoModel();
+    protected VOrdenPagoModel m_model;
     protected Properties m_ctx = Env.getCtx();
-    private String m_trxName = m_model.getTrxName();
+    private String m_trxName;
     
     private Map<String, KeyStroke> actionKeys;
     
@@ -2398,9 +2448,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		//
 		
 		txtTotalPagar1.setValue(null);
-		txtTotalPagar1.setText("");
+		txtTotalPagar1.setValue(BigDecimal.ZERO);
 		lblDateTrx.setText(getModel().isSOTrx()?"Fecha del recibo:":"Fecha de la O/P:");		
-		txtSaldo.setText("");
+		//txtSaldo.setText("");
 		txtDifCambio.setText("");
 		txtTotalPagar2.setText("");
 		txtRetenciones2.setText("");
@@ -2414,15 +2464,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		
 		// 
 		
-		initFormattedTextField((JFormattedTextField)txtTotalPagar1);
-		initFormattedTextField((JFormattedTextField)txtChequeImporte);
-		initFormattedTextField((JFormattedTextField)txtEfectivoImporte);
-		initFormattedTextField((JFormattedTextField)txtTransfImporte);
-		initFormattedTextField((JFormattedTextField)txtCreditImporte);
-		initFormattedTextField((JFormattedTextField)txtCreditAvailable);
-		initFormattedTextField((JFormattedTextField)txtPagoAdelantadoAvailable);
-		txtCreditAvailable.setText("");
-		txtPagoAdelantadoAvailable.setText("");
+		//initFormattedTextField((JFormattedTextField)txtTotalPagar1);
+		//initFormattedTextField((JFormattedTextField)txtChequeImporte);
+		//initFormattedTextField((JFormattedTextField)txtEfectivoImporte);
+		//initFormattedTextField((JFormattedTextField)txtTransfImporte);
+		//initFormattedTextField((JFormattedTextField)txtCreditImporte);
+		//initFormattedTextField((JFormattedTextField)txtCreditAvailable);
+		//initFormattedTextField((JFormattedTextField)txtPagoAdelantadoAvailable);
+		//txtCreditAvailable.setText("");
+		// txtPagoAdelantadoAvailable.setText("");
 		
 		//
 		cboCurrency.addVetoableChangeListener(this);
@@ -2446,9 +2496,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		});				
 		
 		// tblFacturas.getDefaultEditor(BigDecimal.class).addCellEditorListener(this);
-		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class); 
-		TableCellEditor cellEd = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
-		TableCellEditor cellEd2 = new DecimalEditor(BigDecimal.ZERO, new BigDecimal(Integer.MAX_VALUE), m_model.getNumberFormat());
+		// TableCellEditor cellEd = tblFacturas.getDefaultEditor(BigDecimal.class);
+		TableCellEditor cellEd = new DecimalEditor();
+		TableCellEditor cellEd2 = new DecimalEditor();
 		int cc = tblFacturas.getColumnModel().getColumnCount();
 		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
 		TableColumn tc2 = tblFacturas.getColumnModel().getColumn(cc - 2);
@@ -2563,19 +2613,19 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				try {
 					if (creditInvoice.getValue() != null && ((Object[])creditInvoice.getValue()).length>1) {
 						txtCreditImporte.setEnabled(false);
-						txtCreditAvailable.setText(getModel().numberFormat(BigDecimal.valueOf(getTotalCreditsOpenAmt())));
+						txtCreditAvailable.setValue(BigDecimal.valueOf(getTotalCreditsOpenAmt()));
 						return;
 					}
 				} catch (Exception ex) { }
 				
 				Integer invoiceID = (Integer)creditInvoice.getValue();
 				if (invoiceID != null)
-					txtCreditAvailable.setText(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
+					txtCreditAvailable.setValue(getModel().getCreditAvailableAmt(invoiceID));
 					// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar 
 					try {
-						double min = Math.min(	getModel().numberParse(txtCreditAvailable.getText()).doubleValue(),
-												getModel().numberParse(txtSaldo.getText()).doubleValue() );
-						txtCreditImporte.setText(getModel().numberFormat(BigDecimal.valueOf(min)));
+						double min = Math.min(	((BigDecimal)txtCreditAvailable.getValue()).doubleValue(),
+												((BigDecimal)txtSaldo.getValue()).doubleValue() );
+						txtCreditImporte.setValue(BigDecimal.valueOf(min));
 						txtCreditImporte.setEnabled(true);
 					} catch (Exception ex) { }
 			}
@@ -2601,12 +2651,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
         // Cuando cambia el documento de pago adelantado, se carga el 
         // importe disponible en el text correspondiente
-        pagoAdelantado.addActionListener(new ActionListener() {
+        /*pagoAdelantado.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
 				Integer paymentID = (Integer)pagoAdelantado.getValue();
 				if (paymentID != null)
-					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getPagoAdelantadoAvailableAmt(paymentID)));
+					txtPagoAdelantadoAvailable.setValue(getModel().getPagoAdelantadoAvailableAmt(paymentID));
 			}
         	
         });
@@ -2618,10 +2668,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			public void actionPerformed(ActionEvent e) {
 				Integer cashLineID = (Integer)cashAdelantado.getValue();
 				if (cashLineID != null)
-					txtPagoAdelantadoAvailable.setText(getModel().numberFormat(getModel().getCashAdelantadoAvailableAmt(cashLineID)));
+					txtPagoAdelantadoAvailable.setValue(getModel().getCashAdelantadoAvailableAmt(cashLineID));
 			}
         	
-        });
+        });*/
         // Total a pagar 1
     	updateTotalAPagar1();
         // Agregado de pestañas con otras formas de pago. Método vacío que deben
@@ -2829,14 +2879,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// Efectivo
 		
 		efectivoLibroCaja.setValue(null);
-		txtEfectivoImporte.setText("");
+		//txtEfectivoImporte.setText("");
 		
 		// Transferencia 
 		
 		transfCtaBancaria.setValue(null);
 		//transFecha.setValue(d);
 		transFecha.setValue(dateTrx.getValue());
-		txtTransfImporte.setText("");
+		//txtTransfImporte.setText("");
 		txtTransfNroTransf.setText("");
 		
 		// Cheque
@@ -2862,7 +2912,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		else
 			txtChequeALaOrden.setText(getModel().getChequeALaOrden());
 		// -------------------------------------------------------------
-		txtChequeImporte.setText("");
+		//txtChequeImporte.setText("");
 		txtChequeNroCheque.setText("");
 		txtChequeBanco.setText("");
 		txtChequeCUITLibrador.setText("");
@@ -2870,20 +2920,20 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		
 		// Credito
 		creditInvoice.setValue(null);
-		txtCreditAvailable.setText("");
-		txtCreditImporte.setText("");
+		//txtCreditAvailable.setText("");
+		//txtCreditImporte.setText("");
 		
 		// Pago anticipado
 		pagoAdelantado.setValue(null);
-		txtPagoAdelantadoImporte.setText("");
+		txtPagoAdelantadoImporte.setValue(null);
 		cashAdelantado.setValue(null);
-		txtPagoAdelantadoAvailable.setText("");
+		txtPagoAdelantadoAvailable.setValue(null);
 		
 		// Cheque de tercero
 		if (m_chequeTerceroTabIndex >= 0) { // Está disponible la opcion de cheques de tercero
 			//chequeTerceroCuenta.setValue(null); No se borra la cuenta para la comodidad del usuario, dado que es un campo de filtro.
 			chequeTercero.setValue(null);
-			txtChequeTerceroImporte.setText("");
+			//txtChequeTerceroImporte.setText("");
 			txtChequeTerceroDescripcion.setText("");
 		}
 		cboChequeBancoID.setValue(null);
@@ -2899,7 +2949,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			VOrdenPagoModel.MedioPagoEfectivo mpe = (VOrdenPagoModel.MedioPagoEfectivo)mp;
 			
 			efectivoLibroCaja.setValue(mpe.libroCaja_ID);
-			txtEfectivoImporte.setText(m_model.numberFormat(mpe.importe));
+			txtEfectivoImporte.setValue(mpe.importe);
 			
 			jTabbedPane2.setSelectedIndex(TAB_INDEX_EFECTIVO);
 			
@@ -2909,7 +2959,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			
 			transfCtaBancaria.setValue(mpt.C_BankAccount_ID);
 			transFecha.setValue(mpt.fechaTransf);
-			txtTransfImporte.setText(m_model.numberFormat(mpt.importe));
+			txtTransfImporte.setValue(mpt.importe);
 			txtTransfNroTransf.setText(mpt.nroTransf);
 			
 			jTabbedPane2.setSelectedIndex(TAB_INDEX_TRANSFERENCIA);
@@ -2922,7 +2972,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			chequeFechaEmision.setValue(mpc.fechaEm);
 			chequeFechaPago.setValue(mpc.fechaPago);
 			txtChequeALaOrden.setText(mpc.aLaOrden);
-			txtChequeImporte.setText(m_model.numberFormat(mpc.importe));
+			txtChequeImporte.setValue(mpc.importe);
 			txtChequeNroCheque.setText(mpc.nroCheque);
 			txtChequeBanco.setText(mpc.banco);
 			cboChequeBancoID.setValue(mpc.bancoID);
@@ -3123,7 +3173,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	protected void updateSummaryInfo(){
 		BigDecimal sumaMediosPago = m_model.getSumaMediosPago();
 		
-		txtSaldo.setText(numberFormat(m_model.getSaldoMediosPago()));
+		txtSaldo.setValue(m_model.getSaldoMediosPago());
 		txtDifCambio.setText(numberFormat(getModel().calculateExchangeDifference()));
 		txtTotalPagar2.setText(numberFormat(m_model.getSumaTotalPagarFacturas()));
 		txtRetenciones2.setText(numberFormat(m_model.getSumaRetenciones()));
@@ -3412,7 +3462,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		pagoAdelantadoTypePanel.removeAll();
 		pagoAdelantado.setValue(null);
 		cashAdelantado.setValue(null);
-		txtPagoAdelantadoAvailable.setText("");
+		//txtPagoAdelantadoAvailable.setText("");
 		if (cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_PAYMENT_INDEX) {
 			pagoAdelantadoTypePanel.add(pagoAdelantado);
 			lblPagoAdelantado.setText(getMsg("Payment"));
@@ -3442,24 +3492,53 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		// Cheque
         lblChequeTercero = new JLabel();
         lblChequeTercero.setText(getMsg("Check"));
-        chequeTercero = VComponentsFactory.VLookupFactory("C_Payment_ID", "C_Payment", m_WindowNo, DisplayType.Search, getModel().getChequeTerceroSqlValidation());
+        chequeTercero = VComponentsFactory.VLookupFactory("C_Payment_ID", "C_Payment", m_WindowNo, DisplayType.Search, getModel().getChequeTerceroSqlValidation(),
+        		true, true, true, true, "org.openXpertya.apps.search.InfoPaymentChequeTerceros"); //JACOFER
         chequeTercero.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Integer paymentID = (Integer)chequeTercero.getValue();
-				String importe = "";
-				if (paymentID != null)
-					importe = getModel().numberFormat(getModel().getChequeAmt(paymentID));
-				txtChequeTerceroImporte.setText(importe);
+				if (chequeTercero.getValue() != null) {
+					// Selección múltiple de cheques en cartera
+					//Si selecciono uno solo, funciona como antes.
+					if (chequeTercero.getValue().getClass().equals(Integer.class)) {
+						Integer paymentID = (Integer)chequeTercero.getValue();
+						BigDecimal importe = BigDecimal.ZERO;
+						if (paymentID != null)
+							importe = getModel().getPaymentAmt(paymentID);
+						txtChequeTerceroImporte.setValue(importe);
+					} else { //Si selecciono más de uno, viene como un array de enteros
+						for (Object objID : ((Object[])chequeTercero.getValue())) {
+							Integer paymentID = (Integer)objID;
+							BigDecimal importe = BigDecimal.ZERO;
+							if (paymentID != null)
+								importe = getModel().getPaymentAmt(paymentID);
+							txtChequeTerceroImporte.setValue(importe);
+							try {
+								VOrdenPagoModel.MedioPago mp = null;
+								saveChequeTerceroMedioPago(paymentID);
+								savePMFinalize(mp);	// para Credito, mp sera null, con lo cual no hay necesidad de revalidar
+							} catch (InterruptedException ex) {
+					    		String title = Msg.getMsg(m_ctx, "Error");
+					    		String msg = Msg.parseTranslation(m_ctx, ex.getMessage());
+					    		JOptionPane.showMessageDialog(chequeTercero, msg, title, JOptionPane.ERROR_MESSAGE);
+					    	} catch (Exception ex) {
+					    		String title = Msg.getMsg(m_ctx, "Error");
+					    		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + ex.getMessage() /*"@SaveError@"*/ );
+					    		
+					    		JOptionPane.showMessageDialog(chequeTercero, msg, title, JOptionPane.ERROR_MESSAGE);
+					    	}
+						}
+					}
+				}
 			}
         });
         // Importe
         lblChequeTerceroImporte = new JLabel();
         lblChequeTerceroImporte.setText(Msg.getElement(m_ctx, "Amount"));
-        txtChequeTerceroImporte = new JFormattedTextField();
-        txtChequeTerceroImporte.setText("0");
-        initFormattedTextField((JFormattedTextField)txtChequeTerceroImporte);
+        txtChequeTerceroImporte = new VNumber();
+        txtChequeTerceroImporte.setValue(BigDecimal.ZERO);
+        //initFormattedTextField((JFormattedTextField)txtChequeTerceroImporte);
         txtChequeTerceroImporte.setValue(null);
-        txtChequeTerceroImporte.setEditable(false);
+        txtChequeTerceroImporte.setReadWrite(false);
         // Descripcion
         lblChequeTerceroDescripcion = new JLabel();
         lblChequeTerceroDescripcion.setText(getMsg("Description"));
@@ -3512,7 +3591,14 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 	
 	private void saveChequeTerceroMedioPago() throws Exception {
-		Integer paymentID = (Integer)chequeTercero.getValue();
+		saveChequeTerceroMedioPago(null);
+	}
+	
+	private void saveChequeTerceroMedioPago(Integer paymentID) throws Exception {
+		//JACOFER Si no paso el ID del Pago, lo obtengo del VLookup (caso selección simple normal, compatibilidad)
+		if (paymentID == null)
+			paymentID = (Integer)chequeTercero.getValue();
+		
 		BigDecimal importe; 
 		Integer monedaOriginalID;
 		try {
@@ -3521,7 +3607,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			throw new Exception(cboCurrency.getValue().toString());
 		}
 		try {
-			importe = numberParse(txtChequeTerceroImporte.getText());
+			importe = (BigDecimal)txtChequeTerceroImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception(lblChequeTerceroImporte.getText());
 		}
@@ -3579,6 +3665,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		setCurrencyContext(value);
 	}
 	
+	// Seteo en el contexto el valor total a pagar de la OP para poder mostrarlo en la ventana info de Cheques
+	private void setToPayAmtContext(BigDecimal amount) {
+		Env.setContext(m_ctx,m_WindowNo,"ToPayAmt", amount.setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+	} 
+	
 	/**
 	 * Busca las notas de créditos o pagos anticipados sin imputar para la
 	 * entidad comercial seleccionada
@@ -3621,7 +3712,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		BigDecimal total = m_model.getSumaTotalPagarFacturas();
 		String n = numberFormat(total);
 		txtTotalPagar1.setValue(total);
-		txtTotalPagar1.setText(n);
+		txtTotalPagar1.setValue(total);
 	}
 	
 	/**

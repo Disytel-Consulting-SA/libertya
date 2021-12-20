@@ -18,6 +18,7 @@ package org.openXpertya.util;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 
@@ -86,6 +87,97 @@ public class Evaluator {
         return true;
     }    // isAllVariablesDefined
 
+    
+    public static boolean evaluateComplexLogic( Evaluatee source,String logic ) {
+    	int l = logic.length();
+    	int i = 0;
+    	List<StringBuffer> bloques = new ArrayList<StringBuffer>();
+    	int currentIndexBloque = -1;
+    	Boolean evalOP = null;
+    	Character lastOP = null;
+    	Boolean evaluation = null;
+    	StringBuffer lastCondition = null;
+        while(i < l) {
+        	char c = logic.charAt(i);
+        	if(c == ')') {
+        		if(currentIndexBloque < 0 || bloques.get(currentIndexBloque) == null) {
+        			s_log.severe( "Logic does not comply with complex format "+logic );
+    				return false;
+        		}
+        		else {
+        			// Aca cierra una condición 
+					// Si seguimos teniendo anidadas, armamos una condición en base al resultado de
+					// esta última para que se incorpore a la de afuera
+        			// Si no tenemos anidadas, la dejamos como última condición
+        			if(currentIndexBloque > 0) {
+						boolean miniEval = evaluateLogic(source, bloques.get(currentIndexBloque).toString());
+        				bloques.get(currentIndexBloque-1).append("1="+(miniEval?"1":"0"));
+        			}
+        			else {
+        				lastCondition = new StringBuffer(bloques.get(currentIndexBloque).toString());
+        			}
+        			bloques.remove(currentIndexBloque);
+        			currentIndexBloque--;
+        		}
+        	}
+        	else if(c == '(') {
+        		currentIndexBloque++;
+        		bloques.add(new StringBuffer());
+        	}
+        	// Si el bloque es distinto de null, entonces hay que seguir guardando ahi
+        	else if(currentIndexBloque > -1) {
+        		bloques.get(currentIndexBloque).append(c);
+        	}
+        	// Si es un operador entonces evaluar lo que ya tiene la última condición
+        	else if(c == '&' || c == '|'){
+        		if(!Util.isEmpty(lastCondition.toString(), true)) {
+        			evalOP = evaluateLogic(source, lastCondition.toString());
+        		}
+        		lastOP = c;
+    			lastCondition = null;
+        	}
+        	else {
+        		if(lastCondition == null) {
+        			lastCondition = new StringBuffer();
+        		}
+        		lastCondition.append(c);
+        	}
+        	
+        	// Si se evaluó algo
+        	if(evalOP != null) {
+        		if(evaluation == null) {
+        			evaluation = evalOP;
+        		}
+        		else {
+        			if(lastOP == '&') {
+        				evaluation = evaluation && evalOP;
+        			}
+        			else {
+        				evaluation = evaluation || evalOP;
+        			}
+        		}
+        		evalOP = null;
+        	}
+        	
+        	i++;
+        }
+        if(currentIndexBloque > -1) {
+			s_log.severe( "Logic does not comply with complex format "+logic );
+			return false;
+		}
+        // La última condición
+        if(lastCondition != null) {
+        	evalOP = evaluateLogic(source, lastCondition.toString());
+        	if(lastOP == '&') {
+				evaluation = evaluation & evalOP;
+			}
+			else {
+				evaluation = evaluation | evalOP;
+			}
+        }
+    	return evaluation;
+    }
+    
     /**
      * Descripción de Método
      *
@@ -97,7 +189,7 @@ public class Evaluator {
      */
 
     public static boolean evaluateLogic( Evaluatee source,String logic ) {
-
+    	
         // Conditional
 
         StringTokenizer st = new StringTokenizer( logic.trim(),"&|",true );
@@ -108,6 +200,11 @@ public class Evaluator {
             s_log.severe( "Logic does not comply with format " + "'<expression> [<logic> <expression>]' => " + logic );
 
             return false;
+        }
+        
+        // Evaluar lógica compleja basada en varias condiciones en paréntesis
+        if(logic.indexOf("(") >= 0) {
+        	return evaluateComplexLogic(source,logic);
         }
 
         boolean retValue = evaluateLogicTuple( source,st.nextToken());

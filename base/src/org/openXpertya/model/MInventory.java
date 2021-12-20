@@ -19,10 +19,8 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -46,6 +44,9 @@ import org.openXpertya.util.Util;
 
 public class MInventory extends X_M_Inventory implements DocAction {
 
+	/** Flag que indica si estamos bajo una anulación */
+	private boolean isVoiding = false; 
+	
 	/**
 	 * Obtener el nro de documento del inventario en el caso que exista el
 	 * valor pasado como parámetro a la columna parámetro. Además, es posible
@@ -713,7 +714,10 @@ public class MInventory extends X_M_Inventory implements DocAction {
     	                // Transaction
     	                // Sólo se guarda la transacción si el movimiento es distinto de 0
     	                if(!Util.isEmpty(qtyDiff, true)){
-	    	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
+							trx = new MTransaction(getCtx(), MTransaction.MOVEMENTTYPE_InventoryIn,
+									line.getM_Locator_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
+									qtyDiff, getMovementDate(), get_TrxName());
+	    	                trx.setVoiding(isVoiding());
 	    	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	    	                trx.setClientOrg(this);
 	    	                trx.setDescription("MInventory.complete() - 1st Transaction Save - Transaction of MTransaction "
@@ -758,7 +762,10 @@ public class MInventory extends X_M_Inventory implements DocAction {
     	                // Transaction
     	                // Sólo se guarda la transacción si el movimiento es distinto de 0
     	                if(!Util.isEmpty(qtyDiff, true)){
-	    	                trx = new MTransaction( getCtx(),MTransaction.MOVEMENTTYPE_InventoryIn,line.getM_Locator_ID(),line.getM_Product_ID(),line.getM_AttributeSetInstance_ID(),qtyDiff,getMovementDate(),get_TrxName());
+							trx = new MTransaction(getCtx(), MTransaction.MOVEMENTTYPE_InventoryIn,
+									line.getM_Locator_ID(), line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
+									qtyDiff, getMovementDate(), get_TrxName());
+							trx.setVoiding(isVoiding());
 	    	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	    	                trx.setClientOrg(this);
 	    	                trx.setDescription("MInventory.complete() - 1st Transaction Save - Transaction of MTransaction "
@@ -802,6 +809,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
 							line.getM_AttributeSetInstance_ID(),
 							qtyOnHand, getMovementDate(),
 							get_TrxName());
+					trx.setVoiding(isVoiding());
 	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	                trx.setClientOrg(this);
 	                trx.setDescription("MInventory.complete() - 2nd Transaction Save - Transaction of MTransaction "
@@ -832,6 +840,7 @@ public class MInventory extends X_M_Inventory implements DocAction {
 							line.getM_AttributeSetInstance_ID(),
 							line.getQtyCount(), getMovementDate(),
 							get_TrxName());
+					trx.setVoiding(isVoiding());
 	                trx.setM_InventoryLine_ID( line.getM_InventoryLine_ID());
 	                trx.setClientOrg(this);
 	                trx.setDescription("MInventory.complete() - 3rd Transaction Save - Transaction of MTransaction "
@@ -1056,7 +1065,16 @@ public class MInventory extends X_M_Inventory implements DocAction {
 					m_processMsg = CLogger.retrieveErrorAsString();
 					return false;
 				}
+				// Liberar y corregir las cantidades de despachos de importación utilizados por
+				// este inventario
+		        try {
+		        	fixImportClearanceInventory(aLine.getID());
+		        } catch(Exception e) {
+		        	m_processMsg = CLogger.retrieveErrorAsString();
+					return false;
+		        }
 			}
+			reversal.setVoiding(true);
 			// Completar el documento reverso
 			if (!reversal.processIt(DOCACTION_Complete)) {
 				m_processMsg = reversal.getProcessMsg();
@@ -1318,6 +1336,33 @@ public class MInventory extends X_M_Inventory implements DocAction {
     	return transfer;
 	}
 
+
+	/**
+	 * Realizar la corrección de los despachos de importación utilizados en esta
+	 * línea de inventario
+	 * 
+	 * @param inventoryLineID línea de inventario
+	 */
+	protected void fixImportClearanceInventory(Integer inventoryLineID) throws Exception{
+		List<MImportClearanceInventory> icis = MImportClearanceInventory.getFromInventoryLine(getCtx(), inventoryLineID,
+				get_TrxName());
+		MImportClearance ic;
+		for (MImportClearanceInventory mImportClearanceInventory : icis) {
+			ic = new MImportClearance(getCtx(), mImportClearanceInventory.getM_Import_Clearance_ID(), get_TrxName());
+			ic.setQtyUsed(ic.getQtyUsed().add(mImportClearanceInventory.getQty().negate()));
+			if(!ic.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+	}
+
+	public boolean isVoiding() {
+		return isVoiding;
+	}
+
+	public void setVoiding(boolean isVoiding) {
+		this.isVoiding = isVoiding;
+	}
 	
 }    // MInventory
 

@@ -9,7 +9,6 @@ import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountableDocument;
 import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MPromotionCode;
-import org.openXpertya.model.MTax;
 
 /**
  * Wrapper de Pedido de TPV que permite calcular descuentos dentro del mismo
@@ -30,8 +29,8 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	}
 
 	@Override
-	public BigDecimal getLinesTotalAmt() {
-		return getOrder().getOrderProductsTotalAmt(false, false);
+	public BigDecimal getLinesTotalAmt(boolean documentDiscountApplied) {
+		return getOrder().getOrderProductsTotalAmt(false, documentDiscountApplied);
 	}
 	
 	@Override
@@ -125,6 +124,29 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 	@Override
 	public void setDocumentReferences(MPromotionCode promotionCode) {
 		promotionCode.setC_Invoice_ID(getOrder().getGeneratedInvoiceID());
+	}
+
+	@Override
+	public BigDecimal getTotalDocumentDiscount() {
+		return getOrder().getTotalDocumentDiscount();
+	}
+
+	@Override
+	public BigDecimal getTaxBaseAmt() {
+		return getOrder().getTotalTaxBaseAmt(false, true);
+	}
+
+	@Override
+	public int getCurrencyID() {
+		// TODO Por ahora no se usa por aca, cuando agreguemos posibilidad de crear
+		// comprobantes en distintas monedas en TPV entonces hay que modificar este dato
+		return 0;
+	}
+
+	@Override
+	public String getDeliveryViaRule() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/*@Override

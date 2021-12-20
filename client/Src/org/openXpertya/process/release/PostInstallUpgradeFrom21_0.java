@@ -1,8 +1,6 @@
 package org.openXpertya.process.release;
 
-import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.process.PluginPostInstallProcess;
-import org.openXpertya.utils.JarHelper;
 
 public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	
@@ -30,6 +28,26 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String INV_REPORT_UID = "CORE-AD_JasperReport-1000021";
 	protected final static String INV_REPORT_FILENAME = "rpt_FactA.jasper";
 	
+	/** Reporte de Cuenta Corriente por Entidad Comercial */
+	protected final static String BALANCE_BY_BPARTNER_JASPER_REPORT_UID = "JACLBY-AD_JasperReport-20200413133217034-110405";
+	protected final static String BALANCE_BY_BPARTNER_JASPER_REPORT_FILENAME = "CurrentAccountByBPartner.jasper";
+
+	/** Detalle de Cobros/Pagos sin Conciliar */
+	protected final static String UNRECONCILED_PAYMENTS_JASPER_REPORT_UID = "CORE-AD_Process-1010577";
+	protected final static String UNRECONCILED_PAYMENTS_JASPER_REPORT_FILENAME = "UnreconciledPaymentsDetailed.jasper";
+	
+	/** Consulta de Despacho de Importación */
+	protected final static String TABLE_CLEARANCE_JASPER_REPORT_UID = "JACLBY-AD_Process-20200601184841124-606998";
+	protected final static String TABLE_CLEARANCE_JASPER_REPORT_FILENAME = "ImportClearanceReport.jasper";
+	
+	/** Impresión de Despacho de Importación */
+	protected final static String IMPORT_CLEARANCE_PRINT_JASPER_REPORT_UID = "JACLBY-AD_JasperReport-20210430140236681-145033";
+	protected final static String IMPORT_CLEARANCE_PRINT_JASPER_REPORT_FILENAME = "rpt_DespachoImportacion.jasper";
+	
+	/** Comprobante de Retención */
+	public static String COMPROBANTE_RETENCION_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010081";
+	public static String COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME = "rpt_Comprobante_Retencion.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -52,16 +70,20 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		// Impresión de Facturas
 		updateReport(INV_REPORT_UID, INV_REPORT_FILENAME);
 		
-		/*
-		 * Actualizacion de binarios
-		 * """"""""""""""""""""""""" 
-		 * Utilizar SIEMPRE los métodos MJasperReport.updateBinaryData() y MProcess.addAttachment() 
-		 * para la carga de informes tipo Jasper, el primero para la carga en AD_JasperReport y el 
-		 * segundo en reportes dinámicos, los cuales van adjuntos en el informe/proceso correspondiente.
-		 * 
-		 * Idealmente incorporar informes ya precompilados para evitar 
-		 * la necesidad de contar con javac en los equipos de los usuarios
-		 */
+		// Reporte de Cuenta Corriente por Entidad Comercial
+		updateReport(BALANCE_BY_BPARTNER_JASPER_REPORT_UID, BALANCE_BY_BPARTNER_JASPER_REPORT_FILENAME);
+		
+		// Detalle de Cobros/Pagos sin Conciliar
+		updateReport(UNRECONCILED_PAYMENTS_JASPER_REPORT_UID, UNRECONCILED_PAYMENTS_JASPER_REPORT_FILENAME);
+		
+		// Consulta de Despacho de Importación
+		updateReport(TABLE_CLEARANCE_JASPER_REPORT_UID, TABLE_CLEARANCE_JASPER_REPORT_FILENAME);
+		
+		// Impresión de Despacho de Importación
+		updateReport(IMPORT_CLEARANCE_PRINT_JASPER_REPORT_UID, IMPORT_CLEARANCE_PRINT_JASPER_REPORT_FILENAME);
+		
+		// Comprobante de Retención
+		updateReport(COMPROBANTE_RETENCION_JASPER_REPORT_UID, COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME);
 		
 		return " ";
 	}

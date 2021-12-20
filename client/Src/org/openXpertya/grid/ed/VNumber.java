@@ -537,6 +537,9 @@ public final class VNumber extends JComponent implements VEditor,ActionListener,
             return new Integer( bd.intValue());
         }
 
+        if(bd != null && bd.compareTo(BigDecimal.ZERO) == 0) {
+        	return BigDecimal.ZERO;
+        }
         return bd.setScale( m_format.getMaximumFractionDigits(),BigDecimal.ROUND_HALF_UP );
     }
    

@@ -804,7 +804,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	 *  Get the key of currently selected row
 	 *  @return selected key
 	 */
-	protected Integer getSelectedRowKey()
+	public Integer getSelectedRowKey()
 	{
 		Integer key = contentPanel.getSelectedRowKey();
 		
@@ -816,7 +816,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
      *  @return IDs if selection present
      *  @author ashley
      */
-    protected ArrayList<Integer> getSelectedRowKeys()
+    public ArrayList<Integer> getSelectedRowKeys()
     {
         ArrayList<Integer> selectedDataList = new ArrayList<Integer>();
         

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_DocType
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-07-29 16:25:37.146 */
+ *  @version  - 2021-12-14 10:22:59.555 */
 public class X_C_DocType extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -22,6 +22,8 @@ setAllowOnlyProviders (false);
 setAllowOtherBatchPaymentDate (false);
 setAllowProposalDue (false);
 setApplyPerception (false);
+setApplyRetention (false);
+setCAIControl (false);
 setC_DocType_ID (0);
 setDocBaseType (null);
 setDocTypeKey (null);
@@ -36,6 +38,7 @@ setEnableInCreateFromShipment (false);
 setFiscalDocument (null);
 setGL_Category_ID (0);
 setHasCharges (false);
+setInOut_Allow_Greater_QtyOrdered (false);
 setIsCheckoutPlaceRestricted (false);
 setIsCreateCounter (true);	// Y
 setIsDefault (false);
@@ -54,6 +57,7 @@ setIsWarehouseClosureControl (false);
 setLinesCountMax (0);
 setLockSeq (false);
 setName (null);
+setNotInvoiceable (false);
 setOnlyVendorProducts (false);
 setopen_close_by_pos (false);	// N
 setPOSEnableDue (false);
@@ -240,6 +244,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Apply Retention */
+public void setApplyRetention (boolean ApplyRetention)
+{
+set_Value ("ApplyRetention", new Boolean(ApplyRetention));
+}
+/** Get Apply Retention */
+public boolean isApplyRetention() 
+{
+Object oo = get_Value("ApplyRetention");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set CAI */
 public void setCAI (String CAI)
 {
@@ -254,6 +274,22 @@ set_Value ("CAI", CAI);
 public String getCAI() 
 {
 return (String)get_Value("CAI");
+}
+/** Set CAI Control */
+public void setCAIControl (boolean CAIControl)
+{
+set_Value ("CAIControl", new Boolean(CAIControl));
+}
+/** Get CAI Control */
+public boolean isCAIControl() 
+{
+Object oo = get_Value("CAIControl");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 public static final int C_BANKLIST_BANK_ID_AD_Reference_ID = MReference.getReferenceID("C_Bank");
 /** Set Bank */
@@ -532,6 +568,23 @@ Integer ii = (Integer)get_Value("DocNoSequence_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int DOCNOSEQUENCE_UNIQUE_ID_AD_Reference_ID = MReference.getReferenceID("AD_Sequence for Documents");
+/** Set Unique Sequence.
+Sequence for unique numbers assigned at completed document action */
+public void setDocNoSequence_Unique_ID (int DocNoSequence_Unique_ID)
+{
+if (DocNoSequence_Unique_ID <= 0) set_Value ("DocNoSequence_Unique_ID", null);
+ else 
+set_Value ("DocNoSequence_Unique_ID", new Integer(DocNoSequence_Unique_ID));
+}
+/** Get Unique Sequence.
+Sequence for unique numbers assigned at completed document action */
+public int getDocNoSequence_Unique_ID() 
+{
+Integer ii = (Integer)get_Value("DocNoSequence_Unique_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 public static final int DOCSUBTYPECAE_AD_Reference_ID = MReference.getReferenceID("DocSubTypeCae");
 /** Facturas A = 01 */
 public static final String DOCSUBTYPECAE_FacturasA = "01";
@@ -595,12 +648,122 @@ public static final String DOCSUBTYPECAE_NotasDeDebitoM = "52";
 public static final String DOCSUBTYPECAE_NotasDeCreditoM = "53";
 /** Facturas de Exportacion Simplificado = 22 */
 public static final String DOCSUBTYPECAE_FacturasDeExportacionSimplificado = "22";
+/** Liquidacion de Servicios Publicos A = 17 */
+public static final String DOCSUBTYPECAE_LiquidacionDeServiciosPublicosA = "17";
+/** Liquidacion de Servicios Publicos B = 18 */
+public static final String DOCSUBTYPECAE_LiquidacionDeServiciosPublicosB = "18";
+/** Cptes A Compra Sector Pesquero Maritimo = 23 */
+public static final String DOCSUBTYPECAE_CptesACompraSectorPesqueroMaritimo = "23";
+/** Cptes B Compra Sector Pesquero Maritimo = 25 */
+public static final String DOCSUBTYPECAE_CptesBCompraSectorPesqueroMaritimo = "25";
+/** Cptes B Consignacion Sector Pesquero Maritimo = 26 */
+public static final String DOCSUBTYPECAE_CptesBConsignacionSectorPesqueroMaritimo = "26";
+/** Liquidacion Comercial Impositiva A = 27 */
+public static final String DOCSUBTYPECAE_LiquidacionComercialImpositivaA = "27";
+/** Liquidacion Comercial Impositiva B = 28 */
+public static final String DOCSUBTYPECAE_LiquidacionComercialImpositivaB = "28";
+/** Cbtes Compra Bienes Usados = 30 */
+public static final String DOCSUBTYPECAE_CbtesCompraBienesUsados = "30";
+/** Cbtes para Reciclar Materiales = 32 */
+public static final String DOCSUBTYPECAE_CbtesParaReciclarMateriales = "32";
+/** Liquidacion Primaria de Granos = 33 */
+public static final String DOCSUBTYPECAE_LiquidacionPrimariaDeGranos = "33";
+/** Cbtes A Apartado A Inciso F RGN 1415 = 34 */
+public static final String DOCSUBTYPECAE_CbtesAApartadoAIncisoFRGN1415 = "34";
+/** Cbtes B Anexo I Apartado A Inc. F RGN 1415 = 35 */
+public static final String DOCSUBTYPECAE_CbtesBAnexoIApartadoAIncFRGN1415 = "35";
+/** Cbtes C Anexo I Apartado A Inc. F RGN 1415 = 36 */
+public static final String DOCSUBTYPECAE_CbtesCAnexoIApartadoAIncFRGN1415 = "36";
+/** Nota de Debito RGN 1415 = 37 */
+public static final String DOCSUBTYPECAE_NotaDeDebitoRGN1415 = "37";
+/** Nota de Credito RGN 1415 = 38 */
+public static final String DOCSUBTYPECAE_NotaDeCreditoRGN1415 = "38";
+/** Otros Cbtes A RGN 1415 = 39 */
+public static final String DOCSUBTYPECAE_OtrosCbtesARGN1415 = "39";
+/** Otros Cbtes B RGN 1415 = 40 */
+public static final String DOCSUBTYPECAE_OtrosCbtesBRGN1415 = "40";
+/** Otros Cbtes C RGN 1415 = 41 */
+public static final String DOCSUBTYPECAE_OtrosCbtesCRGN1415 = "41";
+/** Nota de Credito Liquidacion Impositiva B = 43 */
+public static final String DOCSUBTYPECAE_NotaDeCreditoLiquidacionImpositivaB = "43";
+/** Nota de Debito Liquidacion Impositiva A = 45 */
+public static final String DOCSUBTYPECAE_NotaDeDebitoLiquidacionImpositivaA = "45";
+/** Nota de Debito Liquidacion Impositiva B = 46 */
+public static final String DOCSUBTYPECAE_NotaDeDebitoLiquidacionImpositivaB = "46";
+/** Nota de Credito Liquidacion Impositiva A = 48 */
+public static final String DOCSUBTYPECAE_NotaDeCreditoLiquidacionImpositivaA = "48";
+/** Cbtes Compra Bienes a CF = 49 */
+public static final String DOCSUBTYPECAE_CbtesCompraBienesACF = "49";
+/** Recibo Factura A Reg. Factura de Credito = 50 */
+public static final String DOCSUBTYPECAE_ReciboFacturaARegFacturaDeCredito = "50";
+/** Recibos M = 54 */
+public static final String DOCSUBTYPECAE_RecibosM = "54";
+/** Nota de Venta al Contado M = 55 */
+public static final String DOCSUBTYPECAE_NotaDeVentaAlContadoM = "55";
+/** Cbtes M Anexo I Apartado A Inc. F RGN 1415 = 56 */
+public static final String DOCSUBTYPECAE_CbtesMAnexoIApartadoAIncFRGN1415 = "56";
+/** Otros Cbtes M RGN 1415 = 57 */
+public static final String DOCSUBTYPECAE_OtrosCbtesMRGN1415 = "57";
+/** Cuentas de Venta y Liquido Prod. M = 58 */
+public static final String DOCSUBTYPECAE_CuentasDeVentaYLiquidoProdM = "58";
+/** Liquidaciones M = 59 */
+public static final String DOCSUBTYPECAE_LiquidacionesM = "59";
+/** Cuentas de Venta y Liquido Prod. A = 60 */
+public static final String DOCSUBTYPECAE_CuentasDeVentaYLiquidoProdA = "60";
+/** Cuentas de Venta y Liquido Prod. B = 61 */
+public static final String DOCSUBTYPECAE_CuentasDeVentaYLiquidoProdB = "61";
+/** Liquidaciones A = 63 */
+public static final String DOCSUBTYPECAE_LiquidacionesA = "63";
+/** Liquidaciones B = 64 */
+public static final String DOCSUBTYPECAE_LiquidacionesB = "64";
+/** Despacho de Importacion = 66 */
+public static final String DOCSUBTYPECAE_DespachoDeImportacion = "66";
+/** Recibo Factura de Credito = 70 */
+public static final String DOCSUBTYPECAE_ReciboFacturaDeCredito = "70";
+/** Tique Factura A = 81 */
+public static final String DOCSUBTYPECAE_TiqueFacturaA = "81";
+/** Tique Factura B = 82 */
+public static final String DOCSUBTYPECAE_TiqueFacturaB = "82";
+/** Tique = 83 */
+public static final String DOCSUBTYPECAE_Tique = "83";
+/** Nota de Credito No Cumplen RGN 1415 = 90 */
+public static final String DOCSUBTYPECAE_NotaDeCreditoNoCumplenRGN1415 = "90";
+/** Otros Cbtes No Cumplen RGN 1415 = 99 */
+public static final String DOCSUBTYPECAE_OtrosCbtesNoCumplenRGN1415 = "99";
+/** Tique Nota de Credito = 110 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeCredito = "110";
+/** Tique Factura C = 111 */
+public static final String DOCSUBTYPECAE_TiqueFacturaC = "111";
+/** Tique Nota de Credito A = 112 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeCreditoA = "112";
+/** Tique Nota de Credito B = 113 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeCreditoB = "113";
+/** Tique Nota de Credito C = 114 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeCreditoC = "114";
+/** Tique Nota de Debito A = 115 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeDebitoA = "115";
+/** Tique Nota de Debito B = 116 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeDebitoB = "116";
+/** Tique Nota de Debito C = 117 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeDebitoC = "117";
+/** Tique Factura M = 118 */
+public static final String DOCSUBTYPECAE_TiqueFacturaM = "118";
+/** Tique Nota de Credito M = 119 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeCreditoM = "119";
+/** Tique Nota de Debito M = 120 */
+public static final String DOCSUBTYPECAE_TiqueNotaDeDebitoM = "120";
+/** Liquidacion Secundaria de Granos = 331 */
+public static final String DOCSUBTYPECAE_LiquidacionSecundariaDeGranos = "331";
+/** Liquidacion Deposito Granos en Planta = 332 */
+public static final String DOCSUBTYPECAE_LiquidacionDepositoGranosEnPlanta = "332";
+/** Cptes A Consignacion Sector Pesquero Maritimo = 24 */
+public static final String DOCSUBTYPECAE_CptesAConsignacionSectorPesqueroMaritimo = "24";
 /** Remito R = 91 */
 public static final String DOCSUBTYPECAE_RemitoR = "91";
 /** Set docsubtypecae */
 public void setdocsubtypecae (String docsubtypecae)
 {
-if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("13") || docsubtypecae.equals("12") || docsubtypecae.equals("16") || docsubtypecae.equals("15") || docsubtypecae.equals("202") || docsubtypecae.equals("207") || docsubtypecae.equals("212") || docsubtypecae.equals("203") || docsubtypecae.equals("208") || docsubtypecae.equals("213") || docsubtypecae.equals("201") || docsubtypecae.equals("206") || docsubtypecae.equals("211") || docsubtypecae.equals("51") || docsubtypecae.equals("52") || docsubtypecae.equals("53") || docsubtypecae.equals("22") || docsubtypecae.equals("91") || ( refContainsValue("CORE-AD_Reference-1010096", docsubtypecae) ) );
+if (docsubtypecae == null || docsubtypecae.equals("01") || docsubtypecae.equals("02") || docsubtypecae.equals("03") || docsubtypecae.equals("04") || docsubtypecae.equals("05") || docsubtypecae.equals("06") || docsubtypecae.equals("07") || docsubtypecae.equals("08") || docsubtypecae.equals("09") || docsubtypecae.equals("10") || docsubtypecae.equals("20") || docsubtypecae.equals("19") || docsubtypecae.equals("21") || docsubtypecae.equals("11") || docsubtypecae.equals("13") || docsubtypecae.equals("12") || docsubtypecae.equals("16") || docsubtypecae.equals("15") || docsubtypecae.equals("202") || docsubtypecae.equals("207") || docsubtypecae.equals("212") || docsubtypecae.equals("203") || docsubtypecae.equals("208") || docsubtypecae.equals("213") || docsubtypecae.equals("201") || docsubtypecae.equals("206") || docsubtypecae.equals("211") || docsubtypecae.equals("51") || docsubtypecae.equals("52") || docsubtypecae.equals("53") || docsubtypecae.equals("22") || docsubtypecae.equals("17") || docsubtypecae.equals("18") || docsubtypecae.equals("23") || docsubtypecae.equals("25") || docsubtypecae.equals("26") || docsubtypecae.equals("27") || docsubtypecae.equals("28") || docsubtypecae.equals("30") || docsubtypecae.equals("32") || docsubtypecae.equals("33") || docsubtypecae.equals("34") || docsubtypecae.equals("35") || docsubtypecae.equals("36") || docsubtypecae.equals("37") || docsubtypecae.equals("38") || docsubtypecae.equals("39") || docsubtypecae.equals("40") || docsubtypecae.equals("41") || docsubtypecae.equals("43") || docsubtypecae.equals("45") || docsubtypecae.equals("46") || docsubtypecae.equals("48") || docsubtypecae.equals("49") || docsubtypecae.equals("50") || docsubtypecae.equals("54") || docsubtypecae.equals("55") || docsubtypecae.equals("56") || docsubtypecae.equals("57") || docsubtypecae.equals("58") || docsubtypecae.equals("59") || docsubtypecae.equals("60") || docsubtypecae.equals("61") || docsubtypecae.equals("63") || docsubtypecae.equals("64") || docsubtypecae.equals("66") || docsubtypecae.equals("70") || docsubtypecae.equals("81") || docsubtypecae.equals("82") || docsubtypecae.equals("83") || docsubtypecae.equals("90") || docsubtypecae.equals("99") || docsubtypecae.equals("110") || docsubtypecae.equals("111") || docsubtypecae.equals("112") || docsubtypecae.equals("113") || docsubtypecae.equals("114") || docsubtypecae.equals("115") || docsubtypecae.equals("116") || docsubtypecae.equals("117") || docsubtypecae.equals("118") || docsubtypecae.equals("119") || docsubtypecae.equals("120") || docsubtypecae.equals("331") || docsubtypecae.equals("332") || docsubtypecae.equals("24") || docsubtypecae.equals("91") || ( refContainsValue("CORE-AD_Reference-1010096", docsubtypecae) ) );
  else throw new IllegalArgumentException ("docsubtypecae Invalid value: " + docsubtypecae + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010096") );
 if (docsubtypecae != null && docsubtypecae.length() > 10)
 {
@@ -924,6 +1087,22 @@ Indicates if Pro Forma Invoices can be generated from this document */
 public boolean isHasProforma() 
 {
 Object oo = get_Value("HasProforma");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set In Out Allow Greater Qty Ordered */
+public void setInOut_Allow_Greater_QtyOrdered (boolean InOut_Allow_Greater_QtyOrdered)
+{
+set_Value ("InOut_Allow_Greater_QtyOrdered", new Boolean(InOut_Allow_Greater_QtyOrdered));
+}
+/** Get In Out Allow Greater Qty Ordered */
+public boolean isInOut_Allow_Greater_QtyOrdered() 
+{
+Object oo = get_Value("InOut_Allow_Greater_QtyOrdered");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -1314,6 +1493,22 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Not Invoiceable */
+public void setNotInvoiceable (boolean NotInvoiceable)
+{
+set_Value ("NotInvoiceable", new Boolean(NotInvoiceable));
+}
+/** Get Not Invoiceable */
+public boolean isNotInvoiceable() 
+{
+Object oo = get_Value("NotInvoiceable");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Only Vendor Products.
 Only is allowed vendor products */

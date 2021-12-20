@@ -63,7 +63,7 @@ public class PoSModel {
 	private PriceListVersion priceListVersion;
 	
 	/** Estado de conexión del TPV: Online/Offline */
-	private PoSConnectionState connectionState;
+	protected PoSConnectionState connectionState;
 	
 	/** Contiene el último pedido de cliente cargado */
 	private Order customerOrder = null;
@@ -436,6 +436,19 @@ public class PoSModel {
 		// La cantidad de la línea no debe superar el máximo configurado
 		if(countSurpassMax(count)){
 			throw new ProductAddValidationFailed(product, "SurpassMaxOrderLineQty");
+		}
+		
+		// Validar cantidades mínimas
+		if(product.getSalesOrderMin().compareTo(count) > 0) {
+			throw new ProductAddValidationFailed(product, "POSQtyLessThanSalesOrderMinQty", getConnectionState()
+					.parseTranslation("@QtyEntered@: " + count + ". @Order_Min@: " + product.getSalesOrderMin()));
+		}
+		
+		// Validar múltiplo a ordenar de ventas
+		if(!Util.isEmpty(product.getSalesOrderPack(), true)
+				&& count.remainder(product.getSalesOrderPack()).compareTo(BigDecimal.ZERO) != 0) {
+			throw new ProductAddValidationFailed(product, "POSQtyMustBeMultipleOfSalesOrderPack", getConnectionState()
+					.parseTranslation("@QtyEntered@: " + count + ". @Order_Pack@: " + product.getSalesOrderPack()));
 		}
 		
 		// Crea el artículo del pedido con la cantidad indicada y lo agrega al pedido
@@ -850,6 +863,10 @@ public class PoSModel {
 	 */
 	public void loadDefaultPriceList(int windowNo){
 		updatePriceList(getPoSConfig().getPriceListIDInConfig(), windowNo);
+	}
+	
+	public int getDefaultPriceList(){
+		return getConnectionState().getDefaultPriceListIDInConfig();
 	}
 	
 	public boolean reprintInvoice(FiscalDocumentPrint fdp){

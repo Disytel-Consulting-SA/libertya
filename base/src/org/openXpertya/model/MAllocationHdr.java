@@ -610,6 +610,12 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         
         status = this.afterProcessDocument(engine.getDocAction(), status) && status;
 
+        // Incorporar la asignación del número de documento único desde la secuencia
+ 		// única al completar. 
+ 		// IMPORTANTE: La asignación del número de documento único debe ir al final de
+ 		// este método
+ 		status = assignUniqueDocumentNo(engine.getDocAction(), status) && status;
+        
 		return status;        
     }    // processIt
 
@@ -1899,6 +1905,32 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 
 	public void setIgnorePOSJournalAssigned(boolean ignorePOSJournalAssigned) {
 		this.ignorePOSJournalAssigned = ignorePOSJournalAssigned;
+	}
+	
+	/**
+	 * Asigna el número de documento único luego de completar. 
+	 * 
+	 * @param processAction acción realizada sobre el documento
+	 * @param status        el estado del procesamiento luego de realizar la acción
+	 *                      parámetro
+	 * @return true si el procesamiento se ejecutó y se asignó correctamente el
+	 *         número de documento único, false caso contrario. Depende también del
+	 *         status parámetro.
+	 */
+	public boolean assignUniqueDocumentNo(String processAction, boolean status) {
+		boolean newStatus = status;
+		if(status && DOCACTION_Complete.equals(processAction)) {
+			MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
+			if(!Util.isEmpty(dt.getDocNoSequence_Unique_ID(), true)) {
+				String newDocNo = DB.getUniqueDocumentNo(dt.getID(), get_TrxName());
+				if(Util.isEmpty(newDocNo, true)) {
+					setProcessMsg(Msg.getMsg(getCtx(), "UniqueDocumentNoError"));
+					newStatus = false;
+				}
+				setDocumentNo(newDocNo);
+			}
+		}
+		return newStatus;
 	}
 }    // MAllocation
 

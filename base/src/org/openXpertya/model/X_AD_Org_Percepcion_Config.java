@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Org_Percepcion_Config
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2013-09-12 18:05:09.099 */
+ *  @version  - 2021-12-20 13:54:03.044 */
 public class X_AD_Org_Percepcion_Config extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -92,11 +92,17 @@ public static final String PADRONTYPE_PadrónBsAs = "B";
 public static final String PADRONTYPE_PadrónDeAltoRiesgoCABA = "A";
 /** Régimen Simplificado CABA = S */
 public static final String PADRONTYPE_RégimenSimplificadoCABA = "S";
+/** Padrón de Regímenes Generales = G */
+public static final String PADRONTYPE_PadrónDeRegímenesGenerales = "G";
+/** Coeficientes Tucuman = C */
+public static final String PADRONTYPE_CoeficientesTucuman = "C";
+/** Padron Contribuyentes Tucuman = T */
+public static final String PADRONTYPE_PadronContribuyentesTucuman = "T";
 /** Set Padron Type */
 public void setPadronType (String PadronType)
 {
-if (PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S"));
- else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S");
+if (PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S") || PadronType.equals("G") || PadronType.equals("C") || PadronType.equals("T") || ( refContainsValue("CORE-AD_Reference-1010198", PadronType) ) );
+ else throw new IllegalArgumentException ("PadronType Invalid value: " + PadronType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010198") );
 if (PadronType == null) throw new IllegalArgumentException ("PadronType is mandatory");
 if (PadronType.length() > 1)
 {

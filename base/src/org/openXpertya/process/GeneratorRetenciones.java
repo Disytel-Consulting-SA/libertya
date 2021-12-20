@@ -8,6 +8,7 @@ import java.util.Vector;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.RetencionProcessor;
@@ -95,7 +96,7 @@ public class GeneratorRetenciones {
 				}
 		}
 	
-	private void cargarFacturas(RetencionProcessor procesador) throws Exception{
+	private boolean cargarFacturas(RetencionProcessor procesador) throws Exception{
 		/*
 		 * 	si (pago_anticipado)
 		 * 		procesador.addInvoice(null, importe_a_Pagar) 
@@ -105,21 +106,24 @@ public class GeneratorRetenciones {
 		 *  
 		 */
 		//this.setPago_anticipado(m_facturas.isEmpty());
-		
+		boolean invoiceLoaded = false;
 		if(isPago_anticipado()){
 			procesador.addInvoice(null, getM_FacturasTotalPagar());
 		}else{
 			for(int i = 0; i< m_facturas.size(); i++){
-				/*
-				 * para cada factura fc con importe a pagar
-				 * procesador.addInvoice(fc, importe_a_pagar(fc))
-				 */
+				MInvoice fc;
+				MDocType dt;
 				if(m_facturasManualAmounts.get(i).compareTo(Env.ZERO)>0){
-					MInvoice fc = new MInvoice(Env.getCtx(),m_facturas.get(i),getTrxName());
-					procesador.addInvoice(fc,m_facturasManualAmounts.get(i));
+					fc = new MInvoice(m_ctx,m_facturas.get(i),getTrxName());
+					dt = MDocType.get(m_ctx, fc.getC_DocTypeTarget_ID());
+					if(dt.isApplyRetention()) {
+						procesador.addInvoice(fc,m_facturasManualAmounts.get(i));
+						invoiceLoaded = true;
+					}
 				}
 			}
-		}	
+		}
+		return isPago_anticipado() || invoiceLoaded;
 	};
 	
 	
@@ -225,8 +229,9 @@ public class GeneratorRetenciones {
 			retProcessor.setRetencionSchema(retSchema);
 			retProcessor.setTrxName(getTrxName());
 			//vfechaPago = java.sql.Timestamp.valueOf(Env.getContextAsDate(Env.getCtx(), "#Date").toString());
-			cargarFacturas(retProcessor);
-			importeRetencion = retProcessor.getAmount();	
+			if(cargarFacturas(retProcessor)) {
+				importeRetencion = retProcessor.getAmount();	
+			}
 			
 			if(retSchema.isSufferedRetencion() || importeRetencion.compareTo(Env.ZERO)> 0){
 				lista_retenciones.add(retProcessor);

@@ -469,7 +469,9 @@ public class LaunchInOut extends SvrProcess {
 						+ JasperReportsUtil.coalesce(orgLoc.getRegion()
 								.getName(), "") + ", "
 						+ JasperReportsUtil.coalesce(orgLoc.getAddress1(), ""));
-		
+		// Datos de CAI
+		jasperwrapper.addParameter("CAI", getInout().getCAI());
+		jasperwrapper.addParameter("VTO_CAI", getInout().getDateCAI());
 	}
 
 	protected void initializeAmts(MOrder order, MInvoice invoice) {

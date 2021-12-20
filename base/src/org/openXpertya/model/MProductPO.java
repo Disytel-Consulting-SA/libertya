@@ -40,6 +40,12 @@ import org.openXpertya.util.Util;
 
 public class MProductPO extends X_M_Product_PO {
 
+	/**
+	 * Preference que determina si hay que validar códigos repetidos de artículos
+	 * para mismo proveedor
+	 */
+	private final static String UNIQUE_VENDOR_PRODUCT_NO_PREFERENCE_NAME = "MProductPO_UniqueVendorProductNo";
+	
     /** Descripción de Campos */
 
     private final static String sqlGetProductPO = "SELECT * FROM M_Product_PO " + "WHERE M_Product_ID=? AND IsActive='Y' " + "ORDER BY IsCurrentVendor DESC, Updated DESC";
@@ -204,13 +210,7 @@ public class MProductPO extends X_M_Product_PO {
     
     public static BigDecimal dameOrderMin(Properties ctx, Integer M_Product_ID, Integer C_BPartner_ID, Integer C_UOM_ID, BigDecimal QtyEntered, String trxName) {    	
     	// Convertir a la unidad del ARTICULO
-		if (Util.isEmpty(C_UOM_ID, true) || Util.isEmpty(C_BPartner_ID, true))
-    		return null;
-    	
-		QtyEntered = MUOMConversion.convertProductFrom(ctx, M_Product_ID,
-				C_UOM_ID, QtyEntered);
-    	
-    	if (QtyEntered == null)
+	if (Util.isEmpty(C_UOM_ID, true) || Util.isEmpty(C_BPartner_ID, true))
     		return null;
     	
     	BigDecimal orderMin = null;
@@ -218,10 +218,6 @@ public class MProductPO extends X_M_Product_PO {
         MProductPO po = MProductPO.get(ctx, M_Product_ID, C_BPartner_ID, trxName);
         if (po != null) {
         	orderMin = po.getOrder_Min();
-	        if (orderMin != null) {
-				orderMin = MUOMConversion.convertProductFrom(ctx, M_Product_ID,
-						po.getC_UOM_ID(), orderMin);
-	        }
         }
         
         return orderMin;    	
@@ -368,7 +364,11 @@ public class MProductPO extends X_M_Product_PO {
     	}
         
         // Mismo nro de artículo de proveedor para distinto artículo
-        if(newRecord || (is_ValueChanged("VendorProductNo") && !Util.isEmpty(getVendorProductNo(), true))){
+	String puv = MPreference.searchCustomPreferenceValue(UNIQUE_VENDOR_PRODUCT_NO_PREFERENCE_NAME,
+				getAD_Client_ID(), getAD_Org_ID(), getCreatedBy(), true);
+        if((newRecord 
+        		|| (is_ValueChanged("VendorProductNo") && !Util.isEmpty(getVendorProductNo(), true)))
+        		&& (Util.isEmpty(puv, true) || puv.equals("Y"))){
         	String newRecordWhereClause = newRecord?"":" AND m_product_id <> "+getM_Product_ID();
 			int productID = DB.getSQLValue(get_TrxName(),
 					"SELECT m_product_id FROM " + get_TableName()
@@ -391,7 +391,7 @@ public class MProductPO extends X_M_Product_PO {
         
         // Mismo UPC para distinto artículo
         if(newRecord || (is_ValueChanged("UPC") && !Util.isEmpty(getUPC(), true))){
-        	String newRecordWhereClause = newRecord?"":" AND m_product_id <> "+getM_Product_ID();
+        	String newRecordWhereClause = " AND m_product_id <> "+getM_Product_ID();
 			int productID = DB.getSQLValue(get_TrxName(),
 					"SELECT m_product_id FROM " + get_TableName()
 							+ " WHERE ad_client_id = ? and isactive = 'Y' and trim(upc) = trim('" + getUPC()

@@ -209,7 +209,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 //        }
 
         try {
-            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, s.prefix, s.suffix, d.DocTypeKey, d.docsubtypeinv " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
+            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, s.prefix, s.suffix, d.caicontrol, d.DocTypeKey, d.docsubtypeinv " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
                          + " AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
             PreparedStatement pstmt = DB.prepareStatement( SQL );
 
@@ -271,6 +271,34 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	                	}
 	                }
                 }
+                
+				// Se comenta ya que sino siempre se asigna valor a estos campos y nunca deja de
+				// estar habilitado el botón Save
+                // Si se controla CAI, entonces buscar el CAI válido para este Tipo de Documento
+                /*boolean IsSOTrx = "Y".equals( Env.getContext( ctx,WindowNo,"IsSOTrx" ));
+                if(IsSOTrx) {
+                	mTab.setValue("CAI", null);
+            		mTab.setValue("DateCAI", null);
+                }
+                if(rs.getString( "caicontrol" ).equals( "Y" )) {
+                	Timestamp dateInvoiced = (Timestamp)mTab.getValue("DateInvoiced");
+                	String sql = "select c.cai, c.datecai " + 
+                			"	from c_cai c " + 
+                			"	join c_cai_doctype cd on cd.c_cai_id = c.c_cai_id " + 
+                			"	where cd.c_doctype_id = ? and cd.isactive = 'Y' and c.isactive = 'Y' and ?::date between c.validfrom::date and c.datecai::date " + 
+                			"	order by c.created desc " +
+                			"	limit 1 ";
+                	PreparedStatement psCai = DB.prepareStatement(sql, null, true);
+                	psCai.setInt(1, C_DocType_ID);
+                	psCai.setTimestamp(2, dateInvoiced);
+                	ResultSet rsCai = psCai.executeQuery();
+                	if(rsCai.next()) {
+                		mTab.setValue("CAI", rsCai.getString("cai"));
+                		mTab.setValue("DateCAI", rsCai.getTimestamp("datecai"));
+                	}
+                	rsCai.close();
+                	psCai.close();
+                }*/
             }
 
             rs.close();
@@ -1047,7 +1075,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		boolean isSOTrx = Env.getContext(ctx, WindowNo, "IsSOTrx").equals("Y");
 		
 		// Obtengo el impuesto en base a la entidad comercial
-		MTax tax = getTax(ctx, isSOTrx, C_BPartner_ID, null);
+		MTax tax = getTax(ctx, isSOTrx, C_BPartner_ID, AD_Org_ID, null);
 		if(tax != null){
 			C_Tax_ID = tax.getID();
 		}
@@ -1068,14 +1096,22 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	}	//	tax
 	
 	
-	public static MTax getTax(Properties ctx, boolean isSOTrx, Integer bPartnerID, String trxName){
+	public static MTax getTax(Properties ctx, boolean isSOTrx, Integer bPartnerID, Integer orgID, String trxName){
 		MBPartner partner = new MBPartner(ctx,bPartnerID,trxName);
 		MTax tax = null;
 		int C_Tax_ID = 0;
-		if(partner.getC_Categoria_Iva_ID() > 0){
+		if(!Util.isEmpty(orgID, true)) {
+			MOrgInfo oi = MOrgInfo.get(ctx, orgID);
+			if(!Util.isEmpty(oi.getC_Categoria_IVA_ID(),true)) {
+				X_C_Categoria_Iva categoria_Iva = new X_C_Categoria_Iva(ctx, oi.getC_Categoria_IVA_ID(), trxName);
+				C_Tax_ID = categoria_Iva.getC_Tax_ID();
+			}
+		}
+		
+		if(C_Tax_ID <= 0 && partner.getC_Categoria_Iva_ID() > 0){
 			X_C_Categoria_Iva categoria_Iva = new X_C_Categoria_Iva(ctx, partner.getC_Categoria_Iva_ID(), trxName);
 			// 1) verificamos en letra acepta iva
-			Integer clientCatIVA = darCategoriaIvaClient(Env.getAD_Org_ID(ctx));
+			Integer clientCatIVA = darCategoriaIvaClient(orgID);
 			MLetraAceptaIva laiva = darLetraAceptaIVA(ctx, isSOTrx ? categoria_Iva.getID() : clientCatIVA,
 					isSOTrx ? clientCatIVA : categoria_Iva.getID(), trxName);
 			C_Tax_ID = laiva != null?laiva.getC_Tax_ID():0;

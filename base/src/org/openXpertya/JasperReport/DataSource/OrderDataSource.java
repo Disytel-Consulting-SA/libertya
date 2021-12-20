@@ -107,6 +107,11 @@ public class OrderDataSource implements JRDataSource  {
 		methodMapper.put("PRICEDIFF", "getPriceDiff");
 		methodMapper.put("RECEPTIONAMT", "getReceptionAmt");
 		methodMapper.put("DIFFAMT", "getDiffAmt");
+		
+		methodMapper.put("MANUALDOCUMENTDISCOUNT_UNITY", "getManualDocumentDiscountUnityAmtWithTax");
+		methodMapper.put("MANUALDOCUMENTDISCOUNT_UNITY_NET", "getManualDocumentDiscountUnityAmtNet");
+		methodMapper.put("MANUALTOTAL_DOCUMENTDISCOUNT", "getManualTotalDocumentDiscountUnityAmtWithTax");
+		methodMapper.put("MANUALTOTAL_DOCUMENTDISCOUNT_NET", "getManualTotalDocumentDiscountUnityAmtNet");
 	}
 	
 	public void loadData() throws RuntimeException {

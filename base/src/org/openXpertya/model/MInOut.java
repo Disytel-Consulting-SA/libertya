@@ -41,6 +41,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.PurchasesUtil;
 import org.openXpertya.util.ReservedUtil;
+import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
 /**
@@ -957,7 +958,8 @@ public class MInOut extends X_M_InOut implements DocAction {
 
             //
             if(isReverseCopy){
-            	line.setQty(line.getQtyEntered().negate());
+            	line.setQtyEntered(line.getQtyEntered().negate());
+            	line.setMovementQty(line.getMovementQty().negate());
             }
             
             line.setProcessed( false );
@@ -1351,6 +1353,47 @@ public class MInOut extends X_M_InOut implements DocAction {
                 return false;
 			}
         }
+		
+		// Validaciones de CAI
+		if(isSOTrx()) {
+			CallResult crCAI = doCAIValidations(bpartner, MDocType.get(getCtx(), getC_DocType_ID()), true);
+			if(crCAI.isError()) {
+				log.saveError("SaveError", crCAI.getMsg());
+				return false;
+			}
+		}
+		
+		// Validar el número de despacho obligatorio para los casos donde el país de la
+		// localización de la EC es ditinto del actual 
+		if (ImportClearanceManager.isImportClearanceActive(getCtx())
+				&& !isSOTrx() && getMovementType().endsWith("+") 
+				&& Util.isEmpty(getClearanceNumber(), true)) {
+			// Validar si tenemos país configurado en la organización o compañía
+			int compareCountryID = 0;
+			MOrgInfo oi = MOrgInfo.get(getCtx(), getAD_Org_ID());
+			if(!Util.isEmpty(oi.getC_Location_ID(), true)) {
+				MLocation ol = MLocation.get(getCtx(), oi.getC_Location_ID(), get_TrxName());
+				compareCountryID = !Util.isEmpty(ol.getC_Country_ID(), true)?ol.getC_Country_ID():0;
+			}
+			if(compareCountryID == 0) {
+				MClientInfo ci = MClientInfo.get(getCtx(), getAD_Client_ID());
+				if(!Util.isEmpty(ci.getC_Location_ID(), true)) {
+					MLocation cl = MLocation.get(getCtx(), ci.getC_Location_ID(), get_TrxName());
+					compareCountryID = !Util.isEmpty(cl.getC_Country_ID(), true)?cl.getC_Country_ID():0;
+				}
+			}
+			if(compareCountryID == 0) {
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "NoOrgClientCountry"));
+				return false;
+			}
+			
+			MBPartnerLocation bpl = new MBPartnerLocation(getCtx(), getC_BPartner_Location_ID(), get_TrxName());
+			MLocation l = bpl.getLocation(false);
+			if (!Util.isEmpty(l.getC_Country_ID(), true) && l.getC_Country_ID() != compareCountryID) {
+				log.saveError("SaveError", Msg.getMsg(getCtx(), "ImportClearanceNoBPCountryError"));
+				return false;
+			}
+		}
         
         return true;
     }    // beforeSave
@@ -1396,7 +1439,15 @@ public class MInOut extends X_M_InOut implements DocAction {
 
         DocumentEngine engine = new DocumentEngine( this,getDocStatus());
 
-        return engine.processIt( processAction,getDocAction(),log );
+        boolean status = engine.processIt( processAction,getDocAction(),log );
+        
+        // Incorporar la asignación del número de documento único desde la secuencia
+  		// única al completar. 
+  		// IMPORTANTE: La asignación del número de documento único debe ir al final de
+  		// este método
+  		status = assignUniqueDocumentNo(engine.getDocAction(), status) && status;
+  		
+  		return status;
     }    // process
 
 
@@ -1448,6 +1499,7 @@ public class MInOut extends X_M_InOut implements DocAction {
         if( m_processMsg != null ) {
             return DocAction.STATUS_Invalid;
         }
+        MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
         MDocType dt = MDocType.get( getCtx(),getC_DocType_ID());
         // Cuando está activado el control de cierres de almacenes y es un remito
         // de salida se actualiza la fecha en caso de que la misma sea menor a la
@@ -1506,6 +1558,15 @@ public class MInOut extends X_M_InOut implements DocAction {
         	manageAssetLines();
         }
         // -----------------------------------------------------------------------
+		// Para Despachos de Importación, se deben dividir las líneas considerando 
+        // los número de despacho disponibles a utilizar y dividirlos
+        // -----------------------------------------------------------------------        
+		if (ImportClearanceManager.isImportClearanceActive(getCtx())) {
+        	manageImportClearance();
+        }
+        // -----------------------------------------------------------------------
+        
+        
         
         // Verificar que la cantidad de las líneas de la devolución del cliente 
         // no sobrepasen la cantidad entregada (delivered) de cada línea de pedido
@@ -1532,6 +1593,13 @@ public class MInOut extends X_M_InOut implements DocAction {
 						}
 					}
 				}
+			}
+        	
+        	// Validaciones de CAI
+			CallResult crCAI = doCAIValidations(bpartner, dt, false);
+			if(crCAI.isError()) {
+				setProcessMsg(crCAI.getMsg());
+				return DocAction.STATUS_Invalid;
 			}
         }
         
@@ -1718,6 +1786,95 @@ public class MInOut extends X_M_InOut implements DocAction {
 		return result;
     }
     
+    /**
+	 * @return true si se debe gestionar los despachos de importación diviendo
+	 *         líneas en este remito, false caso contrario
+	 */
+    protected boolean isImportClearanceInOut() {
+    	return !isReversal() && (isSOTrx() || getMovementType().endsWith("-"));
+    }
+    
+    /**
+	 * Dividir las líneas del remito para que se configuren correctamente el número
+	 * de despacho para cada una
+	 * 
+	 * @return el resultado de la operación
+	 */
+    private CallResult manageImportClearance() {
+    	CallResult cr = new CallResult();
+    	if(isImportClearanceInOut()) {
+			// Dividir las líneas si así lo requiere por despachos de importación
+	    	cr = importClearanceDivideLines();
+    	}
+    	
+    	return cr;
+    }
+    
+    /**
+	 * Dividir las líneas del remito/devolución de cliente dependiendo los despachos
+	 * de importación disponibles al momento
+	 * 
+	 * @return resultado de la operación
+	 */
+    protected CallResult importClearanceDivideLines() {
+    	CallResult cr = new CallResult();
+    	List<MImportClearance> icxp = null;
+    	BigDecimal qtyToIC = null, decrementQty = null;
+    	boolean deleteOldLine = false;
+    	MInOutLine newInOutLine;
+    	List<MInOutLine> iolsToDel = new ArrayList<MInOutLine>();
+    	ImportClearanceProcessing icp = null;
+    	for (MInOutLine iol : getLines(true)) {
+        	icp = ImportClearanceManager.getImportClearanceProcessingClass(getMovementType().endsWith("+"));
+			icxp = icp.getImportClearances(getCtx(), iol.getM_Product_ID(), get_TrxName());
+			qtyToIC = iol.getMovementQty().abs();
+			deleteOldLine = icxp.size() > 1;
+			for (int i = 0; i < icxp.size() && qtyToIC.compareTo(BigDecimal.ZERO) > 0; i++) {
+				newInOutLine = iol;
+				if (deleteOldLine || (!deleteOldLine && qtyToIC.compareTo(icp.getQtyToCompare(icxp.get(i))) > 0)) {
+					newInOutLine = new MInOutLine(getCtx(), 0, get_TrxName());
+					PO.copyValues(iol, newInOutLine);
+				}
+				decrementQty = qtyToIC.compareTo(icp.getQtyToCompare(icxp.get(i))) > 0 ? 
+						icp.getQtyToCompare(icxp.get(i))
+						: qtyToIC;
+				qtyToIC = qtyToIC.subtract(decrementQty);
+				newInOutLine.setM_Import_Clearance_ID(icxp.get(i).getID());
+				newInOutLine.setQty(decrementQty);
+				if(!newInOutLine.save()) {
+					cr.setMsg(CLogger.retrieveErrorAsString(), true);
+					return cr;
+				}
+			}
+			// Si todavía me queda cantidad para distribuir, entonces no lleva despacho de
+			// importación y se setea en la línea actual
+			if(qtyToIC.compareTo(BigDecimal.ZERO) > 0) {
+				iol.setQty(qtyToIC);
+				if(!iol.save()) {
+					cr.setMsg(CLogger.retrieveErrorAsString(), true);
+					return cr;
+				}
+			}
+			// Si se debe eliminar la línea, entonces se agrega a la lista correspondiente
+			// para luego eliminarlas
+			if(deleteOldLine && qtyToIC.compareTo(BigDecimal.ZERO) == 0) {
+				iolsToDel.add(iol);
+			}
+		}
+    	// Eliminar las líneas que así lo requieran
+    	for (MInOutLine diol : iolsToDel) {
+    		if(!diol.delete(false)) {
+				cr.setMsg(CLogger.retrieveErrorAsString(), true);
+				return cr;
+			}
+		}
+    	// Para recargar las líneas
+    	if(iolsToDel.size() > 0) {
+    		m_lines = null;
+    		getLines(true);
+    	}
+    	return cr;
+    }
     
     private boolean existsDocNumber(boolean completed) {
 		String sql = "SELECT * FROM " + Table_Name + " WHERE AD_Client_ID = ? ";
@@ -2317,11 +2474,16 @@ public class MInOut extends X_M_InOut implements DocAction {
             		if ((MovementType.endsWith("+") && QtyPO.signum() >= 0) 
             				|| (MovementType.endsWith("-") && QtyPO.signum() < 0)) {
 	                    if (realOrderLinePendingQty.subtract(sLine.getMovementQty().abs()).compareTo(Env.ZERO) < 0) {
-	                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
-	                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
-	                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
+							// Si se permite recibir mas mercadería de la solicitada en el pedido, no se
+							// valida
+	                    	boolean isIn = MovementType.endsWith("+") && QtyPO.signum() >= 0; 
+	                    	if(!isIn || (isIn && !docType.isInOut_Allow_Greater_QtyOrdered())) {
+		                    	m_processMsg = Msg.translate(getCtx(), "MovementGreaterThanOrder");
+		                    	if(ol_qtyReturned.compareTo(BigDecimal.ZERO) > 0){
+		                    		m_processMsg += ". "+Msg.getMsg(getCtx(), "AdditionQtyReturned");
+		                    	}
+		                    	return DocAction.STATUS_Invalid;
 	                    	}
-	                    	return DocAction.STATUS_Invalid;
 	                    }            			
             		}
                     if (MovementType.endsWith("-")) {
@@ -2452,9 +2614,11 @@ public class MInOut extends X_M_InOut implements DocAction {
                         
 						mtrx.setDescription("MInOut.complete() - 1st Transaction Save - Transaction of MTransaction "
 								+ mtrx.get_TrxName()+ " - MInOutLineMA created "+ma.getCreated()+" , updated "+ma.getUpdated() );
-                        
+                        mtrx.setVoiding(isReversal());
+						
                         if( !mtrx.save()) {
-                            m_processMsg = Msg.translate(getCtx(), "CouldNoCreateMaterialTransaction");
+                        	m_processMsg = Msg.translate(getCtx(), "CouldNoCreateMaterialTransaction") + " : "
+								+ CLogger.retrieveErrorAsString();
 
                             return DocAction.STATUS_Invalid;
                         }
@@ -2499,6 +2663,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 							&& !Util.isEmpty(ol_warehouseID, true)) {
 						Integer orderLocatorID = MWarehouse.getDefaultLocatorID(
 								ol_warehouseID, get_TrxName());
+						if (docType.isInOut_Allow_Greater_QtyOrdered()
+								&& QtyPO.abs().compareTo(ol_qtyReserved.abs()) > 0) {
+							QtyPO = ol_qtyReserved.abs().multiply(new BigDecimal(QtyPO.signum()));
+						}
 						if (!MStorage.add(getCtx(), ol_warehouseID,
 								orderLocatorID, sLine.getM_Product_ID(),
 								sLine.getM_AttributeSetInstance_ID(),
@@ -2542,9 +2710,10 @@ public class MInOut extends X_M_InOut implements DocAction {
 
                     mtrx.setDescription("MInOut.complete() - 2nd Transaction Save - Transaction of MTransaction "
 								+ mtrx.get_TrxName());
-                    
+                    mtrx.setVoiding(isReversal());
                     if( !mtrx.save()) {
-                        m_processMsg = "Could not create Material Transaction";
+                        m_processMsg = Msg.translate(getCtx(), "CouldNoCreateMaterialTransaction") + " : "
+								+ CLogger.retrieveErrorAsString();
 
                         return DocAction.STATUS_Invalid;
                     }
@@ -2578,6 +2747,8 @@ public class MInOut extends X_M_InOut implements DocAction {
                 		else{
                 			ol_qtyReserved = ol_qtyReserved.add( sLine.getMovementQty());
                 		}
+						ol_qtyReserved = ol_qtyReserved.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO
+								: ol_qtyReserved;
                 	}
                 } 
             }                                                   // stock movement
@@ -2602,6 +2773,9 @@ public class MInOut extends X_M_InOut implements DocAction {
 				// Determinar el pendiente
 				ol_qtyReserved = ReservedUtil.getOrderLinePending(getCtx(), ol_qtyOrdered, ol_qtyDelivered,
 						ol_qtyTransferred, ol_qtyReturned);
+				
+				ol_qtyReserved = ol_qtyReserved.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO
+						: ol_qtyReserved;
 				
                 try {
 	                String updateSQL = " UPDATE C_OrderLine " +
@@ -3427,7 +3601,71 @@ public class MInOut extends X_M_InOut implements DocAction {
 		super.copyInstanceValues(to);
 		((MInOut)to).setReversal(isReversal());
 	}
+	
+	/**
+	 * Hacer validaciones de CAI
+	 * @param partner
+	 * @param dt
+	 * @param setCAIControlData
+	 * @return
+	 */
+	protected CallResult doCAIValidations(MBPartner partner, MDocType dt, boolean setCAIControlData){
+		CallResult cr = new CallResult();
+		
+		// Fecha del CAI
+		if (getCAI() != null && !getCAI().equals("")
+				&& getDateCAI() == null) {
+			cr.setMsg(Msg.getMsg(getCtx(), "InvalidCAIDate"), true);
+			return cr;
+		}
 
+		// Fecha del CAI > que fecha de facturacion
+		if (getDateCAI() != null
+				&& getMovementDate().compareTo(getDateCAI()) > 0 
+				&& !TimeUtil.isSameDay(getMovementDate(), getDateCAI())){
+			cr.setMsg(Msg.getMsg(getCtx(), "InvoicedDateAfterCAIDate"), true);
+			return cr;
+		}
+
+		// Validaciones de control de CAI
+		if(dt.isCAIControl()) {
+			try {
+				MCAI.doCAIValidations(getCtx(), dt.getC_DocType_ID(), getMovementDate(), this, setCAIControlData,
+						get_TrxName());
+			} catch(Exception e) {
+				cr.setMsg(e.getMessage(), true);
+				return cr;
+			}
+		}
+		return cr;
+	}
+	
+	/**
+	 * Asigna el número de documento único luego de completar. 
+	 * 
+	 * @param processAction acción realizada sobre el documento
+	 * @param status        el estado del procesamiento luego de realizar la acción
+	 *                      parámetro
+	 * @return true si el procesamiento se ejecutó y se asignó correctamente el
+	 *         número de documento único, false caso contrario. Depende también del
+	 *         status parámetro.
+	 */
+	public boolean assignUniqueDocumentNo(String processAction, boolean status) {
+		boolean newStatus = status;
+		if(status && DOCACTION_Complete.equals(processAction)) {
+			MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
+			if(!Util.isEmpty(dt.getDocNoSequence_Unique_ID(), true)) {
+				String newDocNo = DB.getUniqueDocumentNo(dt.getID(), get_TrxName());
+				if(Util.isEmpty(newDocNo, true)) {
+					setProcessMsg(Msg.getMsg(getCtx(), "UniqueDocumentNoError"));
+					newStatus = false;
+				}
+				setDocumentNo(newDocNo);
+			}
+		}
+		return newStatus;
+	}
+	
 	public boolean isBypassWarehouseCloseValidation() {
 		return bypassWarehouseCloseValidation;
 	}

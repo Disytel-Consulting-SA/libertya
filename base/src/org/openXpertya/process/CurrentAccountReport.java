@@ -123,16 +123,14 @@ public class CurrentAccountReport extends SvrProcess {
 		// | Debitos = Signo 1 | Debitos = Signo -1 |
 		// | Créditos = Signo -1 | Créditos = Signo 1 |
 		// +-------------------------+--------------------------+
-		debit_signo_issotrx = p_AccountType.equalsIgnoreCase("C") ? 1 : -1;
-		credit_signo_isotrx = p_AccountType.equalsIgnoreCase("C") ? -1 : 1;
+		debit_signo_issotrx = getDebitSignoIsSOTrx();
+		credit_signo_isotrx = getCreditSignoIsSOTrx();
 
 		// Moneda de la compañía utilizada para conversión de montos de
 		// documentos.
 		client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
 		// Generador de consulta de cuenta corriente
-		setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
-				p_C_DocType_ID, p_ShowDetailedReceiptsPayments, p_DateTrx_From,
-				p_DateTrx_To, getCondition(), p_C_BPartnerID, p_AccountType));
+		setCurrentAccountQuery(buildCurrentAccountQuery());
 	}
 
 	@Override
@@ -165,7 +163,6 @@ public class CurrentAccountReport extends SvrProcess {
 			int i = 1;
 			// Parámetros de sqlDoc
 			pstmt.setInt(i++, debit_signo_issotrx);
-			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, credit_signo_isotrx);
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
@@ -383,7 +380,6 @@ public class CurrentAccountReport extends SvrProcess {
 			// Parámetros de sqlDoc
 			int i = 1;
 			pstmt.setInt(i++, debit_signo_issotrx);
-			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, credit_signo_isotrx);
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());
@@ -617,4 +613,77 @@ public class CurrentAccountReport extends SvrProcess {
 		this.condition = condition;
 	}
 
+	protected int getDebitSignoIsSOTrx() {
+		return p_AccountType.equalsIgnoreCase("C") ? 1 : -1;
+	}
+	
+	protected int getCreditSignoIsSOTrx() {
+		return p_AccountType.equalsIgnoreCase("C") ? -1 : 1;
+	}
+	
+	/**
+	 * @return construir la clase que contiene encapsulada la consulta de cuenta
+	 *         corriente
+	 */
+	protected CurrentAccountQuery buildCurrentAccountQuery() {
+		return new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
+				p_C_DocType_ID, p_ShowDetailedReceiptsPayments, p_DateTrx_From,
+				p_DateTrx_To, getCondition(), p_C_BPartnerID, p_AccountType);
+	}
+
+	protected Integer getP_AD_Org_ID() {
+		return p_AD_Org_ID;
+	}
+
+	protected void setP_AD_Org_ID(Integer p_AD_Org_ID) {
+		this.p_AD_Org_ID = p_AD_Org_ID;
+	}
+
+	protected Integer getP_C_DocType_ID() {
+		return p_C_DocType_ID;
+	}
+
+	protected void setP_C_DocType_ID(Integer p_C_DocType_ID) {
+		this.p_C_DocType_ID = p_C_DocType_ID;
+	}
+
+	protected String getP_AccountType() {
+		return p_AccountType;
+	}
+
+	protected void setP_AccountType(String p_AccountType) {
+		this.p_AccountType = p_AccountType;
+	}
+
+	protected boolean isP_ShowDetailedReceiptsPayments() {
+		return p_ShowDetailedReceiptsPayments;
+	}
+
+	protected void setP_ShowDetailedReceiptsPayments(boolean p_ShowDetailedReceiptsPayments) {
+		this.p_ShowDetailedReceiptsPayments = p_ShowDetailedReceiptsPayments;
+	}
+
+	protected Timestamp getP_DateTrx_From() {
+		return p_DateTrx_From;
+	}
+
+	protected void setP_DateTrx_From(Timestamp p_DateTrx_From) {
+		this.p_DateTrx_From = p_DateTrx_From;
+	}
+
+	protected Timestamp getP_DateTrx_To() {
+		return p_DateTrx_To;
+	}
+
+	protected void setP_DateTrx_To(Timestamp p_DateTrx_To) {
+		this.p_DateTrx_To = p_DateTrx_To;
+	}
+
+	protected Integer getP_C_BPartnerID() {
+		return p_C_BPartnerID;
+	}
+
+	protected void setP_C_BPartnerID(Integer p_C_BPartnerID) {
+		this.p_C_BPartnerID = p_C_BPartnerID;
+	}
 }

@@ -310,7 +310,7 @@ public class MProductPricing implements Serializable{
 
     /** Descripción de Campos */
 
-    private boolean m_discountSchema = false;
+    private MDiscountSchema m_discountSchema = null;
 
     /** Descripción de Campos */
 
@@ -326,6 +326,9 @@ public class MProductPricing implements Serializable{
 	 * medio de {@link MBPartner#getDiscountContext()}.
 	 */
     private String context = MBPartner.DISCOUNTCONTEXT_Bill;
+    
+    /** El importe de descuento aplicado al precio */
+    protected BigDecimal discountAmt = BigDecimal.ZERO;
     
     /**
      * Descripción de Método
@@ -704,9 +707,7 @@ public class MProductPricing implements Serializable{
      *
      */
 
-    private void calculateDiscount() {
-        m_discountSchema = false;
-
+    public void calculateDiscount(BigDecimal basePrice) {
         if( (m_C_BPartner_ID == 0) || (m_M_Product_ID == 0) || !isApplyBPDiscount()) {
             return;
         }
@@ -717,7 +718,6 @@ public class MProductPricing implements Serializable{
         MBPartner bpartner = new MBPartner(Env.getCtx(), m_C_BPartner_ID, null);
         DiscountCalculator calculator = DiscountCalculator.create(m_C_BPartner_ID, m_isSOTrx, context, bpartner.getDiscountContext());
 
-        m_discountSchema = calculator.getBPartnerDiscountSchema() != null;
         //Modificado por ConSerTi para que coja el precio de tarifa no el estandar 
         // m_PriceStd       = sd.calculatePrice( m_Qty,m_PriceStd,m_M_Product_ID,m_M_Product_Category_ID,FlatDiscount );
         
@@ -730,10 +730,18 @@ public class MProductPricing implements Serializable{
         // debe ser necesariamente PriceSTD (sino se asigna el PriceList al PriceSTD). 
         // Hay que tener en cuenta que el PriceSTD se lee de la BD con lo cual no hay forma
         // de que se apliquen descuentos sucesivos que produzcan valores incorrectos
-		m_PriceStd = calculator.calculatePrice(m_PriceStd, m_Qty, m_M_Product_Category_ID, m_M_Product_ID, gamasID,
+		m_PriceStd = calculator.calculatePrice(basePrice, m_Qty, m_M_Product_Category_ID, m_M_Product_ID, gamasID,
 				linesID, vendorIDs, m_PriceDate);
+		if(m_PriceList.compareTo(m_PriceStd) != 0) {
+			m_discountSchema = calculator.getBPartnerDiscountSchema();
+			discountAmt = basePrice.subtract(m_PriceStd);
+		}
     }    // calculateDiscount
 
+    public void calculateDiscount() {
+    	calculateDiscount(m_PriceStd);    	
+    }
+    
     /**
      * Descripción de Método
      *
@@ -973,9 +981,13 @@ public class MProductPricing implements Serializable{
      */
 
     public boolean isDiscountSchema() {
-        return m_discountSchema;
+        return m_discountSchema != null;
     }    // isDiscountSchema
 
+    public MDiscountSchema getDiscountSchema() {
+        return m_discountSchema;
+    }    // isDiscountSchema
+    
     /**
      * Descripción de Método
      *

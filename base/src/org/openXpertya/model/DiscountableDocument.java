@@ -44,10 +44,22 @@ public abstract class DiscountableDocument implements IDocument {
 	}
 
 	@Override
-	public BigDecimal getLinesTotalAmt() {
+	public BigDecimal getLinesTotalAmt(boolean documentDiscountApplied) {
 		BigDecimal totalAmt = BigDecimal.ZERO;
 		for (IDocumentLine line : getDocumentLines()) {
 			totalAmt = totalAmt.add(line.getTotalAmt());
+			if(documentDiscountApplied) {
+				totalAmt = totalAmt.subtract(line.getDocumentDiscountAmt());
+			}
+		}
+		return totalAmt;
+	}
+	
+	@Override
+	public BigDecimal getLinesNetAmt() {
+		BigDecimal totalAmt = BigDecimal.ZERO;
+		for (IDocumentLine line : getDocumentLines()) {
+			totalAmt = totalAmt.add(line.getNetAmt());
 		}
 		return totalAmt;
 	}
@@ -123,14 +135,14 @@ public abstract class DiscountableDocument implements IDocument {
 	/**
 	 * @return lista de percepciones a aplicar al documento
 	 */
-	public List<MTax> getApplyPercepcion(GeneratorPercepciones generator) throws Exception{
+	public List<Percepcion> getApplyPercepcion(GeneratorPercepciones generator) throws Exception{
 		return generator.getDebitApplyPercepciones();
 	}
 	
 	/**
 	 * @return lista de percepciones a aplicar al documento
 	 */
-	public List<DocumentTax> getAppliedPercepciones(){
+	public List<Percepcion> getAppliedPercepciones(){
 		return null;
 	}
 }

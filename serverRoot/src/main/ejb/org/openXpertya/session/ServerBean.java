@@ -244,6 +244,23 @@ public class ServerBean implements SessionBean
 		return dn;
 	}	//	getDocumentNo
 
+	/**
+	 * 	Get Unique Document No based on Document Type
+	 *  @ejb:interface-method view-type="remote"
+	 * 
+	 *	@param C_DocType_ID document type
+	 * 	@param trxName optional Transaction Name
+	 *	@return unique document no or null
+	 *  @throws RemoteException
+	 */
+	public String getUniqueDocumentNo (int C_DocType_ID, String trxName)  throws RemoteException
+	{
+		m_nextSeqCount++;
+		String dn = MSequence.getUniqueDocumentNo(C_DocType_ID, trxName);
+		if (dn == null)		//	try again
+			dn = MSequence.getUniqueDocumentNo(C_DocType_ID, trxName);
+		return dn;
+	}	//	getDocumentNo
 
 	/*************************************************************************
 	 *  Process Remote

@@ -24,14 +24,17 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
 import org.compiere.swing.CComboBox;
+import org.compiere.swing.CTextField;
 import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
+import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoAdelantado;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
@@ -49,6 +52,7 @@ import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.pos.view.KeyUtils;
 import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -102,7 +106,7 @@ public class VOrdenCobro extends VOrdenPago {
 	protected VNumber txtOrgCharge;
 	protected VNumber txtGroupingAmt;
 	protected CComboBox cboTenderType;
-	private JFormattedTextField txtRetencImporte;
+	private VNumber txtRetencImporte;
 	private javax.swing.JTextField txtRetencNroRetenc;
 	protected JFormattedTextField txtDiscountAmt;
 	protected javax.swing.JTextField txtPaymentDiscount;
@@ -140,13 +144,21 @@ public class VOrdenCobro extends VOrdenPago {
 	protected CComboBox cboEntidadFinancieraPlans;
 
 	private PaymentMediumItemListener paymentMediumItemListener;
+	
+	// Agregado para lector de cheques
+	protected javax.swing.JLabel lblCheckBarcode = new javax.swing.JLabel();
+    protected CTextField txtCheckBarcode;
 
 	public VOrdenCobro() {
 		super();
-		setModel(new VOrdenCobroModel());
 		setPaymentMediumItemListener(new PaymentMediumItemListener());
 	}
 
+	@Override
+	protected VOrdenPagoModel createModel() {
+    	return new VOrdenCobroModel();
+    }
+	
 	@Override
 	protected VLookup createChequeChequeraLookup() {
 		return VComponentsFactory.VLookupFactory("C_BankAccount_ID",
@@ -165,6 +177,8 @@ public class VOrdenCobro extends VOrdenPago {
 		super.initTranslations();
 		// Cheques
 		lblChequeChequera.setText(Msg.translate(m_ctx, "C_BankAccount_ID"));
+		// Agregado para lector de cheques
+		lblCheckBarcode.setText(Msg.translate(m_ctx, "CheckBarcode"));
 
 		// Retencions
 		lblRetencSchema.setText(Msg.translate(m_ctx, "C_Withholding_ID"));
@@ -231,7 +245,7 @@ public class VOrdenCobro extends VOrdenPago {
 			}
 		});
 		ocultarCanje();
-		initFormattedTextField((JFormattedTextField) txtRetencImporte);
+		//initFormattedTextField((JFormattedTextField) txtRetencImporte);
 	}
 
 	protected void ocultarCanje() {
@@ -412,8 +426,8 @@ public class VOrdenCobro extends VOrdenPago {
 								.addPreferredGap(
 										org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jScrollPane1,
-										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-										260, 440)
+										200,
+										300, Short.MAX_VALUE)
 								.addPreferredGap(
 										org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jPanel3Layout
@@ -614,7 +628,7 @@ public class VOrdenCobro extends VOrdenPago {
 		jPanel5.setOpaque(false);
 		lblEfectivoLibroCaja.setText("LIBRO DE CAJA");
 		lblEfectivoImporte.setText("IMPORTE");
-		txtEfectivoImporte.setText("0");
+		txtEfectivoImporte.setValue(BigDecimal.ZERO);
 		cboCashReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_Cash);
 		cboCashReceiptMedium.addItemListener(getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_EFECTIVO, cboCashReceiptMedium);
@@ -696,7 +710,7 @@ public class VOrdenCobro extends VOrdenPago {
 		lblTransfNroTransf.setText("NRO TRANSFERENCIA");
 		lblTransfImporte.setText("IMPORTE");
 		lblTransfFecha.setText("FECHA");
-		txtTransfImporte.setText("0");
+		txtTransfImporte.setValue(BigDecimal.ZERO);
 		cboTransferReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_DirectDeposit);
 		cboTransferReceiptMedium
 				.addItemListener(getPaymentMediumItemListener());
@@ -804,6 +818,7 @@ public class VOrdenCobro extends VOrdenPago {
 	@Override
 	protected JComponent createCheckTab() {
 		jPanel7.setOpaque(false);
+		lblCheckBarcode.setText("LECTOR CHEQUE");	// Agregado para lector de cheques
 		lblChequeChequera.setText("CHEQUERA");
 		lblChequeNroCheque.setText("NUMERO DE CHEQUE");
 		lblChequeImporte.setText("IMPORTE");
@@ -843,6 +858,7 @@ public class VOrdenCobro extends VOrdenPago {
 								.add(jPanel7Layout
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.TRAILING)
+										.add(lblCheckBarcode) // Agregado para lector de cheques
 										.add(lblCheckReceiptMedium)
 										.add(lblChequeCUITLibrador)
 										.add(lblChequeBanco)
@@ -890,7 +906,10 @@ public class VOrdenCobro extends VOrdenPago {
 												165, Short.MAX_VALUE)
 										.add(cboCheckReceiptMedium,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-												165, Short.MAX_VALUE))
+												165, Short.MAX_VALUE)
+										.add(getCheckBarcode(),		// Agregado para lector de cheques
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												165, Short.MAX_VALUE))	
 								.addContainerGap()));
 		jPanel7Layout
 				.setVerticalGroup(jPanel7Layout
@@ -899,6 +918,16 @@ public class VOrdenCobro extends VOrdenPago {
 						.add(jPanel7Layout
 								.createSequentialGroup()
 								.addContainerGap()
+								.add(jPanel7Layout
+										.createParallelGroup(
+												org.jdesktop.layout.GroupLayout.BASELINE)
+										.add(lblCheckBarcode)
+										.add(getCheckBarcode(),
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
+												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+								.addPreferredGap(
+										org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jPanel7Layout
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.BASELINE)
@@ -1012,8 +1041,8 @@ public class VOrdenCobro extends VOrdenPago {
 		lblCreditInvoice.setText("CREDITO");
 		lblCreditAvailable.setText("DISPONIBLE");
 		lblCreditImporte.setText("IMPORTE");
-		txtCreditAvailable.setText("0");
-		txtCreditImporte.setText("0");
+		txtCreditAvailable.setValue(BigDecimal.ZERO);
+		txtCreditImporte.setValue(BigDecimal.ZERO);
 		cboCreditReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_CreditNote);
 		cboCreditReceiptMedium.addItemListener(getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_CREDITO, cboCreditReceiptMedium);
@@ -1114,9 +1143,9 @@ public class VOrdenCobro extends VOrdenPago {
 		lblRetencImporte.setText("IMPORTE");
 		lblRetencFecha = new JLabel();
 		lblRetencFecha.setText("FECHA");
-		txtRetencImporte = new JFormattedTextField();
-		txtRetencImporte.setText("0");
-		initFormattedTextField((JFormattedTextField) txtRetencImporte);
+		txtRetencImporte = new VNumber();
+		txtRetencImporte.setValue(BigDecimal.ZERO);
+		//initFormattedTextField((JFormattedTextField) txtRetencImporte);
 		txtRetencNroRetenc = new JTextField();
 		retencSchema = VComponentsFactory
 				.VLookupFactory("C_RetencionSchema_ID", "C_RetencionSchema",
@@ -1452,16 +1481,73 @@ public class VOrdenCobro extends VOrdenPago {
 		lblPagoAdelantado.setText(getModel().isSOTrx() ? "COBRO" : "PAGO");
 		lblPagoAdelantadoImporte = new JLabel();
 		lblPagoAdelantadoImporte.setText("IMPORTE");
-		txtPagoAdelantadoImporte = new JFormattedTextField();
-		txtPagoAdelantadoImporte.setText("0");
-		initFormattedTextField((JFormattedTextField) txtPagoAdelantadoImporte);
-		pagoAdelantado = VComponentsFactory.VLookupFactory("C_Payment_ID",
-				"C_Payment", m_WindowNo, DisplayType.Search, getModel()
-						.getPagoAdelantadoSqlValidation());
+		txtPagoAdelantadoImporte = new VNumber();
+		txtPagoAdelantadoImporte.setValue(BigDecimal.ZERO);
+		//initFormattedTextField((JFormattedTextField) txtPagoAdelantadoImporte);
+		pagoAdelantado = VComponentsFactory.VLookupFactory("C_Payment_ID", "C_Payment", m_WindowNo, DisplayType.Search, getModel().getPagoAdelantadoSqlValidation(),
+        		true, true, true, true, "org.openXpertya.apps.search.InfoPaymentAdelantado"); //JACOFER
+        pagoAdelantado.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (pagoAdelantado.getValue() != null) {
+					//JACOFER - Selección múltiple de pagos adelantados
+					//Si selecciono uno solo, funciona como antes.
+					if (pagoAdelantado.getValue().getClass().equals(Integer.class)) {
+						Integer paymentID = (Integer)pagoAdelantado.getValue();
+						BigDecimal importe = BigDecimal.ZERO;
+						if (paymentID != null)
+							importe = getModel().getPagoAdelantadoAvailableAmt(paymentID);
+						txtPagoAdelantadoImporte.setValue(importe);
+						txtPagoAdelantadoAvailable.setValue(importe);
+					} else { 
+						BigDecimal sumAvailable = BigDecimal.ZERO;
+						//Si selecciono más de uno, viene como un array de enteros
+						for (Object objID : ((Object[])pagoAdelantado.getValue())) {
+							Integer paymentID = (Integer)objID;
+							BigDecimal importe = BigDecimal.ZERO;
+							if (paymentID != null)
+								importe = getModel().getPagoAdelantadoAvailableAmt(paymentID);
+							sumAvailable = sumAvailable.add(importe);
+							txtPagoAdelantadoImporte.setValue(sumAvailable);
+							txtPagoAdelantadoAvailable.setValue(sumAvailable);
+						}
+					}
+				}
+			}
+        });
 
 		cashAdelantado = VComponentsFactory.VLookupFactory("C_CashLine_ID",
 				"C_CashLine", m_WindowNo, DisplayType.Search, getModel()
-						.getCashAnticipadoSqlValidation());
+						.getCashAnticipadoSqlValidation(),
+						true, true, true, true, "org.openXpertya.apps.search.InfoCashLineAdelantado"); //JACOFER);
+		cashAdelantado.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (cashAdelantado.getValue() != null) {
+					//JACOFER - Selección múltiple de pagos adelantados
+					//Si selecciono uno solo, funciona como antes.
+					if (cashAdelantado.getValue().getClass().equals(Integer.class)) {
+						Integer cashLineID = (Integer)cashAdelantado.getValue();
+						BigDecimal importe = BigDecimal.ZERO;
+						if (cashLineID != null)
+							importe = getModel().getCashAdelantadoAvailableAmt(cashLineID);
+						txtPagoAdelantadoImporte.setValue(importe);
+						txtPagoAdelantadoAvailable.setValue(importe);
+					} else {
+						BigDecimal sumAvailable = BigDecimal.ZERO;
+						//Si selecciono más de uno, viene como un array de enteros
+						for (Object objID : ((Object[])cashAdelantado.getValue())) {
+							Integer cashLineID = (Integer)objID;
+							BigDecimal importe = BigDecimal.ZERO;
+							if (cashLineID != null)
+								importe = getModel().getCashAdelantadoAvailableAmt(cashLineID);
+							sumAvailable = sumAvailable.add(importe);
+							txtPagoAdelantadoImporte.setValue(sumAvailable);
+							txtPagoAdelantadoAvailable.setValue(sumAvailable);
+						}
+					}
+				}
+			}
+        });
+		
 		lblPagoAdelantadoType = new JLabel();
 		lblPagoAdelantadoType.setText("TIPO");
 		cboPagoAdelantadoType = new VComboBox(new Object[] { getMsg("Payment"),
@@ -1478,8 +1564,8 @@ public class VOrdenCobro extends VOrdenPago {
 		cboPagoAdelantadoReceiptMedium = createPaymentMediumCombo(MPOSPaymentMedium.TENDERTYPE_AdvanceReceipt);
 		pagoAdelantadoTypePanel = new JPanel();
 		pagoAdelantadoTypePanel.setLayout(new BorderLayout());
-		txtPagoAdelantadoAvailable = new JFormattedTextField();
-		txtPagoAdelantadoAvailable.setEditable(false);
+		txtPagoAdelantadoAvailable = new VNumber();
+		txtPagoAdelantadoAvailable.setReadWrite(false);
 		lblPagoAdelantadoAvailable = new JLabel();
 		lblPagoAdelantadoAvailable.setText("PENDIENTE");
 		tenderTypeIndexsCombos.put(TAB_INDEX_PAGO_ADELANTADO,
@@ -1761,8 +1847,9 @@ public class VOrdenCobro extends VOrdenPago {
 																org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
 														.add(jTabbedPane2,
-																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-																330, 330)
+																354,
+																420,
+																Short.MAX_VALUE)
 														.add(panelPaymentDiscount,
 																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
 																org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
@@ -1908,9 +1995,9 @@ public class VOrdenCobro extends VOrdenPago {
 										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
 								.add(jTabbedPane1,
-										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-										org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
-										org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+										354,
+										420,
+										Short.MAX_VALUE)
 								.addPreferredGap(
 										org.jdesktop.layout.LayoutStyle.RELATED)
 								.add(jPanel2,
@@ -2252,7 +2339,7 @@ public class VOrdenCobro extends VOrdenPago {
 		m_frame.repaint();
 	}
 
-	private VOrdenCobroModel getCobroModel() {
+	protected VOrdenCobroModel getCobroModel() {
 		return (VOrdenCobroModel) getModel();
 	}
 
@@ -2269,10 +2356,12 @@ public class VOrdenCobro extends VOrdenPago {
 		if (retencSchema == null)
 			return;
 
+		txtCheckBarcode.setText("");
+		
 		Date d = new Date();
 		// Retenciones
 		retencSchema.setValue(null);
-		txtRetencImporte.setText("0");
+		txtRetencImporte.setValue(BigDecimal.ZERO);
 		txtRetencNroRetenc.setText("");
 		retencFecha.setValue(d);
 		// Caja efectivo de la caja diaria si es que existe
@@ -2327,14 +2416,14 @@ public class VOrdenCobro extends VOrdenPago {
 		String retencionNumber = txtRetencNroRetenc.getText().trim();
 		BigDecimal amount = null;
 		try {
-			amount = numberParse(txtRetencImporte.getText());
+			amount = (BigDecimal)txtRetencImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
 		// Se agrega la retención como medio de cobro.
 		// La fecha es la fecha de la RC
 		getCobroModel().addRetencion(retencionSchemaID, retencionNumber,
-				amount, getModel().m_fechaTrx, getC_Campaign_ID(), getC_Project_ID());
+				amount, retencFecha.getTimestamp(), getC_Campaign_ID(), getC_Project_ID());
 	}
 
 	protected void saveCreditCardMedioPago() throws Exception {
@@ -2372,7 +2461,7 @@ public class VOrdenCobro extends VOrdenPago {
 		BigDecimal amount = null;
 		Integer monedaOriginalID;
 		try {
-			amount = numberParse(txtChequeImporte.getText());
+			amount = (BigDecimal)txtChequeImporte.getValue();
 		} catch (Exception e) {
 			throw new Exception("@Invalid@ @Amount@");
 		}
@@ -2436,16 +2525,18 @@ public class VOrdenCobro extends VOrdenPago {
 	}
 
 	@Override
-	protected MedioPago savePagoAdelantadoMedioPago() throws Exception {
-		MedioPago mp = super.savePagoAdelantadoMedioPago();
-		MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboPagoAdelantadoReceiptMedium
-				.getSelectedItem();
-		saveBasicValidation(paymentMedium, null);
-		mp.setPaymentMedium(paymentMedium);
-		mp.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
-		mp.setMonedaOriginalID((Integer) cboCurrency.getValue());
+	protected List<MedioPago> savePagoAdelantadoMedioPago() throws Exception {
+		List<MedioPago> retValue = super.savePagoAdelantadoMedioPago();
+		for (MedioPago mp : retValue) {
+			MPOSPaymentMedium paymentMedium = (MPOSPaymentMedium) cboPagoAdelantadoReceiptMedium
+					.getSelectedItem();
+			saveBasicValidation(paymentMedium, null);
+			mp.setPaymentMedium(paymentMedium);
+			mp.setDiscountSchemaToApply(getCobroModel().getCurrentGeneralDiscount());
+			mp.setMonedaOriginalID((Integer) cboCurrency.getValue());
+		}
 		
-		return mp;
+		return retValue;
 	}
 
 	@Override
@@ -2482,7 +2573,7 @@ public class VOrdenCobro extends VOrdenPago {
 				.getC_RetencionSchema_ID());
 		txtRetencNroRetenc.setText(retencion.getRetencionNumber());
 		txtRetencImporte
-				.setText(getModel().numberFormat(retencion.getAmount()));
+				.setValue(retencion.getAmount());
 		retencFecha.setValue(retencion.getDateTrx());
 	}
 
@@ -2811,7 +2902,7 @@ public class VOrdenCobro extends VOrdenPago {
 		updateOverdueInvoicesCharge();
 		BigDecimal total = getModel().getSumaTotalPagarFacturas();
 		txtTotalPagar1.setValue(total);
-		txtTotalPagar1.setText(numberFormat(total));
+		txtTotalPagar1.setValue(total);
 	}
 
     protected void updateCustomPaymentsTabsState(){
@@ -3185,5 +3276,50 @@ public class VOrdenCobro extends VOrdenPago {
 	@Override
 	protected void doBPartnerValidations(){
 		// Por lo pronto no existen validaciones de clientes
+	}
+	
+	private CTextField getCheckBarcode() {
+		if (txtCheckBarcode == null) {
+			txtCheckBarcode = new CTextField();
+			txtCheckBarcode.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					//Validaciones string ingresado
+					//Longitud debe ser 29 caracteres
+					// Eliminar los caracteres que no son numéricos
+					if(Util.isEmpty(txtCheckBarcode.getText(), true)) {
+						return;
+					}
+					
+					String newCodeText = txtCheckBarcode.getText().replaceAll("[^\\d]", "");
+					txtCheckBarcode.setText(newCodeText);
+					if (newCodeText.length() != 29) {
+						showError(Msg.getMsg(m_ctx, "CheckBarcodeError"));
+						return;
+					}
+					
+					String codBanco = txtCheckBarcode.getText().substring(0, 3);
+					String cp = txtCheckBarcode.getText().substring(6, 10);
+					String ctaCte = txtCheckBarcode.getText().substring(18, 29);
+					String nroCheque = txtCheckBarcode.getText().substring(10, 18);
+					String nombreBanco = DB.getSQLValueString(getModel().getTrxName(), "SELECT name FROM c_bank WHERE routingno = ? ORDER BY created DESC LIMIT 1", codBanco);
+					String nombreLocalidad = DB.getSQLValueString(getModel().getTrxName(), "SELECT name FROM c_city WHERE postal = ? ORDER BY created DESC LIMIT 1", cp);
+					
+					if (nombreBanco == null || nombreBanco.isEmpty()) {
+						nombreBanco = Msg.getMsg(m_ctx, "UnidentifiedBank");
+					}
+					
+					String textoBanco = nombreBanco + 
+										(nombreLocalidad != null && !nombreLocalidad.isEmpty() ? (" - " + Msg.getMsg(m_ctx, "Branch") + " " + nombreLocalidad) : "") +
+										" - " +	Msg.getMsg(m_ctx, "Postal") + " " + cp;
+										
+					String textoCuenta = Msg.getMsg(m_ctx, "Account") + " " + ctaCte.replaceFirst ("^0*", "");
+										
+					txtChequeNroCheque.setText(nroCheque.replaceFirst ("^0*", ""));
+					txtChequeBanco.setText(textoBanco);
+					txtChequeDescripcion.setText(textoCuenta);
+				}
+			});
+		}
+		return txtCheckBarcode;
 	}
 }

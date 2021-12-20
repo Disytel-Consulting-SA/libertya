@@ -41,6 +41,7 @@ import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AGlassPane;
 import org.openXpertya.apps.Help;
 import org.openXpertya.model.MRole;
+import org.openXpertya.plugin.common.PluginClassUtil;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -295,13 +296,9 @@ public class FormFrame extends CFrame implements ActionListener {
         setTitle( Env.getHeader( ctx,m_WindowNo ));
 
         try {
-
-            // Create instance w/o parameters
-
-            m_panel = ( FormPanel )Class.forName( className ).newInstance();
+            m_panel = (FormPanel)PluginClassUtil.get(className);
         } catch( Exception e ) {
             log.log( Level.SEVERE,"Class=" + className + ", AD_Form_ID=" + AD_Form_ID,e );
-
             return false;
         }
 

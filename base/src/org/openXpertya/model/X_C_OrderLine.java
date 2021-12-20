@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-12-05 12:32:20.196 */
+ *  @version  - 2021-12-14 10:23:00.202 */
 public class X_C_OrderLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -450,6 +450,18 @@ BigDecimal bd = (BigDecimal)get_Value("LineTotalAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set General Discount Amt */
+public void setManualGeneralDiscountAmt (BigDecimal ManualGeneralDiscountAmt)
+{
+set_Value ("ManualGeneralDiscountAmt", ManualGeneralDiscountAmt);
+}
+/** Get General Discount Amt */
+public BigDecimal getManualGeneralDiscountAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ManualGeneralDiscountAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Attribute Set Instance.
 Product Attribute Set Instance */
 public void setM_AttributeSetInstance_ID (int M_AttributeSetInstance_ID)
@@ -845,7 +857,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_OrderLine(C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,LineTotalAmt,CheckoutPlace,QtyTransferred,AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,C_Order_ID,C_OrderLine_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,FreightAmt,IsActive,IsDescription,Line,LineNetAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy,QtyReturned,DiffAmt,PriceDiff,PriceReception,QtyDiff,QtyReception,ReceptionAmt,SalesRep_Orig_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_OrderLine(C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,LineTotalAmt,CheckoutPlace,QtyTransferred,AD_Client_ID,AD_Org_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Charge_ID,C_Currency_ID,C_Order_ID,C_OrderLine_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,DateDelivered,DateInvoiced,DateOrdered,DatePromised,Description,Discount,FreightAmt,IsActive,IsDescription,Line,LineNetAmt,M_AttributeSetInstance_ID,M_Product_ID,M_Shipper_ID,M_Warehouse_ID,OpenMatrix,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyDelivered,QtyEntered,QtyInvoiced,QtyOrdered,QtyReserved,Ref_OrderLine_ID,S_ResourceAssignment_ID,Updated,UpdatedBy,QtyReturned,DiffAmt,PriceDiff,PriceReception,QtyDiff,QtyReception,ReceptionAmt,SalesRep_Orig_ID,ManualGeneralDiscountAmt," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
  		 if (getDocumentDiscountAmt() == null) sql = sql.replaceFirst("DocumentDiscountAmt,","").replaceFirst("\\?,", "");
@@ -888,6 +900,7 @@ try
  		 if (getQtyReception() == null) sql = sql.replaceFirst("QtyReception,","").replaceFirst("\\?,", "");
  		 if (getReceptionAmt() == null) sql = sql.replaceFirst("ReceptionAmt,","").replaceFirst("\\?,", "");
  		 if (getSalesRep_Orig_ID() == 0) sql = sql.replaceFirst("SalesRep_Orig_ID,","").replaceFirst("\\?,", "");
+ 		 if (getManualGeneralDiscountAmt() == null) sql = sql.replaceFirst("ManualGeneralDiscountAmt,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -956,6 +969,7 @@ try
 		 if (getQtyReception() != null) pstmt.setBigDecimal(col++, getQtyReception());
 		 if (getReceptionAmt() != null) pstmt.setBigDecimal(col++, getReceptionAmt());
 		 if (getSalesRep_Orig_ID() != 0) pstmt.setInt(col++, getSalesRep_Orig_ID());
+		 if (getManualGeneralDiscountAmt() != null) pstmt.setBigDecimal(col++, getManualGeneralDiscountAmt());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

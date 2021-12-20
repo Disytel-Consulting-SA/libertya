@@ -11,6 +11,7 @@ import java.util.Properties;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
 
+import org.openXpertya.model.MPayment;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -75,7 +76,12 @@ public class ChecksByAccountDataSource implements OXPJasperDataSource {
 					"INNER JOIN c_bankaccount as ba ON ba.c_bankaccount_id = p.c_bankaccount_id " +
 					"INNER JOIN c_bpartner as bp ON bp.c_bpartner_id = p.c_bpartner_id " +
 					"INNER JOIN ad_org as o ON o.ad_org_id = p.ad_org_id " +
-					"WHERE p.ad_client_id = ? AND p.tendertype = 'K' AND p.docstatus IN ('CO','CL') ");
+					"WHERE p.ad_client_id = ? AND p.tendertype = 'K' ");
+		// Estados completos o cerrados pero no en una cuenta de cheques en cartera
+		sql.append(" AND (p.docstatus = 'CO' OR (p.docstatus = 'CL' AND ba.ischequesencartera = 'N')) ");
+		sql.append(" AND p.original_ref_payment_id is null ");
+		sql.append(" AND (p.CheckStatus is null OR p.CheckStatus <> '"+MPayment.CHECKSTATUS_Rejected+"') ");
+		sql.append(" AND NOT EXISTS (select po.c_payment_id from c_payment po where po.original_ref_payment_id = p.c_payment_id) ");
 		sql.append(" AND ");
 		sql.append(getDateColumnName());
 		sql.append("::date ");

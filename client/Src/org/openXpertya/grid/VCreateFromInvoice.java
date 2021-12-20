@@ -199,13 +199,19 @@ public class VCreateFromInvoice extends VCreateFrom {
     		if (bPartnerField != null) {
     			bPartnerField.setValue(m_inout.getC_BPartner_ID());
     		}
-            if( m_inout.getC_Order_ID() != 0 ) {
+            /*if( m_inout.getC_Order_ID() != 0 ) {
                 p_order = new MOrder( Env.getCtx(),m_inout.getC_Order_ID(),null );
-            }
+                if(isForInvoice()) {
+	                orderField.setValue(p_order.getID());
+	                loadOrder(p_order.getID(), isForInvoice(), allowDeliveryReturned(), true);
+	                return;
+                }
+            }*/
         }
 
         //
-        StringBuffer sql = ((CreateFromInvoiceModel)getHelper()).loadShipmentQuery();
+		StringBuffer sql = ((CreateFromInvoiceModel) getHelper())
+				.loadShipmentQuery(getRemainingQtySQLLine(isForInvoice(), allowDeliveryReturned()));
         List<SourceEntity> data = new ArrayList<SourceEntity>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -329,16 +335,7 @@ public class VCreateFromInvoice extends VCreateFrom {
 	 * Inicializa el lookup de remitos
 	 */
 	private void initShipmentLookup() {
-		// Determinar el signo de la factura actual
-		MDocType dt = new MDocType(getCtx(), getInvoice().getC_DocTypeTarget_ID(), getTrxName());
-		int sign = 0;
-		try {
-			sign = Integer.parseInt(dt.getsigno_issotrx());
-			sign = sign * -1;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx(), sign); 
+    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx(), getOrderFilter()); 
 		shipmentField = VComponentsFactory.VLookupFactory("M_InOut_ID", "M_InOut", p_WindowNo, DisplayType.Search,
 				whereClause, false, addSecurityValidation());
     	shipmentField.addVetoableChangeListener(new VetoableChangeListener() {
@@ -390,9 +387,6 @@ public class VCreateFromInvoice extends VCreateFrom {
         	orderField.setValue(relatedOrderID);
         }
 	}
-	
-	
-
 	
     /**
      * Este método es invocado cuando el usuario cambia el remito seleccionado

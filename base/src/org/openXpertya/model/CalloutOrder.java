@@ -1419,12 +1419,15 @@ public class CalloutOrder extends CalloutEngine {
         log.fine( "Bill BP_Location=" + billC_BPartner_Location_ID );
 
         //
-
+        boolean isSOTrx = Env.getContext(ctx, WindowNo, "IsSOTrx").equals("Y");
         int C_Tax_ID = 0;
         // Si los Comprobantes fiscales están activos se busca la tasa de impuesto a partir de la categoría de IVA debe estar condicionado 
         if (CalloutInvoiceExt.ComprobantesFiscalesActivos()) {
         	int C_BPartner_ID = Env.getContextAsInt( ctx,WindowNo,"C_BPartner_ID" );
-            C_Tax_ID = DB.getSQLValue( null,"SELECT C_Tax_ID FROM C_Categoria_Iva ci INNER JOIN C_BPartner bp ON (ci.C_Categoria_Iva_ID = bp.C_Categoria_Iva_ID) WHERE bp.C_BPartner_ID = ?",C_BPartner_ID );
+        	MTax tax = CalloutInvoiceExt.getTax(ctx, isSOTrx, C_BPartner_ID, AD_Org_ID, null);
+    		if(tax != null){
+    			C_Tax_ID = tax.getID();
+    		}
         }
         
         if( C_Tax_ID == 0 ) {

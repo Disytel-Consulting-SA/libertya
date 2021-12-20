@@ -195,15 +195,11 @@ public class Order  {
 	}
 
 	public BigDecimal getOrderProductsTotalAmt(boolean withoutDocumentTotalAmtForOtherTaxes) {
-		return getOrderProductsTotalAmt(true, withoutDocumentTotalAmtForOtherTaxes, true);
+		return getOrderProductsTotalAmt(true, withoutDocumentTotalAmtForOtherTaxes);
 	}
 	
 	public BigDecimal getOrderProductsTotalAmt(boolean includeOtherTaxesAmt, boolean withoutDocumentTotalAmtForOtherTaxes) {
-		return getOrderProductsTotalAmt(includeOtherTaxesAmt, withoutDocumentTotalAmtForOtherTaxes, true);
-	}
-	
-	public BigDecimal getOrderProductsTotalAmt(boolean includeOtherTaxesAmt, boolean withoutDocumentTotalAmtForOtherTaxes, boolean updateOtherTaxes) {
-		return getOrderProductsTotalAmt(true, includeOtherTaxesAmt, withoutDocumentTotalAmtForOtherTaxes, updateOtherTaxes, true);
+		return getOrderProductsTotalAmt(true, includeOtherTaxesAmt, withoutDocumentTotalAmtForOtherTaxes, true);
 	}
 	
 	/**
@@ -224,7 +220,7 @@ public class Order  {
 	 *         incluyendo descuentos a nivel documento utilizar el método
 	 *         {@link #getTotalAmount()}.
 	 */
-	public BigDecimal getOrderProductsTotalAmt(boolean includeTaxAmt, boolean includeOtherTaxesAmt, boolean withoutDocumentTotalAmtForOtherTaxes, boolean updateOtherTaxes, boolean updateTaxes) {
+	public BigDecimal getOrderProductsTotalAmt(boolean includeTaxAmt, boolean includeOtherTaxesAmt, boolean withoutDocumentTotalAmtForOtherTaxes, boolean updateTaxes) {
 		BigDecimal amount = BigDecimal.ZERO;
 		BigDecimal taxAmount = BigDecimal.ZERO;
 		BigDecimal taxAmountAux = BigDecimal.ZERO;
@@ -267,12 +263,8 @@ public class Order  {
 		}
 		
 		if(includeOtherTaxesAmt){
-			amount = amount.add(scaleAmount(getTotalOtherTaxesAmt(false, withoutDocumentTotalAmtForOtherTaxes)));
-			if(updateOtherTaxes){
-				for (Tax otherTax : getOtherTaxes()) {
-					otherTax.setTaxBaseAmt(scaleAmount(taxBaseAmount));
-					otherTax.setAmount(scaleAmount(taxBaseAmount.multiply(otherTax.getTaxRateMultiplier())));
-				}
+			for (Tax otherTax : getOtherTaxes()) {
+				amount = amount.add(otherTax.getAmount());
 			}
 		}
 		
@@ -770,16 +762,11 @@ public class Order  {
 	 * @return Devuelve el importe pendiente de pago de este pedido sin tener en
 	 *         cuenta el descuento de este pedido, es decir, el descuento del
 	 *         pedido se toma como un importe pendiente de pago
-	 */
+	 */	
 	public BigDecimal getOpenAmount() {
-		return getOpenAmount(false);
-	}
-	
-	public BigDecimal getOpenAmount(boolean updateOtherTaxes) {
 		BigDecimal toPay = BigDecimal.ZERO;
 		if (getBalance().compareTo(BigDecimal.ZERO) <= 0) {
-			toPay = getOrderProductsTotalAmt(true, true, updateOtherTaxes)
-					.subtract(getPaidAmount());
+			toPay = getOrderProductsTotalAmt(true, true).subtract(getPaidAmount());
 		}
 		return toPay;
 	}
@@ -905,24 +892,12 @@ public class Order  {
 	}
 	
 	
-	public BigDecimal getTotalOtherTaxesAmt(boolean isTemporalDocumentoDiscountAmt) {
-		return getTotalOtherTaxesAmt(isTemporalDocumentoDiscountAmt, true);
-	}
-	
-	/*public BigDecimal getTotalOtherTaxesAmt(boolean isTemporalDocumentDiscountAmt, boolean withoutDocumentDiscountAmt) {
-		BigDecimal totalTaxAmt = BigDecimal.ZERO;
-		for (OrderProduct orderProduct : getOrderProducts()) {
-			totalTaxAmt = totalTaxAmt
-					.add(orderProduct.getTotalOtherTaxAmt(withoutDocumentDiscountAmt, isTemporalDocumentDiscountAmt));
+	public BigDecimal getTotalOtherTaxesAmt() {
+		BigDecimal otAmt = BigDecimal.ZERO;
+		for (Tax ot : getOtherTaxes()) {
+			otAmt = otAmt.add(ot.getAmount());
 		}
-
-		return scaleAmount(totalTaxAmt);
-	}*/
-	
-	public BigDecimal getTotalOtherTaxesAmt(boolean isTemporalDocumentDiscountAmt, boolean withoutDocumentDiscountAmt) {
-		BigDecimal totalTaxBaseAmt = getTotalTaxBaseAmt(isTemporalDocumentDiscountAmt, withoutDocumentDiscountAmt);
-		BigDecimal totalTaxAmt = totalTaxBaseAmt.multiply(getOtherTaxesDivisor());
-		return scaleAmount(totalTaxAmt);
+		return otAmt;
 	}
 	
 	public BigDecimal getTotalTaxAmt(boolean isTemporalDocumentDiscountAmt, boolean withoutDocumentDiscountAmt) {

@@ -44,6 +44,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 
 /**
@@ -553,7 +554,12 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 				ip.setStyle("border: 2px");
 				ip.setClosable(true);
 				ip.setAttribute("mode", "modal");
-				ip.addValueChangeListener(this);
+				ip.addValueChangeListener(this); 
+				
+				// Custom Change Listener
+				if (customListener != null) ip.addEventListener(customEvent, customListener);
+				if (customAttribute != null) ip.setAttribute(customAttributeName, customAttribute);
+				
 				infoPanel = ip;
 				AEnv.showWindow(ip);
 				
@@ -581,6 +587,11 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 				ip.setClosable(true);
 				ip.setAttribute("mode", "modal");
 				ip.addValueChangeListener(this);
+				
+				// Custom Change Listener
+				if (customListener != null) ip.addEventListener(customEvent, customListener);
+				if (customAttribute != null) ip.setAttribute(customAttributeName, customAttribute);
+				
 				infoPanel = ip;
 				AEnv.showWindow(ip);
 	
@@ -607,6 +618,11 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 				ig.setClosable(true);
 				ig.setAttribute("mode", "modal");
 				ig.addValueChangeListener(this);
+				
+				// Custom Change Listener
+				if (customListener != null) ig.addEventListener(customEvent, customListener);
+				if (customAttribute != null) ig.setAttribute(customAttributeName, customAttribute);
+				
 				infoPanel = ig;
 				AEnv.showWindow(ig);
 	
@@ -998,4 +1014,29 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
 	public void setShowInfo(boolean showInfo) {
 		this.showInfo = showInfo;
 	}
+
+
+	public InfoPanel getInfoPanel() {
+		return infoPanel;
+	}
+	
+	// Custom EventListener
+	String customEvent;
+	EventListener customListener;
+	
+
+	public void setInfoCustomEventListener(String event, EventListener customListener) {
+		this.customEvent = event;
+		this.customListener = customListener;
+	}
+	
+	// Custom Attribute
+	String customAttributeName;
+	Object customAttribute;
+	
+	public void setInfoCustomAttribute(String name, Object attribute) {
+		this.customAttributeName = name;
+		this.customAttribute = attribute;
+	}
+	
 }

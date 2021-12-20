@@ -627,7 +627,8 @@ public final class ImpFormat {
 			find.append(where2);
 		}
 		// need to have both criteria
-		if (whereParentChild != null && whereParentChild.indexOf(" AND ") != -1) {
+		//if (whereParentChild != null && whereParentChild.indexOf(" AND ") != -1) {
+		if (whereParentChild != null) {
 			if (find.length() > 0) {
 				// may have only one
 				find.append(" OR (").append(whereParentChild).append(")");
@@ -757,7 +758,8 @@ public final class ImpFormat {
 		}
 
 		// need to have both criteria
-		if ((whereParentChild != null) && (whereParentChild.indexOf(" AND ") != -1)) {
+		//if ((whereParentChild != null) && (whereParentChild.indexOf(" AND ") != -1)) {
+		if (whereParentChild != null) {
 			if (find.length() > 0) {
 				// may have only one
 				find.append(uniqueChildParentOperator).append("(").append(whereParentChild).append(")");

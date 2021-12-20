@@ -445,13 +445,13 @@ public class DiscountCalculator {
 		// Si el importe base recibido es null entonces se toma el importe total
 		// del documento como base
 		if (baseAmt == null) {
-			baseAmt = document.getLinesTotalAmt();
+			baseAmt = document.getLinesTotalAmt(false);
 		}
 		
 		// El importe base y el total del documento debe ser mayor que cero para que
 		// exista algún descuento.
 		if (baseAmt.compareTo(BigDecimal.ZERO) <= 0
-				|| document.getLinesTotalAmt().compareTo(BigDecimal.ZERO) == 0) {
+				|| document.getLinesTotalAmt(false).compareTo(BigDecimal.ZERO) == 0) {
 			return BigDecimal.ZERO;
 		}
 		
@@ -512,7 +512,7 @@ public class DiscountCalculator {
 		
 		// Importe total del documento con impuestos. Utilizado para calcular la
 		// proporción del baseAmt que también tiene incluido el impuesto 
-		BigDecimal documentTotalAmt = documentLine.getDocument().getLinesTotalAmt(); 
+		BigDecimal documentTotalAmt = documentLine.getDocument().getLinesTotalAmt(false); 
 		
 		// Valida que el esquema exista
 		if (discountSchema == null) {
@@ -2523,7 +2523,7 @@ public class DiscountCalculator {
 	
 	public BigDecimal getApplicationRatio(IDocument document, BigDecimal baseAmt) {
 		BigDecimal appBaseAmt = baseAmt;
-		BigDecimal documentTotalAmt = document.getLinesTotalAmt(); 
+		BigDecimal documentTotalAmt = document.getLinesTotalAmt(false); 
 		if (appBaseAmt == null) {
 			appBaseAmt = documentTotalAmt;
 		}
@@ -2615,11 +2615,22 @@ public class DiscountCalculator {
 	public interface IDocument {
 		
 		/**
+		 * @param documentDiscountApplied true si se debe obtener el total aplicando el
+		 *                                descuento a nivel de documento, false caso
+		 *                                contrario
+		 * @return El importe total de las líneas del documento <b>incluyendo
+		 *         impuestos</b>. Incluye o no descuentos aplicados a nivel de documento
+		 *         dependiendo el parámetro, pero si aquellos aplicados a nivel de
+		 *         línea.
+		 */
+		public BigDecimal getLinesTotalAmt(boolean documentDiscountApplied);
+		
+		/**
 		 * @return El importe total de las líneas del documento <b>incluyendo
 		 *         impuestos</b>. No incluye descuentos aplicados a nivel de
 		 *         documento, pero si aquellos aplicados a nivel de línea.
 		 */
-		public BigDecimal getLinesTotalAmt();
+		public BigDecimal getLinesNetAmt();
 		
 		/**
 		 * @return La lista de líneas asociadas a este documento.
@@ -2760,12 +2771,24 @@ public class DiscountCalculator {
 		/**
 		 * @return lista de percepciones a aplicar al documento
 		 */
-		public List<MTax> getApplyPercepcion(GeneratorPercepciones generator) throws Exception;
+		public List<Percepcion> getApplyPercepcion(GeneratorPercepciones generator) throws Exception;
 		
 		/**
 		 * @return lista de percepciones aplicadas al documento
 		 */
-		public List<DocumentTax> getAppliedPercepciones();
+		public List<Percepcion> getAppliedPercepciones();
+		
+		/** @return Obtiene el total del descuento de documento aplicado */
+		public BigDecimal getTotalDocumentDiscount();
+		
+		/** Importe base para aplicación de impuestos */
+		public BigDecimal getTaxBaseAmt();
+		
+		/** Obtiene la moneda */
+		public int getCurrencyID();
+		
+		/** Obtiene la regla de envío de mercadería */
+		public String getDeliveryViaRule();
 	}
 	
 	
@@ -2775,6 +2798,11 @@ public class DiscountCalculator {
 		 * @return el documento de débito relacionado con este crédito 
 		 */
 		public IDocument getDebitRelatedDocument();
+		
+		/**
+		 * @return true si es una NC por anulación, false caso contrario
+		 */
+		public boolean isVoiding();
 	}
 
 	/**
@@ -3019,6 +3047,11 @@ public class DiscountCalculator {
 		
 		/** Obtiene los IDs de los proveedores asociados al artículo de la línea */
 		public List<Integer> getProductVendorIDs();
+		
+		/**
+		 * @return El importe total neto de la línea, incluyendo descuentos
+		 */
+		public BigDecimal getNetAmt();
 	}
 
 	/**
@@ -3291,7 +3324,7 @@ public class DiscountCalculator {
 		 */
 		public BigDecimal getApplicationRatio(IDocument document) {
 			BigDecimal appBaseAmt = getBaseAmt();
-			BigDecimal documentTotalAmt = document.getLinesTotalAmt(); 
+			BigDecimal documentTotalAmt = document.getLinesTotalAmt(false); 
 			if (appBaseAmt == null) {
 				appBaseAmt = documentTotalAmt;
 			}

@@ -16,91 +16,37 @@
 
 package org.openXpertya.process;
 
-import java.math.BigDecimal;
-import java.util.logging.Level;
-
 import org.openXpertya.model.M_Table;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 
-/**
- * Descripción de Clase
- *
- *
- * @version    2.2, 12.10.07
- * @author     Equipo de Desarrollo de openXpertya    
- */
+public class ImportDelete extends AbstractSvrProcess {
 
-public class ImportDelete extends SvrProcess {
-
-    /** Descripción de Campos */
-
-    protected int p_AD_Table_ID = 0;
-
-    /**
-     * Descripción de Método
-     *
-     */
-
-    protected void prepare() {
-        ProcessInfoParameter[] para = getParameter();
-
-        for( int i = 0;i < para.length;i++ ) {
-            String name = para[ i ].getParameterName();
-
-            if( name.equals( "AD_Table_ID" )) {
-                p_AD_Table_ID = (( BigDecimal )para[ i ].getParameter()).intValue();
-            } else {
-                log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
-            }
-        }
-    }    // prepare
-
-    /**
-     * Descripción de Método
-     *
-     *
-     * @return
-     *
-     * @throws Exception
-     */
-
-    protected String doIt() throws Exception {
-        log.info( "doIt - AD_Table_ID=" + p_AD_Table_ID );
-
-        // get Table Info
-
-        M_Table table = new M_Table( getCtx(),p_AD_Table_ID,get_TrxName());
-
-        if( table.getID() == 0 ) {
-            throw new IllegalArgumentException( "ImportDelete - No AD_Table_ID=" + p_AD_Table_ID );
-        }
-
+	@Override
+	protected String doIt() throws Exception {
+		StringBuffer sqlWhere = new StringBuffer("AD_Client_ID = "+getAD_Client_ID());
+        M_Table table = new M_Table( getCtx(),getParamValueAsInt("AD_TABLE_ID"),get_TrxName());
         String tableName = table.getTableName();
-
-        if( !tableName.startsWith( "I" )) {
-            throw new IllegalArgumentException( "ImportDelete - Not an import table = " + tableName );
+        // Armar where en base a los valores de los parámetros de usuario y registros a eliminar
+        // Si es usuario de login, agrego el filtro
+        if(((String)getParametersValues().get("USER")).equalsIgnoreCase("L")) {
+        	sqlWhere.append(" AND CreatedBy = "	+ Env.getAD_User_ID(getCtx()));
         }
-
+        
+        // Tipo de registros a eliminar
+        if(!((String)getParametersValues().get("RECORDTYPE")).equalsIgnoreCase("A")) {
+			sqlWhere.append(
+					" AND I_IsImported = '" + (((String) getParametersValues().get("RECORDTYPE")).equalsIgnoreCase("I")
+							? "Y"
+							: "N") + "'");
+        }
+        
         // Delete
-
-		String sql = "DELETE FROM " + tableName + " WHERE AD_Client_ID=" + getAD_Client_ID() + " AND CreatedBy = "
-				+ Env.getAD_User_ID(getCtx());
+		String sql = "DELETE FROM " + tableName + " WHERE "+sqlWhere.toString();
         int    no  = DB.executeUpdate( sql,get_TrxName());
         String msg = Msg.translate( getCtx(),tableName + "_ID" ) + " #" + no;
 
         return msg;
-    }    // ImportDelete
-}    // ImportDelete
-
-
-
-/*
- *  @(#)ImportDelete.java   02.07.07
- * 
- *  Fin del fichero ImportDelete.java
- *  
- *  Versión 2.2
- *
- */
+    }
+}

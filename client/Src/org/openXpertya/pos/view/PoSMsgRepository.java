@@ -36,6 +36,10 @@ public class PoSMsgRepository {
 		return msg;
 	}
 	
+	public String parse(String msg) {
+		return Msg.parseTranslation(Env.getCtx(),msg);
+	}
+	
 	public Map<String, String> getMsgs() {
 		return msgs;
 	}

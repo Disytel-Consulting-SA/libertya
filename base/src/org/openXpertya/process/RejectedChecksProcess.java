@@ -2,24 +2,22 @@ package org.openXpertya.process;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBoletaDepositoLine;
 import org.openXpertya.model.MCheckCuitControl;
 import org.openXpertya.model.MClientInfo;
-import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
-import org.openXpertya.model.MLetraComprobante;
 import org.openXpertya.model.MOrgInfo;
-import org.openXpertya.model.MPOS;
-import org.openXpertya.model.MPOSJournal;
-import org.openXpertya.model.MPOSLetter;
+import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPayment;
-import org.openXpertya.model.MPreference;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_C_Payment;
@@ -32,15 +30,6 @@ import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
 public class RejectedChecksProcess extends AbstractSvrProcess {
-
-	/** Locale AR activo? */
-	public final boolean LOCALE_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
-	
-	/**
-	 * Nombre de la Preference con la clave (doctypekey) del tipo de documento
-	 * del débito de cheque rechazado
-	 */
-	private final static String REJECTED_CHECK_DOCTYPEKEY_PREFERENCE_NAME = "RejectedCheckDocTypeKey";
 	
 	/** Cheque */
 	private MPayment check;
@@ -60,8 +49,11 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	/** Documento débito generado por el cheque */
 	private MInvoice invoice;
 	
-	/** Cheque generado por el cheque de tercero */
-	private MPayment generatedChequeTercero;
+	/**
+	 * Descripción de los cheques de tercero rechazados generados a partir del
+	 * cheque parámetro
+	 */
+	private List<String> chequesTerceroRejectedMsg = new ArrayList<String>();
 	
 	/** Contra cheque generado por el cheque de la línea de la boleta de depósito */
 	private MPayment reverseCheckBoletaDeposito;
@@ -165,12 +157,11 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	 * @throws Exception
 	 */
 	protected void rejectGeneratedChequeTercero(Timestamp rejectedDate, String rejectedComments) throws Exception{
-		MPayment payment = (MPayment) PO.findFirst(getCtx(),
+		List<PO> payment = PO.find(getCtx(),
 				X_C_Payment.Table_Name, "Original_Ref_Payment_ID = ? and docstatus in ('CO','CL')",
 				new Object[] { getCheck().getID() }, null, get_TrxName());
-		if(payment != null){
-			doCheckRejection(payment, rejectedDate, rejectedComments);
-			setGeneratedChequeTercero(payment);
+		for (PO po : payment) {
+			getChequeTerceroRejectedMsg().add(rejectNewCheck((MPayment)po));
 		}
 	}
 	
@@ -215,7 +206,8 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	 */
 	protected void stopCheckCUIT() throws Exception{
 		MOrgInfo orgInfo = MOrgInfo.get(getCtx(), Env.getAD_Org_ID(getCtx()));
-		if (orgInfo.isCheckCuitControl()
+		if (getCheck().isReceipt() 
+				&& orgInfo.isCheckCuitControl()
 				&& !Util.isEmpty(getCuitLibrador(), true)) {
 			// Obtengo el control de cuit para la organización del cheque y le seteo a 0
 			// el límite
@@ -237,8 +229,8 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	protected void stopCurrentAccount() throws Exception{
 		// Setear la entidad comercial con el crédito inhabilitado siempre y
 		// cuando la cuenta corriente esté habilitada
-		if (!getbPartner().getSOCreditStatus().equals(
-				MBPartner.SOCREDITSTATUS_NoCreditCheck)) {
+		if (getCheck().isReceipt() 
+				&& !getbPartner().getSOCreditStatus().equals(MBPartner.SOCREDITSTATUS_NoCreditCheck)) {
 			getbPartner().setSOCreditStatus(MBPartner.SOCREDITSTATUS_CreditDisabled);
 			if(!getbPartner().save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
@@ -253,6 +245,7 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	protected MInvoice createDebitDocument() throws Exception{
 		MTax tax = MTax.getTaxExemptRate(getCtx(), get_TrxName());
 		MInvoice invoice = new MInvoice(getCtx(), 0, get_TrxName());
+		invoice.setIsSOTrx(getCheck().isReceipt());
 		invoice.setBPartner(getbPartner());
 		// Setear el tipo de documento
 		invoice = setDocType(invoice);
@@ -287,6 +280,10 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 		}
 		// Recargar la factura
 		setInvoice(new MInvoice(getCtx(), invoice.getID(), get_TrxName()));
+		getCheck().setC_Invoice_Check_Rejected_ID(invoice.getID());
+		if(!getCheck().save()) {
+			throw new Exception(CLogger.retrieveErrorAsString());
+		}
 		return invoice;
 	}
 	
@@ -301,95 +298,14 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 	protected MInvoice setDocType(MInvoice invoice) throws Exception{
 		Integer docTypeID = getDocTypeID();
 		if(Util.isEmpty(docTypeID, true)){
-			MDocType documentType = null;
-			// Si existe la preference, buscamos ese doctype
-			String rejectedCheckDoctypekey = MPreference.searchCustomPreferenceValue(
-					REJECTED_CHECK_DOCTYPEKEY_PREFERENCE_NAME, invoice.getAD_Client_ID(), invoice.getAD_Org_ID(), null,
-					true);
-			if(!Util.isEmpty(rejectedCheckDoctypekey, true)){
-				documentType = MDocType.getDocType(getCtx(), rejectedCheckDoctypekey, get_TrxName());
-			}
-			// Si es L_AR, buscamos el punto de venta
-			if(documentType == null){
-				if(LOCALE_AR_ACTIVE){
-					String docTypeKey = MDocType.DOCTYPE_CustomerDebitNote;
-					// Letra
-					MLetraComprobante letra = getLetraComprobante();
-					invoice.setC_Letra_Comprobante_ID(letra.getID());
-					// Punto de Venta
-					// Se obtiene el tipo de documento a crear
-					// Obtener el punto de venta:
-					// 1) Desde la caja diaria, priorizando la personalización de
-					// punto de venta por letra de la config del tpv asociada a ella
-					// 2) Desde la config de TPV, si es que posee una sola,
-					// priorizando la personalización de punto de venta por letra
-					Integer ptoVenta = null;
-					// 1)
-					if(MPOSJournal.isActivated()){
-						ptoVenta = MPOSJournal.getCurrentPOSNumber(letra.getLetra());
-					}
-					// 2)
-					if(Util.isEmpty(ptoVenta, true)){
-						List<MPOS> pos = MPOS.get(getCtx(),
-								Env.getAD_Org_ID(getCtx()),
-								Env.getAD_User_ID(getCtx()), get_TrxName());
-						if(pos.size() == 1){
-							Map<String, Integer> letters = MPOSLetter
-									.getPOSLetters(pos.get(0).getID(),
-											get_TrxName());
-							ptoVenta = letters.get(letra) != null ? letters
-									.get(letra) : pos.get(0).getPOSNumber();
-						}
-					}
-					// Se obtiene el tipo de documento para la factura.
-					if(Util.isEmpty(ptoVenta, true)){
-						throw new Exception(Msg.getMsg(getCtx(), "CanGetPOSNumber"));
-					}
-					documentType = MDocType.getDocType(getCtx(),
-							invoice.getAD_Org_ID(), docTypeKey, letra.getLetra(),
-							ptoVenta, get_TrxName());
-					if (documentType == null) {
-						throw new Exception(Msg.getMsg(getCtx(),
-								"NonexistentPOSDocType", new Object[] { letra,
-								ptoVenta }));
-					}
-					invoice.setPuntoDeVenta(ptoVenta);
-				}
-				else{
-					// Si no es L_AR 
-					documentType = MDocType.getDocType(getCtx(),
-							MDocType.DOCTYPE_CustomerInvoice, get_TrxName());
-				}
-			}
-			docTypeID = documentType.getID();
+			RejectedCheckTrxBuilder rc = RejectedCheckTrxBuilder.get(getCheck());
+			rc.setDocType(invoice);
 		}
-		invoice.setC_DocTypeTarget_ID(docTypeID);
-		invoice.setC_DocType_ID(docTypeID);
+		else {
+			invoice.setC_DocTypeTarget_ID(docTypeID);
+			invoice.setC_DocType_ID(docTypeID);
+		}
 		return invoice;
-	}
-	
-	/**
-	 * Obtener la letra del comprobante en base a la EC y la compañía
-	 * 
-	 * @return la letra del comprobante
-	 * @throws Exception
-	 */
-	protected MLetraComprobante getLetraComprobante() throws Exception{
-		Integer categoriaIVAclient = CalloutInvoiceExt.darCategoriaIvaClient();
-		Integer categoriaIVACustomer = getbPartner().getC_Categoria_Iva_ID();
-		// Se validan las categorias de IVA de la compañia y el cliente.
-		if (categoriaIVAclient == null || categoriaIVAclient == 0) {
-			throw new Exception(Msg.getMsg(getCtx(), "ClientWithoutIVAError"));
-		} else if (categoriaIVACustomer == null || categoriaIVACustomer == 0) {
-			throw new Exception(Msg.getMsg(getCtx(), "BPartnerWithoutIVAError"));
-		}
-		// Se obtiene el ID de la letra del comprobante a partir de las categorias de IVA.
-		Integer letraID = CalloutInvoiceExt.darLetraComprobante(categoriaIVACustomer, categoriaIVAclient);
-		if (letraID == null || letraID == 0){
-			throw new Exception(Msg.getMsg(getCtx(), "LetraCalculationError"));
-		}
-		// Se obtiene el PO de letra del comprobante.
-		return new MLetraComprobante(getCtx(), letraID, get_TrxName());
 	}
 	
 	protected boolean isCurrentAccountDisabled(){ 
@@ -404,15 +320,15 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 		msg.createAndAddListElement("check",
 				Msg.getMsg(getCtx(), "RejectedCheck") + " : "
 						+ getCheck().getDocumentNo(), actions);
-		if (getGeneratedChequeTercero() != null
+		if (getChequeTerceroRejectedMsg() != null
 				|| getReverseCheckBoletaDeposito() != null
 				|| getEachCheckBoletaDeposito() != null) {
 			HTMLList otherChecks = msg.createList("otherChecks", "ul");
 			// Cheque generado por el cheque de tercero
-			if(getGeneratedChequeTercero() != null){
+			if(getChequeTerceroRejectedMsg().size() > 0){
 				msg.createAndAddListElement("checktercero",
 						Msg.getMsg(getCtx(), "GeneratedCheckOfChequeTercero") + " : "
-								+ getGeneratedChequeTercero().getDocumentNo(), otherChecks);
+								+ getChequeTerceroRejectedMsg(), otherChecks);
 			}
 			// Contra cheque generado por boleta de depósito
 			if(getReverseCheckBoletaDeposito() != null){
@@ -431,14 +347,15 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 		}
 		// CUIT bloqueado
 		MOrgInfo orgInfo = MOrgInfo.get(getCtx(), Env.getAD_Org_ID(getCtx()));
-		if (orgInfo.isCheckCuitControl()
+		if (getCheck().isReceipt() 
+				&& orgInfo.isCheckCuitControl()
 				&& Util.isEmpty(getCuitLibrador(), true)) {
 			msg.createAndAddListElement("checkcuitcontrol",
 					Msg.getMsg(getCtx(), "CheckCUITHold") + " : "
 							+ getbPartner().getTaxID(), actions);
 		}
 		// Cuenta corriente
-		if (isCurrentAccountDisabled()) {
+		if (getCheck().isReceipt() && isCurrentAccountDisabled()) {
 			msg.createAndAddListElement("currentaccount",
 					Msg.getMsg(getCtx(), "Credit_Status_D") + " : "
 							+ getbPartner().getName(), actions);
@@ -449,6 +366,28 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 						+ getInvoice().getDocumentNo(), actions);
 		msg.addList(actions);
 		return msg.toString();
+	}
+	
+	/**
+	 * Ejecuta recursivamente este proceso de rechazo del cheque parámetro
+	 * 
+	 * @param ctp cheque a rechazar
+	 * @return info de la ejecución del proceso
+	 * @throws Exception
+	 */
+	protected String rejectNewCheck(MPayment ctp) throws Exception {
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("C_Payment_ID", ctp.getID());
+		params.put("RejectedDate", (Timestamp) getParametersValues().get("REJECTEDDATE"));
+		if((String)getParametersValues().get("REJECTEDCOMMENTS") != null) {
+			params.put("RejectedComments", (String) getParametersValues().get("REJECTEDCOMMENTS"));
+		}
+		ProcessInfo pi = MProcess.execute(getCtx(), getProcessInfo().getAD_Process_ID(), 0, params, get_TrxName());
+		if(pi.isError()) {
+			throw new Exception(pi.getSummary());
+		}
+		
+		return pi.getSummary();
 	}
 	
 	protected MPayment getCheck() {
@@ -499,14 +438,6 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 		this.productID = productID;
 	}
 
-	protected MPayment getGeneratedChequeTercero() {
-		return generatedChequeTercero;
-	}
-
-	protected void setGeneratedChequeTercero(MPayment generatedChequeTercero) {
-		this.generatedChequeTercero = generatedChequeTercero;
-	}
-
 	protected MPayment getReverseCheckBoletaDeposito() {
 		return reverseCheckBoletaDeposito;
 	}
@@ -522,6 +453,14 @@ public class RejectedChecksProcess extends AbstractSvrProcess {
 
 	protected void setEachCheckBoletaDeposito(MPayment eachCheckBoletaDeposito) {
 		this.eachCheckBoletaDeposito = eachCheckBoletaDeposito;
+	}
+
+	protected List<String> getChequeTerceroRejectedMsg() {
+		return chequesTerceroRejectedMsg;
+	}
+
+	protected void setChequeTerceroRejectedMsg(List<String> chequesTerceroRejectedMsg) {
+		this.chequesTerceroRejectedMsg = chequesTerceroRejectedMsg;
 	}
 	
 

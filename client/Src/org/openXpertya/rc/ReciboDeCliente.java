@@ -22,8 +22,6 @@ import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.pos.model.AmountHelper;
 import org.openXpertya.pos.model.Order;
 import org.openXpertya.pos.model.Payment;
-import org.openXpertya.rc.Invoice;
-import org.openXpertya.rc.InvoiceLine;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -185,7 +183,9 @@ public class ReciboDeCliente {
 		}
 		invoice.setManualAmt(manualAmt);
 		invoice.setManualAmtOriginal(manualAmtOriginal);
-		invoice.setTotalPaymentTermDiscount(paymentTermDiscount);
+		if(isApplyPaymentTerm()) {
+			invoice.setTotalPaymentTermDiscount(paymentTermDiscount);
+		}
 		add(invoice);
 	}
 	
@@ -1080,5 +1080,22 @@ public class ReciboDeCliente {
 
 	protected List<RetencionProcessor> getRetenciones() {
 		return retenciones;
+	}
+	
+	/**
+	 * @return la config de descuentos que se utiliza en este momento, puede ser
+	 *         desde el discount calculator o directo desde la config
+	 */
+	private MDiscountConfig getActualDiscountConfig() {
+		return getDiscountCalculator() != null ? getDiscountCalculator()
+				.getDiscountConfig() : getDiscountConfig();
+	}
+	
+	/**
+	 * @return true si se debe aplicar el esquema de vencimientos, false caso
+	 *         contrario
+	 */
+	public boolean isApplyPaymentTerm() {
+		return getActualDiscountConfig().isApplyPaymentTerm();
 	}
 }

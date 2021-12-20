@@ -1110,6 +1110,202 @@ public class MSequence extends X_AD_Sequence {
     }		// getDocumentNo
 
     /**
+	 * Obtiene el número de documento de la secuencia única establecida en el tipo
+	 * de documento
+	 * 
+	 * @param C_DocType_ID
+	 * @param trxName
+	 * @return
+	 */
+    public static synchronized String getUniqueDocumentNo(int C_DocType_ID, String trxName) {
+
+        if (C_DocType_ID == 0) {
+
+            s_log.severe("C_DocType_ID=0");
+
+            return null;
+        }
+
+        MDocType	dt	= MDocType.get(Env.getCtx(), C_DocType_ID);	// wrong for SERVER, but r/o
+
+        if ((dt != null) &&!dt.isDocNoControlled()) {
+
+            s_log.finer("DocType_ID=" + C_DocType_ID + " Not DocNo controlled");
+
+            return null;
+        }
+
+        if ((dt == null) || (dt.getDocNoSequence_Unique_ID() == 0)) {
+
+            s_log.warning("No Unique Sequence for DocType - " + dt);
+
+            return null;
+        }
+
+        // Check OXPSYS
+        boolean	OXPSYS	= Ini.getPropertyBool(Ini.P_OXPSYS);
+
+        if (CLogMgt.isLevel(LOGLEVEL)) {
+            s_log.log(LOGLEVEL, "DocType_ID=" + C_DocType_ID + " [" + trxName + "]");
+        }
+
+        // begin vpj-cd e-evolution 09/02/2005 PostgreSQL
+        String	selectSQL	= null;
+
+        if (DB.isPostgreSQL()) {
+
+            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID, OID " + "FROM AD_Sequence " + "WHERE AD_Sequence_ID=?" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
+            USE_PROCEDURE	= false;
+
+        } else {
+
+            // String selectSQL = "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID "
+            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID "
+
+            // end vpj-cd e-evolution 09/02/2005     PostgreSQL
+            + "FROM AD_Sequence " + "WHERE AD_Sequence_ID=?" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' ";
+        }
+
+        // + " FOR UPDATE";
+        Connection		conn	= null;
+        PreparedStatement	pstmt	= null;
+        Trx			trx	= (trxName == null)
+                                          ? null
+                                          : Trx.get(trxName, true);
+
+        //
+        int	AD_Sequence_ID	= 0;
+        int	incrementNo	= 0;
+        BigDecimal	next		= new BigDecimal(-1);
+        String	prefix		= "";
+        String	suffix		= "";
+
+        try {
+
+            if (trx != null) {
+                conn	= trx.getConnection();
+            } else {
+                conn	= DB.getConnectionID();
+            }
+
+            // Error
+            if (conn == null) {
+                return null;
+            }
+
+            //
+            pstmt	= conn.prepareStatement(selectSQL, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+            pstmt.setInt(1, dt.getDocNoSequence_Unique_ID());
+
+            //
+            ResultSet	rs	= pstmt.executeQuery();
+
+            // s_log.fine("AC=" + conn.getAutoCommit() + " -Iso=" + conn.getTransactionIsolation()
+            // + " - Type=" + pstmt.getResultSetType() + " - Concur=" + pstmt.getResultSetConcurrency());
+            if (rs.next()) {
+
+                incrementNo	= rs.getInt(3);
+                prefix		= rs.getString(4);
+                suffix		= rs.getString(5);
+
+                int	AD_Client_ID	= rs.getInt(6);
+
+                if (OXPSYS && (AD_Client_ID > 11)) {
+                    OXPSYS	= false;
+                }
+
+                AD_Sequence_ID	= rs.getInt(7);
+
+                if (USE_PROCEDURE) {
+                    next	= new BigDecimal(nextID(conn, AD_Sequence_ID, OXPSYS));
+                } else {
+
+                    if (OXPSYS) {
+
+                        next	= rs.getBigDecimal(2);
+                        rs.updateBigDecimal(2, next.add(new BigDecimal(incrementNo)));
+
+                    } else {
+
+                        next	= rs.getBigDecimal(1);
+                        rs.updateBigDecimal(1, next.add(new BigDecimal(incrementNo)));
+                    }
+
+                    rs.updateRow();
+                }
+
+            } else {
+
+                s_log.warning("(DocType)- no record found - " + dt);
+                next	= new BigDecimal(-2);
+            }
+
+            rs.close();
+            pstmt.close();
+            pstmt	= null;
+
+            // Commit
+            if (trx == null) {
+
+                conn.commit();
+
+                // conn.close();
+            }
+
+            conn	= null;
+
+        } catch (Exception e) {
+
+            s_log.log(Level.SEVERE, "(DocType) [" + trxName + "]", e);
+            next	= new BigDecimal(-2);
+        }
+
+        // Finish
+        try {
+
+            if (pstmt != null) {
+                pstmt.close();
+            }
+
+            pstmt	= null;
+
+            // if (conn != null && trx == null)
+            // conn.close();
+            conn	= null;
+
+        } catch (Exception e) {
+
+            s_log.log(Level.SEVERE, "(DocType) - finish", e);
+            pstmt	= null;
+        }
+
+        // Error
+        if (next.compareTo(BigDecimal.ZERO) < 0) {
+            return null;
+        }
+
+        // create DocumentNo
+        StringBuffer	doc	= new StringBuffer();
+
+        if ((prefix != null) && (prefix.length() > 0)) {
+            doc.append(prefix);
+        }
+
+        doc.append(next);
+
+        if ((suffix != null) && (suffix.length() > 0)) {
+            doc.append(suffix);
+        }
+
+        String	documentNo	= doc.toString();
+
+        s_log.finer(documentNo + " (" + incrementNo + ")" + " - C_DocType_ID=" + C_DocType_ID + " [" + trx + "]");
+
+        return documentNo;
+
+    }		// getUniqueDocumentNo
+    
+    /**
      *      Get Document No from table
      *      @param AD_Client_ID client
      *      @param TableName table name

@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_Retencion
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:28.328 */
-public class X_C_BPartner_Retencion extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2021-12-20 13:54:05.322 */
+public class X_C_BPartner_Retencion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_BPartner_Retencion (Properties ctx, int C_BPartner_Retencion_ID, String trxName)
@@ -26,13 +27,13 @@ public X_C_BPartner_Retencion (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=1000144 */
-public static final int Table_ID=1000144;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_BPartner_Retencion");
 
 /** TableName=C_BPartner_Retencion */
 public static final String Table_Name="C_BPartner_Retencion";
 
-protected static KeyNamePair Model = new KeyNamePair(1000144,"C_BPartner_Retencion");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_BPartner_Retencion");
 protected static BigDecimal AccessLevel = new BigDecimal(3);
 
 /** Load Meta Data */
@@ -46,11 +47,23 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_BPartner_Retencion[").append(getID()).append("]");
 return sb.toString();
 }
+/** Set Alicuota */
+public void setAlicuota (BigDecimal Alicuota)
+{
+set_Value ("Alicuota", Alicuota);
+}
+/** Get Alicuota */
+public BigDecimal getAlicuota() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Alicuota");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Business Partner .
 Identifies a Business Partner */
 public void setC_BPartner_ID (int C_BPartner_ID)
 {
-set_Value ("C_BPartner_ID", new Integer(C_BPartner_ID));
+set_ValueNoCheck ("C_BPartner_ID", new Integer(C_BPartner_ID));
 }
 /** Get Business Partner .
 Identifies a Business Partner */
@@ -91,7 +104,7 @@ public void setDescription (String Description)
 if (Description != null && Description.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Description = Description.substring(0,59);
+Description = Description.substring(0,60);
 }
 set_Value ("Description", Description);
 }
@@ -112,7 +125,7 @@ public void setTaxID (String TaxID)
 if (TaxID != null && TaxID.length() > 20)
 {
 log.warning("Length > 20 - truncated");
-TaxID = TaxID.substring(0,19);
+TaxID = TaxID.substring(0,20);
 }
 set_Value ("TaxID", TaxID);
 }

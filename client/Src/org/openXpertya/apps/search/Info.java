@@ -26,6 +26,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -102,8 +103,25 @@ public abstract class Info extends CDialog implements ListSelectionListener {
      *
      * @return
      */
+	public static Info create( Frame frame,boolean modal,int WindowNo,String tableName,String keyColumn,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation) {
+		return create(frame, modal, WindowNo, tableName, keyColumn, value, multiSelection, whereClause, addSecurityValidation, null);
+	}
 
-    public static Info create( Frame frame,boolean modal,int WindowNo,String tableName,String keyColumn,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation ) {
+	/**
+	 * Rescritura método para agregar constructor Info personalizado por nombre de clase, por reflection (JACOFER)  
+	 * @param frame
+	 * @param modal
+	 * @param WindowNo
+	 * @param tableName
+	 * @param keyColumn
+	 * @param value
+	 * @param multiSelection
+	 * @param whereClause
+	 * @param addSecurityValidation
+	 * @param infoClassName
+	 * @return
+	 */
+    public static Info create( Frame frame,boolean modal,int WindowNo,String tableName,String keyColumn,String value,boolean multiSelection,String whereClause, boolean addSecurityValidation, String infoClassName) {
         Info info = null;
         
         /**
@@ -113,7 +131,23 @@ public abstract class Info extends CDialog implements ListSelectionListener {
         
         if (info!=null)        
         	;
-        else if( tableName.equals( "C_BPartner" )) {
+        //--- Creación de la clase info por reflextion a partir del nombre parámetro (JACOFER)
+        else if (infoClassName != null) {
+			Class classDefinition;
+		    Class[] argsClassDefinition = new Class[] {Frame.class, boolean.class, int.class, String.class, boolean.class, String.class};
+		    Object[] args = new Object[] { frame, modal, WindowNo, value, multiSelection, whereClause};
+		    Constructor constructor;
+		    
+		    try {
+		    	classDefinition = Class.forName(infoClassName);
+		    	constructor = classDefinition.getConstructor(argsClassDefinition);
+		        info = (Info) constructor.newInstance(args);
+		    } catch (Exception e) {
+		    	// Si da algún tipo de error (nombre de clase incorrecto, error al instanciar, etc) retorno la ventana InfoGeneral
+	            info = new InfoGeneral( frame,modal,WindowNo,value,tableName,keyColumn,multiSelection,whereClause );
+		    }
+		//--- FIN Creación de la clase info por reflextion a partir del nombre parámetro (JACOFER)
+        } else if( tableName.equals( "C_BPartner" )) {
         	// System.out.println("creando info c_BPartner");
             info = new InfoBPartner( frame,modal,WindowNo,value,!Env.getContext( Env.getCtx(),"IsSOTrx" ).equals( "N" ),multiSelection,whereClause );
         } else if( tableName.equals( "M_Product" )) {

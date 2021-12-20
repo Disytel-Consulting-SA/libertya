@@ -25,6 +25,7 @@ import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.compiere.swing.CComboBox;
+import org.compiere.swing.CTextField;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VOrdenCobroModel;
 import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
@@ -44,6 +45,7 @@ import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.RetencionProcessor;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
@@ -120,6 +122,9 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Combobox cboEntidadFinancieraPlans;
 
 	private PaymentMediumItemListener paymentMediumItemListener;
+	
+	// Agregado para lector de cheques
+	protected WStringEditor txtCheckBarcode;
 
 	public WOrdenCobro() {
 		super();
@@ -148,6 +153,8 @@ public class WOrdenCobro extends WOrdenPago {
 		super.initTranslations();
 		// Cheques
 		chequeChequera.getLabel().setText(Msg.translate(m_ctx, "C_BankAccount_ID"));
+		// Agregado para lector de cheques
+		txtCheckBarcode.getLabel().setText(Msg.translate(m_ctx, "CheckBarcode"));
 
 		// Retencions
 		retencSchema.getLabel().setValue(Msg.translate(m_ctx, "C_Withholding_ID"));
@@ -353,6 +360,7 @@ public class WOrdenCobro extends WOrdenPago {
 		
 		Tabpanel tabpanel = new Tabpanel();
 		
+		txtCheckBarcode.getLabel().setText("LECTOR CHEQUE"); //JACOFER: Agregado para lector de cheques
         chequeChequera.getLabel().setText("CHEQUERA");
         txtChequeNroCheque.getLabel().setText("NUMERO DE CHEQUE");
         txtChequeImporte.getLabel().setText("IMPORTE");
@@ -385,6 +393,9 @@ public class WOrdenCobro extends WOrdenPago {
 		gridpanel.setWidth("100%");
 		
     	Rows rows = gridpanel.newRows();
+    	Row row0 = rows.newRow();
+    	row0.appendChild(txtCheckBarcode.getLabel().rightAlign());
+    	row0.appendChild(txtCheckBarcode.getComponent());
 		Row row = rows.newRow();
 		row.appendChild(lblCheckReceiptMedium.rightAlign());
 		row.appendChild(cboCheckReceiptMedium);
@@ -1977,6 +1988,42 @@ public class WOrdenCobro extends WOrdenPago {
 			@Override
 			public void onEvent(Event arg0) throws Exception {
 				updateGroupingAmt(false);
+				
+			}
+		});
+		
+		txtCheckBarcode = new WStringEditor();
+		txtCheckBarcode.getComponent().addEventListener("onChange", new EventListener() {		
+			@Override
+			public void onEvent(Event arg0) throws Exception {
+				//Validaciones string ingresado
+				//Longitud debe ser 29 caracteres
+				if (txtCheckBarcode.getValue().toString().length() != 29 || 
+						!txtCheckBarcode.getValue().toString().matches("[0-9]+")) {
+					showError(Msg.getMsg(m_ctx, "CheckBarcodeError"));
+					return;
+				}
+				
+				String codBanco = txtCheckBarcode.getValue().toString().substring(0, 3);
+				String cp = txtCheckBarcode.getValue().toString().substring(6, 10);
+				String ctaCte = txtCheckBarcode.getValue().toString().substring(18, 29);
+				String nroCheque = txtCheckBarcode.getValue().toString().substring(10, 18);
+				String nombreBanco = DB.getSQLValueString(getModel().getTrxName(), "SELECT name FROM c_bank WHERE routingno = ? ORDER BY created DESC LIMIT 1", codBanco);
+				String nombreLocalidad = DB.getSQLValueString(getModel().getTrxName(), "SELECT name FROM c_city WHERE postal = ? ORDER BY created DESC LIMIT 1", cp);
+				
+				if (nombreBanco == null || nombreBanco.isEmpty()) {
+					nombreBanco = Msg.getMsg(m_ctx, "UnidentifiedBank");
+				}
+				
+				String textoBanco = nombreBanco + 
+									(nombreLocalidad != null && !nombreLocalidad.isEmpty() ? (" - " + Msg.getMsg(m_ctx, "Branch") + " " + nombreLocalidad) : "") +
+									" - " +	Msg.getMsg(m_ctx, "Postal") + " " + cp;
+									
+				String textoCuenta = Msg.getMsg(m_ctx, "Account") + " " + ctaCte.replaceFirst ("^0*", "");
+									
+				txtChequeNroCheque.setValue(nroCheque.replaceFirst ("^0*", ""));
+				txtChequeBanco.setValue(textoBanco);
+				txtChequeDescripcion.setValue(textoCuenta);
 				
 			}
 		});

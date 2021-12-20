@@ -1,8 +1,10 @@
 package org.openXpertya.cc;
 
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Properties;
 
+import org.openXpertya.model.MRole;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -62,6 +64,9 @@ public class CurrentAccountQuery {
 	/** Tipo de Cuenta: C = Cliente, V = Proveedor, B = Ambos */
 	private String accountType;
 	
+	/** Agregar Validaciones de Seguridad de Organizaciones */
+	private boolean addSecurityValidation = false;
+	
 	public CurrentAccountQuery(Properties ctx, Integer orgID,
 			Integer docTypeID, Boolean detailReceiptsPayments,
 			Timestamp dateFrom, Timestamp dateTo, String condition, 
@@ -76,6 +81,15 @@ public class CurrentAccountQuery {
 		setCondition(condition);
 		setbPartnerID(bPartnerID);
 		setAccountType(Util.isEmpty(accountType, true)?"B":accountType);
+	}
+	
+	public CurrentAccountQuery(Properties ctx, Integer orgID,
+			Integer docTypeID, Boolean detailReceiptsPayments,
+			Timestamp dateFrom, Timestamp dateTo, String condition, 
+			Integer bPartnerID, String accountType, 
+			boolean addSecurityValidation) {
+		this(ctx, orgID, docTypeID, detailReceiptsPayments, dateFrom, dateTo, condition, bPartnerID, accountType);
+		setAddSecurityValidation(addSecurityValidation);
 	}
 
 	/**
@@ -110,6 +124,7 @@ public class CurrentAccountQuery {
 							+ "document_id, "
 							+ "c_invoicepayschedule_id, "
 							+ "amount, "
+							+ "sum(openamt) as openamt, "
 							+ "sum(debit) as debit, "
 							+ "sum(credit) as credit ");
 			sqlDoc.append(" from ( ");
@@ -125,7 +140,8 @@ public class CurrentAccountQuery {
 			sqlDoc.append(" (CASE WHEN ah.c_allocationhdr_id IS NULL THEN rv.c_invoicepayschedule_id ELSE null::integer END) as c_invoicepayschedule_id, ");
 			sqlDoc.append(" debit, ");
 			sqlDoc.append(" credit, ");		
-			sqlDoc.append(" rv.amount ");
+			sqlDoc.append(" rv.amount, ");
+			sqlDoc.append(" openamt ");
 			sqlDoc.append(" from ( ");
 			
 			// Final de la query
@@ -141,49 +157,61 @@ public class CurrentAccountQuery {
 			sqlSummarySubQueryEnd.append(" GROUP BY datetrx, createdghost, c_doctype_id, documentno, duedate, created, c_currency_id, documenttable, document_id, c_invoicepayschedule_id, amount ");
 		}
 		sqlDoc.append(" SELECT distinct ");
+		sqlDoc.append(" 	DateTrx, ");
+		sqlDoc.append(" 	createdghost, ");
+		sqlDoc.append(" 	C_DocType_ID, ");
+		sqlDoc.append(" 	C_BPartner_ID, ");
+		sqlDoc.append(" 	DocumentNo, ");
+		sqlDoc.append(" 	duedate, ");
+		sqlDoc.append("     ABS(CASE WHEN signo_issotrx = ? THEN allocatedamt + openamt ELSE 0.0 END) * SIGN(amount)::numeric AS Debit, ");
+		sqlDoc.append("     ABS(CASE WHEN signo_issotrx = ? THEN allocatedamt + openamt ELSE 0.0 END) * SIGN(amount)::numeric AS Credit, ");
+		sqlDoc.append("  	Created, ");
+		sqlDoc.append("  	C_Currency_ID, ");
+		sqlDoc.append("  	amount, ");
+		sqlDoc.append("  	documenttable, ");
+		sqlDoc.append("  	document_id, ");
+		sqlDoc.append(" 	c_invoicepayschedule_id, ");
+		sqlDoc.append(" 	c_allocationhdr_id, ");
+		sqlDoc.append("  	openamt ");
+		
+		sqlDoc.append(" from ( ");
+		sqlDoc.append(" SELECT distinct ");
 		sqlDoc.append(" 	d.Dateacct::date as DateTrx, ");
 		sqlDoc.append(" 	d.Created as createdghost, ");
 		sqlDoc.append(" 	d.C_DocType_ID, ");
 		sqlDoc.append(" 	d.C_BPartner_ID, ");
 		sqlDoc.append(" 	d.DocumentNo, ");
 		sqlDoc.append(" 	d.duedate, ");
-		sqlDoc.append("     ABS(CASE WHEN d.signo_issotrx = ? THEN ");
+
+		// Importe imputado
 		sqlDoc.append("     abs((SELECT CASE ");
 		sqlDoc.append("		WHEN d.documenttable = 'C_Invoice' THEN getallocatedamt(d.document_id, " + getCurrencyID() + ", COALESCE(c_conversiontype_id,0), 1, "+ getDateToInlineQuery() +", coalesce(d.c_invoicepayschedule_id,0)) ");
 		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id LEFT JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ") "+getInvoiceOrgIDAllocatedQueryCondition()+" ) ");
-		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id LEFT JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ") "+getInvoiceOrgIDAllocatedQueryCondition()+" ) END)) ");
-		sqlDoc.append("     + ");
+		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id LEFT JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ") "+getInvoiceOrgIDAllocatedQueryCondition()+" ) END)) as allocatedamt, ");
+		
+		// Importe pendiente
 		sqlDoc.append("     abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
 		sqlDoc.append("     invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0), "+ getDateToInlineQuery() +") ");
 		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN ");
 		sqlDoc.append("     cashlineavailable(d.document_id, "+ getDateToInlineQuery() +") ");
-		sqlDoc.append("     ELSE paymentavailable(d.document_id, "+ getDateToInlineQuery() +") END, d.c_currency_id, ?, "+ getDateToInlineQuery() +", COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ");
-		sqlDoc.append("	         ELSE 0.0 END) * SIGN(d.amount)::numeric AS Debit, ");
-		sqlDoc.append("     ABS(CASE WHEN d.signo_issotrx = ? THEN ");
-		sqlDoc.append("     abs((SELECT CASE ");
-		sqlDoc.append("		WHEN d.documenttable = 'C_Invoice' THEN getallocatedamt(d.document_id, " + getCurrencyID() + ", COALESCE(c_conversiontype_id,0), 1, "+ getDateToInlineQuery() +", coalesce(d.c_invoicepayschedule_id,0)) ");
-		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id LEFT JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id WHERE (al.c_cashline_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ") "+getInvoiceOrgIDAllocatedQueryCondition()+" ) ");
-		sqlDoc.append("     ELSE (select (CASE WHEN SUM(al.amount) IS NULL THEN 0.0 ELSE SUM(al.amount) END) FROM C_AllocationLine al INNER JOIN C_AllocationHdr ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id LEFT JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id WHERE (al.c_payment_id = d.document_id) AND (al.isactive = 'Y') AND (ah.dateacct::date <= " + getDateToInlineQuery() + ") "+getInvoiceOrgIDAllocatedQueryCondition()+" ) END)) ");
-		sqlDoc.append("     + ");
-		sqlDoc.append("     abs((SELECT currencyconvert ( CASE WHEN d.documenttable = 'C_Invoice' THEN ");
-		sqlDoc.append("     invoiceOpen(d.document_id, coalesce(d.c_invoicepayschedule_id,0), "+ getDateToInlineQuery() +") ");
-		sqlDoc.append("     WHEN d.documenttable = 'C_CashLine' THEN ");
-		sqlDoc.append("     cashlineavailable(d.document_id, "+ getDateToInlineQuery() +") ");
-		sqlDoc.append("     ELSE paymentavailable(d.document_id, "+ getDateToInlineQuery() +") END, d.c_currency_id, ?, "+ getDateToInlineQuery() +", COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) ");
-		sqlDoc.append("	         ELSE 0.0 END) * SIGN(d.amount)::numeric AS Credit, ");
+		sqlDoc.append("     ELSE paymentavailable(d.document_id, "+ getDateToInlineQuery() +") END, d.c_currency_id, ?, "+ getDateToInlineQuery() +", COALESCE(d.c_conversiontype_id,0), d.ad_client_id, d.ad_org_id ))) as openamt, ");
+
 		sqlDoc.append("  	d.Created, ");
 		sqlDoc.append("  	d.C_Currency_ID, ");
 		sqlDoc.append("  	d.amount, ");
 		sqlDoc.append("  	d.documenttable, ");
 		sqlDoc.append("  	d.document_id, ");
 		sqlDoc.append(" 	d.c_invoicepayschedule_id, ");
-		sqlDoc.append(" 	d.c_allocationhdr_id ");
-		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ", "+(orgID == null?0:orgID)+", '"+getAccountType()+"', true)  d ");
+		sqlDoc.append(" 	d.c_allocationhdr_id, ");
+		sqlDoc.append(" 	d.signo_issotrx ");
+		sqlDoc.append(" FROM V_Documents_Org_Filtered (" + (bPartnerID != null ? bPartnerID : -1) + ", " + !detailReceiptsPayments + ", '"+getCondition()+"', " + getDateToInlineQuery() + ", "+(orgID == null?0:orgID)+", '"+getAccountType()+"', true, true)  d ");
 		sqlDoc.append(" WHERE d.AD_Client_ID = ? ");
 		sqlDoc.append(" AND "+getDocStatusWhereClause());
 		sqlAppend("   AND d.C_Bpartner_ID = ? ", bPartnerID, sqlDoc);
 		sqlAppend("   AND d.AD_Org_ID = ? ", orgID, sqlDoc);
 		sqlAppend("   AND d.C_DocType_ID = ? ", docTypeID, sqlDoc);
+		sqlDoc.append(getSecurityValidation());
+		sqlDoc.append(" ) as t ");
 		
 		sqlDoc.append(sqlSummarySubQueryEnd);
 		sqlDoc.append(" ) as d ");
@@ -206,7 +234,7 @@ public class CurrentAccountQuery {
 		if (!detailReceiptsPayments) {
 			StringBuffer sqlGroupBy = new StringBuffer();
 			sqlGroupBy
-					.append(" SELECT DateTrx, C_DocType_ID, DocumentNo, SUM(Debit) AS Debit, SUM(Credit) AS Credit, Created, C_Currency_ID, SUM(amount) AS Amount, documenttable, document_id, c_invoicepayschedule_id");
+					.append(" SELECT DateTrx, C_DocType_ID, DocumentNo, SUM(Debit) AS Debit, SUM(Credit) AS Credit, Created, C_Currency_ID, SUM(amount) AS Amount, documenttable, document_id, c_invoicepayschedule_id, sum(openamt) as openamt ");
 			sqlGroupBy.append(" FROM( ");
 			sqlGroupBy.append(sql);
 			sqlGroupBy.append(" ) AS aux ");
@@ -222,13 +250,19 @@ public class CurrentAccountQuery {
 	 * @return Query con el saldo acumulado a la fecha desde
 	 */
 	public String getAcumBalanceQuery() {
+		Timestamp prevDateTo = getDateTo();
+		Calendar dateToOpenAmt = Calendar.getInstance();
+		dateToOpenAmt.setTimeInMillis(getDateFrom().getTime());
+		dateToOpenAmt.add(Calendar.DATE, -1);
+		setDateTo(new Timestamp(dateToOpenAmt.getTimeInMillis()));
 		String sqlDoc = getAllDocumentsQuery(" AND d.DateTrx::date < ?::date ");
 		StringBuffer sqlBalance = new StringBuffer();
 		sqlBalance
-				.append(" SELECT COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit ");
+				.append(" SELECT COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.openamt),0.0) AS openamt ");
 		sqlBalance.append(" FROM ( ");
 		sqlBalance.append(sqlDoc);
 		sqlBalance.append(" ) t");
+		setDateTo(prevDateTo);
 		return sqlBalance.toString();
 	}
 
@@ -266,6 +300,14 @@ public class CurrentAccountQuery {
 		if (value != null)
 			append = clause;
 		return append;
+	}
+	
+	protected String getSecurityValidation() {
+		String secVal = "";
+		if(isAddSecurityValidation()) {
+			secVal = " AND "+MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())).getOrgWhere(MRole.SQL_RO);
+		}
+		return secVal;
 	}
 
 	public Integer getOrgID() {
@@ -354,5 +396,13 @@ public class CurrentAccountQuery {
 
 	public void setAccountType(String accountType) {
 		this.accountType = accountType;
+	}
+
+	protected boolean isAddSecurityValidation() {
+		return addSecurityValidation;
+	}
+
+	protected void setAddSecurityValidation(boolean addSecurityValidation) {
+		this.addSecurityValidation = addSecurityValidation;
 	}
 }

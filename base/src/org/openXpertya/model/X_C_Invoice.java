@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Invoice
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-07-29 09:46:30.501 */
+ *  @version  - 2021-12-14 10:22:59.819 */
 public class X_C_Invoice extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -53,11 +53,9 @@ setManualGeneralDiscount (Env.ZERO);
 setM_PriceList_ID (0);
 setNetAmount (Env.ZERO);
 setNotExchangeableCredit (false);
-setNumeroComprobante (0);
 setPaymentRule (null);	// P
 setPosted (false);	// N
 setProcessed (false);
-setPuntoDeVenta (0);
 setSendEMail (false);
 setTotalLines (Env.ZERO);
 setUpdateOrderQty (false);
@@ -812,6 +810,32 @@ public Timestamp getDateRecepted()
 {
 return (Timestamp)get_Value("DateRecepted");
 }
+public static final int DELIVERYVIARULE_AD_Reference_ID = MReference.getReferenceID("C_Order DeliveryViaRule");
+/** Pickup = P */
+public static final String DELIVERYVIARULE_Pickup = "P";
+/** Shipper = S */
+public static final String DELIVERYVIARULE_Shipper = "S";
+/** Delivery = D */
+public static final String DELIVERYVIARULE_Delivery = "D";
+/** Set Delivery Via.
+How the order will be delivered */
+public void setDeliveryViaRule (String DeliveryViaRule)
+{
+if (DeliveryViaRule == null || DeliveryViaRule.equals("P") || DeliveryViaRule.equals("S") || DeliveryViaRule.equals("D") || ( refContainsValue("CORE-AD_Reference-152", DeliveryViaRule) ) );
+ else throw new IllegalArgumentException ("DeliveryViaRule Invalid value: " + DeliveryViaRule + ".  Valid: " +  refValidOptions("CORE-AD_Reference-152") );
+if (DeliveryViaRule != null && DeliveryViaRule.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+DeliveryViaRule = DeliveryViaRule.substring(0,1);
+}
+set_Value ("DeliveryViaRule", DeliveryViaRule);
+}
+/** Get Delivery Via.
+How the order will be delivered */
+public String getDeliveryViaRule() 
+{
+return (String)get_Value("DeliveryViaRule");
+}
 /** Set Description.
 Optional short description of the record */
 public void setDescription (String Description)
@@ -1010,7 +1034,7 @@ Total amount of document */
 public void setGrandTotal (BigDecimal GrandTotal)
 {
 if (GrandTotal == null) throw new IllegalArgumentException ("GrandTotal is mandatory");
-set_ValueNoCheck ("GrandTotal", GrandTotal);
+set_Value ("GrandTotal", GrandTotal);
 }
 /** Get Grand Total.
 Total amount of document */
@@ -1990,7 +2014,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Invoice(CreateCashLine,IsCopy,AuthCode,AuthMatch,C_POSJournal_ID,ManualGeneralDiscount,ImportClearance,SkipIPNoCaeValidation,ManageElectronicInvoice,Authorize,OldGrandTotal,M_AuthorizationChain_ID,NotExchangeableCredit,InitialCurrentAccountAmt,C_POSPaymentMedium_ID,ManageDragOrderDiscounts,IsExchange,ManualDocumentNo,ApplyPercepcion,TipoComprobante,Ref_Invoice_ID,IsPayScheduleValid,vtocae,C_Invoice_ID,cae,idcae,caeerror,C_Activity_ID,Description,DocAction,Posted,C_Order_ID,C_DocType_ID,GenerateTo,C_Campaign_ID,DocStatus,POReference,DateOrdered,Created,C_Currency_ID,IsTransferred,GrandTotal,C_Project_ID,C_Payment_ID,TotalLines,IsPaid,DateAcct,AD_Client_ID,Processing,IsActive,UpdatedBy,DatePrinted,IsSOTrx,AD_Org_ID,C_Charge_ID,CopyFrom,Processed,Updated,IsSelfService,CreateFrom,IsDiscountPrinted,AD_OrgTrx_ID,SalesRep_ID,ChargeAmt,IsTaxIncluded,IsInDispute,SendEMail,C_CashLine_ID,C_ConversionType_ID,IsPrinted,NumeroDeDocumento,C_Invoice_Orig_ID,PuntoDeVenta,Invoice_Adress,NombreCli,C_Letra_Comprobante_ID,DateInvoiced,CAI,CUIT,DateCAI,Caja,NumeroComprobante,FiscalAlreadyPrinted,C_BPartner_ID,M_PriceList_ID,PaymentRule,caecbte,IsApproved,C_DocTypeTarget_ID,DocumentNo,CreatedBy,C_BPartner_Location_ID,AD_User_ID,C_Region_ID,User1_ID,User2_ID,C_PaymentTerm_ID,NroIdentificCliente,FiscalDescription,M_RMA_ID,NetAmount,C_POSPaymentMedium_Credit_ID,PrintType,UpdateOrderQty,C_Region_Delivery_ID,IsVoidable,DateRecepted,FechadeTCparaActualizarPrecios,M_InOutTransport_ID,AuthorizationChainStatus,ManageDragOrderSurcharges,C_Order_Orig_ID,OrigInvFecha,OrigInvNro,OrigInvPtoVta,OrigInvTipo," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_Invoice(CreateCashLine,IsCopy,AuthCode,AuthMatch,C_POSJournal_ID,ManualGeneralDiscount,ImportClearance,SkipIPNoCaeValidation,ManageElectronicInvoice,Authorize,OldGrandTotal,M_AuthorizationChain_ID,NotExchangeableCredit,InitialCurrentAccountAmt,C_POSPaymentMedium_ID,ManageDragOrderDiscounts,IsExchange,ManualDocumentNo,ApplyPercepcion,TipoComprobante,Ref_Invoice_ID,IsPayScheduleValid,vtocae,C_Invoice_ID,cae,idcae,caeerror,C_Activity_ID,Description,DocAction,Posted,C_Order_ID,C_DocType_ID,GenerateTo,C_Campaign_ID,DocStatus,POReference,DateOrdered,Created,C_Currency_ID,IsTransferred,C_Project_ID,C_Payment_ID,TotalLines,IsPaid,DateAcct,AD_Client_ID,Processing,IsActive,UpdatedBy,DatePrinted,IsSOTrx,AD_Org_ID,C_Charge_ID,CopyFrom,Processed,Updated,IsSelfService,CreateFrom,IsDiscountPrinted,AD_OrgTrx_ID,SalesRep_ID,ChargeAmt,IsTaxIncluded,IsInDispute,SendEMail,C_CashLine_ID,C_ConversionType_ID,IsPrinted,NumeroDeDocumento,C_Invoice_Orig_ID,Invoice_Adress,NombreCli,C_Letra_Comprobante_ID,DateInvoiced,CAI,CUIT,DateCAI,Caja,FiscalAlreadyPrinted,C_BPartner_ID,M_PriceList_ID,PaymentRule,caecbte,IsApproved,C_DocTypeTarget_ID,DocumentNo,CreatedBy,C_BPartner_Location_ID,AD_User_ID,C_Region_ID,User1_ID,User2_ID,C_PaymentTerm_ID,NroIdentificCliente,GrandTotal,NumeroComprobante,PuntoDeVenta,FiscalDescription,M_RMA_ID,NetAmount,C_POSPaymentMedium_Credit_ID,PrintType,UpdateOrderQty,C_Region_Delivery_ID,IsVoidable,DateRecepted,FechadeTCparaActualizarPrecios,M_InOutTransport_ID,AuthorizationChainStatus,ManageDragOrderSurcharges,C_Order_Orig_ID,OrigInvFecha,OrigInvNro,OrigInvPtoVta,OrigInvTipo,DeliveryViaRule," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getAuthCode() == null) sql = sql.replaceFirst("AuthCode,","").replaceFirst("\\?,", "");
  		 if (getC_POSJournal_ID() == 0) sql = sql.replaceFirst("C_POSJournal_ID,","").replaceFirst("\\?,", "");
@@ -2018,7 +2042,6 @@ try
  		 if (getPOReference() == null) sql = sql.replaceFirst("POReference,","").replaceFirst("\\?,", "");
  		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
  		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
- 		 if (getGrandTotal() == null) sql = sql.replaceFirst("GrandTotal,","").replaceFirst("\\?,", "");
  		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Payment_ID() == 0) sql = sql.replaceFirst("C_Payment_ID,","").replaceFirst("\\?,", "");
  		 if (getTotalLines() == null) sql = sql.replaceFirst("TotalLines,","").replaceFirst("\\?,", "");
@@ -2051,6 +2074,9 @@ try
  		 if (getUser1_ID() == 0) sql = sql.replaceFirst("User1_ID,","").replaceFirst("\\?,", "");
  		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
  		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
+ 		 if (getGrandTotal() == null) sql = sql.replaceFirst("GrandTotal,","").replaceFirst("\\?,", "");
+ 		 if (getNumeroComprobante() == 0) sql = sql.replaceFirst("NumeroComprobante,","").replaceFirst("\\?,", "");
+ 		 if (getPuntoDeVenta() == 0) sql = sql.replaceFirst("PuntoDeVenta,","").replaceFirst("\\?,", "");
  		 if (getFiscalDescription() == null) sql = sql.replaceFirst("FiscalDescription,","").replaceFirst("\\?,", "");
  		 if (getM_RMA_ID() == 0) sql = sql.replaceFirst("M_RMA_ID,","").replaceFirst("\\?,", "");
  		 if (getNetAmount() == null) sql = sql.replaceFirst("NetAmount,","").replaceFirst("\\?,", "");
@@ -2066,6 +2092,7 @@ try
  		 if (getOrigInvNro() == 0) sql = sql.replaceFirst("OrigInvNro,","").replaceFirst("\\?,", "");
  		 if (getOrigInvPtoVta() == 0) sql = sql.replaceFirst("OrigInvPtoVta,","").replaceFirst("\\?,", "");
  		 if (getOrigInvTipo() == null) sql = sql.replaceFirst("OrigInvTipo,","").replaceFirst("\\?,", "");
+ 		 if (getDeliveryViaRule() == null) sql = sql.replaceFirst("DeliveryViaRule,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -2118,7 +2145,6 @@ try
 		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
 		 pstmt.setInt(col++, getC_Currency_ID());
 		 pstmt.setString(col++, isTransferred()?"Y":"N");
-		 if (getGrandTotal() != null) pstmt.setBigDecimal(col++, getGrandTotal());
 		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
 		 if (getC_Payment_ID() != 0) pstmt.setInt(col++, getC_Payment_ID());
 		 if (getTotalLines() != null) pstmt.setBigDecimal(col++, getTotalLines());
@@ -2149,7 +2175,6 @@ try
 		 pstmt.setString(col++, isPrinted()?"Y":"N");
 		 if (getNumeroDeDocumento() != null) pstmt.setString(col++, getNumeroDeDocumento());
 		 if (getC_Invoice_Orig_ID() != 0) pstmt.setInt(col++, getC_Invoice_Orig_ID());
-		 pstmt.setInt(col++, getPuntoDeVenta());
 		 if (getInvoice_Adress() != null) pstmt.setString(col++, getInvoice_Adress());
 		 if (getNombreCli() != null) pstmt.setString(col++, getNombreCli());
 		 if (getC_Letra_Comprobante_ID() != 0) pstmt.setInt(col++, getC_Letra_Comprobante_ID());
@@ -2158,7 +2183,6 @@ try
 		 if (getCUIT() != null) pstmt.setString(col++, getCUIT());
 		 if (getDateCAI() != null) pstmt.setTimestamp(col++, getDateCAI());
 		 if (getCaja() != null) pstmt.setString(col++, getCaja());
-		 pstmt.setInt(col++, getNumeroComprobante());
 		 pstmt.setString(col++, isFiscalAlreadyPrinted()?"Y":"N");
 		 pstmt.setInt(col++, getC_BPartner_ID());
 		 pstmt.setInt(col++, getM_PriceList_ID());
@@ -2175,6 +2199,9 @@ try
 		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
 		 pstmt.setInt(col++, getC_PaymentTerm_ID());
 		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
+		 if (getGrandTotal() != null) pstmt.setBigDecimal(col++, getGrandTotal());
+		 if (getNumeroComprobante() != 0) pstmt.setInt(col++, getNumeroComprobante());
+		 if (getPuntoDeVenta() != 0) pstmt.setInt(col++, getPuntoDeVenta());
 		 if (getFiscalDescription() != null) pstmt.setString(col++, getFiscalDescription());
 		 if (getM_RMA_ID() != 0) pstmt.setInt(col++, getM_RMA_ID());
 		 if (getNetAmount() != null) pstmt.setBigDecimal(col++, getNetAmount());
@@ -2193,6 +2220,7 @@ try
 		 if (getOrigInvNro() != 0) pstmt.setInt(col++, getOrigInvNro());
 		 if (getOrigInvPtoVta() != 0) pstmt.setInt(col++, getOrigInvPtoVta());
 		 if (getOrigInvTipo() != null) pstmt.setString(col++, getOrigInvTipo());
+		 if (getDeliveryViaRule() != null) pstmt.setString(col++, getDeliveryViaRule());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

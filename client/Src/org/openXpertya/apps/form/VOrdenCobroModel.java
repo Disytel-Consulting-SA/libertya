@@ -607,6 +607,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		BigDecimal discount = paymentTerm.getDiscount(ips, dateInvoiced,
 				dueDate, new Timestamp(System.currentTimeMillis()), openAmt);
 		rif.setPaymentTermDiscount(discount);
+		rif.setToPayWithPaymentTerm(reciboDeCliente.isApplyPaymentTerm());
 	}
 	
 	protected void updateIsExchangeInfo(ResultItemFactura rif){
@@ -963,6 +964,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 					inv.setBPartner(getBPartner());
 					inv.setC_Project_ID(getProjectID());
 					inv.setC_Campaign_ID(getCampaignID());
+					inv.setApplyPercepcion(false);
 					if(!inv.save()){
 						throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
 								+ " document for discounts. Original Error: "+CLogger.retrieveErrorAsString());
@@ -989,6 +991,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(credit != null){
 			// Refrescar la factura con la de la base 
 			credit = refreshInvoice(credit.getCtx(), credit.getC_Invoice_ID(), getTrxName());
+			credit.setSkipExtraValidations(true);
+			inv.setApplyPercepcion(false);
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(credit)){
@@ -1008,6 +1012,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(debit != null){
 			// Refrescar la factura con la de la base 
 			debit = refreshInvoice(debit.getCtx(), debit.getC_Invoice_ID(), getTrxName());
+			debit.setSkipExtraValidations(true);
+			inv.setApplyPercepcion(false);
 			// Completar el crédito en el caso que no requiera impresión fiscal,
 			// ya que si requieren se realiza al final del procesamiento
 			if(!needFiscalPrint(debit)){
@@ -1437,7 +1443,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 						charged = true;
 					}
 				}
-				defaultValue = defaultValue.add(fac.getToPayAmt(true));
+				defaultValue = defaultValue.add(fac.getToPayAmt());
 			}
 		}
 		return defaultValue;
@@ -1481,7 +1487,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			// vencimiento ascendente 
 			if(amt.compareTo(BigDecimal.ZERO) > 0){
 				// A pagar (open amt - descuento de payment term)
-				toPay = fac.getToPayAmt(true);
+				toPay = fac.getToPayAmt();
 				// Si el monto a pagar es mayor a 
 				if(toPay.compareTo(amt) > 0){
 					currentManualAmt = amt;
