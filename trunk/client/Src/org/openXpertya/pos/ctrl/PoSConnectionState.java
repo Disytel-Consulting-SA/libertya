@@ -140,6 +140,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	
 	public abstract void setAuthorizationModel(AUserAuthModel authModel);
 	
+	public abstract String parseTranslation(String msg);
+	
 	/**
 	 * @param checkDeadLineToCompare
 	 *            plazo a comparar
@@ -160,6 +162,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 			Integer actualCheckDeadLine); 
 	
 	public abstract boolean regenerateCAE(Order order);
+
+	public abstract int getDefaultPriceListIDInConfig();
 	
 	public int getClientCurrencyID() {
 		return getPoSCOnfig().getCurrencyID();

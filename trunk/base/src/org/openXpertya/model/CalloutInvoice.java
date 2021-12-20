@@ -28,6 +28,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -75,7 +76,7 @@ public class CalloutInvoice extends CalloutEngine {
 //        }
 
         try {
-            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, d.DocTypeKey, d.docsubtypeinv " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
+            String SQL = "SELECT d.HasCharges,'N',d.IsDocNoControlled," + "s.CurrentNext, d.DocBaseType, d.DocTypeKey, d.caicontrol, d.docsubtypeinv " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
                          + " AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
             PreparedStatement pstmt = DB.prepareStatement( SQL );
 
@@ -110,7 +111,7 @@ public class CalloutInvoice extends CalloutEngine {
                 String dsi = rs.getString( "docsubtypeinv" );
 
                 Env.setContext( ctx,WindowNo,"docsubtypeinv", dsi);
-
+                
                 // AP Check & AR Credit Memo
                 // Si el campo de forma de pago contiene un valor por defecto,
 				// entonces no lo modifico
@@ -126,6 +127,34 @@ public class CalloutInvoice extends CalloutEngine {
 	                	}
 	                }
                 }
+                
+				// Se comenta ya que sino siempre se asigna valor a estos campos y nunca deja de
+				// estar habilitado el botón Save
+                // Si se controla CAI, entonces buscar el CAI válido para este Tipo de Documento
+                /*boolean IsSOTrx = "Y".equals( Env.getContext( ctx,WindowNo,"IsSOTrx" ));
+                if(IsSOTrx) {
+                	mTab.setValue("CAI", null);
+            		mTab.setValue("DateCAI", null);
+                }
+                if(rs.getString( "caicontrol" ).equals( "Y" )) {
+                	Timestamp dateInvoiced = (Timestamp)mTab.getValue("DateInvoiced");
+                	String sql = "select c.cai, c.datecai " + 
+                			"	from c_cai c " + 
+                			"	join c_cai_doctype cd on cd.c_cai_id = c.c_cai_id " + 
+                			"	where cd.c_doctype_id = ? and cd.isactive = 'Y' and c.isactive = 'Y' and ?::date between c.validfrom::date and c.datecai::date " + 
+                			"	order by c.created desc " +
+                			"	limit 1 ";
+                	PreparedStatement psCai = DB.prepareStatement(sql, null, true);
+                	psCai.setInt(1, C_DocType_ID);
+                	psCai.setTimestamp(2, dateInvoiced);
+                	ResultSet rsCai = psCai.executeQuery();
+                	if(rsCai.next()) {
+                		mTab.setValue("CAI", rsCai.getString("cai"));
+                		mTab.setValue("DateCAI", rsCai.getTimestamp("datecai"));
+                	}
+                	rsCai.close();
+                	psCai.close();
+                }*/
             }
 
             rs.close();
@@ -360,8 +389,8 @@ public class CalloutInvoice extends CalloutEngine {
         	M_AttributeSetInstance_ID = new Integer(0);
         
         // Disytel: Conversion entre el precio de la tarifa y la moneda destino de la cabecera
-        String invoiceID = Env.getContext(ctx, WindowNo, 0, "C_Invoice_ID");
-        MInvoice invoice = new MInvoice(ctx, Integer.parseInt(invoiceID), null);
+        Integer invoiceID = Integer.parseInt(Env.getContext(ctx, WindowNo, 0, "C_Invoice_ID"));
+        MInvoice invoice = new MInvoice(ctx, invoiceID, null);
         
 		MProductPricing pp = new MProductPricing(M_Product_ID.intValue(), C_BPartner_ID, Qty, IsSOTrx,
 				M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscountsSurcharges(false));
@@ -380,58 +409,48 @@ public class CalloutInvoice extends CalloutEngine {
         
         int priceListCurrency = (new MPriceList(ctx, invoice.getM_PriceList_ID(), null)).getC_Currency_ID();
         int targetCurrency = invoice.getC_Currency_ID();
+         
+        if (mField.getColumnName().equals("M_Product_ID")) {
+	        if (priceListCurrency == targetCurrency)
+	        {
+	            mTab.setValue( "PriceList",pp.getPriceList());
+	            mTab.setValue( "PriceLimit",pp.getPriceLimit());
+	            mTab.setValue( "PriceActual",pp.getPriceStd());
+	            mTab.setValue( "PriceEntered",pp.getPriceStd());
+	            mTab.setValue( "C_Currency_ID",pp.getC_Currency_ID());
+	        }
+	        else
+	        {
+	            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+	            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+	            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+	            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
+	            mTab.setValue( "C_Currency_ID", targetCurrency);        	
+	        }
+	        
+	        // mTab.setValue("Discount", pp.getDiscount());
+	
+	        mTab.setValue( "C_UOM_ID",new Integer( pp.getC_UOM_ID()));
+	        Env.setContext( ctx,WindowNo,"EnforcePriceLimit",pp.isEnforcePriceLimit()
+	                ?"Y"
+	                :"N" );
+	        Env.setContext( ctx,WindowNo,"DiscountSchema",pp.isDiscountSchema()
+	                ?"Y"
+	                :"N" );
+        }
+        if (mTab.getValue("QtyEntered") != null) {
+        	if(pp.getDiscountSchema() != null) {
+				mTab.setValue(
+						MDiscountSchema.DISCOUNTAPPLICATION_DiscountToPrice.equals(
+								pp.getDiscountSchema().getDiscountApplication()) ? "LineDiscountAmt" : "LineBonusAmt",
+						((BigDecimal) mTab.getValue("PriceList")).subtract((BigDecimal) mTab.getValue("PriceEntered"))
+								.multiply((BigDecimal) mTab.getValue("QtyEntered")));
+        	}
+        }
         
-        if (priceListCurrency == targetCurrency)
-        {
-            mTab.setValue( "PriceList",pp.getPriceList());
-            mTab.setValue( "PriceLimit",pp.getPriceLimit());
-            mTab.setValue( "PriceActual",pp.getPriceStd());
-            mTab.setValue( "PriceEntered",pp.getPriceStd());
-            mTab.setValue( "C_Currency_ID",pp.getC_Currency_ID());
-        }
-        else
-        {
-            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-            mTab.setValue( "C_Currency_ID", targetCurrency);        	
-        }
-        // mTab.setValue("Discount", pp.getDiscount());
-
-        mTab.setValue( "C_UOM_ID",new Integer( pp.getC_UOM_ID()));
-        Env.setContext( ctx,WindowNo,"EnforcePriceLimit",pp.isEnforcePriceLimit()
-                ?"Y"
-                :"N" );
-        Env.setContext( ctx,WindowNo,"DiscountSchema",pp.isDiscountSchema()
-                ?"Y"
-                :"N" );
-
-        // Descuento de la cabecera
-		BigDecimal generalDiscountManual = DB
-				.getSQLValueBD(
-						null,
-						"SELECT ManualGeneralDiscount FROM c_invoice WHERE c_invoice_id = ?",
-						invoice.getID());
-		if(generalDiscountManual.compareTo(BigDecimal.ZERO) != 0){
-	        int StdPrecision = MPriceList.getStandardPrecision( ctx,M_PriceList_ID );
-	        BigDecimal priceList = (BigDecimal)mTab.getValue("PriceList");
-	        BigDecimal priceActual = (BigDecimal)mTab.getValue("PriceActual");
-			BigDecimal priceUnit = priceList.compareTo(BigDecimal.ZERO) != 0 ? priceList
-					: priceActual;
-			BigDecimal lineDiscountAmtUnit = priceUnit.multiply(
-					generalDiscountManual).divide(new BigDecimal(100), StdPrecision,
-					BigDecimal.ROUND_HALF_UP);
-			// Seteo el precio ingresado con el precio de lista - monto de
-			// descuento
-			BigDecimal realPrice = priceUnit.subtract(lineDiscountAmtUnit);
-			BigDecimal lineDiscountAmt = lineDiscountAmtUnit
-					.multiply((BigDecimal) mTab.getValue("QtyEntered"));
-			mTab.setValue( "PriceEntered", realPrice);
-			mTab.setValue( "PriceActual", realPrice);
-			mTab.setValue( "LineDiscountAmt", lineDiscountAmt);
-		}
-		
+        // Descuento manual general
+        doProductManualGeneralDiscount(ctx, WindowNo, mTab, invoiceID);
+        
         setCalloutActive( false );
 
         return tax( ctx,WindowNo,mTab,mField,value );
@@ -582,7 +601,7 @@ public class CalloutInvoice extends CalloutEngine {
         // Si los Comprobantes fiscales están activos se busca la tasa de impuesto a partir de la categoría de IVA debe estar condicionado 
         if (CalloutInvoiceExt.ComprobantesFiscalesActivos()) {
         	int C_BPartner_ID = Env.getContextAsInt( ctx,WindowNo,"C_BPartner_ID" );
-			MTax tax = CalloutInvoiceExt.getTax(ctx, isSOTrx, C_BPartner_ID, null);
+			MTax tax = CalloutInvoiceExt.getTax(ctx, isSOTrx, C_BPartner_ID, AD_Org_ID, null);
 			if(tax != null){
 				C_Tax_ID = tax.getID();
 			}
@@ -715,6 +734,19 @@ public class CalloutInvoice extends CalloutEngine {
 	            Env.setContext( ctx,WindowNo,"DiscountSchema",pp.isDiscountSchema()
 	                    ?"Y"
 	                    :"N" );
+	            
+		    if (mTab.getValue("QtyEntered") != null) {
+	            	if(pp.getDiscountSchema() != null) {
+	    				mTab.setValue(
+	    						MDiscountSchema.DISCOUNTAPPLICATION_DiscountToPrice.equals(
+	    								pp.getDiscountSchema().getDiscountApplication()) ? "LineDiscountAmt" : "LineBonusAmt",
+	    						((BigDecimal) mTab.getValue("PriceList")).subtract((BigDecimal) mTab.getValue("PriceEntered"))
+	    								.multiply((BigDecimal) mTab.getValue("QtyEntered")));
+	            	}
+	            }
+	            
+	            // Descuento manual general
+	            doProductManualGeneralDiscount(ctx, WindowNo, mTab, invoiceID);
             }
             else{
             	mTab.setValue( "PriceActual",PriceEntered);
@@ -1000,6 +1032,71 @@ public class CalloutInvoice extends CalloutEngine {
     
     public String bPartnerLocation( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
     	return "";
+    }
+
+    /**
+	 * Actualización del descuento manual general de la cabecera de la factura
+	 * 
+	 * @param ctx
+	 * @param WindowNo
+	 * @param mTab
+	 * @param invoiceID
+	 */
+    protected void doProductManualGeneralDiscount(Properties ctx, int WindowNo, MTab mTab, int invoiceID) {
+    	// Descuento de la cabecera
+		BigDecimal generalDiscountManual = DB
+				.getSQLValueBD(
+						null,
+						"SELECT ManualGeneralDiscount FROM c_invoice WHERE c_invoice_id = ?",
+						invoiceID);
+		if(generalDiscountManual.compareTo(BigDecimal.ZERO) != 0){
+			int M_PriceList_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_ID" );
+	        int StdPrecision = MPriceList.getStandardPrecision( ctx,M_PriceList_ID );
+	        BigDecimal priceList = (BigDecimal)mTab.getValue("PriceList");
+	        BigDecimal priceActual = (BigDecimal)mTab.getValue("PriceActual");
+			
+	        BigDecimal lineDiscountAmtUnityNet = getColumnUnityAmtNet("LineDiscountAmt", WindowNo, mTab, ctx);
+	        BigDecimal lineBonusAmtUnityNet = getColumnUnityAmtNet("LineBonusAmt", WindowNo, mTab, ctx);
+	        
+			// Tomo siempre el precio actual, para que funcione la bonificación
+			// manual en conjunto con otras, sino me pisa el precio
+			BigDecimal priceUnit = priceList.compareTo(BigDecimal.ZERO) != 0
+					? (priceList.subtract(lineDiscountAmtUnityNet).subtract(lineBonusAmtUnityNet))
+							: priceActual;
+	        
+			BigDecimal lineDiscountAmtUnit = priceUnit.multiply(
+					generalDiscountManual).divide(new BigDecimal(100), StdPrecision,
+					BigDecimal.ROUND_HALF_UP);
+			// Seteo el precio ingresado con el precio de lista - monto de
+			// descuento
+			BigDecimal realPrice = priceUnit.subtract(lineDiscountAmtUnit);
+			BigDecimal lineDiscountAmt = lineDiscountAmtUnit
+					.multiply((BigDecimal) mTab.getValue("QtyEntered"));
+			mTab.setValue( "PriceEntered", realPrice);
+			mTab.setValue( "PriceActual", realPrice);
+			mTab.setValue( "ManualGeneralDiscountAmt", lineDiscountAmt);
+		}
+    }
+
+    public BigDecimal getUnityAmtNet(BigDecimal amt, BigDecimal qty, int WindowNo, MTab tab, Properties ctx){
+    	BigDecimal netAmt = amt;
+    	Integer taxID = (Integer)tab.getValue("C_Tax_ID");
+    	if(!Util.isEmpty(taxID, true)) {
+        	boolean isTaxIncluded = isTaxIncluded(WindowNo);
+        	MTax tax = MTax.get(ctx, taxID, null);
+    		netAmt = Util.amtByTax(amt, Util.getTaxAmt(amt, isTaxIncluded, tax.getRate()), 
+    				isTaxIncluded, false);;
+    	}
+		return Util.getUnityAmt(amt, qty);
+    }
+    
+    public BigDecimal getColumnUnityAmtNet(String columnName, int WindowNo, MTab tab, Properties ctx) {
+    	BigDecimal amtUnityNet = (BigDecimal)tab.getValue(columnName);
+    	if(!Util.isEmpty(amtUnityNet, true)) {
+    		amtUnityNet = getUnityAmtNet(amtUnityNet, 
+    				(BigDecimal)tab.getValue("QtyEntered"), WindowNo, tab, ctx);
+    	}
+		return amtUnityNet == null?BigDecimal.ZERO:amtUnityNet;
     }
 }    // CalloutInvoice
 

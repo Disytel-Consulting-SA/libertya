@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_InvoiceLine
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-12-05 12:32:19.874 */
+ *  @version  - 2021-12-20 13:54:06.66 */
 public class X_C_InvoiceLine extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -376,6 +376,18 @@ BigDecimal bd = (BigDecimal)get_Value("LineTotalAmt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set General Discount Amt */
+public void setManualGeneralDiscountAmt (BigDecimal ManualGeneralDiscountAmt)
+{
+set_Value ("ManualGeneralDiscountAmt", ManualGeneralDiscountAmt);
+}
+/** Get General Discount Amt */
+public BigDecimal getManualGeneralDiscountAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ManualGeneralDiscountAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Attribute Set Instance.
 Product Attribute Set Instance */
 public void setM_AttributeSetInstance_ID (int M_AttributeSetInstance_ID)
@@ -387,6 +399,20 @@ Product Attribute Set Instance */
 public int getM_AttributeSetInstance_ID() 
 {
 Integer ii = (Integer)get_Value("M_AttributeSetInstance_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Import Clearance */
+public void setM_Import_Clearance_ID (int M_Import_Clearance_ID)
+{
+if (M_Import_Clearance_ID <= 0) set_Value ("M_Import_Clearance_ID", null);
+ else 
+set_Value ("M_Import_Clearance_ID", new Integer(M_Import_Clearance_ID));
+}
+/** Get Import Clearance */
+public int getM_Import_Clearance_ID() 
+{
+Integer ii = (Integer)get_Value("M_Import_Clearance_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -597,7 +623,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_InvoiceLine(C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,C_BPartner_Vendor_ID,CostPrice,LineNetAmount,A_Asset_ID,AD_Client_ID,AD_Org_ID,C_Charge_ID,C_Invoice_ID,C_InvoiceLine_ID,C_OrderLine_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,Description,IsActive,IsDescription,IsPrinted,Line,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_InOutLine_ID,M_Product_ID,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyEntered,QtyInvoiced,Ref_InvoiceLine_ID,S_ResourceAssignment_ID,TaxAmt,Updated,UpdatedBy,SalesRep_Orig_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_InvoiceLine(C_Project_ID,DocumentDiscountAmt,LineBonusAmt,LineDiscountAmt,C_BPartner_Vendor_ID,CostPrice,LineNetAmount,A_Asset_ID,AD_Client_ID,AD_Org_ID,C_Charge_ID,C_Invoice_ID,C_InvoiceLine_ID,C_OrderLine_ID,Created,CreatedBy,C_Tax_ID,C_UOM_ID,Description,IsActive,IsDescription,IsPrinted,Line,LineNetAmt,LineTotalAmt,M_AttributeSetInstance_ID,M_InOutLine_ID,M_Product_ID,PriceActual,PriceEntered,PriceLimit,PriceList,Processed,QtyEntered,QtyInvoiced,Ref_InvoiceLine_ID,S_ResourceAssignment_ID,TaxAmt,Updated,UpdatedBy,SalesRep_Orig_ID,ManualGeneralDiscountAmt,M_Import_Clearance_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
  		 if (getDocumentDiscountAmt() == null) sql = sql.replaceFirst("DocumentDiscountAmt,","").replaceFirst("\\?,", "");
@@ -627,6 +653,8 @@ try
  		 if (getTaxAmt() == null) sql = sql.replaceFirst("TaxAmt,","").replaceFirst("\\?,", "");
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getSalesRep_Orig_ID() == 0) sql = sql.replaceFirst("SalesRep_Orig_ID,","").replaceFirst("\\?,", "");
+ 		 if (getManualGeneralDiscountAmt() == null) sql = sql.replaceFirst("ManualGeneralDiscountAmt,","").replaceFirst("\\?,", "");
+ 		 if (getM_Import_Clearance_ID() == 0) sql = sql.replaceFirst("M_Import_Clearance_ID,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -679,6 +707,8 @@ try
 		 if (getUpdated() != null) pstmt.setTimestamp(col++, getUpdated());
 		 pstmt.setInt(col++, getUpdatedBy());
 		 if (getSalesRep_Orig_ID() != 0) pstmt.setInt(col++, getSalesRep_Orig_ID());
+		 if (getManualGeneralDiscountAmt() != null) pstmt.setBigDecimal(col++, getManualGeneralDiscountAmt());
+		 if (getM_Import_Clearance_ID() != 0) pstmt.setInt(col++, getM_Import_Clearance_ID());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

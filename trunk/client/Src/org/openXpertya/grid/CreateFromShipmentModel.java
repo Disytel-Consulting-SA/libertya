@@ -147,6 +147,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 			inout.setFreightCostRule(p_order.getFreightCostRule());
 			inout.setFreightAmt(p_order.getFreightAmt());
 			inout.setC_BPartner_ID(p_order.getBill_BPartner_ID());
+			inout.setSalesRep_ID(p_order.getSalesRep_ID());
 		}
 		// Asocia la factura
 		if ((m_invoice != null) && (m_invoice.getC_Invoice_ID() != 0)) {

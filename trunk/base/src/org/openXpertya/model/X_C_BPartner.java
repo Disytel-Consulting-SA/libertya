@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-09-21 19:01:06.726 */
+ *  @version  - 2021-12-20 13:54:05.085 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -24,7 +24,6 @@ setC_BP_Group_ID (0);
 setCreditMinimumAmt (Env.ZERO);
 setDiscountContext (null);	// B
 setEmitir_Mi_Pyme (false);
-setIsConvenioMultilateral (false);
 setIsCustomer (false);
 setIsEmployee (false);
 setIsGroupInvoices (false);
@@ -502,6 +501,21 @@ public String getCreditSituation()
 {
 return (String)get_Value("CreditSituation");
 }
+public static final int C_REGION_SEDE_ID_AD_Reference_ID = MReference.getReferenceID("C_Region");
+/** Set Head Region */
+public void setC_Region_Sede_ID (int C_Region_Sede_ID)
+{
+if (C_Region_Sede_ID <= 0) set_Value ("C_Region_Sede_ID", null);
+ else 
+set_Value ("C_Region_Sede_ID", new Integer(C_Region_Sede_ID));
+}
+/** Get Head Region */
+public int getC_Region_Sede_ID() 
+{
+Integer ii = (Integer)get_Value("C_Region_Sede_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 public static final int CUSTOMERTYPE_AD_Reference_ID = MReference.getReferenceID("customertype");
 /** Aplicadores = Aplicadores */
 public static final String CUSTOMERTYPE_Aplicadores = "Aplicadores";
@@ -871,23 +885,29 @@ if (oo != null)
 }
 return false;
 }
+public static final int ISCONVENIOMULTILATERAL_AD_Reference_ID = MReference.getReferenceID("Convenio Multilateral Regímenes");
+/** Regimen General = G */
+public static final String ISCONVENIOMULTILATERAL_RegimenGeneral = "G";
+/** Regimen Especial = E */
+public static final String ISCONVENIOMULTILATERAL_RegimenEspecial = "E";
 /** Set Convenio Multilateral.
 Entidades comerciales en Convenio Multilateral */
-public void setIsConvenioMultilateral (boolean IsConvenioMultilateral)
+public void setIsConvenioMultilateral (String IsConvenioMultilateral)
 {
-set_Value ("IsConvenioMultilateral", new Boolean(IsConvenioMultilateral));
+if (IsConvenioMultilateral == null || IsConvenioMultilateral.equals("G") || IsConvenioMultilateral.equals("E") || ( refContainsValue("IBTUCUMAN-AD_Reference-20210329152107391-614121", IsConvenioMultilateral) ) );
+ else throw new IllegalArgumentException ("IsConvenioMultilateral Invalid value: " + IsConvenioMultilateral + ".  Valid: " +  refValidOptions("IBTUCUMAN-AD_Reference-20210329152107391-614121") );
+if (IsConvenioMultilateral != null && IsConvenioMultilateral.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+IsConvenioMultilateral = IsConvenioMultilateral.substring(0,1);
+}
+set_Value ("IsConvenioMultilateral", IsConvenioMultilateral);
 }
 /** Get Convenio Multilateral.
 Entidades comerciales en Convenio Multilateral */
-public boolean isConvenioMultilateral() 
+public String getIsConvenioMultilateral() 
 {
-Object oo = get_Value("IsConvenioMultilateral");
-if (oo != null) 
-{
- if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
- return "Y".equals(oo);
-}
-return false;
+return (String)get_Value("IsConvenioMultilateral");
 }
 /** Set Customer.
 Indicates if this Business Partner is a Customer */

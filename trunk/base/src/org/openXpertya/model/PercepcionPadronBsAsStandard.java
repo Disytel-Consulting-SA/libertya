@@ -3,8 +3,6 @@ package org.openXpertya.model;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 
-import org.openXpertya.util.Env;
-
 public class PercepcionPadronBsAsStandard extends PercepcionStandard {
 
 	public PercepcionPadronBsAsStandard() {
@@ -18,34 +16,19 @@ public class PercepcionPadronBsAsStandard extends PercepcionStandard {
 	}
 
 	@Override
-	public BigDecimal getPercepcionPercToApply() {
+	public Percepcion applyDebitPerception() {
 		// Buscarlo por el cuit
+		Percepcion p = null;
 		BigDecimal perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
 				getPercepcionData().getBpartner().getTaxID(), new Timestamp(getPercepcionData().getDocument().getDate().getTime()),
 				MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, null);
 		if(perc == null){
-			perc = super.getPercepcionPercToApply();
+			p = super.applyDebitPerception();
 		}
-		return perc;
-	}
-	
-	@Override
-	public BigDecimal getMinimumNetAmount() {
-		// Buscarlo por el cuit
-		BigDecimal perc = MBPartnerPadronBsAs.getBPartnerPerc("percepcion",
-				getPercepcionData().getBpartner().getTaxID(), new Timestamp(getPercepcionData().getDocument().getDate().getTime()),
-				MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, null);
-		if(perc == null){
-			return super.getMinimumNetAmount();
+		else {
+			p = getApplyRate(perc, getPercepcionData().getDocument().getTaxBaseAmt(),
+					getPercepcionData().getMinimumNetAmtBy(MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs, true));
 		}
-		return getRegisterMinimumNetAmount(MBPartnerPadronBsAs.PADRONTYPE_PadrónBsAs);
-	}
-	
-	public BigDecimal getRegisterMinimumNetAmount(String padronType) {
-		MOrgPercepcionConfig percepcionConfig = MOrgPercepcionConfig.getOrgPercepcionConfig(Env.getCtx(), getPercepcionData().getDocument().getOrgID(), padronType, null);
-		if (percepcionConfig != null){
-			return percepcionConfig.getMinimumNetAmount();
-		}
-		return super.getMinimumNetAmount();
+		return p;
 	}
 }

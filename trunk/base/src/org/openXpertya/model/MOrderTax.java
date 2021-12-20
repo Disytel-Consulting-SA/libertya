@@ -133,6 +133,35 @@ public class MOrderTax extends X_C_OrderTax {
         return retValue;
     }    // get
 
+    public static MOrderTax get(Properties ctx, Integer orderID, Integer taxID, String trxName){
+		if(orderID == 0){
+			return null;
+		}
+		String sql = "SELECT * FROM c_ordertax WHERE c_order_id = ? AND c_tax_id = ?";
+		MOrderTax orderTax = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, orderID);
+			ps.setInt(2, taxID);
+			rs = ps.executeQuery();
+			if(rs.next()){
+				orderTax = new MOrderTax(ctx, rs, trxName);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null) ps = null;
+				if(rs != null) rs = null;
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return orderTax;
+	}
+    
     /** Descripción de Campos */
 
     private static CLogger s_log = CLogger.getCLogger( MOrderTax.class );

@@ -172,13 +172,14 @@ public class WCreateFromInvoice extends WCreateFrom {
     		if (bPartnerField != null) {
     			bPartnerField.setValue(m_inout.getC_BPartner_ID());
     		}
-            if( m_inout.getC_Order_ID() != 0 ) {
+            /*if( m_inout.getC_Order_ID() != 0 ) {
                 p_order = new MOrder( Env.getCtx(),m_inout.getC_Order_ID(),null );
-            }
+            }*/
         }
 
         //
-        StringBuffer sql = ((CreateFromInvoiceModel)getHelper()).loadShipmentQuery();
+        StringBuffer sql = ((CreateFromInvoiceModel)getHelper()).loadShipmentQuery(
+        		getRemainingQtySQLLine(isForInvoice(), allowDeliveryReturned()));
         List<SourceEntity> data = new ArrayList<SourceEntity>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -298,7 +299,7 @@ public class WCreateFromInvoice extends WCreateFrom {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx(), sign);     	
+    	String whereClause = CreateFromInvoiceModel.getShipmentFilter(getIsSOTrx(), getOrderFilter());     	
     	/* FEDE:TODO: ESTO DEBERIA REFACTORIZARSE A OTRO LUGAR */
     	int colID = 3521; 	// M_InOut.M_InOut_ID
 		MLookupInfo info = VComponentsFactory.MLookupInfoFactory(Env.getCtx(), p_WindowNo, p_mTab.getTabNo(), colID,

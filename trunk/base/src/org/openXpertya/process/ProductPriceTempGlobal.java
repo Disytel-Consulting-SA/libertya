@@ -49,10 +49,7 @@ public class ProductPriceTempGlobal extends SvrProcess {
 	protected String doIt() throws Exception {
 		// Crear los precios de las sucursales, en sus tipos de precios de lista
 		// o la lista de precios parámetro
-		StringBuffer sql = new StringBuffer(" SELECT plv.* " +
-											" FROM m_pricelist_version plv " +
-											" INNER JOIN m_pricelist pl ON pl.m_pricelist_id = plv.m_pricelist_id ");
-		sql.append(" WHERE plv.ad_client_id = ? AND plv.isactive = 'Y' AND pl.isactive = 'Y' AND plv.M_PriceList_Version_Base_ID is not null ");
+		StringBuffer sql = getBaseQuery();
 		List<Object> params = new ArrayList<Object>();
 		params.add(Env.getAD_Client_ID(getCtx()));
 		if(!Util.isEmpty(getOrgID(), true)){
@@ -81,22 +78,16 @@ public class ProductPriceTempGlobal extends SvrProcess {
 			// Itero por las versiones y las creo
 			while (rs.next()) {
 				Trx.getTrx(get_TrxName()).start();
-				ProductPriceTemp ppTemp = new ProductPriceTemp(getCtx(),
-						rs.getInt("AD_Client_ID"), rs.getInt("AD_Org_ID"),
-						rs.getInt("M_PriceList_Version_ID"),
-						rs.getInt("M_PriceList_Version_Base_ID"),
-						Util.isEmpty(getDiscountSchemaID(), true)?rs.getInt("M_DiscountSchema_ID"):getDiscountSchemaID(), 
-						get_TrxName());
-				generatedPriceListVersions.add(ppTemp.doIt());
+				generatedPriceListVersions.add(runProductPriceTemp(rs));
+				Trx.getTrx(get_TrxName()).commit();
+				// Tirar la importación de precios
+				Trx.getTrx(get_TrxName()).start();
+				Map<String, Object> importParams = new HashMap<String, Object>();
+				importParams.put("AD_Org_ID", getOrgID());
+				MProcess.execute(getCtx(), getImportPriceListProcessID(),
+						X_I_ProductPrice.Table_ID, importParams, get_TrxName());
 				Trx.getTrx(get_TrxName()).commit();
 			}
-			// Tirar la importación de precios
-			Trx.getTrx(get_TrxName()).start();
-			Map<String, Object> importParams = new HashMap<String, Object>();
-			importParams.put("AD_Org_ID", getOrgID());
-			MProcess.execute(getCtx(), getImportPriceListProcessID(),
-					X_I_ProductPrice.Table_ID, importParams, get_TrxName());
-			Trx.getTrx(get_TrxName()).commit();
 		} catch(Exception e){
 			Trx.getTrx(get_TrxName()).rollback();
 			throw e;
@@ -149,6 +140,27 @@ public class ProductPriceTempGlobal extends SvrProcess {
 
 	public void setDiscountSchemaID(Integer discountSchemaID) {
 		this.discountSchemaID = discountSchemaID;
+	}
+	
+	protected StringBuffer getBaseQuery() {
+		// Crear los precios de las sucursales, en sus tipos de precios de lista
+		// o la lista de precios parámetro
+		StringBuffer sql = new StringBuffer(" SELECT plv.* " +
+											" FROM m_pricelist_version plv " +
+											" INNER JOIN m_pricelist pl ON pl.m_pricelist_id = plv.m_pricelist_id ");
+		sql.append(" WHERE plv.ad_client_id = ? AND plv.isactive = 'Y' AND pl.isactive = 'Y' AND plv.M_PriceList_Version_Base_ID is not null ");
+		
+		return sql;
+	}
+	
+	protected String runProductPriceTemp(ResultSet rs) throws Exception {
+		ProductPriceTemp ppTemp = new ProductPriceTemp(getCtx(),
+				rs.getInt("AD_Client_ID"), rs.getInt("AD_Org_ID"),
+				rs.getInt("M_PriceList_Version_ID"),
+				rs.getInt("M_PriceList_Version_Base_ID"),
+				Util.isEmpty(getDiscountSchemaID(), true)?rs.getInt("M_DiscountSchema_ID"):getDiscountSchemaID(), 
+				get_TrxName());
+		return ppTemp.doIt();
 	}
 
 }

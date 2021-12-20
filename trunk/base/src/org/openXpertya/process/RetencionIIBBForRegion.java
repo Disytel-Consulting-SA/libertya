@@ -43,6 +43,26 @@ public class RetencionIIBBForRegion extends RetencionIIBB {
 	}
 	
 	/**
+	 * @return total de las facturas de la región
+	 */
+	public BigDecimal getTotalAmt() {
+		changeInvoicesListByRegion();
+		BigDecimal total = BigDecimal.ZERO;
+		for (BigDecimal amount : getAmountList()) {
+			total = total.add(amount);
+		}
+		return total;
+	}
+	
+	/**
+	 * @return el neto de todas las facturas, no solo de las que poseen lugar de
+	 *         entrega de la región
+	 */
+	public BigDecimal getPayNetAmtAllInvoices() {
+		return super.getPayNetAmt();
+	}
+	
+	/**
 	 * Actualiza las listas de importes y facturas quedando solo con las que
 	 * pertenecen a la misma región
 	 */

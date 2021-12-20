@@ -79,11 +79,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
      *
      * @return
      */
-
-    public static MOrder copyFrom( MOrder from,Timestamp dateDoc,int C_DocTypeTarget_ID,boolean isSOTrx,boolean counter,boolean copyASI,boolean copyLines,String trxName ) {
+	public static MOrder copyFrom( MOrder from,Timestamp dateDoc,int C_DocTypeTarget_ID,boolean isSOTrx,boolean counter,boolean copyASI,boolean copyLines,String trxName ) {
+		return copyFrom( from, dateDoc, C_DocTypeTarget_ID, isSOTrx, counter, copyASI, copyLines, true, trxName );
+	}
+	
+    public static MOrder copyFrom( MOrder from,Timestamp dateDoc,int C_DocTypeTarget_ID,boolean isSOTrx,boolean counter,boolean copyASI,boolean copyLines, boolean saveOrder, String trxName ) {
     	MOrder to = new MOrder( from.getCtx(),0,trxName );
         to.set_TrxName( trxName );
-        PO.copyValues( from,to,from.getAD_Client_ID(),from.getAD_Org_ID());
+        PO.copyValues( from,to,from.getAD_Client_ID(), from.getAD_Org_ID());
         to.setC_Order_ID( 0 );
         to.set_ValueNoCheck( "DocumentNo",null );
         
@@ -146,17 +149,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
         //
        
-        if( !to.save( trxName )) {
+        if(saveOrder && !to.save( trxName )) {
             throw new IllegalStateException( "Could not create Order."+CLogger.retrieveErrorAsString() );
         }
         
-        if( counter ) {
+        if( saveOrder && counter ) {
             from.setRef_Order_ID( to.getC_Order_ID());
            // to.save();
         }
         
         //JOptionPane.showMessageDialog( null,"Antes de crear laslineas la id = "+from.getC_Order_ID(),null, JOptionPane.INFORMATION_MESSAGE );
-        if( copyLines && to.copyLinesFrom( from,counter,copyASI ) == 0 ) {
+        if( saveOrder && copyLines && to.copyLinesFrom( from,counter,copyASI ) == 0 ) {
             throw new IllegalStateException( "Could not create Order Lines."+CLogger.retrieveErrorAsString() );
         }
 
@@ -361,7 +364,13 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
  	
 	/** Bypass para no setear cadena de autorización */
 	private boolean skipAuthorizationChain = false;
- 	
+
+	/**
+	 * Bypass para actualización del descuento manual general del pedido
+	 * (Sólo para Pedidos, no TPV)
+	 */
+	private boolean skipManualGeneralDiscount = false;
+	
     /**
      * Descripción de Método
      *
@@ -1549,7 +1558,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 							pp.getPriceList().multiply(
 									orderLine.getDiscount().divide(
 											Env.ONEHUNDRED, 4,
-											BigDecimal.ROUND_HALF_DOWN))));
+											BigDecimal.ROUND_HALF_UP))));
 					if(!orderLine.save()){
 						log.saveError("SaveError", CLogger.retrieveErrorAsString());
 						return false;
@@ -1578,6 +1587,27 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			calculateTaxTotal();
         	//updateAmounts();
         }
+		
+		// No se puede aplicar descuentos manuales generales cuando el documento
+		// arrastra descuentos del pedido, siempre y cuando en el pedido se
+		// hayan aplicado descuentos
+		boolean calculateTax = false;
+		if (!newRecord && is_ValueChanged("ManualGeneralDiscount")) {
+			// Actualización de las líneas en base al descuento de la cabecera
+			// cuando cambia ese dato (No para TPV)
+			if (!updateManualGeneralDiscount()) {
+				log.saveError("", CLogger.retrieveErrorAsString());
+				return false;
+			}
+			
+			calculateTax = true;
+		}
+		
+		calculateTax = calculateTax || (!newRecord && (is_ValueChanged("C_DocTypeTarget_ID")
+				|| is_ValueChanged("C_BPartner_ID") || is_ValueChanged("DeliveryViaRule")));
+		if(calculateTax) {
+			calculateTaxTotal();
+		}
 		
         return true;
     }    // beforeSave
@@ -1838,6 +1868,12 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         DocumentEngine engine = new DocumentEngine( this,getDocStatus());
 
         boolean status = engine.processIt( processAction,getDocAction(),log );
+        
+        // Incorporar la asignación del número de documento único desde la secuencia
+ 		// única al completar. 
+ 		// IMPORTANTE: La asignación del número de documento único debe ir al final de
+ 		// este método
+ 		status = assignUniqueDocumentNo(engine.getDocAction(), status) && status;
         
         return status;
     }    // processIt
@@ -3154,7 +3190,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
     private boolean calculateTaxTotal() {
         log.fine( "" );
 
-        if(isTPVInstance()){
+        if(isTPVInstance() && isSkipManualGeneralDiscount()){
         	return true;
         }
         
@@ -3200,6 +3236,13 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         }
 
         // Taxes
+        // Calcular las percepciones
+  		try {
+ 			recalculatePercepciones();
+  		} catch (Exception e) {
+  			log.severe("ERROR generating percepciones. " + e.getMessage());
+  			e.printStackTrace();
+  		}
 
         BigDecimal  grandTotal = totalLines;
         MOrderTax[] taxes      = getTaxes( true );
@@ -3255,7 +3298,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         // Recalculo el total a partir de los impuestos del pedido.
         taxes = getTaxes(true);
         for (MOrderTax orderTax : taxes) {
-			if(!isTaxIncluded())
+        	MTax tax  = orderTax.getTax();
+        	if (!isTaxIncluded() || tax.isCategoriaManual())
 				grandTotal = grandTotal.add( orderTax.getTaxAmt() ); 
 		}
 
@@ -3662,6 +3706,23 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			}
         }
 
+        // Crear el document discount a partir del descuento manual general de
+  		// la cabecera
+  		if (!isSkipManualGeneralDiscount() && !Util.isEmpty(getManualGeneralDiscount(), true)) {
+  			BigDecimal totalPriceListLines = getSumColumnLines("(PriceList * QtyOrdered)-LineDiscountAmt-LineBonusAmt");
+  			BigDecimal manualGeneralDiscountAmt = getSumColumnLines("ManualGeneralDiscountAmt");
+  			MDocumentDiscount documentDiscount = createDocumentDiscount(
+  					totalPriceListLines, manualGeneralDiscountAmt, null,
+  					MDocumentDiscount.CUMULATIVELEVEL_Document,
+  					MDocumentDiscount.DISCOUNTAPPLICATION_DiscountToPrice,
+  					MDocumentDiscount.DISCOUNTKIND_ManualGeneralDiscount, null, null);
+  			// Si no se puede guardar aborta la operación
+  			if (!documentDiscount.save()) {
+  				m_processMsg = CLogger.retrieveErrorAsString();
+  				return DocAction.STATUS_Invalid;
+  			}
+  		}
+        
         // Para pedidos transferibles, se debe controlar que la cantidad de
 		// la línea no supere el pendiente a entregar del pedido original
 		// relacionado y setear la cantidad transferida a la pedida
@@ -4141,10 +4202,18 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
                 line.addDescription( Msg.getMsg( getCtx(),"Voided" ) + " (" + old + ")" );
                 line.setQty( Env.ZERO );
                 line.setLineNetAmt( Env.ZERO );
-                line.save( get_TrxName());
+                line.setLineTotalAmt(Env.ZERO);
+                line.setAllowAnyQty(true);
+                if(!line.save( get_TrxName())) {
+                	m_processMsg = CLogger.retrieveErrorAsString();
+    	    		return false;
+                }
             }
         }
-
+        
+        // Recalcula los impuestos
+        calculateTaxTotal();
+        
         addDescription( Msg.getMsg( getCtx(),"Voided" ));
 
         // Clear Reservations
@@ -4314,6 +4383,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 	            	// QtyEntered unchanged	
 	                line.addDescription( "Close (" + old + ")" );
 	                line.setUpdatePriceInSave(false);
+	                line.setAllowAnyQty(true);
 	                if(!line.save( get_TrxName())){
 	                	m_processMsg = CLogger.retrieveErrorAsString();
 	    	            return false;
@@ -4636,12 +4706,21 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			// Suma de los impuestos de este pedido
 			.append(  "(SELECT COALESCE(SUM(TaxAmt),0) ")
 			.append(   "FROM C_OrderTax ot ")
-			.append(   "WHERE ot.C_Order_ID = o.C_Order_ID) AS TotalTaxAmt ")
+			.append("   JOIN c_tax t on t.c_tax_id = ot.c_tax_id ")
+			.append("   JOIN c_taxcategory tc on tc.c_taxcategory_id = t.c_taxcategory_id ")
+			.append(   "WHERE ot.C_Order_ID = o.C_Order_ID and tc.ismanual = 'N') AS TotalTaxAmt, ")
+			// Suma de los impuestos de este pedido
+			.append(  "(SELECT COALESCE(SUM(TaxAmt),0) ")
+			.append(   "FROM C_OrderTax ot ")
+			.append("   JOIN c_tax t on t.c_tax_id = ot.c_tax_id ")
+			.append("   JOIN c_taxcategory tc on tc.c_taxcategory_id = t.c_taxcategory_id ")			
+			.append(   "WHERE ot.C_Order_ID = o.C_Order_ID and tc.ismanual = 'Y') AS TotalManualTaxesAmt ")
 		    .append("FROM C_Order o ")
 		    .append("WHERE o.C_Order_ID = ?");
 		
 		BigDecimal totalLines  = null; // Total neto de líneas
-		BigDecimal totalTaxAmt = null; // Total de impuestos
+		BigDecimal totalTaxAmt = null; // Total de impuestos automáticos
+		BigDecimal totalManualTaxAmt = null; // Total de impuestos manuales
 		
 		try {
 			pstmt = DB.prepareStatement(dataSql.toString(), get_TrxName());
@@ -4651,6 +4730,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			if (rs.next()) {
 				totalLines  = rs.getBigDecimal("TotalLines");
 				totalTaxAmt = rs.getBigDecimal("TotalTaxAmt");
+				totalManualTaxAmt = rs.getBigDecimal("TotalManualTaxesAmt"); 
 			}
 			
 		} catch (SQLException e) {
@@ -4663,28 +4743,32 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			} catch (Exception e) {}
 		}
 		
-		if (totalLines == null || totalTaxAmt == null) {
-			updateOk = false;
-		// Se obtuvieron ambos importes
-		} else {
-			// Actualización del monto de descuento de la cabecera del pedido
-			updateChargeAmt();
-			
-			BigDecimal grandTotal = null;    // Total del pedido calculado
-			BigDecimal chargeAmt =           // Importe del cargo (descuentos) 
-				getChargeAmt() != null ? getChargeAmt() : BigDecimal.ZERO;
-			
-			if (isTaxIncluded()) {
-				grandTotal = totalLines.add(chargeAmt);
-			} else {
-				grandTotal = totalLines.add(totalTaxAmt).add(chargeAmt);
-			}
-			
-			setTotalLines(totalLines);
-			setGrandTotal(grandTotal);
-			
-			log.info("Order updated - TotalLines = " + totalLines + " - GrandTotal = " + grandTotal); 
+		
+		// Actualización del monto de descuento de la cabecera del pedido
+		if(isUpdateChargeAmt()){
+			BigDecimal chargeAmt = getTotalDocumentDiscountAmtFromLines();
+			chargeAmt = Util.isEmpty(chargeAmt, true)?BigDecimal.ZERO:chargeAmt.negate(); 
+			setChargeAmt(chargeAmt);
 		}
+		BigDecimal grandTotal = null;    // Total del pedido calculado
+		BigDecimal chargeAmt =           // Importe del cargo (descuentos) 
+			getChargeAmt() != null ? getChargeAmt() : BigDecimal.ZERO;
+		totalLines = totalLines == null ? BigDecimal.ZERO : totalLines;
+		totalTaxAmt = totalTaxAmt == null ? BigDecimal.ZERO : totalTaxAmt;
+		totalManualTaxAmt = totalManualTaxAmt == null ? BigDecimal.ZERO : totalManualTaxAmt;
+		
+		grandTotal = totalLines.add(chargeAmt);
+		
+		if (!isTaxIncluded()) {
+			grandTotal = grandTotal.add(totalTaxAmt);
+		}
+		
+		grandTotal = grandTotal.add(totalManualTaxAmt);
+		
+		setTotalLines(totalLines);
+		setGrandTotal(grandTotal);
+		
+		log.info("Order updated - TotalLines = " + totalLines + " - GrandTotal = " + grandTotal); 
 		
 		return updateOk;
 	}
@@ -4926,15 +5010,15 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		}
 		
 		@Override
-		public List<DocumentTax> getAppliedPercepciones(){
+		public List<Percepcion> getAppliedPercepciones(){
 			List<MOrderTax> orderTaxes = MOrder.this.getAppliedPercepciones();
-			List<DocumentTax> documentTaxes = new ArrayList<DocumentTax>();
-			DocumentTax doctax;
+			List<Percepcion> documentTaxes = new ArrayList<Percepcion>();
+			Percepcion doctax;
 			for (MOrderTax orderTax : orderTaxes) {
 				// Se debe determinar el porcentaje del impuesto que se aplicó
 				// en el documento, esto se determina con el importe base y el
 				// monto del impuesto
-				doctax = new DocumentTax();
+				doctax = new Percepcion();
 				doctax.setTaxID(orderTax.getC_Tax_ID());
 				doctax.setTaxAmt(orderTax.getTaxAmt());
 				doctax.setTaxBaseAmt(orderTax.getTaxBaseAmt());
@@ -4947,6 +5031,26 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		@Override
 		public void setDocumentReferences(MPromotionCode promotionCode) {
 			promotionCode.setC_Invoice_ID(getTpvGeneratedInvoiceID());
+		}
+
+		@Override
+		public BigDecimal getTotalDocumentDiscount() {
+			return MOrder.this.getChargeAmt();
+		}
+
+		@Override
+		public BigDecimal getTaxBaseAmt() {
+			return MOrder.this.getNetTaxBaseAmt();
+		}
+
+		@Override
+		public int getCurrencyID() {
+			return MOrder.this.getC_Currency_ID();
+		}
+
+		@Override
+		public String getDeliveryViaRule() {
+			return MOrder.this.getDeliveryViaRule();
 		}
 	}
 	
@@ -5201,9 +5305,11 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 				manualTaxesAmt = manualTaxesAmt.add(rs.getBigDecimal("taxamt"));
 			}
 			
+			BigDecimal chargeAmt = getChargeAmt() == null ? BigDecimal.ZERO : getChargeAmt();
+			
 			// Actualizar totales
 			setTotalLines(taxBaseAmt.add(automaticTaxesAmt));
-			setGrandTotal(taxBaseAmt.add(automaticTaxesAmt).add(manualTaxesAmt));
+			setGrandTotal(taxBaseAmt.add(automaticTaxesAmt).add(manualTaxesAmt).add(chargeAmt));
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally{
@@ -5239,6 +5345,139 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 			BigDecimal chargeAmt = getTotalDocumentDiscountAmtFromLines();
 			chargeAmt = Util.isEmpty(chargeAmt, true)?BigDecimal.ZERO:chargeAmt.negate(); 
 			setChargeAmt(chargeAmt);
+		}
+	}
+
+	/**
+	 * Asigna el número de documento único luego de completar. 
+	 * 
+	 * @param processAction acción realizada sobre el documento
+	 * @param status        el estado del procesamiento luego de realizar la acción
+	 *                      parámetro
+	 * @return true si el procesamiento se ejecutó y se asignó correctamente el
+	 *         número de documento único, false caso contrario. Depende también del
+	 *         status parámetro.
+	 */
+	public boolean assignUniqueDocumentNo(String processAction, boolean status) {
+		boolean newStatus = status;
+		if(status && DOCACTION_Complete.equals(processAction)) {
+			MDocType dt = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
+			if(!Util.isEmpty(dt.getDocNoSequence_Unique_ID(), true)) {
+				String newDocNo = DB.getUniqueDocumentNo(dt.getID(), get_TrxName());
+				if(Util.isEmpty(newDocNo, true)) {
+					setProcessMsg(Msg.getMsg(getCtx(), "UniqueDocumentNoError"));
+					newStatus = false;
+				}
+				setDocumentNo(newDocNo);
+			}
+		}
+		return newStatus;
+	}
+
+	public void setSkipManualGeneralDiscount(boolean skipManualGeneralDiscount) {
+		this.skipManualGeneralDiscount = skipManualGeneralDiscount;
+	}
+
+	public boolean isSkipManualGeneralDiscount() {
+		return skipManualGeneralDiscount;
+	}
+	
+	/**
+	 * Actualiza el descuento manual general
+	 * 
+	 * @return true si fue posible la actualización, false caso contrario
+	 */
+	public boolean updateManualGeneralDiscount() {
+		int stdPrecision = MPriceList.getStandardPrecision(getCtx(),
+				getM_PriceList_ID());
+		try {
+			// Actualización del descuento de líneas
+			updateManualGeneralDiscountToLines(stdPrecision);
+		} catch (Exception e) {
+			log.saveError("", !Util.isEmpty(e.getMessage()) ? e.getMessage()
+					: e.getCause() != null ? e.getCause().getMessage() : "");
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Actualización de líneas en base al descuento cargado en la cabecera
+	 * 
+	 * @param scale
+	 * @throws Exception
+	 */
+	public void updateManualGeneralDiscountToLines(int scale) throws Exception {
+		for (MOrderLine orderLine : getLines()) {
+			orderLine.updateGeneralManualDiscount(getManualGeneralDiscount(),
+					scale);
+			orderLine.setSkipManualGeneralDiscount(true);
+			if (!orderLine.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+		}
+	}
+	
+	/**
+	 * Obtengo la suma de una columna numérica de las líneas de este pedido
+	 * 
+	 * @param numericColumnName
+	 *            nombre de la columna numérica de la línea
+	 * @return la suma de esa columna numérica de las líneas del pedido
+	 */
+	protected BigDecimal getSumColumnLines(String numericColumnName) {
+		// Obtengo la suma de los descuentos de las líneas
+		String sql = "SELECT sum(" + numericColumnName
+				+ ") FROM c_orderline WHERE c_order_id = ?";
+		BigDecimal totalLineAmt = DB.getSQLValueBD(get_TrxName(), sql, getID());
+		totalLineAmt = totalLineAmt == null ? BigDecimal.ZERO : totalLineAmt;
+		return totalLineAmt;
+	}
+	
+	/**
+	 * Crea un document discount con los datos parámetro. No guarda el PO.
+	 * @param baseAmt
+	 * @param discountAmt
+	 * @param taxRate
+	 * @param cumulativeLevel
+	 * @param discountApplication
+	 * @param discountKind
+	 * @param description
+	 * @return 
+	 */
+	private MDocumentDiscount createDocumentDiscount(BigDecimal baseAmt,
+			BigDecimal discountAmt, BigDecimal taxRate, String cumulativeLevel,
+			String discountApplication, String discountKind, String description, 
+			Integer discountSchemaID) {
+		MDocumentDiscount documentDiscount = new MDocumentDiscount(getCtx(), 0,
+				get_TrxName());
+		// Asigna las referencias al documento
+		documentDiscount.setC_Order_ID(getID());
+		// Asigna los importes y demás datos del descuento
+		documentDiscount.setDiscountBaseAmt(baseAmt);
+		documentDiscount.setDiscountAmt(discountAmt);
+		documentDiscount.setCumulativeLevel(cumulativeLevel);
+		documentDiscount.setDiscountApplication(discountApplication);
+		documentDiscount.setTaxRate(taxRate);
+		documentDiscount.setDiscountKind(discountKind);
+		documentDiscount.setDescription(description);
+		documentDiscount.setM_DiscountSchema_ID(discountSchemaID == null ? 0 : discountSchemaID);
+		return documentDiscount;
+	}
+	
+	public void calculatePercepciones() throws Exception {
+		if (MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(), get_TrxName())) {
+			GeneratorPercepciones generator = new GeneratorPercepciones(
+					getCtx(), getDiscountableWrapper(), get_TrxName());
+			generator.calculatePercepciones(this);
+		}
+	}
+
+	public void recalculatePercepciones() throws Exception {
+		if (MOrgPercepcion.existsOrgPercepcion(getCtx(), getAD_Org_ID(),	get_TrxName())) {
+			GeneratorPercepciones generator = new GeneratorPercepciones(
+					getCtx(), getDiscountableWrapper(), get_TrxName());
+			generator.recalculatePercepciones(this);
 		}
 	}
 }    // MOrder

@@ -46,7 +46,8 @@ from (SELECT distinct p.ad_client_id, p.ad_org_id, o.value as orgvalue, o.name a
 	ORDER BY a.datetrx desc
 	LIMIT 1) AS allocation_documentno, 
 	CASE WHEN ccs.c_creditcardsettlement_id is not null AND ccs.settlementno is null THEN 'Liq. '||ccs.paymentdate::date ELSE ccs.settlementno END as settlementno,
-	coalesce(bd.documentno,b.documentno) as boletadeposito_documentno
+	coalesce(bd.documentno,b.documentno) as boletadeposito_documentno,
+	ppm.name as pospaymentmediumname
 FROM c_payment p
 inner join ad_org o on o.ad_org_id = p.ad_org_id
 JOIN c_bpartner bp ON bp.c_bpartner_id = p.c_bpartner_id
@@ -55,6 +56,7 @@ left join c_creditcardsettlement ccs ON ccs.c_payment_id = p.c_payment_id
 left join m_boletadeposito bd on bd.c_boleta_payment_id = p.c_payment_id
 left join m_boletadepositoline bl on bl.c_depo_payment_id = p.c_payment_id
 left join m_boletadeposito b on b.m_boletadeposito_id = bl.m_boletadeposito_id
+left join c_pospaymentmedium ppm on ppm.c_pospaymentmedium_id = p.c_pospaymentmedium_id
 WHERE p.ad_client_id = $P{AD_CLIENT_ID}
 	and ($P{AD_Org_ID} is null OR $P{AD_Org_ID} = 0 OR $P{AD_Org_ID} = p.ad_org_id)
 	and ($P{C_BankAccount_ID} is null OR $P{C_BankAccount_ID} = 0 OR $P{C_BankAccount_ID} = p.c_bankaccount_id)
@@ -93,6 +95,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 	<field name="settlementno" class="java.lang.String"/>
 	<field name="boletadeposito_documentno" class="java.lang.String"/>
 	<field name="tendertype" class="java.lang.String"/>
+	<field name="pospaymentmediumname" class="java.lang.String"/>
 
 	<variable name="SUM_PAYAMT" class="java.math.BigDecimal" resetType="Report" calculation="Sum">
 		<variableExpression><![CDATA[$F{payamt}]]></variableExpression>
@@ -275,9 +278,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="122"
+						x="115"
 						y="156"
-						width="105"
+						width="96"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-7"/>
@@ -290,9 +293,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="419"
+						x="462"
 						y="156"
-						width="68"
+						width="57"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-8"/>
@@ -305,7 +308,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="487"
+						x="519"
 						y="156"
 						width="55"
 						height="15"
@@ -320,7 +323,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="542"
+						x="574"
 						y="156"
 						width="55"
 						height="15"
@@ -335,9 +338,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="597"
+						x="629"
 						y="156"
-						width="58"
+						width="59"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-11"/>
@@ -350,9 +353,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="781"
+						x="796"
 						y="156"
-						width="79"
+						width="64"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-12"/>
@@ -360,14 +363,14 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
-				<text><![CDATA[Boleta Depósito]]></text>
+				<text><![CDATA[Bol. Depósito]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="655"
+						x="688"
 						y="156"
-						width="60"
+						width="49"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-13"/>
@@ -380,9 +383,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="715"
+						x="737"
 						y="156"
-						width="66"
+						width="59"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-14"/>
@@ -397,7 +400,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 						mode="Opaque"
 						x="0"
 						y="156"
-						width="122"
+						width="115"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-15"/>
@@ -458,7 +461,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="227"
+						x="211"
 						y="156"
 						width="126"
 						height="15"
@@ -473,9 +476,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="353"
+						x="337"
 						y="156"
-						width="66"
+						width="60"
 						height="15"
 						backcolor="#EDECEC"
 						key="staticText-21"/>
@@ -484,6 +487,21 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 						<font pdfFontName="Helvetica" size="9" isBold="false"/>
 					</textElement>
 				<text><![CDATA[Tipo]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Opaque"
+						x="397"
+						y="156"
+						width="65"
+						height="15"
+						backcolor="#EDECEC"
+						key="staticText-22"/>
+					<box topBorder="Thin" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="9" isBold="false"/>
+					</textElement>
+				<text><![CDATA[Medio Cobro]]></text>
 				</staticText>
 			</band>
 		</title>
@@ -501,7 +519,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 					<reportElement
 						x="0"
 						y="0"
-						width="122"
+						width="115"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -513,9 +531,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="122"
+						x="115"
 						y="0"
-						width="105"
+						width="96"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -527,7 +545,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="227"
+						x="211"
 						y="0"
 						width="126"
 						height="15"
@@ -541,9 +559,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="419"
+						x="462"
 						y="0"
-						width="68"
+						width="57"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -555,7 +573,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="487"
+						x="519"
 						y="0"
 						width="55"
 						height="15"
@@ -569,7 +587,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="542"
+						x="574"
 						y="0"
 						width="55"
 						height="15"
@@ -583,9 +601,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="597"
+						x="629"
 						y="0"
-						width="58"
+						width="59"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -597,9 +615,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="655"
+						x="688"
 						y="0"
-						width="60"
+						width="49"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -611,9 +629,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="715"
+						x="737"
 						y="0"
-						width="66"
+						width="59"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -625,9 +643,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="781"
+						x="796"
 						y="0"
-						width="79"
+						width="64"
 						height="15"
 						key="textField"
 						isPrintWhenDetailOverflows="true"/>
@@ -637,18 +655,33 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{boletadeposito_documentno}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="353"
+						x="337"
 						y="0"
-						width="66"
+						width="60"
 						height="15"
-						key="textField"/>
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
 						<font size="8"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{tendertype}.equals("K")?"Cheque":"Transferencia"]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="397"
+						y="0"
+						width="65"
+						height="15"
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$F{pospaymentmediumname}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>
@@ -660,9 +693,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 			<band height="14"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="703"
+						x="795"
 						y="0"
-						width="79"
+						width="65"
 						height="14"
 						key="textField-6"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -677,9 +710,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 			<band height="14"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="703"
+						x="795"
 						y="0"
-						width="79"
+						width="65"
 						height="14"
 						key="textField-7"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -695,7 +728,7 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 				<staticText>
 					<reportElement
 						mode="Opaque"
-						x="464"
+						x="509"
 						y="0"
 						width="55"
 						height="15"
@@ -707,9 +740,9 @@ ORDER BY dateemissioncheck, checkno]]></queryString>
 					</textElement>
 				<text><![CDATA[Total]]></text>
 				</staticText>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="519"
+						x="564"
 						y="0"
 						width="58"
 						height="15"

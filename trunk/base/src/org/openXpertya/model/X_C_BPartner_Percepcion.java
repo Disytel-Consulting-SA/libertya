@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_Percepcion
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2012-05-17 17:47:27.234 */
+ *  @version  - 2021-12-20 13:54:05.297 */
 public class X_C_BPartner_Percepcion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -46,6 +46,18 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_BPartner_Percepcion[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Alicuota */
+public void setAlicuota (BigDecimal Alicuota)
+{
+set_Value ("Alicuota", Alicuota);
+}
+/** Get Alicuota */
+public BigDecimal getAlicuota() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Alicuota");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Business Partner .
 Identifies a Business Partner */

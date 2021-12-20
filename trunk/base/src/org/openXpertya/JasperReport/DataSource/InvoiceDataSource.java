@@ -78,6 +78,13 @@ public class InvoiceDataSource implements OXPJasperDataSource  {
 		methodMapper.put("DOCUMENTDISCOUNT_UNITY_NET", "getDocumentDiscountUnityAmtNet");
 		methodMapper.put("TOTAL_DOCUMENTDISCOUNT", "getTotalDocumentDiscountUnityAmtWithTax");
 		methodMapper.put("TOTAL_DOCUMENTDISCOUNT_NET", "getTotalDocumentDiscountUnityAmtNet");
+		
+		methodMapper.put("MANUALDOCUMENTDISCOUNT_UNITY", "getManualDocumentDiscountUnityAmtWithTax");
+		methodMapper.put("MANUALDOCUMENTDISCOUNT_UNITY_NET", "getManualDocumentDiscountUnityAmtNet");
+		methodMapper.put("MANUALTOTAL_DOCUMENTDISCOUNT", "getManualTotalDocumentDiscountUnityAmtWithTax");
+		methodMapper.put("MANUALTOTAL_DOCUMENTDISCOUNT_NET", "getManualTotalDocumentDiscountUnityAmtNet");
+		
+		methodMapper.put("CLEARANCENUMBER", "getClearanceNumber");
 	}
 	
 	public void loadData() throws RuntimeException {

@@ -145,7 +145,7 @@ public class CreateVendorProductsOrderLines extends SvrProcess {
 	}
 	
 	
-	private void setOrderLineDescription(MOrderLine ol, BigDecimal qtyOrdered) {
+	protected void setOrderLineDescription(MOrderLine ol, BigDecimal qtyOrdered) {
 		int m_Product_ID = ol.getM_Product_ID();
 		Map<Integer, BigDecimal> weekQty = new HashMap<Integer, BigDecimal>();
 		

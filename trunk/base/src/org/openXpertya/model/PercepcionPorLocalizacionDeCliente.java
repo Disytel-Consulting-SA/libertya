@@ -1,7 +1,5 @@
 package org.openXpertya.model;
 
-import java.math.BigDecimal;
-
 import org.openXpertya.util.Env;
 
 public class PercepcionPorLocalizacionDeCliente extends PercepcionStandard {
@@ -16,29 +14,18 @@ public class PercepcionPorLocalizacionDeCliente extends PercepcionStandard {
 	}
 
 	@Override
-	public BigDecimal getPercepcionPercToApply() {
-		//MTax tax = new MTax(Env.getCtx(), getPercepcionData().getTax().getC_Tax_ID(), null);
+	public Percepcion applyDebitPerception() {
+		Percepcion p = null;
 		int c_Region_Tax_ID = getPercepcionData().getTax().getC_Region_ID();
 		
 		MBPartnerLocation bpLocation = new MBPartnerLocation(Env.getCtx(),getPercepcionData().getBpartner().getPrimaryC_BPartner_Location_ID(), null);
 		MLocation location = new MLocation(Env.getCtx(),bpLocation.getC_Location_ID(), null);
 		int c_Region_BP_ID = location.getC_Region_ID();
 		
-		BigDecimal perc = BigDecimal.ZERO;
 		if (c_Region_Tax_ID == c_Region_BP_ID){
-			perc = super.getPercepcionPercToApply();
+			p = super.applyDebitPerception();
 		}
 		
-		return perc;
-	}
-	
-	@Override
-	public String getArcibaNormCode() {
-		return getPercepcionData().getTax().getArcibaNormCode();
-	}
-	
-	@Override
-	public BigDecimal getMinimumNetAmount() {
-		return super.getMinimumNetAmount();
+		return p;
 	}
 }

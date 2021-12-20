@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -49,7 +50,9 @@ import org.openXpertya.model.IProcessParameter;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MField;
 import org.openXpertya.model.MFieldVO;
+import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MPInstancePara;
+import org.openXpertya.model.MultiMap;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -135,6 +138,8 @@ implements ValueChangeListener, IProcessParameter
 		
 		private Grid centerPanel = null;
 
+		protected MultiMap m_depOnField = new MultiMap();
+		
 		/**
 		 *  Dispose
 		 */
@@ -144,7 +149,8 @@ implements ValueChangeListener, IProcessParameter
 			m_wEditors2.clear();
 			m_mFields.clear();
 			m_mFields2.clear();
-			
+			fields.clear();
+	        m_depOnField.clear();
 		}   //  dispose
 
 		/**
@@ -256,7 +262,9 @@ implements ValueChangeListener, IProcessParameter
 			if (hasFields)
 			{
 				centerPanel.appendChild(rows);
+				setDefaultValues();
 		    	processCallouts();
+		    	processDependencies();
 				dynamicDisplay();
 			}
 			else
@@ -287,6 +295,9 @@ implements ValueChangeListener, IProcessParameter
 
 			fields.put(mField.getColumnName(), mField);
 			
+			// Dependientes
+	        initDependants(mField);
+			
 			Row row = new Row();
 			
 			//	The Editor
@@ -303,9 +314,6 @@ implements ValueChangeListener, IProcessParameter
 			
 			//  MField => VEditor - New Field value to be updated to editor
 			mField.addPropertyChangeListener(editor);
-			//  Set Default
-			Object defaultObject = mField.getDefault();
-			mField.setValue (defaultObject, true);
 			//streach component to fill grid cell
             editor.fillHorizontal();
             //setup editor context menu
@@ -367,9 +375,6 @@ implements ValueChangeListener, IProcessParameter
                 	popupMenu.addMenuListener((ContextMenuListener)editor2);
                     this.appendChild(popupMenu);
                 }
-				//  Set Default
-				Object defaultObject2 = mField2.getDefault();
-				mField2.setValue (defaultObject2, true);
 				//
 				m_wEditors2.add (editor2);
 				Label separator = new Label(" - ");
@@ -574,7 +579,9 @@ implements ValueChangeListener, IProcessParameter
 			else
 				Env.setContext(Env.getCtx(), m_WindowNo, name, value.toString());
 
+			fields.get(name).setValue(value, true, false);
 			processCallout(fields.get(name), value);
+			processDependencies(fields.get(name));
 			dynamicDisplay();
 		}
 		
@@ -691,5 +698,73 @@ implements ValueChangeListener, IProcessParameter
 					f.restoreValue();
 			}
 		}
+		
+		public ArrayList getDependantList( String columnName ) {
+	        return m_depOnField.getValues( columnName );
+	    }    // getDependentFieldList
+	    
+	    public boolean hasDependants( String columnName ) {
+	        return m_depOnField.containsKey( columnName );
+	    }    // isDependentOn
+		
+		protected void setDefaultValues() {
+	    	setDefaultValues(m_mFields);
+	    	setDefaultValues(m_mFields2);
+	    }
+	    
+	    protected void setDefaultValues(List<MField> fields) {
+	    	Object defaultObject;
+	    	for (MField field : fields) {
+	    		if(field != null) {
+	    			defaultObject = field.getDefault();
+	    			field.refreshLookup();
+	        		field.setValue( defaultObject, true, true );
+	    		}
+			}
+	    }
+		
+	    private void initDependants(MField field) {
+	    	ArrayList list = field.getDependentOn();
+
+	        for( int i = 0;i < list.size();i++ ) {
+	            m_depOnField.put( list.get( i ),field );    // ColumnName, Field
+	        }
+	    }
+	    
+	    protected void processDependencies(){
+			Set<String> keys = fields.keySet();
+			for (String columnName : keys) {
+				processDependencies(fields.get(columnName));
+			}
+		}
+		
+		public void processDependencies( MField changedField ) {
+	        String columnName = changedField.getColumnName();
+
+	        if( !hasDependants( columnName )) {
+	            return;
+	        }
+
+	        ArrayList list = getDependantList( columnName );
+
+	        for( int i = 0;i < list.size();i++ ) {
+	            MField dependentField = ( MField )list.get( i );
+	            if( (dependentField != null) && (dependentField.getLookup() instanceof MLookup) ) {
+	                MLookup mLookup = ( MLookup )dependentField.getLookup();
+	                if( mLookup.getValidation().indexOf( "@" + columnName + "@" ) != -1 ) {
+	                    log.fine( columnName + " changed - " + dependentField.getColumnName() + " set to null" );
+
+	                    dependentField.setValue(null, true);
+	                    
+	                    /*if(dependentField.getLookup() != null) {
+	                    	dependentField.getLookup().removeAllElements();
+	                    	dependentField.getLookup().fillComboBox(dependentField.getVO().IsMandatory, false, false, false);
+	                    }*/
+	                    mLookup.refresh();	                    
+	                }
+	            }
+	        }    // for all dependent fields
+	    }        // processDependencies
+	    
 	}	//	ProcessParameterPanel
 

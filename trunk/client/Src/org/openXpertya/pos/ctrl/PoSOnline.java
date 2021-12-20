@@ -71,7 +71,9 @@ import org.openXpertya.model.MTax;
 import org.openXpertya.model.MUser;
 import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
+import org.openXpertya.model.Percepcion;
 import org.openXpertya.model.PrintInfo;
+import org.openXpertya.model.X_C_Categoria_Iva;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
 import org.openXpertya.pos.exceptions.GeneratingCAEError;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -149,6 +151,7 @@ public class PoSOnline extends PoSConnectionState {
 	private MInOut shipment = null;
 	private MAllocationHdr allocHdr = null;
 	private MOrg mOrg = null;
+	private MOrgInfo mOrgInfo = null;
 	
 	private HashMap<Integer, MPayment> mpayments = new HashMap<Integer, MPayment>();
 	// private Vector<MPayment> mpayments = new Vector<MPayment>();
@@ -218,6 +221,7 @@ public class PoSOnline extends PoSConnectionState {
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
 		setCompleteOrderPOSValidations(new CompleteOrderPOSValidations());
 		setmOrg(MOrg.get(ctx, Env.getAD_Org_ID(ctx)));
+		setmOrgInfo(MOrgInfo.get(ctx, Env.getAD_Org_ID(ctx)));
 		setGeneratorPercepciones(new GeneratorPercepciones(getCtx(), null));
 		getGeneratorPercepciones().setTPVInstance(true);
 		setPaymentDocType(MDocType.getDocType(ctx,
@@ -558,11 +562,11 @@ public class PoSOnline extends PoSConnectionState {
 		return success;
 	}
 	
-	private boolean getShouldCreateInvoice() {
+	protected boolean getShouldCreateInvoice() {
 		return shouldCreateInvoice;
 	}
 	
-	private boolean getShouldCreateInout() {
+	protected boolean getShouldCreateInout() {
 		return shouldCreateInout;
 	}
 	
@@ -625,12 +629,12 @@ public class PoSOnline extends PoSConnectionState {
 		}
 	}
 	
-	private String getTrxName() {
+	protected String getTrxName() {
 		//return trx != null ? trx.getTrxName() : null;
 		return trxName;
 	}
 	
-	private void clearState(Order order) {
+	protected void clearState(Order order) {
 		
 		ctx = Env.getCtx();
 		invoiceDate = Env.getTimestamp();
@@ -790,7 +794,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * @param order
 	 * @throws PosException
 	 */
-	private void checkSaldo(Order order) throws PosException {
+	protected void checkSaldo(Order order) throws PosException {
 		
 		BigDecimal cashChange = BigDecimal.ZERO;
 		boolean invalidPayment = false;
@@ -940,6 +944,8 @@ public class PoSOnline extends PoSConnectionState {
 		  .append(   "p.m_product_category_id, ")
 		  .append(   "p.CheckoutPlace, ")
 		  .append(   "p.IsSold, ")
+		  .append(   "p.Sales_Order_Min, ")
+		  .append(   "p.Sales_Order_Pack, ")
 		  .append(   "coalesce(pg.m_product_gamas_id,0) as m_product_gamas_id, ")
 		  .append(   "coalesce(pg.m_product_lines_id,0) as m_product_lines_id ")
 		  .append("FROM ( "); 
@@ -1052,7 +1058,9 @@ public class PoSOnline extends PoSConnectionState {
 						checkoutPlace,
 						sold,
 						rs.getInt("m_product_gamas_id"),
-						rs.getInt("m_product_lines_id"));
+						rs.getInt("m_product_lines_id"),
+						rs.getBigDecimal("Sales_Order_Min"),
+						rs.getBigDecimal("Sales_Order_Pack"));
 				
 				productList.addProduct(product, matchType);
 				productMatch.put(product.getId(), matchType);
@@ -1288,13 +1296,24 @@ public class PoSOnline extends PoSConnectionState {
 		}
 	}
 	
-
-	private MOrder createOxpOrder(Order order) throws PosException {
+	protected Integer getOrderDocTypeID() {
+		return getPoSCOnfig().getOrderDocTypeID();
+	}
+	
+	protected MOrder getOrderNewInstance() {
+		return new MOrder(ctx, 0, getTrxName());
+	}
+	
+	protected MOrderLine getOrderLineNewInstance() {
+		return new MOrderLine(ctx, 0, getTrxName());
+	}
+	
+	protected MOrder createOxpOrder(Order order) throws PosException {
 		
 		
 		List<OrderProduct> products = order.getOrderProducts();
 		
-		MOrder mo = new MOrder(ctx, 0, getTrxName());
+		MOrder mo = getOrderNewInstance();
 
 		setCaches(mo); //Ader: caches
 		
@@ -1304,8 +1323,8 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setTPVInstance(true);
 		// TODO: Cual de los dos ?
 		
-		mo.setC_DocType_ID(getPoSCOnfig().getOrderDocTypeID());
-		mo.setC_DocTypeTarget_ID(getPoSCOnfig().getOrderDocTypeID());
+		mo.setC_DocType_ID(getOrderDocTypeID());
+		mo.setC_DocTypeTarget_ID(getOrderDocTypeID());
 		
 		mo.setDocAction(MOrder.DOCACTION_Complete);
 		mo.setDocStatus(MOrder.DOCSTATUS_Drafted);
@@ -1316,7 +1335,7 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setM_PriceList_ID(getPoSCOnfig().getPriceListID());
 		mo.setM_Warehouse_ID(getPoSCOnfig().getWarehouseID());
 		//RESP
-		mo.setSalesRep_ID(order.getOrderRep());
+		mo.setSalesRep_ID(!Util.isEmpty(order.getOrderRep(), true) ? order.getOrderRep() : partner.getSalesRep_ID());
 		//mo.setSalesRep_ID(Env.getContextAsInt(ctx, "#SalesRep_ID"));
         
 		// Si el pedido tiene asociado un esquema de vencimientos entonces le
@@ -1333,6 +1352,9 @@ public class PoSOnline extends PoSConnectionState {
 		mo.setNroIdentificCliente(order.getBusinessPartner().getCustomerIdentification());
 		
 		mo.setPaymentRule(order.getPaymentRule());
+		mo.setSkipManualGeneralDiscount(true);
+		
+		setAdditionalOrderData(mo,order);
 		
 		debug("Guardando el Pedido (Encabezado, sin líneas aún)");
 		throwIfFalse(mo.save(), mo);
@@ -1350,8 +1372,14 @@ public class PoSOnline extends PoSConnectionState {
 			//Ader : caches; si esto es null bueno....
 			MProduct product = getProductFromCache(op.getProduct().getId());
 			
-			MOrderLine line = new MOrderLine(mo);
+			MOrderLine line = getOrderLineNewInstance();
 
+			line.setOrder(mo);
+			
+			line.setC_Tax_ID( 0 );
+	        line.setLine( 0 );
+	        line.setC_UOM_ID( 0 );
+	        
 			line.setDirectInsert(true);
 			line.setProduct( product );
 			line.setM_AttributeSetInstance_ID( op.getProduct().getAttributeSetInstanceID() );
@@ -1393,6 +1421,10 @@ public class PoSOnline extends PoSConnectionState {
 	        if(!Util.isEmpty(op.getSalesRep_Orig_ID(), true)) {
 	        	line.setSalesRep_Orig_ID(op.getSalesRep_Orig_ID());
 	        }
+	        
+	        line.setSkipManualGeneralDiscount(true);
+	        
+	        setAdditionalOrderLineData(line,op);
 	        
 	        // unicamente la ultima linea actualizará el encabezado con información de impuestos
 	        line.setShouldUpdateHeader(currentProduct==productCount);
@@ -1456,6 +1488,14 @@ public class PoSOnline extends PoSConnectionState {
 		discountCalculator.setDocument(mo.getDiscountableWrapper());
 		order.setGeneratedOrderID(mo.getC_Order_ID());
 		return mo;
+	}
+	
+	protected void setAdditionalOrderData(MOrder mo,Order order) {
+		// Incorporar datos adicionales a la M
+	}
+	
+	protected void setAdditionalOrderLineData(MOrderLine line,OrderProduct op) {
+		// Incorporar datos adicionales a la M	
 	}
 	
 	private void createOXPOrderTaxes(MOrder mo, Order order) throws PosException{
@@ -2374,14 +2414,18 @@ public class PoSOnline extends PoSConnectionState {
 		rBPartner.setDiscountSchemaContext(mBPartner.getDiscountContext());
 		int codigoIVA = 0;
 		boolean isPercepcionLiable = false;
-		if(mBPartner.getC_Categoria_Iva_ID() > 0){
-			MCategoriaIva catIva = new MCategoriaIva(getCtx(), mBPartner.getC_Categoria_Iva_ID(), null);
+		if(!Util.isEmpty(getmOrgInfo().getC_Categoria_IVA_ID(), true) 
+				|| !Util.isEmpty(mBPartner.getC_Categoria_Iva_ID(), true)){
+			MCategoriaIva catIva = new MCategoriaIva(getCtx(),
+					!Util.isEmpty(getmOrgInfo().getC_Categoria_IVA_ID(), true) ? getmOrgInfo().getC_Categoria_IVA_ID()
+							: mBPartner.getC_Categoria_Iva_ID(),
+					null);
 			codigoIVA = catIva.getCodigo();
 			isPercepcionLiable = catIva.isPercepcionLiable();
-			MTax mTax = CalloutInvoiceExt.getTax(getCtx(), true, mBPartner.getID(), getTrxName());
-			if(mTax != null){
-				rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax.getName(), mTax.isPercepcion()));
-			}
+		}
+		MTax mTax = CalloutInvoiceExt.getTax(getCtx(), true, mBPartner.getID(), getmOrg().getAD_Org_ID(), getTrxName());
+		if(mTax != null){
+			rBPartner.setTax(new Tax(mTax.getID(), mTax.getRate(), mTax.getName(), mTax.isPercepcion()));
 		}
 		rBPartner.setIVACategory(codigoIVA);
 		rBPartner.setPercepcionLiable(isPercepcionLiable);
@@ -2690,7 +2734,7 @@ public class PoSOnline extends PoSConnectionState {
               "  AND pp.IsActive = 'Y' ";
 		 */
 		
-		sql = " SELECT p.M_Product_ID, bomPriceStd(p.M_Product_ID, ?, ?), p.value, p.name, bomPriceLimit(p.M_Product_ID, ?, ?), p.upc, s.MandatoryType, p.m_product_category_id, p.CheckoutPlace, p.IsSold, p.Value, coalesce(pg.m_product_gamas_id,0) as m_product_gamas_id, coalesce(pg.m_product_lines_id,0) as m_product_lines_id " +    
+		sql = " SELECT p.M_Product_ID, bomPriceStd(p.M_Product_ID, ?, ?), p.value, p.name, bomPriceLimit(p.M_Product_ID, ?, ?), p.upc, s.MandatoryType, p.m_product_category_id, p.CheckoutPlace, p.IsSold, p.Value, coalesce(pg.m_product_gamas_id,0) as m_product_gamas_id, coalesce(pg.m_product_lines_id,0) as m_product_lines_id, p.Sales_Order_Min, p.Sales_Order_Pack " +    
 			  "	FROM M_Product p " +
 			  "	LEFT JOIN M_AttributeSet s ON (p.M_AttributeSet_ID = s.M_AttributeSet_ID)     " +
 			  " JOIN M_Product_Category pc ON pc.M_Product_Category_ID = p.M_Product_Category_ID " +
@@ -2742,7 +2786,9 @@ public class PoSOnline extends PoSConnectionState {
 								checkoutPlace,
 								sold,
 								rs.getInt("m_product_gamas_id"),
-								rs.getInt("m_product_lines_id"));
+								rs.getInt("m_product_lines_id"),
+								rs.getBigDecimal("Sales_Order_Min"),
+								rs.getBigDecimal("Sales_Order_Pack"));
 			}
 			
 			rs.close();
@@ -2948,9 +2994,7 @@ public class PoSOnline extends PoSConnectionState {
 
 	@Override
 	public PriceList getCurrentPriceList(int windowNo) {
-		MPriceList priceList = new MPriceList(Env.getCtx(), Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_ID"), null);
-		PriceList newPriceList = new PriceList(priceList.getID(),priceList.getName(), priceList.getDescription(),priceList.getC_Currency_ID(),priceList.isTaxIncluded(),priceList.isPerceptionsIncluded(),priceList.isSOPriceList(),priceList.isDefault(),priceList.getPricePrecision());
-		return newPriceList;
+		return getPriceList(Env.getContextAsInt(Env.getCtx(), windowNo, "M_PriceList_ID"));		
 	}
 
 	@Override
@@ -3829,7 +3873,7 @@ public class PoSOnline extends PoSConnectionState {
 		String documentNo = null;
 		Integer docTypeID = getActualDocTypeID();
 		// Se obtiene el próximo nro de doc, si es que tengo tipo de doc
-		if(!Util.isEmpty(docTypeID, true)){
+		if(!Util.isEmpty(docTypeID, true) && getShouldCreateInvoice()){
 			documentNo = CalloutInvoiceExt.getNextDocumentNo(getCtx(), docTypeID, getTrxName());
 		}
 		return documentNo;
@@ -3964,22 +4008,26 @@ public class PoSOnline extends PoSConnectionState {
 	@Override
 	public List<Tax> getOtherTaxes(IDocument document) {
 		getGeneratorPercepciones().loadDocument(document);
+		getGeneratorPercepciones().setDocType(MDocType.get(getCtx(), getActualDocTypeID()));
 		return getOtherTaxes();
 	}
 	
 	public List<Tax> getOtherTaxes() {
 		List<Tax> otherTaxes = new ArrayList<Tax>();
-		List<MTax> mOtherTaxes = new ArrayList<MTax>();
-		// Percepciones
-		try{
-			mOtherTaxes.addAll(getGeneratorPercepciones().getApplyPercepciones());
-		} catch(Exception e){
-			e.printStackTrace();
-		}
 		// Itero por los impuestos adicionales
-		for (MTax mTax : mOtherTaxes) {
-			otherTaxes.add(new Tax(mTax.getID(), mTax.getRate(),
-					mTax.getName(), mTax.isPercepcion()));
+		MTax t;
+		Tax tax;
+		try {
+			for (Percepcion p : getGeneratorPercepciones().getApplyPercepciones()) {
+				t = MTax.get(getCtx(), p.getTaxID(), getTrxName());
+				tax = new Tax(p.getTaxID(), p.getTaxRate(), t.getName(), true);
+				tax.setAmount(p.getTaxAmt());
+				tax.setTaxBaseAmt(p.getTaxBaseAmt());
+				otherTaxes.add(tax);
+			}
+		}
+		catch (Exception e){
+			e.printStackTrace();
 		}
 		
 		return otherTaxes;
@@ -4044,6 +4092,14 @@ public class PoSOnline extends PoSConnectionState {
 
 	public void setmOrg(MOrg mOrg) {
 		this.mOrg = mOrg;
+	}
+	
+	public MOrgInfo getmOrgInfo() {
+		return mOrgInfo;
+	}
+
+	public void setmOrgInfo(MOrgInfo mOrgInfo) {
+		this.mOrgInfo = mOrgInfo;
 	}
 
 	public GeneratorPercepciones getGeneratorPercepciones() {
@@ -4156,6 +4212,9 @@ public class PoSOnline extends PoSConnectionState {
 				docTypeID = getPoSCOnfig().getInvoiceDocTypeID();
 			}	
 		}
+		else {
+			docTypeID = getOrderDocTypeID();
+		}
 		return docTypeID;
 	}
 	
@@ -4193,5 +4252,23 @@ public class PoSOnline extends PoSConnectionState {
 			result = false;
 		}
 		return result;
+	}
+
+	@Override
+	public String parseTranslation(String msg) {
+		return Msg.parseTranslation(ctx, msg);
+	}
+
+	@Override
+	public int getDefaultPriceListIDInConfig() {
+		return getPoSCOnfig().getPriceListIDInConfig();
+	}
+	
+	protected PriceList getPriceList(int priceListID) {
+		MPriceList priceList = new MPriceList(Env.getCtx(), priceListID, null);
+		PriceList newPriceList = new PriceList(priceList.getID(), priceList.getName(), priceList.getDescription(),
+				priceList.getC_Currency_ID(), priceList.isTaxIncluded(), priceList.isPerceptionsIncluded(),
+				priceList.isSOPriceList(), priceList.isDefault(), priceList.getPricePrecision());
+		return newPriceList;
 	}
 }

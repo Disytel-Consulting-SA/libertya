@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_CuentaCorriente
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2019-09-26 13:14:29.535 */
+ *  @version  - 2021-12-14 10:23:04.193 */
 public class X_T_CuentaCorriente extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -397,6 +397,20 @@ set_Value ("NumeroComprobante", NumeroComprobante);
 public String getNumeroComprobante() 
 {
 return (String)get_Value("NumeroComprobante");
+}
+/** Set Open Amount.
+Open item amount */
+public void setOpenAmt (BigDecimal OpenAmt)
+{
+set_Value ("OpenAmt", OpenAmt);
+}
+/** Get Open Amount.
+Open item amount */
+public BigDecimal getOpenAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("OpenAmt");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Saldo */
 public void setsaldo (BigDecimal saldo)

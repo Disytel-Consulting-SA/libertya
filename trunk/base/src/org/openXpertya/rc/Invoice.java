@@ -9,15 +9,13 @@ import java.util.Properties;
 
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountableDocument;
-import org.openXpertya.model.DocumentTax;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocumentDiscount;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MPromotionCode;
+import org.openXpertya.model.Percepcion;
 import org.openXpertya.util.Env;
-
-import bsh.This;
 
 public class Invoice extends DiscountableDocument implements Serializable{
 
@@ -381,12 +379,27 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	}
 
 	@Override
-	public List<DocumentTax> getAppliedPercepciones() {
+	public List<Percepcion> getAppliedPercepciones() {
 		return getRealInvoice().getDocumentAppliedPercepciones();
 	}
 
 	@Override
 	public void setDocumentReferences(MPromotionCode promotionCode) {
 		promotionCode.setC_Invoice_ID(getInvoiceID());
+	}
+
+	@Override
+	public BigDecimal getTaxBaseAmt() {
+		return getRealInvoice().getNetAmount();
+	}
+
+	@Override
+	public int getCurrencyID() {
+		return getRealInvoice().getC_Currency_ID();
+	}
+
+	@Override
+	public String getDeliveryViaRule() {
+		return getRealInvoice().getDeliveryViaRule();
 	}
 }

@@ -234,56 +234,7 @@ public class MMatchPO extends X_M_MatchPO {
 
     protected boolean afterSave( boolean newRecord,boolean success ) {
         if( success && (getC_OrderLine_ID() != 0) ) {
-            MOrderLine orderLine = new MOrderLine( getCtx(),getC_OrderLine_ID(),get_TrxName());
-            MOrder order = new MOrder( getCtx(),orderLine.getC_Order_ID(),get_TrxName());
-            if( getM_InOutLine_ID() != 0 ) {
-                orderLine.setQtyDelivered( orderLine.getQtyDelivered().add( getQtyMovement()));
-                orderLine.setQtyReserved( orderLine.getQtyReserved().subtract( getQtyMovement()));
-            }
-
-            if( getC_InvoiceLine_ID() != 0 ) {
-            	// Verificar el tipo de documento base del tipo de documento de la factura
-            	MInvoiceLine line = new MInvoiceLine(getCtx(), getC_InvoiceLine_ID(), get_TrxName()); 
-            	MInvoice invoice = new MInvoice(getCtx(), line.getC_Invoice_ID(), get_TrxName());
-        		MDocType docType = new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(), get_TrxName());
-				boolean isDebit = !docType.getDocBaseType().equals(
-						MDocType.DOCBASETYPE_APCreditMemo);
-				if(isDebit){
-					orderLine.setQtyInvoiced( orderLine.getQtyInvoiced().add( getQty()));
-				}
-				else{
-					// Actualizar la mercadería entregada por el proveedor con
-					// la cantidad ésta ya que estamos bajo un crédito que
-					// tenemos con el proveedor por un pedido realizado
-					// anteriormente, esto significa que la cantiada entregada
-					// se incrementa por el solo hecho de que si nos hizo tal
-					// crédito es porque no ingresa la mercadería que debería
-					// ingresar
-					orderLine.setQtyDelivered( orderLine.getQtyDelivered().add( getQty() ));
-					orderLine.setQtyReserved( orderLine.getQtyReserved().subtract( getQty() ));
-					// Actualizar el pendiente de entrega del stock ya que esa
-					// mercadería no va a entrar
-					// Actualizar el stock y el pendiente de entrega para ese producto
-					success = success
-							&& MStorage.add(getCtx(), order
-									.getM_Warehouse_ID(),
-									MStorage.getM_Locator_ID(order
-											.getM_Warehouse_ID(), line
-											.getM_Product_ID(), line
-											.getM_AttributeSetInstance_ID(),
-											line.getQtyInvoiced(),
-											get_TrxName()), line
-											.getM_Product_ID(), line
-											.getM_AttributeSetInstance_ID(),
-									line.getM_AttributeSetInstance_ID(),
-									BigDecimal.ZERO, BigDecimal.ZERO, line
-											.getQtyInvoiced().negate(),
-									get_TrxName());
-				}
-            }
-
-            orderLine.setUpdatePriceInSave(false);
-            return orderLine.save( get_TrxName());
+        	success = success && doUpdateQtys();
         }
 
         return success;
@@ -405,22 +356,11 @@ public class MMatchPO extends X_M_MatchPO {
      */
 
     protected boolean afterDelete( boolean success ) {
-
         // Order Delivered/Invoiced
         // (Reserved in VMatch and MInOut.completeIt)
-
         if( success && (getC_OrderLine_ID() != 0) ) {
-            MOrderLine orderLine = new MOrderLine( getCtx(),getC_OrderLine_ID(),get_TrxName());
-
-            if( getM_InOutLine_ID() != 0 ) {
-                orderLine.setQtyDelivered( orderLine.getQtyDelivered().subtract( getQtyMovement()));
-            }
-
-            if( getC_InvoiceLine_ID() != 0 ) {
-                orderLine.setQtyInvoiced( orderLine.getQtyInvoiced().subtract( getQty()));
-            }
-
-            return orderLine.save( get_TrxName());
+        	setQty(getQty().negate());
+        	doUpdateQtys();
         }
 
         return success;
@@ -444,6 +384,121 @@ public class MMatchPO extends X_M_MatchPO {
     		}
     	}
     	return qty;
+    }
+    
+    protected boolean doUpdateQtys(){
+    	boolean success = true;
+    	MOrderLine orderLine = new MOrderLine( getCtx(),getC_OrderLine_ID(),get_TrxName());
+        MOrder order = new MOrder( getCtx(),orderLine.getC_Order_ID(),get_TrxName());
+        if( getM_InOutLine_ID() != 0 ) {
+        	MInOutLine iol = new MInOutLine(getCtx(), getM_InOutLine_ID(), get_TrxName());
+        	MInOut io = new MInOut(getCtx(), iol.getM_InOut_ID(), get_TrxName());
+        	// Salida de mercadería
+        	BigDecimal qty = getQty();
+        	if(io.getMovementType().endsWith("-")) {
+            	if(getQty().compareTo(BigDecimal.ZERO) > 0) {
+            		qty = getQty().compareTo(orderLine.getQtyDelivered()) > 0
+    						? orderLine.getQtyDelivered()
+    						: getQty();
+    				qty = qty.multiply(new BigDecimal(-1));
+            	}
+            	else {
+            		qty = getQty().abs().compareTo(orderLine.getQtyReserved()) > 0
+    						? orderLine.getQtyReserved()
+    						: getQty().abs();
+            	}
+        	}
+        	// Entrada de mercadería
+        	else {
+            	if(getQty().compareTo(BigDecimal.ZERO) > 0) {
+            		qty = getQty().compareTo(orderLine.getQtyReserved()) > 0
+    						? orderLine.getQtyReserved()
+    						: getQty();
+            	}
+            	else {
+            		qty = getQty().abs().compareTo(orderLine.getQtyDelivered()) > 0
+    						? orderLine.getQtyDelivered().multiply(new BigDecimal(-1))
+    						: getQty();
+            	}
+        	}
+			
+            orderLine.setQtyDelivered( orderLine.getQtyDelivered().add(qty));
+            orderLine.setQtyReserved( orderLine.getQtyReserved().subtract(qty));
+        }
+
+        if( getC_InvoiceLine_ID() != 0 ) {
+        	// Verificar el tipo de documento base del tipo de documento de la factura
+        	MInvoiceLine line = new MInvoiceLine(getCtx(), getC_InvoiceLine_ID(), get_TrxName()); 
+        	MInvoice invoice = new MInvoice(getCtx(), line.getC_Invoice_ID(), get_TrxName());
+    		MDocType docType = new MDocType(getCtx(), invoice.getC_DocTypeTarget_ID(), get_TrxName());
+			boolean isDebit = !docType.getDocBaseType().equals(
+					MDocType.DOCBASETYPE_APCreditMemo);
+			if(isDebit){
+				// Si la cantidad facturada supera la cantidad pendiente a facturar, entonces se
+				// toma la cantidad pendiente a facturar else cantidad facturada
+				BigDecimal qty = getQty();
+				if(getQty().compareTo(BigDecimal.ZERO) > 0) {
+					BigDecimal qtyInvoicedPending = orderLine.getQtyOrdered().subtract(orderLine.getQtyInvoiced());
+					qty = getQty().compareTo(qtyInvoicedPending) > 0
+							? qtyInvoicedPending
+							: getQty();
+				}
+				else {
+					qty = getQty().abs().compareTo(orderLine.getQtyInvoiced().abs()) > 0
+							? orderLine.getQtyInvoiced().multiply(new BigDecimal(-1))
+							: getQty();
+				}
+				orderLine.setQtyInvoiced(orderLine.getQtyInvoiced().add(qty));
+			}
+			else{
+				BigDecimal qty = BigDecimal.ZERO;
+				if(getQty().compareTo(BigDecimal.ZERO) > 0) {
+					qty = getQty().compareTo(orderLine.getQtyInvoiced()) > 0
+							? orderLine.getQtyInvoiced()
+							: getQty();
+				}
+				else {
+					BigDecimal qtyInvoicedPending = orderLine.getQtyOrdered().subtract(orderLine.getQtyInvoiced());
+					qty = getQty().abs().compareTo(qtyInvoicedPending) > 0
+							? qtyInvoicedPending.multiply(new BigDecimal(-1))
+							: getQty();
+				}
+				// Actualizar la mercadería entregada por el proveedor con
+				// la cantidad ésta ya que estamos bajo un crédito que
+				// tenemos con el proveedor por un pedido realizado
+				// anteriormente, esto significa que la cantiada entregada
+				// se incrementa por el solo hecho de que si nos hizo tal
+				// crédito es porque no ingresa la mercadería que debería
+				// ingresar
+				if(invoice.isUpdateOrderQty()) {
+					orderLine.setQtyEntered(orderLine.getQtyEntered().subtract(qty));
+					orderLine.setQtyOrdered(orderLine.getQtyOrdered().subtract(qty));
+					orderLine.setQtyDelivered( orderLine.getQtyDelivered().add(qty));
+					orderLine.setQtyReserved( orderLine.getQtyReserved().subtract(qty));
+					// Actualizar el pendiente de recepción del stock ya que esa
+					// mercadería no va a entrar
+					success = MStorage.add(getCtx(), order
+									.getM_Warehouse_ID(),
+									MStorage.getM_Locator_ID(order
+											.getM_Warehouse_ID(), line
+											.getM_Product_ID(), line
+											.getM_AttributeSetInstance_ID(),
+											line.getQtyInvoiced(),
+											get_TrxName()), line
+											.getM_Product_ID(), line
+											.getM_AttributeSetInstance_ID(),
+									line.getM_AttributeSetInstance_ID(),
+									BigDecimal.ZERO, BigDecimal.ZERO, qty.negate(),
+									get_TrxName());
+				}
+				orderLine.setQtyInvoiced(orderLine.getQtyInvoiced().subtract(qty));
+			}
+        }
+
+        orderLine.setUpdatePriceInSave(false);
+        success = success && orderLine.save( get_TrxName());
+        
+        return success;
     }
 }    // MMatchPO
 

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.openXpertya.plugin.common.PluginClassUtil;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -71,7 +72,6 @@ public class MRetencionProcessor extends X_C_RetencionProcessor {
 	public static Object getProcessorClass(Properties ctx, Integer processorID, String trxName) throws Exception{
 		String processorClassName = getProcessorClassName(ctx, processorID,
 				trxName);
-		Class processor = Class.forName(processorClassName);
-		return processor.newInstance();
+		return PluginClassUtil.get(processorClassName);
 	}
 }

@@ -1,20 +1,24 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.Timestamp;
-import java.util.Properties;
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner_Padron_BsAs
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-11-03 15:41:22.008 */
+ *  @version  - 2021-12-20 13:54:05.277 */
 public class X_C_BPartner_Padron_BsAs extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_BPartner_Padron_BsAs (Properties ctx, int C_BPartner_Padron_BsAs_ID, String trxName)
 {
 super (ctx, C_BPartner_Padron_BsAs_ID, trxName);
+/** if (C_BPartner_Padron_BsAs_ID == 0)
+{
+setc_bpartner_padron_bsas_id (0);
+}
+ */
 }
 /** Load Constructor */
 public X_C_BPartner_Padron_BsAs (Properties ctx, ResultSet rs, String trxName)
@@ -99,6 +103,18 @@ Integer ii = (Integer)get_Value("c_bpartner_padron_bsas_id");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Coeficiente */
+public void setCoeficiente (BigDecimal Coeficiente)
+{
+set_Value ("Coeficiente", Coeficiente);
+}
+/** Get Coeficiente */
+public BigDecimal getCoeficiente() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Coeficiente");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set CUIT */
 public void setCUIT (String CUIT)
 {
@@ -177,11 +193,15 @@ public static final String PADRONTYPE_PadrónDeAltoRiesgoCABA = "A";
 public static final String PADRONTYPE_RégimenSimplificadoCABA = "S";
 /** Padrón de Regímenes Generales = G */
 public static final String PADRONTYPE_PadrónDeRegímenesGenerales = "G";
+/** Coeficientes Tucuman = C */
+public static final String PADRONTYPE_CoeficientesTucuman = "C";
+/** Padron Contribuyentes Tucuman = T */
+public static final String PADRONTYPE_PadronContribuyentesTucuman = "T";
 /** Set Padron Type */
 public void setPadronType (String PadronType)
 {
-if (PadronType == null || PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S") || PadronType.equals("G"));
- else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S - G");
+if (PadronType == null || PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S") || PadronType.equals("G") || PadronType.equals("C") || PadronType.equals("T") || ( refContainsValue("CORE-AD_Reference-1010198", PadronType) ) );
+ else throw new IllegalArgumentException ("PadronType Invalid value: " + PadronType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010198") );
 if (PadronType != null && PadronType.length() > 1)
 {
 log.warning("Length > 1 - truncated");

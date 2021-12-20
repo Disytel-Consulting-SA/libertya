@@ -35,6 +35,7 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -683,23 +684,32 @@ public class MUOMConversion extends X_C_UOM_Conversion {
     static public BigDecimal getProductRateTo( Properties ctx,int M_Product_ID,int C_UOM_To_ID ) {
         MUOMConversion[] rates = getProductConversions( ctx,M_Product_ID );
 
-        if( rates.length == 0 ) {
-            s_log.fine( "getProductRateTo - none found" );
-
-            return null;
+        if(rates != null) {
+	        for( int i = 0;i < rates.length;i++ ) {
+	            MUOMConversion rate = rates[ i ];
+	
+	            if( rate.getC_UOM_To_ID() == C_UOM_To_ID ) {
+	                return rate.getMultiplyRate();
+	            }
+	        }
         }
 
-        for( int i = 0;i < rates.length;i++ ) {
-            MUOMConversion rate = rates[ i ];
-
-            if( rate.getC_UOM_To_ID() == C_UOM_To_ID ) {
-                return rate.getMultiplyRate();
-            }
-        }
-
-        s_log.fine( "getProductRateTo - none applied" );
-
-        return null;
+		// Si no existe conversiones para este artículo, buscamos la genérica que sería
+		// desde UM origen a destino, sin artículo asignado
+		MProduct prod = MProduct.get(ctx, M_Product_ID);
+		BigDecimal genRate = getGenericMultiplyRateFrom( ctx, prod.getC_UOM_ID(), C_UOM_To_ID );
+		if(!Util.isEmpty(genRate, true)) {
+			return genRate;
+		}
+		 
+		genRate = getGenericDivideRateFrom( ctx, C_UOM_To_ID, prod.getC_UOM_ID() );
+		if(!Util.isEmpty(genRate, true)) {
+			return genRate;
+		}
+		 
+		s_log.fine( "None applied" );
+		
+		return null;
     }    // getProductRateTo
 
     /**
@@ -759,20 +769,29 @@ public class MUOMConversion extends X_C_UOM_Conversion {
     static public BigDecimal getProductRateFrom( Properties ctx,int M_Product_ID,int C_UOM_To_ID ) {
         MUOMConversion[] rates = getProductConversions( ctx,M_Product_ID );
 
-        if( rates.length == 0 ) {
-            s_log.fine( "getProductRateFrom - none found" );
-
-            return null;
+        if(rates != null) {
+	        for( int i = 0;i < rates.length;i++ ) {
+	            MUOMConversion rate = rates[ i ];
+	
+	            if( rate.getC_UOM_To_ID() == C_UOM_To_ID ) {
+	                return rate.getDivideRate();
+	            }
+	        }
         }
 
-        for( int i = 0;i < rates.length;i++ ) {
-            MUOMConversion rate = rates[ i ];
-
-            if( rate.getC_UOM_To_ID() == C_UOM_To_ID ) {
-                return rate.getDivideRate();
-            }
+		// Si no existe conversiones para este artículo, buscamos la genérica que sería
+		// desde UM origen a destino, sin artículo asignado
+        MProduct prod = MProduct.get(ctx, M_Product_ID);
+        BigDecimal genRate = getGenericDivideRateFrom( ctx, prod.getC_UOM_ID(), C_UOM_To_ID );
+        if(!Util.isEmpty(genRate, true)) {
+        	return genRate;
         }
-
+        
+        genRate = getGenericMultiplyRateFrom( ctx, C_UOM_To_ID, prod.getC_UOM_ID() );
+        if(!Util.isEmpty(genRate, true)) {
+        	return genRate;
+        }
+        
         s_log.fine( "None applied" );
 
         return null;
@@ -795,19 +814,11 @@ public class MUOMConversion extends X_C_UOM_Conversion {
         Integer          key    = new Integer( M_Product_ID );
         MUOMConversion[] result = ( MUOMConversion[] )s_conversionProduct.get( key );
 
-        if( result != null && !reload ) {
+        if( result != null && result.length > 0 && !reload ) {
             return result;
         }
 
         ArrayList list = new ArrayList();
-
-        // Add default conversion
-
-        MUOMConversion defRate = new MUOMConversion( MProduct.get( ctx,M_Product_ID ));
-
-        list.add( defRate );
-
-        //
 
         String sql = "SELECT * FROM C_UOM_Conversion c " + "WHERE c.M_Product_ID=?" + " AND EXISTS (SELECT * FROM M_Product p " + "WHERE c.M_Product_ID=p.M_Product_ID AND c.C_UOM_ID=p.C_UOM_ID)" + " AND c.IsActive='Y'";
         PreparedStatement pstmt = null;
@@ -841,13 +852,83 @@ public class MUOMConversion extends X_C_UOM_Conversion {
 
         // Convert & save
 
-        result = new MUOMConversion[ list.size()];
-        list.toArray( result );
-        s_conversionProduct.put( key,result );
-        s_log.fine( "getProductConversions - M_Product_ID=" + M_Product_ID + " #" + result.length );
+        if(list.size() > 0) {
+	        result = new MUOMConversion[ list.size()];
+	        list.toArray( result );
+	        s_conversionProduct.put( key,result );
+	        s_log.fine( "getProductConversions - M_Product_ID=" + M_Product_ID + " #" + result.length );
+        }
 
         return result;
     }    // getProductConversions
+    
+    /**
+	 * Obtiene la tasa de conversión genérica basado en la columna parámetro, dividerate o
+	 * multiplyrate, desde una unidad de medida a otra
+	 * 
+	 * @param ctx        contexto actual
+	 * @param columnRate nombre de columna de tasa de conversión, dividerate o
+	 *                   multiplyrate
+	 * @param uomID      id de unidad de medida desde
+	 * @param uomToID    id de unidad de medida hasta
+	 * @return la tasa de conversión específica
+	 */
+    public static BigDecimal getGenericRateFrom( Properties ctx, String columnRate, int uomID, int uomToID ) {
+    	BigDecimal rate = null;
+    	String sql = "select "+columnRate
+    				+ " from c_uom_conversion "
+    				+ " where ad_client_id = ? and c_uom_id = ? and c_uom_to_id = ? and isactive = 'Y' and M_Product_ID IS NULL "
+    				+ " order by created desc limit 1";
+    	PreparedStatement ps = null;
+    	ResultSet rs = null;
+    	try {
+			ps = DB.prepareStatement(sql);
+			ps.setInt(1, Env.getAD_Client_ID(ctx));
+			ps.setInt(2, uomID);
+			ps.setInt(3, uomToID);
+			rs = ps.executeQuery();
+			if(rs.next()) {
+				rate = rs.getBigDecimal(columnRate);
+			}
+		} catch (Exception e) {
+			s_log.severe(e.getMessage());
+		} finally {
+			try {
+				if(rs != null) rs.close();
+				if(ps != null) ps.close();
+			} catch (Exception e2) {
+				s_log.severe(e2.getMessage());
+			}
+		}
+    	
+    	return rate;
+    }
+    
+    /**
+	 * Obtiene la tasa de conversión divisoria genérica de unidad de medida
+	 * desde/hasta
+	 * 
+	 * @param ctx     contexto actual
+	 * @param uomID   unidad de medida desde
+	 * @param uomToID unidad de medida hasta
+	 * @return tasa de conversión genérica
+	 */
+    public static BigDecimal getGenericDivideRateFrom( Properties ctx, int uomID, int uomToID ) {
+    	return getGenericRateFrom(ctx, "dividerate", uomID, uomToID);
+    }
+    
+    /**
+	 * Obtiene la tasa de conversión multiplicadora genérica de unidad de medida
+	 * desde/hasta
+	 * 
+	 * @param ctx     contexto actual
+	 * @param uomID   unidad de medida desde
+	 * @param uomToID unidad de medida hasta
+	 * @return tasa de conversión genérica
+	 */
+    public static BigDecimal getGenericMultiplyRateFrom( Properties ctx, int uomID, int uomToID ) {
+    	return getGenericRateFrom(ctx, "multiplyrate", uomID, uomToID);
+    }
     
     /**
      * Get uom conversions of client

@@ -1,7 +1,11 @@
 package org.openXpertya.model;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.openXpertya.util.DB;
@@ -32,6 +36,31 @@ public class MOrgPercepcionConfig extends X_AD_Org_Percepcion_Config {
 			}
 		}
 		return null;
+	}
+	
+	public static Map<String, BigDecimal> getOrgPercepcionConfigData(Properties ctx, Integer orgID, String trxName){
+		Map<String, BigDecimal> opd = new HashMap<String, BigDecimal>();
+		String sql = "SELECT * FROM ad_org_percepcion_config WHERE ad_org_id = ? AND isactive = 'Y'";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, trxName);
+			ps.setInt(1, orgID);
+			rs = ps.executeQuery();
+			while(rs.next()){
+				opd.put(rs.getString("padrontype"), rs.getBigDecimal("minimumnetamount"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally{
+			try {
+				if(ps != null)ps.close();
+				if(rs != null)rs.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		}
+		return opd;
 	}
 	
 	public MOrgPercepcionConfig(Properties ctx, int AD_Org_Percepcion_Config_ID,

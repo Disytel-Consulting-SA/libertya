@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_OrderTax
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:31.125 */
-public class X_C_OrderTax extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2021-12-14 10:23:00.226 */
+public class X_C_OrderTax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_OrderTax (Properties ctx, int C_OrderTax_ID, String trxName)
@@ -29,13 +30,13 @@ public X_C_OrderTax (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=314 */
-public static final int Table_ID=314;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("C_OrderTax");
 
 /** TableName=C_OrderTax */
 public static final String Table_Name="C_OrderTax";
 
-protected static KeyNamePair Model = new KeyNamePair(314,"C_OrderTax");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_OrderTax");
 protected static BigDecimal AccessLevel = new BigDecimal(1);
 
 /** Load Meta Data */
@@ -48,6 +49,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_OrderTax[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Arciba Norm Code */
+public void setArcibaNormCode (String ArcibaNormCode)
+{
+if (ArcibaNormCode != null && ArcibaNormCode.length() > 10)
+{
+log.warning("Length > 10 - truncated");
+ArcibaNormCode = ArcibaNormCode.substring(0,10);
+}
+set_Value ("ArcibaNormCode", ArcibaNormCode);
+}
+/** Get Arciba Norm Code */
+public String getArcibaNormCode() 
+{
+return (String)get_Value("ArcibaNormCode");
 }
 /** Set Order.
 Order */
@@ -112,6 +128,20 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
+}
+/** Set Rate.
+Rate or Tax or Exchange */
+public void setRate (BigDecimal Rate)
+{
+set_Value ("Rate", Rate);
+}
+/** Get Rate.
+Rate or Tax or Exchange */
+public BigDecimal getRate() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Rate");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Tax Amount.
 Tax Amount for a document */

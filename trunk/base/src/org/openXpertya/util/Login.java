@@ -611,6 +611,9 @@ public class Login {
 					clientInfo.getVoidingInvoicePOSJournalConfig());
 			Env.setContext(m_ctx, "#VoidingInvoicePaymentsPOSJournalConfig",
 					clientInfo.getVoidingInvoicePaymentsPOSJournalConfig());
+			
+			// Despacho de Importación
+			Env.setContext(m_ctx, "#ImportClearanceActive", clientInfo.isImportClearanceActive() ? "Y" : "N");
 		}
         return retValue;
     }    // getOrgs

@@ -33,7 +33,6 @@ public class OnCreditCurrentAccountBalanceData extends
             int i = 1;
 			// Parámetros de sqlDoc
 			ps.setInt(i++, 1);
-			ps.setInt(i++, client_Currency_ID);
 			ps.setInt(i++, -1);
 			ps.setInt(i++, client_Currency_ID);
 			ps.setInt(i++, clientID);

@@ -90,6 +90,8 @@ public class InOutDataSource implements JRDataSource {
 		methodMapper.put("PRICESTDCOST", "getPriceStdCost");
 		methodMapper.put("PRICESTDSALES", "getPriceStdSales");
 
+		methodMapper.put("CLEARANCENUMBER", "getClearanceNumber");
+		methodMapper.put("COSTPRICE", "getCostPrice");
 	}
 	
 	public void loadData() throws RuntimeException {

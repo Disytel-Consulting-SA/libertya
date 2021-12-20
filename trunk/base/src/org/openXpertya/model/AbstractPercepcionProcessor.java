@@ -1,6 +1,5 @@
 package org.openXpertya.model;
 
-import java.math.BigDecimal;
 import java.util.Properties;
 
 public abstract class AbstractPercepcionProcessor {
@@ -31,18 +30,13 @@ public abstract class AbstractPercepcionProcessor {
 	}
 	
 	/**
-	 * @return el porcentaje de percepción a aplicar
+	 * @return la percepción de débito aplicada en este procesador
 	 */
-	public abstract BigDecimal getPercepcionPercToApply();
+	public abstract Percepcion applyDebitPerception();
 
 	/**
-	 * @return el código de norma Arciba
+	 * @return la percepción de crédito aplicada en este procesador
 	 */
-	public abstract String getArcibaNormCode();
-	
-	/**
-	 * @return el monto neto mínimo de aplicación 
-	 */
-	public abstract BigDecimal getMinimumNetAmount();
+	public abstract Percepcion applyCreditPerception();
 
 }

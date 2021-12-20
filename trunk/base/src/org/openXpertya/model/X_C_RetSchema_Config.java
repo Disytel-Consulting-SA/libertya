@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_RetSchema_Config
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-04-08 14:58:47.551 */
+ *  @version  - 2021-12-20 13:54:07.998 */
 public class X_C_RetSchema_Config extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -140,12 +140,14 @@ public static final String NAME_PorcentajeDelExcedente = "PE";
 public static final String NAME_PorLugarDeEntrega = "LE";
 /** Por Region Origen y Destino = OD */
 public static final String NAME_PorRegionOrigenYDestino = "OD";
+/** Minimum Net Amount = MNA */
+public static final String NAME_MinimumNetAmount = "MNA";
 /** Set Name.
 Alphanumeric identifier of the entity */
 public void setName (String Name)
 {
-if (Name.equals("N") || Name.equals("P") || Name.equals("INI") || Name.equals("T") || Name.equals("MR") || Name.equals("IF") || Name.equals("E") || Name.equals("PE") || Name.equals("LE") || Name.equals("OD"));
- else throw new IllegalArgumentException ("Name Invalid value - Reference = NAME_AD_Reference_ID - N - P - INI - T - MR - IF - E - PE - LE - OD");
+if (Name.equals("N") || Name.equals("P") || Name.equals("INI") || Name.equals("T") || Name.equals("MR") || Name.equals("IF") || Name.equals("E") || Name.equals("PE") || Name.equals("LE") || Name.equals("OD") || Name.equals("MNA") || ( refContainsValue("CORE-AD_Reference-1000082", Name) ) );
+ else throw new IllegalArgumentException ("Name Invalid value: " + Name + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000082") );
 if (Name == null) throw new IllegalArgumentException ("Name is mandatory");
 if (Name.length() > 30)
 {
@@ -183,11 +185,17 @@ public static final String PADRONTYPE_PadrónBsAs = "B";
 public static final String PADRONTYPE_PadrónDeAltoRiesgoCABA = "A";
 /** Régimen Simplificado CABA = S */
 public static final String PADRONTYPE_RégimenSimplificadoCABA = "S";
+/** Padrón de Regímenes Generales = G */
+public static final String PADRONTYPE_PadrónDeRegímenesGenerales = "G";
+/** Coeficientes Tucuman = C */
+public static final String PADRONTYPE_CoeficientesTucuman = "C";
+/** Padron Contribuyentes Tucuman = T */
+public static final String PADRONTYPE_PadronContribuyentesTucuman = "T";
 /** Set Padron Type */
 public void setPadronType (String PadronType)
 {
-if (PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S"));
- else throw new IllegalArgumentException ("PadronType Invalid value - Reference = PADRONTYPE_AD_Reference_ID - B - A - S");
+if (PadronType.equals("B") || PadronType.equals("A") || PadronType.equals("S") || PadronType.equals("G") || PadronType.equals("C") || PadronType.equals("T") || ( refContainsValue("CORE-AD_Reference-1010198", PadronType) ) );
+ else throw new IllegalArgumentException ("PadronType Invalid value: " + PadronType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010198") );
 if (PadronType == null) throw new IllegalArgumentException ("PadronType is mandatory");
 if (PadronType.length() > 1)
 {
@@ -209,8 +217,8 @@ public static final String PARAMTYPE_Valor = "VA";
 /** Set Param Type */
 public void setParamType (String ParamType)
 {
-if (ParamType.equals("RA") || ParamType.equals("VA"));
- else throw new IllegalArgumentException ("ParamType Invalid value - Reference = PARAMTYPE_AD_Reference_ID - RA - VA");
+if (ParamType.equals("RA") || ParamType.equals("VA") || ( refContainsValue("CORE-AD_Reference-1000071", ParamType) ) );
+ else throw new IllegalArgumentException ("ParamType Invalid value: " + ParamType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000071") );
 if (ParamType == null) throw new IllegalArgumentException ("ParamType is mandatory");
 if (ParamType.length() > 3)
 {

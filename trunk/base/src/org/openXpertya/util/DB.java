@@ -2041,6 +2041,48 @@ public final class DB {
     }    // getDocumentNo
 
     /**
+	 * Obtiene el número de documento de la secuencia única asociada al doctype ID
+	 * parámetro
+	 * 
+	 * @param C_DocType_ID
+	 * @param trxName
+	 * @return número de documento de la secuencia única
+	 */
+    public static String getUniqueDocumentNo( int C_DocType_ID,String trxName ) {
+        if( ( (trxName == null) || (trxName.length() == 0) ) && isRemoteObjects()) {
+            Server server = CConnection.get().getServer();
+
+            try {
+                if( server != null ) {    // See ServerBean
+                    String dn = server.getUniqueDocumentNo (C_DocType_ID, trxName);
+                    log.finest( "Server => " + dn );
+
+                    if( dn != null ) {
+                        return dn;
+                    }
+                }
+
+                log.log( Level.SEVERE,"AppsServer not found - " + C_DocType_ID );
+            } catch( RemoteException ex ) {
+                log.log( Level.SEVERE,"AppsServer error",ex );
+            }
+        }
+
+        // fallback
+
+        String dn = MSequence.getUniqueDocumentNo(C_DocType_ID, trxName);
+
+        if( dn == null ) {    // try again
+            dn = MSequence.getUniqueDocumentNo(C_DocType_ID, trxName);
+        }
+
+        // if (dn == null)
+        // throw new DBException ("No DocumentNo");
+
+        return dn;
+    }    // getDocumentNo
+    
+    /**
      * Descripción de Método
      *
      *

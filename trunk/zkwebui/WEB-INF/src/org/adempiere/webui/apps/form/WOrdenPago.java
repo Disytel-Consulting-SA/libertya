@@ -6,6 +6,7 @@ package org.adempiere.webui.apps.form;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +17,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import javax.swing.JOptionPane;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
@@ -48,6 +50,7 @@ import org.adempiere.webui.event.ContextMenuListener;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
+import org.adempiere.webui.panel.InfoPanel;
 import org.adempiere.webui.window.FDialog;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VModelHelper;
@@ -59,6 +62,7 @@ import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoTransferencia;
 import org.openXpertya.apps.form.VOrdenPagoModel.ResultItemFactura;
+import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.Lookup;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
@@ -69,6 +73,7 @@ import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
 import org.openXpertya.model.MPInstance;
 import org.openXpertya.model.MPInstancePara;
+import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.model.Query;
@@ -76,6 +81,7 @@ import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_AD_Role;
 import org.openXpertya.model.X_C_BankAccountDoc;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
@@ -1068,6 +1074,17 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		// Procesar
     		
     		BigDecimal monto = null;
+    		
+    		// Seteo acá el monto total que tiene que verse en la Info Customizada de Cheques de Terceros
+    		try {
+            	chequeTercero.setInfoCustomAttribute("toPayAmy", m_model.numberParse((String)txtTotalPagar1.getValue())); 
+    		} catch (Exception e) {
+    			showError("@SaveErrorNotUnique@ \n\n" + txtTotalPagar1.getLabel().getValue());
+    			
+        		txtTotalPagar1.getComponent().setFocus(true); // .requestFocusInWindow();
+        		if (txtTotalPagar1.getValue().toString().trim().length() > 0) 
+        			txtTotalPagar1.getValue().toString().substring(0, txtTotalPagar1.getValue().toString().length() - 1);
+    		}
     		
     		try {
     			
@@ -2304,16 +2321,73 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		// Cheque
 		info = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_Payment_ID", "C_Payment", DisplayType.Search, m_model.getChequeTerceroSqlValidation());
 		lookup = new MLookup(info, 0);
-		chequeTercero = new WSearchEditor("C_Payment_ID", false, false, true, lookup);
+		chequeTercero = new WSearchEditor("C_Payment_ID", false, false, true, lookup, true);
         chequeTercero.getLabel().setText(getMsg("Check"));
+                
+        chequeTercero.setInfoCustomEventListener("onClick", new EventListener() {
+			
+			@Override
+			public void onEvent(Event event) throws Exception {
+				InfoPanel comp = (InfoPanel)event.getTarget();	
+				int selectedRecords = 0;
+				BigDecimal selectedAmount = BigDecimal.ZERO;
+				
+				for (Integer key : comp.getSelectedRowKeys()) {
+					MPayment cheque = new MPayment(m_ctx, key, null);
+					BigDecimal checkPendingAmt = cheque.getTotalAmt().subtract(cheque.getAllocatedAmt());
+					selectedRecords++;
+					selectedAmount = selectedAmount.add(checkPendingAmt); 
+				}
+				
+				BigDecimal toPayAmt = (BigDecimal)comp.getAttribute("toPayAmy");
+				BigDecimal pendingAmt = toPayAmt.subtract(selectedAmount);
+				
+				DecimalFormat format = DisplayType.getNumberFormat(DisplayType.Amount);
+				
+				String status = (selectedRecords > 0 ? (NumeroCastellano.numeroACastellano(selectedRecords) + "registros seleccionados. " + 
+								"Suma: $ " + format.format(selectedAmount) + ". ") : "") +
+								"Total a pagar: $ " + format.format(toPayAmt) + ". " + 
+								"Saldo: $ " + format.format(pendingAmt) + ".";
+				
+				chequeTercero.getInfoPanel().setStatusDB(status);
+			}
+		});
+        
         addPopupMenu(chequeTercero, true, true, false);
         chequeTercero.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
-				Integer paymentID = (Integer)chequeTercero.getNewValueOnChange();
-				String importe = "";
-				if (paymentID != null)
-					importe = getModel().numberFormat(getModel().getChequeAmt(paymentID));
-				txtChequeTerceroImporte.setValue(importe);			
+				if (chequeTercero.getNewValueOnChange() != null) {
+					// Selección múltiple de cheques en cartera
+					//Si selecciono uno solo, funciona como antes.
+					if (chequeTercero.getNewValueOnChange().getClass().equals(Integer.class)) {
+						Integer paymentID = (Integer)chequeTercero.getNewValueOnChange();
+						String importe = "";
+						if (paymentID != null)
+							importe = getModel().numberFormat(getModel().getPaymentAmt(paymentID));
+						txtChequeTerceroImporte.setValue(importe);
+					} else { //Si selecciono más de uno, viene como un array de enteros
+						for (Object objID : ((Object[])chequeTercero.getNewValueOnChange())) {
+							Integer paymentID = (Integer)objID;
+							String importe = "";
+							if (paymentID != null)
+								importe = getModel().numberFormat(getModel().getPaymentAmt(paymentID));
+							txtChequeTerceroImporte.setValue(importe);
+							try {
+								VOrdenPagoModel.MedioPago mp = null;
+								saveChequeTerceroMedioPago(paymentID);
+								cmdSavePMFinalize(mp);	// para Credito, mp sera null, con lo cual no hay necesidad de revalidar
+							} catch (InterruptedException ex) {
+					    		String title = Msg.getMsg(m_ctx, "Error");
+					    		String msg = Msg.parseTranslation(m_ctx, ex.getMessage());
+					    		showError(title + ": " + msg);					    		
+					    	} catch (Exception ex) {
+					    		String title = Msg.getMsg(m_ctx, "Error");
+					    		String msg = Msg.parseTranslation(m_ctx, "@SaveErrorNotUnique@ \n\n" + ex.getMessage() /*"@SaveError@"*/ );
+					    		showError(title + ": " + msg);
+					    	}
+						}
+					}
+				}
 			}
 		}); 
         // Importe
@@ -2453,10 +2527,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         return tabpanel;
 	}
 	
-	
-	
 	private void saveChequeTerceroMedioPago() throws Exception {
-		Integer paymentID = (Integer)chequeTercero.getValue();
+		saveChequeTerceroMedioPago(null);
+	}
+	
+	private void saveChequeTerceroMedioPago(Integer paymentID) throws Exception {
+		// Si no paso el ID del Pago, lo obtengo del VLookup (caso selección simple normal, compatibilidad)
+		if (paymentID == null)
+			paymentID = (Integer)chequeTercero.getValue();
+		
 		BigDecimal importe; 
 		Integer monedaOriginalID;
 		try {

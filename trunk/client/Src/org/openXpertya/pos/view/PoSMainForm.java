@@ -159,7 +159,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private final int S_MINIMIZED_HEIGHT = 710;
 	private final int S_TENDERTYPE_PANEL_WIDTH = 325;
 	
-	private final int S_PAYMENT_FIELD_WIDTH = 176;
+	protected final int S_PAYMENT_FIELD_WIDTH = 176;
 	private final int S_PAYMENT_SMALL_FIELD_WIDTH = 55;
 	private final int S_PAYMENT_INFO_FIELD_WIDTH = 140;
 	
@@ -179,25 +179,25 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private NumberFormat amountFormat; 
 	private NumberFormat priceFormat;
 	
-	private final String UPDATE_ORDER_PRODUCT_ACTION = "updOrdProdAction";
-	private final String GOTO_PAYMENTS_ACTION = "gotoPaymAction";
-	private final String PAY_ORDER_ACTION = "payOrdAction";	
-	private final String ADD_PAYMENT_ACTION = "addPaymentAction";
-	private final String SET_CUSTOMER_DATA_ACTION = "setCusDataAction";
-	private final String SET_BPARTNER_INFO_ACTION = "setBPInfoAction";
-	private final String GOTO_ORDER = "gotoOrder";
-	private final String ADD_ORDER_ACTION = "addOrder";
-	private final String MOVE_ORDER_PRODUCT_FORWARD = "moveOrderProductForward";
-	private final String MOVE_ORDER_PRODUCT_BACKWARD = "moveOrderProductBackward";
-	private final String CHANGE_FOCUS_PRODUCT_ORDER = "changeFocusProductOrder";
-	private final String MOVE_PAYMENT_FORWARD = "movePaymentForward";
-	private final String MOVE_PAYMENT_BACKWARD = "movePaymentBackward";
-	private final String REMOVE_PAYMENT_ACTION = "removePaymentAction";
-	private final String CHANGE_FOCUS_CUSTOMER_AMOUNT = "changeFocusCustomerAmount";
-	private final String CHANGE_FOCUS_GENERAL_DISCOUNT = "changeFocusGeneralDiscount";
-	private final String CANCEL_ORDER = "cancelOrder";
-	private final String GOTO_INSERT_CARD = "gotoInsertCard";
-	private final String INSERT_PROMOTIONAL_CODE = "insertPromotionalCode";
+	protected final String UPDATE_ORDER_PRODUCT_ACTION = "updOrdProdAction";
+	protected final String GOTO_PAYMENTS_ACTION = "gotoPaymAction";
+	protected final String PAY_ORDER_ACTION = "payOrdAction";	
+	protected final String ADD_PAYMENT_ACTION = "addPaymentAction";
+	protected final String SET_CUSTOMER_DATA_ACTION = "setCusDataAction";
+	protected final String SET_BPARTNER_INFO_ACTION = "setBPInfoAction";
+	protected final String GOTO_ORDER = "gotoOrder";
+	protected final String ADD_ORDER_ACTION = "addOrder";
+	protected final String MOVE_ORDER_PRODUCT_FORWARD = "moveOrderProductForward";
+	protected final String MOVE_ORDER_PRODUCT_BACKWARD = "moveOrderProductBackward";
+	protected final String CHANGE_FOCUS_PRODUCT_ORDER = "changeFocusProductOrder";
+	protected final String MOVE_PAYMENT_FORWARD = "movePaymentForward";
+	protected final String MOVE_PAYMENT_BACKWARD = "movePaymentBackward";
+	protected final String REMOVE_PAYMENT_ACTION = "removePaymentAction";
+	protected final String CHANGE_FOCUS_CUSTOMER_AMOUNT = "changeFocusCustomerAmount";
+	protected final String CHANGE_FOCUS_GENERAL_DISCOUNT = "changeFocusGeneralDiscount";
+	protected final String CANCEL_ORDER = "cancelOrder";
+	protected final String GOTO_INSERT_CARD = "gotoInsertCard";
+	protected final String INSERT_PROMOTIONAL_CODE = "insertPromotionalCode";
 	
 	private PoSModel model;
 	
@@ -391,132 +391,132 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private boolean processing = false;
 	private boolean duplicated = false;
 	
-	private String MSG_ORDER;
-	private String MSG_PAYMENT;
-	private String MSG_CODE;
-	private String MSG_TOTAL;
-	private String MSG_PRODUCT_INCOME;
-	private String MSG_PRODUCT_NOT_FOUND;
-	private String MSG_COUNT;
-	private String MSG_PRODUCT;
-	private String MSG_UNIT_PRICE;
-	private String MSG_UPDATE_PRODUCT;
-	private String MSG_PAY;
-	private String MSG_LOCATION;
-	private String MSG_CLIENT;
-	private String MSG_ADD_PAYMENT;
-	private String MSG_AMOUNT;
-	private String MSG_TYPE;
-	private String MSG_CHECK;
-	private String MSG_CREDIT;
-	private String MSG_CREDIT_BALANCE;
-	private String MSG_CASH_RETURNING;
-	private String MSG_AMT_TO_RETURN;
-	private String MSG_CREDIT_CARD;
-	private String MSG_CASH;
-	private String MSG_COUPON_NUMBER;
-	private String MSG_COUPON_NUMBER_SHORT;
-	private String MSG_COUPON_BATCH_NUMBER_SHORT;
-	private String MSG_CARD_NUMBER;
-	private String MSG_ACCT_DATE;
-	private String MSG_EMISSION_DATE;
-	private String MSG_CHECK_NUMBER;
-	private String MSG_BANK;
-	private String MSG_CONVERTED_AMOUNT;
-	private String MSG_CURRENCY;
-	private String MSG_ADD;
-	private String MSG_CHANGE;
-	private String MSG_BALANCE;
-	private String MSG_PAID;
-	private String MSG_TO_PAY;
-	private String MSG_DELETE;
-	private String MSG_PAYMENTS_SELECTED;
-	private String MSG_NO_PRODUCT_ERROR;
-	private String MSG_NO_BPARTNER_LOCATION_ERROR;
-	private String MSG_NO_AMOUNT_ERROR;
-	private String MSG_INVALID_PAYMENT_AMOUNT_ERROR;
-	private String MSG_NO_CURRENCY_CONVERT_ERROR;
-	private String MSG_INVALID_CREDIT_AMOUNT_ERROR;
-	private String MSG_RETURN_CASH_AMOUNT_ERROR;
-	private String MSG_RETURN_CASH_POSITIVE_AMOUNT_ERROR;
-	private String MSG_CREDIT_NOTE_REPEATED_ERROR;
-	private String MSG_INVALID_CARD_AMOUNT_ERROR;
-	private String MSG_CREDIT_CARD_REPEATED;
-	private String MSG_NO_BPARTNER_ERROR;
-	private String MSG_NO_LOCATION_ERROR;
-	private String MSG_POS_ORDER_STATUS;
-	private String MSG_POS_PAYMENT_STATUS;
-	private String MSG_INSUFFICIENT_CREDIT_ERROR;
-	private String MSG_BALANCE_ERROR;
-	private String MSG_INVALID_PAYMENT_ERROR;
-	private String MSG_FATAL_ERROR;
-	private String MSG_TAXRATE;
-	private String MSG_TAXID;
-	private String MSG_NO_PRICE_LIST_FOR_PRODUCT_ERROR;
-	private String MSG_INVALID_ORDER;
-	private String MSG_LOAD_CUSTOMER_ORDER;
-	private String MSG_CUSTOMER;
-	private String MSG_DATE;
-	private String MSG_INVOICE_CREATE_ERROR;
-	private String MSG_CANT_CREATE_TICKET_ERROR;
-	private String MSG_POS_CONFIG_ERROR;
-	private String MSG_QTY;
-	private String MSG_CUSTOMER_DESCRIPTION;
-	private String MSG_CUSTOMER_IDENTIFICATION;
-	private String MSG_PRICE_LIST;
-	private String MSG_CHECKOUT_IN;
-	private String MSG_PAYMENT_MEDIUM;
-	private String MSG_NO_PAYMENT_MEDIUM_ERROR;
-	private String MSG_CREDIT_CARD_PLAN;
-	private String MSG_NO_CREDIT_CARD_PLAN_ERROR;
-	private String MSG_BANK_ACCOUNT;
-	private String MSG_NO_BANK_ACCOUNT_ERROR;
-	private String MSG_CHECK_CUIT;
-	private String MSG_FILL_MANDATORY;
-	private String MSG_INVALID_CHECK_ACCTDATE;
-	private String MSG_AVAILABLE_AMT;
-	private String MSG_AMOUNT_GREATHER_THAN_AVAILABLE;
-	private String MSG_TRANSFER_NUMBER;
-	private String MSG_NOT_NEED_PAYMENTS_ERROR;
-	private String MSG_PAYMENT_AMT_SURPLUS_ERROR;
-	private String MSG_TRANSFER;
-	private String MSG_DISCOUNT;
-	private String MSG_PAYMENT_TOPAY_AMOUNT;
-	private String MSG_CUOTAS;
-	private String MSG_CUOTA_AMOUNT;
-	private String MSG_DISCOUNT_SHORT;
-	private String MSG_NONE;
-	private String MSG_PAYMENTS_SUMMARY;
-	private String MSG_PRICE;
-	private String MSG_FINAL_PRICE;
-	private String MSG_CHANGE_PRODUCT_ORDER;
-	private String MSG_PAYMENT_TERM;
-	private String MSG_NO_PAYMENTTERM;
-	private String MSG_NO_POSJOURNAL;
-	private String MSG_RETRY_VOID_INVOICE;
-	private String MSG_RETRY_VOID_INVOICE_INFO;
-	private String MSG_RETRY_VOID_INVOICE_INFO_POS_JOURNAL;
-	private String MSG_VOID_INVOICE_OK;
-	private String MSG_SUPERVISOR_AUTH;
-	private String MSG_DISCOUNT_GENERAL_SHORT;
-	private String MSG_DISCOUNT_GENERAL;
-	private String MSG_CONFIRM_CANCEL_ORDER;
-	private String MSG_CANCEL_ORDER;
-	private String MSG_NEXT_INVOICE_DOCUMENTNO;
-	private String MSG_NO_BEFORE_CHECK_DEADLINES;
-	private String MSG_CHECK_DEADLINE_REQUIRED;
-	private String MSG_INSERT_CARD;
-	private String MSG_CLOSE_POS_ORDERLINES;
-	private String MSG_POSNET;
-	private String MSG_NO_AUTHORIZATION;
-	private String MSG_HAS_CREDIT_AVAILABLE;
-	private String MSG_USE_CREDIT_MANDATORY;
-	private String MSG_DUPLICATED_POS_INSTANCE;
-	private String MSG_CASH_RETIREMENT;
-	private String MSG_CASH_RETIREMENT_EXCEEDS_LIMIT;
-	private String MSG_TAXES;
-	private String MSG_TAX;
-	private String MSG_PROMOTIONS;
+	protected String MSG_ORDER;
+	protected String MSG_PAYMENT;
+	protected String MSG_CODE;
+	protected String MSG_TOTAL;
+	protected String MSG_PRODUCT_INCOME;
+	protected String MSG_PRODUCT_NOT_FOUND;
+	protected String MSG_COUNT;
+	protected String MSG_PRODUCT;
+	protected String MSG_UNIT_PRICE;
+	protected String MSG_UPDATE_PRODUCT;
+	protected String MSG_PAY;
+	protected String MSG_LOCATION;
+	protected String MSG_CLIENT;
+	protected String MSG_ADD_PAYMENT;
+	protected String MSG_AMOUNT;
+	protected String MSG_TYPE;
+	protected String MSG_CHECK;
+	protected String MSG_CREDIT;
+	protected String MSG_CREDIT_BALANCE;
+	protected String MSG_CASH_RETURNING;
+	protected String MSG_AMT_TO_RETURN;
+	protected String MSG_CREDIT_CARD;
+	protected String MSG_CASH;
+	protected String MSG_COUPON_NUMBER;
+	protected String MSG_COUPON_NUMBER_SHORT;
+	protected String MSG_COUPON_BATCH_NUMBER_SHORT;
+	protected String MSG_CARD_NUMBER;
+	protected String MSG_ACCT_DATE;
+	protected String MSG_EMISSION_DATE;
+	protected String MSG_CHECK_NUMBER;
+	protected String MSG_BANK;
+	protected String MSG_CONVERTED_AMOUNT;
+	protected String MSG_CURRENCY;
+	protected String MSG_ADD;
+	protected String MSG_CHANGE;
+	protected String MSG_BALANCE;
+	protected String MSG_PAID;
+	protected String MSG_TO_PAY;
+	protected String MSG_DELETE;
+	protected String MSG_PAYMENTS_SELECTED;
+	protected String MSG_NO_PRODUCT_ERROR;
+	protected String MSG_NO_BPARTNER_LOCATION_ERROR;
+	protected String MSG_NO_AMOUNT_ERROR;
+	protected String MSG_INVALID_PAYMENT_AMOUNT_ERROR;
+	protected String MSG_NO_CURRENCY_CONVERT_ERROR;
+	protected String MSG_INVALID_CREDIT_AMOUNT_ERROR;
+	protected String MSG_RETURN_CASH_AMOUNT_ERROR;
+	protected String MSG_RETURN_CASH_POSITIVE_AMOUNT_ERROR;
+	protected String MSG_CREDIT_NOTE_REPEATED_ERROR;
+	protected String MSG_INVALID_CARD_AMOUNT_ERROR;
+	protected String MSG_CREDIT_CARD_REPEATED;
+	protected String MSG_NO_BPARTNER_ERROR;
+	protected String MSG_NO_LOCATION_ERROR;
+	protected String MSG_POS_ORDER_STATUS;
+	protected String MSG_POS_PAYMENT_STATUS;
+	protected String MSG_INSUFFICIENT_CREDIT_ERROR;
+	protected String MSG_BALANCE_ERROR;
+	protected String MSG_INVALID_PAYMENT_ERROR;
+	protected String MSG_FATAL_ERROR;
+	protected String MSG_TAXRATE;
+	protected String MSG_TAXID;
+	protected String MSG_NO_PRICE_LIST_FOR_PRODUCT_ERROR;
+	protected String MSG_INVALID_ORDER;
+	protected String MSG_LOAD_CUSTOMER_ORDER;
+	protected String MSG_CUSTOMER;
+	protected String MSG_DATE;
+	protected String MSG_INVOICE_CREATE_ERROR;
+	protected String MSG_CANT_CREATE_TICKET_ERROR;
+	protected String MSG_POS_CONFIG_ERROR;
+	protected String MSG_QTY;
+	protected String MSG_CUSTOMER_DESCRIPTION;
+	protected String MSG_CUSTOMER_IDENTIFICATION;
+	protected String MSG_PRICE_LIST;
+	protected String MSG_CHECKOUT_IN;
+	protected String MSG_PAYMENT_MEDIUM;
+	protected String MSG_NO_PAYMENT_MEDIUM_ERROR;
+	protected String MSG_CREDIT_CARD_PLAN;
+	protected String MSG_NO_CREDIT_CARD_PLAN_ERROR;
+	protected String MSG_BANK_ACCOUNT;
+	protected String MSG_NO_BANK_ACCOUNT_ERROR;
+	protected String MSG_CHECK_CUIT;
+	protected String MSG_FILL_MANDATORY;
+	protected String MSG_INVALID_CHECK_ACCTDATE;
+	protected String MSG_AVAILABLE_AMT;
+	protected String MSG_AMOUNT_GREATHER_THAN_AVAILABLE;
+	protected String MSG_TRANSFER_NUMBER;
+	protected String MSG_NOT_NEED_PAYMENTS_ERROR;
+	protected String MSG_PAYMENT_AMT_SURPLUS_ERROR;
+	protected String MSG_TRANSFER;
+	protected String MSG_DISCOUNT;
+	protected String MSG_PAYMENT_TOPAY_AMOUNT;
+	protected String MSG_CUOTAS;
+	protected String MSG_CUOTA_AMOUNT;
+	protected String MSG_DISCOUNT_SHORT;
+	protected String MSG_NONE;
+	protected String MSG_PAYMENTS_SUMMARY;
+	protected String MSG_PRICE;
+	protected String MSG_FINAL_PRICE;
+	protected String MSG_CHANGE_PRODUCT_ORDER;
+	protected String MSG_PAYMENT_TERM;
+	protected String MSG_NO_PAYMENTTERM;
+	protected String MSG_NO_POSJOURNAL;
+	protected String MSG_RETRY_VOID_INVOICE;
+	protected String MSG_RETRY_VOID_INVOICE_INFO;
+	protected String MSG_RETRY_VOID_INVOICE_INFO_POS_JOURNAL;
+	protected String MSG_VOID_INVOICE_OK;
+	protected String MSG_SUPERVISOR_AUTH;
+	protected String MSG_DISCOUNT_GENERAL_SHORT;
+	protected String MSG_DISCOUNT_GENERAL;
+	protected String MSG_CONFIRM_CANCEL_ORDER;
+	protected String MSG_CANCEL_ORDER;
+	protected String MSG_NEXT_INVOICE_DOCUMENTNO;
+	protected String MSG_NO_BEFORE_CHECK_DEADLINES;
+	protected String MSG_CHECK_DEADLINE_REQUIRED;
+	protected String MSG_INSERT_CARD;
+	protected String MSG_CLOSE_POS_ORDERLINES;
+	protected String MSG_POSNET;
+	protected String MSG_NO_AUTHORIZATION;
+	protected String MSG_HAS_CREDIT_AVAILABLE;
+	protected String MSG_USE_CREDIT_MANDATORY;
+	protected String MSG_DUPLICATED_POS_INSTANCE;
+	protected String MSG_CASH_RETIREMENT;
+	protected String MSG_CASH_RETIREMENT_EXCEEDS_LIMIT;
+	protected String MSG_TAXES;
+	protected String MSG_TAX;
+	protected String MSG_PROMOTIONS;
 	private String MSG_CAE_GENERATED;
 	private String MSG_CAE_GENERATED_VOID;
 	
@@ -526,7 +526,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 */
 	public PoSMainForm() {
 		super();
-		this.model = new PoSModel();
+		this.model = getPoSModel();
 		this.model.setProcessListener(this);
 		this.msgRepository = PoSMsgRepository.getInstance();
 		setAuthDialog(new AuthorizationDialog(this));
@@ -534,6 +534,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		initMsgs();
 	}
 
+	protected PoSModel getPoSModel() {
+		return new PoSModel();
+	}
+	
 	public void init(int WindowNo, FormFrame frame) {
 		setWindowNo(WindowNo);
 		setFrame(frame);
@@ -553,7 +557,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			getFrame().getContentPane().add(getStatusBar(),BorderLayout.SOUTH);
 			this.revalidate();
 			this.repaint();
-			setComponentFactory(new OnlinePoSComponentFactory(getWindowNo(), getModel()));
+			setComponentFactory(getPOSComponentFactory());
 			dateFormat = getComponentFactory().getDateFormat(DisplayType.Date);
 			amountFormat = getComponentFactory().getNumberFormat(DisplayType.Amount);
 			priceFormat = getComponentFactory().getNumberFormat(DisplayType.CostPrice);
@@ -699,12 +703,19 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 	}
 	
+	/**
+	 * @return Factory de componentes
+	 */
+	protected OnlinePoSComponentFactory getPOSComponentFactory() {
+		return new OnlinePoSComponentFactory(getWindowNo(), getModel());
+	}
+	
 	private void initBusinessLogic() {
 		loadBPartner(getModel().getDefaultBPartner());
 		selectTenderType(MPOSPaymentMedium.TENDERTYPE_Cash);
 	}
 	
-	private void initMsgs() {
+	protected void initMsgs() {
 		MSG_NO_POS_CONFIG = getMsg("NoPOSConfig");
 		MSG_ORDER = getMsg("C_Order_ID");
 		MSG_PAYMENT = getMsg("CustomerPayment");
@@ -890,7 +901,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 						+ getModel().getPoSConfig().getName());
 	}
 	
-	private void keyBindingsInit() {
+	protected void keyBindingsInit() {
 		// Deshabilito el F10 que algunos look and feel y 
 		// técnicas de focos asignan al primer componente menú de la barra de menú 
 		getFrame().getJMenuBar().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
@@ -1119,7 +1130,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		setActionEnabled(INSERT_PROMOTIONAL_CODE, true);
 	}
 
-	private void setActionEnabled(String action, boolean enabled) {
+	protected void setActionEnabled(String action, boolean enabled) {
 		String kAction = (enabled?action:"none");
         KeyStroke keyStroke = getActionKeys().get(action);
         
@@ -1132,7 +1143,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return javax.swing.JTabbedPane	
 	 */
-	private CTabbedPane getCPosTab() {
+	protected CTabbedPane getCPosTab() {
 		if (cPosTab == null) {
 			cPosTab = new CTabbedPane();
 			cPosTab.setPreferredSize(new java.awt.Dimension(750,580));
@@ -1252,7 +1263,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return javax.swing.JPanel	
 	 */
-	private CPanel getCPaymentPanel() {
+	protected CPanel getCPaymentPanel() {
 		if (cPaymentPanel == null) {
 			cPaymentPanel = new CPanel();
 			cPaymentPanel.setLayout(new BorderLayout());
@@ -1269,7 +1280,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CPanel	
 	 */
-	private CPanel getCTotalPanel() {
+	protected CPanel getCTotalPanel() {
 		if (cTotalPanel == null) {
 			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
 			gridBagConstraints4.gridx = 0;
@@ -1433,18 +1444,22 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cOrderTableScrollPane;
 	}
 
+	protected ProductTableModel getProductTableModel() {
+		return new ProductTableModel();
+	}
+	
 	/**
 	 * This method initializes cOrderTable	
 	 * 	
 	 * @return javax.swing.JTable	
 	 */
-	private JTable getCOrderTable() {
+	protected JTable getCOrderTable() {
 		if (cOrderTable == null) {
 			cOrderTable = new MiniTable();
 			cOrderTable.setRowSelectionAllowed(true);
 			
 			// Creo el Modelo de la tabla.
-			ProductTableModel orderTableModel = new ProductTableModel();
+			ProductTableModel orderTableModel = getProductTableModel();
 			// Se vincula la lista de productos en la orden con el table model
 			// para que se muestren en la tabla.
 			orderTableModel.setOrderProducts(getOrder().getOrderProducts());
@@ -1544,7 +1559,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CPanel	
 	 */
-	private CPanel getCCommandPanel() {
+	protected CPanel getCCommandPanel() {
 		if (cCommandPanel == null) {
 			cCommandPanel = new CPanel();
 			cCommandPanel.setLayout(new BoxLayout(getCCommandPanel(), BoxLayout.Y_AXIS));
@@ -1564,7 +1579,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CPanel	
 	 */
-	private CPanel getCCommandInfoPanel() {
+	protected CPanel getCCommandInfoPanel() {
 		if (cCommandInfoPanel == null) {
 			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
 			gridBagConstraints2.gridx = 0;
@@ -1825,7 +1840,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CPanel	
 	 */
-	private CPanel getCClientPanel() {
+	protected CPanel getCClientPanel() {
 		if (cClientPanel == null) {
 			GridBagConstraints gridBagConstraints17 = new GridBagConstraints();
 			gridBagConstraints17.gridy = 0;
@@ -2156,7 +2171,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 		return cGeneralDiscountPercText;
 	}
-
+	
 	/**
 	 * This method initializes cPaymentCenterPanel	
 	 * 	
@@ -2507,7 +2522,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CComboBox	
 	 */
-	private CComboBox getCTenderTypeCombo() {
+	protected CComboBox getCTenderTypeCombo() {
 		if (cTenderTypeCombo == null) {
 			cTenderTypeCombo = getComponentFactory().createTenderTypeCombo();
 			cTenderTypeCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
@@ -4260,7 +4275,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CPanel	
 	 */
-	private CPanel getCLoadOrderPanel() {
+	protected CPanel getCLoadOrderPanel() {
 		if (cLoadOrderPanel == null) {
 			GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
 			gridBagConstraints6.fill = java.awt.GridBagConstraints.NONE;
@@ -4703,11 +4718,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			return;
 		OrderProduct orderProduct = (OrderProduct)getOrderTableUtils().getSelection();
 		if(orderProduct != null) {
-			UpdateOrderProductDialog dialog = new UpdateOrderProductDialog(orderProduct,this);
+			UpdateOrderProductDialog dialog = getUpdateOrderProducDialog(orderProduct);
 			AEnv.positionCenterScreen(dialog);
 			dialog.setModal(true);
 			dialog.setVisible(true);
 		}
+	}
+	
+	protected UpdateOrderProductDialog getUpdateOrderProducDialog(OrderProduct orderProduct) {
+		return new UpdateOrderProductDialog(orderProduct,this);
 	}
 	
 	private void openCustomerDataDialog() {
@@ -4737,6 +4756,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getOrder().updateOrderProduct();
 		getOrderTableUtils().refreshTable();
 		getOrderTableUtils().setSelection(orderProduct);
+		updateOtherTaxes();
 		updateTotalAmount();
 	}
 	
@@ -4748,11 +4768,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		updateAllowClose();
 	}
 	
-	private boolean hasOrderProducts() {
+	protected boolean hasOrderProducts() {
 		return getCOrderTable().getRowCount() > 0;
 	}
 	
-	private void goToPayments() {
+	protected void goToPayments() {
 		if(!hasOrderProducts()) {
 			errorMsg(MSG_NO_PRODUCT_ERROR);
 		} else {
@@ -4792,7 +4812,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 						UserAuthConstants.POS_CANCEL_ORDER_UID,
 						MSG_CANCEL_ORDER,
 						UserAuthConstants.POS_CANCEL_ORDER_MOMENT);
-				BigDecimal amount = getOrder().getOrderProductsTotalAmt(true, true, false, false, false);
+				BigDecimal amount = getOrder().getOrderProductsTotalAmt(true, true, false, false);
 				authOperation.setOperationLog(
 						"@Total@: " + amount + ".");
 				authOperation.setMustSave(true);
@@ -4818,7 +4838,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	/**
 	 * @return Devuelve actionKeys.
 	 */
-	private Map<String, KeyStroke> getActionKeys() {
+	protected Map<String, KeyStroke> getActionKeys() {
 		return actionKeys;
 	}
 
@@ -4848,8 +4868,6 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		BusinessPartner bp = getModel().getBPartner(bPartnerID);
 		getOrder().setBusinessPartner(bp);
-		getModel().getOtherTaxes();
-		getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
 		
 		getCTaxIdText().setText("");
 		getCCustomerDescriptionText().setText("");
@@ -4884,6 +4902,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 		setCustomerDataDescriptionText();
 		updateStatusDB();
+		
+		getModel().getOtherTaxes();
+		getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
+		updateTaxes();
 		/* Se comenta por las nuevas modificaciones a Cuenta Corriente, notificación obsoleta
 		alertAutomaticCreditNote();
 		*/
@@ -5324,7 +5346,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		TimeStatsLogger.endTask(MeasurableTask.POS_ADD_PAYMENT);
 	}
 	
-	private void updatePaymentsTable() {
+	protected void updatePaymentsTable() {
 		getPaymentTableModel().fireTableDataChanged();
 		getPaymentsTableUtils().refreshTable();
 		if(getPaymentsTableUtils().getSelection() == null)
@@ -5385,7 +5407,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCRemovePaymentButton().setEnabled(getOrder().hasPayments());
 	}
 	
-	private void completeOrder() {
+	protected void completeOrder() {
 		TimeStatsLogger.beginTask(MeasurableTask.POS_SAVE_DOCUMENTS);
 		TimeStatsLogger.beginTask(MeasurableTask.POS_COMPLETE_ORDER);
 		
@@ -5498,7 +5520,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					getFrame().setBusy(false);
 					mNormal();
 					updateProcessing(false);
-				}				
+				}	
+				if(!success) {
+					doOperationsOnErrorCompleteOrder();
+				}
 			}
 		};
 
@@ -5516,7 +5541,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		worker.start();
 	}	
 	
-	private void newOrder() {
+	protected void newOrder() {
 		if (infoFiscalPrinter != null) {
 			infoFiscalPrinter.setVisible(false);
 			infoFiscalPrinter.clearDetail();
@@ -5559,11 +5584,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return getModel().getOrder();
 	}
 	
-	private void updatePaymentsStatus() {
+	protected void updatePaymentsStatus() {
 		getModel().balanceValidate();
-		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt(true, false, false, false, false);
+		updateOtherTaxes();
+		BigDecimal totalAmt = getOrder().getOrderProductsTotalAmt(true, false, false, false);
 		//BigDecimal taxAmt = getOrder().getTotalTaxAmt(false, true);
-		BigDecimal otherTaxesAmt = getOrder().getTotalOtherTaxesAmt(false, true);
+		BigDecimal otherTaxesAmt = getOrder().getTotalOtherTaxesAmt();
 		totalAmt = totalAmt.add(otherTaxesAmt);
 		BigDecimal documentDiscountAmt = getOrder().getTotalDocumentDiscount().negate();
 		BigDecimal toPayAmt = getOrder().getOrderProductsTotalAmt(true);
@@ -5596,7 +5622,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		setActionEnabled(PAY_ORDER_ACTION,true);
 	}
 	
-	private void updateConvertedAmount() {
+	protected void updateConvertedAmount() {
 		BigDecimal amount = (BigDecimal)getCAmountText().getValue();
 		if(MPOSPaymentMedium.TENDERTYPE_Cash.equals(getSelectedTenderType())) {
 			int fromCurrencyId = ((Integer)getCCurrencyCombo().getValue()).intValue();
@@ -5606,7 +5632,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 	}
 	
-	private void selectTab(int index) {
+	protected void selectTab(int index) {
 		// Pestaña de Pedido
 		if(index == 0) {
 			getCPosTab().setEnabledAt(1,false);
@@ -5823,10 +5849,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
     }
     
     private void openBPInfoDialog(){
-    	BPartnerDialog dialog = new BPartnerDialog(this, true);
+    	BPartnerDialog dialog = getBPDialog();
     	AEnv.positionCenterScreen(dialog);
 		dialog.setModal(true);
 		dialog.setVisible(true);
+    }
+    
+    protected BPartnerDialog getBPDialog() {
+    	return new BPartnerDialog(this, true);
     }
     
     private void openPromotionsDialog(){
@@ -6233,7 +6263,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * Recalcula descuentos / recargos y toda la información adicional del medio
 	 * de pago para ser mostrada en los componentes gráficos
 	 */
-    private void refreshPaymentMediumInfo() {
+    protected void refreshPaymentMediumInfo() {
     	refreshPaymentMediumInfo(null);
     }
     
@@ -6747,7 +6777,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 												.getProcessValue(UserAuthConstants.POS_VOID_DOCUMENTS_UID)),
 								UserAuthConstants.POS_VOID_DOCUMENT);
 						authOperation.setMustSave(true);
-						authOperation.setAmount(getOrder().getOrderProductsTotalAmt(true, true, false, false, false));
+						authOperation.setAmount(getOrder().getOrderProductsTotalAmt(true, true, false, false));
 						getAuthDialog().addAuthOperation(authOperation);
 						getAuthDialog().authorizeOperation(UserAuthConstants.POS_VOID_DOCUMENT);
 						CallResult result = getAuthDialog().getAuthorizeResult(true);
@@ -7014,7 +7044,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 	
 	public void updateOtherTaxes(){
-		getModel().getOtherTaxes();
+		if(getOrder() != null) {
+			getOrder().setOtherTaxes(getModel().getOtherTaxes());
+			updateTaxes();
+		}
 	}
 	
 	private void finishAndNewOrder(){
@@ -7098,4 +7131,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return true;
 	}
 
+	protected void doOperationsOnErrorCompleteOrder() {
+		// Realizar tareas luego de error al completar pedido
+	}
+	
 }  //  @jve:decl-index=0:visual-constraint="10,10"

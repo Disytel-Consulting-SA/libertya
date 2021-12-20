@@ -230,7 +230,6 @@ public class BalanceReport extends SvrProcess {
 			pstmt.setTimestamp(i++,
 					p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
 			pstmt.setInt(i++, debit_signo_issotrx);
-			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, credit_signo_issotrx);
 			pstmt.setInt(i++, client_Currency_ID);
 			pstmt.setInt(i++, getAD_Client_ID());

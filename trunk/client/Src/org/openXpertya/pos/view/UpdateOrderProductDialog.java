@@ -36,6 +36,7 @@ import org.openXpertya.apps.AUserAuth;
 import org.openXpertya.grid.ed.VNumber;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.pos.ctrl.PoSModel;
+import org.openXpertya.pos.exceptions.ProductAddValidationFailed;
 import org.openXpertya.pos.model.OrderProduct;
 import org.openXpertya.pos.model.User;
 import org.openXpertya.reflection.CallResult;
@@ -45,6 +46,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.UserAuthData;
 import org.openXpertya.util.UserAuthorizationOperation;
+import org.openXpertya.util.Util;
 
 
 public class UpdateOrderProductDialog extends JDialog {
@@ -68,8 +70,8 @@ public class UpdateOrderProductDialog extends JDialog {
 	private CLabel cProductPriceLabel = null;
 	private CLabel cProductTaxedPriceLabel = null;
 	private CLabel cProductTaxRateLabel = null;
-	private VNumber cPriceListText = null;
-	private VNumber cProductTaxedPriceText = null;
+	protected VNumber cPriceListText = null;
+	protected VNumber cProductTaxedPriceText = null;
 	private VNumber cDiscountAmtText = null;
 	private CLabel cDiscountLabel = null;
 	private VNumber cDiscountText = null;
@@ -113,6 +115,8 @@ public class UpdateOrderProductDialog extends JDialog {
 	private String MSG_INVALID_COUNT;
 	private String MSG_LINE_DESCRIPTION_TITLE;
 	private String MSG_DESCRIPTION;
+	private String MSG_LESS_THAN_SALES_ORDER_MIN;
+	private String MSG_NOT_SALES_ORDER_PACK;
 	
 	private final String CHANGE_FOCUS_USER_AUTH = "changeFocusUserAuth";
 	
@@ -176,6 +180,8 @@ public class UpdateOrderProductDialog extends JDialog {
 		MSG_INVALID_FINAL_PRICE = getMsg("InvalidFinalPrice");
 		MSG_LINE_DESCRIPTION_TITLE = getMsg("LineDescription");
 		MSG_DESCRIPTION = getMsg("Description");
+		MSG_LESS_THAN_SALES_ORDER_MIN = getMsg("POSQtyLessThanSalesOrderMinQty");
+		MSG_NOT_SALES_ORDER_PACK = getMsg("POSQtyMustBeMultipleOfSalesOrderPack");
 	}
 
 	private void keyBindingsInit(){
@@ -541,7 +547,7 @@ public class UpdateOrderProductDialog extends JDialog {
 	 * 	
 	 * @return org.openXpertya.grid.ed.VNumber	
 	 */
-	private VNumber getCPriceListText() {
+	protected VNumber getCPriceListText() {
 		if (cPriceListText == null) {
 			cPriceListText = new VNumber();
 			cPriceListText.setPreferredSize(new java.awt.Dimension(100,20));
@@ -564,7 +570,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		return cDiscountAmtText;
 	}
 	
-	private VNumber getCProductTaxedPriceText() {
+	protected VNumber getCProductTaxedPriceText() {
 		if (cProductTaxedPriceText == null) {
 			cProductTaxedPriceText = new VNumber();
 			cProductTaxedPriceText.setDisplayType(DisplayType.CostPrice);
@@ -597,7 +603,7 @@ public class UpdateOrderProductDialog extends JDialog {
 	 * 	
 	 * @return org.openXpertya.grid.ed.VNumber	
 	 */
-	private VNumber getCDiscountText() {
+	protected VNumber getCDiscountText() {
 		if (cDiscountText == null) {
 			cDiscountText = new VNumber();
 			cDiscountText.setDisplayType(DisplayType.CostPrice);
@@ -610,7 +616,7 @@ public class UpdateOrderProductDialog extends JDialog {
 					if(discount != null) {
 						OrderProduct op = getOrderProduct(); 
 						// Se recalcula el importe
-						BigDecimal taxedPriceList = op.getTaxedPrice(op.getPriceList());
+						BigDecimal taxedPriceList = op.getTaxedPrice((BigDecimal)getCPriceListText().getValue());
 						BigDecimal taxedPrice = op.scalePrice(taxedPriceList.subtract(taxedPriceList.multiply(discount.divide(new BigDecimal(100),10,BigDecimal.ROUND_HALF_UP))));
 						getCProductTaxedPriceText().setValue(taxedPrice);
 						updateDiscountAmtText();
@@ -629,7 +635,7 @@ public class UpdateOrderProductDialog extends JDialog {
 	 * 	
 	 * @return org.compiere.swing.CTextField	
 	 */
-	private CTextField getCCountText() {
+	protected CTextField getCCountText() {
 		if (cCountText == null) {
 			cCountText = new CTextField();
 			cCountText.setMinimumSize(new java.awt.Dimension(50,20));
@@ -873,7 +879,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		return panel;
 	}
 
-	private void updateDiscountComponents(){
+	protected void updateDiscountComponents(){
 		boolean isManualDiscountApplicable = getOrderProduct().getOrder()
 				.isManualDiscountApplicable(getOrderProduct());
 		getCBonusRadio().setEnabled(isManualDiscountApplicable);
@@ -921,7 +927,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		return true;
 	}
 	
-	private void updateDiscountAmtText(){
+	protected void updateDiscountAmtText(){
 		BigDecimal manualDiscount = (BigDecimal) (getCDiscountText().getValue() == null ? BigDecimal.ZERO
 				: getCDiscountText().getValue());
 		BigDecimal priceList = (BigDecimal)getCPriceListText().getValue();
@@ -935,7 +941,7 @@ public class UpdateOrderProductDialog extends JDialog {
 						new BigDecimal((String)getCCountText().getValue())));
 	}
 	
-	private CallResult validateUserAccess(boolean deleting) {
+	protected CallResult validateUserAccess(boolean deleting) {
 		CallResult cr = new CallResult();
 		// Si el TPV está configurado para permitir modificaciones de precios
 		// entonces no se validan los datos de usuario.
@@ -980,7 +986,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		return cr;
 	}
 	
-	private void updateOrderProduct() {
+	protected void updateOrderProduct() {
 		CallResult resultAuth = validateUserAccess(false); 
 		if(resultAuth.isError()){
 			errorMsg(resultAuth.getMsg());
@@ -1046,6 +1052,21 @@ public class UpdateOrderProductDialog extends JDialog {
 		if(getPoS().getModel().countSurpassMax(count)){
 			error = true;
 			errorMsg.append(" ").append(MSG_SURPASS_MAX_QTY);
+		}
+		
+		// Validar cantidades mínimas
+		if(getOrderProduct().getProduct().getSalesOrderMin().compareTo(count) > 0) {
+			error = true;
+			errorMsg.append(" ").append(MSG_LESS_THAN_SALES_ORDER_MIN).append(getMsgRepository().parse(
+					"@QtyEntered@: " + count + ". @Order_Min@: " + getOrderProduct().getProduct().getSalesOrderMin())+".");
+		}
+		
+		// Validar múltiplo a ordenar de ventas
+		if(!Util.isEmpty(getOrderProduct().getProduct().getSalesOrderPack(), true)
+				&& count.remainder(getOrderProduct().getProduct().getSalesOrderPack()).compareTo(BigDecimal.ZERO) != 0) {
+			error = true;
+			errorMsg.append(" ").append(MSG_NOT_SALES_ORDER_PACK).append(getMsgRepository().parse(
+					"@QtyEntered@: " + count + ". @Order_Pack@: " + getOrderProduct().getProduct().getSalesOrderPack())+".");
 		}
 		
 		if(error) {
@@ -1125,7 +1146,7 @@ public class UpdateOrderProductDialog extends JDialog {
 		return applicationGroup;
 	}
 	
-	private void cancel() {
+	protected void cancel() {
 		setVisible(false);
 	}
 	

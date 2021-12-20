@@ -201,4 +201,9 @@ public class DiscountableOrderProductWrapper extends DiscountableDocumentLine {
 	public List<Integer> getProductVendorIDs() {
 		return getOrderProduct().getProduct().getVendorsIds();
 	}
+
+	@Override
+	public BigDecimal getNetAmt() {
+		return getOrderProduct().getTaxBaseAmt(true, false);
+	}
 }

@@ -1,13 +1,13 @@
 /** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.util.Properties;
-import org.openXpertya.util.Env;
-import org.openXpertya.util.KeyNamePair;
+import java.util.logging.Level;
+ import java.util.*;
+import java.sql.*;
+import java.math.*;
+import org.openXpertya.util.*;
 /** Modelo Generado por AD_Org_Percepcion
- *  @author Comunidad de Desarrollo Libertya Basado en Codigo Original Modificado, Revisado y Optimizado de: Jorg Janke 
- *  @version  - 2016-11-24 16:20:43.46 */
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2021-12-20 13:54:03.034 */
 public class X_AD_Org_Percepcion extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -22,10 +22,13 @@ setC_RetencionProcessor_ID (0);
 setC_Tax_ID (0);
 setIsConvenioMultilateral (false);
 setMinimumNetAmount (Env.ZERO);
+setMinimumPercepcionAmt (Env.ZERO);
 setName (null);
+setPartialReturn (true);	// Y
+setTotalReturn (false);
 setUseCABAJurisdiction (false);
 }
-*/
+ */
 }
 /** Load Constructor */
 public X_AD_Org_Percepcion (Properties ctx, ResultSet rs, String trxName)
@@ -151,6 +154,19 @@ BigDecimal bd = (BigDecimal)get_Value("MinimumNetAmount");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Minimum Percepcion Amount */
+public void setMinimumPercepcionAmt (BigDecimal MinimumPercepcionAmt)
+{
+if (MinimumPercepcionAmt == null) throw new IllegalArgumentException ("MinimumPercepcionAmt is mandatory");
+set_Value ("MinimumPercepcionAmt", MinimumPercepcionAmt);
+}
+/** Get Minimum Percepcion Amount */
+public BigDecimal getMinimumPercepcionAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("MinimumPercepcionAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set Name.
 Alphanumeric identifier of the entity */
 public void setName (String Name)
@@ -172,6 +188,42 @@ return (String)get_Value("Name");
 public KeyNamePair getKeyNamePair() 
 {
 return new KeyNamePair(getID(), getName());
+}
+/** Set Partial Return.
+Partial Return of Perceptions in Credit Notes */
+public void setPartialReturn (boolean PartialReturn)
+{
+set_Value ("PartialReturn", new Boolean(PartialReturn));
+}
+/** Get Partial Return.
+Partial Return of Perceptions in Credit Notes */
+public boolean isPartialReturn() 
+{
+Object oo = get_Value("PartialReturn");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Total Return.
+Total Return of Percepciones on voiding invoices */
+public void setTotalReturn (boolean TotalReturn)
+{
+set_Value ("TotalReturn", new Boolean(TotalReturn));
+}
+/** Get Total Return.
+Total Return of Percepciones on voiding invoices */
+public boolean isTotalReturn() 
+{
+Object oo = get_Value("TotalReturn");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Use CABA Jurisdiction */
 public void setUseCABAJurisdiction (boolean UseCABAJurisdiction)

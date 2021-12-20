@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -112,7 +113,7 @@ public class CalloutInOut extends CalloutEngine {
         try {
             Env.setContext( ctx,WindowNo,"C_DocTypeTarget_ID",C_DocType_ID.intValue());
 
-            String SQL = "SELECT d.doctypekey, d.DocBaseType, d.IsDocNoControlled, s.CurrentNext " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
+            String SQL = "SELECT d.doctypekey, d.DocBaseType, d.IsDocNoControlled, s.CurrentNext, d.caicontrol " + "FROM C_DocType d, AD_Sequence s " + "WHERE C_DocType_ID=?"    // 1
                          + " AND d.DocNoSequence_ID=s.AD_Sequence_ID(+)";
             PreparedStatement pstmt = DB.prepareStatement( SQL );
 
@@ -147,6 +148,32 @@ public class CalloutInOut extends CalloutEngine {
 
                 if( rs.getString( "IsDocNoControlled" ).equals( "Y" )) {
                     mTab.setValue( "DocumentNo","<" + rs.getString( "CurrentNext" ) + ">" );
+                }
+                
+                // Si se controla CAI, entonces buscar el CAI válido para este Tipo de Documento
+                boolean IsSOTrx = "Y".equals( Env.getContext( ctx,WindowNo,"IsSOTrx" ));
+                if(IsSOTrx) {
+                	mTab.setValue("CAI", null);
+            		mTab.setValue("DateCAI", null);
+                }
+                if(rs.getString( "caicontrol" ).equals( "Y" )) {
+                	Timestamp dateInvoiced = (Timestamp)mTab.getValue("MovementDate");
+                	String sql = "select c.cai, c.datecai " + 
+                			"	from c_cai c " + 
+                			"	join c_cai_doctype cd on cd.c_cai_id = c.c_cai_id " + 
+                			"	where cd.c_doctype_id = ? and cd.isactive = 'Y' and c.isactive = 'Y' and ?::date between c.validfrom::date and c.datecai::date " + 
+                			"	order by c.created desc " +
+                			"	limit 1 ";
+                	PreparedStatement psCai = DB.prepareStatement(sql, null, true);
+                	psCai.setInt(1, C_DocType_ID);
+                	psCai.setTimestamp(2, dateInvoiced);
+                	ResultSet rsCai = psCai.executeQuery();
+                	if(rsCai.next()) {
+                		mTab.setValue("CAI", rsCai.getString("cai"));
+                		mTab.setValue("DateCAI", rsCai.getTimestamp("datecai"));
+                	}
+                	rsCai.close();
+                	psCai.close();
                 }
             }
 

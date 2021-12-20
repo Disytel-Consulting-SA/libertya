@@ -3,11 +3,9 @@ package org.openXpertya.pos.view;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.FlowLayout;
 import java.awt.FocusTraversalPolicy;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
@@ -19,7 +17,6 @@ import java.util.Map;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.compiere.swing.CButton;
@@ -189,7 +186,7 @@ public class BPartnerDialog extends JDialog {
 	}
 
 	
-	private VLookup getCBPartner(){
+	protected VLookup getCBPartner(){
 		if(cBPartner == null){
 			cBPartner = getPoS().getComponentFactory().createBPartnerSearch();
 			cBPartner.setPreferredSize(new java.awt.Dimension(FIELD_WIDTH,20));
@@ -206,11 +203,11 @@ public class BPartnerDialog extends JDialog {
 						BusinessPartner customer = getPoS().getModel().getBPartner(bPartnerID);
 						priceListCombo = getPriceListByID(customer.getPriceListId());
 						if(priceListCombo == null){
-							priceListCombo = getPriceListByID(getPoS().getModel().getPriceList().getId());
+							priceListCombo = getPriceListByID(getPoS().getModel().getDefaultPriceList());
 						}
 					}
 					else{
-						priceListCombo = getPriceListByID(getPoS().getModel().getPriceList().getId());
+						priceListCombo = getPriceListByID(getPoS().getModel().getDefaultPriceList());
 					}
 					getCPriceList().setSelectedItem(priceListCombo);
 					SwingUtilities.invokeLater(new Runnable() {
@@ -229,7 +226,7 @@ public class BPartnerDialog extends JDialog {
 		return cBPartner;
 	}
 	
-	private CComboBox getCPriceList(){
+	protected CComboBox getCPriceList(){
 		if(cPriceList == null){
 			cPriceList = getPoS().getComponentFactory().createPriceListCombo();
 			cPriceList.setSelectedItem(getPriceListByID(getPoS().getModel().getPriceList().getId()));
@@ -266,6 +263,9 @@ public class BPartnerDialog extends JDialog {
 			cCancelButton.setPreferredSize(new java.awt.Dimension(BUTTON_WIDTH,26));
 			cCancelButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
+					if(getCBPartner().isMandatory() && getCBPartner().getValue() == null) {
+						getPoS().loadBPartner(getPoS().getModel().getDefaultBPartner());
+					}
 					setVisible(false);
 				}
 			});
@@ -286,17 +286,26 @@ public class BPartnerDialog extends JDialog {
 		return getPoS().getImageIcon(name);
 	}
 	
-	
-	
-	private void updateData(){
+	protected void updateData(){
 		// Verificar obligatoriedad
 		if(passMandatory()){
 			// Entidad Comercial - Cliente
 			if(manageBPartner()){
 				// Lista de Precios
-				managePriceList();
-				// Close
-				close();
+				if(managePriceList()) {
+					// Close
+					close();
+				}
+				else {
+					getCBPartner().setValue(null);
+					getPoS().getModel().getOrder().setBusinessPartner(null);
+					SwingUtilities.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							getCBPartner().requestFocus();
+						}
+					});
+				}
 			}
 		}
 	}	
@@ -382,7 +391,7 @@ public class BPartnerDialog extends JDialog {
 	}
 	
 	
-	private void managePriceList(){
+	private boolean managePriceList(){
 		PriceList oldPriceList = getPoS().getModel().getPriceList(); 
 		PriceList priceListSelected = (PriceList)getCPriceList().getSelectedItem();
 		// Si la tarifa es distinta a la que está elegida con anterioridad
@@ -400,11 +409,13 @@ public class BPartnerDialog extends JDialog {
 				getPoS().getModel().updatePriceList(oldPriceList, getPoS().getWindowNo());
 				// Actualizo el status bar del form principal
 				getPoS().updateStatusDB();
+				return false;
 			}
 			else{
 				// Si tienen a todos los productos, los actualizo
 				for (OrderProduct orderProduct : getOrderLines()) {
 					orderProduct.getProduct().setStdPrice(getOrderLinesPrices().get(orderProduct));
+					orderProduct.setPriceList(getOrderLinesPrices().get(orderProduct));
 					orderProduct.setPrice(getOrderLinesPrices().get(orderProduct));
 					orderProduct.getProduct().setTaxIncludedInPrice(priceListSelected.isTaxIncluded());
 					orderProduct.getProduct().setPerceptionIncludedInPrice(priceListSelected.isPerceptionsIncluded());
@@ -413,6 +424,7 @@ public class BPartnerDialog extends JDialog {
 				getPoS().refreshOrderProductsTable();
 			}
 		}
+		return true;
 	}
 	
 	

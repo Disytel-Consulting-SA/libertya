@@ -671,6 +671,14 @@ public class MDocType extends X_C_DocType {
 		}
 		
 		String controladorFiscalType = X_C_Controlador_Fiscal.CONTROLADORFISCALTYPE_Thermal;
+
+		// La secuencia de documento y la única no deben ser la misma
+		if (!Util.isEmpty(getDocNoSequence_Unique_ID(), true) 
+				&& !Util.isEmpty(getDocNoSequence_ID(), true)
+				&& getDocNoSequence_Unique_ID() == getDocNoSequence_ID()) {
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "DocTypeUniqueSameDocNoSeq"));
+			return false;
+		}
 		
 		/**
 		 * Se codifica siguiendo la siguiente definicion:
@@ -747,6 +755,11 @@ public class MDocType extends X_C_DocType {
 			setPOSEnableDueDays(0);
 		}
 		
+		// Control de CAI
+		if(isCAIControl()) {
+			setCAI(null);
+			setDateCAI(null);
+		}
 		
 		return true;
 	}

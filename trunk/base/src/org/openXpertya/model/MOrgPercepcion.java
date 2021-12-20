@@ -71,13 +71,6 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 				return false;
 			}
 		}
-		// Si el procesador está marcado como que soporta padrón, entonces no se
-		// marca como convenio multilateral
-		MRetencionProcessor processor = new MRetencionProcessor(getCtx(),
-				getC_RetencionProcessor_ID(), get_TrxName());
-		if(processor.isSupportRegister()){
-			setIsConvenioMultilateral(false);
-		}
 		return true;
 	}	
 	

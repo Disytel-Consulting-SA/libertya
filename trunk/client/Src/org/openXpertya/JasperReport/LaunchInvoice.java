@@ -11,7 +11,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.openXpertya.JasperReport.DataSource.InvoiceDataSource;
@@ -29,7 +28,6 @@ import org.openXpertya.model.MElectronicInvoice;
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
-import org.openXpertya.model.MInvoicePaySchedule;
 import org.openXpertya.model.MLocation;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
@@ -294,8 +292,10 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("SUBTOTAL2_WITHTAX",  linesTotalAmt.subtract(totalLineDiscounts));
 		jasperwrapper.addParameter("IVA_105", new BigDecimal(10.5) );
 		jasperwrapper.addParameter("IVA_21", new BigDecimal(21) );
-		jasperwrapper.addParameter("SUBIVA_105", getTaxAmt(invoice, new BigDecimal(10.5)) );
-		jasperwrapper.addParameter("SUBIVA_21", getTaxAmt(invoice, new BigDecimal(21)) );
+		BigDecimal iva105Amt = getTaxAmt(invoice, new BigDecimal(10.5));
+		BigDecimal iva21Amt = getTaxAmt(invoice, new BigDecimal(21));
+		jasperwrapper.addParameter("SUBIVA_105", iva105Amt);
+		jasperwrapper.addParameter("SUBIVA_21", iva21Amt);		
 		jasperwrapper.addParameter("SUBDESC", invoice.getDiscountsAmt());
 		jasperwrapper.addParameter("TOTAL", invoice.getGrandTotal() );
 		jasperwrapper
@@ -469,8 +469,8 @@ public class LaunchInvoice extends SvrProcess {
 				JasperReportsUtil.getLocalizacion(getCtx(),
 					invoice.getAD_Client_ID(), invoice.getAD_Org_ID(),
 					get_TrxName()));
-		jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT",
-			invoice.getPercepcionesTotalAmt());
+		BigDecimal percepcionTotalAmt = invoice.getPercepcionesTotalAmt();
+		jasperwrapper.addParameter("PERCEPCION_TOTAL_AMT", percepcionTotalAmt);
 		
 		// Datos de Localización 
 		MLocation loc = BPLocation.getLocation(false);
@@ -517,6 +517,8 @@ public class LaunchInvoice extends SvrProcess {
 			// Monto de la Retención
 			jasperwrapper.addParameter("RET_AMOUNT", retencion_invoice.getamt_retenc());
 			// Se comenta ya que se debe tomar de los datos de la retención
+			jasperwrapper.addParameter("RET_BASE_IMPONIBLE", retencion_invoice.getbaseimponible_amt());
+			jasperwrapper.addParameter("RET_PERCENT", retencion_invoice.getretencion_percent());
 			// Monto del Recibo
 			//jasperwrapper.addParameter("RET_ALLOC_AMOUNT", allocation.getGrandTotal());
 			MAllocationHdr allocation = new MAllocationHdr(getCtx(), retencion_invoice.getC_AllocationHdr_ID(), null);
@@ -551,12 +553,26 @@ public class LaunchInvoice extends SvrProcess {
 		// Código de Comprobante
 		jasperwrapper.addParameter("COD_CBANTE",
 				MElectronicInvoice.getRefTablaComprobantes(getCtx(), docType.getID(), get_TrxName()));
+		
+		// Código de Comprobante
+		jasperwrapper.addParameter("IMPORT_CLEARANCE", invoice.getImportClearance());
+		
+		// Impuesto 27%
+		BigDecimal iva27Amt = getTaxAmt(invoice, new BigDecimal(27));
+		jasperwrapper.addParameter("IVA_27", new BigDecimal(27));
+		jasperwrapper.addParameter("SUBIVA_27", iva27Amt);
+		
+		// Otros impuestos
+		BigDecimal allTaxesAmt = getTaxAmt(invoice, (BigDecimal)null);
+		BigDecimal othersTaxesAmt = allTaxesAmt.subtract(iva105Amt).subtract(iva21Amt).subtract(iva27Amt)
+				.subtract(percepcionTotalAmt);
+		jasperwrapper.addParameter("OTHER_TAXES_AMT", othersTaxesAmt);
 	}
 	
 	
 	private BigDecimal getTaxAmt(MInvoice invoice, BigDecimal rate)
 	{
-		BigDecimal retValue = new BigDecimal(0);
+		BigDecimal retValue = BigDecimal.ZERO;
 		int size = invoice.getTaxes(true).length;
 		boolean found = false;
 		MTax tax = null;
@@ -564,10 +580,11 @@ public class LaunchInvoice extends SvrProcess {
 		for (int i=0; i<size && !found; i++)
 		{
 			tax = new MTax(getCtx(), invoice.getTaxes(false)[i].getC_Tax_ID(), null);
-			if (tax.getRate().compareTo(rate) == 0 && tax.getName().toUpperCase().indexOf("IVA") >= 0 )
+			if (rate == null
+					|| (tax.getRate().compareTo(rate) == 0 && tax.getName().toUpperCase().indexOf("IVA") >= 0))
 			{
-				found = true;
-				retValue = invoice.getTaxes(false)[i].getTaxAmt();
+				found = rate != null;
+				retValue = retValue.add(invoice.getTaxes(false)[i].getTaxAmt());
 			}
 		}
 		return retValue;

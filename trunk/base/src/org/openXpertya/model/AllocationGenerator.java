@@ -246,7 +246,7 @@ public class AllocationGenerator {
 		int clientCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID"); // Moneda de la compañía
 		Timestamp systemDate = Env.getContextAsDate(getCtx(), "#Date");         // Fecha actual
 		// Se asignan los valores por defecto requeridos al encabezado
-		newAllocationHdr = new MAllocationHdr(getCtx(), 0, getTrxName());
+		newAllocationHdr = createMAllocationHdr();
 		newAllocationHdr.setAD_Org_ID(orgID);
 		if(!Util.isEmpty(bPartnerID, true)){
 			newAllocationHdr.setC_BPartner_ID(bPartnerID);
@@ -308,6 +308,13 @@ public class AllocationGenerator {
 	 */
 	public MAllocationHdr createAllocationHdr() throws AllocationGeneratorException {
 		return createAllocationHdr(MAllocationHdr.ALLOCATIONTYPE_Manual);
+	}
+	
+	/**
+	 * @return instancia de allocation hdr
+	 */
+	public MAllocationHdr createMAllocationHdr() {
+		return new MAllocationHdr(getCtx(), 0, getTrxName());
 	}
 	
 	/**

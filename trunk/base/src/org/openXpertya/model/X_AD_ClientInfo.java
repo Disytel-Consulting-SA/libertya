@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_ClientInfo
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-07-12 21:29:43.635 */
+ *  @version  - 2021-12-20 13:54:02.181 */
 public class X_AD_ClientInfo extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setAcct2_Active (false);
 setAcct3_Active (false);
 setAllowDeliveryReturned (false);
 setCuitControlCheckLimit (Env.ZERO);
+setImportClearanceActive (false);
 setIsDiscountLineAmt (false);
 setIsPOSJournalActive (false);
 setIsWarehouseCloseControl (false);
@@ -372,6 +373,28 @@ Integer ii = (Integer)get_Value("C_Location_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+public static final int CONVENIOMULTILATERAL_AD_Reference_ID = MReference.getReferenceID("Convenio Multilateral Regímenes");
+/** Regimen General = G */
+public static final String CONVENIOMULTILATERAL_RegimenGeneral = "G";
+/** Regimen Especial = E */
+public static final String CONVENIOMULTILATERAL_RegimenEspecial = "E";
+/** Set Convenio Multilateral */
+public void setConvenioMultilateral (String ConvenioMultilateral)
+{
+if (ConvenioMultilateral == null || ConvenioMultilateral.equals("G") || ConvenioMultilateral.equals("E") || ( refContainsValue("IBTUCUMAN-AD_Reference-20210329152107391-614121", ConvenioMultilateral) ) );
+ else throw new IllegalArgumentException ("ConvenioMultilateral Invalid value: " + ConvenioMultilateral + ".  Valid: " +  refValidOptions("IBTUCUMAN-AD_Reference-20210329152107391-614121") );
+if (ConvenioMultilateral != null && ConvenioMultilateral.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+ConvenioMultilateral = ConvenioMultilateral.substring(0,1);
+}
+set_Value ("ConvenioMultilateral", ConvenioMultilateral);
+}
+/** Get Convenio Multilateral */
+public String getConvenioMultilateral() 
+{
+return (String)get_Value("ConvenioMultilateral");
+}
 public static final int C_OUTGOINGTRANSFER_DT_ID_AD_Reference_ID = MReference.getReferenceID("C_DocType");
 /** Set Outgoing Transfer Document Type */
 public void setC_OutgoingTransfer_DT_ID (int C_OutgoingTransfer_DT_ID)
@@ -384,6 +407,21 @@ set_Value ("C_OutgoingTransfer_DT_ID", new Integer(C_OutgoingTransfer_DT_ID));
 public int getC_OutgoingTransfer_DT_ID() 
 {
 Integer ii = (Integer)get_Value("C_OutgoingTransfer_DT_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_REGION_SEDE_ID_AD_Reference_ID = MReference.getReferenceID("C_Region");
+/** Set Head Region */
+public void setC_Region_Sede_ID (int C_Region_Sede_ID)
+{
+if (C_Region_Sede_ID <= 0) set_Value ("C_Region_Sede_ID", null);
+ else 
+set_Value ("C_Region_Sede_ID", new Integer(C_Region_Sede_ID));
+}
+/** Get Head Region */
+public int getC_Region_Sede_ID() 
+{
+Integer ii = (Integer)get_Value("C_Region_Sede_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -548,6 +586,22 @@ set_Value ("IIBBDate", IIBBDate);
 public Timestamp getIIBBDate() 
 {
 return (Timestamp)get_Value("IIBBDate");
+}
+/** Set Import Clearance Active */
+public void setImportClearanceActive (boolean ImportClearanceActive)
+{
+set_Value ("ImportClearanceActive", new Boolean(ImportClearanceActive));
+}
+/** Get Import Clearance Active */
+public boolean isImportClearanceActive() 
+{
+Object oo = get_Value("ImportClearanceActive");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Discount calculated from Line Amounts.
 Payment Discount calculation does not include Taxes and Charges */

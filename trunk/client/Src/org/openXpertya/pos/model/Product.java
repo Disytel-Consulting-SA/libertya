@@ -37,6 +37,10 @@ public class Product {
 	
 	private boolean sold = true;
 	
+	private BigDecimal salesOrderMin = null;
+
+	private BigDecimal salesOrderPack = null;
+	
 	public Product() {
 		super();
 	}
@@ -57,7 +61,7 @@ public class Product {
 	 * @param checkoutPlace
 	 * @param sold
 	 */
-	public Product(int id, String code, String description, BigDecimal stdPrice, BigDecimal limitPrice, int M_AttributeSetInstance_ID, String masiDescription, boolean taxIncludedInPrice, boolean perceptionIncludedInPrice, boolean masiMandatory, int productCategoryID, List<Integer> vendorsIds, String checkoutPlace, boolean sold, int productGamasID, int productLinesID) {
+	public Product(int id, String code, String description, BigDecimal stdPrice, BigDecimal limitPrice, int M_AttributeSetInstance_ID, String masiDescription, boolean taxIncludedInPrice, boolean perceptionIncludedInPrice, boolean masiMandatory, int productCategoryID, List<Integer> vendorsIds, String checkoutPlace, boolean sold, int productGamasID, int productLinesID, BigDecimal salesOrderMin, BigDecimal salesOrderPack) {
 		super();
 		setId(id);
 		setCode(code);
@@ -75,6 +79,8 @@ public class Product {
 		setSold(sold);
 		setProductGamasID(productGamasID);
 		setProductLinesID(productLinesID);
+		setSalesOrderMin(salesOrderMin);
+		setSalesOrderPack(salesOrderPack);
 	}
 	
 	/**
@@ -287,6 +293,22 @@ public class Product {
 
 	public void setProductLinesID(int productLinesID) {
 		this.productLinesID = productLinesID;
+	}
+
+	public BigDecimal getSalesOrderMin() {
+		return salesOrderMin;
+	}
+
+	public void setSalesOrderMin(BigDecimal salesOrderMin) {
+		this.salesOrderMin = salesOrderMin;
+	}
+
+	public BigDecimal getSalesOrderPack() {
+		return salesOrderPack;
+	}
+
+	public void setSalesOrderPack(BigDecimal salesOrderPack) {
+		this.salesOrderPack = salesOrderPack;
 	}
 	
 }

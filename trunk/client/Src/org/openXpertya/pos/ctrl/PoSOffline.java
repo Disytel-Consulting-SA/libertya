@@ -351,4 +351,16 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public String parseTranslation(String msg) {
+		// TODO Auto-generated method stub
+		return msg;
+	}
+
+	@Override
+	public int getDefaultPriceListIDInConfig() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 }
