@@ -48,6 +48,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	public static String COMPROBANTE_RETENCION_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010081";
 	public static String COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME = "rpt_Comprobante_Retencion.jasper";
 	
+	/** Reporte de Saldos por Comercial */
+	protected final static String BALANCE_BY_COMERCIAL_JASPER_REPORT_UID = "JACLBY4.7-AD_Process-20200408171313237-755685";
+	protected final static String BALANCE_BY_COMERCIAL_JASPER_REPORT_FILENAME = "BalanceBySalesRep.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -84,6 +88,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		
 		// Comprobante de Retención
 		updateReport(COMPROBANTE_RETENCION_JASPER_REPORT_UID, COMPROBANTE_RETENCION_JASPER_REPORT_FILENAME);
+
+		// Reporte de Saldos por Comercial
+		updateReport(BALANCE_BY_COMERCIAL_JASPER_REPORT_UID, BALANCE_BY_COMERCIAL_JASPER_REPORT_FILENAME);
+
 		
 		return " ";
 	}
