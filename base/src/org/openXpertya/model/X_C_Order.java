@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Order
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-12-14 10:23:00.088 */
+ *  @version  - 2022-01-06 09:48:23.84 */
 public class X_C_Order extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -99,6 +99,21 @@ public BigDecimal getAcceptance()
 BigDecimal bd = (BigDecimal)get_Value("Acceptance");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Add Lines Quick */
+public void setAddLinesQuicker (String AddLinesQuicker)
+{
+if (AddLinesQuicker != null && AddLinesQuicker.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+AddLinesQuicker = AddLinesQuicker.substring(0,1);
+}
+set_Value ("AddLinesQuicker", AddLinesQuicker);
+}
+/** Get Add Lines Quick */
+public String getAddLinesQuicker() 
+{
+return (String)get_Value("AddLinesQuicker");
 }
 public static final int AD_ORG_TRANSFER_ID_AD_Reference_ID = MReference.getReferenceID("AD_Org (all but 0)");
 /** Set Organization */
@@ -1716,7 +1731,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Order(ValidTo,Authorize,M_AuthorizationChain_ID,OldGrandTotal,AD_Org_Transfer_ID,CUIT,Invoice_Adress,IsExchange,IsTpvUsed,M_Warehouse_Transfer_ID,NombreCli,NroIdentificCliente,Acceptance,AD_Client_ID,AD_Org_ID,AD_OrgTrx_ID,AD_User_ID,Bill_BPartner_ID,Bill_Location_ID,Bill_User_ID,C_Activity_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Campaign_ID,C_CashLine_ID,C_Charge_ID,C_ConversionType_ID,C_Currency_ID,C_DocType_ID,C_DocTypeTarget_ID,ChargeAmt,CopyFrom,C_Order_ID,C_Payment_ID,C_PaymentTerm_ID,C_Project_ID,Created,CreatedBy,CreateVendorProductLines,C_Repair_Order_ID,DateAcct,DateOrdered,DatePrinted,dateprod,DatePromised,daterealprod,DeliveryRule,DeliveryViaRule,Description,DocAction,DocStatus,DocumentNo,FreightAmt,FreightCostRule,GrandTotal,InvoiceRule,IsActive,IsApproved,IsCreditApproved,IsDelivered,IsDiscountPrinted,IsDropShip,IsInvoiced,IsPrinted,IsSelected,IsSelfService,IsSOTrx,IsTaxIncluded,IsTransferred,M_PriceList_ID,M_Shipper_ID,M_Warehouse_ID,Pay_BPartner_ID,Pay_Location_ID,PaymentRule,POReference,Posted,PriorityRule,Processed,Processing,program_invoice,Ref_Order_ID,repair_priority,repair_state,SalesRep_ID,SendEMail,TotalLines,Updated,UpdatedBy,User1_ID,User2_ID,AuthorizationChainStatus,IsReActivated,C_Invoice_Orig_ID,CreditRequestType,ManualGeneralDiscount," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_Order(ValidTo,Authorize,M_AuthorizationChain_ID,OldGrandTotal,AD_Org_Transfer_ID,CUIT,Invoice_Adress,IsExchange,IsTpvUsed,M_Warehouse_Transfer_ID,NombreCli,NroIdentificCliente,Acceptance,AD_Client_ID,AD_Org_ID,AD_OrgTrx_ID,AD_User_ID,Bill_BPartner_ID,Bill_Location_ID,Bill_User_ID,C_Activity_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Campaign_ID,C_CashLine_ID,C_Charge_ID,C_ConversionType_ID,C_Currency_ID,C_DocType_ID,C_DocTypeTarget_ID,ChargeAmt,CopyFrom,C_Order_ID,C_Payment_ID,C_PaymentTerm_ID,C_Project_ID,Created,CreatedBy,CreateVendorProductLines,C_Repair_Order_ID,DateAcct,DateOrdered,DatePrinted,dateprod,DatePromised,daterealprod,DeliveryRule,DeliveryViaRule,Description,DocAction,DocStatus,DocumentNo,FreightAmt,FreightCostRule,GrandTotal,InvoiceRule,IsActive,IsApproved,IsCreditApproved,IsDelivered,IsDiscountPrinted,IsDropShip,IsInvoiced,IsPrinted,IsSelected,IsSelfService,IsSOTrx,IsTaxIncluded,IsTransferred,M_PriceList_ID,M_Shipper_ID,M_Warehouse_ID,Pay_BPartner_ID,Pay_Location_ID,PaymentRule,POReference,Posted,PriorityRule,Processed,Processing,program_invoice,Ref_Order_ID,repair_priority,repair_state,SalesRep_ID,SendEMail,TotalLines,Updated,UpdatedBy,User1_ID,User2_ID,AuthorizationChainStatus,IsReActivated,C_Invoice_Orig_ID,CreditRequestType,AddLinesQuicker,ManualGeneralDiscount," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getValidTo() == null) sql = sql.replaceFirst("ValidTo,","").replaceFirst("\\?,", "");
  		 if (getAuthorize() == null) sql = sql.replaceFirst("Authorize,","").replaceFirst("\\?,", "");
@@ -1777,6 +1792,7 @@ try
  		 if (getAuthorizationChainStatus() == null) sql = sql.replaceFirst("AuthorizationChainStatus,","").replaceFirst("\\?,", "");
  		 if (getC_Invoice_Orig_ID() == 0) sql = sql.replaceFirst("C_Invoice_Orig_ID,","").replaceFirst("\\?,", "");
  		 if (getCreditRequestType() == null) sql = sql.replaceFirst("CreditRequestType,","").replaceFirst("\\?,", "");
+ 		 if (getAddLinesQuicker() == null) sql = sql.replaceFirst("AddLinesQuicker,","").replaceFirst("\\?,", "");
  		 if (getManualGeneralDiscount() == null) sql = sql.replaceFirst("ManualGeneralDiscount,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
@@ -1884,6 +1900,7 @@ try
 		 pstmt.setString(col++, isReActivated()?"Y":"N");
 		 if (getC_Invoice_Orig_ID() != 0) pstmt.setInt(col++, getC_Invoice_Orig_ID());
 		 if (getCreditRequestType() != null) pstmt.setString(col++, getCreditRequestType());
+		 if (getAddLinesQuicker() != null) pstmt.setString(col++, getAddLinesQuicker());
 		 if (getManualGeneralDiscount() != null) pstmt.setBigDecimal(col++, getManualGeneralDiscount());
 		 col = setAdditionalInsertValues(col, pstmt);
  
