@@ -1421,3 +1421,7 @@ $BODY$
   COST 100;
 ALTER FUNCTION getperceptionamtreturn(integer, character)
   OWNER TO libertya;
+
+--20220106- Merge de Micro QUICKER 
+--Nueva columna para incorporar el boton para agregar lineas rapido
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','addlinesquicker','character(1)'));
