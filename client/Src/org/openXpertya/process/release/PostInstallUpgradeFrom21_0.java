@@ -52,6 +52,14 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String BALANCE_BY_COMERCIAL_JASPER_REPORT_UID = "JACLBY4.7-AD_Process-20200408171313237-755685";
 	protected final static String BALANCE_BY_COMERCIAL_JASPER_REPORT_FILENAME = "BalanceBySalesRep.jasper";
 	
+	/** Informe de Comparación de Precios */
+	protected final static String PRICES_COMPARISON_JASPER_REPORT_UID = "JACAD1_RA1-AD_Process-20210127141500085-924635";
+	protected final static String PRICES_COMPARISON_JASPER_REPORT_FILENAME = "PricesComparison.jasper";
+	
+	/** Listado de Precios Modificados */
+	protected final static String PRICE_CHANGE_REPORT_JASPER_REPORT_UID = "JACAD1_RA2-AD_Process-20210202130311740-315374";
+	protected final static String PRICE_CHANGE_REPORT_JASPER_REPORT_FILENAME = "PriceChangeReport.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -92,6 +100,11 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		// Reporte de Saldos por Comercial
 		updateReport(BALANCE_BY_COMERCIAL_JASPER_REPORT_UID, BALANCE_BY_COMERCIAL_JASPER_REPORT_FILENAME);
 
+		// Informe de Comparación de Precios
+		updateReport(PRICES_COMPARISON_JASPER_REPORT_UID, PRICES_COMPARISON_JASPER_REPORT_FILENAME);
+		
+		// Listado de Precios Modificados
+		updateReport(PRICE_CHANGE_REPORT_JASPER_REPORT_UID, PRICE_CHANGE_REPORT_JASPER_REPORT_FILENAME);
 		
 		return " ";
 	}
