@@ -44,6 +44,8 @@
 	<parameter name="SUBREPORT_TOTAL_GENERAL_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="SUBREPORT_TOTAL_CREDITS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 	<parameter name="SUBREPORT_TOTAL_DEBITS_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_PERCEPCIONES_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
+	<parameter name="SUBREPORT_MANUAL_DATASOURCE" isForPrompting="false" class="net.sf.jasperreports.engine.JRDataSource"/>
 
 	<field name="DATEACCT" class="java.util.Date"/>
 	<field name="TIPODOCNAME" class="java.lang.String"/>
@@ -706,71 +708,59 @@
 			</band>
 		</pageFooter>
 		<summary>
-			<band height="186"  isSplitAllowed="true" >
+			<band height="204"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="79"
-						y="65"
-						width="63"
+						x="85"
+						y="50"
+						width="76"
 						height="11"
-						key="textField"/>
+						key="textField"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{TOTALCOMPROBANTES}]]></textFieldExpression>
 				</textField>
-				<staticText>
-					<reportElement
-						mode="Transparent"
-						x="0"
-						y="8"
-						width="53"
-						height="16"
-						forecolor="#010101"
-						backcolor="#FFFFFF"
-						key="staticText-16"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center">
-						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[TOTALES]]></text>
-				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="79"
-						y="29"
-						width="63"
+						x="85"
+						y="17"
+						width="76"
 						height="11"
-						key="textField-2"/>
+						key="textField-2"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{TOTALGRAVADOS}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="79"
-						y="41"
-						width="63"
+						x="85"
+						y="28"
+						width="76"
 						height="11"
-						key="textField-3"/>
+						key="textField-3"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{TOTALNOGRAVADOS}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="79"
-						y="53"
-						width="63"
+						x="85"
+						y="39"
+						width="76"
 						height="11"
-						key="textField-4"/>
+						key="textField-4"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Right" verticalAlignment="Middle">
 						<font size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$P{TOTALIMPORTES}]]></textFieldExpression>
@@ -779,14 +769,15 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="29"
-						width="79"
+						y="17"
+						width="85"
 						height="11"
 						forecolor="#010101"
 						backcolor="#FFFFFF"
-						key="staticText-17"/>
+						key="staticText-17"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Neto Gravado:]]></text>
@@ -795,14 +786,15 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="41"
-						width="79"
+						y="28"
+						width="85"
 						height="11"
 						forecolor="#010101"
 						backcolor="#FFFFFF"
-						key="staticText-18"/>
+						key="staticText-18"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Neto No Grav.:]]></text>
@@ -811,30 +803,32 @@
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="53"
-						width="79"
+						y="39"
+						width="85"
 						height="11"
 						forecolor="#010101"
 						backcolor="#FFFFFF"
-						key="staticText-21"/>
+						key="staticText-21"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Importe:]]></text>
+				<text><![CDATA[Impuesto:]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="65"
-						width="79"
+						y="50"
+						width="85"
 						height="11"
 						forecolor="#010101"
 						backcolor="#FFFFFF"
-						key="staticText-22"/>
+						key="staticText-22"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left">
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
 				<text><![CDATA[Facturado:]]></text>
@@ -842,39 +836,45 @@
 				<staticText>
 					<reportElement
 						mode="Transparent"
-						x="220"
-						y="10"
-						width="83"
-						height="16"
+						x="0"
+						y="2"
+						width="56"
+						height="11"
 						forecolor="#010101"
 						backcolor="#FFFFFF"
-						key="staticText-27"/>
+						key="staticText-29"
+						positionType="Float"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center">
+					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<text><![CDATA[SUBTOTALES IVA]]></text>
+				<text><![CDATA[TOTALES]]></text>
 				</staticText>
 				<subreport  isUsingCache="true">
 					<reportElement
 						mode="Transparent"
-						x="220"
-						y="32"
-						width="315"
-						height="30"
+						x="180"
+						y="17"
+						width="355"
+						height="18"
 						key="subreport-1"
-						positionType="Float"/>
+						positionType="Float">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_TAXS_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_TAXS_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TAXS}]]></subreportExpression>
 				</subreport>
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="85"
+						y="138"
 						width="535"
-						height="28"
-						key="subreport-2"
-						positionType="Float"/>
+						height="19"
+						key="subreport-4"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_TOTAL_GENERAL_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["DETALLE DE NETO E IVA POR CATEGORIA DE CLIENTE - GENERAL"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -884,11 +884,14 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="121"
+						y="161"
 						width="535"
-						height="28"
-						key="subreport-3"
-						positionType="Float"/>
+						height="19"
+						key="subreport-5"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_TOTAL_CREDITS_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["DETALLE DE NETO E IVA POR CATEGORIA DE CLIENTE - NOTAS DE CREDITOS"]]></subreportParameterExpression>
 					</subreportParameter>
@@ -898,16 +901,108 @@
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="0"
-						y="156"
+						y="185"
 						width="535"
-						height="28"
-						key="subreport-4"
-						positionType="Float"/>
+						height="19"
+						key="subreport-6"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_TOTAL_DEBITS_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
 					<subreportParameter  name="TITLE">
 						<subreportParameterExpression><![CDATA["DETALLE DE NETO E IVA POR CATEGORIA DE CLIENTE - FACTURAS Y NOTAS DE DEBITO"]]></subreportParameterExpression>
 					</subreportParameter>
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_TOTAL_DEBITS_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_TOTAL}]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement
+						mode="Transparent"
+						x="180"
+						y="2"
+						width="93"
+						height="11"
+						forecolor="#010101"
+						backcolor="#FFFFFF"
+						key="staticText-30"
+						positionType="Float">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_TAXS_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[SUBTOTALES IVA]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						mode="Transparent"
+						x="0"
+						y="65"
+						width="535"
+						height="11"
+						forecolor="#010101"
+						backcolor="#FFFFFF"
+						key="staticText-31"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_PERCEPCIONES_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[PERCEPCIONES]]></text>
+				</staticText>
+				<subreport  isUsingCache="true">
+					<reportElement
+						mode="Transparent"
+						x="0"
+						y="78"
+						width="535"
+						height="18"
+						key="subreport-7"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_PERCEPCIONES_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_PERCEPCIONES_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_MANUAL_SUBREPORT_TAXS}]]></subreportExpression>
+				</subreport>
+				<staticText>
+					<reportElement
+						mode="Transparent"
+						x="0"
+						y="101"
+						width="535"
+						height="11"
+						forecolor="#010101"
+						backcolor="#FFFFFF"
+						key="staticText-32"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_MANUAL_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left">
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[OTROS TRIBUTOS]]></text>
+				</staticText>
+				<subreport  isUsingCache="true">
+					<reportElement
+						mode="Transparent"
+						x="0"
+						y="114"
+						width="535"
+						height="18"
+						key="subreport-8"
+						positionType="Float"
+						isRemoveLineWhenBlank="true">
+							<printWhenExpression><![CDATA[new Boolean($P{SUBREPORT_MANUAL_DATASOURCE} != null)]]></printWhenExpression>
+						</reportElement>
+					<dataSourceExpression><![CDATA[$P{SUBREPORT_MANUAL_DATASOURCE}]]></dataSourceExpression>
+					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_MANUAL_SUBREPORT_TAXS}]]></subreportExpression>
 				</subreport>
 			</band>
 		</summary>
