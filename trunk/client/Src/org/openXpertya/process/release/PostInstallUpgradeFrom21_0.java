@@ -60,6 +60,14 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String PRICE_CHANGE_REPORT_JASPER_REPORT_UID = "JACAD1_RA2-AD_Process-20210202130311740-315374";
 	protected final static String PRICE_CHANGE_REPORT_JASPER_REPORT_FILENAME = "PriceChangeReport.jasper";
 	
+	/** Informe Libro IVA */
+	protected final static String LIVA_JASPER_REPORT_UID = "LIVA2CORE-AD_JasperReport-1010047-20121031201418";
+	protected final static String LIVA_JASPER_REPORT_FILENAME = "InformeLibroIVA.jasper";
+	
+	/** Subreporte Informe Libro IVA Manuales */
+	protected final static String LIVA_SUBREPORT_MANUAL_JASPER_REPORT_UID = "LIVARPENH-AD_JasperReport-20210831110740889-608253";
+	protected final static String LIVA_SUBREPORT_MANUAL_JASPER_REPORT_FILENAME = "SubReport_TaxInformeLibroIva_Manuales.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -105,6 +113,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		
 		// Listado de Precios Modificados
 		updateReport(PRICE_CHANGE_REPORT_JASPER_REPORT_UID, PRICE_CHANGE_REPORT_JASPER_REPORT_FILENAME);
+		
+		// Libro IVA
+		updateReport(LIVA_JASPER_REPORT_UID, LIVA_JASPER_REPORT_FILENAME);
+		updateReport(LIVA_SUBREPORT_MANUAL_JASPER_REPORT_UID, LIVA_SUBREPORT_MANUAL_JASPER_REPORT_FILENAME);
 		
 		return " ";
 	}
