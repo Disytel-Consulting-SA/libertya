@@ -1587,7 +1587,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				
 				Integer invoiceID = (Integer)creditInvoice.getNewValueOnChange();
 				if (invoiceID != null)
-					txtCreditAvailable.setValue(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID)));
+					txtCreditAvailable.setValue(getModel().numberFormat(getModel().getCreditAvailableAmt(invoiceID, (Integer)cboCurrency.getValue())));
 				// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar 
 				try {
 					double min = Math.min(	getModel().numberParse(txtCreditAvailable.getValue().toString()).doubleValue(),
@@ -1644,7 +1644,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected double getTotalCreditsOpenAmt() {
 		double totalCreditsOpenAmt = 0;
 		for (int i = 0; i < ((Object[])creditInvoice.getNewValueOnChange()).length; i++) { 
-			totalCreditsOpenAmt = totalCreditsOpenAmt + getModel().getCreditAvailableAmt((Integer)((Object[])creditInvoice.getNewValueOnChange())[i]).doubleValue();	
+			totalCreditsOpenAmt = totalCreditsOpenAmt 
+					+ getModel().getCreditAvailableAmt((Integer)((Object[])creditInvoice.getNewValueOnChange())[i], 
+							(Integer) cboCurrency.getValue()).doubleValue();	
 		}
 		return totalCreditsOpenAmt;
 	}

@@ -2705,12 +2705,16 @@ public class VOrdenPagoModel {
 	}
 
 	public BigDecimal getCreditAvailableAmt(int invoiceID) {
+		return getCreditAvailableAmt(invoiceID, getC_Currency_ID());
+	}
+	
+	public BigDecimal getCreditAvailableAmt(int invoiceID, int currencyToID) {
 		try {
 			BigDecimal AvailableamountToConvert = (BigDecimal) DB.getSQLObject(null, "SELECT invoiceOpen(?, 0)",
 					new Object[] { invoiceID });
 			return currencyConvert(AvailableamountToConvert,
 					DB.getSQLValue(null, "SELECT C_Currency_ID From C_Invoice where C_Invoice_ID = " + invoiceID),
-					getC_Currency_ID(),
+					currencyToID,
 					// new Timestamp(new java.util.Date().getTime()));
 					m_fechaTrx);
 		} catch (Exception e) {
