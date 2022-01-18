@@ -2620,7 +2620,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				
 				Integer invoiceID = (Integer)creditInvoice.getValue();
 				if (invoiceID != null)
-					txtCreditAvailable.setValue(getModel().getCreditAvailableAmt(invoiceID));
+					txtCreditAvailable.setValue(getModel().getCreditAvailableAmt(invoiceID, (Integer)cboCurrency.getValue()));
 					// Setear el mínimo entre el monto pendiente de la NC y el total pendiente a pagar 
 					try {
 						double min = Math.min(	((BigDecimal)txtCreditAvailable.getValue()).doubleValue(),
@@ -2684,7 +2684,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	protected double getTotalCreditsOpenAmt() {
 		double totalCreditsOpenAmt = 0;
 		for (int i = 0; i < ((Object[])creditInvoice.getValue()).length; i++) { 
-			totalCreditsOpenAmt = totalCreditsOpenAmt + getModel().getCreditAvailableAmt((Integer)((Object[])creditInvoice.getValue())[i]).doubleValue();	
+			totalCreditsOpenAmt = totalCreditsOpenAmt
+					+ getModel().getCreditAvailableAmt((Integer) ((Object[]) creditInvoice.getValue())[i],
+							(Integer) cboCurrency.getValue()).doubleValue();	
 		}
 		return totalCreditsOpenAmt;
 	}
