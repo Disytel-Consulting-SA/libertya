@@ -1440,3 +1440,124 @@ CREATE OR REPLACE VIEW rv_c_invoice_reten_ganan_emitidas AS
 
 ALTER TABLE rv_c_invoice_reten_ganan_emitidas
   OWNER TO libertya;
+
+--20220118-Merge de Micro Libro IVA Digital Fixes
+--Fix por repetidos, omitir los nulos
+CREATE OR REPLACE FUNCTION getcodigooperacion(p_c_invoice_id integer)
+  RETURNS character AS
+$BODY$   DECLARE     	v_CodigoOperacion        	character(1);   BEGIN       
+
+select into v_CodigoOperacion codigooperacion
+from (
+   SELECT (CASE WHEN (COUNT(*) >= 1) THEN t.codigooperacion ELSE NULL END) as codigooperacion    
+   FROM (SELECT CASE WHEN it.taxamt = 0 AND t.rate <> 0 AND te.c_tax_id > 0 THEN te.codigooperacion ELSE t.codigooperacion END as codigooperacion 	 
+	FROM C_Invoicetax it      	 
+	INNER JOIN C_Tax t ON (t.C_Tax_ID = it.C_Tax_ID)  	 
+	LEFT JOIN (select * from c_tax where rate = 0 and isactive = 'Y' AND ispercepcion = 'N') as te on te.ad_client_id = it.ad_client_id     	 
+	WHERE (C_Invoice_ID = p_c_invoice_id) 
+		AND (t.rate = 0 OR (t.rate <> 0 AND it.taxamt = 0))
+		AND (t.rate > 0 and it.taxamt > 0 or t.rate = 0 and it.taxamt = 0)
+	) as t 
+group by codigooperacion) as i
+order by codigooperacion
+limit 1;
+
+   RETURN v_CodigoOperacion;   END; $BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getcodigooperacion(integer)
+  OWNER TO libertya;
+
+--Eliminación de caracteres no numéricos en el número de identificación
+CREATE OR REPLACE FUNCTION gettaxid(
+    p_bp_taxid character varying,
+    p_bp_taxidtype character,
+    p_bp_categoria_iva_id integer,
+    p_nroidentificcliente character varying,
+    p_grandtotal numeric)
+  RETURNS character varying AS
+$BODY$
+DECLARE
+	v_Categoria_IVA_ID		integer := NULL;
+	v_Bp_TaxID			character varying(20);
+BEGIN
+
+	v_Bp_TaxID := p_Bp_TaxID;
+
+	-- SI EL TIPO DE IDENTIFICACION DE LA ENTIDAD COMERCIAL ES DNI
+	IF (p_Bp_TaxIDType = '96') THEN 
+		-- SI EL NRO. DE IDENTIFICACION ES INVALIDO (SU LONGITUD DEBE SER MAYOR A 6 Y MENOR A 9), LIMPIAMOS EL VALOR
+		IF (v_Bp_TaxID IS NOT NULL) AND ((char_length(trim(both ' ' from v_Bp_TaxID)) < 7) OR (char_length(trim(both ' ' from v_Bp_TaxID)) > 8)) THEN
+			v_Bp_TaxID := NULL;
+		END IF;	
+	END IF;
+
+	-- SI EL MONTO DE LA FACTURA SUPERA LOS $1000 Y LA ENTIDAD NO TIENE SETEADO EL CAMPO taxid
+	IF (p_GrandTotal > 1000) AND (v_Bp_TaxID IS NULL OR trim(both ' ' from v_Bp_TaxID) = '')  THEN 
+		-- SI LA EC TIENE CATEGORIA DE IVA CONSUMIDOR FINAL, EL DNI PUEDE HABER QUEDADO REGISTRADO EN LA FACTURA (CAMPO NROIDENTIFICCLIENTE)
+		SELECT C_Categoria_Iva_ID
+		INTO v_Categoria_IVA_ID
+		FROM C_Categoria_Iva 
+		WHERE i_tipo_iva = 'CF' AND p_Bp_Categoria_IVA_ID = C_Categoria_Iva_ID;
+
+		-- SI LA EC TIENE CATEGORIA DE IVA CONSUMIDOR FINAL
+		IF  (v_Categoria_IVA_ID IS NOT NULL) THEN
+			v_Bp_TaxID := p_NroIdentificCliente;
+		END IF;	
+
+		-- SI EL NRO. DE IDENTIFICACION ES NULL O VACIO, SE ASIGNA COMO VALOR POR DEFECTO 1
+		IF (v_Bp_TaxID IS NULL OR v_Bp_TaxID = '0' OR trim(both ' ' from v_Bp_TaxID) = '') THEN
+			v_Bp_TaxID := '1';
+		END IF;
+	END IF;	
+
+	-- SI EL TIPO DE IDENTIFICACION ES DISTINTO DE 99, EL NRO. DE IDENTIFICACION NO PUEDE SER NULL O VACIO
+	-- SE ASIGNA COMO VALOR POR DEFECTO 1
+	IF (p_Bp_TaxIDType <> '99') AND (v_Bp_TaxID IS NULL OR v_Bp_TaxID = '0' OR trim(both ' ' from v_Bp_TaxID) = '') THEN
+		v_Bp_TaxID := '1';
+	END IF;	
+
+	RETURN regexp_replace(v_Bp_TaxID, '[^[:digit:]]', '', 'g'); 
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION gettaxid(character varying, character, integer, character varying, numeric)
+  OWNER TO libertya;
+
+--El crédito fiscal computable y la cantidad de alícuotas de iva era erróneo debido a la condición del case
+CREATE OR REPLACE VIEW reginfo_compras_cbte_v AS 
+ SELECT i.ad_client_id, i.ad_org_id, i.c_invoice_id, date_trunc('day'::text, i.dateacct) AS date, date_trunc('day'::text, i.dateinvoiced) AS fechadecomprobante, gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva)::character varying(15) AS tipodecomprobante, 
+        CASE
+            WHEN gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva)::text = '66'::text THEN 0
+            ELSE i.puntodeventa
+        END AS puntodeventa, 
+        CASE
+            WHEN gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva)::text = '66'::text THEN 0
+            ELSE i.numerocomprobante
+        END AS nrocomprobante, 
+        CASE
+            WHEN gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva)::text = '66'::text THEN i.importclearance
+            ELSE NULL::character varying
+        END::character varying(30) AS despachoimportacion, bp.taxidtype AS codigodocvendedor, bp.taxid AS nroidentificacionvendedor, bp.name AS nombrevendedor, currencyconvert(getgrandtotal(i.c_invoice_id, true), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imptotal, 0::numeric(20,2) AS impconceptosnoneto, 0::numeric AS impopeexentas, currencyconvert(gettaxamountbyperceptiontype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosvaloragregado, currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'N'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepopagosdeimpunac, currencyconvert(gettaxamountbyperceptiontype(i.c_invoice_id, 'B'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepiibb, currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'M'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS imppercepimpumuni, currencyconvert(gettaxamountbyareatype(i.c_invoice_id, 'I'::bpchar), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impimpuinternos, cu.wsfecode AS codmoneda, currencyrate(i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(10,6) AS tipodecambio, 
+        CASE
+            WHEN (l.letra = ANY (ARRAY['B'::bpchar, 'C'::bpchar])) OR gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva)::text = '66'::text THEN 0::numeric
+            ELSE getcantidadalicuotasiva(i.c_invoice_id)
+        END AS cantalicuotasiva, getcodigooperacion(i.c_invoice_id)::character varying(1) AS codigooperacion, 
+        CASE
+            WHEN (l.letra = ANY (ARRAY['B'::bpchar, 'C'::bpchar])) OR gettipodecomprobante(dt.doctypekey, l.letra, i.issotrx, dt.transactiontypefrontliva)::text = '66'::text THEN 0::numeric
+            ELSE currencyconvert(getcreditofiscalcomputable(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)
+        END::numeric(20,2) AS impcreditofiscalcomputable, currencyconvert(getimporteotrostributos(i.c_invoice_id), i.c_currency_id, 118, i.dateacct::timestamp with time zone, NULL::integer, i.ad_client_id, i.ad_org_id)::numeric(20,2) AS impotrostributos, NULL::character varying(20) AS cuitemisorcorredor, NULL::character varying(60) AS denominacionemisorcorredor, 0::numeric(20,2) AS ivacomision
+   FROM c_invoice i
+   JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+   LEFT JOIN c_letra_comprobante l ON l.c_letra_comprobante_id = i.c_letra_comprobante_id
+   JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+   JOIN c_currency cu ON cu.c_currency_id = i.c_currency_id
+  WHERE 
+CASE
+    WHEN i.issotrx = 'N'::bpchar THEN i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+    ELSE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar, 'VO'::bpchar, 'RE'::bpchar, '??'::bpchar])
+END AND (i.issotrx = 'N'::bpchar AND dt.transactiontypefrontliva IS NULL OR dt.transactiontypefrontliva = 'P'::bpchar) AND i.isactive = 'Y'::bpchar AND (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTI'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND dt.isfiscaldocument = 'Y'::bpchar AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar) AND (dt.iselectronic IS NULL OR dt.iselectronic::bpchar = 'N'::bpchar OR dt.iselectronic::bpchar = 'Y'::bpchar AND i.cae IS NOT NULL);
+
+ALTER TABLE reginfo_compras_cbte_v
+  OWNER TO libertya;
