@@ -1425,3 +1425,18 @@ ALTER FUNCTION getperceptionamtreturn(integer, character)
 --20220106- Merge de Micro QUICKER 
 --Nueva columna para incorporar el boton para agregar lineas rapido
 update ad_system set dummy = (SELECT addcolumnifnotexists('c_order','addlinesquicker','character(1)'));
+
+--20220118- Merge de Micro SICORE 
+--View para la exportación SICORE
+CREATE OR REPLACE VIEW rv_c_invoice_reten_ganan_emitidas AS 
+ SELECT rs.name, ah.ad_client_id, ah.ad_org_id, '06'::text AS codigo, i.dateacct AS date, ah.documentno AS comprobante, ah.grandtotal, '217'::text AS codigo_impuesto, rs.name2::text AS codigo_regimen, '1'::text AS codigo_operacion, round(ri.baseimponible_amt, 2) AS baseimponible, '01'::text AS condicion, '0'::text AS suspedidos, round(ri.amt_retenc, 2) AS amt_retenc, '000000'::text AS porcentaje_exlusion, to_char('now'::text::date::timestamp with time zone, 'dd/mm/YYYY'::text) AS emision_boletin, '80'::text AS tipo_doc, b.taxid::text AS cuit, i.documentno AS certificado, b.name AS ordenante, ' '::text AS acrecentamiento, 0::numeric AS cuit_pais, 0::numeric AS cuit_ordenante
+   FROM c_allocationhdr ah
+   JOIN m_retencion_invoice ri ON ah.c_allocationhdr_id = ri.c_allocationhdr_id
+   JOIN c_invoice i ON i.c_invoice_id = ri.c_invoice_id
+   JOIN c_retencionschema rs ON rs.c_retencionschema_id = ri.c_retencionschema_id
+   JOIN c_retenciontype rt ON rt.c_retenciontype_id = rs.c_retenciontype_id
+   JOIN c_bpartner b ON b.c_bpartner_id = ah.c_bpartner_id
+  WHERE (rt.name::text = ANY (ARRAY['Ganancias'::text, 'Honorarios Profesionales'::text])) AND rs.retencionapplication::text = 'E'::text AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]));
+
+ALTER TABLE rv_c_invoice_reten_ganan_emitidas
+  OWNER TO libertya;
