@@ -68,6 +68,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String LIVA_SUBREPORT_MANUAL_JASPER_REPORT_UID = "LIVARPENH-AD_JasperReport-20210831110740889-608253";
 	protected final static String LIVA_SUBREPORT_MANUAL_JASPER_REPORT_FILENAME = "SubReport_TaxInformeLibroIva_Manuales.jasper";
 	
+	/** Reporte Libro Diario General */
+	protected final static String LIDIGEN_JASPER_REPORT_UID = "LIDIGEN-AD_Process-20200915121504378-687567";
+	protected final static String LIDIGEN_JASPER_REPORT_FILENAME = "LibroDiarioGeneral.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -117,6 +121,9 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		// Libro IVA
 		updateReport(LIVA_JASPER_REPORT_UID, LIVA_JASPER_REPORT_FILENAME);
 		updateReport(LIVA_SUBREPORT_MANUAL_JASPER_REPORT_UID, LIVA_SUBREPORT_MANUAL_JASPER_REPORT_FILENAME);
+		
+		// Reporte Libro Diario General
+		updateReport(LIDIGEN_JASPER_REPORT_UID, LIDIGEN_JASPER_REPORT_FILENAME);
 		
 		return " ";
 	}

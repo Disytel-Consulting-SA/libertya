@@ -1561,3 +1561,487 @@ END AND (i.issotrx = 'N'::bpchar AND dt.transactiontypefrontliva IS NULL OR dt.t
 
 ALTER TABLE reginfo_compras_cbte_v
   OWNER TO libertya;
+  
+--20220119-0930 Merge de micro LIDIGEN. Nuevas funciones para actualización de la descripción de fact_acct
+-- Function: getfactacctdescription(integer, integer, numeric, integer, integer, integer)
+CREATE OR REPLACE FUNCTION getfactacctdescription(
+    clientid integer,
+    tableid integer,
+    recordid numeric,
+    lineid integer,
+    taxid integer,
+    productid integer)
+  RETURNS character varying AS
+$BODY$
+DECLARE
+	tn character varying;
+	summary character varying;
+	r record;
+	r2 record;
+	r3 record;
+	r4 record;
+BEGIN
+	--Obtener el nombre de la tabla
+	select into tn upper(tablename) from ad_table where ad_table_id = tableid;
+
+	if (tn = 'C_INVOICE') then
+		select into r * from c_invoice where c_invoice_id = recordid;
+		select into r2 * from c_doctype where c_doctype_id = r.c_doctypetarget_id;
+
+		summary = r2.name || ' - ' || r.documentno;
+
+		if(lineid is not null and lineid > 0) then
+			select into r3 * from c_invoiceline where c_invoiceline_id = lineid;
+			summary = summary || ' - Línea ' || r3.line || ' NETO';
+		end if;
+	
+		if(taxid is not null and taxid > 0) then
+			select into r3 name from c_tax where c_tax_id = taxid;
+			summary = summary || ' - ' || r3.name;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'C_ALLOCATIONHDR') then
+		select into r * from c_allocationhdr where c_allocationhdr_id = recordid;
+		select into r2 * from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		if(r2 is not null) then
+			summary = r2.name;
+		else
+			summary = r.allocationtype;
+		end if;
+
+		summary = summary || ' ' || r.documentno;
+
+		if(lineid is not null and lineid > 0) then
+			select into r3 * from c_allocationline where c_allocationline_id = lineid;
+			if (r3.c_invoice_id is not null) then
+				summary = summary || ' - ' || getFactAcctDescription(clientid, 318, r3.c_invoice_id::numeric, 0, 0, 0);
+			end if;
+			
+			if (r3.c_payment_id is not null) then
+				summary = summary || ' - ' || getFactAcctDescription(clientid, 335, r3.c_payment_id::numeric, 0, 0, 0);
+			elsif (r3.c_cashline_id is not null) then 
+				summary = summary || ' - ' || getFactAcctDescription(clientid, 407, (select c_cash_id from c_cashline where c_cashline_id = r3.c_cashline_id)::numeric, r3.c_cashline_id, 0, 0);
+			elsif (r3.c_invoice_credit_id is not null) then
+				summary = summary || ' - ' || getFactAcctDescription(clientid, 318, r3.c_invoice_credit_id::numeric, 0, 0, 0);
+			end if;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'C_BANKSTATEMENT') then
+		select into r * from c_bankstatement where c_bankstatement_id = recordid;
+		select into r2 * from c_bankaccount where c_bankaccount_id = r.c_bankaccount_id;
+
+		summary = 'Extracto Bancario - ' || r2.description;
+
+		if(lineid is not null and lineid > 0) then
+			select into r3 * from c_bankstatementline where c_bankstatementline_id = lineid;
+			if (r3.description is not null) then
+				summary = summary || ' - ' || r3.description;
+			end if;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'C_PAYMENT') then
+		select into r * from c_payment where c_payment_id = recordid;
+		select into r2 * from c_bankaccount where c_bankaccount_id = r.c_bankaccount_id;
+
+		--Referencia del tendertype
+		select into r3 ad_language from ad_client where ad_client_id = clientid;
+
+		if (r3.ad_language = 'en_US') then
+			select into r4 rl.name
+			from ad_ref_list rl
+			where ad_reference_id = (select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-214')
+				and value = r.tendertype;
+		else 
+			select into r4 t.name
+			from ad_ref_list rl
+			join ad_ref_list_trl t on t.ad_ref_list_id = rl.ad_ref_list_id
+			where ad_reference_id = (select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-214')
+				and value = r.tendertype and ad_language = r3.ad_language;
+		end if;
+
+		summary = r4.name || ' ' || r.documentno;
+		
+		if (r.tendertype = 'C') then
+			select into r3 ef.name 
+			from m_entidadfinanciera ef 
+			join m_entidadfinancieraplan efp on ef.m_entidadfinanciera_id = efp.m_entidadfinanciera_id
+			where efp.m_entidadfinancieraplan_id = r.m_entidadfinancieraplan_id;
+
+			summary = summary || ' - ' || r3.name;
+		end if;
+
+		summary = summary || ' - ' || r2.description;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'C_CASH') then
+		select into r * from c_cash where c_cash_id = recordid;
+
+		summary = 'Caja ' || r.name;
+
+		if(lineid is not null and lineid > 0) then
+			select into r2 * from c_cashline where c_cashline_id = lineid;
+			summary = summary || ' - Línea ' || r2.line;
+
+			select into r3 ad_language from ad_client where ad_client_id = clientid;
+
+			if (r3.ad_language = 'en_US') then
+				select into r4 rl.name
+				from ad_ref_list rl
+				where ad_reference_id = (select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-217')
+					and value = r2.cashtype;
+			else
+				select into r4 t.name
+				from ad_ref_list rl
+				join ad_ref_list_trl t on t.ad_ref_list_id = rl.ad_ref_list_id
+				where ad_reference_id = (select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-217')
+					and value = r2.cashtype and ad_language = r3.ad_language;
+			end if;
+
+			summary = summary || ' - ' || r4.name;
+
+			if (r2.cashtype = 'C') then
+				select into r3 name from c_charge where c_charge_id = r2.c_charge_id;
+				summary = summary || ' ' || r3.name;
+			elsif (r2.cashtype = 'I') then
+				select into r3 documentno from c_invoice where c_invoice_id = r2.c_invoice_id;
+				if (r3.documentno is not null) then 
+					summary = summary || ' ' || r3.documentno;
+				end if;
+			elsif (r2.cashtype = 'T') then
+				select into r3 description from c_bankaccount where c_bankaccount_id = r2.c_bankaccount_id;
+				summary = summary || ' ' || r3.description;
+			end if;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+	
+	elsif (tn = 'C_CREDITCARDSETTLEMENT') then
+		select into r * from C_CreditCardSettlement where C_CreditCardSettlement_id = recordid;
+		summary = 'Liquidación Tarjeta - ' || r.settlementno;
+
+		if(taxid is not null and taxid > 0) then
+			select into r3 name from c_tax where c_tax_id = taxid;
+			summary = summary || ' - ' || r3.name;
+		else 
+			select into r3 name from m_product where m_product_id = productid;
+			summary = summary || ' - ' || r3.name;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'GL_JOURNAL') then
+		select into r * from Gl_Journal where Gl_Journal_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'M_INOUT') then
+		select into r * from m_inout where m_inout_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+
+		if(lineid is not null and lineid > 0) then
+			select into r2 * from m_inoutline where m_inoutline_id = lineid;
+			summary = summary || ' - Línea ' || r2.line;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'M_INVENTORY') then
+		select into r * from M_Inventory where M_Inventory_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+		
+		if(lineid is not null and lineid > 0) then
+			select into r2 * from M_Inventoryline where M_Inventoryline_id = lineid;
+			summary = summary || ' - Línea ' || r2.line;
+		end if;
+		
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'M_MOVEMENT') then
+		select into r * from M_Movement where M_Movement_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+		
+		if(lineid is not null and lineid > 0) then
+			select into r2 * from M_Movementline where M_Movementline_id = lineid;
+			summary = summary || ' - Línea ' || r2.line;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'M_PRODUCTION') then
+		select into r * from M_Production where M_Production_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+		
+		if(lineid is not null and lineid > 0) then
+			select into r2 * from M_Productionline where M_Productionline_id = lineid;
+			summary = summary || ' - Línea ' || r2.line;
+		end if;
+
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	elsif (tn = 'M_MATCHINV') then
+		summary = 'Relacion Factura-Remito';
+	elsif (tn = 'M_MATCHPO') then
+		summary = 'Relacion Pedido-Factura-Remito';
+	elsif (tn = 'M_AMORTIZATION') then
+		select into r * from M_Amortization where M_Amortization_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+		
+		if(lineid is not null and lineid > 0) then
+			select into r2 * from M_Amortizationline where M_Amortizationline_id = lineid;
+			summary = summary || ' - Línea ' || r2.line;
+		end if;
+		
+		if (r.docstatus IN ('VO','RE')) then
+			summary = 'ANU - ' || summary;
+		end if;
+		
+	else summary := '';
+	end if;
+
+	return summary;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getfactacctdescription(integer, integer, numeric, integer, integer, integer)
+  OWNER TO libertya;
+
+-- Function: getfactacctjournalsummary(integer, integer, numeric, integer)
+CREATE OR REPLACE FUNCTION getfactacctjournalsummary(
+    clientid integer,
+    tableid integer,
+    recordid numeric,
+    bpartnerid integer)
+  RETURNS character varying AS
+$BODY$
+DECLARE
+	tn character varying;
+	summary character varying;
+	r record;
+	r2 record;
+	r3 record;
+	r4 record;
+BEGIN
+	summary = '';
+	--Obtener el nombre de la tabla
+	select into tn upper(tablename) from ad_table where ad_table_id = tableid;
+	
+	if (tn = 'C_INVOICE') then
+		select into r documentno, c_doctypetarget_id from c_invoice where c_invoice_id = recordid;
+		select into r2 issotrx, signo_issotrx from c_doctype where c_doctype_id = r.c_doctypetarget_id;
+
+		if ((r2.issotrx = 'Y' and r2.signo_issotrx = '1') OR (r2.issotrx = 'N' and r2.signo_issotrx = '-1')) then
+			summary = summary || ' DEB ';
+		else 
+			summary = summary || ' CRED ';
+		end if;
+		
+		summary = summary || r.documentno;
+		
+	elsif (tn = 'C_ALLOCATIONHDR') then
+		select into r documentno, allocationtype, c_doctype_id from c_allocationhdr where c_allocationhdr_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		if(r2 is not null) then
+			summary = r2.name;
+		else
+			summary = r.allocationtype;
+		end if;
+
+		summary = summary || ' ' || r.documentno;
+		
+	elsif (tn = 'C_BANKSTATEMENT') then
+		select into r c_bankaccount_id from c_bankstatement where c_bankstatement_id = recordid;
+		select into r2 description from c_bankaccount where c_bankaccount_id = r.c_bankaccount_id;
+
+		summary = 'Extracto ' || r2.description;
+		
+	elsif (tn = 'C_PAYMENT') then
+		select into r tendertype, documentno from c_payment where c_payment_id = recordid;
+
+		--Referencia del tendertype
+		select into r3 ad_language from ad_client where ad_client_id = clientid;
+
+		if (r3.ad_language = 'en_US') then
+			select into r4 rl.name
+			from ad_ref_list rl
+			where ad_reference_id = (select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-214')
+				and value = r.tendertype;
+		else 
+			select into r4 t.name
+			from ad_ref_list rl
+			join ad_ref_list_trl t on t.ad_ref_list_id = rl.ad_ref_list_id
+			where ad_reference_id = (select ad_reference_id from ad_reference where ad_componentobjectuid = 'CORE-AD_Reference-214')
+				and value = r.tendertype and ad_language = r3.ad_language;
+		end if;
+
+		summary = r4.name || ' ' || r.documentno;
+		
+	elsif (tn = 'C_CASH') then
+		select into r name from c_cash where c_cash_id = recordid;
+		summary = 'Caja ' || r.name;
+	
+	elsif (tn = 'C_CREDITCARDSETTLEMENT') then
+		select into r settlementno from C_CreditCardSettlement where C_CreditCardSettlement_id = recordid;
+		summary = 'Liquidación - ' || r.settlementno;
+		
+	elsif (tn = 'GL_JOURNAL') then
+		select into r c_doctype_id, description, documentno from Gl_Journal where Gl_Journal_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+
+		if (r.description is not null) then
+			summary = summary || ' ' || r.description;
+		end if;
+		
+	elsif (tn = 'M_INOUT') then
+		select into r c_doctype_id, documentno from m_inout where m_inout_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+		
+	elsif (tn = 'M_INVENTORY') then
+		select into r c_doctype_id, documentno from M_Inventory where M_Inventory_id = recordid;
+		select into r2 name from c_doctype where c_doctype_id = r.c_doctype_id;
+
+		summary = r2.name || ' ' || r.documentno;
+		
+	elsif (tn = 'M_MOVEMENT') then
+		summary = 'Movimiento de Inventario ' || r.documentno;
+				
+	elsif (tn = 'M_PRODUCTION') then
+		summary = 'Produccion ' || r.documentno;
+		
+	elsif (tn = 'M_MATCHINV') then
+		summary = 'Relacion Factura-Remito';
+	elsif (tn = 'M_MATCHPO') then
+		summary = 'Relacion Pedido-Factura-Remito';
+	elsif (tn = 'M_AMORTIZATION') then
+		select into r documentno from M_AMORTIZATION where M_AMORTIZATION_id = recordid;
+		summary = 'Amortizacion ' || r.documentno;
+		
+	else summary := '';
+	end if;
+
+	summary = 'POR ' || summary;
+
+	if(bpartnerid is not null and bpartnerid > 0) then
+		select into r2 name from c_bpartner where c_bpartner_id = bpartnerid;
+		summary = summary || ' - ' || r2.name;
+	end if;
+
+	return summary;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION getfactacctjournalsummary(integer, integer, numeric, integer)
+  OWNER TO libertya;
+
+-- Function: update_fact_acct_description()
+CREATE OR REPLACE FUNCTION update_fact_acct_description()
+  RETURNS trigger AS
+$BODY$
+BEGIN
+	NEW.description = getFactAcctDescription(NEW.ad_client_id, NEW.ad_table_id, NEW.record_id, NEW.line_id, NEW.c_tax_id, NEW.m_product_id);
+	
+	RETURN NEW;
+END;
+
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION update_fact_acct_description()
+  OWNER TO libertya;
+
+--TRIGGER Fact_Acct
+CREATE TRIGGER update_fact_acct_description
+  BEFORE INSERT OR UPDATE
+  ON fact_acct
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_fact_acct_description();
+
+--Función de reseteo de descripción
+CREATE OR REPLACE FUNCTION resetfactacctdescription(
+    clientid integer,
+    tableid integer)
+  RETURNS void AS
+$BODY$
+BEGIN
+	update fact_acct
+	set description = getFactAcctDescription(ad_client_id, ad_table_id, record_id, line_id, c_tax_id, m_product_id)
+	where ad_client_id = clientid and (tableid = 0 or ad_table_id = tableid);
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION resetfactacctdescription(integer, integer)
+  OWNER TO libertya;
