@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_EstadoDeCuenta
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2018-05-10 23:23:19.435 */
+ *  @version  - 2022-01-20 10:36:04.365 */
 public class X_T_EstadoDeCuenta extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -17,6 +17,7 @@ super (ctx, T_EstadoDeCuenta_ID, trxName);
 /** if (T_EstadoDeCuenta_ID == 0)
 {
 setAD_PInstance_ID (0);
+setFilterInternalEC (false);
 setT_EstadoDeCuenta_ID (0);
 }
  */
@@ -342,6 +343,22 @@ Document sequence NUMERIC of the document */
 public String getDocumentNo() 
 {
 return (String)get_Value("DocumentNo");
+}
+/** Set Filter Internal EC */
+public void setFilterInternalEC (boolean FilterInternalEC)
+{
+set_Value ("FilterInternalEC", new Boolean(FilterInternalEC));
+}
+/** Get Filter Internal EC */
+public boolean isFilterInternalEC() 
+{
+Object oo = get_Value("FilterInternalEC");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set Grand Total.
 Total amount of document */

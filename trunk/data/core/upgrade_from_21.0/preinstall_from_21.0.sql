@@ -2045,3 +2045,7 @@ $BODY$
   COST 100;
 ALTER FUNCTION resetfactacctdescription(integer, integer)
   OWNER TO libertya;
+  
+--20220120-1050 Merge de Micro FIECIN. Filtro de Entidades comerciales internas en Informe de Saldos y Estado de Cuenta
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_balancereport','FilterInternalEC','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('t_estadodecuenta','FilterInternalEC','character(1) NOT NULL DEFAULT ''N''::bpchar'));

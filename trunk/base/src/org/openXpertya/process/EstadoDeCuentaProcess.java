@@ -51,6 +51,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	private HashMap<Integer, BigDecimal> saldosGeneralMultimoneda = new HashMap<Integer, BigDecimal>();
 	
 	PreparedStatement pstmt = null;
+	
+	private boolean filterInternalEC = false;
 		
 	@Override
 	protected void prepare() {
@@ -100,6 +102,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
             	condition = (String)para[ i ].getParameter();
             } else if( name.equalsIgnoreCase( "C_BP_Group_ID" )) {
             	bpGroupID = para[ i ].getParameterAsInt();
+            } else if( name.equalsIgnoreCase( "FilterInternalEC" )) {
+            	filterInternalEC = ((String)para[ i ].getParameter()).equals("Y");
             } else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
@@ -159,6 +163,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				" and ad_client_id = " + getAD_Client_ID() +
 				(bPartnerID!=0?" AND c_bpartner_id = " + bPartnerID:"") +
 				(bpGroupID!=0?" AND c_bp_group_id = " + bpGroupID:"") +
+				(bPartnerID!=0?"":getFilterInternalEC()) +
 				" order by c_bpartner_id ";	
 	}
 	
@@ -511,6 +516,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setDateToDays(dateToDays);
 			ec.setCondition(condition);
 			ec.setDirectInsert(true);
+			ec.setFilterInternalEC(filterInternalEC);
 			ec.save();
 			
 			subSaldo = ec.getOpenAmt();
@@ -581,6 +587,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
+			ec.setFilterInternalEC(filterInternalEC);
 			ec.setDirectInsert(true);
 			ec.save();
 		}
@@ -612,6 +619,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
+			ec.setFilterInternalEC(filterInternalEC);
 			ec.setDirectInsert(true);
 			ec.save();
 		}
@@ -657,6 +665,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setDateAcct(dateTrxFrom);
 		} 
 		ec.setCondition(condition);
+		ec.setFilterInternalEC(filterInternalEC);
 		ec.setDirectInsert(true);
 		ec.save();
 	}
@@ -701,6 +710,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
+			ec.setFilterInternalEC(filterInternalEC);
 			ec.setDirectInsert(true);
 			ec.save();
 		}
@@ -732,6 +742,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 				ec.setDateAcct(dateTrxFrom);
 			} 
 			ec.setCondition(condition);
+			ec.setFilterInternalEC(filterInternalEC);
 			ec.setDirectInsert(true);
 			ec.save();
 		}
@@ -772,5 +783,20 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	 */
 	public String getDateToInlineQuery(){
 		return " ('"+ ((dateTrxTo != null) ? dateTrxTo + "'" : "now'::text") + ")::timestamp(6) without time zone ";
+	}
+	
+	/**
+	 * Filtro de entidades comerciales que sean de uso interno, es decir, para
+	 * retenciones y entidades financieras
+	 * 
+	 * @return condición SQL para dichas EC
+	 */
+	protected String getFilterInternalEC() {
+		String sql = "";
+		if(filterInternalEC) {
+			sql = " AND c_bpartner_id NOT IN (select distinct c_bpartner_id from m_entidadfinanciera where ad_client_id = "+Env.getAD_Client_ID(getCtx())+") ";
+			sql += " AND c_bpartner_id NOT IN (select distinct c_bpartner_recaudador_id from c_retencionschema where ad_client_id = "+Env.getAD_Client_ID(getCtx())+") ";
+		}
+		return sql;
 	}
 }
