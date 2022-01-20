@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por T_BalanceReport
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-06-28 15:44:07.362 */
+ *  @version  - 2022-01-20 10:36:04.299 */
 public class X_T_BalanceReport extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,6 +19,7 @@ super (ctx, T_BalanceReport_ID, trxName);
 setAD_PInstance_ID (0);
 setCondition (null);
 setDateCreated (new Timestamp(System.currentTimeMillis()));
+setFilterInternalEC (false);
 setOnlyCurrentAccounts (false);
 }
  */
@@ -57,8 +58,8 @@ public static final String ACCOUNTTYPE_Vendor = "V";
 Indicates the type of account */
 public void setAccountType (String AccountType)
 {
-if (AccountType == null || AccountType.equals("C") || AccountType.equals("V"));
- else throw new IllegalArgumentException ("AccountType Invalid value - Reference = ACCOUNTTYPE_AD_Reference_ID - C - V");
+if (AccountType == null || AccountType.equals("C") || AccountType.equals("V") || ( refContainsValue("CORE-AD_Reference-1000072", AccountType) ) );
+ else throw new IllegalArgumentException ("AccountType Invalid value: " + AccountType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000072") );
 if (AccountType != null && AccountType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -164,8 +165,8 @@ public static final String CONDITION_All = "A";
 /** Set Condition */
 public void setCondition (String Condition)
 {
-if (Condition.equals("B") || Condition.equals("P") || Condition.equals("A"));
- else throw new IllegalArgumentException ("Condition Invalid value - Reference = CONDITION_AD_Reference_ID - B - P - A");
+if (Condition.equals("B") || Condition.equals("P") || Condition.equals("A") || ( refContainsValue("CORE-AD_Reference-1010267", Condition) ) );
+ else throw new IllegalArgumentException ("Condition Invalid value: " + Condition + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010267") );
 if (Condition == null) throw new IllegalArgumentException ("Condition is mandatory");
 if (Condition.length() > 1)
 {
@@ -245,6 +246,22 @@ public BigDecimal getDueDebt()
 BigDecimal bd = (BigDecimal)get_Value("DueDebt");
 if (bd == null) return Env.ZERO;
 return bd;
+}
+/** Set Filter Internal EC */
+public void setFilterInternalEC (boolean FilterInternalEC)
+{
+set_Value ("FilterInternalEC", new Boolean(FilterInternalEC));
+}
+/** Get Filter Internal EC */
+public boolean isFilterInternalEC() 
+{
+Object oo = get_Value("FilterInternalEC");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
 }
 /** Set General balance */
 public void setGeneralBalance (BigDecimal GeneralBalance)

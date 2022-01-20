@@ -60,6 +60,7 @@ public class BalanceReport extends SvrProcess {
 	/** Preferencia a definir segun la necesidad de ejecución */
 	public static final String BALANCE_REPORT_ITERATIVE_PREFERENCE = "BALANCE_REPORT_ITERATIVE";
 	
+	private boolean filterInternalEC = false;
 	
 	@Override
 	protected void prepare() {
@@ -96,7 +97,9 @@ public class BalanceReport extends SvrProcess {
         		valueTo = valueToOrigin.equals("%")?null:valueToOrigin;
         	} else if (name.equalsIgnoreCase("Condition")) {
 				setCondition((String) para[i].getParameter());
-			}
+			} else if( name.equalsIgnoreCase( "FilterInternalEC" )) {
+            	filterInternalEC = ((String)para[ i ].getParameter()).equals("Y");
+            }
         }
         
         // Reporte de Cta Corriente de Cliente o Proveedor.
@@ -198,6 +201,7 @@ public class BalanceReport extends SvrProcess {
 				sqlDoc.append(getAccountTypeQuery());
 				sqlDoc.append(getOnlyCurrentAccountsQuery());
 				sqlDoc.append(getScopeQuery());
+				sqlDoc.append(getFilterInternalEC());
 			} else {
 				// Logica iterativa
 				sqlDoc.append(" 	WHERE bp.c_bpartner_id = " + rsBP.getInt("c_bpartner_id"));
@@ -252,7 +256,7 @@ public class BalanceReport extends SvrProcess {
 				subindice++;
 				usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
 				usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
-				usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition ) ");
+				usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition, FilterInternalEC) ");
 				usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 											.append(getAD_Client_ID()).append(",")
 											.append(p_AD_Org_ID == null?"0":p_AD_Org_ID).append(",")
@@ -295,6 +299,8 @@ public class BalanceReport extends SvrProcess {
 						rs.getBigDecimal("chequesencartera")):"null::numeric");
 				usql.append(" , ");
 				usql.append("'"+getCondition()+"'");
+				usql.append(" , ");
+				usql.append("'"+(filterInternalEC?"Y":"N")+"'");
 				usql.append(" ); ");
 			}
 		}
@@ -317,8 +323,8 @@ public class BalanceReport extends SvrProcess {
 					
 					// Reinsertar, pero ordenando segun el criterio que corresponda, a partir de maxSubIndice+1.  Ordenar por el balance,  bien por fecha mas antigua... y sino queda como estaba
 					DB.executeUpdate(
-						" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition) " + 
-						" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition " +
+						" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition, FilterInternalEC) " + 
+						" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition, FilterInternalEC " +
 						" 	from t_balancereport " +
 						"	where ad_pinstance_id = " + getAD_PInstance_ID() +
 						"	order by " + getOrderBy() +
@@ -387,7 +393,9 @@ public class BalanceReport extends SvrProcess {
 				.append(getBPGroupQuery())
 				.append(getAccountTypeQuery())
 				.append(getScopeQuery())
-				.append(getOnlyCurrentAccountsQuery());
+				.append(getOnlyCurrentAccountsQuery())
+				.append(getFilterInternalEC());
+		
 		
 		if(!Util.isEmpty(valueFrom, true)){
 			bpQuery.append(" AND bp.value >= minvalue ");
@@ -471,6 +479,20 @@ public class BalanceReport extends SvrProcess {
 		}
 		return sql;
 	}
-		
+	
+	/**
+	 * Filtro de entidades comerciales que sean de uso interno, es decir, para
+	 * retenciones y entidades financieras
+	 * 
+	 * @return condición SQL para dichas EC
+	 */
+	protected String getFilterInternalEC() {
+		String sql = "";
+		if(filterInternalEC) {
+			sql = " AND bp.c_bpartner_id NOT IN (select distinct c_bpartner_id from m_entidadfinanciera where ad_client_id = "+Env.getAD_Client_ID(getCtx())+") ";
+			sql += " AND bp.c_bpartner_id NOT IN (select distinct c_bpartner_recaudador_id from c_retencionschema where ad_client_id = "+Env.getAD_Client_ID(getCtx())+") ";
+		}
+		return sql;
+	}
 	
 }
