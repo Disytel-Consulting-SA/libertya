@@ -80,6 +80,10 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 	protected final static String LIVADET_COMPRAS_JASPER_REPORT_UID = "LIVADET-AD_Process-20210510104521071-681043";
 	protected final static String LIVADET_COMPRAS_JASPER_REPORT_FILENAME = "Libro_IVA_Purchase_Detailed.jasper";
 	
+	/** Informe de Descuento por Artículo */
+	protected final static String INFODESCAR_JASPER_REPORT_UID = "INFODESCAR-AD_Process-20201027165059682-999619";
+	protected final static String INFODESCAR_JASPER_REPORT_FILENAME = "DiscountsByProduct.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -138,6 +142,9 @@ public class PostInstallUpgradeFrom21_0 extends PluginPostInstallProcess {
 		
 		/** Informe de Libro de IVA Compras Detallado */
 		updateReport(LIVADET_COMPRAS_JASPER_REPORT_UID, LIVADET_COMPRAS_JASPER_REPORT_FILENAME);
+		
+		/** Informe de Descuento por Artículo */
+		updateReport(INFODESCAR_JASPER_REPORT_UID, INFODESCAR_JASPER_REPORT_FILENAME);
 		
 		return " ";
 	}
