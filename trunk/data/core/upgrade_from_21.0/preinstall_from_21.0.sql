@@ -2049,3 +2049,30 @@ ALTER FUNCTION resetfactacctdescription(integer, integer)
 --20220120-1050 Merge de Micro FIECIN. Filtro de Entidades comerciales internas en Informe de Saldos y Estado de Cuenta
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_balancereport','FilterInternalEC','character(1) NOT NULL DEFAULT ''N''::bpchar'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('t_estadodecuenta','FilterInternalEC','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+
+--20220322-1124 Finalizacion de conexiones idle in transaction (postgres 9.5 o superior)
+CREATE OR REPLACE FUNCTION pg_terminage_backends()
+RETURNS NUMERIC AS
+$BODY$
+DECLARE
+  targetpid int;
+  killcount int;
+BEGIN
+	killcount := 0;
+	FOR targetpid IN
+		select pid 
+		from pg_stat_activity 
+		where state ilike '%idle%in%transaction%' 
+		and age(now(), query_start) > '1 minute'
+		order by query_start asc 
+	LOOP
+		killcount := killcount + 1;
+		raise notice 'killing pid %', targetpid;
+		perform pg_terminate_backend( targetpid );
+	END LOOP;
+	
+	return killcount;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
