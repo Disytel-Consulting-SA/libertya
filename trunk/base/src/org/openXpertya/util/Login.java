@@ -146,7 +146,7 @@ public class Login {
             msg.append( "(untested)" );
         }
 
-        msg.append( "  <>  1.6.0" );
+        msg.append( " not accepted." );
 
         //
 

@@ -2076,3 +2076,5 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+-- 20220503-1030 Versionado DBB para release 22.0
+UPDATE ad_system SET version = '03-05-2022' WHERE ad_system_id = 0;
