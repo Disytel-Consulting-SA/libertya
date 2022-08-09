@@ -1096,6 +1096,6 @@ public class ReciboDeCliente {
 	 *         contrario
 	 */
 	public boolean isApplyPaymentTerm() {
-		return getActualDiscountConfig().isApplyPaymentTerm();
+		return getActualDiscountConfig() != null ? getActualDiscountConfig().isApplyPaymentTerm() : false;
 	}
 }
