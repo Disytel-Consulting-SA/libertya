@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # $Id: Libertya.sh,v 2.0 $
-echo Cliente Libertya v22.0 $OXP_HOME
+echo Cliente Libertya v19.07 $OXP_HOME
 
 #	Establecer Directamente para Sobreescribir
 #OXP_HOME=/ServidorOXP
@@ -33,4 +33,12 @@ fi
 PROP=
 #PROP=-DPropertyFile=test.properties
 
-$JAVA -Xms32m -Xmx512m -Dfile.encoding=UTF-8 -DOXP_HOME=$OXP_HOME $PROP -classpath $CLASSPATH org.openXpertya.OpenXpertya
+#Lee y establece flags custom desde archivo
+jvm_args=""
+while read -r line; do
+    jvm_args="$jvm_args$line "
+done < proxy.preferences
+jvm_args="$jvm_args$line"
+echo "JVM Args: $jvm_args"
+
+$JAVA -Xms32m -Xmx512m -Dfile.encoding=UTF-8 $jvm_args -DOXP_HOME=$OXP_HOME $PROP -classpath $CLASSPATH org.openXpertya.OpenXpertya
