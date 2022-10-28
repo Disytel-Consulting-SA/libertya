@@ -19,7 +19,7 @@ function download(filename, location, winVer) {
 
 function getContentWin(location) {
   return getContentCommon(location, "wget.exe") + 
-  		 "libertya.bat \n" +
+  		 "Libertya.bat \n" +
 		 "cd .. \n";
 }
 
@@ -42,7 +42,7 @@ return  "mkdir ClienteLBY \n" +
      	"cd .. \n" +
      	appExec + " -N " + baseUrl + "OXPHome/libertya.exe \n" +
 		appExec + " -N " + baseUrl + "OXPHome/libertya.bat \n" +
-		appExec + " -N " + baseUrl + "OXPHome/proxy.preferences \n" +
+		appExec + " -N " + baseUrl + "proxy.preferences \n" +
      	appExec + " -N " + baseUrl + "OXPHome/Libertya.sh \n";
 }
 </script>
