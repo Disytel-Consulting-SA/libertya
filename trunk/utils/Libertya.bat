@@ -44,14 +44,13 @@
 @if "%1" == "" goto START
 @SET PROP=-DPropertyFile=%1
 
+
+:START
 Rem lectura de proxy.preferences
 set preferences=
 setlocal enabledelayedexpansion
 for /f "tokens=*" %%a in (proxy.preferences) do (
     set preferences=!preferences! %%a
 )
-
-:START
+@Echo proxy preferences %preferences%
 @"%JAVA%" -Xms64m -Xmx512m -Dfile.encoding=UTF-8 %preferences% -DOXP_HOME=%OXP_HOME% %PROP% -classpath %CLASSPATH% org.openXpertya.OpenXpertya 
-
-@sleep 15
