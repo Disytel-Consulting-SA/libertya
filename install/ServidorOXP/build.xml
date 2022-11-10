@@ -74,7 +74,7 @@
 	<!--	<copy file="utils/openxpertya.exe"
 	  tofile="openxpertya.exe" filtering="yes" overwrite="yes"/>-->
 	<delete> 
-	  <fileset dir="." includes="**/*.sh" excludes="Libertya.sh"/>
+	  <fileset dir="." includes="**/*.sh" excludes="Libertya.sh,utils/Libertya.sh"/>
 	</delete>
 
   </target>
