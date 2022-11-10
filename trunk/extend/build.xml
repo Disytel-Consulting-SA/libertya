@@ -46,7 +46,7 @@ openXpertya
   
   <target name="compile" depends="makedir">
     <!-- Compilar el codigo java de ${src} a ${build.dir} -->
-    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+    <javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.8" target="1.8" debug="on" encoding="UTF-8">
       <classpath refid="project.class.path"/>
     </javac>
     <!-- Copiar Todas las imagenes y archivos al directorio de compilacion -->

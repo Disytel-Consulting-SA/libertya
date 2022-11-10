@@ -47,6 +47,9 @@
 
 package org.openXpertya.print.pdf.text.pdf;
 
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageOutputStream;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -1250,14 +1253,20 @@ public class PdfGraphics2D extends Graphics2D {
                 g3.drawImage(img, 0, 0, img.getWidth(null), img.getHeight(null), null);
                 g3.dispose();
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                com.sun.image.codec.jpeg.JPEGImageEncoder encoder = com.sun.image.codec.jpeg.JPEGCodec.createJPEGEncoder(baos);
-                com.sun.image.codec.jpeg.JPEGEncodeParam param = com.sun.image.codec.jpeg.JPEGCodec.getDefaultJPEGEncodeParam(scaled);
-                param.setQuality(jpegQuality, true);
-                encoder.encode(scaled, param);
+//				Reemplazo de com.sun.image.codec.* por solucion bajo OpenJDK  
+//              ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//              com.sun.image.codec.jpeg.JPEGImageEncoder encoder = com.sun.image.codec.jpeg.JPEGCodec.createJPEGEncoder(baos);
+//              com.sun.image.codec.jpeg.JPEGEncodeParam param = com.sun.image.codec.jpeg.JPEGCodec.getDefaultJPEGEncodeParam(scaled);
+//              param.setQuality(jpegQuality, true);
+//              encoder.encode(scaled, param);
+                
+                ByteArrayOutputStream response = new ByteArrayOutputStream();
+                ImageIO.write(scaled, "jpg", response);
+                
                 scaled.flush();
                 scaled = null;
-                image = org.openXpertya.print.pdf.text.Image.getInstance(baos.toByteArray());
+                                
+                image = org.openXpertya.print.pdf.text.Image.getInstance(response.toByteArray());
 
             }
             if (mask!=null) {

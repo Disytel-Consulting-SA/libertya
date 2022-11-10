@@ -50,7 +50,7 @@
 	<!-- =========================================== -->
 	<target name="compile" depends="makedir">
 		<!-- compila el código java desde ${src} a ${build.dir} -->
-		<javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.6" target="1.6" debug="on" encoding="UTF-8">
+		<javac srcdir="${src}" destdir="${build.dir}" deprecation="off" source="1.8" target="1.8" debug="on" encoding="UTF-8">
 			<classpath refid="project.class.path"/>
 		</javac>
 		<!-- copia todos los ficheros de imagen y sonido desde los fuentes al directorio de construcción -->

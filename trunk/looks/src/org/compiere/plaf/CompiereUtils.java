@@ -20,8 +20,7 @@
 
 package org.compiere.plaf;
 
-import com.sun.image.codec.jpeg.JPEGCodec;
-import com.sun.image.codec.jpeg.JPEGImageDecoder;
+import javax.imageio.ImageIO;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -261,12 +260,8 @@ public class CompiereUtils {
 
             try {
 
-                in	= url.openStream();
-
-                JPEGImageDecoder	decoder	= JPEGCodec.createJPEGDecoder(in);
-
-                image	= decoder.decodeAsBufferedImage();
-
+            	image = ImageIO.read(url);
+            	
             } catch (Exception e) {
 
                 System.err.println("CompiereUtils.loadJPEGImage: " + e.getMessage());
