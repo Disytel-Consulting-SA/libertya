@@ -958,7 +958,7 @@ public class MSequence extends X_AD_Sequence {
 
         if (DB.isPostgreSQL()) {
 
-            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID, OID " + "FROM AD_Sequence " + "WHERE AD_Sequence_ID=?" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
+            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID " + "FROM AD_Sequence " + "WHERE AD_Sequence_ID=?" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
             USE_PROCEDURE	= false;
 
         } else {
@@ -1154,7 +1154,7 @@ public class MSequence extends X_AD_Sequence {
 
         if (DB.isPostgreSQL()) {
 
-            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID, OID " + "FROM AD_Sequence " + "WHERE AD_Sequence_ID=?" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
+            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Client_ID, AD_Sequence_ID " + "FROM AD_Sequence " + "WHERE AD_Sequence_ID=?" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
             USE_PROCEDURE	= false;
 
         } else {
@@ -1335,7 +1335,7 @@ public class MSequence extends X_AD_Sequence {
 
         if (DB.isPostgreSQL()) {
 
-            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Sequence_ID , OID " + "FROM AD_Sequence " + "WHERE Name=?" + " AND AD_Client_ID IN (0,?)" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + "ORDER BY AD_Client_ID DESC " + " FOR UPDATE OF AD_Sequence ";
+            selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, Prefix, Suffix, AD_Sequence_ID " + "FROM AD_Sequence " + "WHERE Name=?" + " AND AD_Client_ID IN (0,?)" + " AND IsActive='Y' AND IsTableID='N' AND IsAutoSequence='Y' " + "ORDER BY AD_Client_ID DESC " + " FOR UPDATE OF AD_Sequence ";
             USE_PROCEDURE	= false;
 
         } else {
@@ -1546,7 +1546,7 @@ public class MSequence extends X_AD_Sequence {
         
         
         	if (usarSecuencia.booleanValue())
-        		selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, AD_Sequence_ID , OID " + "FROM AD_Sequence " + "WHERE Name=?" + " AND IsActive='Y' AND IsTableID='Y' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
+        		selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, AD_Sequence_ID " + "FROM AD_Sequence " + "WHERE Name=?" + " AND IsActive='Y' AND IsTableID='Y' AND IsAutoSequence='Y' " + " FOR UPDATE OF AD_Sequence ";
         	else
         	{
         		selectSQL	= "SELECT nextval(?)";
@@ -1757,7 +1757,7 @@ public class MSequence extends X_AD_Sequence {
 		if (!existeSeq)
 		{
 		
-			selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, AD_Sequence_ID , OID " + "FROM AD_Sequence " + "WHERE Name=?  AND IsActive='Y' AND IsTableID='Y' AND IsAutoSequence='Y' ";
+			selectSQL	= "SELECT CurrentNext, CurrentNextSys, IncrementNo, AD_Sequence_ID " + "FROM AD_Sequence " + "WHERE Name=?  AND IsActive='Y' AND IsTableID='Y' AND IsAutoSequence='Y' ";
    
             pstmt=null;  
               //
