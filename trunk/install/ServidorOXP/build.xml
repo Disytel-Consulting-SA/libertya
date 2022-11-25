@@ -499,6 +499,9 @@
 			<zipfileset dir="${basedir}/lib" 
 				includes="ClienteLBY.zip,OXP.jar,OXPXLib.jar,*.jnlp,*.0,*.html,JasperReports.jar,Libertya.sh,libertya.exe"
 				prefix="OXPHome"/>
+			<zipfileset dir="${basedir}/utils" 
+				includes="Libertya.bat"
+				prefix="OXPHome"/>
 	</zip>
 
 	<!-- Construye OXPRoot ear		-->
