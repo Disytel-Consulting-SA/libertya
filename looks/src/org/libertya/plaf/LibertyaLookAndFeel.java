@@ -72,6 +72,9 @@ public class LibertyaLookAndFeel extends NimbusLookAndFeel {
         defaults.put("ComboBox[Focused+MouseOver].backgroundPainter", null);
         //defaults.put("ComboBox[Focused].backgroundPainter", null);
         
+        // BugFix: checkboxes seleccionados pero deshabilitados no se visualizaban seleccionados
+        defaults.put("CheckBox[Disabled+Selected].iconPainter", null);
+        
         // Font por defecto
         Font laFont = null; 
         try {
