@@ -541,12 +541,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 			</band>
 		</pageHeader>
 		<columnHeader>
-			<band height="119"  isSplitAllowed="true" >
+			<band height="134"  isSplitAllowed="true" >
 				<rectangle>
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="93"
+						y="107"
 						width="538"
 						height="25"
 						backcolor="#D6D6D6"
@@ -556,7 +556,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="4"
-						y="95"
+						y="109"
 						width="238"
 						height="20"
 						key="textField-42"/>
@@ -569,7 +569,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="244"
-						y="95"
+						y="109"
 						width="38"
 						height="20"
 						key="staticText-14"/>
@@ -582,7 +582,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="284"
-						y="95"
+						y="109"
 						width="38"
 						height="20"
 						key="staticText-15"/>
@@ -595,7 +595,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="325"
-						y="95"
+						y="109"
 						width="55"
 						height="20"
 						key="staticText-16"/>
@@ -608,7 +608,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="382"
-						y="95"
+						y="109"
 						width="55"
 						height="20"
 						key="staticText-17"/>
@@ -621,7 +621,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="440"
-						y="95"
+						y="109"
 						width="32"
 						height="20"
 						key="staticText-18"/>
@@ -634,7 +634,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="472"
-						y="95"
+						y="109"
 						width="67"
 						height="20"
 						key="staticText-19"/>
@@ -647,7 +647,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="243"
-						y="94"
+						y="108"
 						width="0"
 						height="25"
 						key="line-1"/>
@@ -656,7 +656,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="283"
-						y="94"
+						y="108"
 						width="0"
 						height="25"
 						key="line-2"/>
@@ -665,7 +665,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="324"
-						y="94"
+						y="108"
 						width="0"
 						height="25"
 						key="line-3"/>
@@ -674,7 +674,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="381"
-						y="94"
+						y="108"
 						width="0"
 						height="25"
 						key="line-4"/>
@@ -683,7 +683,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="438"
-						y="94"
+						y="108"
 						width="0"
 						height="25"
 						key="line-5"/>
@@ -692,7 +692,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="473"
-						y="94"
+						y="108"
 						width="0"
 						height="25"
 						key="line-6"/>
@@ -704,15 +704,15 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						x="0"
 						y="0"
 						width="538"
-						height="92"
+						height="108"
 						key="rectangle-4"/>
 					<graphicElement stretchType="NoStretch"/>
 				</rectangle>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="77"
+						x="67"
 						y="70"
-						width="248"
+						width="267"
 						height="13"
 						key="textField-63"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -723,9 +723,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="334"
+						x="341"
 						y="70"
-						width="70"
+						width="63"
 						height="13"
 						key="staticText-38"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -751,7 +751,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="70"
-						width="71"
+						width="61"
 						height="13"
 						key="staticText-39"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -764,7 +764,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="5"
-						width="71"
+						width="61"
 						height="13"
 						key="staticText-40"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -777,7 +777,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="31"
-						width="71"
+						width="61"
 						height="13"
 						key="staticText-41"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -790,7 +790,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="44"
-						width="71"
+						width="61"
 						height="13"
 						key="staticText-43"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -801,9 +801,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="334"
+						x="341"
 						y="5"
-						width="70"
+						width="63"
 						height="13"
 						key="staticText-44"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -814,9 +814,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="334"
+						x="341"
 						y="18"
-						width="70"
+						width="63"
 						height="13"
 						key="staticText-45"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -827,9 +827,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="334"
+						x="341"
 						y="31"
-						width="70"
+						width="63"
 						height="13"
 						key="staticText-46"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -840,9 +840,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="334"
+						x="341"
 						y="44"
-						width="70"
+						width="63"
 						height="13"
 						key="staticText-47"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -853,9 +853,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="77"
+						x="67"
 						y="5"
-						width="248"
+						width="267"
 						height="13"
 						key="textField-65"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -866,9 +866,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="77"
+						x="67"
 						y="31"
-						width="248"
+						width="267"
 						height="13"
 						key="textField-66"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -879,9 +879,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="77"
+						x="67"
 						y="44"
-						width="248"
+						width="267"
 						height="13"
 						key="textField-68"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -946,7 +946,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="18"
-						width="71"
+						width="61"
 						height="13"
 						key="staticText-49"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -957,9 +957,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="77"
+						x="67"
 						y="18"
-						width="248"
+						width="267"
 						height="13"
 						key="textField-74"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -970,9 +970,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="77"
+						x="67"
 						y="57"
-						width="248"
+						width="267"
 						height="13"
 						key="textField-77"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -985,7 +985,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="57"
-						width="71"
+						width="61"
 						height="13"
 						key="staticText-52"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -996,9 +996,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="334"
+						x="341"
 						y="57"
-						width="70"
+						width="63"
 						height="13"
 						key="staticText-54"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -1660,8 +1660,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font fontName="Arial" size="8"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Comprobante expresado en " + $P{CURRENCY} + ($P{CURRENCY}.startsWith("ARS") ? "" : ". A los fines contables e impositivos el tipo de cambio es  1 " + $P{CURRENCY_SIMBOL} + " = $ " + $P{CURRENCY_RATE})
-]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA["Comprobante expresado en " + $P{CURRENCY} + ($P{CURRENCY}.startsWith("ARS") ? "" : ". A los fines contables e impositivos el tipo de cambio es  1 " + $P{CURRENCY_SIMBOL} + " = $ " + $P{CURRENCY_RATE})]]></textFieldExpression>
 				</textField>
 			</band>
 		</lastPageFooter>

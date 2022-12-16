@@ -11,6 +11,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.openXpertya.JasperReport.DataSource.InvoiceDataSource;
@@ -262,10 +263,23 @@ public class LaunchInvoice extends SvrProcess {
 		try{
 			Set<String> inouts = JasperReportsUtil.getInOutsDocumentsNo(
 				getCtx(), invoice, get_TrxName());
-			int i = 1;
-			for (String idocumentNo : inouts) {
-				jasperwrapper.addParameter("NROREMITO_"+(i++), idocumentNo);
+			// Arma una lista en forma de string con todos los remitos asociados a la factura
+			String listInOut = "";
+			Iterator<String> it = inouts.iterator();
+			while(it.hasNext()) {
+				String aInOut = (String) it.next();
+				// Ignora los tickets, solo muestra los remitos
+				if(!aInOut.contains("TCK")) {
+					listInOut += aInOut;
+					if(it.hasNext()) {
+						listInOut += ", ";
+					}
+				}
 			}
+			// Si la lista de remitos termina en una coma, la quita
+			if(listInOut.endsWith(", "))
+				listInOut = listInOut.substring(0, listInOut.length() - 2);
+			jasperwrapper.addParameter("NROREMITO_1", listInOut);
 			// Si no existen remitos asociados en la inversa, desde el remito, 
 			// se toman desde las líneas de la factura
 			if(inouts.size() == 0) {

@@ -7079,12 +7079,13 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 						cr.setMsg(Msg.getMsg(getCtx(), "OriginalDocumentMustBeMiPyme"), true);
 						return cr;
 					}
+					// IMPORTANTE: Esta validación no es considerada por AFIP, por lo que no se tiene en cuenta.
 					// Poseen misma moneda?
-					if(getC_Currency_ID() != cimp.getC_Currency_ID()) {
+					/*if(getC_Currency_ID() != cimp.getC_Currency_ID()) {
 						// Deben tener misma moneda que el comprobante original
 						cr.setMsg(Msg.getMsg(getCtx(), "OriginalDocumentDifferentCurrency"), true);
 						return cr;
-					}
+					}*/
 				}
 			}
 			
