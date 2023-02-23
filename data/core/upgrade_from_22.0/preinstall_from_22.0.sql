@@ -72,4 +72,34 @@ $BODY$
 ALTER FUNCTION addindexifnotexists(character varying, character varying, character varying, character varying)
   OWNER TO libertya;
    
-  
+--20230223-1158 Desactivacion de registros pendientes de replicacion con un age superior al umbral especificado
+/** 
+ * Desactiva registros si ya tienen cierto age considerable (a definir por el usuario)
+ * 
+ * Forma de uso:
+ * 	select * from replication_disable_old_records(1010016, '1 month'); 
+ * 
+ * Desactivara todos los registros de compañia 0 y la definida por parametro
+ * cuyo campo updated tenga una antiguedad mayor a un mes
+ */
+CREATE OR REPLACE FUNCTION replication_disable_old_records(p_clientid integer, p_age character varying)
+  RETURNS int AS
+$BODY$
+DECLARE
+	atable varchar;
+	query varchar;
+BEGIN
+	FOR atable IN (select table_name from information_schema.columns where lower(column_name) = 'reparray' and table_schema = 'libertya' order by table_name)  loop
+		begin
+			query = 'UPDATE ' || atable || ' SET reparray = ''SET''||reparray, includeinreplication = ''D''  WHERE ad_client_id IN (0, ' || p_clientid || ') AND includeinreplication = ''Y'' and age(now(), updated) > ''' || p_age || '''';
+			--raise notice '%', query;
+			execute query;
+		exception when others then
+			-- probablemente el campo updated no existe en la tabla
+			-- raise notice 'Error en tabla %', atable;
+		end;
+	END LOOP;
+	return 0;
+END
+$BODY$
+  LANGUAGE 'plpgsql' volatile;
