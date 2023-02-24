@@ -135,6 +135,9 @@ public class ConfigurationData {
     /** Numero de conexiones RW a BBDD server-side */
     public static final String	SERVER_DB_CONNECTIONS_RW = "SERVER_DB_CONNECTIONS_RW";
 
+    /** Resolver a hostname o utilizar directamente hostaddress (IP)? */
+    public static final String	SERVIDOR_APPS_OXP_USE_IP = "SERVIDOR_APPS_OXP_USE_IP";
+    
     /** Descripción de Campo */
     public static final String	NOMBRE_BD_OXP	= "NOMBRE_BD_OXP";
 
@@ -267,6 +270,9 @@ public class ConfigurationData {
     /** Descripción de Campo */
     private File	m_OXPHome;
 
+    /** Forzar el uso de IP para el servidor de aplicaciones (sin resolucion de nombres)? */
+    protected boolean useAppsServerIP = false;
+    
     /**
      * Constructor ...
      *
@@ -489,7 +495,7 @@ public class ConfigurationData {
         try {
 
             localhost	= InetAddress.getLocalHost();
-            hostName	= localhost.getHostName();
+            hostName	= useAppsServerIP ? localhost.getHostAddress() : localhost.getHostName();
 
         } catch (Exception e) {
             log.severe("Cannot get local host name");
@@ -569,6 +575,11 @@ public class ConfigurationData {
             p_properties.setProperty(ALIASWEBKEYSTORE_OXP, KeyStoreMgt.CERTIFICATE_ALIAS);
         }
 
+        // Existe configuracion para forzar IP bajo Server App en lugar de resolucion de nombre?
+        if (p_properties.containsKey(SERVIDOR_APPS_OXP_USE_IP) && "Y".equals(p_properties.get(SERVIDOR_APPS_OXP_USE_IP))) {
+        	useAppsServerIP = true;
+        }
+        
         return true;
 
     }		// load
@@ -1868,6 +1879,10 @@ public class ConfigurationData {
 		}
     	
     }
+
+	public boolean isUseAppsServerIP() {
+		return useAppsServerIP;
+	}
 }	// ConfigurationData
 
 
