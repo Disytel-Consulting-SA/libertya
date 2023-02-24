@@ -95,7 +95,7 @@ public class ConfigJBoss extends Config {
         }
 
         log.info("OK: AppsServer = " + appsServer);
-        setProperty(ConfigurationData.SERVIDOR_APPS_OXP, appsServer.getHostName());
+        setProperty(ConfigurationData.SERVIDOR_APPS_OXP, p_data.isUseAppsServerIP() ? appsServer.getHostAddress() : appsServer.getHostName());	
         setProperty(ConfigurationData.TIPO_APPS_OXP, p_data.getAppsServerType());
 
         // Deployment Dir
@@ -133,7 +133,7 @@ public class ConfigJBoss extends Config {
         // Web Port
         int	WebPort	= p_data.getAppsServerWebPort();
 
-        pass	= !p_data.testPort("http", appsServer.getHostName(), WebPort, "/") && p_data.testServerPort(WebPort);
+        pass	= !p_data.testPort("http", appsServer.getHostAddress(), WebPort, "/") && p_data.testServerPort(WebPort);
         error	= "Not correct: Web Port = " + WebPort;
         if (getPanel() != null)
         	signalOK(getPanel().okWebPort, "ErrorWebPort", pass, true, error);
@@ -148,7 +148,7 @@ public class ConfigJBoss extends Config {
         // SSL Port
         int	sslPort	= p_data.getAppsServerSSLPort();
 
-        pass	= !p_data.testPort("https", appsServer.getHostName(), sslPort, "/") && p_data.testServerPort(sslPort);
+        pass	= !p_data.testPort("https", appsServer.getHostAddress(), sslPort, "/") && p_data.testServerPort(sslPort);
         error	= "Not correct: SSL Port = " + sslPort;
         if (getPanel() != null)
         	signalOK(getPanel().okSSLPort, "ErrorWebPort", pass, true, error);
