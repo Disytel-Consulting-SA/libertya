@@ -103,3 +103,63 @@ BEGIN
 END
 $BODY$
   LANGUAGE 'plpgsql' volatile;
+  
+  
+--20230228-1016 Desactivacion de registros pendientes de replicacion con un age superior al umbral especificado. Version mejorada que incluye numero de registros modificados
+/** 
+ * Desactiva registros si ya tienen cierto age considerable (a definir por el usuario)
+ * 
+ * Forma de uso:
+ * 	select * from replication_disable_old_records(1010016, '1 month'); 
+ * 
+ * Desactivara todos los registros de compañia 0 y la definida por parametro
+ * cuyo campo updated tenga una antiguedad mayor a un mes
+ */
+CREATE OR REPLACE FUNCTION replication_disable_old_records(p_clientid integer, p_age character varying)
+  RETURNS int AS
+$BODY$
+DECLARE
+	atable varchar;
+	query varchar;
+	whereclause VARCHAR;
+	cant int;
+	totalrecords int;
+begin
+	totalrecords = 0;
+	whereclause = ' WHERE ad_client_id IN (0, ' || p_clientid || ') AND includeinreplication = ''Y'' and age(now(), updated) > ''' || p_age || ''''; 
+	
+	FOR atable IN (    
+		-- iterar por todas las tablas configuradas en replicacion
+		SELECT lower(t.tablename)
+		FROM ad_tablereplication tr
+		INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id
+		UNION
+		SELECT 'ad_changelog_replication'
+	)
+	loop
+		-- si no hay registros que cumplen la condicion, omitir
+		EXECUTE 'select count(1) from ' || atable || whereclause INTO cant;
+		if cant <= 0 THEN
+			continue;
+		END IF;
+		
+		-- notificar el numero de registros a bajar
+		totalrecords = totalrecords + cant;
+		raise notice '% : %', atable, cant;
+		query =    ' UPDATE ' || atable || ' SET reparray = ';
+		if atable <> 'ad_changelog_replication' then
+		    query = query || '''SET''||';
+		end if;
+		begin
+			query = query || 'reparray, includeinreplication = ''D'' ' || whereclause;  
+			--raise notice '%', query;
+			execute query;
+		exception when others then
+			-- probablemente el campo updated no existe en la tabla
+			-- raise notice 'Error en tabla %', atable;
+		end;
+	END LOOP;
+	return totalrecords;
+END
+$BODY$
+  LANGUAGE 'plpgsql' volatile;
