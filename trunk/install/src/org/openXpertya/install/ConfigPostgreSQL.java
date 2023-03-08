@@ -109,7 +109,7 @@ public class ConfigPostgreSQL extends Config {
         if (getPanel() != null)
         	signalOK(getPanel().okDatabaseServer, "ErrorDatabaseServer", pass, true, error);
         log.info("OK: Database Server = " + databaseServer);
-        setProperty(ConfigurationData.SERVIDOR_BD_OXP, databaseServer.getHostName());
+        setProperty(ConfigurationData.SERVIDOR_BD_OXP, p_data.isUseAppsServerIP() ? databaseServer.getHostAddress() : databaseServer.getHostName());	
         setProperty(ConfigurationData.TIPO_BD_OXP, p_data.getDatabaseType());
 
         // Database Port
@@ -132,7 +132,7 @@ public class ConfigPostgreSQL extends Config {
         String	systemPassword	= p_data.getDatabaseSystemPassword();
 
         // URL (derived)   jdbc:sybase:Tds:prod1:5000/prod1
-        String	urlSystem	= p_db.getConnectionURL(databaseServer.getHostName(), databasePort, p_db.getSystemDatabase(databaseName), p_db.getSystemUser());
+        String	urlSystem	= p_db.getConnectionURL(p_data.isUseAppsServerIP() ? databaseServer.getHostAddress() : databaseServer.getHostName(), databasePort, p_db.getSystemDatabase(databaseName), p_db.getSystemUser());
 
         pass	= testJDBC(urlSystem, p_db.getSystemUser(), systemPassword);
         error	= "Error connecting: " + urlSystem + " - " + p_db.getSystemUser() + "/" + systemPassword;
@@ -160,7 +160,7 @@ public class ConfigPostgreSQL extends Config {
         }
 
         //
-        String	url	= p_db.getConnectionURL(databaseServer.getHostName(), databasePort, databaseName, databaseUser);
+        String	url	= p_db.getConnectionURL(p_data.isUseAppsServerIP() ? databaseServer.getHostAddress() : databaseServer.getHostName(), databasePort, databaseName, databaseUser);
 
         // Ignore result as it might not be imported
         pass	= testJDBC(url, databaseUser, databasePassword);
