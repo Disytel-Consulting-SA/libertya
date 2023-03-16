@@ -1424,6 +1424,23 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             }
         }
         
+        //Guardado auxiliar de datos para la impresion del documento.
+        if(!isProcessed()) {
+        	MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+        	MBPartnerLocation location = new MBPartnerLocation(getCtx(),	getC_BPartner_Location_ID(), get_TrxName());
+        	MLocation loc = location.getLocation(false);
+        	
+        	String fullLocation = location.getLocation(true).toString();
+        	setNombreCli(bpartner.getName());
+        	setInvoice_Adress(fullLocation);
+        	setNroIdentificCliente(bpartner.getTaxID());
+        	setDireccion(loc.getAddress1());
+        	setLocalidad(loc.getCity());
+        	setprovincia(loc.getRegion().getName());
+        	setCP(loc.getPostal());
+        	setCAT_Iva_ID(bpartner.getC_Categoria_Iva_ID());
+        }
+        
         MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID(), get_TrxName());
         
         // Se valida el nro de documento único cuando este documento está en Borrador solamente
@@ -1711,6 +1728,8 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             int no = DB.executeUpdate( sql,get_TrxName());
 
             log.fine( "Description -> #" + no );
+            
+          
         }
         
         // Propagate Changes of Payment Info to existing (not reversed/closed) invoices
@@ -1752,14 +1771,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         afterSaveSync( "DatePromised" );
         afterSaveSync( "M_Warehouse_ID" );
         afterSaveSync( "M_Shipper_ID" );
-        afterSaveSync( "C_Currency_ID" );
+        afterSaveSync( "C_Currency_ID" ); 
 
         // begin vpj-cd e-evolution 01/25/2005 CMPCS
 
-//        afterSaveSync( "DocStatus" );
+        // afterSaveSync( "DocStatus" );
 
         // end vpj-cd e-evolution 01/25/2005 CMPCS
-
+           
         return true;
     }    // afterSave
 
@@ -5051,6 +5070,18 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		@Override
 		public String getDeliveryViaRule() {
 			return MOrder.this.getDeliveryViaRule();
+		}
+
+		@Override
+		public boolean isVoiding() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public IDocument getCreditRelatedDocument() {
+			// TODO Auto-generated method stub
+			return null;
 		}
 	}
 	

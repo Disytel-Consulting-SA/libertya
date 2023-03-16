@@ -2614,6 +2614,13 @@ public class DiscountCalculator {
 	 */
 	public interface IDocument {
 		
+		public IDocument getCreditRelatedDocument();
+		
+		/**
+		 * @return true si es una NC por anulación, false caso contrario
+		 */
+		public boolean isVoiding();		
+		
 		/**
 		 * @param documentDiscountApplied true si se debe obtener el total aplicando el
 		 *                                descuento a nivel de documento, false caso

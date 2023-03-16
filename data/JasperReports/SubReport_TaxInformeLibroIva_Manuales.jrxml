@@ -2,7 +2,7 @@
 <!-- Created with iReport - A designer for JasperReports -->
 <!DOCTYPE jasperReport PUBLIC "//JasperReports//DTD Report Design//EN" "http://jasperreports.sourceforge.net/dtds/jasperreport.dtd">
 <jasperReport
-		 name="SubReport_TaxInformeLibroIva_Manuales"
+		 name="SubReport_TaxInformeLibroIva"
 		 columnCount="1"
 		 printOrder="Vertical"
 		 orientation="Portrait"
@@ -46,7 +46,7 @@
 			<band height="11"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
-						x="256"
+						x="351"
 						y="0"
 						width="59"
 						height="11"
@@ -59,22 +59,9 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="127"
+						x="221"
 						y="0"
-						width="70"
-						height="11"
-						key="staticText-2"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center">
-						<font size="8"/>
-					</textElement>
-				<text><![CDATA[Base Imponible]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="196"
-						y="0"
-						width="60"
+						width="130"
 						height="11"
 						key="staticText-3"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
@@ -96,6 +83,19 @@
 					</textElement>
 				<text><![CDATA[Categoría]]></text>
 				</staticText>
+				<staticText>
+					<reportElement
+						x="127"
+						y="0"
+						width="94"
+						height="11"
+						key="staticText-6"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center">
+						<font size="8"/>
+					</textElement>
+				<text><![CDATA[Base imponible]]></text>
+				</staticText>
 			</band>
 		</title>
 		<pageHeader>
@@ -110,7 +110,7 @@
 			<band height="11"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="256"
+						x="351"
 						y="0"
 						width="59"
 						height="11"
@@ -120,19 +120,6 @@
 						<font pdfFontName="Helvetica" size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{TaxAmount}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="127"
-						y="0"
-						width="70"
-						height="11"
-						key="textField-1"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font pdfFontName="Helvetica" size="7"/>
-					</textElement>
-				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{TaxBaseAmount}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -150,9 +137,9 @@
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="196"
+						x="221"
 						y="0"
-						width="60"
+						width="130"
 						height="11"
 						key="textField"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -160,6 +147,19 @@
 						<font size="7"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$F{TaxName}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="##0.00" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="127"
+						y="0"
+						width="94"
+						height="11"
+						key="textField-1"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center" verticalAlignment="Middle">
+						<font pdfFontName="Helvetica" size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.math.BigDecimal"><![CDATA[$F{TaxBaseAmount}]]></textFieldExpression>
 				</textField>
 			</band>
 		</detail>

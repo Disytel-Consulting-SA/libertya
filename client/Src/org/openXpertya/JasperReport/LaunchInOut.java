@@ -119,8 +119,9 @@ public class LaunchInOut extends SvrProcess {
 	}
 
 	private String createReport() throws Exception {
-		bpartner = new MBPartner(getCtx(), getInout().getC_BPartner_ID(),
-				null);
+		
+		bpartner = new MBPartner(getCtx(), getInout().getC_BPartner_ID(), null);
+		
 		InOutDataSource ds = new InOutDataSource(getCtx(), getInout());
 
 		try {
@@ -174,30 +175,53 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("FECHA", getInout().getMovementDate());
 		jasperwrapper.addParameter("MOVEMENT_DATE", getInout()
 				.getMovementDate());
-		jasperwrapper.addParameter("RAZONSOCIAL", bpartner.getName());
+		// NombreCli
+		if(!Util.isEmpty(getInout().getNombreCli()))
+			jasperwrapper.addParameter("RAZONSOCIAL", getInout().getNombreCli());
+		else
+			jasperwrapper.addParameter("RAZONSOCIAL", bpartner.getName());
 		jasperwrapper.addParameter("RAZONSOCIAL2", bpartner.getName2());
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
-		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
-				.formatLocation(getCtx(), location.getID(), false));
-		jasperwrapper.addParameter("BP_LOCATION_NAME", BPLocation.getName());
-		jasperwrapper.addParameter("CIUDAD",
-				JasperReportsUtil.coalesce(location.getCity(), ""));
-		jasperwrapper.addParameter("PROVINCIA",
-				(region != null ? region.getName() : JasperReportsUtil.coalesce(location.getRegionName(), "")));
-		jasperwrapper.addParameter("PLAZA",
-				JasperReportsUtil.coalesce(location.getPlaza(), ""));
-		jasperwrapper.addParameter("POSTALCODE",
-				JasperReportsUtil.coalesce(location.getPostal(), ""));
+		jasperwrapper.addParameter("DIRECCION", JasperReportsUtil.formatLocation(getCtx(), location.getID(), false));
+		// Dirección
+		if(!Util.isEmpty(getInout().getDireccion()))
+			jasperwrapper.addParameter("BP_LOCATION_NAME", getInout().getDireccion());
+		else
+			jasperwrapper.addParameter("BP_LOCATION_NAME", BPLocation.getName());
+		// Localidad
+		if(!Util.isEmpty(getInout().getLocalidad()))
+			jasperwrapper.addParameter("CIUDAD", getInout().getLocalidad());
+		else
+			jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(), ""));
+		// Provincia
+		if(!Util.isEmpty(getInout().getprovincia()))
+			jasperwrapper.addParameter("PROVINCIA", getInout().getprovincia());
+		else
+			jasperwrapper.addParameter("PROVINCIA",(region != null ? region.getName() : JasperReportsUtil.coalesce(location.getRegionName(), "")));
+		jasperwrapper.addParameter("PLAZA",	JasperReportsUtil.coalesce(location.getPlaza(), ""));
+		// Codigo Postal
+		if(!Util.isEmpty(getInout().getCP()))
+			jasperwrapper.addParameter("POSTALCODE", getInout().getCP());
+		else
+			jasperwrapper.addParameter("POSTALCODE", JasperReportsUtil.coalesce(location.getPostal(), ""));
 		jasperwrapper
 				.addParameter("PAIS", JasperReportsUtil.coalesce(location
 						.getCountry().getName(), ""));
-		if (!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)) {
-			jasperwrapper.addParameter(
-					"TIPO_IVA",
-					JasperReportsUtil.getCategoriaIVAName(getCtx(),
-							bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+		// Categoría IVA
+		if(!Util.isEmpty(getInout().getCAT_Iva_ID(),true)) {			
+			jasperwrapper.addParameter("TIPO_IVA", 
+					JasperReportsUtil.getCategoriaIVAName(getCtx(), getInout().getCAT_Iva_ID(), get_TrxName()));
+		} else {
+			if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(),true)) {
+				jasperwrapper.addParameter("TIPO_IVA", 
+						JasperReportsUtil.getCategoriaIVAName(getCtx(), bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+			}
 		}
-		jasperwrapper.addParameter("CUIT", bpartner.getTaxID());
+		// CUIT
+		if(!Util.isEmpty(getInout().getNroIdentificCliente()))
+			jasperwrapper.addParameter("CUIT", getInout().getNroIdentificCliente());
+		else
+			jasperwrapper.addParameter("CUIT",bpartner.getTaxID()); 
 		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
 		if (!Util.isEmpty(getInout().getSalesRep_ID(), true)) {
 			MUser salesRepUser = new MUser(getCtx(), getInout()
@@ -284,9 +308,9 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("CLIENT", client.getName());
 		jasperwrapper.addParameter("CLIENT_CUIT", clientInfo.getCUIT());
 		jasperwrapper.addParameter(
-				"CLIENT_CATEGORIA_IVA",
-				JasperReportsUtil.getCategoriaIVAName(getCtx(),
-						clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
+				"CLIENT_CATEGORIA_IVA","TEST IVA");
+				//JasperReportsUtil.getCategoriaIVAName(getCtx(),
+				//		clientInfo.getC_Categoria_Iva_ID(), get_TrxName()));
 		jasperwrapper.addParameter("ORG", JasperReportsUtil.getOrgName(
 				getCtx(), getInout().getAD_Org_ID()));
 		jasperwrapper.addParameter("ORG_LOCATION_DESCRIPTION",
@@ -427,10 +451,8 @@ public class LaunchInOut extends SvrProcess {
 		jasperwrapper.addParameter("LOC_PLAZA", loc.getPlaza());
 		jasperwrapper.addParameter("LOC_CITY", loc.getCity());
 		jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
-		jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc
-				.getRegion().getName() : "");
-		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc
-				.getCountry().getName() : "");
+		jasperwrapper.addParameter("LOC_REGION", getInout().getprovincia());
+		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc.getCountry().getName() : "");
 
 		jasperwrapper.addParameter("BP_LOCATION_PHONE", BPLocation.getPhone());
 		jasperwrapper

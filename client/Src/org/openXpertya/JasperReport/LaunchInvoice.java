@@ -11,9 +11,9 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Set;
 
+import org.jcp.xml.dsig.internal.dom.Utils;
 import org.openXpertya.JasperReport.DataSource.InvoiceDataSource;
 import org.openXpertya.JasperReport.DataSource.InvoicePerceptionsDataSource;
 import org.openXpertya.JasperReport.DataSource.JasperReportsUtil;
@@ -200,7 +200,11 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("DIA", Integer.toString(c.get(Calendar.DATE)));
 		jasperwrapper.addParameter("MES", Integer.toString(c.get(Calendar.MONTH)+1)); // Mas 1 porque el Calendar maneja los meses de 0 a 11
 		jasperwrapper.addParameter("ANIO", Integer.toString(c.get(Calendar.YEAR)));		
-		jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(invoice.getNombreCli(), bpartner.getName()) ); 
+		// NombreCli
+		if(!Util.isEmpty(invoice.getNombreCli()))
+			jasperwrapper.addParameter("RAZONSOCIAL", invoice.getNombreCli()); // NombreCli de la Factura
+		else
+			jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(bpartner.getName(), ""));
 		jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
 		jasperwrapper.addParameter("BPARTNER_NAME", bpartner.getName());
 		jasperwrapper.addParameter("CODIGO", bpartner.getValue());
@@ -211,14 +215,23 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("ADDRESS1", JasperReportsUtil.coalesce(location.getAddress1(), ""));
 		jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(),""));
 		jasperwrapper.addParameter("PAIS", JasperReportsUtil.coalesce(location.getCountry().getName(),""));
-		if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
-			jasperwrapper.addParameter(
-				"TIPO_IVA",
-				JasperReportsUtil.getCategoriaIVAName(getCtx(),
-						bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+		// Categoria IVA
+		if(!Util.isEmpty(invoice.getCAT_Iva_ID(),true)) {			
+			jasperwrapper.addParameter("TIPO_IVA", 
+					JasperReportsUtil.getCategoriaIVAName(getCtx(), invoice.getCAT_Iva_ID(), get_TrxName()));
+		} else {
+			if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
+				jasperwrapper.addParameter("TIPO_IVA",
+					JasperReportsUtil.getCategoriaIVAName(getCtx(), bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+			}
 		}
+		
 		jasperwrapper.addParameter("LETRA", JasperReportsUtil.coalesce(invoice.getLetra(),""));
-		jasperwrapper.addParameter("CUIT", JasperReportsUtil.coalesce(bpartner.getTaxID(),""));
+		// CUIT
+		if(!Util.isEmpty(invoice.getNroIdentificCliente()))
+			jasperwrapper.addParameter("CUIT", invoice.getNroIdentificCliente());
+		else
+			jasperwrapper.addParameter("CUIT", bpartner.getTaxID());
 		jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
 		if (invoice.getSalesRep_ID() > 0) {
 			MUser salesRepUser = new MUser(getCtx(), invoice.getSalesRep_ID(),
@@ -263,23 +276,10 @@ public class LaunchInvoice extends SvrProcess {
 		try{
 			Set<String> inouts = JasperReportsUtil.getInOutsDocumentsNo(
 				getCtx(), invoice, get_TrxName());
-			// Arma una lista en forma de string con todos los remitos asociados a la factura
-			String listInOut = "";
-			Iterator<String> it = inouts.iterator();
-			while(it.hasNext()) {
-				String aInOut = (String) it.next();
-				// Ignora los tickets, solo muestra los remitos
-				if(!aInOut.contains("TCK")) {
-					listInOut += aInOut;
-					if(it.hasNext()) {
-						listInOut += ", ";
-					}
-				}
+			int i = 1;
+			for (String idocumentNo : inouts) {
+				jasperwrapper.addParameter("NROREMITO_"+(i++), idocumentNo);
 			}
-			// Si la lista de remitos termina en una coma, la quita
-			if(listInOut.endsWith(", "))
-				listInOut = listInOut.substring(0, listInOut.length() - 2);
-			jasperwrapper.addParameter("NROREMITO_1", listInOut);
 			// Si no existen remitos asociados en la inversa, desde el remito, 
 			// se toman desde las líneas de la factura
 			if(inouts.size() == 0) {
@@ -488,14 +488,26 @@ public class LaunchInvoice extends SvrProcess {
 		
 		// Datos de Localización 
 		MLocation loc = BPLocation.getLocation(false);
-		jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
+		if(!Util.isEmpty(invoice.getDireccion()))
+			jasperwrapper.addParameter("LOC_ADDRESS1", invoice.getDireccion());
+		else
+			jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
 		jasperwrapper.addParameter("LOC_ADDRESS2", loc.getAddress2());
 		jasperwrapper.addParameter("LOC_ADDRESS3", loc.getAddress3());
-		jasperwrapper.addParameter("LOC_ADDRESS4", loc.getAddress1());
+		jasperwrapper.addParameter("LOC_ADDRESS4", loc.getAddress4());
 		jasperwrapper.addParameter("LOC_PLAZA", loc.getPlaza());
-		jasperwrapper.addParameter("LOC_CITY", loc.getCity());
-		jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
-		jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
+		if(!Util.isEmpty(invoice.getLocalidad()))
+			jasperwrapper.addParameter("LOC_CITY", invoice.getLocalidad());
+		else
+			jasperwrapper.addParameter("LOC_CITY", loc.getCity());
+		if(!Util.isEmpty(invoice.getCP()))
+			jasperwrapper.addParameter("LOC_POSTAL", invoice.getCP());
+		else
+			jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
+		if(!Util.isEmpty(invoice.getprovincia()))
+			jasperwrapper.addParameter("LOC_REGION", invoice.getprovincia());
+		else
+			jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
 		jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc.getCountry().getName() : "");
 		
 		jasperwrapper.addParameter("BP_LOCATION_PHONE", BPLocation.getPhone());
