@@ -915,6 +915,77 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 		return invoice;
 	}
+	
+	/**
+	 * Obtiene el crédito relacionado al pedido del debito parámetro
+	 * 
+	 * @param creditInvoice
+	 *            factura de crédito
+	 * @return
+	 */
+	public static MInvoice getCreditFor(MInvoice debitInvoice) {
+		MInvoice invoice = null;
+		// Esta variable booleana permite determinar si es posible buscar un
+		// débito relacionado con este crédito por alguno de los campos de
+		// documentos ya que sino busca cualquier débito de la EC lo cual no es
+		// correcto
+		boolean canSearchByDocument = false;
+		String docBaseTypeDebit = debitInvoice.isSOTrx() ? "'"
+				+ MDocType.DOCBASETYPE_ARCreditMemo + "'" : "'"
+				+ MDocType.DOCBASETYPE_APCreditMemo + "'";
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT i.c_invoice_id "
+				+ "FROM c_invoice as i "
+				+ "INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id "
+				+ "WHERE c_bpartner_id = ? " + "		AND dt.docbasetype = "
+				+ docBaseTypeDebit + "		AND i.docstatus IN ('CO','CL') ");
+		// Si tenemos una factura original en el crédito, entonces tomo esa
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& !Util.isEmpty(debitInvoice.getC_Invoice_Orig_ID(), true)) {
+				sql.append(" AND i.c_invoice_id = ? ");
+				canSearchByDocument = true;
+		} 
+		// Si no se puede buscar por ninguna relación de comprobante, entonces
+		// salgo
+		if (!canSearchByDocument) {
+			return invoice;
+		}
+		sql.append(" ORDER BY dateinvoiced desc ");
+		sql.append("LIMIT 1");
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(),
+					debitInvoice.get_TrxName());
+			int i = 1;
+			ps.setInt(i++, debitInvoice.getC_BPartner_ID());
+			if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+					&& !Util.isEmpty(debitInvoice.getC_Invoice_Orig_ID(), true)) {
+					ps.setInt(i++, debitInvoice.getC_Invoice_Orig_ID());
+
+			} 
+			rs = ps.executeQuery();
+			if (rs.next()) {
+				invoice = new MInvoice(debitInvoice.getCtx(),
+						rs.getInt("c_invoice_id"), debitInvoice.get_TrxName());
+			}
+		} catch (Exception e) {
+			s_log.severe("ERROR getting credit for " + debitInvoice.toString());
+			e.printStackTrace();
+		} finally {
+			try {
+				if (rs != null)
+					rs.close();
+				if (ps != null)
+					ps.close();
+			} catch (Exception e2) {
+				s_log.severe("ERROR getting credit for "
+						+ debitInvoice.toString());
+				e2.printStackTrace();
+			}
+		}
+		return invoice;
+	}	
 
 	public static boolean existInvoiceFiscalPrinted(Properties ctx,
 			String letter, Integer ptoVenta, Integer nroComprobante,
@@ -2502,9 +2573,85 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 		}
 		
+		//Guardado auxiliar de datos para la impresion del documento.
+		if(!isProcessed()) {
+		       	MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+		       	MBPartnerLocation location = new MBPartnerLocation(getCtx(),	getC_BPartner_Location_ID(), get_TrxName());
+		       	MLocation loc = location.getLocation(false);
+		       	
+		       	String fullLocation = location.getLocation(true).toString();
+		       	setNombreCli(bpartner.getName());
+		       	setInvoice_Adress(fullLocation);
+		       	setNroIdentificCliente(bpartner.getTaxID());
+		       	setDireccion(loc.getAddress1());
+		       	setLocalidad(loc.getCity());
+		       	setprovincia(loc.getRegion().getName());
+		       	setCP(loc.getPostal());
+		       	setCAT_Iva_ID(bpartner.getC_Categoria_Iva_ID());
+		}
+		
+		// Lautaro Laserna: Copiado de impuestos cuando se genera una NC por el total de una factura
+		if(getC_Invoice_Orig_ID() != 0) {
+			MInvoice orig = new MInvoice(Env.getCtx(), getC_Invoice_Orig_ID(), get_TrxName());
+			// Si el neto es el mismo, asumimos que es por el TOTAL del doc original
+			if((getTotalLinesNet().floatValue() == orig.getTotalLinesNet().floatValue())) {
+				try {
+					// Si es por el TOTAL, copio los impuestos
+					copyAllTaxes(orig);
+					
+					// Acomoda los totales por si difieren del doc original
+					setTotalLines(orig.getTotalLines());
+					setGrandTotal(orig.getGrandTotal());
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				// Si es por el PARCIAL, se chekea en PercepcionStandard.java si acepta devolución parcial, y las recalcula.
+			}
+		}
+		
 		return true;
 	} // beforeSave
-
+	
+	protected void copyAllTaxes(MInvoice orig) throws Exception {
+		DB.executeUpdate("DELETE FROM C_InvoiceTax WHERE C_Invoice_ID = " + getC_Invoice_ID(), get_TrxName());
+		MInvoiceTax[] invoiceTaxes = orig.getTaxes(true);
+				
+		for (MInvoiceTax mInvoiceTax : invoiceTaxes) {
+			StringBuffer sql = new StringBuffer();
+			sql.append("INSERT INTO c_invoicetax ("
+												+ "c_tax_id, "
+												+ "c_invoice_id, "
+												+ "ad_client_id, "
+												+ "ad_org_id, "
+												+ "createdby, "
+												+ "updatedby, "
+												+ "taxbaseamt, "
+												+ "taxamt, "
+												+ "processed, "
+												+ "istaxincluded, "
+												+ "isperceptionsincluded, "
+												+ "arcibanormcode, "
+												+ "rate) ");
+			sql.append("VALUES (" + mInvoiceTax.getC_Tax_ID() + ", ");
+			sql.append(getC_Invoice_ID() + ", ");
+			sql.append(mInvoiceTax.getAD_Client_ID() + ", ");
+			sql.append(mInvoiceTax.getAD_Org_ID() + ", ");
+			sql.append(mInvoiceTax.getCreatedBy() + ", ");
+			sql.append(mInvoiceTax.getUpdatedBy() + ", ");
+			sql.append(mInvoiceTax.getTaxBaseAmt() + ", ");
+			sql.append(mInvoiceTax.getTaxAmt() + ", ");
+			sql.append(mInvoiceTax.isProcessed() ? "'Y', " : "'N', ");
+			sql.append(mInvoiceTax.isTaxIncluded() ? "'Y', " : "'N', ");
+			sql.append(mInvoiceTax.isPerceptionsIncluded() ? "'Y', " : "'N', ");
+			sql.append(mInvoiceTax.getArcibaNormCode() + ", ");
+			sql.append(mInvoiceTax.getRate() + ") ");
+			
+			DB.executeUpdate(sql.toString(),get_TrxName());
+		}
+	}
+	
 	/**
 	 * Actualiza el descuento manual general
 	 * 
@@ -2854,7 +3001,21 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 					get_TrxName());
 			success = success && invoiceUpdated.createPaySchedule();
 		}
-
+		
+//		// Lautaro Laserna: Copiado de impuestos cuando se genera una NC por el total de una factura
+//		MDocType dt = new MDocType(Env.getCtx(), getDocTypeID(), null);
+//		if(getC_Invoice_Orig_ID() != 0) {
+//			MInvoice orig = new MInvoice(Env.getCtx(), getC_Invoice_Orig_ID(), get_TrxName());
+//			if(getTotalLinesNet().floatValue() == orig.getTotalLinesNet().floatValue()) {
+//				try {
+//					copyAllTaxes(orig);
+//				} catch (Exception e) {
+//					System.out.println("Error al copiar los impuestos.");
+//					e.printStackTrace();
+//				}
+//			}
+//		}
+		
 		return success;
 	} // afterSave
 
@@ -6697,6 +6858,35 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		public String getDeliveryViaRule() {
 			return MInvoice.this.getDeliveryViaRule();
 		}
+
+		@Override
+		public boolean isVoiding() {
+			// TODO Auto-generated method stub
+			return MInvoice.this.isVoidProcess();
+			//return false;
+		}
+		
+		/**
+		 * @return lista de percepciones a aplicar al documento
+		 */
+		public List<Percepcion> getApplyPercepcion(GeneratorPercepciones generator) throws Exception{
+			if(this.isVoiding()) {
+				return generator.getCreditApplyPercepcionesFromVoid();				
+			}
+			return generator.getDebitApplyPercepciones();
+		}
+
+		@Override
+		public IDocument getCreditRelatedDocument() {
+			// Determinar el credito relacionado al crédito
+			IDocument creditDocument = null;
+			MInvoice creditInvoice = MInvoice.getCreditFor(MInvoice.this);
+			if (creditInvoice != null) {
+				creditDocument = creditInvoice.getDiscountableWrapper();
+			}
+			return creditDocument;
+			//return null;
+		}
 	}
 
 	private class DiscountableMInvoiceCreditWrapper extends
@@ -7174,11 +7364,29 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 * 1) Tasa de impuesto mayor a 0
 	 * 3) Importe de impuesto = 0
 	 */
+	/*
 	protected void deleteInvalidInvoiceTax() {
 		String sql = "delete from c_invoicetax it where c_invoice_id = " + getID()
 				+ " and taxamt = 0 and exists (select t.c_tax_id from c_tax t where t.rate <> 0 and it.c_tax_id = t.c_tax_id)";
 		DB.executeUpdate(sql, get_TrxName());
 	}
+	*/
+	
+	
+	/**
+	 * 20220505 - Lautaro Laserna
+	 * Elimina los impuestos de comprobante inválidos. Las condiciones de los mismos son:
+	 * 1) Tasa de impuesto mayor a 0
+	 * 2) Importe de impuesto = 0
+	 * 3) Contempla el caso de IVA 0 para impuestos exentos.
+	 */
+	protected void deleteInvalidInvoiceTax() {
+		String sql = "delete from c_invoicetax it where c_invoice_id = " + getID()
+				+ " and taxamt = 0 and exists "
+				+ "(select t.c_tax_id from c_tax t where (t.rate <> 0 and it.c_tax_id = t.c_tax_id) or (t.rate = 0 and it.taxbaseamt = 0 and it.taxamt = 0))";
+		DB.executeUpdate(sql, get_TrxName());
+	}
+	
 	
 	public boolean isIgnorePOSJournalAssigned() {
 		return ignorePOSJournalAssigned;

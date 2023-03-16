@@ -168,24 +168,35 @@ public class LaunchOrder extends SvrProcess {
 				.getDocTypeName(getCtx(), order.getC_DocTypeTarget_ID(),
 						"NOTA DE PEDIDO", get_TrxName()));
 			jasperwrapper.addParameter("FECHA", order.getDateOrdered() );
-			jasperwrapper.addParameter("RAZONSOCIAL", bpartner.getName()); 
+			// NombreCli
+			if(!Util.isEmpty(order.getNombreCli()))
+				jasperwrapper.addParameter("RAZONSOCIAL", order.getNombreCli());
+			else
+				jasperwrapper.addParameter("RAZONSOCIAL", JasperReportsUtil.coalesce(bpartner.getName(), "") );
 			jasperwrapper.addParameter("RAZONSOCIAL2", JasperReportsUtil.coalesce(bpartner.getName2(), "") );
 			jasperwrapper.addParameter("CODIGO", bpartner.getValue());
 			jasperwrapper.addParameter("DIRECCION", JasperReportsUtil
-					.formatLocation(getCtx(), location.getID(), false));
-			jasperwrapper.addParameter("BP_LOCATION_NAME", bpLocation.getName());
-			jasperwrapper.addParameter("TELEFONO", bpLocation.getPhone() );
-			if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
-				jasperwrapper.addParameter(
-					"TIPO_IVA",
-					JasperReportsUtil.getCategoriaIVAName(getCtx(),
-							bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+					.formatLocation(getCtx(), location.getID(), false)); 
+			jasperwrapper.addParameter("BP_LOCATION_NAME", bpLocation.getName()); 
+			jasperwrapper.addParameter("TELEFONO", bpLocation.getPhone() ); 
+			// Categoria IVA
+			if(!Util.isEmpty(order.getCAT_Iva_ID(), true)){
+				jasperwrapper.addParameter("TIPO_IVA",
+						JasperReportsUtil.getCategoriaIVAName(getCtx(), order.getCAT_Iva_ID(), get_TrxName()));
+			} else {
+				if(!Util.isEmpty(bpartner.getC_Categoria_Iva_ID(), true)){
+					jasperwrapper.addParameter("TIPO_IVA",
+						JasperReportsUtil.getCategoriaIVAName(getCtx(), bpartner.getC_Categoria_Iva_ID(), get_TrxName()));
+				}
 			}
-			jasperwrapper.addParameter("DNI_CUIT", bpartner.getTaxID());
-			jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());
-			jasperwrapper.addParameter("LOCALIDAD", location.getCity() );
-			jasperwrapper.addParameter(
-				"PAIS",
+			// CUIT
+			if(!Util.isEmpty(order.getNroIdentificCliente()))
+				jasperwrapper.addParameter("DNI_CUIT", order.getNroIdentificCliente());
+			else
+				jasperwrapper.addParameter("DNI_CUIT", bpartner.getTaxID());
+			jasperwrapper.addParameter("INGBRUTO", bpartner.getIIBB());  
+			jasperwrapper.addParameter("LOCALIDAD", location.getCity() ); 
+			jasperwrapper.addParameter(	"PAIS",
 				JasperReportsUtil.coalesce(location.getCountry().getName(), ""));
 			jasperwrapper.addParameter("VENDEDOR", salesUserName);
 			if (order.getSalesRep_ID() > 0) {
@@ -441,16 +452,38 @@ public class LaunchOrder extends SvrProcess {
 			
 			// Datos de Localización 
 			MLocation loc = bpLocation.getLocation(false);
-			jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
-			jasperwrapper.addParameter("LOC_ADDRESS2", loc.getAddress2());
+			if(!Util.isEmpty(order.getDireccion()))
+				jasperwrapper.addParameter("LOC_ADDRESS1", order.getDireccion());
+			else
+				jasperwrapper.addParameter("LOC_ADDRESS1", loc.getAddress1());
+			jasperwrapper.addParameter("LOC_ADDRESS2", loc.getAddress2());		
 			jasperwrapper.addParameter("LOC_ADDRESS3", loc.getAddress3());
-			jasperwrapper.addParameter("LOC_ADDRESS4", loc.getAddress1());
-			jasperwrapper.addParameter("LOC_PLAZA", loc.getPlaza());
-			jasperwrapper.addParameter("LOC_CITY", loc.getCity());
-			jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
-			jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
+			jasperwrapper.addParameter("LOC_ADDRESS4", loc.getAddress4());
+			jasperwrapper.addParameter("LOC_PLAZA",loc.getPlaza());
+			if(!Util.isEmpty(order.getLocalidad())) {
+				jasperwrapper.addParameter("LOC_CITY", order.getLocalidad());
+				jasperwrapper.addParameter("LOCALIDAD", order.getLocalidad());
+			}
+			else {
+				jasperwrapper.addParameter("LOC_CITY", loc.getCity());
+				jasperwrapper.addParameter("LOCALIDAD", loc.getCity());
+			}			
+			if(!Util.isEmpty(order.getCP())) {
+				jasperwrapper.addParameter("LOC_POSTAL", order.getCP());
+				jasperwrapper.addParameter("CP", order.getCP());
+			}else {
+				jasperwrapper.addParameter("LOC_POSTAL", loc.getPostal());
+				jasperwrapper.addParameter("CP", loc.getPostal());
+			}
+			if(!Util.isEmpty(order.getprovincia())) {
+				jasperwrapper.addParameter("LOC_REGION", order.getprovincia());
+				jasperwrapper.addParameter("PROVINCIA", order.getprovincia());
+			}
+			else {
+				jasperwrapper.addParameter("LOC_REGION", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
+				jasperwrapper.addParameter("PROVINCIA", loc.getC_Region_ID() > 0 ? loc.getRegion().getName() : "");
+			}
 			jasperwrapper.addParameter("LOC_COUNTRY", loc.getC_City_ID() > 0 ? loc.getCountry().getName() : "");
-			
 			jasperwrapper.addParameter("BP_LOCATION_PHONE", bpLocation.getPhone());
 			jasperwrapper.addParameter("BP_LOCATION_PHONE2", bpLocation.getPhone2());
 			jasperwrapper.addParameter("BP_LOCATION_FAX", bpLocation.getFax());
@@ -579,3 +612,4 @@ public class LaunchOrder extends SvrProcess {
 		return new OrderDataSource(getCtx(), order);
 	}
 }
+

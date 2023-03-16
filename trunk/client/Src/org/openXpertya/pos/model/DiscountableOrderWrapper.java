@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.openXpertya.model.DiscountCalculator;
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountableDocument;
 import org.openXpertya.model.MDocumentDiscount;
@@ -145,6 +146,18 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 
 	@Override
 	public String getDeliveryViaRule() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isVoiding() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public IDocument getCreditRelatedDocument() {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por M_InOut
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-12-14 10:23:02.58 */
+ *  @version  - 2022-04-11 13:50:56.574 */
 public class X_M_InOut extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -32,9 +32,9 @@ setIsInTransit (false);
 setIsPrinted (false);
 setIsSOTrx (false);	// @IsSOTrx@
 setM_InOut_ID (0);
+setM_Warehouse_ID (0);
 setMovementDate (new Timestamp(System.currentTimeMillis()));	// @#Date@
 setMovementType (null);
-setM_Warehouse_ID (0);
 setPosted (false);
 setPriorityRule (null);	// 5
 setProcessed (false);
@@ -117,21 +117,6 @@ Integer ii = (Integer)get_Value("C_Activity_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set CAI */
-public void setCAI (String CAI)
-{
-if (CAI != null && CAI.length() > 14)
-{
-log.warning("Length > 14 - truncated");
-CAI = CAI.substring(0,14);
-}
-set_Value ("CAI", CAI);
-}
-/** Get CAI */
-public String getCAI() 
-{
-return (String)get_Value("CAI");
-}
 /** Set Business Partner .
 Identifies a Business Partner */
 public void setC_BPartner_ID (int C_BPartner_ID)
@@ -209,20 +194,6 @@ Integer ii = (Integer)get_Value("C_DocType_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Charge amount.
-Charge Amount */
-public void setChargeAmt (BigDecimal ChargeAmt)
-{
-set_Value ("ChargeAmt", ChargeAmt);
-}
-/** Get Charge amount.
-Charge Amount */
-public BigDecimal getChargeAmt() 
-{
-BigDecimal bd = (BigDecimal)get_Value("ChargeAmt");
-if (bd == null) return Env.ZERO;
-return bd;
-}
 /** Set Invoice.
 Invoice Identifier */
 public void setC_Invoice_ID (int C_Invoice_ID)
@@ -238,23 +209,6 @@ public int getC_Invoice_ID()
 Integer ii = (Integer)get_Value("C_Invoice_ID");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Clearance Number.
-Import Clearance Number */
-public void setClearanceNumber (String ClearanceNumber)
-{
-if (ClearanceNumber != null && ClearanceNumber.length() > 255)
-{
-log.warning("Length > 255 - truncated");
-ClearanceNumber = ClearanceNumber.substring(0,255);
-}
-set_Value ("ClearanceNumber", ClearanceNumber);
-}
-/** Get Clearance Number.
-Import Clearance Number */
-public String getClearanceNumber() 
-{
-return (String)get_Value("ClearanceNumber");
 }
 /** Set Order.
 Order */
@@ -287,6 +241,81 @@ public int getC_Project_ID()
 Integer ii = (Integer)get_Value("C_Project_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set CAI */
+public void setCAI (String CAI)
+{
+if (CAI != null && CAI.length() > 14)
+{
+log.warning("Length > 14 - truncated");
+CAI = CAI.substring(0,14);
+}
+set_Value ("CAI", CAI);
+}
+/** Get CAI */
+public String getCAI() 
+{
+return (String)get_Value("CAI");
+}
+/** Set CAT_Iva_ID */
+public void setCAT_Iva_ID (int CAT_Iva_ID)
+{
+if (CAT_Iva_ID <= 0) set_Value ("CAT_Iva_ID", null);
+ else 
+set_Value ("CAT_Iva_ID", new Integer(CAT_Iva_ID));
+}
+/** Get CAT_Iva_ID */
+public int getCAT_Iva_ID() 
+{
+Integer ii = (Integer)get_Value("CAT_Iva_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Charge amount.
+Charge Amount */
+public void setChargeAmt (BigDecimal ChargeAmt)
+{
+set_Value ("ChargeAmt", ChargeAmt);
+}
+/** Get Charge amount.
+Charge Amount */
+public BigDecimal getChargeAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("ChargeAmt");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Clearance Number.
+Import Clearance Number */
+public void setClearanceNumber (String ClearanceNumber)
+{
+if (ClearanceNumber != null && ClearanceNumber.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+ClearanceNumber = ClearanceNumber.substring(0,255);
+}
+set_Value ("ClearanceNumber", ClearanceNumber);
+}
+/** Get Clearance Number.
+Import Clearance Number */
+public String getClearanceNumber() 
+{
+return (String)get_Value("ClearanceNumber");
+}
+/** Set CP */
+public void setCP (String CP)
+{
+if (CP != null && CP.length() > 8)
+{
+log.warning("Length > 8 - truncated");
+CP = CP.substring(0,8);
+}
+set_Value ("CP", CP);
+}
+/** Get CP */
+public String getCP() 
+{
+return (String)get_Value("CP");
 }
 /** Set Create Confirm */
 public void setCreateConfirm (String CreateConfirm)
@@ -472,6 +501,21 @@ Optional short description of the record */
 public String getDescription() 
 {
 return (String)get_Value("Description");
+}
+/** Set Direccion */
+public void setDireccion (String Direccion)
+{
+if (Direccion != null && Direccion.length() > 20)
+{
+log.warning("Length > 20 - truncated");
+Direccion = Direccion.substring(0,20);
+}
+set_Value ("Direccion", Direccion);
+}
+/** Get Direccion */
+public String getDireccion() 
+{
+return (String)get_Value("Direccion");
 }
 public static final int DOCACTION_AD_Reference_ID = MReference.getReferenceID("_Document Action");
 /** Approve = AP */
@@ -775,6 +819,21 @@ if (oo != null)
 }
 return false;
 }
+/** Set Localidad */
+public void setLocalidad (String Localidad)
+{
+if (Localidad != null && Localidad.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+Localidad = Localidad.substring(0,40);
+}
+set_Value ("Localidad", Localidad);
+}
+/** Get Localidad */
+public String getLocalidad() 
+{
+return (String)get_Value("Localidad");
+}
 /** Set m_incotermcode_id */
 public void setm_incotermcode_id (int m_incotermcode_id)
 {
@@ -800,64 +859,6 @@ public int getM_InOut_ID()
 Integer ii = (Integer)get_Value("M_InOut_ID");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set Movement Date.
-Date a product was moved in or out of inventory */
-public void setMovementDate (Timestamp MovementDate)
-{
-if (MovementDate == null) throw new IllegalArgumentException ("MovementDate is mandatory");
-set_Value ("MovementDate", MovementDate);
-}
-/** Get Movement Date.
-Date a product was moved in or out of inventory */
-public Timestamp getMovementDate() 
-{
-return (Timestamp)get_Value("MovementDate");
-}
-public static final int MOVEMENTTYPE_AD_Reference_ID = MReference.getReferenceID("M_Transaction Movement Type");
-/** Vendor Receipts = V+ */
-public static final String MOVEMENTTYPE_VendorReceipts = "V+";
-/** Vendor Returns = V- */
-public static final String MOVEMENTTYPE_VendorReturns = "V-";
-/** Inventory Out = I- */
-public static final String MOVEMENTTYPE_InventoryOut = "I-";
-/** Inventory In = I+ */
-public static final String MOVEMENTTYPE_InventoryIn = "I+";
-/** Movement From = M- */
-public static final String MOVEMENTTYPE_MovementFrom = "M-";
-/** Movement To = M+ */
-public static final String MOVEMENTTYPE_MovementTo = "M+";
-/** Customer Shipment = C- */
-public static final String MOVEMENTTYPE_CustomerShipment = "C-";
-/** Customer Returns = C+ */
-public static final String MOVEMENTTYPE_CustomerReturns = "C+";
-/** Work Order + = W+ */
-public static final String MOVEMENTTYPE_WorkOrderPlus = "W+";
-/** Work Order - = W- */
-public static final String MOVEMENTTYPE_WorkOrder_ = "W-";
-/** Production + = P+ */
-public static final String MOVEMENTTYPE_ProductionPlus = "P+";
-/** Production - = P- */
-public static final String MOVEMENTTYPE_Production_ = "P-";
-/** Set Movement Type.
-Method of moving the inventory */
-public void setMovementType (String MovementType)
-{
-if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-") || ( refContainsValue("CORE-AD_Reference-189", MovementType) ) );
- else throw new IllegalArgumentException ("MovementType Invalid value: " + MovementType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-189") );
-if (MovementType == null) throw new IllegalArgumentException ("MovementType is mandatory");
-if (MovementType.length() > 2)
-{
-log.warning("Length > 2 - truncated");
-MovementType = MovementType.substring(0,2);
-}
-set_ValueNoCheck ("MovementType", MovementType);
-}
-/** Get Movement Type.
-Method of moving the inventory */
-public String getMovementType() 
-{
-return (String)get_Value("MovementType");
 }
 /** Set m_portaircode_id */
 public void setm_portaircode_id (int m_portaircode_id)
@@ -925,6 +926,79 @@ Integer ii = (Integer)get_Value("M_Warehouse_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
+/** Set Movement Date.
+Date a product was moved in or out of inventory */
+public void setMovementDate (Timestamp MovementDate)
+{
+if (MovementDate == null) throw new IllegalArgumentException ("MovementDate is mandatory");
+set_Value ("MovementDate", MovementDate);
+}
+/** Get Movement Date.
+Date a product was moved in or out of inventory */
+public Timestamp getMovementDate() 
+{
+return (Timestamp)get_Value("MovementDate");
+}
+public static final int MOVEMENTTYPE_AD_Reference_ID = MReference.getReferenceID("M_Transaction Movement Type");
+/** Vendor Receipts = V+ */
+public static final String MOVEMENTTYPE_VendorReceipts = "V+";
+/** Vendor Returns = V- */
+public static final String MOVEMENTTYPE_VendorReturns = "V-";
+/** Inventory Out = I- */
+public static final String MOVEMENTTYPE_InventoryOut = "I-";
+/** Inventory In = I+ */
+public static final String MOVEMENTTYPE_InventoryIn = "I+";
+/** Movement From = M- */
+public static final String MOVEMENTTYPE_MovementFrom = "M-";
+/** Movement To = M+ */
+public static final String MOVEMENTTYPE_MovementTo = "M+";
+/** Customer Shipment = C- */
+public static final String MOVEMENTTYPE_CustomerShipment = "C-";
+/** Customer Returns = C+ */
+public static final String MOVEMENTTYPE_CustomerReturns = "C+";
+/** Work Order + = W+ */
+public static final String MOVEMENTTYPE_WorkOrderPlus = "W+";
+/** Work Order - = W- */
+public static final String MOVEMENTTYPE_WorkOrder_ = "W-";
+/** Production + = P+ */
+public static final String MOVEMENTTYPE_ProductionPlus = "P+";
+/** Production - = P- */
+public static final String MOVEMENTTYPE_Production_ = "P-";
+/** Set Movement Type.
+Method of moving the inventory */
+public void setMovementType (String MovementType)
+{
+if (MovementType.equals("V+") || MovementType.equals("V-") || MovementType.equals("I-") || MovementType.equals("I+") || MovementType.equals("M-") || MovementType.equals("M+") || MovementType.equals("C-") || MovementType.equals("C+") || MovementType.equals("W+") || MovementType.equals("W-") || MovementType.equals("P+") || MovementType.equals("P-") || ( refContainsValue("CORE-AD_Reference-189", MovementType) ) );
+ else throw new IllegalArgumentException ("MovementType Invalid value: " + MovementType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-189") );
+if (MovementType == null) throw new IllegalArgumentException ("MovementType is mandatory");
+if (MovementType.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+MovementType = MovementType.substring(0,2);
+}
+set_ValueNoCheck ("MovementType", MovementType);
+}
+/** Get Movement Type.
+Method of moving the inventory */
+public String getMovementType() 
+{
+return (String)get_Value("MovementType");
+}
+/** Set Nombre Entidad Facturada */
+public void setNombreCli (String NombreCli)
+{
+if (NombreCli != null && NombreCli.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+NombreCli = NombreCli.substring(0,40);
+}
+set_Value ("NombreCli", NombreCli);
+}
+/** Get Nombre Entidad Facturada */
+public String getNombreCli() 
+{
+return (String)get_Value("NombreCli");
+}
 /** Set No Packages.
 Number of packages shipped */
 public void setNoPackages (int NoPackages)
@@ -938,6 +1012,23 @@ public int getNoPackages()
 Integer ii = (Integer)get_Value("NoPackages");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set Nro Identificacion del Cliente.
+Número de DNI, Cédula, Libreta de Enrolamiento, Pasaporte o Libreta Cívica del cliente. */
+public void setNroIdentificCliente (String NroIdentificCliente)
+{
+if (NroIdentificCliente != null && NroIdentificCliente.length() > 120)
+{
+log.warning("Length > 120 - truncated");
+NroIdentificCliente = NroIdentificCliente.substring(0,120);
+}
+set_Value ("NroIdentificCliente", NroIdentificCliente);
+}
+/** Get Nro Identificacion del Cliente.
+Número de DNI, Cédula, Libreta de Enrolamiento, Pasaporte o Libreta Cívica del cliente. */
+public String getNroIdentificCliente() 
+{
+return (String)get_Value("NroIdentificCliente");
 }
 /** Set Pick Date.
 Date/Time when picked for Shipment */
@@ -1090,6 +1181,21 @@ if (oo != null)
 }
 return false;
 }
+/** Set provincia */
+public void setprovincia (String provincia)
+{
+if (provincia != null && provincia.length() > 40)
+{
+log.warning("Length > 40 - truncated");
+provincia = provincia.substring(0,40);
+}
+set_Value ("provincia", provincia);
+}
+/** Get provincia */
+public String getprovincia() 
+{
+return (String)get_Value("provincia");
+}
 /** Set ReceptionDate */
 public void setReceptionDate (Timestamp ReceptionDate)
 {
@@ -1220,49 +1326,60 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO M_InOut(InOutDate,InOutReceptionDate,isintrastat,m_incotermcode_id,m_portaircode_id,m_shipmentcode_id,m_statetermscode_id,ReceptionDate,PrePrinted_DocNo,AD_Client_ID,AD_Org_ID,AD_OrgTrx_ID,AD_User_ID,C_Activity_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Campaign_ID,C_Charge_ID,C_DocType_ID,ChargeAmt,C_Invoice_ID,C_Order_ID,C_Project_ID,CreateConfirm,Created,CreatedBy,CreateFrom,CreatePackage,DateAcct,DateOrdered,DatePrinted,DateReceived,DeliveryRule,DeliveryViaRule,Description,DocAction,DocStatus,DocumentNo,FreightAmt,FreightCostRule,GenerateTo,IsActive,IsApproved,IsInDispute,IsInTransit,IsPrinted,IsSOTrx,M_InOut_ID,MovementDate,MovementType,M_Shipper_ID,M_Warehouse_ID,NoPackages,PickDate,POReference,Posted,PriorityRule,Processed,Processing,Ref_InOut_ID,SalesRep_ID,SendEMail,ShipDate,TrackingNo,Updated,UpdatedBy,User1_ID,User2_ID,PrintType,CAI,ClearanceNumber,DateCAI," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO M_InOut(AD_Client_ID,AD_Org_ID,AD_OrgTrx_ID,AD_User_ID,C_Activity_ID,C_BPartner_ID,C_BPartner_Location_ID,C_Campaign_ID,C_Charge_ID,C_DocType_ID,C_Invoice_ID,C_Order_ID,C_Project_ID,CAI,CAT_Iva_ID,ChargeAmt,ClearanceNumber,CP,CreateConfirm,Created,CreatedBy,CreateFrom,CreatePackage,DateAcct,DateCAI,DateOrdered,DatePrinted,DateReceived,DeliveryRule,DeliveryViaRule,Description,Direccion,DocAction,DocStatus,DocumentNo,FreightAmt,FreightCostRule,GenerateTo,InOutDate,InOutReceptionDate,IsActive,IsApproved,IsInDispute,IsInTransit,isintrastat,IsPrinted,IsSOTrx,Localidad,m_incotermcode_id,M_InOut_ID,m_portaircode_id,m_shipmentcode_id,M_Shipper_ID,m_statetermscode_id,M_Warehouse_ID,MovementDate,MovementType,NombreCli,NoPackages,NroIdentificCliente,PickDate,POReference,Posted,PrePrinted_DocNo,PrintType,PriorityRule,Processed,Processing,provincia,ReceptionDate,Ref_InOut_ID,SalesRep_ID,SendEMail,ShipDate,TrackingNo,Updated,UpdatedBy,User1_ID,User2_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
-		 if (getInOutDate() == null) sql = sql.replaceFirst("InOutDate,","").replaceFirst("\\?,", "");
- 		 if (getInOutReceptionDate() == null) sql = sql.replaceFirst("InOutReceptionDate,","").replaceFirst("\\?,", "");
- 		 if (getm_incotermcode_id() == 0) sql = sql.replaceFirst("m_incotermcode_id,","").replaceFirst("\\?,", "");
- 		 if (getm_portaircode_id() == 0) sql = sql.replaceFirst("m_portaircode_id,","").replaceFirst("\\?,", "");
- 		 if (getm_shipmentcode_id() == 0) sql = sql.replaceFirst("m_shipmentcode_id,","").replaceFirst("\\?,", "");
- 		 if (getm_statetermscode_id() == 0) sql = sql.replaceFirst("m_statetermscode_id,","").replaceFirst("\\?,", "");
- 		 if (getReceptionDate() == null) sql = sql.replaceFirst("ReceptionDate,","").replaceFirst("\\?,", "");
- 		 if (getPrePrinted_DocNo() == null) sql = sql.replaceFirst("PrePrinted_DocNo,","").replaceFirst("\\?,", "");
- 		 if (getAD_OrgTrx_ID() == 0) sql = sql.replaceFirst("AD_OrgTrx_ID,","").replaceFirst("\\?,", "");
+		 if (getAD_OrgTrx_ID() == 0) sql = sql.replaceFirst("AD_OrgTrx_ID,","").replaceFirst("\\?,", "");
  		 if (getAD_User_ID() == 0) sql = sql.replaceFirst("AD_User_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Activity_ID() == 0) sql = sql.replaceFirst("C_Activity_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Campaign_ID() == 0) sql = sql.replaceFirst("C_Campaign_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Charge_ID() == 0) sql = sql.replaceFirst("C_Charge_ID,","").replaceFirst("\\?,", "");
- 		 if (getChargeAmt() == null) sql = sql.replaceFirst("ChargeAmt,","").replaceFirst("\\?,", "");
  		 if (getC_Invoice_ID() == 0) sql = sql.replaceFirst("C_Invoice_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Order_ID() == 0) sql = sql.replaceFirst("C_Order_ID,","").replaceFirst("\\?,", "");
  		 if (getC_Project_ID() == 0) sql = sql.replaceFirst("C_Project_ID,","").replaceFirst("\\?,", "");
+ 		 if (getCAI() == null) sql = sql.replaceFirst("CAI,","").replaceFirst("\\?,", "");
+ 		 if (getCAT_Iva_ID() == 0) sql = sql.replaceFirst("CAT_Iva_ID,","").replaceFirst("\\?,", "");
+ 		 if (getChargeAmt() == null) sql = sql.replaceFirst("ChargeAmt,","").replaceFirst("\\?,", "");
+ 		 if (getClearanceNumber() == null) sql = sql.replaceFirst("ClearanceNumber,","").replaceFirst("\\?,", "");
+ 		 if (getCP() == null) sql = sql.replaceFirst("CP,","").replaceFirst("\\?,", "");
  		 if (getCreateConfirm() == null) sql = sql.replaceFirst("CreateConfirm,","").replaceFirst("\\?,", "");
  		 if (getCreated() == null) sql = sql.replaceFirst("Created,","").replaceFirst("\\?,", "");
  		 if (getCreateFrom() == null) sql = sql.replaceFirst("CreateFrom,","").replaceFirst("\\?,", "");
  		 if (getCreatePackage() == null) sql = sql.replaceFirst("CreatePackage,","").replaceFirst("\\?,", "");
  		 if (getDateAcct() == null) sql = sql.replaceFirst("DateAcct,","").replaceFirst("\\?,", "");
+ 		 if (getDateCAI() == null) sql = sql.replaceFirst("DateCAI,","").replaceFirst("\\?,", "");
  		 if (getDateOrdered() == null) sql = sql.replaceFirst("DateOrdered,","").replaceFirst("\\?,", "");
  		 if (getDatePrinted() == null) sql = sql.replaceFirst("DatePrinted,","").replaceFirst("\\?,", "");
  		 if (getDateReceived() == null) sql = sql.replaceFirst("DateReceived,","").replaceFirst("\\?,", "");
  		 if (getDeliveryRule() == null) sql = sql.replaceFirst("DeliveryRule,","").replaceFirst("\\?,", "");
  		 if (getDeliveryViaRule() == null) sql = sql.replaceFirst("DeliveryViaRule,","").replaceFirst("\\?,", "");
  		 if (getDescription() == null) sql = sql.replaceFirst("Description,","").replaceFirst("\\?,", "");
+ 		 if (getDireccion() == null) sql = sql.replaceFirst("Direccion,","").replaceFirst("\\?,", "");
  		 if (getDocAction() == null) sql = sql.replaceFirst("DocAction,","").replaceFirst("\\?,", "");
  		 if (getDocStatus() == null) sql = sql.replaceFirst("DocStatus,","").replaceFirst("\\?,", "");
  		 if (getDocumentNo() == null) sql = sql.replaceFirst("DocumentNo,","").replaceFirst("\\?,", "");
  		 if (getFreightAmt() == null) sql = sql.replaceFirst("FreightAmt,","").replaceFirst("\\?,", "");
  		 if (getFreightCostRule() == null) sql = sql.replaceFirst("FreightCostRule,","").replaceFirst("\\?,", "");
  		 if (getGenerateTo() == null) sql = sql.replaceFirst("GenerateTo,","").replaceFirst("\\?,", "");
+ 		 if (getInOutDate() == null) sql = sql.replaceFirst("InOutDate,","").replaceFirst("\\?,", "");
+ 		 if (getInOutReceptionDate() == null) sql = sql.replaceFirst("InOutReceptionDate,","").replaceFirst("\\?,", "");
+ 		 if (getLocalidad() == null) sql = sql.replaceFirst("Localidad,","").replaceFirst("\\?,", "");
+ 		 if (getm_incotermcode_id() == 0) sql = sql.replaceFirst("m_incotermcode_id,","").replaceFirst("\\?,", "");
+ 		 if (getm_portaircode_id() == 0) sql = sql.replaceFirst("m_portaircode_id,","").replaceFirst("\\?,", "");
+ 		 if (getm_shipmentcode_id() == 0) sql = sql.replaceFirst("m_shipmentcode_id,","").replaceFirst("\\?,", "");
+ 		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
+ 		 if (getm_statetermscode_id() == 0) sql = sql.replaceFirst("m_statetermscode_id,","").replaceFirst("\\?,", "");
  		 if (getMovementDate() == null) sql = sql.replaceFirst("MovementDate,","").replaceFirst("\\?,", "");
  		 if (getMovementType() == null) sql = sql.replaceFirst("MovementType,","").replaceFirst("\\?,", "");
- 		 if (getM_Shipper_ID() == 0) sql = sql.replaceFirst("M_Shipper_ID,","").replaceFirst("\\?,", "");
+ 		 if (getNombreCli() == null) sql = sql.replaceFirst("NombreCli,","").replaceFirst("\\?,", "");
  		 if (getNoPackages() == 0) sql = sql.replaceFirst("NoPackages,","").replaceFirst("\\?,", "");
+ 		 if (getNroIdentificCliente() == null) sql = sql.replaceFirst("NroIdentificCliente,","").replaceFirst("\\?,", "");
  		 if (getPickDate() == null) sql = sql.replaceFirst("PickDate,","").replaceFirst("\\?,", "");
  		 if (getPOReference() == null) sql = sql.replaceFirst("POReference,","").replaceFirst("\\?,", "");
+ 		 if (getPrePrinted_DocNo() == null) sql = sql.replaceFirst("PrePrinted_DocNo,","").replaceFirst("\\?,", "");
+ 		 if (getPrintType() == null) sql = sql.replaceFirst("PrintType,","").replaceFirst("\\?,", "");
  		 if (getPriorityRule() == null) sql = sql.replaceFirst("PriorityRule,","").replaceFirst("\\?,", "");
+ 		 if (getprovincia() == null) sql = sql.replaceFirst("provincia,","").replaceFirst("\\?,", "");
+ 		 if (getReceptionDate() == null) sql = sql.replaceFirst("ReceptionDate,","").replaceFirst("\\?,", "");
  		 if (getRef_InOut_ID() == 0) sql = sql.replaceFirst("Ref_InOut_ID,","").replaceFirst("\\?,", "");
  		 if (getSalesRep_ID() == 0) sql = sql.replaceFirst("SalesRep_ID,","").replaceFirst("\\?,", "");
  		 if (getShipDate() == null) sql = sql.replaceFirst("ShipDate,","").replaceFirst("\\?,", "");
@@ -1270,10 +1387,6 @@ try
  		 if (getUpdated() == null) sql = sql.replaceFirst("Updated,","").replaceFirst("\\?,", "");
  		 if (getUser1_ID() == 0) sql = sql.replaceFirst("User1_ID,","").replaceFirst("\\?,", "");
  		 if (getUser2_ID() == 0) sql = sql.replaceFirst("User2_ID,","").replaceFirst("\\?,", "");
- 		 if (getPrintType() == null) sql = sql.replaceFirst("PrintType,","").replaceFirst("\\?,", "");
- 		 if (getCAI() == null) sql = sql.replaceFirst("CAI,","").replaceFirst("\\?,", "");
- 		 if (getClearanceNumber() == null) sql = sql.replaceFirst("ClearanceNumber,","").replaceFirst("\\?,", "");
- 		 if (getDateCAI() == null) sql = sql.replaceFirst("DateCAI,","").replaceFirst("\\?,", "");
  		 skipAdditionalNullValues(sql);
  
 
@@ -1285,15 +1398,6 @@ try
  
 		 CPreparedStatement pstmt = new CPreparedStatement( ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE, sql, get_TrxName(), true);
  
-		 if (getInOutDate() != null) pstmt.setTimestamp(col++, getInOutDate());
-		 if (getInOutReceptionDate() != null) pstmt.setTimestamp(col++, getInOutReceptionDate());
-		 pstmt.setString(col++, isintrastat()?"Y":"N");
-		 if (getm_incotermcode_id() != 0) pstmt.setInt(col++, getm_incotermcode_id());
-		 if (getm_portaircode_id() != 0) pstmt.setInt(col++, getm_portaircode_id());
-		 if (getm_shipmentcode_id() != 0) pstmt.setInt(col++, getm_shipmentcode_id());
-		 if (getm_statetermscode_id() != 0) pstmt.setInt(col++, getm_statetermscode_id());
-		 if (getReceptionDate() != null) pstmt.setTimestamp(col++, getReceptionDate());
-		 if (getPrePrinted_DocNo() != null) pstmt.setString(col++, getPrePrinted_DocNo());
 		 pstmt.setInt(col++, getAD_Client_ID());
 		 pstmt.setInt(col++, getAD_Org_ID());
 		 if (getAD_OrgTrx_ID() != 0) pstmt.setInt(col++, getAD_OrgTrx_ID());
@@ -1304,46 +1408,66 @@ try
 		 if (getC_Campaign_ID() != 0) pstmt.setInt(col++, getC_Campaign_ID());
 		 if (getC_Charge_ID() != 0) pstmt.setInt(col++, getC_Charge_ID());
 		 pstmt.setInt(col++, getC_DocType_ID());
-		 if (getChargeAmt() != null) pstmt.setBigDecimal(col++, getChargeAmt());
 		 if (getC_Invoice_ID() != 0) pstmt.setInt(col++, getC_Invoice_ID());
 		 if (getC_Order_ID() != 0) pstmt.setInt(col++, getC_Order_ID());
 		 if (getC_Project_ID() != 0) pstmt.setInt(col++, getC_Project_ID());
+		 if (getCAI() != null) pstmt.setString(col++, getCAI());
+		 if (getCAT_Iva_ID() != 0) pstmt.setInt(col++, getCAT_Iva_ID());
+		 if (getChargeAmt() != null) pstmt.setBigDecimal(col++, getChargeAmt());
+		 if (getClearanceNumber() != null) pstmt.setString(col++, getClearanceNumber());
+		 if (getCP() != null) pstmt.setString(col++, getCP());
 		 if (getCreateConfirm() != null) pstmt.setString(col++, getCreateConfirm());
 		 if (getCreated() != null) pstmt.setTimestamp(col++, getCreated());
 		 pstmt.setInt(col++, getCreatedBy());
 		 if (getCreateFrom() != null) pstmt.setString(col++, getCreateFrom());
 		 if (getCreatePackage() != null) pstmt.setString(col++, getCreatePackage());
 		 if (getDateAcct() != null) pstmt.setTimestamp(col++, getDateAcct());
+		 if (getDateCAI() != null) pstmt.setTimestamp(col++, getDateCAI());
 		 if (getDateOrdered() != null) pstmt.setTimestamp(col++, getDateOrdered());
 		 if (getDatePrinted() != null) pstmt.setTimestamp(col++, getDatePrinted());
 		 if (getDateReceived() != null) pstmt.setTimestamp(col++, getDateReceived());
 		 if (getDeliveryRule() != null) pstmt.setString(col++, getDeliveryRule());
 		 if (getDeliveryViaRule() != null) pstmt.setString(col++, getDeliveryViaRule());
 		 if (getDescription() != null) pstmt.setString(col++, getDescription());
+		 if (getDireccion() != null) pstmt.setString(col++, getDireccion());
 		 if (getDocAction() != null) pstmt.setString(col++, getDocAction());
 		 if (getDocStatus() != null) pstmt.setString(col++, getDocStatus());
 		 if (getDocumentNo() != null) pstmt.setString(col++, getDocumentNo());
 		 if (getFreightAmt() != null) pstmt.setBigDecimal(col++, getFreightAmt());
 		 if (getFreightCostRule() != null) pstmt.setString(col++, getFreightCostRule());
 		 if (getGenerateTo() != null) pstmt.setString(col++, getGenerateTo());
+		 if (getInOutDate() != null) pstmt.setTimestamp(col++, getInOutDate());
+		 if (getInOutReceptionDate() != null) pstmt.setTimestamp(col++, getInOutReceptionDate());
 		 pstmt.setString(col++, isActive()?"Y":"N");
 		 pstmt.setString(col++, isApproved()?"Y":"N");
 		 pstmt.setString(col++, isInDispute()?"Y":"N");
 		 pstmt.setString(col++, isInTransit()?"Y":"N");
+		 pstmt.setString(col++, isintrastat()?"Y":"N");
 		 pstmt.setString(col++, isPrinted()?"Y":"N");
 		 pstmt.setString(col++, isSOTrx()?"Y":"N");
+		 if (getLocalidad() != null) pstmt.setString(col++, getLocalidad());
+		 if (getm_incotermcode_id() != 0) pstmt.setInt(col++, getm_incotermcode_id());
 		 pstmt.setInt(col++, getM_InOut_ID());
+		 if (getm_portaircode_id() != 0) pstmt.setInt(col++, getm_portaircode_id());
+		 if (getm_shipmentcode_id() != 0) pstmt.setInt(col++, getm_shipmentcode_id());
+		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
+		 if (getm_statetermscode_id() != 0) pstmt.setInt(col++, getm_statetermscode_id());
+		 pstmt.setInt(col++, getM_Warehouse_ID());
 		 if (getMovementDate() != null) pstmt.setTimestamp(col++, getMovementDate());
 		 if (getMovementType() != null) pstmt.setString(col++, getMovementType());
-		 if (getM_Shipper_ID() != 0) pstmt.setInt(col++, getM_Shipper_ID());
-		 pstmt.setInt(col++, getM_Warehouse_ID());
+		 if (getNombreCli() != null) pstmt.setString(col++, getNombreCli());
 		 if (getNoPackages() != 0) pstmt.setInt(col++, getNoPackages());
+		 if (getNroIdentificCliente() != null) pstmt.setString(col++, getNroIdentificCliente());
 		 if (getPickDate() != null) pstmt.setTimestamp(col++, getPickDate());
 		 if (getPOReference() != null) pstmt.setString(col++, getPOReference());
 		 pstmt.setString(col++, isPosted()?"Y":"N");
+		 if (getPrePrinted_DocNo() != null) pstmt.setString(col++, getPrePrinted_DocNo());
+		 if (getPrintType() != null) pstmt.setString(col++, getPrintType());
 		 if (getPriorityRule() != null) pstmt.setString(col++, getPriorityRule());
 		 pstmt.setString(col++, isProcessed()?"Y":"N");
 		 pstmt.setString(col++, isProcessing()?"Y":"N");
+		 if (getprovincia() != null) pstmt.setString(col++, getprovincia());
+		 if (getReceptionDate() != null) pstmt.setTimestamp(col++, getReceptionDate());
 		 if (getRef_InOut_ID() != 0) pstmt.setInt(col++, getRef_InOut_ID());
 		 if (getSalesRep_ID() != 0) pstmt.setInt(col++, getSalesRep_ID());
 		 pstmt.setString(col++, isSendEMail()?"Y":"N");
@@ -1353,10 +1477,6 @@ try
 		 pstmt.setInt(col++, getUpdatedBy());
 		 if (getUser1_ID() != 0) pstmt.setInt(col++, getUser1_ID());
 		 if (getUser2_ID() != 0) pstmt.setInt(col++, getUser2_ID());
-		 if (getPrintType() != null) pstmt.setString(col++, getPrintType());
-		 if (getCAI() != null) pstmt.setString(col++, getCAI());
-		 if (getClearanceNumber() != null) pstmt.setString(col++, getClearanceNumber());
-		 if (getDateCAI() != null) pstmt.setTimestamp(col++, getDateCAI());
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

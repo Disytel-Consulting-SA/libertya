@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountableDocument;
 import org.openXpertya.model.MCurrency;
@@ -401,5 +402,18 @@ public class Invoice extends DiscountableDocument implements Serializable{
 	@Override
 	public String getDeliveryViaRule() {
 		return getRealInvoice().getDeliveryViaRule();
+	}
+
+	@Override
+	public boolean isVoiding() {
+		// TODO Auto-generated method stub
+		return this.getRealInvoice().isVoidProcess();
+		//return false;
+	}
+
+	@Override
+	public IDocument getCreditRelatedDocument() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

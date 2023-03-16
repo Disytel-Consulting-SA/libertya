@@ -158,7 +158,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public BigDecimal getAmount() {
 		// Las retenciones sufridas no deben ser calculadas.
 		if (!getRetencionSchema().isSufferedRetencion()
-				&& (amount == null || isRecalculateAmount())) {
+				&& (amount == null || amount.compareTo(BigDecimal.ZERO) == 0 || isRecalculateAmount())) {
 			// Calcula el monto de la retención.
 			BigDecimal amt = calculateAmount();
 			// Calcula las excepciones.
@@ -543,7 +543,8 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		BigDecimal net = invoice.getNetAmount();
 		BigDecimal grandTotal = invoice.getGrandTotal();
 		// Decrementar los impuestos manuales
-		/*BigDecimal manualTaxesAmt = BigDecimal.ZERO;
+		/*
+		BigDecimal manualTaxesAmt = BigDecimal.ZERO;
 		try{
 			List<MInvoiceTax> manualTaxes = MInvoiceTax.getTaxesFromInvoice(invoice, true);
 			for (MInvoiceTax mInvoiceTax : manualTaxes) {
@@ -552,7 +553,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			grandTotal = grandTotal.subtract(manualTaxesAmt);
 		} catch(Exception e){
 			e.printStackTrace();
-		}*/
+		}
+		amt = amt.subtract(manualTaxesAmt);
+		*/
 		return net.multiply(amt).divide(grandTotal, 2, BigDecimal.ROUND_HALF_EVEN);
 	}
 	
@@ -640,6 +643,39 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	
 	public Map<MInvoice, BigDecimal> getAllocatedInvoicesAmts(
 			String allocationLineCreditColumn, Integer creditID, 
+			boolean calculateRetencionPorcentaje, boolean filterByApplyRetencionFlag)
+			throws Exception {
+		Map<MInvoice, BigDecimal> allocatedAmts = new HashMap<MInvoice, BigDecimal>();
+		// Query que permite obtener las facturas (débitos) y el monto imputado
+		// del crédito parámetro
+		// TODO: conversión del monto imputado a la moneda del crédito, la fecha
+		// de conversión es la fecha del crédito o la de imputación?
+		BigDecimal amountRet = calculateRetencionPorcentaje
+				? getRetencionPorcentaje(allocationLineCreditColumn, creditID) : BigDecimal.ZERO;
+		String sql = "SELECT DISTINCT c_allocationline_id, al.c_invoice_id, amount "
+				+ "FROM c_allocationhdr as ah "
+				+ "INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
+				+ "INNER JOIN c_invoice as i on i.c_invoice_id = al.c_invoice_id "
+				+ "INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctype_id "
+				+ "WHERE ah.isactive = 'Y' "
+				+ "AND dt.applyretention = 'Y' "
+				+ "AND ah.docstatus in ('CO','CL') AND al."
+				+ allocationLineCreditColumn
+				+ " = "
+				+ creditID
+				+ " AND allocationtype <> 'OPA'";
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		ResultSet rs = ps.executeQuery();
+		while (rs.next()) {
+			allocatedAmts.put(
+					new MInvoice(Env.getCtx(), rs.getInt("c_invoice_id"),
+							getTrxName()), rs.getBigDecimal("amount").add(amountRet));
+		}
+		return allocatedAmts;
+	}	
+	
+	public Map<MInvoice, BigDecimal> getAllocatedInvoicesAmts(
+			String allocationLineCreditColumn, Integer creditID, 
 			boolean calculateRetencionPorcentaje)
 			throws Exception {
 		Map<MInvoice, BigDecimal> allocatedAmts = new HashMap<MInvoice, BigDecimal>();
@@ -649,10 +685,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		// de conversión es la fecha del crédito o la de imputación?
 		BigDecimal amountRet = calculateRetencionPorcentaje
 				? getRetencionPorcentaje(allocationLineCreditColumn, creditID) : BigDecimal.ZERO;
-		String sql = "SELECT DISTINCT c_allocationline_id, c_invoice_id, amount "
+		String sql = "SELECT DISTINCT c_allocationline_id, al.c_invoice_id, amount "
 				+ "FROM c_allocationhdr as ah "
 				+ "INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "WHERE ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al."
+				+ "WHERE ah.isactive = 'Y' "
+				+ "AND ah.docstatus in ('CO','CL') AND al."
 				+ allocationLineCreditColumn
 				+ " = "
 				+ creditID
@@ -876,7 +913,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		while (rs.next()) {
 			paymentID = rs.getInt("c_payment_id");
 			// Determinar las facturas imputadas al pago y obtener su neto
-			allocatedAmts = getAllocatedInvoicesAmts("c_payment_id", paymentID, false);
+			allocatedAmts = getAllocatedInvoicesAmts("c_payment_id", paymentID, false, true);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
 					new ArrayList<BigDecimal>(allocatedAmts.values()));
@@ -1067,7 +1104,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		while (rs.next()) {
 			cashlineID = rs.getInt("c_cashline_id");
 			// Determinar las facturas imputadas al cashline y obtener su neto
-			allocatedAmts = getAllocatedInvoicesAmts("c_cashline_id", cashlineID, false);
+			allocatedAmts = getAllocatedInvoicesAmts("c_cashline_id", cashlineID, false, true);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
 					new ArrayList<BigDecimal>(allocatedAmts.values()));
@@ -1238,7 +1275,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			retencionCreditID = rs.getInt("c_invoice_id");
 			// Determinar las facturas imputadas al cashline y obtener su neto
 			allocatedAmts = getAllocatedInvoicesAmts("c_invoice_credit_id",
-					retencionCreditID, false);
+					retencionCreditID, false, true);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
 					new ArrayList<BigDecimal>(allocatedAmts.values()));

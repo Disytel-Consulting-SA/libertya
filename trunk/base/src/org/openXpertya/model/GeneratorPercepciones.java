@@ -230,11 +230,14 @@ public class GeneratorPercepciones {
 		Percepcion percepcion;
 		for (MOrgPercepcion orgPercepcion : getOrgPercepciones()) {
 			// Aplicar la percepción
-			percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyDebitPerception();			
-			// Impuesto
-			if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
-				percepcion.orgPercepcionID = orgPercepcion.getID();
-				percepciones.add(percepcion);
+			boolean ECesCM = getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType() != null && getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType().equals(MBPartner.IIBBTYPE_ConvenioMultilateral);
+			if ((!orgPercepcion.isConvenioMultilateral() && !ECesCM) || (orgPercepcion.isConvenioMultilateral() && ECesCM)) {
+				percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyDebitPerception();			
+				// Impuesto
+				if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
+					percepcion.orgPercepcionID = orgPercepcion.getID();
+					percepciones.add(percepcion);
+				}
 			}
 		}
 		return percepciones;
@@ -280,6 +283,48 @@ public class GeneratorPercepciones {
 		return percepciones;
 	}
 	
+	/**
+	 * Para documentos de créditos, las percepciones a aplicar difieren de los
+	 * débitos. Si un documento de crédito es de anulación o devolución de un
+	 * débito, entonces se deben aplicar los mismo porcentajes de percepciones
+	 * que se aplicaron en el débito. En cambio, si no posee débito relacionado,
+	 * por ejemplo una NC creada sin relación, entonces se deben aplicar las
+	 * percepciones básicas de un débito
+	 * 
+	 * @return lista de percepciones a aplicar al crédito
+	 * @throws Exception
+	 */
+	public List<Percepcion> getCreditApplyPercepcionesFromVoid() throws Exception{
+		IDocument debitDocument = (IDocument)getDocument();
+		ICreditDocument creditDocument = (ICreditDocument)debitDocument.getCreditRelatedDocument(); 
+		//ICreditDocument creditDocument = (ICreditDocument)getDocument();
+		//IDocument debitDocument = creditDocument.getDebitRelatedDocument();
+		List<Percepcion> percepciones = new ArrayList<Percepcion>();
+		if(!isApplyPercepcion()){
+			return percepciones;
+		}
+		Percepcion percepcion;
+		for (MOrgPercepcion orgPercepcion : getOrgPercepciones()) {
+			// Enviar al procesador de percepciones los datos de débito relacionado y si es
+			// por anulación de comprobante, los importes mínimos no se controlan ya que
+			// sino no aplica para devoluciones parciales
+			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().setMinimumNetAmt(BigDecimal.ZERO);
+			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().setMinimumNetAmtByPadronType(null);
+			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().setMinimumPercepcionAmt(BigDecimal.ZERO);
+			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().setRelatedDocument(creditDocument);
+			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData()
+					.setVoiding(debitDocument.isVoiding());
+			// Percepción aplicada
+			percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyCreditPerception();
+			// Impuesto
+			if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
+				percepcion.orgPercepcionID = orgPercepcion.getID();
+				percepciones.add(percepcion);
+			}
+		}
+		return percepciones;
+	}	
+	
 	public List<Percepcion> getApplyPercepciones() throws Exception{
 		List<Percepcion> percepciones = new ArrayList<Percepcion>();
 		if(getDocument() != null){
@@ -287,6 +332,8 @@ public class GeneratorPercepciones {
 		}
 		return percepciones;
 	}
+	
+	
 	
 	/**
 	 * Recalcula las percepciones en de la factura
