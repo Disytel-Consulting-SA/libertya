@@ -3,7 +3,7 @@
 # $Id: Libertya.sh,v 2.0 $
 echo Cliente Libertya v19.07 $OXP_HOME
 
-#	Establecer Directamente para Sobreescribir
+#Establecer OXP_HOME Directamente para Sobreescribir
 #OXP_HOME=/ServidorOXP
 #JAVA_HOME=/usr/lib/jvm/java
 
