@@ -170,7 +170,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Librerias_Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXPXLib ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -264,7 +264,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -278,7 +278,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="OXPRoot"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -292,7 +292,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="WEBUI"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -322,7 +322,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="OXPRootWar"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -356,7 +356,7 @@
 	      	<manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2019 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
