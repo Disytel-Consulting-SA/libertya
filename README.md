@@ -9,5 +9,5 @@ Libertya es un software de Gestión Integral Administrativa, sin costos de licen
 - Tesorería y Contabilidad
 - Modo TPV: Terminal de Punto de Venta
 - Integración con Sugar CRM y Jasper BI Suite
-- Facturación electónica AFIP
+- Facturación electrónica AFIP
 - Cliente de escritorio y web
