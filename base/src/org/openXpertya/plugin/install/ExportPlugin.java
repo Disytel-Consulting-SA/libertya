@@ -1,9 +1,17 @@
 package org.openXpertya.plugin.install;
 
-import java.math.BigDecimal;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import java.util.Scanner;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.plugin.common.PluginConstants;
@@ -11,12 +19,18 @@ import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Secure;
+import org.openXpertya.util.Util;
+import org.openXpertya.utils.JarHelper;
 
 public class ExportPlugin extends SvrProcess{
 
 	// Variables de instancia
 	
+	private static Object object;
+
 	/** Versión de componente */
 	
 	private Integer componentVersionID;
@@ -319,5 +333,165 @@ public class ExportPlugin extends SvrProcess{
 	protected boolean isPatch() {
 		return patch;
 	}
+	
 
+	protected boolean isValidateChangelogConsistency() {
+		return validateChangelogConsistency;
+	}
+
+
+	protected void setValidateChangelogConsistency(boolean validateChangelogConsistency) {
+		this.validateChangelogConsistency = validateChangelogConsistency;
+	}
+	
+	protected boolean isDisableInconsistentChangelog() {
+		return disableInconsistentChangelog;
+	}
+
+
+	protected void setDisableInconsistentChangelog(boolean disableInconsistentChangelog) {
+		this.disableInconsistentChangelog = disableInconsistentChangelog;
+	}
+
+	
+	
+	/* ================================================ INVOCACION DESDE TERMINAL ================================================ */
+	
+	protected static Properties props;
+	
+	protected static String baseDir; 
+	
+	public static void main(String[] args) {
+
+		try {
+			validateArguments(args);
+			
+			loadProps(args);
+
+			setConnection();
+
+			startEnvironment();
+			
+			showInfo();
+			
+			executeExport();
+			
+			copyFiles();
+			
+			createJar();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+
+	protected static void validateArguments(String[] args) {
+		if (args.length == 0) {
+			System.out.println("Se requiere un descriptor devinfo.properties (junto a su full path)");
+			System.exit(1);
+		}
+	}
+	
+	protected static void loadProps(String[] args) throws Exception {
+		props = Util.loadProperties(args[0]);
+		baseDir = args[0].replace("devinfo.properties", "");
+	}
+	
+	protected static void startEnvironment() {
+		Env.setContext(Env.getCtx(), "#AD_Client_ID", 0);
+	  	Env.setContext(Env.getCtx(), "#AD_Org_ID", 0);
+		if (!OpenXpertya.startupEnvironment( true )) {
+			System.err.println("Error al iniciar. Validar conexion.");
+			System.exit(1);
+		}
+	}
+	
+	protected static void setConnection() {
+		// Al especificar la conexion ya no es necesario el uso 
+		//		System.setProperty("PropertyFile", "/tmp/Libertya.properties");
+		//		Ini.setShowLicenseDialog(false);
+		Ini.getProperties().put(Ini.P_CONNECTION, 
+				Secure.CLEARTEXT + 
+				"CConnection["
+				+ "name=localhost{DEVELOPMENT-DEVELOPMENT},"
+				+ "AppsHost=localhost,"		
+				+ "AppsPort=1099,"
+				+ "RMIoverHTTP=false,"
+				+ "type=PostgreSQL,"
+				+ "DBhost="+props.getProperty("DBHost")+","
+				+ "DBport="+props.getProperty("DBPort")+","
+				+ "DBname="+props.getProperty("DBName")+","
+				+ "BQ=false,"
+				+ "FW=false,"
+				+ "FWhost=,"
+				+ "FWport=0,"
+				+ "UID="+props.getProperty("DBUser")+","
+				+ "PWD="+props.getProperty("DBPass")+"]");
+	}
+	
+	protected static void showInfo() {
+		System.out.println("=== PLUGIN EXPORTER ===");
+		System.out.println(DB.getDatabaseInfo());
+		System.out.println("Config:");
+		props.entrySet().forEach( prop -> {
+				StringBuffer conf = new StringBuffer();
+				conf.append("  ").append(prop.getKey()).append("=").append(prop.getValue());
+				System.out.println(conf);
+			}
+		);
+		System.out.println();
+	}
+	
+	protected static void executeExport() throws Exception {
+		System.out.println(DB.getSQLValueString(null, "SELECT 'Exportando ' || name || '...' FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));		
+		
+		ExportPlugin ep = new ExportPlugin();
+		ep.setComponentVersionID(Integer.parseInt((String)props.get("ExportComponentVersionID")));
+		ep.setDirectoryPath((String)props.get("ExportDirectory"));
+		ep.setProcessID(Integer.parseInt((String)props.get("ExportProcessID")));
+		ep.setChangeLogIDFrom(Integer.parseInt((String)props.get("ExportChangelogFromID")));
+		ep.setChangeLogIDTo(Integer.parseInt((String)props.get("ExportChangelogToID")));
+		ep.setUserID(Integer.parseInt((String)props.get("ExportFromUserID")));
+		ep.setPatch("Y".equalsIgnoreCase((String)props.get("ExportAsPatch")));
+		ep.setValidateChangelogConsistency("Y".equalsIgnoreCase((String)props.get("ExportAndValidateConsistency")));
+		ep.setDisableInconsistentChangelog("Y".equalsIgnoreCase((String)props.get("ExportAndDisableInvalidEntries")));
+		ep.doIt();
+	}
+	
+	protected static void copyFiles() throws Exception {
+		// Pisado de preinstall
+		if ("Y".equalsIgnoreCase((String)props.get("CreateJarOvewritePreinstall"))) {
+			//FileUtils.forceDelete(new File((String)props.get("ExportDirectory")+File.separator+"preinstall.sql"));
+			FileUtils.copyFile(new File(baseDir + File.separator + (String)props.get("CreateJarPreinstallFile")), new File((String)props.get("ExportDirectory") + File.separator + "preinstall.sql"));
+			//FileUtils.moveFile(new File((String)props.get("ExportDirectory")), new File((String)props.get("ExportDirectory")+File.separator+"preinstall.sql"));
+		}
+		
+		// Copia de reportes/binarios
+		if ("Y".equalsIgnoreCase((String)props.get("CreateJarIncludeBinaries"))) {
+			FileUtils.copyDirectory(new File(baseDir + File.separator + (String)props.get("CreateJarBinariesLocation")), new File((String)props.get("CreateJarTargetDir") + File.separator + "binarios"));	
+		}
+	}
+	
+	protected static void createJar() throws Exception {
+		String[] command = {"sh", "-c", "jar -cf " + (String)props.get("CreateJarTargetFileName") + " *"};
+		Process process = Runtime.getRuntime().exec(command, null, new File((String)props.get("CreateJarTargetDir")));
+		process.waitFor();
+		if (process.exitValue() > 0) {
+			throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
+		}
+	}
+	
+	protected static String inputStreamToString(InputStream inputStream) throws Exception {
+	    StringBuffer sb = new StringBuffer();
+	    Scanner scanner = new Scanner(inputStream);
+	    while (scanner.hasNextLine()) {
+	    	sb.append(scanner.nextLine());	
+	    }
+	    return sb.toString();
+	}
 }
+
+
+
+
