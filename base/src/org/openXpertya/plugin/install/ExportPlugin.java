@@ -1,14 +1,11 @@
 package org.openXpertya.plugin.install;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.openXpertya.OpenXpertya;
@@ -23,7 +20,6 @@ import org.openXpertya.util.Ini;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Secure;
 import org.openXpertya.util.Util;
-import org.openXpertya.utils.JarHelper;
 
 public class ExportPlugin extends SvrProcess{
 
@@ -357,8 +353,10 @@ public class ExportPlugin extends SvrProcess{
 	
 	/* ================================================ INVOCACION DESDE TERMINAL ================================================ */
 	
+	/** Contenido de propiedades almacenado en archivo devinfo.properties */
 	protected static Properties props;
 	
+	/** Directorio base determinado a partir de la ubicacion del archivo devinfo.properties */
 	protected static String baseDir; 
 	
 	public static void main(String[] args) {
@@ -447,39 +445,79 @@ public class ExportPlugin extends SvrProcess{
 		System.out.println(DB.getSQLValueString(null, "SELECT 'Exportando ' || name || '...' FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));		
 		
 		ExportPlugin ep = new ExportPlugin();
-		ep.setComponentVersionID(Integer.parseInt((String)props.get("ExportComponentVersionID")));
-		ep.setDirectoryPath((String)props.get("ExportDirectory"));
-		ep.setProcessID(Integer.parseInt((String)props.get("ExportProcessID")));
-		ep.setChangeLogIDFrom(Integer.parseInt((String)props.get("ExportChangelogFromID")));
-		ep.setChangeLogIDTo(Integer.parseInt((String)props.get("ExportChangelogToID")));
-		ep.setUserID(Integer.parseInt((String)props.get("ExportFromUserID")));
-		ep.setPatch("Y".equalsIgnoreCase((String)props.get("ExportAsPatch")));
-		ep.setValidateChangelogConsistency("Y".equalsIgnoreCase((String)props.get("ExportAndValidateConsistency")));
-		ep.setDisableInconsistentChangelog("Y".equalsIgnoreCase((String)props.get("ExportAndDisableInvalidEntries")));
+		ep.setComponentVersionID(Integer.parseInt(prop("ExportComponentVersionID")));
+		ep.setDirectoryPath(prop("ExportDirectory"));
+		ep.setProcessID(Integer.parseInt(prop("ExportProcessID")));
+		ep.setChangeLogIDFrom(Integer.parseInt(prop("ExportChangelogFromID")));
+		ep.setChangeLogIDTo(Integer.parseInt(prop("ExportChangelogToID")));
+		ep.setUserID(Integer.parseInt(prop("ExportFromUserID")));
+		ep.setPatch("Y".equalsIgnoreCase(prop("ExportAsPatch")));
+		ep.setValidateChangelogConsistency("Y".equalsIgnoreCase(prop("ExportAndValidateConsistency")));
+		ep.setDisableInconsistentChangelog("Y".equalsIgnoreCase(prop("ExportAndDisableInvalidEntries")));
 		ep.doIt();
 	}
 	
 	protected static void copyFiles() throws Exception {
 		// Pisado de preinstall
-		if ("Y".equalsIgnoreCase((String)props.get("CreateJarOvewritePreinstall"))) {
-			//FileUtils.forceDelete(new File((String)props.get("ExportDirectory")+File.separator+"preinstall.sql"));
-			FileUtils.copyFile(new File(baseDir + File.separator + (String)props.get("CreateJarPreinstallFile")), new File((String)props.get("ExportDirectory") + File.separator + "preinstall.sql"));
-			//FileUtils.moveFile(new File((String)props.get("ExportDirectory")), new File((String)props.get("ExportDirectory")+File.separator+"preinstall.sql"));
+		if ("Y".equalsIgnoreCase(prop("CreateJarOvewritePreinstall"))) {
+			FileUtils.copyFile(file(baseDir, prop("CreateJarPreinstallFile")), file(prop("ExportDirectory"), "preinstall.sql"));
 		}
 		
 		// Copia de reportes/binarios
-		if ("Y".equalsIgnoreCase((String)props.get("CreateJarIncludeBinaries"))) {
-			FileUtils.copyDirectory(new File(baseDir + File.separator + (String)props.get("CreateJarBinariesLocation")), new File((String)props.get("CreateJarTargetDir") + File.separator + "binarios"));	
+		if ("Y".equalsIgnoreCase(prop("CreateJarIncludeBinaries"))) {
+			FileUtils.copyDirectory(file(baseDir, prop("CreateJarBinariesLocation")), file(prop("ExportDirectory"), "binarios"));	
 		}
 	}
 	
 	protected static void createJar() throws Exception {
-		String[] command = {"sh", "-c", "jar -cf " + (String)props.get("CreateJarTargetFileName") + " *"};
-		Process process = Runtime.getRuntime().exec(command, null, new File((String)props.get("CreateJarTargetDir")));
+		Process process = Runtime.getRuntime().exec(getExecutable(prop("CreateJarTargetFileName")), null, file(prop("ExportDirectory")));
 		process.waitFor();
 		if (process.exitValue() > 0) {
 			throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
 		}
+		moveJarToFinalDestination();
+
+	}
+	
+	protected static void moveJarToFinalDestination() throws Exception {
+		// Si es directorio de export de componente y el de creacion de jar es el mismo, no hay mas nada que hacer, en caso contrario mover el archivo 
+		if (!(prop("CreateJarTargetDir")).equals(prop("ExportDirectory"))) {
+			File target = file(prop("CreateJarTargetDir"), prop("CreateJarTargetFileName"));
+	        if (target.exists()) {
+	            FileUtils.forceDelete(target);
+	        }
+			FileUtils.moveFileToDirectory(file(prop("ExportDirectory"), prop("CreateJarTargetFileName")), file(prop("CreateJarTargetDir")), shouldcreateTargetDir());
+		}
+	}
+	
+	// === Helper methods ===
+	
+	protected static File file(String... args) {
+		StringBuffer buf = new StringBuffer();
+		for (String arg : args) {
+			buf.append(arg).append(arg.endsWith(File.separator)?"":File.separator);
+		}
+		return new File(buf.toString().substring(0, buf.length()-1));
+	}
+	
+	protected static String prop(String key) {
+		return props.getProperty(key);
+	}
+	
+	protected static boolean shouldcreateTargetDir() {
+		 File dir = file(prop("CreateJarTargetDir"));
+		 return !(dir.exists() && dir.isDirectory()); 
+	}
+	
+	protected static String[] getExecutable(String fileName) throws Exception {
+		if (System.getProperty("os.name")==null)
+			throw new Exception("Imposible determinar os.name");
+		// windows
+		if(System.getProperty("os.name").toLowerCase().contains("windows")){
+			return new String[] {"cmd", "/c", "jar -cf " + fileName + " *"};
+		}
+		// OS
+		return new String[] {"sh", "-c", "jar -cf " + fileName + " *"};
 	}
 	
 	protected static String inputStreamToString(InputStream inputStream) throws Exception {
