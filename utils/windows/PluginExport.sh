@@ -1,1 +1,0 @@
-./CallClass.sh org.openXpertya.apps.form.PluginExporter "$@"

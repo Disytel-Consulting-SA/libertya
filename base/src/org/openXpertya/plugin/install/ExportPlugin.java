@@ -377,6 +377,8 @@ public class ExportPlugin extends SvrProcess{
 			copyFiles();
 			
 			createJar();
+			
+			finished();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -432,9 +434,9 @@ public class ExportPlugin extends SvrProcess{
 		System.out.println("=== PLUGIN EXPORTER ===");
 		System.out.println(DB.getDatabaseInfo());
 		System.out.println("Config:");
-		props.entrySet().forEach( prop -> {
+		props.keySet().stream().sorted().forEach( key -> {
 				StringBuffer conf = new StringBuffer();
-				conf.append("  ").append(prop.getKey()).append("=").append(prop.getValue());
+				conf.append("  ").append(key).append("=").append(props.get(key));
 				System.out.println(conf);
 			}
 		);
@@ -488,6 +490,14 @@ public class ExportPlugin extends SvrProcess{
 	        }
 			FileUtils.moveFileToDirectory(file(prop("ExportDirectory"), prop("CreateJarTargetFileName")), file(prop("CreateJarTargetDir")), shouldcreateTargetDir());
 		}
+	}
+	
+	protected static final void finished() {
+		System.out.println();
+		System.out.println("Archivos exportados a: " + prop("ExportDirectory"));
+		System.out.println("Jar final generado en: " + prop("CreateJarTargetDir"));
+		System.out.println();
+		System.out.println("Finalizado!");
 	}
 	
 	// === Helper methods ===

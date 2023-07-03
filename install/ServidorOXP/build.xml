@@ -160,6 +160,7 @@
   	<unjar src="lib/fonts.jar" dest="construirOXPLIB" />
   	<unjar src="lib/core-3.3.1.jar" dest="construirOXPLIB" />
   	<unjar src="lib/javase-3.3.1.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/commons-io-2.4.jar" dest="construirOXPLIB" />
 
     <!--fin cambios para PostgreSQL -->    
     <unjar src="lib/${TIPO_APPS_OXP}.jar" dest="construirOXPLIB" />
