@@ -444,7 +444,10 @@ public class ExportPlugin extends SvrProcess{
 	}
 	
 	protected static void executeExport() throws Exception {
-		System.out.println(DB.getSQLValueString(null, "SELECT 'Exportando ' || name || '...' FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));		
+		System.out.println("===========");
+		System.out.println(DB.getSQLValueString(null, "SELECT 'Exportando: ' || name || '...' FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));
+		System.out.println("===========");
+		System.out.println();
 		
 		ExportPlugin ep = new ExportPlugin();
 		ep.setComponentVersionID(Integer.parseInt(prop("ExportComponentVersionID")));
@@ -468,6 +471,12 @@ public class ExportPlugin extends SvrProcess{
 		// Copia de reportes/binarios
 		if ("Y".equalsIgnoreCase(prop("CreateJarIncludeBinaries"))) {
 			FileUtils.copyDirectory(file(baseDir, prop("CreateJarBinariesLocation")), file(prop("ExportDirectory"), "binarios"));	
+		}
+		
+		// Copia de librerias externas
+		if ("Y".equalsIgnoreCase(prop("CreateJarIncludeLibsAndClasses"))) {
+			FileUtils.copyDirectory(file(baseDir, prop("CreateJarLibsLocation")), file(prop("ExportDirectory"), "lib"));
+			FileUtils.copyDirectory(file(baseDir, prop("CreateJarClassesLocation")), file(prop("ExportDirectory")));
 		}
 	}
 	
@@ -497,7 +506,10 @@ public class ExportPlugin extends SvrProcess{
 		System.out.println("Archivos exportados a: " + prop("ExportDirectory"));
 		System.out.println("Jar final generado en: " + prop("CreateJarTargetDir"));
 		System.out.println();
+		System.out.println("===========");
 		System.out.println("Finalizado!");
+		System.out.println("===========");
+		System.out.println();
 	}
 	
 	// === Helper methods ===
