@@ -115,7 +115,7 @@ public class ExportPlugin extends SvrProcess{
 
 	@Override
 	protected String doIt() throws Exception {
-		MComponentVersion currentComponent = MComponentVersion.getCurrentComponentVersion(getCtx(), get_TrxName());
+		MComponentVersion currentComponent = MComponentVersion.getCurrentComponentVersion(getCtx()!=null?getCtx():Env.getCtx(), get_TrxName());
 		if(currentComponent != null){
 			throw new Exception(Msg.getMsg(getCtx(), "ExistCurrentPlugin"));
 		}
@@ -365,7 +365,7 @@ public class ExportPlugin extends SvrProcess{
 			validateArguments(args);
 			
 			loadProps(args);
-
+			
 			setConnection();
 
 			startEnvironment();
@@ -396,6 +396,12 @@ public class ExportPlugin extends SvrProcess{
 	protected static void loadProps(String[] args) throws Exception {
 		props = Util.loadProperties(args[0]);
 		baseDir = args[0].replace("devinfo.properties", "");
+		
+		// Debe solicitarse la generacion de un Jar conteniendo export de metadatos o de compilacion. En caso contrario no hay nada por hacer 
+		if (!"Y".equalsIgnoreCase(prop("IncludeComponentExport")) && !"Y".equalsIgnoreCase(prop("IncludeClassesAndLibs"))) {
+			System.err.println("No se solicito export de datos ni compilacion. Nada que hacer");
+			System.exit(1);
+		}			
 	}
 	
 	protected static void startEnvironment() {
@@ -444,22 +450,51 @@ public class ExportPlugin extends SvrProcess{
 	}
 	
 	protected static void executeExport() throws Exception {
-		System.out.println("===========");
-		System.out.println(DB.getSQLValueString(null, "SELECT 'Exportando: ' || name || '...' FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));
-		System.out.println("===========");
-		System.out.println();
+		// Incluir la exportacion del componente?
+		if (!"Y".equalsIgnoreCase(prop("IncludeComponentExport"))) {
+			// Solo crear el directorio de exportacion 
+			if (shouldcreateDir("ExportDirectory")) {
+				FileUtils.forceMkdir(file("ExportDirectory"));
+			}
+			return;
+		} 
 		
-		ExportPlugin ep = new ExportPlugin();
-		ep.setComponentVersionID(Integer.parseInt(prop("ExportComponentVersionID")));
-		ep.setDirectoryPath(prop("ExportDirectory"));
-		ep.setProcessID(Integer.parseInt(prop("ExportProcessID")));
-		ep.setChangeLogIDFrom(Integer.parseInt(prop("ExportChangelogFromID")));
-		ep.setChangeLogIDTo(Integer.parseInt(prop("ExportChangelogToID")));
-		ep.setUserID(Integer.parseInt(prop("ExportFromUserID")));
-		ep.setPatch("Y".equalsIgnoreCase(prop("ExportAsPatch")));
-		ep.setValidateChangelogConsistency("Y".equalsIgnoreCase(prop("ExportAndValidateConsistency")));
-		ep.setDisableInconsistentChangelog("Y".equalsIgnoreCase(prop("ExportAndDisableInvalidEntries")));
-		ep.doIt();
+		// Version de componente a exportar
+		int componentVersionID = Integer.parseInt(props.getProperty("ExportComponentVersionID"));
+		
+		// Se encuentra actualmente en desarrollo? Desactivar
+		boolean currentDevelopment = "Y".equalsIgnoreCase(DB.getSQLValueString(null, "SELECT currentdevelopment FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", componentVersionID));
+		if (currentDevelopment) {
+			System.out.println(" Deteniendo el desarrollo del componente temporalmente... ");
+			DB.executeUpdate("UPDATE AD_ComponentVersion SET currentdevelopment = 'N' where AD_ComponentVersion_ID = " + componentVersionID);
+		}
+		
+		try {
+			System.out.println("===========");
+			System.out.println(DB.getSQLValueString(null, "SELECT 'Exportando: ' || name || '...' FROM AD_ComponentVersion WHERE AD_ComponentVersion_ID = ?", componentVersionID));
+			System.out.println("===========");
+			System.out.println();
+			
+			ExportPlugin ep = new ExportPlugin();
+			ep.setComponentVersionID(Integer.parseInt(prop("ExportComponentVersionID")));
+			ep.setDirectoryPath(prop("ExportDirectory"));
+			ep.setProcessID(Integer.parseInt(prop("ExportProcessID")));
+			ep.setChangeLogIDFrom(Integer.parseInt(prop("ExportChangelogFromID")));
+			ep.setChangeLogIDTo(Integer.parseInt(prop("ExportChangelogToID")));
+			ep.setUserID(Integer.parseInt(prop("ExportFromUserID")));
+			ep.setPatch("Y".equalsIgnoreCase(prop("ExportAsPatch")));
+			ep.setValidateChangelogConsistency("Y".equalsIgnoreCase(prop("ExportAndValidateConsistency")));
+			ep.setDisableInconsistentChangelog("Y".equalsIgnoreCase(prop("ExportAndDisableInvalidEntries")));
+			ep.doIt();
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			// Dejar en desarrollo tal como estaba (solo si corresponde) 
+			if (currentDevelopment) {
+				System.out.println(" Reactivando el desarrollo del componente... ");
+				DB.executeUpdate("UPDATE AD_ComponentVersion SET currentdevelopment = 'Y' where AD_ComponentVersion_ID = " + componentVersionID);
+			}
+		}
 	}
 	
 	protected static void copyFiles() throws Exception {
@@ -469,12 +504,12 @@ public class ExportPlugin extends SvrProcess{
 		}
 		
 		// Copia de reportes/binarios
-		if ("Y".equalsIgnoreCase(prop("CreateJarIncludeBinaries"))) {
+		if ("Y".equalsIgnoreCase(prop("IncludeReports"))) {
 			FileUtils.copyDirectory(file(baseDir, prop("CreateJarBinariesLocation")), file(prop("ExportDirectory"), "binarios"));	
 		}
-		
-		// Copia de librerias externas
-		if ("Y".equalsIgnoreCase(prop("CreateJarIncludeLibsAndClasses"))) {
+
+		// Copia de compilacion y librerias externas
+		if ("Y".equalsIgnoreCase(prop("IncludeClassesAndLibs"))) {
 			FileUtils.copyDirectory(file(baseDir, prop("CreateJarLibsLocation")), file(prop("ExportDirectory"), "lib"));
 			FileUtils.copyDirectory(file(baseDir, prop("CreateJarClassesLocation")), file(prop("ExportDirectory")));
 		}
@@ -487,7 +522,6 @@ public class ExportPlugin extends SvrProcess{
 			throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
 		}
 		moveJarToFinalDestination();
-
 	}
 	
 	protected static void moveJarToFinalDestination() throws Exception {
@@ -497,7 +531,7 @@ public class ExportPlugin extends SvrProcess{
 	        if (target.exists()) {
 	            FileUtils.forceDelete(target);
 	        }
-			FileUtils.moveFileToDirectory(file(prop("ExportDirectory"), prop("CreateJarTargetFileName")), file(prop("CreateJarTargetDir")), shouldcreateTargetDir());
+			FileUtils.moveFileToDirectory(file(prop("ExportDirectory"), prop("CreateJarTargetFileName")), file(prop("CreateJarTargetDir")), shouldcreateDir("CreateJarTargetDir"));
 		}
 	}
 	
@@ -526,8 +560,8 @@ public class ExportPlugin extends SvrProcess{
 		return props.getProperty(key);
 	}
 	
-	protected static boolean shouldcreateTargetDir() {
-		 File dir = file(prop("CreateJarTargetDir"));
+	protected static boolean shouldcreateDir(String dirName) {
+		 File dir = file(prop(dirName));
 		 return !(dir.exists() && dir.isDirectory()); 
 	}
 	
