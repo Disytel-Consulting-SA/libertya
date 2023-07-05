@@ -358,6 +358,9 @@ public class ExportPlugin extends SvrProcess{
 	
 	/** Directorio base determinado a partir de la ubicacion del archivo devinfo.properties */
 	protected static String baseDir; 
+
+	/** Nombre definitivo del archivo a crear */
+	protected static StringBuffer fileName = null;
 	
 	public static void main(String[] args) {
 
@@ -516,7 +519,7 @@ public class ExportPlugin extends SvrProcess{
 	}
 	
 	protected static void createJar() throws Exception {
-		Process process = Runtime.getRuntime().exec(getExecutable(prop("CreateJarTargetFileName")), null, file(prop("ExportDirectory")));
+		Process process = Runtime.getRuntime().exec(getJarCreationCommand(getJarFileName()), null, file(prop("ExportDirectory")));
 		process.waitFor();
 		if (process.exitValue() > 0) {
 			throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
@@ -527,11 +530,11 @@ public class ExportPlugin extends SvrProcess{
 	protected static void moveJarToFinalDestination() throws Exception {
 		// Si es directorio de export de componente y el de creacion de jar es el mismo, no hay mas nada que hacer, en caso contrario mover el archivo 
 		if (!(prop("CreateJarTargetDir")).equals(prop("ExportDirectory"))) {
-			File target = file(prop("CreateJarTargetDir"), prop("CreateJarTargetFileName"));
+			File target = file(prop("CreateJarTargetDir"), fileName.toString());
 	        if (target.exists()) {
 	            FileUtils.forceDelete(target);
 	        }
-			FileUtils.moveFileToDirectory(file(prop("ExportDirectory"), prop("CreateJarTargetFileName")), file(prop("CreateJarTargetDir")), shouldcreateDir("CreateJarTargetDir"));
+			FileUtils.moveFileToDirectory(file(prop("ExportDirectory"), fileName.toString()), file(prop("CreateJarTargetDir")), shouldcreateDir("CreateJarTargetDir"));
 		}
 	}
 	
@@ -565,7 +568,7 @@ public class ExportPlugin extends SvrProcess{
 		 return !(dir.exists() && dir.isDirectory()); 
 	}
 	
-	protected static String[] getExecutable(String fileName) throws Exception {
+	protected static String[] getJarCreationCommand(String fileName) throws Exception {
 		if (System.getProperty("os.name")==null)
 			throw new Exception("Imposible determinar os.name");
 		// windows
@@ -583,6 +586,65 @@ public class ExportPlugin extends SvrProcess{
 	    	sb.append(scanner.nextLine());	
 	    }
 	    return sb.toString();
+	}
+	
+	protected static String getJarFileName() throws Exception {
+		if (fileName!=null)
+			return fileName.toString();
+		
+		// Se forzo un nombre en particular para el jar?
+		if (!Util.isEmpty(prop("CreateJarForceFileName"), true)) {
+			fileName = new StringBuffer(prop("CreateJarForceFileName"));
+			return fileName.toString();
+		}
+		
+		// Nombre principal - Si se definio un component version, se intenta generarlo desde los metadats
+		fileName = new StringBuffer(DB.getSQLValueString(null, "select case when c.prefix = 'CORE' then 'org.libertya.core' ELSE c.packagename end || '_v' || cv.version from ad_component c inner join ad_componentversion cv on c.ad_component_id  = cv.ad_component_id where cv.ad_componentversion_id = ? ", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));
+		if (fileName.length()==0) {
+			fileName.append("component");
+		}
+				
+		// Changelog
+		if ("Y".equalsIgnoreCase(prop("IncludeComponentExport"))) {
+			// Determinar hasta que changelog se exporto, considerando que en devinfo puede haber un valor distinto a cero
+			int maxLog = DB.getSQLValue(null, "SELECT max(ad_changelog_id) from ad_changelog where ad_componentversion_id = " + Integer.parseInt(props.getProperty("ExportComponentVersionID")));
+			if (Integer.parseInt(prop("ExportChangelogToID")) > 0 && Integer.parseInt(prop("ExportChangelogToID")) < maxLog) {
+				maxLog = Integer.parseInt(prop("ExportChangelogToID"));
+			}
+			
+			fileName = fileName.append("_c"+maxLog);
+		}
+
+		// Revision svn / git
+		if ("Y".equalsIgnoreCase(prop("IncludeClassesAndLibs")) || "Y".equalsIgnoreCase(prop("IncludeReports"))) {
+			Process process = Runtime.getRuntime().exec(getVersioningCommand(), null, file(baseDir));
+			process.waitFor();
+			if (process.exitValue() > 0) {
+				throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
+			}
+			String revision = inputStreamToString(process.getInputStream());
+			fileName = fileName.append("_r"+revision);			
+		}
+
+		return fileName.append(".jar").toString();
+	}
+	
+	protected static String[] getVersioningCommand() throws Exception {
+		if (System.getProperty("os.name")==null)
+			throw new Exception("Imposible determinar os.name");
+		// windows
+		if(System.getProperty("os.name").toLowerCase().contains("windows")){
+			if ("svn".equalsIgnoreCase(prop("ProjectVersionControl")))
+				return new String[] {"cmd", "/c", "svn info --show-item revision"};
+			if ("git".equalsIgnoreCase(prop("ProjectVersionControl")))
+				return new String[] {"cmd", "/c", "git rev-parse --short=7 HEAD"};
+		}
+		// Otro OS
+		if ("svn".equalsIgnoreCase(prop("ProjectVersionControl")))
+			return new String[] {"sh", "-c", "svn info --show-item revision"};
+		if ("git".equalsIgnoreCase(prop("ProjectVersionControl")))
+			return new String[] {"sh", "-c", "git rev-parse --short=7 HEAD"};
+		throw new Exception("Indicar git o svn en propiedad ProjectVersionControl");
 	}
 }
 
