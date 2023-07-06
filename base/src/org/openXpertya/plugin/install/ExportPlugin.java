@@ -481,7 +481,8 @@ public class ExportPlugin extends SvrProcess{
 			ExportPlugin ep = new ExportPlugin();
 			ep.setComponentVersionID(Integer.parseInt(prop("ExportComponentVersionID")));
 			ep.setDirectoryPath(prop("ExportDirectory"));
-			ep.setProcessID(Integer.parseInt(prop("ExportProcessID")));
+			if (!Util.isEmpty(prop("ExportProcessID"),true))
+				ep.setProcessID(Integer.parseInt(prop("ExportProcessID")));
 			ep.setChangeLogIDFrom(Integer.parseInt(prop("ExportChangelogFromID")));
 			ep.setChangeLogIDTo(Integer.parseInt(prop("ExportChangelogToID")));
 			ep.setUserID(Integer.parseInt(prop("ExportFromUserID")));
@@ -503,18 +504,37 @@ public class ExportPlugin extends SvrProcess{
 	protected static void copyFiles() throws Exception {
 		// Pisado de preinstall
 		if ("Y".equalsIgnoreCase(prop("CreateJarOvewritePreinstall"))) {
-			FileUtils.copyFile(file(baseDir, prop("CreateJarPreinstallFile")), file(prop("ExportDirectory"), "preinstall.sql"));
+			if (file(baseDir, prop("CreateJarBinariesLocation")).exists()) {
+				FileUtils.copyFile(file(baseDir, prop("CreateJarPreinstallFile")), file(prop("ExportDirectory"), "preinstall.sql"));
+			} else {
+				System.out.println("WARNING: Archivo " + prop("CreateJarPreinstallFile") + " omitido (no encontrado)");
+			}
 		}
 		
 		// Copia de reportes/binarios
 		if ("Y".equalsIgnoreCase(prop("IncludeReports"))) {
-			FileUtils.copyDirectory(file(baseDir, prop("CreateJarBinariesLocation")), file(prop("ExportDirectory"), "binarios"));	
+			if (file(baseDir, prop("CreateJarBinariesLocation")).isDirectory() && file(baseDir, prop("CreateJarBinariesLocation")).exists()) {
+				FileUtils.copyDirectory(file(baseDir, prop("CreateJarBinariesLocation")), file(prop("ExportDirectory"), "binarios"));	
+			} else {
+				System.out.println("WARNING: Directorio " + prop("CreateJarBinariesLocation") + " omitido (no encontrado)");	
+			}
+				
 		}
 
 		// Copia de compilacion y librerias externas
 		if ("Y".equalsIgnoreCase(prop("IncludeClassesAndLibs"))) {
-			FileUtils.copyDirectory(file(baseDir, prop("CreateJarLibsLocation")), file(prop("ExportDirectory"), "lib"));
-			FileUtils.copyDirectory(file(baseDir, prop("CreateJarClassesLocation")), file(prop("ExportDirectory")));
+			// Librerias externas
+			if (file(baseDir, prop("CreateJarLibsLocation")).isDirectory() && file(baseDir, prop("CreateJarLibsLocation")).exists()) {
+				FileUtils.copyDirectory(file(baseDir, prop("CreateJarLibsLocation")), file(prop("ExportDirectory"), "lib"));
+			} else {
+				System.out.println("WARNING: Directorio " + prop("CreateJarLibsLocation") + " omitido (no encontrado)");
+			}
+			// Clases compiladas
+			if (file(baseDir, prop("CreateJarClassesLocation")).isDirectory() && file(baseDir, prop("CreateJarClassesLocation")).exists()) {
+				FileUtils.copyDirectory(file(baseDir, prop("CreateJarClassesLocation")), file(prop("ExportDirectory")));
+			} else {
+				System.out.println("WARNING: Directorio " + prop("CreateJarClassesLocation") + " omitido (no encontrado)");
+			}
 		}
 	}
 	
