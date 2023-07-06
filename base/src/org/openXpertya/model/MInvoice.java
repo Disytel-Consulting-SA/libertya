@@ -7566,6 +7566,391 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		return percepcionAmt == null ? BigDecimal.ZERO : percepcionAmt;
 	}
 	
+	/**
+	 * Inicio
+	 * ----------------------------------------------------------------------------------------------------
+	 * Metodos auxiliares para poder controlar numeracion de comprobantes
+	 * 
+	 * dREHER
+	 * ----------------------------------------------------------------------------------------------------
+	 */
+	
+	/**
+	 * Sobre cargo para poder utilizar metodo desde otra clase
+	 * @return resultado de actualizacion de secuencia y cheque
+	 * 
+	 * dREHER
+	 */
+	public CallResult doSequenceControls() {
+		return doSequenceControls(getAD_Sequence_ID());
+	}
+	
+	/**
+	 * Valido que el ultimo numero de la secuencia no pueda ser igual o menor al numero utilizado
+	 * en este comprobante
+	 * 
+	 * @param AD_Sequence_ID
+	 * @return CallResult
+	 * @author dREHER
+	 */
+	
+	public CallResult doSequenceControls(int AD_Sequence_ID) {
+		CallResult cr = new CallResult();
+		
+		// TODO: revisar cuando se trata de un punto de venta terminado en CERO, ej B0670
+		// dREHER
+		MSequence seq = new MSequence(getCtx(), AD_Sequence_ID, get_TrxName());
+		String next = seq.getCurrentNext().toString();				// '300001000'
+		if(next.length() > 8)
+			next = next.substring(next.length()-8, next.length());   //'00001000'
+			
+		int seqNo = new Integer(next);  // 1000
+		BigDecimal pv = seq.getCurrentNext().subtract(new BigDecimal(seqNo));  //300000000
+		int nroComp = getNumeroComprobante(); // 998 
+		
+		if(isVoidProcess() && getDocumentNo().length() > 8)
+			nroComp = new Integer(getDocumentNo().substring(getDocumentNo().length()-8, getDocumentNo().length()));   //'00001000'
+		
+		/**
+		 * Cuando llega via hasta aca via reversion, el campo NumeroComprobante es el mismo
+		 * del documento anulado, por ende acomoda la secuencia siempre
+		 * Una vez completado el comprobante, la reversion acomoda el campo NumeroComprobante 
+		 */
+		log.info("Proxima secuencia:" + seqNo + " - PV:" + pv + " Este comprobante:" + nroComp + " Este documento:" + getDocumentNo() + " Es una anulacion:" + this.isVoidProcess() + " Estado:" + this.getDocStatus());
+		
+		if(seqNo <= nroComp) {
+			seq.setCurrentNext(new BigDecimal(getNumeroComprobante()).add(BigDecimal.ONE).add(pv));  //999
+			log.info("Proxima secuencia: " + (new BigDecimal(getNumeroComprobante()).add(BigDecimal.ONE).add(pv)));
+			if(!seq.save()) {
+				cr.setMsg("La secuencia quedo desactualizada, actualizar manualmente!", true);
+			}else
+				log.info("Se actualizo la secuencia. Proximo numero:" + seq.getCurrentNext());
+		}
+		
+		return cr;
+	}
+	
+	/**
+	 * Obtener la ultima factura del último comprobante emitido
+	 * electrónicamente
+	 * 
+	 * @param ctx
+	 * @param docTypeID
+	 * @param excludedInvoiceID
+	 * @param trxName
+	 * @return C_Invoice_ID
+	 * 
+	 * dREHER
+	 */
+	public static int getLastFEIssued(
+			Properties ctx, Integer docTypeID, Integer excludedInvoiceID,
+			String trxName) {
+		String sql = "select max(i.C_Invoice_ID) "
+				+ "from c_invoice i "
+				+ "inner join c_doctype dt on dt.c_doctype_id = i.c_doctypetarget_id "
+				+ "where i.c_doctypetarget_id = " + docTypeID
+				+ "			and dt.iselectronic = 'Y' "
+				+ "			and i.docstatus in ('CO','CL','VO','RE') "
+				+ "			and i.cae is not null "
+				+ "			and length(trim(i.cae)) > 0 "
+				+ (Util.isEmpty(excludedInvoiceID, true) ? "" : " AND i.c_invoice_id <> " + excludedInvoiceID);
+		
+		return DB.getSQLValue(trxName, sql);
+	}
+	
+
+	/**
+	 * 
+	 * @return ID de la secuencia asociada al tipo de comprobante
+	 * 
+	 * dREHER
+	 */
+	public int getAD_Sequence_ID() {
+		MDocType docType = new MDocType(getCtx(), getC_DocTypeTarget_ID(),
+				get_TrxName());
+		return docType.getDocNoSequence_ID();
+	}
+	
+	/**
+	 * Si la informacion de CAEA viene con error, rechazo u observado - Aprobado R-O-E-A
+	 * NO realizar controles de numeracion de comprobante, ya que probablemente exista
+	 * 
+	 * @return saltear controles de numeracion ?
+	 * dREHER
+	 */
+	public boolean skipCAEAAproaboOrErrors() {
+		boolean skip = false;
+		
+		String CAEAInformed = (String)get_Value("LYEICAEAInformed");  
+		if(CAEAInformed != null && (CAEAInformed.equals("A") || CAEAInformed.equals("O") || CAEAInformed.equals("R") || CAEAInformed.equals("E")))
+			skip = true;
+		
+		return skip;
+	}
+
+	/**
+	 * Controles extras para asegurar la secuencialidad de numeros de comprobantes de ventas
+	 * Se verifica que no haya saltos ni hacia delante ni hacia atras
+	 * 
+	 * dREHER
+	 */
+	public CallResult doExtraNumberControls() {
+		CallResult cr = new CallResult();
+		int tipoDocID = getC_DocTypeTarget_ID();
+		
+		
+		log.info("Valido numeracion de comprobantes: TipoID=" + tipoDocID + " PtoVenta=" + getPuntoDeVenta() + " Numero=" + getNumeroComprobante());
+		
+		// Verifico que exista el numero anterior, para el mismo tipo de documento, salvo que sea la primer factura de este tipo...
+		int nroAnterior = getNumeroComprobante() - 1;
+		if(nroAnterior > 0) {
+			
+			int C_InvoiceAnterior_ID = getInvoiceIDAnterior(true);
+			
+			// NO se encuentra numero inmediamente anterior
+			if(C_InvoiceAnterior_ID <= 0) {
+				MDocType dt = MDocType.get(getCtx(), tipoDocID);
+				cr.setMsg("No se encuentra comprobante anterior # " + nroAnterior + ". Por favor ajuste los secuenciadores para el Tipo de Documento: " + dt.getName(), true);
+			}else {
+				
+				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
+				if(!anterior.isProcessed())
+					cr.setMsg("El comprobante anterior # " + nroAnterior + " no se emitió correctamente, por favor gestionar", true);
+			}
+		}
+		
+		/**
+		if(!cr.isError()) {
+			// Verificar que NO exista el mismo numero, ni uno posterior
+			// TODO verificar si tiene CAE o impresion fiscal
+			
+			String sql = "SELECT C_Invoice_ID FROM C_Invoice WHERE " +
+					" C_DocTypeTarget_ID=? AND PuntoDeVenta=? AND NumeroComprobante >= ? AND IsSOTrx='Y' " +
+					" AND IsActive='Y' AND Processed='Y' AND C_Invoice_ID <> ?";
+			
+			int C_InvoiceMayorIgual_ID = DB.getSQLValueEx(get_TrxName(), sql, new Object[]{tipoDocID, getPuntoDeVenta(), getNumeroComprobante(), getC_Invoice_ID()} );
+
+			if(C_InvoiceMayorIgual_ID > 0) {
+				MDocType dt = MDocType.get(getCtx(), tipoDocID);
+				cr.setMsg("El comprobante ya se encuentra registrado o existe uno posterior!! Por favor ajuste los secuenciadores para el Tipo de Documento:" + dt.getName() + ". ID comprobante=" + C_InvoiceMayorIgual_ID, true);
+			}
+		}
+		*/
+		
+		return cr;
+	}
+	
+	/**
+	 * 
+	 * Controles extras para asegurar la secuencialidad de numeros de comprobantes de ventas
+	 * al momento de completar el documento.
+	 * Ademas se controla si los documentos anteriores se gestionaron correctamente (CAE/Impresion fiscal)
+	 * 
+	 * dREHER
+	 */
+	public CallResult doExtraCompleteNumberControls() {
+		CallResult cr = new CallResult();
+		
+		// Verifico que exista el numero anterior, para el mismo tipo de documento, salvo que sea la primer factura de este tipo...
+		int nroAnterior = getNumeroComprobante() - 1;
+		if(nroAnterior > 0) {
+			
+			int C_InvoiceAnterior_ID = getInvoiceIDAnterior(true);
+			
+			// NO se encuentra numero inmediamente anterior
+			if(C_InvoiceAnterior_ID <= 0 ) {
+				MDocType dt = MDocType.get(getCtx(), this.getDocTypeID());
+				cr.setMsg("No se encuentra comprobante anterior #:" + nroAnterior + ". Por favor ajuste los secuenciadores para el Tipo de Documento:" + dt.getName(), true);
+			}else {
+				
+				// Si es factura electronica, la FC anterior debe tener CAE y VTO
+				if(isElectronicInvoice()) {
+					
+					MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
+					if(anterior.getcae()==null || anterior.getcae().isEmpty() || anterior.getvtocae()==null)
+						cr.setMsg("El comprobante anterior no posee numero de CAE, por favor gestionar!", true);
+					
+				}else {
+					
+					if(requireFiscalPrint()) {
+						
+						MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
+						if(!anterior.isFiscalAlreadyPrinted())
+							cr.setMsg("El comprobante anterior no se encuentra impreso, por favor imprimir!", true);
+						
+					}
+					
+				}
+				
+			}
+			
+		}
+		
+		return cr;
+	}
+	
+	/**
+	 * Numero de comprobante MAYOR para este tipo de documento
+	 * 
+	 * @param c_DocType_ID
+	 * @return
+	 */
+	private int getUltimaFC(int c_DocType_ID) {
+		String sql = "SELECT MAX(NumeroDeComprobante) " +
+				" FROM C_Invoice " +
+				" WHERE C_DocType_ID=? AND IsActive='Y'";
+		return DB.getSQLValue(null, sql, c_DocType_ID);
+	}
+	
+	/**
+	 * Obtiene el C_Invoice_ID del comprobante inmediatamente anterior
+	 * Mismo Tipo de Documento
+	 * 
+	 * @param isSoTrx (boolean) venta?
+	 * 
+	 * @return C_Invoice_ID
+	 * 
+	 * dREHER
+	 */
+	public int getInvoiceIDAnterior(boolean isSoTrx) {
+		int tipoDocID = getC_DocTypeTarget_ID();
+		int PuntoVenta = getPuntoDeVenta();
+		int C_InvoiceAnterior_ID = -1;
+		
+		// Verifico que exista el numero anterior, para el mismo tipo de documento, salvo que sea la primer factura de este tipo...
+		int nroAnterior = getNumeroComprobante() - 1;
+		if(nroAnterior > 0) {
+			
+			String sql = "SELECT C_Invoice_ID FROM C_Invoice WHERE " +
+					" C_DocTypeTarget_ID=? AND PuntoDeVenta=? AND NumeroComprobante=? AND IsSOTrx=" + (isSoTrx?"'Y'":"'N'") +
+					" AND IsActive='Y' ORDER BY Created DESC ";
+			
+			// TODO: cambiar nivel de log -> finest
+			
+			log.warning("Busca comprobante inmediatamente anterior. " +
+					"sql= " + sql +
+					"- Numero Comprobante=" + nroAnterior +
+					"- Punto de Venta=" + PuntoVenta +
+					"- Tipo Doc=" + tipoDocID);
+			C_InvoiceAnterior_ID = DB.getSQLValueEx(get_TrxName(), sql, new Object[]{tipoDocID, PuntoVenta, nroAnterior});
+		}
+		
+		return C_InvoiceAnterior_ID;
+	}
+	
+	/**
+	 * Retorno el objeto factura inmediatamente anterior para el mismo tipo de documento
+	 * 
+	 * @return invoice anterior
+	 * 
+	 * dREHER
+	 */
+	
+	public MInvoice getBeforeInvoice() {
+		int before = getInvoiceIDAnterior(isSOTrx());
+		if(before <= 0)
+			return null;
+		
+		return MInvoice.get(getCtx(), before, get_TrxName());
+		
+	}
+	
+	public MInvoice getLastInvoice() {
+		int lastInvoice = getUltimaFC(getC_DocType_ID());
+		if(lastInvoice > 0)
+			return new MInvoice(getCtx(), lastInvoice, get_TrxName());
+		else
+			return null;
+	}
+	
+	/**
+	 * Sobrecarga para ser utilizada desde la ventana de gestion de CAE
+	 * 
+	 * @param nroComprobante
+	 * @return CallResult
+	 * 
+	 * dREHER
+	 */
+	public CallResult doCAEGeneration(long nroComprobante) {
+		return doCAEGeneration(false, nroComprobante);
+	}
+
+	/**
+	 * Registrar FE y generar CAE
+	 * 
+	 * @param saveInvoice boolean que determina si se debe guardar o no la factura si el proceso fue existoso
+	 * @return resultado de la llamada
+	 */
+	public CallResult doCAEGeneration(boolean saveInvoice, long nroComprobante) {
+		CallResult cr = new CallResult();
+		
+		// === Lógica adicional para evitar doble notificación a AFIP. ===
+		// Si tiene CAE asignado, no debe generarlo nuevamente
+		
+		log.info("MInvoice.doCAEGeneration. requiere generacion CAE=" + requireCAEGeneration() +
+				" - cae=" + getcae() +
+				" - getcaecbte=" + getcaecbte() +
+				" - numero comprobante=" + getNumeroComprobante());
+		
+		if (requireCAEGeneration() 
+				&& (getcae() == null || getcae().length() == 0) 
+				&& getcaecbte() != getNumeroComprobante()) {
+			// Se intenta obtener un proveedor de WSFE, en caso de no encontrarlo se utiliza la vieja version (via pyafipws) 
+			ElectronicInvoiceInterface processor = ElectronicInvoiceProvider.getImplementation(this);
+			if (processor==null) {
+				processor = new ProcessorWSFE(this);
+			} 
+			fireDocActionStatusChanged(
+					new DocActionStatusEvent(this, DocActionStatusEvent.ST_GENERATING_CAE, new Object[] { processor }));
+			String errorMsg = processor.generateCAE(nroComprobante);
+			if (Util.isEmpty(processor.getCAE())) {
+				cr.setMsg(errorMsg, true);
+			} else {
+				setcae(processor.getCAE());
+				setvtocae(processor.getDateCae());
+				setcaeerror(errorMsg);
+				int nroCbte = Integer.parseInt(processor.getNroCbte());
+				boolean updateDocumentNo = getNumeroComprobante()!= nroCbte && this.skipAfterAndBeforeSave;
+				this.setNumeroComprobante(nroCbte);
+				
+				if(updateDocumentNo)
+					setDocumentNo(CalloutInvoiceExt
+							.GenerarNumeroDeDocumento(getPuntoDeVenta(),
+									getNumeroComprobante(), getLetra(),
+									isSOTrx(), false));
+
+				// Actualizar la secuencia del tipo de documento de la
+				// factura en función del valor recibido en el WS de AFIP
+				MDocType dt = MDocType.get(getCtx(), getC_DocType_ID(),
+						get_TrxName());
+				MSequence.setFiscalDocTypeNextNroComprobante(
+						dt.getDocNoSequence_ID(), nroCbte + 1,
+						get_TrxName());
+
+				log.log(Level.SEVERE, "CAE: " + processor.getCAE());
+				log.log(Level.SEVERE, "DATE CAE: " + processor.getDateCae());
+				
+				// Guardar la factura
+				if(saveInvoice && !save()) {
+					cr.setMsg(CLogger.retrieveErrorAsString(), true);
+				}
+				
+				
+			}
+		}
+		return cr;
+	}
+	
+	/**
+	 * FIN
+	 * ----------------------------------------------------------------------------------------------------
+	 * Metodos auxiliares para poder controlar numeracion de comprobantes
+	 * 
+	 * dREHER
+	 * ----------------------------------------------------------------------------------------------------
+	 */
+
+	
 } // MInvoice
 
 /*

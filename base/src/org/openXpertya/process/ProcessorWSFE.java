@@ -53,10 +53,19 @@ public class ProcessorWSFE implements ElectronicInvoiceInterface {
 	}
 	
 	/**
+	 * Sobrecargo por compatibilidad
+	 * 
+	 * dREHER
+	 */
+	public String generateCAE() {
+		return generateCAE(0);
+	}
+	
+	/**
 	 * @author Horacio Alvarez
 	 * @descripcion: Método principal.
 	 */
-	public String generateCAE(){
+	public String generateCAE(long nroComprobante){
 		this.getWsfe().deleteExistingFiles();
 		if(this.getWsfe().getMessageError() == null)
 			this.getWsfe().createInputFile();

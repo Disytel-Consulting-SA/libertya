@@ -14,6 +14,9 @@ public interface ElectronicInvoiceInterface {
 	/** Registra una factura electronica en el site de AFIP mediante WSFEV1 */
 	public String generateCAE();
 	
+	/* Permite generar el CAE conociendo el nro de comprobante que se procesa */
+	public String generateCAE(long nroComprobante);
+	
 	/** Retorna el CAE obtenido */
 	public String getCAE();
 
