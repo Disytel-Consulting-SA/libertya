@@ -503,8 +503,8 @@ public class ExportPlugin extends SvrProcess{
 	
 	protected static void copyFiles() throws Exception {
 		// Pisado de preinstall
-		if ("Y".equalsIgnoreCase(prop("CreateJarOvewritePreinstall"))) {
-			if (file(baseDir, prop("CreateJarBinariesLocation")).exists()) {
+		if (!Util.isEmpty(prop("CreateJarPreinstallFile"))) {
+			if (file(baseDir, prop("CreateJarPreinstallFile")).exists()) {
 				FileUtils.copyFile(file(baseDir, prop("CreateJarPreinstallFile")), file(prop("ExportDirectory"), "preinstall.sql"));
 			} else {
 				System.out.println("WARNING: Archivo " + prop("CreateJarPreinstallFile") + " omitido (no encontrado)");
