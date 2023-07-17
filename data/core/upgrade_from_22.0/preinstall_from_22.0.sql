@@ -838,3 +838,86 @@ WHERE
 	AND dt.isfiscaldocument = 'Y'::bpchar
 	AND (dt.isfiscal IS NULL OR dt.isfiscal = 'N'::bpchar OR dt.isfiscal = 'Y'::bpchar AND i.fiscalalreadyprinted = 'Y'::bpchar)
 ;
+
+-- 20230717-1126 Fix al problema de lista vacia en seleccion de conjunto de atributos
+DROP FUNCTION bompricelimit(integer, integer, integer);
+CREATE OR REPLACE FUNCTION bompricelimit(
+    pm_product_id integer,
+    pm_pricelist_version_id integer,
+    pm_attributesetinstance_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    i_price NUMERIC;
+BEGIN
+    IF (pm_attributesetinstance_id = 0) THEN
+	select bomPriceLimit(PM_Product_ID,PM_PriceList_Version_ID) into i_price;
+    else	
+	SELECT pricelimit into i_price FROM M_ProductPriceInstance pi
+    WHERE pi.M_PriceList_Version_ID=pm_priceList_version_ID AND pi.M_Product_ID=pm_product_id AND pi.M_AttributeSetInstance_ID=pm_attributesetinstance_id;
+	IF (i_price ISNULL) THEN
+		select bomPriceLimit(PM_Product_ID,PM_PriceList_Version_ID) into i_price;
+	END IF;	
+    END IF;
+    return i_price;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION bompricelimit(integer, integer, integer)
+  OWNER TO libertya;
+
+DROP FUNCTION bompricelist(integer, integer, integer);
+CREATE OR REPLACE FUNCTION bompricelist(
+    pm_product_id integer,
+    pm_pricelist_version_id integer,
+    pm_attributesetinstance_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    i_price NUMERIC;
+BEGIN
+    IF (pm_attributesetinstance_id = 0) THEN
+	select bomPriceList(PM_Product_ID,PM_PriceList_Version_ID) into i_price;
+    else	
+	SELECT pricelist into i_price FROM M_ProductPriceInstance pi
+    WHERE pi.M_PriceList_Version_ID=pm_pricelist_version_id AND pi.M_Product_ID=pm_product_id AND pi.M_AttributeSetInstance_ID=pm_attributesetinstance_id;
+	IF (i_price ISNULL) THEN
+		select bomPriceList(PM_Product_ID,PM_PriceList_Version_ID) into i_price;
+	END IF;	
+    END IF;
+    return i_price;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION bompricelist(integer, integer, integer)
+  OWNER TO libertya;
+
+DROP FUNCTION bompricestd(integer, integer, integer);
+CREATE OR REPLACE FUNCTION bompricestd(
+    pm_product_id integer,
+    pm_pricelist_version_id integer,
+    pm_attributesetinstance_id integer)
+  RETURNS numeric AS
+$BODY$
+DECLARE
+    i_price NUMERIC;
+BEGIN
+    IF (pm_attributesetinstance_id = 0) THEN
+	select bomPriceStd(PM_Product_ID,PM_PriceList_Version_ID) into i_price;
+    else	
+	SELECT pricestd into i_price FROM M_ProductPriceInstance pi
+    WHERE pi.M_PriceList_Version_ID=pm_pricelist_version_id AND pi.M_Product_ID=pm_product_id AND pi.M_AttributeSetInstance_ID=pm_attributesetinstance_id;
+	IF (i_price ISNULL) THEN
+		select bomPriceStd(PM_Product_ID,PM_PriceList_Version_ID) into i_price;
+	END IF;	
+    END IF;
+    return i_price;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION bompricestd(integer, integer, integer)
+  OWNER TO libertya;
+
