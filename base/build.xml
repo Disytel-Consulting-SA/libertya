@@ -50,6 +50,7 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="../lib/fluent-hc-4.5.2.jar"/>
     <pathelement path="../lib/commons-logging-1.2.jar"/>
     <pathelement path="../lib/commons-codec-1.9.jar"/>
+  	<pathelement path="../lib/commons-io-2.4.jar"/>
   	<pathelement path="../lib/lyws.jar"/>
   </path>
 

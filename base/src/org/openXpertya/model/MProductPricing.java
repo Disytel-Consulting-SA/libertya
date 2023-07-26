@@ -574,14 +574,22 @@ public class MProductPricing implements Serializable{
 
         //
 
+        /** Modificado por Pablo Corace
+         * Suprimo " INNER JOIN M_Pricelist pl ON (bpl.M_PriceList_ID=pl.BasePriceList_ID) "
+         * Reeemplazo referencias a pl por bpl
+         * Funciona con las funciones BomPrice con las llamadas a parámetros modificadas
+         */
+        
         String sql = "SELECT bomPriceStd(p.M_Product_ID,pv.M_PriceList_Version_ID,?) AS PriceStd,"    // 1
                      + " bomPriceList(p.M_Product_ID,pv.M_PriceList_Version_ID,?) AS PriceList,"    // 2
                      + " bomPriceLimit(p.M_Product_ID,pv.M_PriceList_Version_ID,?) AS PriceLimit,"    // 3
-                     + " p.C_UOM_ID,pv.ValidFrom,pl.C_Currency_ID,p.M_Product_Category_ID,"    // 4..7
-                     + " pl.EnforcePriceLimit, pl.IsTaxIncluded "                                                                                                                                                                                                                                                                                                                                                             // 8..9
-                     + "FROM M_Product p" + " INNER JOIN M_ProductPrice pp ON (p.M_Product_ID=pp.M_Product_ID)" + " INNER JOIN  M_PriceList_Version pv ON (pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID)" + " INNER JOIN M_Pricelist bpl ON (pv.M_PriceList_ID=bpl.M_PriceList_ID)" + " INNER JOIN M_Pricelist pl ON (bpl.M_PriceList_ID=pl.BasePriceList_ID) " + "WHERE pv.IsActive='Y'" + " AND p.M_Product_ID=?"    // #1
+                     + " p.C_UOM_ID,pv.ValidFrom,bpl.C_Currency_ID,p.M_Product_Category_ID,"    // 4..7
+                     + " bpl.EnforcePriceLimit, bpl.IsTaxIncluded "                                                                                                                                                                                                                                                                                                                                                             // 8..9
+                     + "FROM M_Product p" + " INNER JOIN M_ProductPrice pp ON (p.M_Product_ID=pp.M_Product_ID)" + " INNER JOIN  M_PriceList_Version pv ON (pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID)" + " INNER JOIN M_Pricelist bpl ON (pv.M_PriceList_ID=bpl.M_PriceList_ID)" + "WHERE pv.IsActive='Y'" + " AND p.M_Product_ID=?"    // #1
                      + " AND pl.M_PriceList_ID=?"    // #2
                      + "ORDER BY pv.ValidFrom DESC";
+
+        /* Fin modificaciones */
 
         m_calculated = false;
 
