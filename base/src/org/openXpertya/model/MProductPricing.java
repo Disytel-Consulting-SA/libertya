@@ -585,8 +585,13 @@ public class MProductPricing implements Serializable{
                      + " bomPriceLimit(p.M_Product_ID,pv.M_PriceList_Version_ID,?) AS PriceLimit,"    // 3
                      + " p.C_UOM_ID,pv.ValidFrom,bpl.C_Currency_ID,p.M_Product_Category_ID,"    // 4..7
                      + " bpl.EnforcePriceLimit, bpl.IsTaxIncluded "                                                                                                                                                                                                                                                                                                                                                             // 8..9
-                     + "FROM M_Product p" + " INNER JOIN M_ProductPrice pp ON (p.M_Product_ID=pp.M_Product_ID)" + " INNER JOIN  M_PriceList_Version pv ON (pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID)" + " INNER JOIN M_Pricelist bpl ON (pv.M_PriceList_ID=bpl.M_PriceList_ID)" + "WHERE pv.IsActive='Y'" + " AND p.M_Product_ID=?"    // #1
-                     + " AND pl.M_PriceList_ID=?"    // #2
+                     + "FROM M_Product p" 
+                     + " INNER JOIN M_ProductPrice pp ON (p.M_Product_ID=pp.M_Product_ID) " 
+                     + " INNER JOIN  M_PriceList_Version pv ON (pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID) " 
+                     + " INNER JOIN M_Pricelist bpl ON (pv.M_PriceList_ID=bpl.M_PriceList_ID) " 
+                     + "WHERE pv.IsActive='Y'" 
+                     + " AND p.M_Product_ID=?"        // #1
+                     + " AND bpl.M_PriceList_ID=? "    // #2 dREHER se corrije referencia al campo para filtro
                      + "ORDER BY pv.ValidFrom DESC";
 
         /* Fin modificaciones */
