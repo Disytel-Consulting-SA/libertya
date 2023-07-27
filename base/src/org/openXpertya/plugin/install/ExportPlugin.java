@@ -481,7 +481,7 @@ public class ExportPlugin extends SvrProcess{
 			ExportPlugin ep = new ExportPlugin();
 			ep.setComponentVersionID(Integer.parseInt(prop("ExportComponentVersionID")));
 			ep.setDirectoryPath(prop("ExportDirectory"));
-			if (!Util.isEmpty(prop("ExportProcessID"),true))
+			if (!Util.isEmpty(prop("ExportProcessID"),true) && Integer.parseInt(prop("ExportProcessID")) > 0)
 				ep.setProcessID(Integer.parseInt(prop("ExportProcessID")));
 			ep.setChangeLogIDFrom(Integer.parseInt(prop("ExportChangelogFromID")));
 			ep.setChangeLogIDTo(Integer.parseInt(prop("ExportChangelogToID")));
