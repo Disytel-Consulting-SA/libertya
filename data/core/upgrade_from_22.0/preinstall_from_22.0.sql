@@ -920,4 +920,8 @@ $BODY$
   COST 100;
 ALTER FUNCTION bompricestd(integer, integer, integer)
   OWNER TO libertya;
+  
+-- 20230728-1330 MERGE: Cuando la EC tiene configurado ocultar descuento linea FC (se agrega columna para configuracion)
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_bpartner', 'isocultardesctolineafc', 'character(1)'));
+
 

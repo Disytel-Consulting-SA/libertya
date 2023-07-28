@@ -2110,6 +2110,38 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		return dragOrderPrice;
 	}
 	
+	/** dREHER, si se encuentra seteado el flag de ocultar descuento en el socio de negocios
+     * se debe igualar el PriceList con el PriceEntered
+     */
+    public BigDecimal getPriceList() {
+
+    	BigDecimal priceList = super.getPriceList();
+    	int C_Invoice_ID = getC_Invoice_ID();
+
+    	// en caso de que no haya precio ingresado manual, debe seguir trayendo precio de lista
+    	if(getPriceEntered().compareTo(Env.ZERO) > 0) {
+    	
+    		MInvoice inv = new MInvoice(getCtx(), C_Invoice_ID, get_TrxName());
+    		if(inv!=null) {
+    			MBPartner bp = new MBPartner(getCtx(), inv.getC_BPartner_ID(), get_TrxName());
+    			if(bp!=null) {
+    				boolean isOcultarDesctoLineaFC = false;
+    				if(bp.get_Value("IsOcultarDesctoLineaFC")!=null) {
+    					isOcultarDesctoLineaFC = (Boolean)bp.get_Value("IsOcultarDesctoLineaFC");
+    				}
+    				if(isOcultarDesctoLineaFC)
+    					priceList = getPriceEntered();
+
+    			}
+    		}
+
+    	}
+    	
+    	log.finest("getPriceList desde MInvoiceLine :" + priceList);
+    	
+    	return priceList;
+    }
+	
 	/**
 	 * Crea el wrapper de esta línea para ser manipulada por un calculador de
 	 * descuentos.
