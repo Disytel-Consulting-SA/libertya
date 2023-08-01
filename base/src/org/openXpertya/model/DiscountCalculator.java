@@ -371,6 +371,8 @@ public class DiscountCalculator {
 		// Por defecto el precio devuelto es el precio original
 		BigDecimal discountedPrice = price;
 		
+		debug("calculatePrice.hasBPartnerDiscount()=" + hasBPartnerDiscount());
+		
 		// Se determina si el esquema de descuento de EC asignado es aplicable
 		// y en caso de serlo se obtiene el precio descontado a partir de la 
 		// aplicación del esquema.
@@ -1359,6 +1361,10 @@ public class DiscountCalculator {
 			this.currencyID = currencyID;
 		}
 	}
+	
+	private void debug(String s) {
+		System.out.println("====> DiscountCalculator. " + s);
+	}
 
 	/**
 	 * Indica si se debe aplicar el esquema de descuento de la EC basándose en
@@ -1366,6 +1372,16 @@ public class DiscountCalculator {
 	 * generales y de EC asociados a este calculador.
 	 */
 	public boolean isBPartnerDocumentDiscountApplicable() {
+		
+		debug("isBPartnerDocumentDiscountApplicable. hasDiscountConfig()=" + hasDiscountConfig());
+		if(hasDiscountConfig()) {
+			debug("isBPartnerDocumentDiscountApplicable. getDiscountConfig().isApplyAllDocumentDiscount()=" + getDiscountConfig().isApplyAllDocumentDiscount());
+			debug("isBPartnerDocumentDiscountApplicable. getDiscountConfig().MDiscountConfig().getDocumentDiscouunt1()=" + getDiscountConfig().getDocumentDiscount1());
+			debug("isBPartnerDocumentDiscountApplicable. getDiscountConfig().MDiscountConfig().getDocumentDiscount2()=" + getDiscountConfig().getDocumentDiscount2());
+			debug("isBPartnerDocumentDiscountApplicable. hasGeneralDiscounts()=" + hasGeneralDiscounts());
+			debug("isBPartnerDocumentDiscountApplicable. isAssumeGeneralDiscountAdded()=" + isAssumeGeneralDiscountAdded());
+		};
+		
 		return 
 			hasDiscountConfig() 
 			&& (
@@ -1402,6 +1418,11 @@ public class DiscountCalculator {
 	 *            configurado en este calculador
 	 */
 	public boolean isBPartnerDocumentDiscountApplicable(String discountContextType, String bpartnerDiscountContextOfUse) {
+		
+		debug("isBPartnerDocumentDiscountApplicable.isBPartnerDocumentDiscountApplicable()=" + isBPartnerDocumentDiscountApplicable());
+		debug("isBPartnerDocumentDiscountApplicable.bpartnerDiscountContextOfUse=" + bpartnerDiscountContextOfUse);
+		debug("isBPartnerDocumentDiscountApplicable.getContext()=" + getContext());
+		
 		return 
 			isBPartnerDocumentDiscountApplicable()
 			&&
@@ -1552,6 +1573,11 @@ public class DiscountCalculator {
 	 *         está trabajando el calculador de descuento son compatibles
 	 */
 	public boolean discountContextTypeValidation(String discountContextType){
+		
+		debug("discountContextTypeValidation.getContext()=" + getContext());
+		debug("discountContextTypeValidation.MBPartner.DISCOUNTCONTEXT_Receipt=" + MBPartner.DISCOUNTCONTEXT_Receipt);
+		debug("discountContextTypeValidation.discountContextType=" + discountContextType);
+		
 		return (getContext().equals(MBPartner.DISCOUNTCONTEXT_Bill) || getContext()
 				.equals(MBPartner.DISCOUNTCONTEXT_Receipt)
 				&& discountContextType

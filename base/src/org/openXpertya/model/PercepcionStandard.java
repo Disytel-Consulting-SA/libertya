@@ -38,6 +38,14 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 	}
 	
 	/**
+	 * Debug solo mostrar datos por consola
+	 * dREHER
+	 */
+	private void debug(String s) {
+		System.out.println("====> PercepcionStandard." + s);
+	}
+	
+	/**
 	 * Aplica y devuelve la percepción de este procesador
 	 * 
 	 * @param rate       tasa a aplicar
@@ -55,12 +63,17 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 				p.setTaxBaseAmt(taxBaseAmt);
 				p.setTaxAmt(taxAmt);
 				p.setTaxID(getPercepcionData().getTax().getID());
-				System.out.print(p.getTaxAmt());
+				
+				// dREHER
+				debug("getApplyRate. TaxAmt (Percepcion)=" + p.getTaxAmt());
 			}
 		}
 		// Controlar que el importe determinar (importe a percibir) sea mayor al importe
 		// mínimo de percepción
 		if(p != null && p.getTaxAmt().compareTo(getPercepcionData().getMinimumPercepcionAmt()) <= 0) {
+			
+			// dREHER
+			debug("getApplyRate. TaxAmt=" + p.getTaxAmt() + " es menor al minimo a percibir=" + getPercepcionData().getMinimumPercepcionAmt() + " NO aplica percepcion!");
 			p = null;
 		}
 		return p;

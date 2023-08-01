@@ -230,7 +230,12 @@ public class GeneratorPercepciones {
 		Percepcion percepcion;
 		for (MOrgPercepcion orgPercepcion : getOrgPercepciones()) {
 			// Aplicar la percepción
+			
+			// Determina si es convenio multilateral
 			boolean ECesCM = getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType() != null && getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType().equals(MBPartner.IIBBTYPE_ConvenioMultilateral);
+			
+			// Si la Entidad Comercial es IIBB del tipo Convenio multilateral y la Percepcion de la ORG tambien lo es
+			// o NO lo es en la Entidad Comercial y tampoco lo es en la Organizacion
 			if ((!orgPercepcion.isConvenioMultilateral() && !ECesCM) || (orgPercepcion.isConvenioMultilateral() && ECesCM)) {
 				percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyDebitPerception();			
 				// Impuesto
