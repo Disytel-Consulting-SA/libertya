@@ -175,14 +175,14 @@ public final class DB {
     		String property = (rwConn ? "SERVER_DB_CONNECTIONS_RW" : "SERVER_DB_CONNECTIONS");
     		connectionsNo = Integer.parseInt(prop.getProperty(property, ""+connectionsNo));
     	} catch (Exception e) {
-    		e.printStackTrace();
+    		log.warning(e.getMessage());
     	} finally {
     		try {
 	    		if (fis!=null)
 	    			fis.close();
 	    		fis=null;
     		} catch (Exception e2) {
-    			e2.printStackTrace();
+    			log.warning(e2.getMessage());
     		}
     	}
     	return connectionsNo;
@@ -522,7 +522,7 @@ public final class DB {
         		}
         		log.finest("sessionID:" + sessionID + " - connecionNo:" + connectionNo + " - backPID:" + ((PGConnection)connection).getBackendPID());
         	} catch (Exception e) {
-        		e.printStackTrace();
+        		log.warning(e.getMessage());
         	}
         }
         
