@@ -956,6 +956,9 @@ public class DocumentEngine implements DocAction {
 				if (errorMsg == null || errorMsg.trim().isEmpty()) {
 					errorMsg = document.getProcessMsg();
 				}
+				if ((errorMsg == null || errorMsg.trim().isEmpty()) && e.getMessage()!=null) {
+					errorMsg = e.getMessage();
+				}
 				error = true;
 			}
 		}
