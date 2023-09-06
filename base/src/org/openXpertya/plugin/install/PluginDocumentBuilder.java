@@ -135,11 +135,16 @@ public abstract class PluginDocumentBuilder {
 	 * @throws Exception 
 	 */
 	public void generateDocument() throws Exception{
+		System.out.println("===========");
+		System.out.println("Archivo: " + getDestinyFilePath());
 		// Creo el documento
+		System.out.println("Creando el archivo...");
 		createDocument();
 		// Generación del documento a cargo de las subclases
+		System.out.println("Rellenando el archivo...");
 		fillDocument();
 		// Guardar el archivo xml
+		System.out.println("Guardando el archivo...");
 		saveDocument();
 	}
 	
