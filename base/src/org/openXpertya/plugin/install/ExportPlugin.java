@@ -398,7 +398,7 @@ public class ExportPlugin extends SvrProcess{
 	
 	protected static void loadProps(String[] args) throws Exception {
 		props = Util.loadProperties(args[0]);
-		baseDir = args[0].replace("devinfo.properties", "");
+		baseDir = args[0].substring(0, args[0].lastIndexOf(File.separator)+1);
 		
 		// Debe solicitarse la generacion de un Jar conteniendo export de metadatos o de compilacion. En caso contrario no hay nada por hacer 
 		if (!"Y".equalsIgnoreCase(prop("IncludeComponentExport")) && !"Y".equalsIgnoreCase(prop("IncludeClassesAndLibs"))) {
@@ -631,23 +631,51 @@ public class ExportPlugin extends SvrProcess{
 			if (Integer.parseInt(prop("ExportChangelogToID")) > 0 && Integer.parseInt(prop("ExportChangelogToID")) < maxLog) {
 				maxLog = Integer.parseInt(prop("ExportChangelogToID"));
 			}
-			
 			fileName = fileName.append("_c"+maxLog);
 		}
 
 		// Revision svn / git
 		if ("Y".equalsIgnoreCase(prop("IncludeClassesAndLibs")) || "Y".equalsIgnoreCase(prop("IncludeReports"))) {
-			Process process = Runtime.getRuntime().exec(getVersioningCommand(), null, file(baseDir));
-			process.waitFor();
-			if (process.exitValue() > 0) {
-				throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
-			}
-			String revision = inputStreamToString(process.getInputStream());
+			String revision = getRevision();	
 			fileName = fileName.append("_r"+revision);			
 		}
-
 		return fileName.append(".jar").toString();
 	}
+	
+	
+	protected static String getRevision() throws Exception {
+		// Podria ser que un proyecto solo ciertos subdirectorios del proyecto
+		// son actualizados mediante update/pull.  Por consiguiente, la revision
+		// podria llegar a variar segun la ubicacion.  Es por esto que se toma
+		// la mayor revision entre los principales directorios del proyecto.
+		String root   = baseDir + ".." + File.separator + "..";
+		String data   = root 	+ File.separator + "data";
+		String src    = root 	+ File.separator + "src";
+		String lib    = root 	+ File.separator + "lib";
+		String[] dirs = new String[]{baseDir, root, data, src, lib};
+		
+		int maxRev = -1;
+		for (String dir : dirs) {
+			File location = file(dir);
+			if (!location.exists())
+				continue;
+			Process process = Runtime.getRuntime().exec(getVersioningCommand(), null, location);
+			process.waitFor();
+			if (process.exitValue() > 0) {
+				continue;
+			}
+			int revision = Integer.parseInt(inputStreamToString(process.getInputStream()));
+			if (revision > maxRev) {
+				maxRev = revision;
+			}
+		}
+		if (maxRev == -1) {
+			return "UNDEFINED";
+		}
+		return Integer.toString(maxRev);
+	}
+	
+	
 	
 	protected static String[] getVersioningCommand() throws Exception {
 		if (System.getProperty("os.name")==null)
