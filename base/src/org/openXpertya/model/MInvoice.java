@@ -5824,7 +5824,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 
 	public void calculateTotal() {
 		setGrandTotal(getTotalLines().add(getChargeAmt()).add(
-				totalTax(isTaxIncluded())));
+				totalTax(!isTaxIncluded())));
 	}
 
 	public String getLetra() {
