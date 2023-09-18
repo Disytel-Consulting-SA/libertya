@@ -16,6 +16,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.openXpertya.model.DiscountCalculator.IDocumentLine;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine.DiscountApplication;
 import org.openXpertya.model.ProductMatching.MatchingCompareType;
 import org.openXpertya.reflection.CallResult;
@@ -511,6 +512,11 @@ public class DiscountCalculator {
 	
 	protected BigDecimal calculateDiscount(IDocumentLine documentLine,
 			MDiscountSchema discountSchema, BigDecimal baseAmt) {
+			return calculateDiscount(documentLine, discountSchema, baseAmt, true); // patch 22.03
+		}
+		
+		protected BigDecimal calculateDiscount(IDocumentLine documentLine,
+				MDiscountSchema discountSchema, BigDecimal baseAmt, boolean net) { // Fin patch 22.03
 		
 		// Importe total del documento con impuestos. Utilizado para calcular la
 		// proporción del baseAmt que también tiene incluido el impuesto 
@@ -557,7 +563,7 @@ public class DiscountCalculator {
 		// Los descuentos a nivel de documento se calculan a partir del precio
 		// actual de la línea tomando la cantidad total de la misma.
 		} else if (discountSchema.isDocumentLevel()) {
-			price = documentLine.getPrice();
+			price = net ? documentLine.getPrice() : documentLine.getTaxedAmount(documentLine.getPrice()); // patch 22.03
 			qty = documentLine.getQty();
 		}
 		 
@@ -733,7 +739,9 @@ public class DiscountCalculator {
 			discountAmt = calculateDiscount(
 					documentLine, 
 					discountSchema, 
-					baseAmt);
+					baseAmt,  // patch 22.03
+					false);   // Fin patch 22.03
+
 				
 			// Si el descuento es distinto de cero implica que el descuento
 			// se aplicó sobre la línea.

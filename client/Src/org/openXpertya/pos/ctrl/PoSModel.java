@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.openXpertya.apps.AInfoElectronic.ElectronicDialogActionListener;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MPOSJournal;
@@ -559,6 +558,11 @@ public class PoSModel {
 		paymentMediums = getConnectionState().getPaymentMediums();
 	}
 
+	// Patch 22.03
+	public PaymentMedium loadPaymentMedium(int mposPaymentMediumId) {
+		return getConnectionState().getPaymentMedium(mposPaymentMediumId);
+	}
+	
 	/**
 	 * @return Devuelve todos los medios de pago disponibles para el TPV. Si aún no
 	 * se han cargado los medios de pago se invoca el método {@link #loadPaymentMediums()}

@@ -7111,7 +7111,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				manualTaxesAmt = manualTaxesAmt.add(rs.getBigDecimal("taxamt"));
 			}
 			
-			BigDecimal chargeAmt = getChargeAmt() == null ? BigDecimal.ZERO : getChargeAmt();
+			BigDecimal chargeAmt = isTPVInstance() ? BigDecimal.ZERO : getChargeAmt() == null ? BigDecimal.ZERO : getChargeAmt(); // Patch 22.03
 			manualTaxesAmt = manualTaxesAmt == null? BigDecimal.ZERO : manualTaxesAmt;
 			
 			// Actualizar totales

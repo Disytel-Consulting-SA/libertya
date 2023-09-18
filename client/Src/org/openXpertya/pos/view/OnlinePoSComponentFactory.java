@@ -166,18 +166,22 @@ public class OnlinePoSComponentFactory extends PoSComponentFactory {
 						true, null);
 		// Se agregan al combo
 		for (ValueNamePair tenderType : list) {
+			// patch 22.03 NACHO - Agrego siempre los tender Types
+			tenderTypeCombo.addItem(tenderType);
+			
 			// Si debo crear facturas entonces se agregan todos los medios de
 			// pago
-			if(getPoSModel().getConfig().isCreateInvoice()){
+			/*if(getPoSModel().getConfig().isCreateInvoice()){
 				tenderTypeCombo.addItem(tenderType);
-			}
+			}*/
 			// Si no se deben crear facturas no tiene sentido cargar cobros
 			// diferentes de A Crédito
 			// TODO esto debería parametrizarse en la config del tpv?
-			else if (tenderType.getValue().equals(
+			/*else if (tenderType.getValue().equals(
 					MPOSPaymentMedium.TENDERTYPE_Credit)) {
 				tenderTypeCombo.addItem(tenderType);
-			}
+			}*/
+			// Fin patch 22.03
 		}
 		return tenderTypeCombo;
 	}

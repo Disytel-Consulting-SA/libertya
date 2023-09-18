@@ -7014,7 +7014,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if (MPOSPaymentMedium.TENDERTYPE_Credit.equals(tenderType)){
 			getCPaymentMediumCombo().removeAllItems();
 			getCPaymentMediumCombo().addItem(
-					getOrder().getBusinessPartner().getPaymentMedium());
+					getModel().loadPaymentMedium(getOrder().getBusinessPartner().getPaymentMedium().getId())); //Patch 22.03
 		}
 	}
 

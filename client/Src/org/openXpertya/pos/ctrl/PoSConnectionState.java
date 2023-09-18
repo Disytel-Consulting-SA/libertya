@@ -112,6 +112,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	
 	public abstract PaymentMedium getPaymentMedium(Integer paymentMediumID);
 	
+	public abstract PaymentMedium getPaymentMedium(int mposPaymentMediumId); // Patch 22.03
+	
 	public abstract void voidDocuments() throws PosException;
 	
 	public abstract Integer getMaxOrderLineQty();

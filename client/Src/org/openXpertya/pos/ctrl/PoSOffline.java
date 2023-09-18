@@ -198,6 +198,12 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override  // Patch 22.03
+	public PaymentMedium getPaymentMedium(int mposPaymentMediumId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
 	public BigDecimal getCreditAvailableAmount(int invoiceID) {

@@ -1687,12 +1687,13 @@ public class PoSOnline extends PoSConnectionState {
 			invoiceTax.setIsTaxIncluded(mi.isTaxIncluded());
 			throwIfFalse(invoiceTax.save(), mi);
 		}
+		/* patch 22.03
 		for (MInvoiceTax it : mi.getTaxes(true)) {
 			it.calculateTaxFromLines();
 			if(!it.save()) {
 				throw new PosException(CLogger.retrieveErrorAsString());
 			}
-		}
+		} fin patch 22.03 */ 
 		try {
 			mi.recalculatePercepciones();
 		} catch(Exception e) {
@@ -3461,74 +3462,87 @@ public class PoSOnline extends PoSConnectionState {
 				.getAvailablePaymentMediums(getCtx(), null,
 						MPOSPaymentMedium.CONTEXT_CustomerReceiptsOnly, true,
 						getTrxName());
-		PaymentMedium paymentMedium = null;
-		int discountSchemaID = 0;
+		
+// patch 22.03	
 		for (MPOSPaymentMedium mposPaymentMedium : mPaymentMediums) {
-			// Crea la instancia del medio de pago con los datos del C_POSPaymentMedium
-			paymentMedium = new PaymentMedium(mposPaymentMedium.getID(),
-					mposPaymentMedium.getName(), mposPaymentMedium
-							.getTenderType(), mposPaymentMedium
-							.getC_Currency_ID());
-			// Si tiene esquema de descuento se obtiene la instancia y se asocia al
-			// medio de pago.
-			discountSchemaID = mposPaymentMedium.getM_DiscountSchema_ID();
-			if (discountSchemaID > 0) {
-				paymentMedium.setDiscountSchema(getDiscountSchema(discountSchemaID));
-			}
-			// Si es un medio de pago de tipo Tarjeta de Crédito se guarda el ID de 
-			// la entidad financiera y se cargan los planes de tarjeta disponibles
-			// para la misma
-			if (paymentMedium.isCreditCard()) {
-				EntidadFinanciera ef = getEntidadFinanciera(mposPaymentMedium.getM_EntidadFinanciera_ID());
-				if(ef != null){
-					paymentMedium.setEntidadFinanciera(ef);
-					List<EntidadFinancieraPlan> planes = getCreditCardPlans(paymentMedium
-							.getEntidadFinanciera().getId());
-					if(planes != null){
-						paymentMedium.setCreditCardPlans(planes);
-					}
-				}				
-			}
-			
-			// Si es un medio de pago de tipo Cheque se guarda el plazo de cobro
-			if (paymentMedium.isCheck()) {
-				paymentMedium.setCheckDeadLine(Integer
-						.parseInt(mposPaymentMedium.getCheckDeadLine()));
-				paymentMedium
-						.setValidationBeforeCheckDeadLines(mposPaymentMedium
-								.isValidateBeforeCheckDeadLines());
-				paymentMedium.setBeforeCheckDeadLineFrom(mposPaymentMedium
-						.getBeforeCheckDeadLineFrom() != null ? Integer
-						.parseInt(mposPaymentMedium
-								.getBeforeCheckDeadLineFrom()) : null);
-				paymentMedium.setBeforeCheckDeadLineTo(mposPaymentMedium
-						.getBeforeCheckDeadLineTo() != null ? Integer
-						.parseInt(mposPaymentMedium.getBeforeCheckDeadLineTo())
-						: null);
-				paymentMedium
-						.setBeforeCheckDeadLinesToValidate(getBeforeCheckDeadLinesToValidate(mposPaymentMedium));
-			}
-			
-			// Cheques y Tarjetas pueden contener un banco (lista de referencia)
-			// Se guarda el value en el objeto.
-			if (paymentMedium.isCreditCard() || paymentMedium.isCheck()) {
-				paymentMedium.setBank(mposPaymentMedium.getBank());
-			}
-			
-			// Se asigna el nombre del tipo de pago a partir de la lista de referencia
-			paymentMedium.setTenderTypeName(
-				MRefList.getListName(
-						ctx, 
-						MPOSPaymentMedium.TENDERTYPE_AD_Reference_ID, 
-						paymentMedium.getTenderType()
-				)
-			);
-			
+			PaymentMedium paymentMedium = getPaymentMedium(mposPaymentMedium);
 			paymentMediums.add(paymentMedium);
 		}
 		
 		return paymentMediums;
 	}
+	
+	public PaymentMedium getPaymentMedium(int mposPaymentMediumId) {
+		MPOSPaymentMedium mposPaymentMedium = new MPOSPaymentMedium(getCtx(), mposPaymentMediumId, getTrxName());
+		return getPaymentMedium(mposPaymentMedium);
+	}
+	
+	private PaymentMedium getPaymentMedium(MPOSPaymentMedium mposPaymentMedium) {
+		PaymentMedium paymentMedium = null;
+		int discountSchemaID = 0;
+		// Crea la instancia del medio de pago con los datos del C_POSPaymentMedium
+		paymentMedium = new PaymentMedium(mposPaymentMedium.getID(),
+				mposPaymentMedium.getName(), mposPaymentMedium
+						.getTenderType(), mposPaymentMedium
+						.getC_Currency_ID());
+		// Si tiene esquema de descuento se obtiene la instancia y se asocia al
+		// medio de pago.
+		discountSchemaID = mposPaymentMedium.getM_DiscountSchema_ID();
+		if (discountSchemaID > 0) {
+			paymentMedium.setDiscountSchema(getDiscountSchema(discountSchemaID));
+		}
+		// Si es un medio de pago de tipo Tarjeta de Crédito se guarda el ID de 
+		// la entidad financiera y se cargan los planes de tarjeta disponibles
+		// para la misma
+		if (paymentMedium.isCreditCard()) {
+			EntidadFinanciera ef = getEntidadFinanciera(mposPaymentMedium.getM_EntidadFinanciera_ID());
+			if(ef != null){
+				paymentMedium.setEntidadFinanciera(ef);
+				List<EntidadFinancieraPlan> planes = getCreditCardPlans(paymentMedium
+						.getEntidadFinanciera().getId());
+				if(planes != null){
+					paymentMedium.setCreditCardPlans(planes);
+				}
+			}				
+		}
+		
+		// Si es un medio de pago de tipo Cheque se guarda el plazo de cobro
+		if (paymentMedium.isCheck()) {
+			paymentMedium.setCheckDeadLine(Integer
+					.parseInt(mposPaymentMedium.getCheckDeadLine()));
+			paymentMedium
+					.setValidationBeforeCheckDeadLines(mposPaymentMedium
+							.isValidateBeforeCheckDeadLines());
+			paymentMedium.setBeforeCheckDeadLineFrom(mposPaymentMedium
+					.getBeforeCheckDeadLineFrom() != null ? Integer
+					.parseInt(mposPaymentMedium
+							.getBeforeCheckDeadLineFrom()) : null);
+			paymentMedium.setBeforeCheckDeadLineTo(mposPaymentMedium
+					.getBeforeCheckDeadLineTo() != null ? Integer
+					.parseInt(mposPaymentMedium.getBeforeCheckDeadLineTo())
+					: null);
+			paymentMedium
+					.setBeforeCheckDeadLinesToValidate(getBeforeCheckDeadLinesToValidate(mposPaymentMedium));
+		}
+		
+		// Cheques y Tarjetas pueden contener un banco (lista de referencia)
+		// Se guarda el value en el objeto.
+		if (paymentMedium.isCreditCard() || paymentMedium.isCheck()) {
+			paymentMedium.setBank(mposPaymentMedium.getBank());
+		}
+		
+		// Se asigna el nombre del tipo de pago a partir de la lista de referencia
+		paymentMedium.setTenderTypeName(
+			MRefList.getListName(
+					ctx, 
+					MPOSPaymentMedium.TENDERTYPE_AD_Reference_ID, 
+					paymentMedium.getTenderType()
+			)
+		);
+		
+		return paymentMedium;
+	}
+	// Fin patch 22.03
 
 	/**
 	 * @param entidadFinancieraID
