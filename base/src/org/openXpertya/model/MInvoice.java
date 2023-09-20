@@ -2658,8 +2658,13 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 * @return true si fue posible la actualización, false caso contrario
 	 */
 	public boolean updateManualGeneralDiscount() {
-		if (isSkipManualGeneralDiscount())
+		if (isSkipManualGeneralDiscount()) {
+			if (!isTPVInstance)
+				setSkipManualGeneralDiscount(false);
 			return true;
+		}
+		
+		setSkipManualGeneralDiscount(true);
 
 		int stdPrecision = MPriceList.getStandardPrecision(getCtx(),
 				getM_PriceList_ID());
