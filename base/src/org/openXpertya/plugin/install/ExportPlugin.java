@@ -3,6 +3,7 @@ package org.openXpertya.plugin.install;
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
@@ -362,9 +363,13 @@ public class ExportPlugin extends SvrProcess{
 	/** Nombre definitivo del archivo a crear */
 	protected static StringBuffer fileName = null;
 	
+	protected static HashMap<String, String> defaults = new HashMap<String, String>();
+	
 	public static void main(String[] args) {
 
 		try {
+			loadDefaults();
+			
 			validateArguments(args);
 			
 			loadProps(args);
@@ -387,6 +392,15 @@ public class ExportPlugin extends SvrProcess{
 		}
 		
 		
+	}
+
+	protected static void loadDefaults() {
+		defaults.put("CreateJarBinariesLocation", 		"binarios");
+		defaults.put("CreateJarLibsLocation", 			".."+File.separator+".."+File.separator+"lib");
+		defaults.put("CreateJarClassesLocation", 		".."+File.separator+".."+File.separator+"bin");
+		defaults.put("CreateJarServerRootLocation", 	".."+File.separator+".."+File.separator+"serverRoot");
+		defaults.put("CreateJarOXPRootBaseLocation", 	".."+File.separator+".."+File.separator+"oxpRootBase");
+		defaults.put("CreateJarWebUILocation", 			".."+File.separator+".."+File.separator+"webui");
 	}
 
 	protected static void validateArguments(String[] args) {
@@ -504,37 +518,50 @@ public class ExportPlugin extends SvrProcess{
 	protected static void copyFiles() throws Exception {
 		// Pisado de preinstall
 		if (!Util.isEmpty(prop("CreateJarPreinstallFile"))) {
-			if (file(baseDir, prop("CreateJarPreinstallFile")).exists()) {
-				FileUtils.copyFile(file(baseDir, prop("CreateJarPreinstallFile")), file(prop("ExportDirectory"), "preinstall.sql"));
-			} else {
-				System.out.println("WARNING: Archivo " + prop("CreateJarPreinstallFile") + " omitido (no encontrado)");
-			}
+			copyFileContents("CreateJarPreinstallFile", "", "preinstall.sql");
 		}
 		
 		// Copia de reportes/binarios
 		if ("Y".equalsIgnoreCase(prop("IncludeReports"))) {
-			if (file(baseDir, prop("CreateJarBinariesLocation")).isDirectory() && file(baseDir, prop("CreateJarBinariesLocation")).exists()) {
-				FileUtils.copyDirectory(file(baseDir, prop("CreateJarBinariesLocation")), file(prop("ExportDirectory"), "binarios"));	
-			} else {
-				System.out.println("WARNING: Directorio " + prop("CreateJarBinariesLocation") + " omitido (no encontrado)");	
-			}
-				
+			copyDirContents("CreateJarBinariesLocation", "binarios");			
 		}
 
 		// Copia de compilacion y librerias externas
 		if ("Y".equalsIgnoreCase(prop("IncludeClassesAndLibs"))) {
-			// Librerias externas
-			if (file(baseDir, prop("CreateJarLibsLocation")).isDirectory() && file(baseDir, prop("CreateJarLibsLocation")).exists()) {
-				FileUtils.copyDirectory(file(baseDir, prop("CreateJarLibsLocation")), file(prop("ExportDirectory"), "lib"));
-			} else {
-				System.out.println("WARNING: Directorio " + prop("CreateJarLibsLocation") + " omitido (no encontrado)");
-			}
 			// Clases compiladas
-			if (file(baseDir, prop("CreateJarClassesLocation")).isDirectory() && file(baseDir, prop("CreateJarClassesLocation")).exists()) {
-				FileUtils.copyDirectory(file(baseDir, prop("CreateJarClassesLocation")), file(prop("ExportDirectory")));
-			} else {
-				System.out.println("WARNING: Directorio " + prop("CreateJarClassesLocation") + " omitido (no encontrado)");
-			}
+			copyDirContents("CreateJarClassesLocation", "");
+			// Librerias externas
+			copyDirContents("CreateJarLibsLocation", "lib");
+			// Archivos con destino OXPRoot.jar
+			copyDirContents("CreateJarServerRootLocation", "serverRoot");
+			// Archivos con destino OXPRootBase.war			
+			copyDirContents("CreateJarOXPRootBaseLocation", "oxpRootBase");
+			// Archivos con destino webui.war
+			copyDirContents("CreateJarWebUILocation", "webui");
+		}
+	}
+	
+	protected static void copyFileContents(String property, String exportSubDir,  String targetFileName) throws Exception {
+		if (prop(property)==null || prop(property).trim().length()==0) {
+			System.out.println("WARNING: Propiedad " + property + " no definida");
+			return;
+		}
+		if (file(baseDir, prop(property)).exists()) {
+			FileUtils.copyFile(file(baseDir, prop(property)), file(prop("ExportDirectory"), exportSubDir, targetFileName));
+		} else {
+			System.out.println("WARNING: Archivo " + prop(property) + " omitido (no encontrado)");
+		}
+	}
+
+	protected static void copyDirContents(String property, String exportSubDir) throws Exception {
+		if (prop(property)==null || prop(property).trim().length()==0) {
+			System.out.println("WARNING: Propiedad " + property + " no definida");
+			return;
+		}
+		if (file(baseDir, prop(property)).isDirectory() && file(baseDir, prop(property)).exists()) {
+			FileUtils.copyDirectory(file(baseDir, prop(property)), file(prop("ExportDirectory"), exportSubDir));
+		} else {
+			System.out.println("WARNING: Directorio " + prop(property) + " omitido (no encontrado)");
 		}
 	}
 	
@@ -574,13 +601,19 @@ public class ExportPlugin extends SvrProcess{
 	protected static File file(String... args) {
 		StringBuffer buf = new StringBuffer();
 		for (String arg : args) {
+			if (arg==null || arg.trim().length()==0)
+				continue;
 			buf.append(arg).append(arg.endsWith(File.separator)?"":File.separator);
 		}
 		return new File(buf.toString().substring(0, buf.length()-1));
 	}
 	
 	protected static String prop(String key) {
-		return props.getProperty(key);
+		// Se encuentra en el properties?
+		if (props.getProperty(key)!=null)
+			return props.getProperty(key);
+		// Se encuentra en defaults?
+		return defaults.get(key);
 	}
 	
 	protected static boolean shouldcreateDir(String dirName) {
