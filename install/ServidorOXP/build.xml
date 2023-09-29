@@ -124,6 +124,23 @@
   <target name="setupCLib" depends="setupInit"
 	  description="Instalacion de la Libreria del Cliente Libertya">
 
+  	<!-- Backup de Libreria. No se puede hacer copy OXP.jar -> OXP.jar.backup dado que OXP.jar esta en uso por el proceso de configuracion. -->
+  	<unjar src="lib/OXP.jar" dest="backupOXP" overwrite="true" />
+    <jar jarfile="lib/OXP.jar.backup" index="yes">
+      <fileset dir="backupOXP"/>
+      <manifest>
+		<attribute name="Specification-Title" value="Cliente_Libertya"/>
+		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
+		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
+		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
+      </manifest>
+    </jar> 	
+  	<!-- Uso de version default.  Si no existe la version default basarnos en OXP.jar.  Si existe version default no sobreescribirla. -->
+  	<copy file="lib/OXP.jar.backup" tofile="lib/OXP.jar.default" overwrite="false" granularity="9223372036854"/>
+  	
     <!-- Borra las viejas		-->
     <delete file="lib/OXPXLib.jar" failonerror="no"/>
     <delete file="lib/CClient.jar" failonerror="no"/>
@@ -189,9 +206,9 @@
   	<mkdir dir="nuevoOXPRootBase"/>
   	<mkdir dir="nuevoOXPRootBaseAdicionales"/>
   	<mkdir dir="nuevoWEBUI"/>
-
+  	
 	<!-- Descomprimir los actuales OXP.jar y OXPRoot.jar -->	
-    <unjar src="lib/OXP.jar" dest="nuevoOXP" />
+    <unjar src="lib/OXP.jar.default" dest="nuevoOXP" />
   	<unjar src="lib/OXPRoot.jar" dest="nuevoOXPRoot" />
   	<unjar src="lib/webui.war" dest="nuevoWEBUI" />
   	<!-- Librerias de OXPXLib adicionales, relacionadas con la funcionalidad de QRCode para webui -->
@@ -373,6 +390,7 @@
   	<delete dir="nuevoOXPRootBase" failonerror="no"/>
   	<delete dir="nuevoOXPRootBaseAdicionales" failonerror="no"/>
   	<delete dir="nuevosComponents" failonerror="no"/>
+  	<delete dir="backupOXP" failonerror="no"/>
 
     <!-- ===================== FIN Incorporar plugins a OXP.jar, OXPRoot.jar ===========================	-->
   	
