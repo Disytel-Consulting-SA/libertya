@@ -103,18 +103,21 @@
 	  basedir="${build.dir}" 
 	  index="yes">
       <manifest>
-        <attribute name="Specification-Title" value="openXpertya"/>
+        <attribute name="Specification-Title" value="Cliente_Libertya"/>
         <attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
-        <attribute name="Specification-Vendor" value="(C) 2005-2006 FUNDESLE"/>
+        <attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
         <attribute name="Implementation-Title" value="openXpertya ${env.VERSION_OXP}"/>
         <attribute name="Implementation-Version" value="${env.VERSION_OXP} ${DSTAMP}-${TSTAMP}"/>
         <attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/> 
-        <attribute name="Implementation-URL" value="http://www.openxpertya.org"/>
+        <attribute name="Implementation-URL" value="http://www.libertya.org"/>
         <attribute name="Main-Class" value="org.openXpertya.OpenXpertya"/>
         <attribute name="Class-Path" value="OXPTools.jar oracle.jar"/>
       </manifest> 
     </jar>
 
+  	<!-- Version default para reutilizacion en instalacion/desinstalacion de componentes a nivel binarios --> 
+    <copy file="${dist.dir}/OXP.jar" tofile="${dist.dir}/OXP.jar.default" overwrite="yes"/>
+  	
   </target>
 
 
