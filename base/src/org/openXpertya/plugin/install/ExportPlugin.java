@@ -1,6 +1,7 @@
 package org.openXpertya.plugin.install;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -677,6 +678,12 @@ public class ExportPlugin extends SvrProcess{
 	
 	
 	protected static String getRevision() throws Exception {
+		// Git: Se toma la revision 
+		if (isGit()) {
+			return getCommitRevision(baseDir);
+		}
+		
+		// SVN
 		// Podria ser que un proyecto solo ciertos subdirectorios del proyecto
 		// son actualizados mediante update/pull.  Por consiguiente, la revision
 		// podria llegar a variar segun la ubicacion.  Es por esto que se toma
@@ -689,15 +696,7 @@ public class ExportPlugin extends SvrProcess{
 		
 		int maxRev = -1;
 		for (String dir : dirs) {
-			File location = file(dir);
-			if (!location.exists())
-				continue;
-			Process process = Runtime.getRuntime().exec(getVersioningCommand(), null, location);
-			process.waitFor();
-			if (process.exitValue() > 0) {
-				continue;
-			}
-			int revision = Integer.parseInt(inputStreamToString(process.getInputStream()));
+			int revision = Integer.parseInt(getCommitRevision(dir));
 			if (revision > maxRev) {
 				maxRev = revision;
 			}
@@ -707,25 +706,45 @@ public class ExportPlugin extends SvrProcess{
 		}
 		return Integer.toString(maxRev);
 	}
+
 	
-	
+	protected static String getCommitRevision(String dir) throws Exception {
+		File location = file(dir);
+		if (!location.exists())
+			return "-1";
+		Process process = Runtime.getRuntime().exec(getVersioningCommand(), null, location);
+		process.waitFor();
+		if (process.exitValue() > 0) {
+			return "-1";
+		}
+		return inputStreamToString(process.getInputStream());
+	}
+		
 	
 	protected static String[] getVersioningCommand() throws Exception {
 		if (System.getProperty("os.name")==null)
 			throw new Exception("Imposible determinar os.name");
 		// windows
 		if(System.getProperty("os.name").toLowerCase().contains("windows")){
-			if ("svn".equalsIgnoreCase(prop("ProjectVersionControl")))
+			if (isSVN())
 				return new String[] {"cmd", "/c", "svn info --show-item revision"};
-			if ("git".equalsIgnoreCase(prop("ProjectVersionControl")))
+			if (isGit())
 				return new String[] {"cmd", "/c", "git rev-parse --short=7 HEAD"};
 		}
 		// Otro OS
-		if ("svn".equalsIgnoreCase(prop("ProjectVersionControl")))
+		if (isSVN())
 			return new String[] {"sh", "-c", "svn info --show-item revision"};
-		if ("git".equalsIgnoreCase(prop("ProjectVersionControl")))
+		if (isGit())
 			return new String[] {"sh", "-c", "git rev-parse --short=7 HEAD"};
 		throw new Exception("Indicar git o svn en propiedad ProjectVersionControl");
+	}
+	
+	protected static boolean isGit() {
+		return "git".equalsIgnoreCase(prop("ProjectVersionControl"));
+	}
+	
+	protected static boolean isSVN() {
+		return "svn".equalsIgnoreCase(prop("ProjectVersionControl"));
 	}
 }
 
