@@ -19,6 +19,8 @@ export CP=lib/OXPInstall.jar:lib/OXP.jar:lib/CCTools.jar:lib/oracle.jar:lib/jbos
 # Par�metro de configuraci�n de log, e.g. export ARGS=ALL
 export ARGS=CONFIG
 
+./utils/checkDuplicates.sh ./lib/plugins
+if [ "$?" -ne 0 ]; then echo "ERROR: Existen clases duplicadas en lib/plugins"; exit 1; fi
 
 $JAVA -classpath $CP -DOXP_HOME=$OXP_HOME -Djava.awt.headless=true org.openXpertya.install.SilentSetup $ARGS
 

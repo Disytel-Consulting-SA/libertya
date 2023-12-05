@@ -14,6 +14,9 @@ else
   echo fijar JAVA_HOME al directorio of su JDK local.
 fi
 
+./utils/checkDuplicates.sh ./lib/plugins
+if [ "$?" -ne 0 ]; then echo "ERROR: Existen clases duplicadas en lib/plugins"; exit 1; fi
+
 
 echo ===================================
 echo Dialogo de Configuración
