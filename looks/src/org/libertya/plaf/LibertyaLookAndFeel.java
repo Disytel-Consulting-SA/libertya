@@ -9,7 +9,7 @@ import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.plaf.InsetsUIResource;
 
-import com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel;
+import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 public class LibertyaLookAndFeel extends NimbusLookAndFeel {
 

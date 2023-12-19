@@ -178,6 +178,17 @@
   	<unjar src="lib/core-3.3.1.jar" dest="construirOXPLIB" />
   	<unjar src="lib/javase-3.3.1.jar" dest="construirOXPLIB" />
   	<unjar src="lib/commons-io-2.4.jar" dest="construirOXPLIB" />
+  	<!-- En JDK 11, los modulos Java EE y CORBA fueron removidos. Se usa Jacorb en su reemplazo. jacorg.org -->
+  	<unjar src="lib/antlr-2.7.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/idl.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/jacorb-3.9.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/jacorb-omgapi-3.9.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/jacorb-services-3.9.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/picocontainer-1.2.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/slf4j-api-1.7.14.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/slf4j-jdk14-1.7.14.jar" dest="construirOXPLIB" />
+  	<unjar src="lib/wrapper-3.1.0.jar" dest="construirOXPLIB" />
+  
 
     <!--fin cambios para PostgreSQL -->    
     <unjar src="lib/${TIPO_APPS_OXP}.jar" dest="construirOXPLIB" />
@@ -432,6 +443,17 @@
 		
     <mkdir dir="buildSLib"/>
     <unjar src="lib/CSTools.jar" dest="buildSLib" />
+  	<!-- En JDK 11, los modulos Java EE y CORBA fueron removidos. Se usa Jacorb en su reemplazo. jacorg.org -->
+  	<unjar src="lib/antlr-2.7.2.jar" dest="buildSLib" />
+  	<unjar src="lib/idl.jar" dest="buildSLib" />
+  	<unjar src="lib/jacorb-3.9.jar" dest="buildSLib" />
+  	<unjar src="lib/jacorb-omgapi-3.9.jar" dest="buildSLib" />
+  	<unjar src="lib/jacorb-services-3.9.jar" dest="buildSLib" />
+  	<unjar src="lib/picocontainer-1.2.jar" dest="buildSLib" />
+  	<unjar src="lib/slf4j-api-1.7.14.jar" dest="buildSLib" />
+  	<unjar src="lib/slf4j-jdk14-1.7.14.jar" dest="buildSLib" />
+  	<unjar src="lib/wrapper-3.1.0.jar" dest="buildSLib" />
+  
   	<!--cambios para PostgreSQL-->
   	<!--para cualquier base de datos se requiere la clase de conexión-->
     <!--unjar src="lib/${TIPO_BD_OXP}.jar" dest="buildSLib" /-->    

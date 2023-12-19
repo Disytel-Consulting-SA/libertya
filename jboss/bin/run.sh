@@ -141,7 +141,8 @@ fi
 JAVA_OPTS="$JAVA_OPTS -Dprogram.name=$PROGNAME"
 
 # Setup the java endorsed dirs
-JBOSS_ENDORSED_DIRS="$JBOSS_HOME/lib/endorsed"
+# Comentado: Bajo Java 11 impide inicio JVM
+#JBOSS_ENDORSED_DIRS="$JBOSS_HOME/lib/endorsed"
 
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin; then

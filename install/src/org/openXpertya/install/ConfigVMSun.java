@@ -82,17 +82,18 @@ public class ConfigVMSun extends Config {
             return error;
         }
 
-        // Look for tools.jar to make sure that it is not the JRE
-        File	tools	= new File(p_data.getJavaHome() + File.separator + "lib" + File.separator + "tools.jar");
-
-        pass	= tools.exists();
-        error	= "Not found: Java SDK = " + tools;
-        if (getPanel() != null)
-        	signalOK(getPanel().okJavaHome, "ErrorJavaHome", pass, true, error);
-
-        if (!pass) {
-            return error;
-        }
+       // Comentado: en las nuevas versiones de JDK no existe tools.jar
+//        // Look for tools.jar to make sure that it is not the JRE
+//        File	tools	= new File(p_data.getJavaHome() + File.separator + "lib" + File.separator + "tools.jar");
+//
+//        pass	= tools.exists();
+//        error	= "Not found: Java SDK = " + tools;
+//        if (getPanel() != null)
+//        	signalOK(getPanel().okJavaHome, "ErrorJavaHome", pass, true, error);
+//
+//        if (!pass) {
+//            return error;
+//        }
 
         //
         if (CLogMgt.isLevelFinest()) {
@@ -103,90 +104,91 @@ public class ConfigVMSun extends Config {
         log.info("OK: JavaHome=" + javaHome.getAbsolutePath());
         setProperty(ConfigurationData.JAVA_HOME, javaHome.getAbsolutePath());
         System.setProperty(ConfigurationData.JAVA_HOME, javaHome.getAbsolutePath());
-
-        // Java Version
-        final String	VERSION		= "1.4.1";
-        final String	VERSION2	= "1.4.2";
-
-        // begin vpj-cd e-evolution 01/28/2005 1.5
-        final String	VERSION3	= "1.5.0";
         
-        
-        final String	VERSION4	= "1.6.0";
-        
-        final String	VERSION5	= "1.7.0";
-        
-        final String	VERSION6	= "1.8.0";
-
-        // begin vpj-cd e-evolution 01/28/2005 1.5
-        pass	= false;
-
-        String	jh	= javaHome.getAbsolutePath();
-
-        if (jh.indexOf(VERSION) != -1) {	// file name has version = assuming OK
-            pass	= true;
-        }
-
-        if (!pass && (jh.indexOf(VERSION3) != -1)) {	//
-            pass	= true;
-        }
-
-        if (!pass && (jh.indexOf(VERSION4) != -1)) {	//
-            pass	= true;
-        }
-        
-        if (!pass && (jh.indexOf(VERSION5) != -1)) {	//
-            pass	= true;
-        }
-        
-        if (!pass && (jh.indexOf(VERSION6) != -1)) {	//
-            pass	= true;
-        }
-
-        // end vpj-cd e-evolution 01/28/2005 1.5
-        String	thisJH	= System.getProperty("java.home");
-
-        if (thisJH.indexOf(jh) != -1)		// we are running the version currently
-        {
-
-            String	thisJV	= System.getProperty("java.version");
-
-            pass	= thisJV.indexOf(VERSION) != -1;
-
-            if (!pass && (thisJV.indexOf(VERSION2) != -1)) {
-                pass	= true;
-            }
-
-            // begin vpj-cd e-evolution 01/28/2005 1.5
-            if (!pass && (thisJV.indexOf(VERSION3) != -1)) {
-                pass	= true;
-            }
-            
-            if (!pass && (thisJV.indexOf(VERSION4) != -1)) {
-                pass	= true;
-            }       
-            
-            if (!pass && (thisJV.indexOf(VERSION5) != -1)) {
-                pass	= true;
-            } 
-            
-            if (!pass && (thisJV.indexOf(VERSION6) != -1)) {
-                pass	= true;
-            } 
-
-            // end vpj-cd e-evolution 01/28/2005 1.5
-            if (pass) {
-                log.info("OK: Version=" + thisJV);
-            }
-        }
-
-        error	= "Wrong Java Version: Should be " + VERSION3;
-        if (getPanel() != null)
-        	signalOK(getPanel().okJavaHome, "ErrorJavaHome", pass, true, error);
-
-        if (!pass) {
-            return error;
-        }
+        // Se omiten validaciones server-side de version de Java 
+//        // Java Version
+//        final String	VERSION		= "1.4.1";
+//        final String	VERSION2	= "1.4.2";
+//
+//        // begin vpj-cd e-evolution 01/28/2005 1.5
+//        final String	VERSION3	= "1.5.0";
+//        
+//        
+//        final String	VERSION4	= "1.6.0";
+//        
+//        final String	VERSION5	= "1.7.0";
+//        
+//        final String	VERSION6	= "1.8.0";
+//
+//        // begin vpj-cd e-evolution 01/28/2005 1.5
+//        pass	= false;
+//
+//        String	jh	= javaHome.getAbsolutePath();
+//
+//        if (jh.indexOf(VERSION) != -1) {	// file name has version = assuming OK
+//            pass	= true;
+//        }
+//
+//        if (!pass && (jh.indexOf(VERSION3) != -1)) {	//
+//            pass	= true;
+//        }
+//
+//        if (!pass && (jh.indexOf(VERSION4) != -1)) {	//
+//            pass	= true;
+//        }
+//        
+//        if (!pass && (jh.indexOf(VERSION5) != -1)) {	//
+//            pass	= true;
+//        }
+//        
+//        if (!pass && (jh.indexOf(VERSION6) != -1)) {	//
+//            pass	= true;
+//        }
+//
+//        // end vpj-cd e-evolution 01/28/2005 1.5
+//        String	thisJH	= System.getProperty("java.home");
+//
+//        if (thisJH.indexOf(jh) != -1)		// we are running the version currently
+//        {
+//
+//            String	thisJV	= System.getProperty("java.version");
+//
+//            pass	= thisJV.indexOf(VERSION) != -1;
+//
+//            if (!pass && (thisJV.indexOf(VERSION2) != -1)) {
+//                pass	= true;
+//            }
+//
+//            // begin vpj-cd e-evolution 01/28/2005 1.5
+//            if (!pass && (thisJV.indexOf(VERSION3) != -1)) {
+//                pass	= true;
+//            }
+//            
+//            if (!pass && (thisJV.indexOf(VERSION4) != -1)) {
+//                pass	= true;
+//            }       
+//            
+//            if (!pass && (thisJV.indexOf(VERSION5) != -1)) {
+//                pass	= true;
+//            } 
+//            
+//            if (!pass && (thisJV.indexOf(VERSION6) != -1)) {
+//                pass	= true;
+//            } 
+//
+//            // end vpj-cd e-evolution 01/28/2005 1.5
+//            if (pass) {
+//                log.info("OK: Version=" + thisJV);
+//            }
+//        }
+//
+//        error	= "Wrong Java Version: Should be " + VERSION3;
+//        if (getPanel() != null)
+//        	signalOK(getPanel().okJavaHome, "ErrorJavaHome", pass, true, error);
+//
+//        if (!pass) {
+//            return error;
+//        }
 
         //
         setProperty(ConfigurationData.JAVA_TYPE, p_data.getJavaType());

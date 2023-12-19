@@ -27,7 +27,8 @@ import org.openXpertya.util.CLogger;
 import org.zkoss.zk.au.out.AuScript;
 import org.zkoss.zk.ui.util.Clients;
 
-import sun.misc.BASE64Encoder;
+import java.util.Base64;
+import java.util.Base64.Encoder;
 
 /**
  * class to manage browser token for auto authentication
@@ -116,15 +117,16 @@ public final class BrowserToken {
 	
 	private static String getHomeToken() throws UnsupportedEncodingException {
 		String home = OpenXpertya.getOXPHome();	
-		BASE64Encoder encoder = new BASE64Encoder();
-		home = encoder.encode(home.getBytes("UTF-8"));
+		
+		Encoder encoder = Base64.getEncoder();
+		home = encoder.encodeToString(home.getBytes("UTF-8"));
 		home = URLEncoder.encode(home, "UTF-8");
 		return home;
 	}
 	
 	private static String getPasswordHash(MSession session, MUser user) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 		MessageDigest digest = MessageDigest.getInstance("SHA-512");
-		BASE64Encoder encoder = new BASE64Encoder();
+		Encoder encoder = Base64.getEncoder();
 	    digest.reset();
 	    digest.update(session.getWebSession().getBytes("UTF-8"));
 	    String password = null;
@@ -133,7 +135,7 @@ public final class BrowserToken {
 	    else
 	    	password = new String("");
 	    byte[] input = digest.digest(password.getBytes("UTF-8"));
-	    String hash = encoder.encode(input);
+	    String hash = encoder.encodeToString(input);
 	    hash = URLEncoder.encode(hash, "UTF-8");
 	    
 	    return hash;

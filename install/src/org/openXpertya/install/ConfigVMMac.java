@@ -91,46 +91,47 @@ public class ConfigVMMac extends Config {
         setProperty(ConfigurationData.JAVA_HOME, javaHome.getAbsolutePath());
         System.setProperty(ConfigurationData.JAVA_HOME, javaHome.getAbsolutePath());
 
-        // Java Version
-        final String	VERSION		= "1.4.1";
-        final String	VERSION2	= "1.4.2";
-
-        pass	= false;
-
-        String	jh	= javaHome.getAbsolutePath();
-
-        if (jh.indexOf(VERSION) != -1) {	// file name has version = assuming OK
-            pass	= true;
-        }
-
-        if (!pass && (jh.indexOf(VERSION2) != -1)) {	//
-            pass	= true;
-        }
-
-        String	thisJH	= System.getProperty("java.home");
-
-        if (thisJH.indexOf(jh) != -1)		// we are running the version currently
-        {
-
-            String	thisJV	= System.getProperty("java.version");
-
-            pass	= thisJV.indexOf(VERSION) != -1;
-
-            if (!pass && (thisJV.indexOf(VERSION2) != -1)) {
-                pass	= true;
-            }
-
-            if (pass) {
-                log.info("OK: Version=" + thisJV);
-            }
-        }
-
-        error	= "Wrong Java Version: Should be " + VERSION2;
-        signalOK(getPanel().okJavaHome, "ErrorJavaHome", pass, true, error);
-
-        if (!pass) {
-            return error;
-        }
+        // Se omiten validaciones server-side de version de Java 
+//        // Java Version
+//        final String	VERSION		= "1.4.1";
+//        final String	VERSION2	= "1.4.2";
+//
+//        pass	= false;
+//
+//        String	jh	= javaHome.getAbsolutePath();
+//
+//        if (jh.indexOf(VERSION) != -1) {	// file name has version = assuming OK
+//            pass	= true;
+//        }
+//
+//        if (!pass && (jh.indexOf(VERSION2) != -1)) {	//
+//            pass	= true;
+//        }
+//
+//        String	thisJH	= System.getProperty("java.home");
+//
+//        if (thisJH.indexOf(jh) != -1)		// we are running the version currently
+//        {
+//
+//            String	thisJV	= System.getProperty("java.version");
+//
+//            pass	= thisJV.indexOf(VERSION) != -1;
+//
+//            if (!pass && (thisJV.indexOf(VERSION2) != -1)) {
+//                pass	= true;
+//            }
+//
+//            if (pass) {
+//                log.info("OK: Version=" + thisJV);
+//            }
+//        }
+//
+//        error	= "Wrong Java Version: Should be " + VERSION2;
+//        signalOK(getPanel().okJavaHome, "ErrorJavaHome", pass, true, error);
+//
+//        if (!pass) {
+//            return error;
+//        }
 
         //
         setProperty(ConfigurationData.JAVA_TYPE, p_data.getJavaType());

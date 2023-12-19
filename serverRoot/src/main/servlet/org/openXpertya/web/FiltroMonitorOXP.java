@@ -33,7 +33,9 @@ import org.openXpertya.model.MUser;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 
-import sun.misc.BASE64Decoder;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 /**
  * Descripción de Clase
@@ -152,8 +154,8 @@ public class FiltroMonitorOXP implements Filter {
 
         try {
             String        userInfo     = authorization.substring( 6 ).trim();
-            BASE64Decoder decoder      = new BASE64Decoder();
-            String        namePassword = new String( decoder.decodeBuffer( userInfo ));
+            Decoder		  decoder      = Base64.getDecoder();
+            String        namePassword = new String( decoder.decode( userInfo ));
 
             // log.fine("checkAuthorization - Name:Password=" + namePassword);
 
