@@ -924,4 +924,55 @@ ALTER FUNCTION bompricestd(integer, integer, integer)
 -- 20230728-1330 MERGE: Cuando la EC tiene configurado ocultar descuento linea FC (se agrega columna para configuracion)
 UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('c_bpartner', 'isocultardesctolineafc', 'character(1)'));
 
+-- 20240229-0915 Nueva funcion para bajar registros de replicacion SIN modificar includeinreplication 
+/** Pasa a 0 la posicion en el repArray a los registros pendientes a replicar si los mismos tienen  
+    como pendiente el host p_hostpos, pero sin cambiar el campo includeinreplication a N */
+CREATE OR REPLACE FUNCTION replication_lower_records_for_host(p_hostpos int)
+  RETURNS INTEGER AS
+$BODY$
+DECLARE
+atable VARCHAR;
+query VARCHAR;
+cant int;
+whereclause VARCHAR;
+totalrecords int;
+BEGIN
+	totalrecords = 0;
 
+	-- registros pendientes que que tienen pendiente el host p_hostpos (sin importar las demas posiciones)
+	whereclause =   ' WHERE includeinreplication = ''Y'' ' ||
+			' AND substring(reparray from ' || p_hostpos || ' for 1)  IN (''1'', ''3'', ''A'', ''a'') '; 	-- la posicion buscada debe ser uno de los estados de replicacion pendiente
+
+    FOR atable IN (    
+		-- iterar por todas las tablas configuradas en replicacion
+		SELECT lower(t.tablename)
+		FROM ad_tablereplication tr
+		INNER JOIN ad_table t ON tr.ad_table_id = t.ad_table_id
+		UNION
+		SELECT 'ad_changelog_replication'
+	)
+	LOOP
+		-- si no hay registros que cumplen la condicion, omitir
+		EXECUTE 'select count(1) from ' || atable || whereclause INTO cant;
+		if cant <= 0 THEN
+			continue;
+		END IF;
+
+		-- notificar el numero de registros a bajar
+		totalrecords = totalrecords + cant;
+		raise notice '% : %', atable, cant;
+		query =    ' UPDATE ' || atable || ' SET reparray = ';
+		if atable <> 'ad_changelog_replication' then
+		    query = query || '''SET''||';
+		end if;
+		query = query ||'overlay(reparray placing ''0'' from ' || p_hostpos || ' for 1) ' || whereclause;
+			
+		--raise notice '%', query;
+		EXECUTE query;
+	END LOOP;
+	return totalrecords;
+
+END
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE;
+ 
