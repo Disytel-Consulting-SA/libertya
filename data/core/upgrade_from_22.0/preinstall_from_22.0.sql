@@ -976,3 +976,8 @@ END
 $BODY$
   LANGUAGE 'plpgsql' VOLATILE;
  
+-- 20240412-0945 Los campos Usuario y Ventana de valores predeterminados eran de tipo Tabledir, lo cual complicaba su uso cuando el numero de entradas es elevado. Se cambian a Busqueda
+-- Tipo de dato de AD_Preference.AD_User_ID pasa a ser Busqueda en lugar de TableDir
+update ad_column set ad_reference_id = 30 where ad_componentobjectuid = 'CORE-AD_Column-1471' and ad_reference_id = 19;
+-- Tipo de dato de AD_Preference.AD_Window_ID pasa a ser Busqueda en lugar de TableDir
+update ad_column set ad_reference_id = 30 where ad_componentobjectuid = 'CORE-AD_Column-1757' and ad_reference_id = 19;
