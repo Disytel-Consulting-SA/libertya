@@ -1611,14 +1611,31 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     public String getProductName()
     {
     	if (getM_Product_ID() > 0){
+    		
+    		// dREHER, verificar si en las preferencias esta marcado que debe imprimir la marca en los productos    		
+    		String mostrarMarcas = MPreference.GetCustomPreferenceValue("print_mark_in_invoices");
+    		if(mostrarMarcas.isEmpty())
+    			mostrarMarcas = "N";
+    		
     		//MProduct prod = new MProduct(p_ctx, getM_Product_ID(), null);
     		//soporte para caches multi-documento
     		MProduct prod = getProduct();
     		//puede ser null... aunque no deberia
     		String prodName = prod == null? "" : prod.getName();
     		
+    		
+    		String marca = null;
+    		if(mostrarMarcas.equals("Y")) {
+    			int familiaMarca = prod.getM_Product_Family_ID();
+    			if(familiaMarca > 0) {
+    				X_M_Product_Family pf = new X_M_Product_Family(Env.getCtx(), familiaMarca, get_TrxName());
+    				if(pf!=null)
+    					marca = pf.getName();
+    			}
+    		}
+    		
     		//return getDescription() == null ? prod.getName() : (prod.getName() + " - " + getDescription());
-       		return getDescription() == null ? prodName : (prodName + " - " + getDescription());
+       		return getDescription() == null ? prodName + (marca!=null ? " - " + marca : "") : (prodName + (marca!=null ? " - " + marca : "") + " - " + getDescription());
     	}
     	return getDescription();
     }
