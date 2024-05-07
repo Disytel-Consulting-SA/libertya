@@ -1,2 +1,5 @@
 /bin/
 /tools/lib/local/
+.idea/
+.classpath
+
