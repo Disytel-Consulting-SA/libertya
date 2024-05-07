@@ -983,8 +983,138 @@ update ad_column set ad_reference_id = 30 where ad_componentobjectuid = 'CORE-AD
 update ad_column set ad_reference_id = 30 where ad_componentobjectuid = 'CORE-AD_Column-1757' and ad_reference_id = 19;
 
 
---MERGE Marca en facturas
+--MERGE Marca en facturas 2024-04-25
 --20220817-1756 Se agrega entrada en AD_Preference para permitir seteo de 'print_mark_in_invoices' Y/N
 INSERT INTO libertya.AD_Preference (ad_preference_id,isactive,ad_client_id,ad_org_id,createdby,updatedby,value,attribute,updated) 
 VALUES ((select coalesce(max(ad_preference_id)+1,1) from libertya.AD_Preference where ad_preference_id < 100000),'Y',0,0,0,0,'N','print_mark_in_invoices',NOW());
+
+--MERGE JACLBY23 upgrade_from_3.0 2024-05-06
+-- 20230316 Fix en las retenciones de IIBB sufridas para que muestre correctamente el campo fecha (el cual es dateinvoiced, y no dateacct).
+
+DROP VIEW libertya.rv_c_reten_iibb_sufridas;
+
+CREATE OR REPLACE VIEW libertya.rv_c_reten_iibb_sufridas AS 
+SELECT 
+	i.ad_org_id,
+  i.ad_client_id,
+  r.jurisdictioncode AS codigojurisdiccion,
+  replace(bp.taxid::text, '-'::text, ''::text) AS cuit,
+  ((("substring"(replace(bp.taxid::text, '-'::text, ''::text), 1, 2) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 3, 8)) || '-'::text) || "substring"(replace(bp.taxid::text, '-'::text, ''::text), 11, 1) AS taxid_with_script,
+  i.dateacct AS date,
+  i.dateinvoiced,
+  i.puntodeventa,
+  lpad(i.puntodeventa::character varying::text, 4, '0'::text) AS numerodesucursal,
+  i.numerocomprobante AS numerodeconstancia,
+  CASE
+  	WHEN dt.doctypekey::text ~~ 'CDN%'::text AND dt.iselectronic::text = 'N'::text THEN 'D'::bpchar
+    WHEN dt.doctypekey::text ~~ 'CI%'::text AND dt.iselectronic::text = 'N'::text THEN 'F'::bpchar
+    WHEN dt.doctypekey::text ~~ 'CCN%'::text AND dt.iselectronic::text = 'N'::text THEN 'C'::bpchar
+    WHEN dt.doctypekey::text ~~ 'CDN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'I'::bpchar
+    WHEN dt.doctypekey::text ~~ 'CI%'::text AND dt.iselectronic::text = 'Y'::text THEN 'E'::bpchar
+    WHEN dt.doctypekey::text ~~ 'CCN%'::text AND dt.iselectronic::text = 'Y'::text THEN 'H'::bpchar
+    ELSE 'O'::bpchar
+  END AS tipocomprobante,
+  lc.letra AS letracomprobante,
+  i.grandtotal::numeric(20,2) AS importeretenido,
+  COALESCE(src.documentno, ( SELECT ip.documentno
+	  FROM c_allocationline al
+		JOIN c_invoice ip ON ip.c_invoice_id = al.c_invoice_id
+    WHERE al.c_allocationhdr_id = ri.c_allocationhdr_id
+    ORDER BY al.created
+    LIMIT 1)) AS orig_invoice_documentno,
+  i.documentno
+FROM m_retencion_invoice ri
+JOIN c_invoice i ON i.c_invoice_id = ri.c_invoice_id
+JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id
+JOIN c_retencionschema rs ON rs.c_retencionschema_id = ri.c_retencionschema_id
+JOIN c_retenciontype rt ON rt.c_retenciontype_id = rs.c_retenciontype_id
+JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctype_id
+LEFT JOIN c_letra_comprobante lc ON lc.c_letra_comprobante_id = i.c_letra_comprobante_id
+LEFT JOIN c_region r ON r.c_region_id = rs.c_region_id
+LEFT JOIN c_invoice src ON src.c_invoice_id = ri.c_invoice_src_id
+WHERE rt.retentiontype = 'B'::bpchar 
+	AND rs.retencionapplication::text = 'S'::text 
+	AND (i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]));
+
+-- 20230316 Modificación Reporte Informe de retenciones – Filtro por fecha y columnas
+
+DROP VIEW libertya.m_retencion_invoice_v;
+
+CREATE OR REPLACE VIEW libertya.m_retencion_invoice_v
+AS 
+SELECT
+	DISTINCT ri.m_retencion_invoice_id,
+	ri.ad_client_id,
+	ri.ad_org_id,
+	ri.c_retencionschema_id,
+	ri.c_invoice_id,
+	ri.c_allocationhdr_id,
+	ri.c_invoiceline_id,
+	ri.c_invoice_retenc_id,
+	ri.amt_retenc,
+	ri.c_currency_id,
+	ri.pagos_ant_acumulados_amt,
+	ri.retenciones_ant_acumuladas_amt,
+	ri.pago_actual_amt,
+	ri.retencion_percent,
+	ri.importe_no_imponible_amt,
+	ri.base_calculo_percent,
+	ri.issotrx,
+	ri.baseimponible_amt,
+	ri.importe_determinado_amt,
+	rs.c_retenciontype_id,
+	i.c_bpartner_id,
+	rs.retencionapplication,
+	bp.taxid,
+	i.dateinvoiced,
+	i.dateacct,
+	i.documentno AS retencion_documentno,
+	iv.documentno,
+	iv.dateinvoiced AS fecha,
+	iv.grandtotal,
+	iv.c_project_id,
+	iv.totallines
+FROM c_retencionschema rs
+JOIN c_retenciontype rt ON rs.c_retenciontype_id = rt.c_retenciontype_id
+JOIN m_retencion_invoice ri ON rs.c_retencionschema_id = ri.c_retencionschema_id
+JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id
+JOIN c_bpartner bp ON i.c_bpartner_id = bp.c_bpartner_id
+JOIN c_allocationhdr a ON ri.c_allocationhdr_id = a.c_allocationhdr_id
+JOIN c_allocationline al ON a.c_allocationhdr_id = al.c_allocationhdr_id
+LEFT JOIN c_invoice iv ON iv.c_invoice_id = ((SELECT allo.c_invoice_id FROM c_allocationline allo WHERE allo.c_allocationhdr_id = al.c_allocationhdr_id ORDER BY allo.c_invoice_id DESC LIMIT 1))
+WHERE i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])
+	AND i.dateinvoiced >= '2021-10-02'
+ORDER BY
+	ri.m_retencion_invoice_id,
+	ri.ad_client_id,
+	ri.ad_org_id,
+	ri.c_retencionschema_id,
+	ri.c_invoice_id,
+	ri.c_allocationhdr_id,
+	ri.c_invoiceline_id,
+	ri.c_invoice_retenc_id,
+	ri.amt_retenc,
+	ri.c_currency_id,
+	ri.pagos_ant_acumulados_amt,
+	ri.retenciones_ant_acumuladas_amt,
+	ri.pago_actual_amt,
+	ri.retencion_percent,
+	ri.importe_no_imponible_amt,
+	ri.base_calculo_percent,
+	ri.issotrx,
+	ri.baseimponible_amt,
+	ri.importe_determinado_amt,
+	rs.c_retenciontype_id,
+	i.c_bpartner_id,
+	rs.retencionapplication,
+	bp.taxid,
+	i.dateinvoiced,
+	i.dateacct,
+	iv.documentno,
+	iv.dateinvoiced,
+	iv.grandtotal,
+	iv.c_project_id,
+	iv.totallines,
+	i.documentno;
+
 

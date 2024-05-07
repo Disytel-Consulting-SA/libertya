@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Tax
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2015-11-03 22:44:53.623 */
+ *  @version  - 2022-07-26 10:55:11.427 */
 public class X_C_Tax extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -20,6 +20,7 @@ setC_TaxCategory_ID (0);
 setC_Tax_ID (0);
 setIsDefault (false);
 setIsDocumentLevel (false);
+setIsNoGravado (false);
 setIsPercepcion (false);
 setIsSummary (false);
 setIsTaxExempt (false);
@@ -134,8 +135,8 @@ public static final String CODIGOOPERACION_OperacionesDeCanje = "C";
 /** Set Código Operación */
 public void setCodigoOperacion (String CodigoOperacion)
 {
-if (CodigoOperacion == null || CodigoOperacion.equals("Z") || CodigoOperacion.equals("X") || CodigoOperacion.equals("E") || CodigoOperacion.equals("N") || CodigoOperacion.equals("C"));
- else throw new IllegalArgumentException ("CodigoOperacion Invalid value - Reference = CODIGOOPERACION_AD_Reference_ID - Z - X - E - N - C");
+if (CodigoOperacion == null || CodigoOperacion.equals("Z") || CodigoOperacion.equals("X") || CodigoOperacion.equals("E") || CodigoOperacion.equals("N") || CodigoOperacion.equals("C") || ( refContainsValue("CORE-AD_Reference-1010259", CodigoOperacion) ) );
+ else throw new IllegalArgumentException ("CodigoOperacion Invalid value: " + CodigoOperacion + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010259") );
 if (CodigoOperacion != null && CodigoOperacion.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -239,6 +240,22 @@ Tax is calculated on document level (rather than line by line) */
 public boolean isDocumentLevel() 
 {
 Object oo = get_Value("IsDocumentLevel");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set IsNoGravado */
+public void setIsNoGravado (boolean IsNoGravado)
+{
+set_Value ("IsNoGravado", new Boolean(IsNoGravado));
+}
+/** Get IsNoGravado */
+public boolean isNoGravado() 
+{
+Object oo = get_Value("IsNoGravado");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -383,8 +400,8 @@ public static final String PERCEPTIONTYPE_IngresosBrutos = "B";
 /** Set PerceptionType */
 public void setPerceptionType (String PerceptionType)
 {
-if (PerceptionType == null || PerceptionType.equals("G") || PerceptionType.equals("J") || PerceptionType.equals("S") || PerceptionType.equals("I") || PerceptionType.equals("B"));
- else throw new IllegalArgumentException ("PerceptionType Invalid value - Reference = PERCEPTIONTYPE_AD_Reference_ID - G - J - S - I - B");
+if (PerceptionType == null || PerceptionType.equals("G") || PerceptionType.equals("J") || PerceptionType.equals("S") || PerceptionType.equals("I") || PerceptionType.equals("B") || ( refContainsValue("CORE-AD_Reference-1010243", PerceptionType) ) );
+ else throw new IllegalArgumentException ("PerceptionType Invalid value: " + PerceptionType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010243") );
 if (PerceptionType != null && PerceptionType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -441,8 +458,8 @@ public static final String SOPOTYPE_PurchaseTax = "P";
 Sales Tax applies to sales situations, Purchase Tax to purchase situations */
 public void setSOPOType (String SOPOType)
 {
-if (SOPOType.equals("B") || SOPOType.equals("S") || SOPOType.equals("P"));
- else throw new IllegalArgumentException ("SOPOType Invalid value - Reference = SOPOTYPE_AD_Reference_ID - B - S - P");
+if (SOPOType.equals("B") || SOPOType.equals("S") || SOPOType.equals("P") || ( refContainsValue("CORE-AD_Reference-287", SOPOType) ) );
+ else throw new IllegalArgumentException ("SOPOType Invalid value: " + SOPOType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-287") );
 if (SOPOType == null) throw new IllegalArgumentException ("SOPOType is mandatory");
 if (SOPOType.length() > 1)
 {
@@ -468,8 +485,8 @@ public static final String TAXACCUSATION_Prorrateable = "P";
 Tax acussation method */
 public void setTaxAccusation (String TaxAccusation)
 {
-if (TaxAccusation == null || TaxAccusation.equals("G") || TaxAccusation.equals("N") || TaxAccusation.equals("P"));
- else throw new IllegalArgumentException ("TaxAccusation Invalid value - Reference = TAXACCUSATION_AD_Reference_ID - G - N - P");
+if (TaxAccusation == null || TaxAccusation.equals("G") || TaxAccusation.equals("N") || TaxAccusation.equals("P") || ( refContainsValue("CORE-AD_Reference-1000075", TaxAccusation) ) );
+ else throw new IllegalArgumentException ("TaxAccusation Invalid value: " + TaxAccusation + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000075") );
 if (TaxAccusation != null && TaxAccusation.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -495,8 +512,8 @@ public static final String TAXAREATYPE_Interno = "I";
 /** Set Tax Area Type */
 public void setTaxAreaType (String TaxAreaType)
 {
-if (TaxAreaType == null || TaxAreaType.equals("N") || TaxAreaType.equals("P") || TaxAreaType.equals("M") || TaxAreaType.equals("I"));
- else throw new IllegalArgumentException ("TaxAreaType Invalid value - Reference = TAXAREATYPE_AD_Reference_ID - N - P - M - I");
+if (TaxAreaType == null || TaxAreaType.equals("N") || TaxAreaType.equals("P") || TaxAreaType.equals("M") || TaxAreaType.equals("I") || ( refContainsValue("CORE-AD_Reference-1010260", TaxAreaType) ) );
+ else throw new IllegalArgumentException ("TaxAreaType Invalid value: " + TaxAreaType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010260") );
 if (TaxAreaType != null && TaxAreaType.length() > 1)
 {
 log.warning("Length > 1 - truncated");
@@ -536,8 +553,8 @@ public static final String TAXTYPE_ByProduct = "P";
 /** Set Tax Type */
 public void setTaxType (String TaxType)
 {
-if (TaxType.equals("G") || TaxType.equals("C") || TaxType.equals("P"));
- else throw new IllegalArgumentException ("TaxType Invalid value - Reference = TAXTYPE_AD_Reference_ID - G - C - P");
+if (TaxType.equals("G") || TaxType.equals("C") || TaxType.equals("P") || ( refContainsValue("CORE-AD_Reference-1000074", TaxType) ) );
+ else throw new IllegalArgumentException ("TaxType Invalid value: " + TaxType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1000074") );
 if (TaxType == null) throw new IllegalArgumentException ("TaxType is mandatory");
 if (TaxType.length() > 1)
 {

@@ -611,6 +611,12 @@ public class MTax extends X_C_Tax {
 		String taxType = getTaxType();
 		boolean error = false;		
 		
+		// Un impuesto no puede ser EXENTO y NO GRAVADO al mismo tiempo.
+		if(isTaxExempt() && isNoGravado()) {
+			log.saveError("InvalidAplicationRule","Un impuesto No Gravado no puede ser Exento");
+			return false;
+		}
+		
 		// Si taxType es null se lanza un error.
 		if(taxType == null) {
 			log.saveError( "FillMandatory",Msg.translate( getCtx(),"TaxType" ));
