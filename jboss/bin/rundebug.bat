@@ -81,7 +81,8 @@ rem JPDA options. Uncomment and modify as appropriate to enable remote debugging
 rem set JAVA_OPTS=-classic -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y %JAVA_OPTS%
 
 rem Setup the java endorsed dirs
-set JBOSS_ENDORSED_DIRS=%JBOSS_HOME%\lib\endorsed
+rem Comentado: Bajo Java 11 impide inicio JVM
+rem set JBOSS_ENDORSED_DIRS=%JBOSS_HOME%\lib\endorsed
 
 echo ===============================================================================
 echo .
