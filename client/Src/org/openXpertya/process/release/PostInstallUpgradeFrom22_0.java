@@ -1,6 +1,8 @@
 package org.openXpertya.process.release;
 
+import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
+import org.openXpertya.utils.JarHelper;
 
 public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 	/** Impresión de FE */
@@ -14,6 +16,10 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 	protected final static String SUMAS_Y_SALDOS_JASPER_REPORT_UID = "CORE-AD_JasperReport-1000010";
 	protected final static String SUMAS_Y_SALDOS_JASPER_REPORT_FILENAME = "SumasYSaldos.jasper";
 	
+	/** Impresión de la Hoja de Ruta Merge COT ARBA*/
+	protected final static String ROADMAP_JASPER_REPORT_UID = "JACOFER-AD_Process-20200109160937125-741474";
+	protected final static String ROADMAP_JASPER_REPORT_FILENAME = "JacoferRoadMapPrint.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -26,6 +32,17 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 		
 		// Sumas y Saldos
 		updateReport(SUMAS_Y_SALDOS_JASPER_REPORT_UID, SUMAS_Y_SALDOS_JASPER_REPORT_FILENAME);
+		
+		// Impresión de la Hoja de Ruta - Merge COT ARBA
+		MProcess.addAttachment(
+				get_TrxName(),
+				getCtx(),
+				ROADMAP_JASPER_REPORT_UID,
+				ROADMAP_JASPER_REPORT_FILENAME,
+				JarHelper
+						.readBinaryFromJar(
+								jarFileURL,
+								getBinaryFileURL(ROADMAP_JASPER_REPORT_FILENAME)));
 		
 		return "";
 	}

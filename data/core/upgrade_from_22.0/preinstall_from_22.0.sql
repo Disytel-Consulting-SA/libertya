@@ -1117,4 +1117,110 @@ ORDER BY
 	iv.totallines,
 	i.documentno;
 
+-- ### MERGE 2024-05-17 org.libertya.core.micro.r3019.dev.jacofer_11b_cot_arba upgrade_from_0.0
+--20200109-1645 Hojas de Ruta
+CREATE TABLE m_jacofer_roadmap
+(
+  m_jacofer_roadmap_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  documentno character varying(30) NOT NULL,
+  movementdate timestamp without time zone NOT NULL,
+  description character varying(255),
+  total_packagesqty numeric(20,2) NOT NULL DEFAULT 0,
+  total_capacity numeric(20,2) NOT NULL DEFAULT 0,
+  total_weight numeric(20,2) NOT NULL DEFAULT 0,
+  addinouts character(1),
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  processing character(1),
+  docstatus character(2) NOT NULL,
+  docaction character(2) NOT NULL,
+  CONSTRAINT jacofer_roadmap_key PRIMARY KEY (m_jacofer_roadmap_id),
+  CONSTRAINT jacofer_roadmap_fk_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT jacofer_roadmap_fk_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE m_jacofer_roadmap
+  OWNER TO libertya;
+ 
+CREATE TABLE m_jacofer_roadmapline
+(
+  m_jacofer_roadmapline_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer NOT NULL,
+  updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer NOT NULL,
+  m_jacofer_roadmap_id integer NOT NULL,
+  line numeric(18,0),
+  m_inout_id integer NOT NULL,
+  includeinout character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  processed character(1) NOT NULL DEFAULT 'N'::bpchar,
+  CONSTRAINT jacofer_roadmapline_key PRIMARY KEY (m_jacofer_roadmapline_id),
+  CONSTRAINT jacofer_roadmapline_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT jacofer_roadmapline_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT jacofer_roadmapline_roadmap FOREIGN KEY (m_jacofer_roadmap_id)
+      REFERENCES m_jacofer_roadmap (m_jacofer_roadmap_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=TRUE
+);
+ALTER TABLE m_jacofer_roadmapline
+  OWNER TO libertya;
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_inout','jacofer_packagesqty','numeric(20,2) NOT NULL DEFAULT 0'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_inout','jacofer_capacity','numeric(20,2) NOT NULL DEFAULT 0'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_inout','jacofer_weight','numeric(20,2) NOT NULL DEFAULT 0'));
+
+-- ### MERGE 2024-05-17 org.libertya.core.micro.r3019.dev.jacofer_11b_cot_arba upgrade_from_0.0
+-- 20220728 Se agregan los campos de Código Arba para las tablas M_Product, C_UOM y C_Region
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_Product','Jacofer_CodigoArba','VARCHAR(32)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_UOM','Jacofer_CodigoArba','VARCHAR(32)'));
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('C_Region','Jacofer_CodigoArba','VARCHAR(32)'));
+
+-- ### MERGE 2024-05-17 org.libertya.core.micro.r3019.dev.jacofer_11b_cot_arba upgrade_from_0.0
+-- 20220728 Modificaciones en Transportistas para saber si es Transporte Propio.
+UPDATE ad_system SET dummy = (SELECT addcolumnifnotexists('M_Shipper','Jacofer_isTransportePropio','CHARACTER(1) NOT NULL DEFAULT ''N''::BPCHAR'));
+
+-- ### MERGE 2024-05-17 org.libertya.core.micro.r3019.dev.jacofer_11b_cot_arba upgrade_from_0.0
+-- 20220804 Función que obtiene un dato fijo dado un servicio externo y la key de un atributo.
+CREATE OR REPLACE FUNCTION libertya.getexternalserviceattribute(
+    p_externalservice_value character,
+    p_externalserviceattributes_value character)
+  RETURNS character AS
+$BODY$
+DECLARE	v_Name CHARACTER(30);
+BEGIN
+	SELECT esa.name INTO v_Name
+	FROM c_externalserviceattributes esa
+	INNER JOIN c_externalservice es ON es.c_externalservice_id = esa.c_externalservice_id 
+	WHERE es.value = p_externalservice_value
+		AND esa.value = p_externalserviceattributes_value;
+    RETURN v_Name;
+END; $BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION libertya.getexternalserviceattribute(character, character)
+  OWNER TO libertya;
+  
+
+
 
