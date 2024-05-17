@@ -13,7 +13,7 @@ public class AD_UserTest extends GenericTest<X_AD_User>{
 	
 	@Override
 	protected PO getTestingEntity() {
-		X_AD_User user = new X_AD_User(Env.getCtx(), 0, getTestingTrxName());
+		X_AD_User user = new X_AD_User(Env.getCtx(), 0, null);
         user.setName("Test User " + TestUtil.getFormattedDate());
         user.setPassword("TestPass");
         return user;

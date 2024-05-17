@@ -3,34 +3,29 @@ package test.model;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
+
+import common.Logger;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Properties;
 import org.junit.jupiter.api.*;
+import org.junit.platform.commons.logging.LoggerFactory;
+
 import test.util.StartupLY;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public abstract class GenericTest<T extends PO> {
 	
-	static String testingTrxName = null;
 	
 	@BeforeAll
 	static void setUpTestingEnvironment() throws Exception {
-		System.out.println("Ejecutando BeforeAll");
 		StartupLY.getInstance().init();
-		testingTrxName = Trx.createTrx(Trx.createTrxName()).getTrxName();
-		System.out.println("Transaction: " + testingTrxName);
 	}
 	
 	@AfterAll
 	static void finish() {
-		System.out.println("Ejecutando afterAll");		
-		Trx.getTrx(testingTrxName).rollback();
-	}
-
-	//obtener la Trx a utilizar en los tests para aplicar rollback
-	public static String getTestingTrxName() {
-		return testingTrxName;
+		//
 	}
 	
 	//cada entidad implementa el metodo para obtener la entidad a crear (CRUD)
@@ -74,7 +69,7 @@ public abstract class GenericTest<T extends PO> {
 	@Order(2)
 	@DisplayName("Retrieve created entity")
 	void retrieveCreatedEntityShouldReturnOK() {
-		T createdEntity = createNewEntity(Env.getCtx(), entityID, testingTrxName);
+		T createdEntity = createNewEntity(Env.getCtx(), entityID, null);
 		assertEquals(createdEntity.getID(), entityID);
 	}
 	
@@ -87,10 +82,10 @@ public abstract class GenericTest<T extends PO> {
 	@DisplayName("Modify created product")
 	void modifyEntityShouldReturnOK() {
 		
-		T createdEntity = getModifiedEntity(createNewEntity(Env.getCtx(), entityID, testingTrxName));
+		T createdEntity = getModifiedEntity(createNewEntity(Env.getCtx(), entityID, null));
 		createdEntity.save();
 		
-		T modifiedEntity = createNewEntity(Env.getCtx(), entityID, testingTrxName);
+		T modifiedEntity = createNewEntity(Env.getCtx(), entityID, null);
 		assertTrue(getUpdateAssertTrue(modifiedEntity));
 	}
 	
@@ -103,10 +98,10 @@ public abstract class GenericTest<T extends PO> {
     @Order(5)
     void deleteEntityShouldReturnOK() {
 		
-		T createdEntity = createNewEntity(Env.getCtx(), entityID, testingTrxName);
+		T createdEntity = createNewEntity(Env.getCtx(), entityID, null);
 		createdEntity.delete(false);
 		
-		T deletedEntity = createNewEntity(Env.getCtx(), entityID, testingTrxName);
+		T deletedEntity = createNewEntity(Env.getCtx(), entityID, null);
         assertTrue(deletedEntity == null);
     }
 	

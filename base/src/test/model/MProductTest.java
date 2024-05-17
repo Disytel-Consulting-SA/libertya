@@ -6,12 +6,12 @@ import org.openXpertya.model.MProduct;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.Env;
 
-public class M_ProductTest extends GenericTest<MProduct>{
+public class MProductTest extends GenericTest<MProduct>{
 	
 	@Override
 	protected PO getTestingEntity() {
 		
-		MProduct product = new MProduct(Env.getCtx(), 0, getTestingTrxName());
+		MProduct product = new MProduct(Env.getCtx(), 0, null);
 		product.setName("Test Product");
         return product;
 	}
