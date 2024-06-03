@@ -4,6 +4,7 @@ package org.openXpertya.JasperReport;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -214,6 +215,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("ADDRESS1", JasperReportsUtil.coalesce(location.getAddress1(), ""));
 		jasperwrapper.addParameter("CIUDAD", JasperReportsUtil.coalesce(location.getCity(),""));
 		jasperwrapper.addParameter("PAIS", JasperReportsUtil.coalesce(location.getCountry().getName(),""));
+		
 		// Categoria IVA
 		if(!Util.isEmpty(invoice.getCAT_Iva_ID(),true)) {			
 			jasperwrapper.addParameter("TIPO_IVA", 
@@ -311,6 +313,7 @@ public class LaunchInvoice extends SvrProcess {
 		jasperwrapper.addParameter("SUBIVA_21", iva21Amt);		
 		jasperwrapper.addParameter("SUBDESC", invoice.getDiscountsAmt());
 		jasperwrapper.addParameter("TOTAL", invoice.getGrandTotal() );
+		jasperwrapper.addParameter("TOTAL_USD", getTotalUSD(invoice));
 		jasperwrapper
 				.addParameter(
 						"TIPOORIGEN",
@@ -592,9 +595,90 @@ public class LaunchInvoice extends SvrProcess {
 		BigDecimal othersTaxesAmt = allTaxesAmt.subtract(iva105Amt).subtract(iva21Amt).subtract(iva27Amt)
 				.subtract(percepcionTotalAmt);
 		jasperwrapper.addParameter("OTHER_TAXES_AMT", othersTaxesAmt);
+		
+		// dREHER
+		// Datos para facturas de exportacion
+		
+		String data = invoice.get_ValueAsString("Cintolo_Incoterm");
+		jasperwrapper.addParameter("INCOTERM", data);
+		
+		data = invoice.get_ValueAsString("Cintolo_OrigenPro");
+		jasperwrapper.addParameter("ORIGEN_PROCEDENCIA", data);
+		
+		data = invoice.get_ValueAsString("Cintolo_TipoMercaderia");
+		jasperwrapper.addParameter("TIPO_MERCADERIA", data);
+		
+		// Datos de la entrega
+		if(invoice.get_Value("Cintolo_Delivery_Location")!=null) {
+			int C_Location_ID = (Integer)invoice.get_Value("Cintolo_Delivery_Location");
+			if(C_Location_ID > 0) {
+				MLocation lo = MLocation.get(getCtx(), C_Location_ID, get_TrxName());
+				region = null;
+				if (lo.getC_Region_ID() > 0)
+					region = new MRegion(getCtx(), lo.getC_Region_ID(), get_TrxName());
+				jasperwrapper.addParameter(
+					"DIRECCION_ENTREGA",
+					JasperReportsUtil.coalesce(lo.getAddress1(), "")
+							+ ". "
+							+ JasperReportsUtil.coalesce(lo.getCity(), "")
+							+ ". ("
+							+ JasperReportsUtil.coalesce(lo.getPostal(), "")
+							+ "). "
+							+ JasperReportsUtil.coalesce(region == null ? ""
+									: region.getName(), ""));
+				
+			}
+			
+		}
+		
+		// Destino final
+		if(invoice.get_Value("Cintolo_Final_Destine")!=null) {
+			int C_Location_ID = (Integer)invoice.get_Value("Cintolo_Final_Destine");
+			if(C_Location_ID > 0) {
+				MLocation lo = MLocation.get(getCtx(), C_Location_ID, get_TrxName());
+				region = null;
+				if (lo.getC_Region_ID() > 0)
+					region = new MRegion(getCtx(), lo.getC_Region_ID(), get_TrxName());
+				jasperwrapper.addParameter(
+						"DIRECCION_DESTINO",
+						JasperReportsUtil.coalesce(lo.getAddress1(), "")
+						+ ". "
+						+ JasperReportsUtil.coalesce(lo.getCity(), "")
+						+ ". ("
+						+ JasperReportsUtil.coalesce(lo.getPostal(), "")
+						+ "). "
+						+ JasperReportsUtil.coalesce(region == null ? ""
+								: region.getName(), ""));
+
+			}
+
+		}
+		
+		
 	}
 	
-	
+	// CINTOLO. Obtiene el valor en dólares de la factura
+	private BigDecimal getTotalUSD(MInvoice invoice) {
+		if(invoice.getC_Currency_ID() == 100) return null;
+		
+		BigDecimal conversion;
+		BigDecimal rate = invoice.get_Value("Cintolo_Exchange_Rate") != null ? 
+				(BigDecimal)invoice.get_Value("Cintolo_Exchange_Rate") : Env.ZERO;
+		
+		if(rate.equals(Env.ZERO)) {
+			conversion = MCurrency.currencyConvert(
+				invoice.getGrandTotal(), 
+				invoice.getC_Currency_ID(), 
+				100, 
+				invoice.getDateInvoiced(), 
+				invoice.getAD_Org_ID(), 
+				getCtx());
+		} else {
+			conversion = invoice.getGrandTotal().divide(rate,RoundingMode.DOWN);
+		}
+		return conversion;
+	}
+
 	private BigDecimal getTaxAmt(MInvoice invoice, BigDecimal rate)
 	{
 		BigDecimal retValue = BigDecimal.ZERO;

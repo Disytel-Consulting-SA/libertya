@@ -29,6 +29,7 @@ import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.AllocationGenerator;
 import org.openXpertya.model.AllocationGenerator.PaymentMediumInfo;
 import org.openXpertya.model.AllocationGeneratorException;
+import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBankAccount;
@@ -97,6 +98,12 @@ public class VOrdenPagoModel {
 
 	public static final String FILTER_CASH_ORG_LOGIN_PREFERENCE_NAME = "OP_FilterCashOrgLogin";
 	public static final String CASHBOOKTYPE_PREFERENCE_NAME = "OP_CashBookType";
+	
+	// dREHER por ahora el calculo de saldo abierto en $ARS funciona como siempre...
+	private static final boolean isPorAhoraFuncionaComoSiempre = true;
+	
+	// dREHER
+	private static boolean SHOW_DEBUG = false;
 
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
 
@@ -110,6 +117,7 @@ public class VOrdenPagoModel {
 		public static final String TIPOMEDIOPAGO_EFECTIVOADELANTADO = "EA";
 		public static final String TIPOMEDIOPAGO_CHEQUETERCERO = "CT";
 		public static final String TIPOMEDIOPAGO_TARJETACREDITO = "TC";
+		public static final String TIPOMEDIOPAGO_DIFDECAMBIO = "DIF";
 
 		public abstract String getTipoMP();
 
@@ -285,7 +293,64 @@ public class VOrdenPagoModel {
 			return discountSchemaToApply;
 		}
 	}
+	
+	public class MedioPagoDifDeCambio extends MedioPago {
+		public BigDecimal importe;
 
+		public MedioPagoDifDeCambio() {
+
+		}
+
+		@Override
+		public String getTipoMP() {
+			return TIPOMEDIOPAGO_DIFDECAMBIO;
+		}
+
+		@Override
+		public Timestamp getDateTrx() {
+			return m_fechaTrx;
+		}
+
+		@Override
+		public int getBankAccountID() {
+			return -1;
+		}
+
+		public void setCashLine(MCashLine cashLine) {
+			this.payment = cashLine;
+		}
+
+		public MCashLine getCashLine() {
+			return (MCashLine) payment;
+		}
+
+		@Override
+		public void setImporte(BigDecimal importe) {
+			this.importe = importe;
+		}
+
+		@Override
+		public void addToGenerator(POCRGenerator poGenerator) {
+			poGenerator.addCashLinePaymentMedium(getCashLine().getC_CashLine_ID(), getImporteMonedaOriginal());
+		}
+
+		@Override
+		public BigDecimal getImporteMonedaOriginal() {
+			return importe;
+		}
+
+		@Override
+		public Timestamp getDateAcct() {
+			return m_fechaTrx;
+		}
+		
+		@Override
+		public String toString() {
+			return "Comprobante por Dif. de Cambio: " + numberFormat(importe);
+		}
+
+	}
+	
 	public class MedioPagoEfectivo extends MedioPago {
 		public int libroCaja_ID;
 		public BigDecimal importe;
@@ -941,18 +1006,28 @@ public class VOrdenPagoModel {
 	}
 
 	public class ResultItemFactura extends ResultItem {
-
-		private BigDecimal manualAmount = new BigDecimal(0);
-		private BigDecimal manualAmtClientCurrency = new BigDecimal(0);
-		private BigDecimal paymentTermDiscount = new BigDecimal(0);
+		// TODO: CINTOLO
+		private BigDecimal manualAmount = new BigDecimal(0); // A Pagar
+		private BigDecimal manualAmtClientCurrency = new BigDecimal(0); // A Pagar ARS
+		private BigDecimal paymentTermDiscount = new BigDecimal(0); // Desc/Rego Esq. Vto
 
 		private String isexchange = "N";
 		private boolean toPayWithPaymentTerm = true;
+		
+		private BigDecimal exchangeRate = new BigDecimal(0); // dREHER Tasa de cambio de la factura
 
 		public ResultItemFactura(ResultSet rs) throws Exception {
 			VModelHelper.GetInstance().super(rs);
 		}
 
+		public BigDecimal getExchangeRate() {
+			return exchangeRate;
+		}
+
+		public void setExchangeRate(BigDecimal exchangeRate) {
+			this.exchangeRate = exchangeRate;
+		}
+		
 		public BigDecimal getManualAmount() {
 			return manualAmount;
 		}
@@ -998,28 +1073,39 @@ public class VOrdenPagoModel {
 			if (isToPayWithPaymentTerm()) {
 				toPay = toPay.subtract(getPaymentTermDiscount());
 			}
+			
 			return toPay;
 		}		
 	}
-
+	
+	// dREHER solo por compatibilidad
+	public boolean validateConvertionRate() {
+		return validateConvertionRate(null);
+	}
+	
 	// Se recorren las facturas y verificando que exista una tasa de cambio
 	// existente.
 	// En caso de no existir la tasa se retorna false
-	public boolean validateConversionRate() {
+	public boolean validateConvertionRate(Timestamp fecha) {
+		
 		if (m_facturas != null) {
 			for (ResultItem x : m_facturas) {
-				if (((ResultItemFactura) x).getManualAmtClientCurrency().compareTo(BigDecimal.ZERO) > 0
-						|| ((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
+				
+				// dREHER se pide cambiar verificacion para todas las facturas con saldo abierto
+				// mas alla de si las pagamos o no
+				
+				//if (((ResultItemFactura) x).getManualAmtClientCurrency().compareTo(BigDecimal.ZERO) > 0
+				//		|| ((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int currency_ID_To = (Integer) ((ResultItemFactura) x)
 							.getItem(m_facturasTableModel.getCurrencyColIdx());
 					if (MCurrency.currencyConvert(new BigDecimal(1), C_Currency_ID, currency_ID_To,
 							// new Timestamp(System.currentTimeMillis()), 0,
-							m_fechaTrx, 0, getCtx()) == null) {
+							fecha==null?(Timestamp)((ResultItemFactura) x).getItem(m_facturasTableModel.getDueDateColIdx()):fecha, 0, getCtx()) == null) {
 						((ResultItemFactura) x).setManualAmount(BigDecimal.ZERO);
 						((ResultItemFactura) x).setManualAmtClientCurrency(BigDecimal.ZERO);
 						return false;
 					}
-				}
+				// }
 			}
 		}
 		return true;
@@ -1041,7 +1127,14 @@ public class VOrdenPagoModel {
 	public MCurrency mCurency = MCurrency.get(m_ctx, C_Currency_ID);
 	private Integer projectID = 0;
 	private Integer campaignID = 0;
-	private BigDecimal exchangeDifference = BigDecimal.ZERO;
+	
+	// CINTOLO. Valores de diferencia de cambio.
+	protected BigDecimal exchangeDifference = BigDecimal.ZERO;
+	protected BigDecimal exchangeDifferencePercent = BigDecimal.ZERO;
+	protected BigDecimal exchangeDifferencePercentLimit = BigDecimal.ZERO;
+	protected BigDecimal exchangeDifferenceLimit = BigDecimal.ZERO;
+    protected boolean isCintoloEmit = false;
+    protected boolean isCintoloInclude = false;
 
 	protected boolean m_esPagoNormal = true;
 	protected BigDecimal m_montoPagoAnticipado = null;
@@ -1122,6 +1215,7 @@ public class VOrdenPagoModel {
 	public void initTrx() {
 		closeTrx();
 		trxName = super.toString() + "_" + Thread.currentThread().getId() + "_" + System.currentTimeMillis();
+		trxName = "OP" + "_" + Thread.currentThread().getId() + "_" + System.currentTimeMillis();
 		getTrx().start();
 	}
 
@@ -1141,6 +1235,29 @@ public class VOrdenPagoModel {
 	public String getTrxName() {
 		return trxName;
 		// return m_trx != null ? m_trx.getTrxName() : null;
+	}
+	
+	/**
+	 * Con contabilidad en linea da problemas que todas las grabaciones de objetos esten dentro de la misma transaccion
+	 * @return
+	 * dREHER
+	 */
+	public String get_TrxName() {
+		
+		/** optimizar para que solo lo haga una sola vez
+		 * dREHER
+		// Verifico si el esquema actual utiliza contabilidad en linea
+		MAcctSchema[] as = MAcctSchema.getClientAcctSchema(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()));
+		if(as.length > 0) {
+			MAcctSchema es = as[0];
+			boolean io = es.get_ValueAsString("isCintolo_OnlineAccounting").equals("Y");
+			if(io)
+				return null;
+			else
+				return getTrxName();
+		}
+		*/
+		return null;
 	}
 
 	public MedioPago getMedioPago(int idx) {
@@ -1335,7 +1452,9 @@ public class VOrdenPagoModel {
 		if (m_esPagoNormal) {
 			if (m_facturas != null) {
 				for (ResultItem x : m_facturas)
-					suma = suma.add(((ResultItemFactura) x).getManualAmtClientCurrency());
+					// dREHER Controlar valores nulos
+					if(((ResultItemFactura) x).getManualAmtClientCurrency()!=null)
+						suma = suma.add(((ResultItemFactura) x).getManualAmtClientCurrency());
 			}
 		} else {
 			suma = m_montoPagoAnticipado;
@@ -1377,16 +1496,57 @@ public class VOrdenPagoModel {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append(
-				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, openTotal,  sum(convertedamt) as convertedamtsum, sum(openamt) as openAmtSum, sum(openamt) - sum(discount) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule FROM ");
+				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, COALESCE(openTotal,0) AS openTotal,  sum(COALESCE(convertedamt,0)) as convertedamtsum, sum(COALESCE(openamt,0)) as openAmtSum, sum(COALESCE(openamt,0)) - sum(COALESCE(discount,0)) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule, MAX(COALESCE(exchangeRate,0)) as exchangeRate FROM ");
 		sql.append(
 				"  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
-		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
-				+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
-		sql.append(
-				"    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"
+		
+		/**
+		 * Para compras:
+		 * Si la factura tiene tasa de cambio registrada, utilizar esta tasa para calcular la conversion...
+		 * 
+		 * 
+		 * currencyRound(p_Amount * Cintolo_Exchange_Rate, C_Currency_ID, null);
+		 * 
+		 * dREHER
+		 */
+		
+		
+		if(getIsSOTrx().equals("Y") || 
+				isPorAhoraFuncionaComoSiempre) {
+			sql.append(" coalesce(abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
+				+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID)),0) as ConvertedAmt, ");
+		}else {
+			sql.append(" abs( coalesce(CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0) > 0 THEN  "
+					+ " 	currencyRound(i.GrandTotal * i.Cintolo_Exchange_Rate, " + C_Currency_ID + ", null) "
+					+ "ELSE "
+					+ "		currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
+					+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID) END,0) ) as ConvertedAmt, ");
+		}
+		
+		sql.append("isexchange, ");
+		
+		if(getIsSOTrx().equals("Y") || 
+				isPorAhoraFuncionaComoSiempre) {
+			sql.append(
+				"    coalesce(currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"
 						+ m_fechaTrx
-						+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule, ");
-		sql.append(" ROUND(getdiscount(i.c_invoice_id, ips.c_payschedule_id, i.dateinvoiced, ips.duedate, '" + m_fechaTrx + "', i.grandtotal), 2) AS discount ");
+						+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID),0) AS openAmt,  ");
+		}else {
+			sql.append(
+					" coalesce( CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0) > 0 THEN "
+					+ " 	currencyRound(invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) * i.Cintolo_Exchange_Rate," + C_Currency_ID + ", null) "
+					+ "ELSE "
+					+ " 	currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"
+							+ m_fechaTrx
+							+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID) END, 0) AS openAmt,  ");
+		}
+		
+		sql.append("i.C_Currency_ID, i.paymentrule,");
+		
+		sql.append(" ROUND(getdiscount(i.c_invoice_id, ips.c_payschedule_id, i.dateinvoiced, ips.duedate, '" + m_fechaTrx + "', i.grandtotal), 2) AS discount, ");
+		
+		sql.append( "COALESCE(i.Cintolo_Exchange_Rate,0) AS exchangeRate"); // dREHER
+		
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
 		sql.append(
@@ -1439,6 +1599,10 @@ public class VOrdenPagoModel {
 			// int ultimaFactura = -1;
 			while (rs.next()) {
 				ResultItemFactura rif = new ResultItemFactura(rs);
+				
+				// dREHER
+				rif.setExchangeRate(rs.getBigDecimal("exchangeRate"));
+				
 				int facId = ((Integer) rif.getItem(m_facturasTableModel.getIdColIdx()));
 				// if (facId != ultimaFactura) {
 				m_facturas.add(rif);
@@ -1859,7 +2023,10 @@ public class VOrdenPagoModel {
 			BigDecimal DiscountAmt = Env.ZERO;
 			BigDecimal WriteoffAmt = Env.ZERO;
 			BigDecimal OverunderAmt = Env.ZERO;
-
+			
+			
+			// TODO: Acá se podría tomar un pago de tipo "Dif de Cambio", preguntar por la moneda y en base a eso seguir con los calculos
+			// ** Solamente si se agrega dentro del arbol de medios de pago, un pago del tipo "Dif de Pago" **
 			if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_CREDITO)) {
 				// No se debe generar ningún pago dado que es una nota de
 				// crédito existente.
@@ -1884,7 +2051,7 @@ public class VOrdenPagoModel {
 
 				// Hay que crear una linea de caja.
 
-				MCash cash = new MCash(m_ctx, mpe.libroCaja_ID, getTrxName());
+				MCash cash = new MCash(m_ctx, mpe.libroCaja_ID, get_TrxName()); // dREHER
 
 				// La fecha de la caja debe ser la misma fecha que la operación
 				if (!TimeUtil.isSameDay(m_fechaTrx, cash.getDateAcct())) {
@@ -1997,7 +2164,7 @@ public class VOrdenPagoModel {
 						|| mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_EFECTIVOADELANTADO))
 					continue;
 
-				pay = new MPayment(m_ctx, 0, getTrxName());
+				pay = new MPayment(m_ctx, 0, get_TrxName()); //  dREHER getTrxName()
 
 				if (mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_CHEQUETERCERO)) {
 					MedioPagoChequeTercero mpct = (MedioPagoChequeTercero) mp;
@@ -2186,7 +2353,7 @@ public class VOrdenPagoModel {
 				int C_BankAccountDoc_ID = chequeraID;
 				// Se guarda el siguiente numero de cheque en la chequera.
 				X_C_BankAccountDoc bankAccountDoc = new X_C_BankAccountDoc(Env.getCtx(), C_BankAccountDoc_ID,
-						getTrxName());
+						get_TrxName()); // dREHER
 				// Si no se permiten números de cheque manuales, se obtiene el
 				// siguiente y se actualiza
 				if(!bankAccountDoc.isAllowManualCheckNo()){
@@ -2271,8 +2438,13 @@ public class VOrdenPagoModel {
 		}
 		
 		BigDecimal saldoMediosPago = getSaldoMediosPago(); // Debe ser cero
+		BigDecimal allowExchangeDifference = new BigDecimal(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"));
+		
+		// dREHER
+		debug("saldoMediosPago=" + saldoMediosPago + " allowExchangeDifference= " + allowExchangeDifference, false);
+		
 		if (saldoMediosPago.abs()
-				.compareTo(new BigDecimal(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) > 0)
+				.compareTo(allowExchangeDifference) > 0)
 			return PROCERROR_PAYMENTS_AMT_MATCH;
 
 		int ret;
@@ -2299,8 +2471,11 @@ public class VOrdenPagoModel {
 
 			// 2. Crear el generador de OPA y actualizar el encabezado de la
 			// asignación creada
-			getPoGenerator().setTrxName(getTrxName());
+			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			hdr = getPoGenerator().createAllocationHdr();
+			
+			hdr.set_TrxName(get_TrxName()); // dREHER
+			
 			updateAllocationHdr(hdr);
 
 			// 3. Generar los pagos
@@ -2309,7 +2484,7 @@ public class VOrdenPagoModel {
 				errorNo = PROCERROR_PAYMENTS_GENERATION;
 			} else {
 				// 4. Guardar Retenciones
-				m_retGen.setTrxName(getTrxName());
+				m_retGen.setTrxName(get_TrxName()); // dREHER
 				m_retGen.setProjectID(getProjectID());
 				m_retGen.setCampaignID(getCampaignID());
 				m_retGen.save(hdr);
@@ -2363,14 +2538,14 @@ public class VOrdenPagoModel {
 	private void agregarRetencionesComoMediosPagos(Vector<MedioPago> pagos, MAllocationHdr hdr) throws Exception {
 
 		String sql = " SELECT C_Invoice_ID FROM m_retencion_invoice WHERE C_AllocationHdr_ID = ? ";
-		CPreparedStatement pp = DB.prepareStatement(sql, getTrxName());
+		CPreparedStatement pp = DB.prepareStatement(sql, get_TrxName()); // dREHER
 
 		pp.setInt(1, hdr.getC_AllocationHdr_ID());
 
 		ResultSet rs = pp.executeQuery();
 
 		while (rs.next()) {
-			MInvoice invoice = new MInvoice(m_ctx, rs.getInt(1), getTrxName());
+			MInvoice invoice = new MInvoice(m_ctx, rs.getInt(1), get_TrxName()); // dREHER
 			// SUR SOFTWARE - MODIFICACION PARA CONTABILIZAR EL COMPROBANTE DE
 			// RETENCION CON LA FECHA DEL RECIBO // O.PAGO
 			invoice.setDateAcct(this.m_fechaTrx);
@@ -2411,22 +2586,27 @@ public class VOrdenPagoModel {
 		Vector<MedioPago> pays = new Vector<VOrdenPagoModel.MedioPago>(getMediosPago());
 
 		try {
-			// 1. Crear débitos y créditos customs
+			
+			// 1. Crear débitos y créditos customs (descuentos o recargos)
 			makeCustomDebitsCredits(pays);
-
+			
+			
 			// 2. Se crea el generador de orden de pago.
-			getPoGenerator().setTrxName(getTrxName());
+			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			hdr = getPoGenerator().createAllocationHdr();
+			
+			hdr.set_TrxName(get_TrxName()); // dREHER
 
 			// Se setean las propiedades del encabezado
 			updateAllocationHdr(hdr);
 
 			// 3. Retenciones
-			m_retGen.setTrxName(getTrxName());
+			m_retGen.setTrxName(get_TrxName()); // dREHER
 			m_retGen.setProjectID(getProjectID());
 			m_retGen.setCampaignID(getCampaignID());
 			m_retGen.save(hdr);
 
+			// TODO: Revisar por aca!!!!! CINTOLO
 			// 4. Generar los pagos, completos.
 			if (saveOk && !generarPagosDesdeMediosPagos(pays, hdr)) {
 				saveOk = false;
@@ -2435,6 +2615,7 @@ public class VOrdenPagoModel {
 				// 5. Agregar las facturas de debito
 				agregarRetencionesComoMediosPagos(pays, hdr);
 
+				// CINTOLO: En este metodo se llama al POGeneratos que llama al AllocationGenerator
 				// 6. Guardar allocation lines online creadas
 				processOnlineAllocationLines(hdr, pays, true);
 
@@ -2548,7 +2729,7 @@ public class VOrdenPagoModel {
 
 		sql = "update m_retencion_invoice  " + " set c_allocationhdr_id = " + hdr.getC_AllocationHdr_ID()
 				+ " where c_invoice_id = " + c_invoice_id;
-		DB.executeUpdate(sql, getTrxName());
+		DB.executeUpdate(sql, get_TrxName()); // dREHER
 	}
 
 	public void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To,
@@ -2575,7 +2756,42 @@ public class VOrdenPagoModel {
 		BigDecimal manualAmt = MCurrency.currencyConvert(rif.getManualAmtClientCurrency(), C_Currency_ID,
 				// currency_ID_To, new Timestamp(System.currentTimeMillis()), 0,
 				currency_ID_To, m_fechaTrx, 0, getCtx());
+		
+		/**
+		 * currency_ID_To -> moneda del comprobante
+		 * C_Currency_ID -> moneda de la orden de pago
+		 * Para facturas de compra calcular el total en pesos con la tasa de cambio de la factura
+		 * dREHER  
+		 */
+		
+		if(!this.isSOTrx() && !isPorAhoraFuncionaComoSiempre ) {
+			
+			manualAmt = getAmountByInvoiceExchangeRate(rif.getManualAmtClientCurrency().divide(rif.getExchangeRate(), RoundingMode.HALF_DOWN));
+			debug("Actualiza monto ManualAmtClientCurrency. tasa cambio de comprobante=" + rif.getExchangeRate() +
+					" total a Pagar=" + manualAmt);
+		}
+		
+		
 		rif.setManualAmount(manualAmt);
+	}
+
+	// dREHER
+	private void debug(String string) {
+		System.out.println("==> VOrdenPagoModel. " + string);
+	}
+
+	/**
+	 * Monto a convertir
+	 * @return monto convertido segun tasa de cambio del comprobante
+	 * dREHER
+	 */
+	public BigDecimal getAmountByInvoiceExchangeRate(BigDecimal aConvertir) {
+		BigDecimal amount = null;
+		String sql = "SELECT currencyRound(" + aConvertir + ", ?, null)";
+		
+		amount = DB.getSQLValueBD(getTrxName(), sql, C_Currency_ID);
+		
+		return amount;
 	}
 
 	public void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif, int currency_ID_To,
@@ -2601,6 +2817,22 @@ public class VOrdenPagoModel {
 				C_Currency_ID,
 				// new Timestamp(System.currentTimeMillis()), 0, getCtx());
 				m_fechaTrx, 0, getCtx());
+		
+		/**
+		 * currency_ID_To -> moneda del comprobante
+		 * C_Currency_ID -> moneda de la orden de pago
+		 * Para facturas de compra calcular el total en pesos con la tasa de cambio de la factura
+		 * dREHER  
+		 */
+		
+		if(!this.isSOTrx() && !isPorAhoraFuncionaComoSiempre) {
+			
+			manualAmtClientCurrency = getAmountByInvoiceExchangeRate(rif.getManualAmount().divide(rif.getExchangeRate(), RoundingMode.HALF_DOWN));
+			debug("Actualiza monto actualizarPagarCurrencyConPagar. tasa cambio de comprobante=" + rif.getExchangeRate() +
+					" total a Pagar=" + rif.getManualAmount());
+		}
+		
+		
 		rif.setManualAmtClientCurrency(manualAmtClientCurrency);
 	}
 
@@ -3458,6 +3690,7 @@ public class VOrdenPagoModel {
 			pago.addToGenerator(getPoGenerator());
 		}
 		// Se crean las líneas de imputación entre las facturas y los pagos
+		// CINTOLO dREHER flujo de armado de documentos de dif de cambio...
 		getPoGenerator().generateLines();
 	}
 
@@ -3493,7 +3726,7 @@ public class VOrdenPagoModel {
 	protected boolean processOnlineAllocationLines(MAllocationHdr hdr, Vector<MedioPago> pays, boolean rebuild)
 			throws Exception {
 		// Rearmar las online allocation lines por posibles medios de pagos
-		// agregados luego
+		// agregados luego - dREHER para CINTOLO comienza el flujo para el armado de los documentos de dif de cambio...
 		if (rebuild)
 			updateOnlineAllocationLines(pays);
 		boolean ok = true;
@@ -3859,7 +4092,13 @@ public class VOrdenPagoModel {
 		this.paymentRule = paymentRule;
 		getPoGenerator().setPaymentRule(paymentRule);
 	}
-
+	
+	// dREHER
+	protected void debug(String string, boolean isReceipt) {
+		if(SHOW_DEBUG)
+			System.out.println(isReceipt?"VOrdenPagoModel":"VOrdenCobroModel" + " ==> " + string);
+	}
+	
 	/**
 	 * @return el próximo número de documento de la secuencia del tipo de
 	 *         documento
@@ -3881,4 +4120,63 @@ public class VOrdenPagoModel {
 	protected void setActualizarNrosChequera(boolean isActualizarNrosChequera) {
 		this.isActualizarNrosChequera = isActualizarNrosChequera;
 	}
+
+	//--------------------------------------- CINTOLO START --------------------------------------- 
+	
+	// Getters
+	public BigDecimal getExchangeDifferencePercent() {
+		return this.exchangeDifferencePercent;
+	}
+	public BigDecimal getExchangeDifferencePercentLimit() {
+		return this.exchangeDifferencePercentLimit;
+	}
+	public BigDecimal getExchangeDifferenceLimit() {
+		return this.exchangeDifferenceLimit;
+	}
+	
+	// Metodos a implementar en la subclase
+	public boolean isAdjustmentClause() {
+		return false;
+	}
+	
+	public BigDecimal getBPartnerExchangeDifLimit() {
+		return Env.ZERO;
+	}
+	
+	public BigDecimal getBPartnerExchangeDifPercentLimit() {
+		return Env.ZERO;
+	}
+	
+	public BigDecimal calculateExchangeDifferencePercent() {
+		return Env.ZERO;
+	}
+	
+	public boolean shouldEmit() {
+		return false;
+	}
+	
+	public void calculateExchangeDifferenceValues() {
+	}
+	
+	public void processExchangeDifference() {
+	}
+	
+	public boolean isCintoloEmit() {
+		return this.isCintoloEmit;
+	}
+	
+	public boolean isCintoloInclude() {
+		return this.isCintoloInclude;
+	}
+	
+	public void setCintoloEmit(boolean emit) {
+		this.isCintoloEmit = emit;
+		poGenerator.setEmit(emit);
+	}
+	
+	public void setCintoloInclude(boolean include) {
+		this.isCintoloInclude = include;
+		poGenerator.setInclude(include);
+	}
+	//--------------------------------------- CINTOLO END --------------------------------------- 
 }

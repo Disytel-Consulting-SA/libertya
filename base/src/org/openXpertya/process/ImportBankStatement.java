@@ -377,6 +377,15 @@ public class ImportBankStatement extends SvrProcess {
         if( no != 0 ) {
             log.info( "doIt - Invoice.BPartner<->Payment.BPartner Mismatch=" + no );
         }
+        
+        
+        // Banco Santander - Concateno descripción con campos informativos adicionales 
+        sql = new StringBuffer( "UPDATE I_BankStatement SET LineDescription = LineDescription || ' Ref: ' || referenceno || ' Cod. Operativo: ' || codigooperativo || ' Suc. Origen: ' || origen || ' Desc. Sucursal: ' || sucursal " + " WHERE I_IsImported <> 'Y' ").append( clientCheck );
+        no = DB.executeUpdate( sql.toString());
+
+        if( no != 0 ) {
+            log.info( "doIt - Cantidad de registos con descripción actualizada Santander=" + no );
+        }
 
         // Detect Duplicates
 

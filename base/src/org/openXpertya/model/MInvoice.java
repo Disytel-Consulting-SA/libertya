@@ -2574,6 +2574,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		}
 		
 		//Guardado auxiliar de datos para la impresion del documento.
+		
+		// dREHER las columnas y campos existen como tal en la tabla C_Invoice de Cintolo
+		// por lo tanto habilitamos el cargado de los mismos
+		// TODO: averiguar porque se quitaron de la clase modelo
 		if(!isProcessed()) {
 		       	MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
 		       	MBPartnerLocation location = new MBPartnerLocation(getCtx(),	getC_BPartner_Location_ID(), get_TrxName());
@@ -2589,6 +2593,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 		       	setCP(loc.getPostal());
 		       	setCAT_Iva_ID(bpartner.getC_Categoria_Iva_ID());
 		}
+		
 		
 		// Lautaro Laserna: Copiado de impuestos cuando se genera una NC por el total de una factura
 		if(getC_Invoice_Orig_ID() != 0) {
@@ -2686,6 +2691,32 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 * @throws Exception
 	 */
 	public void updateManualGeneralDiscountToLines(int scale) throws Exception {
+		
+		/**
+		 * Se controla que al guardar linea, no dispare el guardado nuevamente de la
+		 * factura para no entrar en un bucle interminable.
+		 * Al finalizar el bloque se actualiza encabezado e impuestos
+		 * 
+		 * dREHER
+		 */
+		BigDecimal descuentoManualGral = getManualGeneralDiscount();
+		MInvoiceLine[] lines = getLines();
+		for (MInvoiceLine invoiceLine : lines) {
+			
+			// dREHER
+			System.out.println("invoiceLine.updateManualGeneralDiscountToLines. start... %" + descuentoManualGral);
+			invoiceLine.updateGeneralManualDiscount(descuentoManualGral,
+					scale);
+			invoiceLine.setSkipManualGeneralDiscount(true);
+			if (!invoiceLine.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+			// dREHER
+			System.out.println("invoiceLine.updateManualGeneralDiscountToLines. end...");
+		}
+		
+		
+		/*
 		for (MInvoiceLine invoiceLine : getLines()) {
 			invoiceLine.updateGeneralManualDiscount(getManualGeneralDiscount(),
 					scale);
@@ -2694,6 +2725,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
 		}
+		*/
 	}
 
 	/**

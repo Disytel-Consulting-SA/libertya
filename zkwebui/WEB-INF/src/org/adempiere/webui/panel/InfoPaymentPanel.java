@@ -292,7 +292,7 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 		if (p_whereClause.length() > 0)
 			where.append(" AND ").append(Util.replace(p_whereClause, "C_Payment.", "p."));
 		
-		// dREHER El parametro C_Payment antes era C_Payment_v
+		// CINTOLO. El parametro C_Payment antes era C_Payment_v
 		
 		prepareTable(s_paymentLayout, " C_Payment p", where.toString(), "2,3,4");
 		

@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -69,6 +70,7 @@ import org.compiere.swing.CComboBox;
 import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
+import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoAdelantado;
@@ -114,7 +116,7 @@ import org.openXpertya.util.ValueNamePair;
  */
 public class VOrdenPago extends CPanel implements FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess,AuthContainer {
     
-	private BigDecimal maxPaymentAllowed = null;
+	protected BigDecimal maxPaymentAllowed = null;
 	
 	public class DecimalEditor extends AbstractCellEditor implements TableCellEditor {
 
@@ -436,6 +438,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				updatePayAllInvoices(false);
+				
+				if(checkPayAll.isSelected()) {
+	
+					/**
+					 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+					 * del recibo/pago y para cada factura
+					 * 
+					 * dREHER
+					 */
+					
+					if(!ValidateConvertionRate()) {
+						checkPayAll.setSelected(false);
+						return;
+					}
+	
+				}
 			}
 		});
         
@@ -449,7 +467,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					}
 				});
         
-        m_frame.setMinimumSize(new java.awt.Dimension(800, 400));
+        m_frame.setMinimumSize(new java.awt.Dimension(800, 800)); // dREHER ajustar la ventana por defecto
+        m_frame.setSize(m_frame.getMinimumSize());
         // m_frame.setOpaque(false);
         jPanel1.setOpaque(false);
         jPanel9.setOpaque(false);
@@ -827,9 +846,21 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			@Override
 			public void vetoableChange(PropertyChangeEvent evt)
 					throws PropertyVetoException {
+				
 				m_model.setFechaOP(dateTrx.getTimestamp());
 				m_model.actualizarFacturas();
 				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
+				
+				/**
+				 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+				 * del recibo/pago y para cada factura
+				 * 
+				 * dREHER
+				 */
+				
+				if(!ValidateConvertionRate()) {
+					return;
+				}
 			}
 		});
     }
@@ -1873,7 +1904,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
-    private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
+    protected void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
     		tblFacturas.setEnabled(true);
     		txtTotalPagar1.setReadWrite(false);
@@ -1950,7 +1981,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      * Pestaña "Seleccion de Pago (F2)" >> jTabbedPane1.getSelectedIndex() = 0
      * Pestaña "Tipo de Pago" >> jTabbedPane1.getSelectedIndex() = 1
      */
-    private void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
+    protected void cmdProcessActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmdProcessActionPerformed
     	
     	validatePaymentBlocked();
     	
@@ -1965,7 +1996,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			if ((m_model.getPartialPayment()) && (!ADialog.ask(m_WindowNo, this,
 					Msg.getMsg(Env.getCtx(), "PartialPayment"))))
 				return;
-    		
+			
     		clearMediosPago();
     		// Procesar
     		
@@ -1996,7 +2027,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				showError("Se produjo un error al pre procesar. "+e.getMessage());
 				return;
 			}
-  		
+    		
     		int status = m_model.doPreProcesar();
     		updateTreeModel();	
     		
@@ -2079,8 +2110,17 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		
     		m_model.setProjectID(getC_Project_ID() == null?0:getC_Project_ID());
     		m_model.setCampaignID(getC_Campaign_ID() == null?0:getC_Campaign_ID());
-    		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
-    		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
+    		
+    		// dREHER, si se trata de cobros, calcular diferencias de cambio
+    		// Para pagos, no calcularlas 
+    		if(m_model.getIsSOTrx().equals("Y")) {
+    			BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
+    			m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
+    		}else {
+    			m_model.setExchangeDifference(Env.ZERO);
+    			debug("Se trata de pagos, NO calculo diferencia de cambio!");
+    		}
+    			
     		
     		/*
     		 * Esta validacion se realiza primero porque no necesariamente bloquea el proceso
@@ -2132,7 +2172,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
     	}    	
     }//GEN-LAST:event_cmdProcessActionPerformed
-    
+
+    // dREHER
+	private void debug(String string) {
+		System.out.println("==> VOrdenPago. " + string);
+	}
+
 	protected CallResult validateDebitNote() {
 		CallResult result = null; 
 		// Aviso si la OP tiene Nota de débitos a clientes
@@ -2205,8 +2250,44 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		
 		// Validar sólo proveedor
 		validateOnlyAllowProviders();
+		
 	}
 	
+	protected boolean ValidateConvertionRate() {
+		
+		if(this.BPartnerSel.getValue() == null){
+			return true;
+		}
+		
+		/**
+		 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+		 * del recibo/pago y para cada factura
+		 * 
+		 * dREHER
+		 */
+		
+		// 1- valido tasa de conversion para la fecha del recibo/pago
+		if(!getModel().validateConvertionRate()){
+			
+			showError("No se encontro tasa de conversion para la moneda y fecha " 
+					+ "de alguno de los comprobantes a pagar");
+			
+			return false;
+		}
+
+		// 2- valido tasa de conversion para la fecha de cada factura
+		if(!getModel().validateConvertionRate(getModel().m_fechaTrx)){
+			
+			showError("No se encontro tasa de conversion para la moneda y fecha " 
+					+ "de la transaccion!");
+			
+			return false;
+		}
+		
+		return true;
+		
+	}
+
 	/**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
@@ -2365,7 +2446,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     protected int m_WindowNo = 0;
     protected FormFrame m_frame;
 
-    private boolean m_cambioTab = false;
+    protected boolean m_cambioTab = false;
     
     protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
@@ -2490,8 +2571,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		tblFacturas.getModel().addTableModelListener(new TableModelListener() {
 			public void tableChanged(TableModelEvent e) {
 				// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
-				validateConversionRate();
-				tableUpdated();
+
+				/**
+				 *  dREHER esta validacion se corre al evento de seleccion de entidad comercial, 
+				 *  si devuelve falso no CONTINUA
+				 *  
+				 *  2024-04-10
+				 */
+				// validateConversionRate();
+				// tableUpdated();
 			}
 		});				
 		
@@ -3068,7 +3156,20 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	            	// Actualizar interfaz grafica para null value
 					if (BPartnerSel.getValue() == null)
 						cmdBPartnerSelActionPerformed(null);
-	            	updatePayAllInvoices(false);
+					else {
+						/**
+						 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+						 * del recibo/pago y para cada factura
+						 * 
+						 * dREHER
+						 */
+						
+						if(!ValidateConvertionRate()) {
+							return;
+						}
+					}
+	            	
+					updatePayAllInvoices(false);
 	            	
 					// Activo/Desactivo pestaña de Pagos Adelantados dependiendo
 					// que el proveedor permitao no, OP Anticipadas
@@ -3143,7 +3244,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		}
 	}
 
-	private void treeUpdated() {
+	protected void treeUpdated() {
 		
 		// Expand all tree nodes 
 		
@@ -3195,12 +3296,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	
 	protected void tableUpdated() {
 		updateTotalAPagar1();
-	}
-	
-	protected void validateConversionRate() {
-		if (!m_model.validateConversionRate()){
-			showError("@NoCurrencyConvertError@");
-		}
 	}
 	
 	public void treeNodesChanged(TreeModelEvent arg0) {
@@ -3668,7 +3763,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 	
 	// Seteo en el contexto el valor total a pagar de la OP para poder mostrarlo en la ventana info de Cheques
-	private void setToPayAmtContext(BigDecimal amount) {
+	protected void setToPayAmtContext(BigDecimal amount) {
 		Env.setContext(m_ctx,m_WindowNo,"ToPayAmt", amount.setScale(2, BigDecimal.ROUND_HALF_UP).toString());
 	} 
 	

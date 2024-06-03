@@ -1985,7 +1985,16 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
 
         // Do not pay when Credit Stop/Hold
 
-        if( !isReceipt()) {
+        /**
+         * Si estamos cobrando DEBE controlar el Saldo Abierto de Cliente, de la Entidad Comercial, caso contrario NO controla
+         * 
+         * dREHER
+         */
+        
+        
+        // Codigo ORIGINAL if( !isReceipt()) {
+        
+        if( isReceipt()) {
             MBPartner bp = new MBPartner( getCtx(),getC_BPartner_ID(),get_TrxName());
 
             if( MBPartner.SOCREDITSTATUS_CreditStop.equals( bp.getSOCreditStatus())) {

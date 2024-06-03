@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Bank
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2009-10-22 14:51:29.972 */
-public class X_C_Bank extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2023-08-28 21:55:54.661 */
+public class X_C_Bank extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_C_Bank (Properties ctx, int C_Bank_ID, String trxName)
@@ -73,6 +74,23 @@ Bank */
 public int getC_Bank_ID() 
 {
 Integer ii = (Integer)get_Value("C_Bank_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+public static final int C_BPARTNER_ID_AD_Reference_ID = MReference.getReferenceID("C_BPartner Vendors");
+/** Set Business Partner .
+Identifies a Business Partner */
+public void setC_BPartner_ID (int C_BPartner_ID)
+{
+if (C_BPartner_ID <= 0) set_Value ("C_BPartner_ID", null);
+ else 
+set_Value ("C_BPartner_ID", new Integer(C_BPartner_ID));
+}
+/** Get Business Partner .
+Identifies a Business Partner */
+public int getC_BPartner_ID() 
+{
+Integer ii = (Integer)get_Value("C_BPartner_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }

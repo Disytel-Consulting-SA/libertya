@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BankAccount
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2016-10-24 20:11:56.082 */
+ *  @version  - 2023-08-28 21:55:54.671 */
 public class X_C_BankAccount extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -99,8 +99,8 @@ public static final String BANKACCOUNTTYPE_Checking = "C";
 Bank Account Type */
 public void setBankAccountType (String BankAccountType)
 {
-if (BankAccountType.equals("S") || BankAccountType.equals("C"));
- else throw new IllegalArgumentException ("BankAccountType Invalid value - Reference = BANKACCOUNTTYPE_AD_Reference_ID - S - C");
+if (BankAccountType.equals("S") || BankAccountType.equals("C") || ( refContainsValue("CORE-AD_Reference-216", BankAccountType) ) );
+ else throw new IllegalArgumentException ("BankAccountType Invalid value: " + BankAccountType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-216") );
 if (BankAccountType == null) throw new IllegalArgumentException ("BankAccountType is mandatory");
 if (BankAccountType.length() > 1)
 {
@@ -132,6 +132,20 @@ public String getBBAN()
 {
 return (String)get_Value("BBAN");
 }
+/** Set Bank.
+Bank */
+public void setC_Bank_ID (int C_Bank_ID)
+{
+set_ValueNoCheck ("C_Bank_ID", new Integer(C_Bank_ID));
+}
+/** Get Bank.
+Bank */
+public int getC_Bank_ID() 
+{
+Integer ii = (Integer)get_Value("C_Bank_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
 /** Set Bank Account.
 Account at the Bank */
 public void setC_BankAccount_ID (int C_BankAccount_ID)
@@ -160,17 +174,18 @@ Integer ii = (Integer)get_Value("C_BankAccount_Location_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Bank.
-Bank */
-public void setC_Bank_ID (int C_Bank_ID)
+public static final int C_CHARGE_INTEREST_ID_AD_Reference_ID = MReference.getReferenceID("C_Charge");
+/** Set C_Charge_Interest_ID */
+public void setC_Charge_Interest_ID (int C_Charge_Interest_ID)
 {
-set_ValueNoCheck ("C_Bank_ID", new Integer(C_Bank_ID));
+if (C_Charge_Interest_ID <= 0) set_Value ("C_Charge_Interest_ID", null);
+ else 
+set_Value ("C_Charge_Interest_ID", new Integer(C_Charge_Interest_ID));
 }
-/** Get Bank.
-Bank */
-public int getC_Bank_ID() 
+/** Get C_Charge_Interest_ID */
+public int getC_Charge_Interest_ID() 
 {
-Integer ii = (Integer)get_Value("C_Bank_ID");
+Integer ii = (Integer)get_Value("C_Charge_Interest_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -284,6 +299,22 @@ set_Value ("ElectronicPaymentsAccount", new Boolean(ElectronicPaymentsAccount));
 public boolean isElectronicPaymentsAccount() 
 {
 Object oo = get_Value("ElectronicPaymentsAccount");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set FixedTermAccount */
+public void setFixedTermAccount (boolean FixedTermAccount)
+{
+set_Value ("FixedTermAccount", new Boolean(FixedTermAccount));
+}
+/** Get FixedTermAccount */
+public boolean isFixedTermAccount() 
+{
+Object oo = get_Value("FixedTermAccount");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

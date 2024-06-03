@@ -1224,3 +1224,321 @@ ALTER FUNCTION libertya.getexternalserviceattribute(character, character)
 
 
 
+
+
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_0.0
+
+ALTER TABLE c_invoice 
+	ADD Cintolo_Adjustment_Clause character(1) NOT NULL DEFAULT 'N'::bpchar,
+	ADD Cintolo_Exchange_Rate numeric(20,2),
+	ADD cintolo_apply_exchange_dif character(1) NOT NULL DEFAULT 'N'::bpchar,
+	ADD cintolo_exchange_dif_receipt INTEGER,
+	ADD cintolo_Adjustment_Clause_Currency INTEGER;
+
+ALTER TABLE c_bpartner
+	ADD cintolo_point_of_sale INTEGER, -- Dif de cambio punto de venta
+	ADD cintolo_percentage_limit numeric(20,2), -- Dif de cambio límite porcentual (Numero)
+  	ADD cintolo_amount_limit numeric(20,2), -- Dif de cambio límite importe (Numero)
+ 	ADD cintolo_currency_limit INTEGER, -- Dif de cambio límite moneda (Ref: C_Currency)
+ 	ADD cintolo_acumulate_exchange_dif character(1) NOT NULL DEFAULT 'N'::bpchar, -- Acumular diferencia de cambio (SI/NO)
+	ADD cintolo_checks_limit numeric(20,2); -- Limite de Cheques (Numerico, Para la pestaña Cliente)
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_0.0
+
+CREATE TABLE C_Cintolo_Exchange_Dif_Settings (
+	C_Cintolo_Exchange_Dif_Settings_ID integer NOT NULL,
+ 	ad_client_id integer NOT NULL,
+  	ad_org_id integer NOT NULL,
+  	isactive character(1) NOT NULL DEFAULT 'Y'::bpchar,
+  	created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  	createdby integer NOT NULL,
+  	updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+  	updatedby integer NOT NULL,
+  	
+  	m_product_id INTEGER NOT NULL, -- Producto (TableDir)
+  	point_of_sale INTEGER NOT NULL, -- Punto de Venta (Entero)
+  	c_doctype_id INTEGER NOT NULL, -- Tipo Doc ajustes interno (TableDir) 
+  	debit_pricelist INTEGER NOT NULL, -- Tarifa Debito (Ref: M_PriceList_ID)
+  	credit_pricelist INTEGER NOT NULL, -- Tarifa Credito (Ref: M_PriceList_ID)
+  	percentage_limit numeric(20,2) NOT NULL, -- Dif de cambio límite porcentual (Numero, Default: 3)
+  	amount_limit numeric(20,2) NOT NULL, -- Dif de cambio límite importe (Numero, Default: 30)
+ 	c_currency_id INTEGER NOT NULL, -- Dif de cambio límite moneda (TableDir, Default: USD)
+  
+  	CONSTRAINT C_Cintolo_Exchange_Dif_Settings_Key PRIMARY KEY (C_Cintolo_Exchange_Dif_Settings_ID)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE C_Cintolo_Exchange_Dif_Settings
+  OWNER TO libertya;
+  
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_0.0  
+-- 20230913-1435 
+CREATE OR REPLACE VIEW libertya.c_invoice_v
+AS SELECT i.c_invoice_id,
+    i.ad_client_id,
+    i.ad_org_id,
+    i.isactive,
+    i.created,
+    i.createdby,
+    i.updated,
+    i.updatedby,
+    i.issotrx,
+    i.documentno,
+    i.docstatus,
+    i.docaction,
+    i.processing,
+    i.processed,
+    i.c_doctype_id,
+    i.c_doctypetarget_id,
+    i.c_order_id,
+    i.description,
+    i.isapproved,
+    i.istransferred,
+    i.salesrep_id,
+    i.dateinvoiced,
+    i.dateprinted,
+    i.dateacct,
+    i.c_bpartner_id,
+    i.c_bpartner_location_id,
+    i.ad_user_id,
+    i.poreference,
+    i.dateordered,
+    i.c_currency_id,
+    i.c_conversiontype_id,
+    i.paymentrule,
+    i.c_paymentterm_id,
+    i.c_charge_id,
+    i.m_pricelist_id,
+    i.c_campaign_id,
+    i.c_project_id,
+    i.c_activity_id,
+    i.isprinted,
+    i.isdiscountprinted,
+    i.ispaid,
+    i.isindispute,
+    i.ispayschedulevalid,
+    NULL::integer AS c_invoicepayschedule_id,
+    i.chargeamt * d.signo_issotrx::numeric AS chargeamt,
+    i.totallines,
+    i.grandtotal * d.signo_issotrx::numeric * d.signo_issotrx::numeric AS grandtotal,
+    d.signo_issotrx::numeric AS multiplier,
+        CASE
+            WHEN "substring"(d.docbasetype::text, 2, 2) = 'P'::text THEN - 1::numeric
+            ELSE 1::numeric
+        END AS multiplierap,
+    d.docbasetype,
+    i.notexchangeablecredit,
+    i.isexchange,
+    i.initialcurrentaccountamt,
+    i.dateacct AS duedate,
+    i.m_authorizationchain_id,
+    i.authorizationchainstatus,
+    i.cintolo_adjustment_clause,
+    i.cintolo_exchange_rate,
+    i.cintolo_adjustment_clause_currency 
+   FROM c_invoice i
+     JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id
+  WHERE i.ispayschedulevalid <> 'Y'::bpchar
+UNION ALL
+ SELECT i.c_invoice_id,
+    i.ad_client_id,
+    i.ad_org_id,
+    i.isactive,
+    i.created,
+    i.createdby,
+    i.updated,
+    i.updatedby,
+    i.issotrx,
+    i.documentno,
+    i.docstatus,
+    i.docaction,
+    i.processing,
+    i.processed,
+    i.c_doctype_id,
+    i.c_doctypetarget_id,
+    i.c_order_id,
+    i.description,
+    i.isapproved,
+    i.istransferred,
+    i.salesrep_id,
+    i.dateinvoiced,
+    i.dateprinted,
+    i.dateacct,
+    i.c_bpartner_id,
+    i.c_bpartner_location_id,
+    i.ad_user_id,
+    i.poreference,
+    i.dateordered,
+    i.c_currency_id,
+    i.c_conversiontype_id,
+    i.paymentrule,
+    i.c_paymentterm_id,
+    i.c_charge_id,
+    i.m_pricelist_id,
+    i.c_campaign_id,
+    i.c_project_id,
+    i.c_activity_id,
+    i.isprinted,
+    i.isdiscountprinted,
+    i.ispaid,
+    i.isindispute,
+    i.ispayschedulevalid,
+    ips.c_invoicepayschedule_id,
+    NULL::numeric AS chargeamt,
+    NULL::numeric AS totallines,
+    ips.dueamt AS grandtotal,
+    d.signo_issotrx AS multiplier,
+        CASE
+            WHEN "substring"(d.docbasetype::text, 2, 2) = 'P'::text THEN - 1::numeric
+            ELSE 1::numeric
+        END AS multiplierap,
+    d.docbasetype,
+    i.notexchangeablecredit,
+    i.isexchange,
+    i.initialcurrentaccountamt,
+    ips.duedate,
+    i.m_authorizationchain_id,
+    i.authorizationchainstatus,
+    i.cintolo_adjustment_clause,
+    i.cintolo_exchange_rate,
+    i.cintolo_adjustment_clause_currency 
+   FROM c_invoice i
+     JOIN c_doctype d ON i.c_doctypetarget_id = d.c_doctype_id
+     JOIN c_invoicepayschedule ips ON i.c_invoice_id = ips.c_invoice_id
+  WHERE i.ispayschedulevalid = 'Y'::bpchar AND ips.isvalid = 'Y'::bpchar;
+  
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_0.0
+-- 20230914-1517
+ALTER TABLE libertya.c_payment ADD cintolo_ref_invoiceline_id int4 NULL;
+  
+
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230825-1819 Campos para cuentas bancarias plazo fijo
+ALTER TABLE IF EXISTS libertya.c_bankaccount
+    ADD COLUMN fixedtermaccount character(1) NOT NULL DEFAULT 'N',
+    ADD COLUMN c_charge_interest_id integer;
+    
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230828_0859 Tablas para registrar plazos fijos
+CREATE TABLE IF NOT EXISTS libertya.c_fixedterm
+(
+    c_fixedterm_id integer NOT NULL,
+    ad_client_id integer NOT NULL,
+    ad_org_id integer NOT NULL,
+    isactive character(1) COLLATE pg_catalog."default" NOT NULL DEFAULT 'Y'::bpchar,
+    created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+    createdby integer NOT NULL,
+    updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+    updatedby integer NOT NULL,
+	trxdate timestamp without time zone NOT NULL,
+	duedate timestamp without time zone NOT NULL,
+	c_bank_id integer NOT NULL,
+	c_bankaccount_id integer NOT NULL,
+	c_bankaccountfixedterm_id integer NOT NULL,
+    initialamount numeric(24,6) NOT NULL DEFAULT 0,
+	term integer NOT NULL,
+	tna numeric(24,6) NOT NULL DEFAULT 0,
+	tnaterm integer NOT NULL,
+	returnamt numeric(24,6) NOT NULL DEFAULT 0,
+	retentionamt numeric(24,6),
+	netamt numeric(24,6),
+	tea numeric(24,6),
+	certificate character varying(40),
+	constitute character(1) NOT NULL DEFAULT 'N'::bpchar,
+	constituted character(1) NOT NULL DEFAULT 'N'::bpchar,
+	c_banktransferconstitution_id integer,
+	accredit character(1) NOT NULL DEFAULT 'N'::bpchar,
+	accredited character(1) NOT NULL DEFAULT 'N'::bpchar,
+	c_paymentinterest_id integer,
+	c_banktransferaccreditation_id integer,
+    CONSTRAINT c_fixedterm_key PRIMARY KEY (c_fixedterm_id),
+    CONSTRAINT cfixedterm_cbank FOREIGN KEY (c_bank_id)
+        REFERENCES libertya.c_bank (c_bank_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedterm_cbankaccount FOREIGN KEY (c_bankaccount_id)
+        REFERENCES libertya.c_bankaccount (c_bankaccount_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedterm_cbankaccountfixedterm FOREIGN KEY (c_bankaccountfixedterm_id)
+        REFERENCES libertya.c_bankaccount (c_bankaccount_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedterm_c_banktransferconstitution FOREIGN KEY (c_banktransferconstitution_id)
+        REFERENCES libertya.c_banktransfer (c_banktransfer_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedterm_c_banktransferaccreditation FOREIGN KEY (c_banktransferaccreditation_id)
+        REFERENCES libertya.c_banktransfer (c_banktransfer_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedterm_c_paymeninterest FOREIGN KEY (c_paymentinterest_id)
+        REFERENCES libertya.c_payment (c_payment_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+);
+
+CREATE TABLE IF NOT EXISTS libertya.c_fixedtermretention
+(
+    c_fixedtermretention_id integer NOT NULL,
+    ad_client_id integer NOT NULL,
+    ad_org_id integer NOT NULL,
+    isactive character(1) COLLATE pg_catalog."default" NOT NULL DEFAULT 'Y'::bpchar,
+    created timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+    createdby integer NOT NULL,
+    updated timestamp without time zone NOT NULL DEFAULT ('now'::text)::timestamp(6) with time zone,
+    updatedby integer NOT NULL,
+	c_fixedterm_id integer NOT NULL,
+	c_retencionschema_id integer NOT NULL,
+	retentionamt numeric(24,6),
+	m_retencion_invoice_id integer,
+    CONSTRAINT c_fixedtermretention_key PRIMARY KEY (c_fixedtermretention_id),
+    CONSTRAINT cfixedtermretention_cfixedterm FOREIGN KEY (c_fixedterm_id)
+        REFERENCES libertya.c_fixedterm (c_fixedterm_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedtermretention_cretencionschema FOREIGN KEY (c_retencionschema_id)
+        REFERENCES libertya.c_retencionschema (c_retencionschema_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+	CONSTRAINT cfixedtermretention_mretencioninvoice FOREIGN KEY (m_retencion_invoice_id)
+        REFERENCES libertya.m_retencion_invoice (m_retencion_invoice_id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+);
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230828_2150 Agrego columna Entidad Comercial en bancos para operaciones (depósitos / payments)
+ALTER TABLE IF EXISTS libertya.c_bank ADD COLUMN c_bpartner_id integer; 
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230828_2214 Agrego columna Moneda en los Plazos fijos, para validar con cuentas bancarias y para las operaciones generadas
+ALTER TABLE IF EXISTS libertya.c_fixedterm ADD COLUMN c_currency_id integer NOT NULL DEFAULT 118;
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230830_1229 Agrego columnas para referencia al recibo por retenciones y para los botones de anular
+ALTER TABLE IF EXISTS libertya.c_fixedterm
+	ADD COLUMN c_allocationretentionhdr_id integer,
+    ADD COLUMN voidconstitute character(1) NOT NULL DEFAULT 'N',
+    ADD COLUMN voidaccredit character(1) NOT NULL DEFAULT 'N';
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230830_1829 Elimino array_agg de postgres 12 porque sino da error 
+DROP AGGREGATE IF EXISTS libertya.array_agg(anyelement);
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0    
+--20230830_1858 Campos para importación extractos Galicia
+ALTER TABLE IF EXISTS libertya.i_bankstatement
+    ADD COLUMN origen character varying(40),
+    ADD COLUMN balance numeric(20, 2);
+
+-- ### MERGE 2024-06-03 org.libertya.core.micro.r3032.dev.cintolo upgrade_from_1.0
+--20230831_0907 Campos para importación extractos Santander
+ALTER TABLE IF EXISTS libertya.i_bankstatement
+    ADD COLUMN sucursal character varying(60),
+    ADD COLUMN codigooperativo character varying(30);
+
+

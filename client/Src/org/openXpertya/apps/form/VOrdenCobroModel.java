@@ -1,10 +1,12 @@
 package org.openXpertya.apps.form;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -21,10 +23,13 @@ import java.util.logging.Level;
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.cc.CurrentAccountManager;
+import org.openXpertya.exchangedif.InvoiceExchangeDif;
 import org.openXpertya.model.AllocationGeneratorException;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MAllocationHdr;
+import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCashLine;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDiscountConfig;
 import org.openXpertya.model.MDiscountSchema;
 import org.openXpertya.model.MDocType;
@@ -95,6 +100,9 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	/** Débitos custom generados */
 	private List<MInvoice> customDebitInvoices = new ArrayList<MInvoice>();
 	
+	/** Diferencia de cambio por Debito */
+	private ArrayList<InvoiceExchangeDif> ExchangeDifDebitInvoices = new ArrayList<InvoiceExchangeDif>();
+	
 	/**
 	 * Asociación entre los créditos custom generados y el medio de pago
 	 * correspondiente en el recibo
@@ -121,6 +129,170 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		setActualizarNrosChequera(false);
 	}
 
+	// --------------------------------- CINTOLO START --------------------------------- 
+	
+	@Override
+	public void calculateExchangeDifferenceValues() {
+		
+		this.exchangeDifference = calculateExchangeDifference();
+		this.exchangeDifferencePercent = calculateExchangeDifferencePercent();
+		this.exchangeDifferenceLimit = getBPartnerExchangeDifLimit();
+		this.exchangeDifferencePercentLimit = getBPartnerExchangeDifPercentLimit();
+		
+		// dREHER presetear diferencia de cambio en el generador de asignaciones
+		this.poGenerator.setDiffExchange(exchangeDifference);
+		this.poGenerator.setInvoiceExchangeDif(this.ExchangeDifDebitInvoices);
+		
+	}
+	
+	@Override
+	public void processExchangeDifference() {			
+		// Si no hay diferencia de cambio, no se agrega nada al arbol
+		if(exchangeDifference.equals(Env.ZERO)) {
+			return;
+		}
+		
+		if(isCintoloEmit && !isCintoloInclude) {
+			MedioPago mp = new MedioPagoDifDeCambio();
+			mp.setImporte(exchangeDifference);			
+			m_mediosPago.add(mp);
+		}
+	}
+	
+	// dREHER se calculan las diferencias y se agregan al array de objetos de dif de cambio
+	@Override
+	public BigDecimal calculateExchangeDifference() {
+		BigDecimal dif = new BigDecimal(0);
+		
+		ExchangeDifDebitInvoices.clear();
+		
+		if (m_facturas == null) {
+			return dif;
+		}
+		
+		for (ResultItem x : m_facturas) {
+			if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
+				int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
+				MInvoice i = new MInvoice(m_ctx, id, trxName); 
+
+				// BigDecimal oldTotalArs = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+				
+				// dREHER
+				// Tomar el saldo abierto y NO el monto total del comprobante, ya que cuando se debe abonar
+				// solo se puede hacer por un monto menor o igual al saldo abierto de la factura a pagar...
+				BigDecimal oldTotalArs = MCurrency.currencyConvert(i.getOpenAmt(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+				if(oldTotalArs==null)
+					oldTotalArs = Env.ZERO;
+				
+				BigDecimal currentTotalArs = (BigDecimal)((ResultItemFactura) x).getItem(10); // Monto Pendiente ARS a la fecha
+				if(currentTotalArs==null)
+					currentTotalArs = Env.ZERO;
+				
+				BigDecimal exchangeDif = currentTotalArs.subtract(oldTotalArs);
+
+				dif = dif.add(exchangeDif);
+
+				debug("Saldos abiertos. A la fecha del comprobante: " + oldTotalArs + 
+						" Al dia de cobro: " + currentTotalArs + 
+						" Diferencia: " + exchangeDif, true);
+				
+				// dREHER aca vamos a agregar los objetos de diferencia de cambio
+				ExchangeDifDebitInvoices.add(new InvoiceExchangeDif(i, exchangeDif) );
+
+			}
+		}
+		
+		return dif;
+	}
+	
+	// Calcula total a partir de la lista de objetos de dif de cambio
+	public BigDecimal addExchangeDifference() {
+		BigDecimal dif = new BigDecimal(0);
+		
+		if(ExchangeDifDebitInvoices == null)
+			return dif;
+		
+		for(InvoiceExchangeDif dc : ExchangeDifDebitInvoices)
+			dif = dif.add(dc.getExchangeDiff());
+		
+		return dif;
+	}
+		
+	@Override
+	public boolean isAdjustmentClause() {
+		if (m_facturas != null) {
+			for (ResultItem x : m_facturas) {
+				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
+					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
+					MInvoice i = new MInvoice(m_ctx,id,trxName); 
+					if((i.get_Value("Cintolo_Adjustment_Clause") != null && 
+							(Boolean) i.get_Value("Cintolo_Adjustment_Clause")) || i.getC_Currency_ID() == 100) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	@Override
+	public BigDecimal getBPartnerExchangeDifLimit() {
+		if(C_BPartner_ID <= 0) {
+			return Env.ZERO;
+		}
+		
+		MBPartner bp = new MBPartner(m_ctx, C_BPartner_ID, trxName);
+		BigDecimal limit = (BigDecimal) bp.get_Value("Cintolo_Amount_Limit");
+		
+		// TODO: El limite siempre tiene que ser en PESOS
+		
+		return (limit != null && limit.compareTo(Env.ZERO) > 0) ? limit : Env.ZERO;
+	}
+	
+	@Override
+	public BigDecimal getBPartnerExchangeDifPercentLimit() {
+		if(C_BPartner_ID <= 0) {
+			return Env.ZERO;
+		}
+		
+		MBPartner bp = new MBPartner(m_ctx, C_BPartner_ID, trxName);
+		BigDecimal limit = (BigDecimal) bp.get_Value("Cintolo_Percentage_Limit");
+		
+		// TODO: El limite siempre tiene que ser en PESOS
+		
+		return (limit != null && limit.compareTo(Env.ZERO) > 0) ? limit : Env.ZERO;
+	}
+	
+	@Override
+	public BigDecimal calculateExchangeDifferencePercent() {
+		if (exchangeDifference.compareTo(BigDecimal.ZERO) == 0) {
+			return BigDecimal.ZERO; 
+	    }
+		
+		BigDecimal totalInvoice = Env.ZERO;
+		if (m_facturas != null) {
+			for (ResultItem x : m_facturas) {
+				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
+					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
+					MInvoice i = new MInvoice(m_ctx,id,trxName); 
+					totalInvoice = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+					//totalInvoice = totalInvoice.add(i.getGrandTotal());
+				}
+			}
+		}
+		return exchangeDifference.divide(totalInvoice,RoundingMode.HALF_UP).multiply(Env.ONEHUNDRED);
+	}
+	
+	@Override
+	public boolean shouldEmit() {
+		return exchangeDifferenceLimit.compareTo(exchangeDifference.abs()) < 0 &&
+				exchangeDifferencePercentLimit.compareTo(exchangeDifferencePercent.abs()) < 0;
+	}
+	
+	
+	
+	// --------------------------------- CINTOLO END --------------------------------- 
+	
 	@Override
 	protected OpenInvoicesTableModel getInvoicesTableModel(){
 		return new OpenInvoicesCustomerReceiptsTableModel();
@@ -423,6 +595,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	@Override
 	protected void addCustomPaymentInfo(MPayment pay, MedioPago mp){
+		if(mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_DIFDECAMBIO)) {
+			return; 
+		}
+		
 		// Si es tarjeta de crédito agrego la info necesaria
 		if(mp.getTipoMP().equals(MedioPago.TIPOMEDIOPAGO_TARJETACREDITO)){
 			MedioPagoTarjetaCredito tarjeta = (MedioPagoTarjetaCredito)mp;
@@ -472,18 +648,33 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			return;
 		}
 		
+		// dREHER si se esta editando la fecha, puede dar null, esperar a refrescar cuando sea una fecha valida
+		if(m_fechaTrx==null)
+			return;
 
 		// paymenttermduedate
 		
-		StringBuffer sql = new StringBuffer();
 		
-		sql.append(" SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno");
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		String formattedFechaFacturas = dateFormat.format(m_fechaFacturas);
+		
+		StringBuffer sql = new StringBuffer();
+		// CINTOLO. Se actualiza la Query para que incluya la dif de cambio en facturas en ARS con Clausula de Ajuste
+ 		sql.append("SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno");
 		if (isSetDescriptionPreference())
 			sql.append(",COALESCE(description,'')");
-		sql.append(", dateinvoiced, duedate, currencyIso, grandTotal, openTotal, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule FROM ");
+		sql.append(", dateinvoiced, duedate, currencyIso, grandTotal, openTotal, COALESCE(convertedamt,0.00) AS convertedamt, COALESCE(openamt,0.00) AS openamt, isexchange, C_Currency_ID, paymentrule FROM ");
 		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, i.description, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
-		sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
-		sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule ");
+		//sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
+		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) ");
+		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , '"+ m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) ");
+		sql.append("	ELSE abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, " + C_Currency_ID + " , '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) ");
+		sql.append("	END AS ConvertedAmt, isexchange, ");		
+		//sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, " + C_Currency_ID + " , '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule ");
+		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) ");
+		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) ");
+		sql.append(" 	ELSE currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) ");
+		sql.append(" 	END AS openAmt, i.C_Currency_ID, i.paymentrule ");
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
 		sql.append("  LEFT JOIN c_invoicepayschedule AS ips ON (i.c_invoicepayschedule_id=ips.c_invoicepayschedule_id) ");
@@ -492,11 +683,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		sql.append("  WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
 		//sql.append("    AND i.IsSOTRx = '" + getIsSOTrx() + "' ");
 		sql.append("    AND GrandTotal <> 0.0 ");
-		sql.append("    AND C_BPartner_ID = ? ");
+		sql.append("    AND C_BPartner_ID = " + C_BPartner_ID + " ");
 		sql.append("    AND dt.signo_issotrx = " + getSignoIsSOTrx());
 		
 		if (AD_Org_ID != 0) 
-			sql.append("  AND i.ad_org_id = ?  ");
+			sql.append("  AND i.ad_org_id = " + AD_Org_ID + " ");
 		
 		sql.append(" AND i.paymentRule = '").append(getPaymentRule()).append("' ");
 		
@@ -510,16 +701,21 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 		sql.append(" ORDER BY DueDate");
 		
-		CPreparedStatement ps = null; 
+		PreparedStatement ps = null; 
 		ResultSet rs = null;
 		
+		// dREHER Controlar que haya tasas de conversion correctamente configuradas
+		boolean isError = false;
+		
 		try {
+			System.out.println(sql.toString());
+			ps = DB.prepareStatement(sql.toString(),trxName,true);
 			
-			ps = DB.prepareStatement(sql.toString(), getTrxName());
+			// dREHER controlar si debe pasarse el parametro fecha a la consulta
+			if (!m_allInvoices && !getBPartner().isGroupInvoices())
+				ps.setTimestamp(1, m_fechaTrx);
 			
-			ps.setInt(i++, C_Currency_ID);
-			ps.setInt(i++, C_Currency_ID);
-			ps.setInt(i++, C_BPartner_ID);
+			rs = ps.executeQuery();
 			
 			if (AD_Org_ID != 0)
 				ps.setInt(i++, AD_Org_ID);
@@ -530,6 +726,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			rs = ps.executeQuery();
 			//int ultimaFactura = -1;
 			while (rs.next()) {
+				
 				ResultItemFactura rif = new ResultItemFactura(rs);
 				// Actualizar el descuento/recargo del esquema de vencimientos
 				updatePaymentTermInfo(rif);
@@ -1336,6 +1533,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			suma = m_montoPagoAnticipado;
 		}
 		
+		if(suma==null)
+			suma = new BigDecimal(0);
+		
+		// CINTOLO: Se recalcula el total en base a si se incluye o no la diferencia de cambio
+		if(!isCintoloEmit || (isCintoloEmit && !isCintoloInclude && !calculateExchangeDifference().equals(Env.ZERO))) {
+			suma = suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO);
+		}
+		
 		return suma;
 	}
 	
@@ -1388,7 +1593,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(m_facturas != null){
 			for (ResultItem f : m_facturas) {
 				ResultItemFactura fac = (ResultItemFactura) f;
-				if (fac.getManualAmtClientCurrency().signum() > 0) {
+				// dREHER controlar valores nulos
+				if (fac.getManualAmtClientCurrency()!= null && fac.getManualAmtClientCurrency().signum() > 0) {
 					dueDate = (Timestamp) fac.getItem(m_facturasTableModel
 							.getDueDateColIdx());
 					setIsOverdueInvoice(dueDate);

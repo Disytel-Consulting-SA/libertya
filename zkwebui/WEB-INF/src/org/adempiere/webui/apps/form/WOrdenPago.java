@@ -80,7 +80,9 @@ import org.openXpertya.model.Query;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_AD_Role;
 import org.openXpertya.model.X_C_BankAccountDoc;
+import org.openXpertya.pos.model.AuthOperation;
 import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.report.NumeroCastellano;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -88,6 +90,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.TimeUtil;
+import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.zkoss.lang.Objects;
@@ -127,7 +130,7 @@ import org.zkoss.zul.impl.XulElement;
  */
 public class WOrdenPago extends ADForm implements ValueChangeListener, TableModelListener, EventListener /*implements /*FormPanel,ActionListener,TableModelListener,VetoableChangeListener,ChangeListener,TreeModelListener,MouseListener,CellEditorListener,ASyncProcess*/ {
 
-	private BigDecimal maxPaymentAllowed = null;
+	protected BigDecimal maxPaymentAllowed = null;
 	
     /** Creates new form WOrdenPago */
     public WOrdenPago() {
@@ -184,7 +187,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         jPanel1 = GridFactory.newGridLayout();
 
         MLookup lookupClient = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_Client_ID", "AD_Client", DisplayType.TableDir);
-        cboClient = new WTableDirEditor("AD_Client_ID", false, false, true, lookupClient);
+        cboClient = new WTableDirEditor("AD_Client_ID", true, false, true, lookupClient);
         cboClient.setValue(Env.getAD_Client_ID(Env.getCtx()));
         cboClient.setReadWrite(false);
         addPopupMenu(cboClient, true, true, false);
@@ -197,7 +200,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         fldDocumentNo = new WStringEditor(); 
 
         MLookup lookupOrg = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_Org_ID", "AD_Org", DisplayType.TableDir);
-		cboOrg = new WTableDirEditor("AD_Org_ID", false, false, true, lookupOrg);
+		cboOrg = new WTableDirEditor("AD_Org_ID", true, false, true, lookupOrg); // obligatorio
 		cboOrg.setValue(Env.getAD_Org_ID(Env.getCtx()));
 		addPopupMenu(cboOrg, true, true, false);
 		
@@ -222,7 +225,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         txtDescription = new WStringEditor();
 		MLookupInfo infoDocType = VComponentsFactory.MLookupInfoFactory( Env.getCtx(),m_WindowNo, 0, "C_DocType_ID", "C_DocType", DisplayType.TableDir, m_model.getDocumentTypeSqlValidation());
 		MLookup lookupDocType = new MLookup(infoDocType, 0);
-		cboDocumentType = new WTableDirEditor("C_DocType_ID", false, false, true, lookupDocType);
+		cboDocumentType = new WTableDirEditor("C_DocType_ID", true, false, true, lookupDocType); // dREHER debe ser obligatorio
+		
+		/* esto incrementa el numero de recibo/op aunque no se avance con el pago, por ahora lo quito TODO: ver luego que hacer para corregir este comportamiento
+		if(lookupDocType.getSize()>0) { // dREHER setea el primer elemento encontrado
+			int C_DocType_ID = DB.getSQLValue(null, "SELECT C_DocType_ID FROM C_DocType WHERE Name='" + lookupDocType.getElementAt(0) + "'");
+			cboDocumentType.setValue(C_DocType_ID);
+			lookupDocType.setSelectedItem(lookupDocType.getElementAt(0));
+			
+			changeTipoDoc();
+		}
+		*/
+		
 		addPopupMenu(cboDocumentType, true, true, false);
 		
 		tblFacturas = new Grid();
@@ -301,7 +315,24 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			
 			@Override
 			public void onEvent(Event arg0) throws Exception {
+				
 				updatePayAllInvoices(false);
+				
+				if(checkPayAll.isSelected()) {
+					
+					/**
+					 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+					 * del recibo/pago y para cada factura
+					 * 
+					 * 
+					 */
+					
+					if(!ValidateConvertionRate()) {
+						checkPayAll.setSelected(false);
+						checkPayAll.setChecked(false);
+						return;
+					}
+				}
 				
 			}
 		});
@@ -997,7 +1028,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
-    private void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
+    protected void onTipoPagoChange(boolean toPayMoment) {//GEN-FIRST:event_onTipoPagoChange
     	if (radPayTypeStd.isSelected()) {
     		tblFacturas.setAttribute("ReadOnly", "false"); 
     		txtTotalPagar1.setReadWrite(false); 
@@ -1057,7 +1088,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	FDialog.info(m_WindowNo, this, msg);
     }
     
-    private void cmdProcessActionPerformed(Event evt) {
+    // dREHER para poder extender en WOrdenCobro se cambia alcance del metodo
+    protected void cmdProcessActionPerformed(Event evt) {
     	
     	doBPartnerValidations();
     	
@@ -1341,9 +1373,46 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		// Validar sólo proveedor
 		validateOnlyAllowProviders();
+		
+	}
+	
+	protected boolean ValidateConvertionRate() {
+		
+		if( this.BPartnerSel.getNewValueOnChange() == null &&
+			this.BPartnerSel.getValue() == null){
+			return true;
+		}
+		
+		/**
+		 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+		 * del recibo/pago y para cada factura
+		 * 
+		 * dREHER
+		 */
+		
+		// 1- valido tasa de conversion para la fecha de cada factura
+		if(!getModel().validateConvertionRate()){
+			
+			showError("No se encontro tasa de conversion para la moneda y fecha<br>" 
+					+ "de alguno de los comprobantes a pagar");
+			
+			return false;
+		}
+
+		// 2- valido tasa de conversion para la fecha del recibo/pago
+		if(!getModel().validateConvertionRate(getModel().m_fechaTrx)){
+			
+			showError("No se encontro tasa de conversion para la moneda y fecha<br>" 
+					+ "de la transaccion!");
+			
+			return false;
+		}
+		
+		return true;
+		
 	}
     
-    /**
+	/**
      * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
      * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
      * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el LookUP.
@@ -1456,13 +1525,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     
     private Tabpanel panelChequeTercero;
     private WSearchEditor chequeTerceroCuenta;
-    private WSearchEditor chequeTercero;
+    protected WSearchEditor chequeTercero;
     private WStringEditor txtChequeTerceroImporte;
     private WStringEditor txtChequeTerceroDescripcion;
 
-	private boolean m_cambioTab = false;
+	protected boolean m_cambioTab = false;
 	protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
-	private static CLogger log = CLogger.getCLogger( WOrdenPago.class );
+	protected static CLogger log = CLogger.getCLogger( WOrdenPago.class );
 	protected VOrdenPagoModel m_model = new VOrdenPagoModel();
 	protected Properties m_ctx = Env.getCtx();
     
@@ -1533,7 +1602,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		getModel().m_facturasTableModel.addTableModelListener(new TableModelListener() {
 			public void tableChanged(TableModelEvent e) {
 				// Se verifica que no se esté intentando pagar una factura que no tiene una tasa de cambio para la fecha actual
-				validateConversionRate();
+				// validateConversionRate();
+				
+				/**
+				 * 2024-04-10 esto se cambia para validar apenas se cambio EC, fecha o pagar todo
+				 * dREHER
+				 */
+				
 				tableUpdated();		
 				resetModel();
 			}
@@ -1918,6 +1993,23 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			resetModel();
 		}
 	}
+	
+	/**
+	 * Refresco la info del tipo de documento
+	 * dREHER
+	 */
+	public void changeTipoDoc() {
+		getModel().setDocumentType((Integer)cboDocumentType.getValue());
+		String documentNo = null;
+		try {
+			documentNo = getModel().nextDocumentNo();
+		} catch (Exception e2) {
+			m_model.setDocumentType(null);
+			fldDocumentNo.setValue(null);
+			showInfo(e2.getMessage());
+		}
+		fldDocumentNo.setValue(documentNo);
+	}
 
 	public void valueChange(ValueChangeEvent e) {
 		// System.out.println("vetoableChange: " + arg0);
@@ -1931,9 +2023,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			// relacionados con el cambio de la entidad comercial
         	customUpdateBPartnerRelatedComponents(true);
         	buscarPagos();
+        	
         	// Actualizar interfaz grafica para null value
-        	if (BPartnerSel.getValue() == null)
+        	if (BPartnerSel.getNewValueOnChange() == null &&
+        		BPartnerSel.getValue() == null) { // dREHER cambio como consulta por null
 				cmdBPartnerSelActionPerformed(null);
+        	}else {
+        		
+        		/**
+				 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+				 * del recibo/pago y para cada factura
+				 * 
+				 * dREHER
+				 */
+				
+				if(!ValidateConvertionRate()) {
+					return;
+				}
+
+        	}
+        	
         	updatePayAllInvoices(false);
         	
 			// Activo/Desactivo pestaña de Pagos Adelantados dependiendo
@@ -1984,6 +2093,18 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			m_model.setFechaOP((Timestamp)dateTrx.getValue());
 			m_model.actualizarFacturas();
 			Env.setContext(m_ctx, m_WindowNo, "Date", (Timestamp)dateTrx.getValue());
+			
+			/**
+			 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
+			 * del recibo/pago y para cada factura
+			 * 
+			 * dREHER
+			 */
+			
+			if(!ValidateConvertionRate()) {
+				return;
+			}
+			
 		}
 	}
 
@@ -2015,7 +2136,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		}
 	}
 	
-	private void treeUpdated() {
+	protected void treeUpdated() {
 		// Update stats text fields
 		updateSummaryInfo();
 	}
@@ -2060,12 +2181,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		updateTotalAPagar1();
 	}
 	
-	protected void validateConversionRate() {
-		if (!m_model.validateConversionRate()){
-			showError("@NoCurrencyConvertError@");
-		}
-	}
-
 	protected void setModel(VOrdenPagoModel model) {
 		m_model = model;
 	}
@@ -2642,7 +2757,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 * Actualizar el total a pagar de la primer pestaña
 	 */    
 	protected void updateTotalAPagar1(){
-		txtTotalPagar1.setValue(numberFormat(m_model.getSumaTotalPagarFacturas()));
+		BigDecimal total = m_model.getSumaTotalPagarFacturas();
+		String n = numberFormat(total);
+		txtTotalPagar1.setValue(total);
 	}
 	
 	/**
@@ -2661,7 +2778,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected void updatePayAmt(BigDecimal amt){
 		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
 
-		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, new Timestamp(System.currentTimeMillis()), getModel().AD_Org_ID, m_ctx);
+		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
 
 		Integer tabIndexSelected = mpTabbox.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
@@ -2776,6 +2893,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		m_model.setDocumentNo(documentNo);*/
 		
 		getModel().reset();
+		
 		updateTreeModel();
 		pagosTree.setModel(getMediosPagoTreeModel());
 	}
@@ -3370,14 +3488,24 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		if (m_nodoMediosPago != null) {
 			m_nodoMediosPago.removeAllChildren();
 			
-			for (MedioPago mp : m_model.m_mediosPago) 
+			for (MedioPago mp : m_model.m_mediosPago) {
+				debug("Medio pago: " + mp.getClass() + " Importe: " + mp.getImporte() 
+							+ " Importe moneda original: " + mp.getImporteMonedaOriginal()
+							+ " Importe real: " + mp.getRealAmt());
+				
 				m_nodoMediosPago.add(new MyTreeNode(null, mp, true));
+			}
 		}
 		
 //		pagosTree.setTreeitemRenderer(getMediosPagoTreeModel()); <- stackoverflow // m_arbolModel.nodeStructureChanged(m_nodoRaiz);
 		treeUpdated();
 	}
 	
+	private void debug(String string) {
+		System.out.println("WOrdenPago. " + string);
+		
+	}
+
 	public SimpleTreeModel getMediosPagoTreeModel() {
 		updateTreeModel();
 		return m_arbolModel;

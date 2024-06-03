@@ -262,7 +262,7 @@ public class GridPanel extends Borderlayout implements EventListener
 		int index = 0;
 		for (int i = 0; i < numColumns; i++)
 		{
-			if (mField[i].isDisplayed())
+			if (mField[i].isDisplayed() && mField[i].isDisplayedInGrid()) // dREHER debe ademas mostrarse en grid
 			{
 				colnames.put(index, mField[i].getHeader());
 				index++;

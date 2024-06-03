@@ -1,11 +1,14 @@
 package org.openXpertya.process;
 
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -26,6 +29,22 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.PresentacionCOT;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 public class GenerateCOTProcess extends ExportProcess {
 	private Properties localCtx;
@@ -150,10 +169,261 @@ public class GenerateCOTProcess extends ExportProcess {
 			getExportFormat().setLastExportedDate(Env.getTimestamp());
 			if(!getExportFormat().save()){
 				throw new Exception(CLogger.retrieveErrorAsString());
+			}else {
+				
+				// dREHER exporto correctamente, informar a AFIP
+				enviarAFIP();
+				
 			}
 		}
 	}
 	
+	/**
+	 * Metodo para enviar a AFIP
+	 * 
+	 *  La url de produccion es:
+	 * 	https://cot.arba.gov.ar/TransporteBienes/SeguridadCliente/presentarRemitos.do
+	 * 
+	 * 	La url para cargar remitos en el ambiente de testing es:
+		http://cot.test.arba.gov.ar/TransporteBienes/pages/remitos/PresentarRemitos.jsp
+	 * 
+		enviando un formulario multipart por método POST con los siguientes atributos:
+		 user
+		 password
+		 file (archivo de texto con los remitos)
+	 * 
+Respuesta de la transacción:
+-----------------------------------------------------------		
+Respuesta de transacción exitosa
+	<TBCOMPROBANTE>
+		<cuitEmpresa>N11</cuitEmpresa>
+		<numeroComprobante>N9</numeroComprobante>
+		<nombreArchivo>A41</nombreArchivo>
+		<codigoIntegridad>A50</codigoIntegridad>
+		<validacionesRemitos class="list">
+			<remito>
+				<numeroUnico>A16</numeroUnico>
+				<procesado>A2</procesado> (SI)
+				<cot>N</cot>
+			</remito>
+			<remito>
+				<numeroUnico>A16</numeroUnico>
+				<procesado>A2</procesado> (NO)
+				<errores class="list">
+					<error>
+						<codigo>N2</codigo>
+						<descripcion>A150</descripcion>
+					</error>
+				</errores>
+			</remito>
+ 		</validacionesRemitos>
+	</TBCOMPROBANTE>
+
+
+Respuesta de transacción fallida
+----------------------------------------------------------------
+	<TBError>
+ 		<tipoError>A20</tipoError> (DATO o ERROR INESPERADO)
+ 		<codigoError>N2</codigoError>
+ 		<mensajeError>A150</mensajeError>
+	</TBError>
+	
+	 * 
+	 * dREHER
+	 */
+	private void enviarAFIP() {
+		
+		// URL del servidor Produccion
+        String url = "https://cot.arba.gov.ar/TransporteBienes/SeguridadCliente/presentarRemitos.do";
+        
+        // URL ambiente testing
+        url = "http://cot.test.arba.gov.ar/TransporteBienes/pages/remitos/PresentarRemitos.jsp";
+
+        // Datos del formulario
+        String user = "tu_usuario";
+        String password = "tu_contraseña";
+        File file = new File(filePath);
+
+        HttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+
+        // Construir el formulario multipart
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addTextBody("user", user);
+        builder.addTextBody("password", password);
+        builder.addBinaryBody("file", file, ContentType.TEXT_PLAIN, file.getName());
+
+        HttpEntity multipart = builder.build();
+        httpPost.setEntity(multipart);
+
+        try {
+            // Enviar la solicitud
+            HttpResponse response = httpClient.execute(httpPost);
+
+            // Procesar la respuesta
+            int statusCode = response.getStatusLine().getStatusCode();
+            String responseBody = EntityUtils.toString(response.getEntity());
+
+            System.out.println("Código de estado: " + statusCode);
+            System.out.println("Respuesta del servidor: " + responseBody);
+            
+            // Termino ok el envio, parsear respuesta...
+            if(statusCode == 200) {
+            	// Recibio un error
+            	if(responseBody.contains("<TBError>")) {
+            		
+            		parsearRespuestaKO(responseBody);
+			
+            	}else {
+		
+            		parsearRespuestaOK(responseBody);
+            		
+            	}
+            }
+
+            // Manejar la respuesta según sea necesario
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+	/**
+	 * Parsear respuesta AFIP SIN ERROR
+	 * @param responseBody
+	 * dREHER
+	 */
+	private void parsearRespuestaOK(String responseBody) {
+
+		try {
+			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        	DocumentBuilder builder = factory.newDocumentBuilder();
+        	ByteArrayInputStream input = new ByteArrayInputStream(responseBody.getBytes("UTF-8"));
+        	Document document = builder.parse(input);
+
+			// Obtener el elemento raíz
+			Element root = document.getDocumentElement();
+
+			// Obtener los elementos hijos de TBCOMPROBANTE
+			NodeList comprobanteList = root.getElementsByTagName("TBCOMPROBANTE");
+			for (int i = 0; i < comprobanteList.getLength(); i++) {
+				Element comprobanteElement = (Element) comprobanteList.item(i);
+
+				// Leer los valores de los elementos dentro de TBCOMPROBANTE
+				String cuitEmpresa = comprobanteElement.getElementsByTagName("cuitEmpresa").item(0).getTextContent();
+				String numeroComprobante = comprobanteElement.getElementsByTagName("numeroComprobante").item(0).getTextContent();
+				String nombreArchivo = comprobanteElement.getElementsByTagName("nombreArchivo").item(0).getTextContent();
+				String codigoIntegridad = comprobanteElement.getElementsByTagName("codigoIntegridad").item(0).getTextContent();
+
+				// Mostrar los valores
+				System.out.println("cuitEmpresa: " + cuitEmpresa);
+				System.out.println("numeroComprobante: " + numeroComprobante);
+				System.out.println("nombreArchivo: " + nombreArchivo);
+				System.out.println("codigoIntegridad: " + codigoIntegridad);
+
+				// Obtener los elementos de validacionesRemitos
+				NodeList validacionesRemitosList = comprobanteElement.getElementsByTagName("validacionesRemitos");
+				for (int j = 0; j < validacionesRemitosList.getLength(); j++) {
+					Element validacionesRemitosElement = (Element) validacionesRemitosList.item(j);
+
+					// Obtener los elementos remito dentro de validacionesRemitos
+					NodeList remitoList = validacionesRemitosElement.getElementsByTagName("remito");
+					for (int k = 0; k < remitoList.getLength(); k++) {
+						Element remitoElement = (Element) remitoList.item(k);
+
+						// Leer los valores de los elementos dentro de remito
+						String numeroUnico = remitoElement.getElementsByTagName("numeroUnico").item(0).getTextContent();
+						String procesado = remitoElement.getElementsByTagName("procesado").item(0).getTextContent();
+						String cot = remitoElement.getElementsByTagName("cot").item(0).getTextContent();
+
+						// Mostrar los valores
+						System.out.println("numeroUnico: " + numeroUnico);
+						System.out.println("procesado: " + procesado);
+						System.out.println("cot: " + cot);
+
+						// Verificar si hay errores dentro de remito
+						NodeList erroresList = remitoElement.getElementsByTagName("errores");
+						if (erroresList.getLength() > 0) {
+							Element erroresElement = (Element) erroresList.item(0);
+
+							// Obtener el elemento error dentro de errores
+							Element errorElement = (Element) erroresElement.getElementsByTagName("error").item(0);
+
+							// Leer los valores de los elementos dentro de error
+							String codigoError = errorElement.getElementsByTagName("codigo").item(0).getTextContent();
+							String descripcionError = errorElement.getElementsByTagName("descripcion").item(0).getTextContent();
+
+							// Mostrar los valores de error
+							System.out.println("codigoError: " + codigoError);
+							System.out.println("descripcionError: " + descripcionError);
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Parsear respuesta AFIP con ERROR
+	 * @param responseBody
+	 * dREHER
+	 */
+	private void parsearRespuestaKO(String responseBody) {
+
+        try {
+        	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        	DocumentBuilder builder = factory.newDocumentBuilder();
+        	ByteArrayInputStream input = new ByteArrayInputStream(responseBody.getBytes("UTF-8"));
+        	Document document = builder.parse(input);
+
+        	// Obtener el elemento raíz
+        	Element rootElement = document.getDocumentElement();
+
+            // Obtener los elementos hijo
+            NodeList childNodes = rootElement.getChildNodes();
+
+            String tipoError = "";
+            String codigoError = "";
+            String mensajeError = "";
+
+            // Recorrer los elementos hijo
+            for (int i = 0; i < childNodes.getLength(); i++) {
+                Node node = childNodes.item(i);
+
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element element = (Element) node;
+                    String nodeName = element.getNodeName();
+                    String nodeValue = element.getTextContent();
+
+                    switch (nodeName) {
+                        case "tipoError":
+                            tipoError = nodeValue;
+                            break;
+                        case "codigoError":
+                            codigoError = nodeValue;
+                            break;
+                        case "mensajeError":
+                            mensajeError = nodeValue;
+                            break;
+                        default:
+                            // Manejar otros elementos si es necesario
+                            break;
+                    }
+                }
+            }
+
+            // Imprimir los datos extraídos
+            System.out.println("Tipo de Error: " + tipoError);
+            System.out.println("Código de Error: " + codigoError);
+            System.out.println("Mensaje de Error: " + mensajeError);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+	}
+
+
 	@Override
 	protected String getMsg() {
 		MJacoferRoadMap rm = new MJacoferRoadMap(localCtx, HojaDeRuta, localTrxName);

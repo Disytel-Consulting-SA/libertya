@@ -11,6 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
+import org.openXpertya.apps.form.VOrdenPagoModel;
+import org.openXpertya.exchangedif.InvoiceExchangeDif;
+import org.openXpertya.model.AllocationGenerator.AllocationDocumentType;
+import org.openXpertya.model.AllocationGenerator.Document;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
@@ -76,6 +80,48 @@ public class AllocationGenerator {
 	/** Locale AR activo? */
 	public final boolean LOCALE_AR_ACTIVE = CalloutInvoiceExt.ComprobantesFiscalesActivos();
 	
+	// Variables CINTOLO
+	protected boolean emit = false;
+	protected boolean include = false;
+	protected static int PESOS_ARG = 118;
+	
+	// dREHER
+	private static boolean SHOW_DEBUG = true;
+	protected BigDecimal diffExchange = null;
+	protected ArrayList<InvoiceExchangeDif> invoiceExchangeDif = null;
+	
+	public ArrayList<InvoiceExchangeDif> getInvoiceExchangeDif() {
+		return invoiceExchangeDif;
+	}
+
+	public void setInvoiceExchangeDif(ArrayList<InvoiceExchangeDif> exchangeDifDebitInvoices) {
+		this.invoiceExchangeDif = exchangeDifDebitInvoices;
+	}
+	
+	public boolean isEmit() {
+		return emit;
+	}
+
+	public boolean isInclude() {
+		return include;
+	}
+
+	public void setEmit(boolean emit) {
+		this.emit = emit;
+	}
+
+	public BigDecimal getDiffExchange() {
+		return diffExchange;
+	}
+
+	public void setDiffExchange(BigDecimal diffExchange) {
+		this.diffExchange = diffExchange;
+	}
+
+	public void setInclude(boolean include) {
+		this.include = include;
+	}
+
 	/**
 	 * Constructor por defecto. Es privado dado que se
 	 * deben utilizar alguno de los constructores que requieren
@@ -326,14 +372,34 @@ public class AllocationGenerator {
 	 */
 	public void generateLines() throws AllocationGeneratorException {	
 		try {
-			generateDebitCreditExchangeDifference();
+			
+			// dREHER - En el caso de CINTOLO las diferencias de cambio ya estan calculadas previamente, pasarle la info al metodo de generacion de documentos
+			// asociados a Diff 
+			if(docType.isSOTrx()) {
+
+				if(diffExchange == null) {				
+					generateDebitCreditExchangeDifference();
+				} else {
+					generateDebitCreditExchangeDifference(diffExchange);
+				}
+
+			}else {
+				diffExchange = null;
+				debug("Al tratarse de pagos NO genera diferencia de cambios...");
+			}
+
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new AllocationGeneratorException(e.toString());
 		}
 		
 		// Validaciones requeridas antes de crear las líneas de asignación
-		validate();
+		
+		// TODO: Estas validaciones dan error. CINTOLO.
+		if(diffExchange == null && docType.isSOTrx()) {			
+			validate();
+		}
 
 		// Se ordenan las listas de débitos y créditos según el monto a imputar
 		sortDocuments(getDebits());
@@ -562,6 +628,108 @@ public class AllocationGenerator {
 	}
 	
 	/**
+	 * Validaciones previas a la generación de las líneas de asignación
+	 * @throws AllocationGeneratorException cuando alguna de las condiciones
+	 * requeridas no se cumple
+	 */
+	private void validateCintolo() throws AllocationGeneratorException {
+		
+		// TODO: IMPORTANTE. VOLVER ESTE MÉTODO A SU CÓDIGO ORIGINAL.
+		
+		// Se intenta guardar el encabezado por si no fue guardado aún, de modo
+		// que se validen sus datos.
+		saveAllocationHdr();		
+		
+		// Se requieren débitos y/o créditos para realizar una asignación. 
+		if (!hasDebits() && !hasCredits()) {
+			throw new AllocationGeneratorException(getMsg("CreditsOrDebitsRequiredError"));
+		}
+		
+		// Sumarizar los montos a pagar segun eleccion de Emitir/Incluir
+		// Si solo emite, lo que suma es el MontoAbierto de FC - diferencia de cambio
+		BigDecimal diffCintolo = Env.ZERO;
+		boolean isDiffCintolo = false;
+		
+		for(Document doc : getDebits()){
+			
+			// dREHER CINTOLO
+			// Si la diferencia de cambio ya viene preseteada y estoy solo emitiendo SIN INCLUIR, validar metodo CINTOLO
+			
+			MInvoice invoice = new MInvoice(Env.getCtx(), doc.getId(), getTrxName());
+
+			// Si es factura en $ARS
+			if(this.getDiffExchange()!=null && invoice.getC_Currency_ID() == PESOS_ARG) { // && !this.isInclude() && this.isEmit()) {
+				
+				isDiffCintolo = true;
+				
+				debug("validate. doc.getOpenAmt()=" + doc.getOpenAmt() + " doc.getAmount()=" + doc.getAmount() + " getDiffExchange()=" + getDiffExchange() + " isDiffCintolo =" + isDiffCintolo);
+				
+				if(!doc.getOpenAmt().equals(doc.amount.subtract(diffExchange)))
+						throw new AllocationGeneratorException(getMsg("DebitAmountValidationError",
+								new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
+				
+				if(!isInclude()) {
+					diffCintolo = diffCintolo.add(doc.amount.subtract(diffExchange));
+				}else
+					diffCintolo = diffCintolo.add(doc.amount);
+				
+				
+			}else {
+				if (!doc.validateAmount()){
+					throw new AllocationGeneratorException(getMsg("DebitAmountValidationError",
+							new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
+				}
+			}
+			
+			if(isValidateDocStatus() && !doc.validateDocStatus()){
+				throw new AllocationGeneratorException(getMsg("DocumentStatus",
+						new Object[] { doc.getDocumentNo(),
+								MRefList.getListName(getCtx(), MInvoice.DOCSTATUS_AD_Reference_ID, doc.getDocStatus()) }));
+			}
+		}
+		
+		for(Document doc : getCredits()){
+			if (!doc.validateAmount()){
+				throw new AllocationGeneratorException(getMsg("CreditAmountValidationError",
+						new Object[] { doc.getDocumentNo(), doc.getAmount(), doc.getOpenAmt() }));
+			}
+			if(isValidateDocStatus() && !doc.validateDocStatus()){
+				throw new AllocationGeneratorException(getMsg("DocumentStatus",
+						new Object[] { doc.getDocumentNo(),
+								MRefList.getListName(getCtx(), MInvoice.DOCSTATUS_AD_Reference_ID, doc.getDocStatus()) }));
+			}
+
+		}
+		
+		// Si hay al menos un débito y un crédito entonces la imputación no puede ser parcial
+		// con lo cual los totales de débitos y créditos deben coincidir.
+		if (hasDebits() && hasCredits()) {
+			// Comparación exacta (sin redondeos)
+			// TODO: Ver si sería posible la tolerancia de algunos centavos de diferencia en
+			// esta comparación.
+			if (getDebitsAmount().compareTo(getCreditsAmount() ) != 0) {
+
+				// dREHER CINTOLO
+				if(this.getDiffExchange()!=null && isDiffCintolo) {
+
+					if ( Math.abs(  (diffCintolo.subtract(getCreditsAmount())).doubleValue() ) >  (Double.parseDouble(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) )
+						throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError",
+								new Object[] { diffCintolo, getCreditsAmount() }));
+					
+				}else {
+
+					if ( Math.abs(  (getDebitsAmount().subtract(getCreditsAmount())).doubleValue() ) >  (Double.parseDouble(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) )
+						throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError",
+								new Object[] { getDebitsAmount(), getCreditsAmount() }));
+				}
+			}
+		}
+				
+		// Se invoca el método de validación específicas (destinado a las subclases)
+		customValidate();
+	}
+	
+	/**
 	 * Validación específica del generador. Este método debe ser sobrescrito por las
 	 * subclases que requieran validaciones extras a las que se realizan por esta clase.
 	 * El método se ejecuta luego de las validaciones estructurales obligatorias de la 
@@ -620,6 +788,19 @@ public class AllocationGenerator {
 		return totalAmount;
 	}
 	
+	private BigDecimal getExchangeDif(int C_Invoice_ID) {
+		BigDecimal dif = Env.ZERO;
+		
+		for(InvoiceExchangeDif dc : this.invoiceExchangeDif) {
+			if(dc.getC_Invoice_ID() == C_Invoice_ID) {
+				dif = dc.getExchangeDiff();
+				break;
+			}
+		}
+		
+		return dif;
+	}
+	
 	/**
 	 * Algoritmo de generación de líneas de asignación que imputan los débitos con los
 	 * créditos configurados en este generador
@@ -645,14 +826,43 @@ public class AllocationGenerator {
 		
 		int debitNumber = 0;
 		
+		boolean isReceipt = this.getAllocationHdr().isSOTrx();
+		
+		debug("AllocationGenerator => generateImputationLines() - Incluir Dif Cambio=" + this.include + " isReceipt=" + isReceipt);
+		
 		for (Document debitDocument : getDebits()) {
 			debitNumber++;
+			
+			// En el caso de pagos trabajar con el metodo estandar
+			if(isReceipt)
+				allowExchangeDifference = getExchangeDif(debitDocument.getId());
+			
 			// Se recorren todos los débitos para ser imputados con los créditos.
 			// Se puede dar el caso que el monto de imputación de un débito
 			// requiera mas de un crédito para ser satisfacido.
-			if (debitDocument.getConvertedAmount() == null)
-				throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),debitDocument.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
-			BigDecimal debitAmount = debitDocument.getConvertedAmount();   // Monto a cubrir del débito
+			
+			BigDecimal debitAmount = null;
+			if(isReceipt) {
+
+				debitAmount = debitDocument.getConvertedAmountToday();   // Monto a cubrir del débito al dia de hoy
+				if (debitAmount == null)
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),debitDocument.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());				
+				
+				
+			}else {
+			
+				debitAmount = debitDocument.getConvertedAmount();   // Monto a cubrir del débito
+				if (debitAmount == null)
+					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),debitDocument.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
+			}
+			
+			// En el caso de pagos trabajar con el metodo estandar 
+			if(isReceipt)
+				debitAmount = debitAmount.subtract(allowExchangeDifference);
+			
+			debug("generateImputationLines-documentNo= " + debitDocument.documentNo 
+					+ " debitAmount= " + debitAmount
+					+ " DiffExchange= " + allowExchangeDifference);
 			
 			BigDecimal creditAmountSum;
 			if	(creditSurplus != null){                 // Inicializar lo que se cubre 
@@ -662,7 +872,9 @@ public class AllocationGenerator {
 				if (getCredits().get(creditIdx).getConvertedAmount() == null)
 					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),getCredits().get(creditIdx).getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 				creditAmountSum = getCredits().get(creditIdx).getConvertedAmount();  // Sino, se utiliza el total del crédito actual
+				debug("generateImputationLines - creditAmount = " + creditAmountSum);
 			}
+			
 			// Lista de créditos y sus montos a utilizar para cubrir el monto a inputar del
 			// débito actual.
 			List<Document> subCredits = new ArrayList<Document>();
@@ -680,19 +892,36 @@ public class AllocationGenerator {
 			// cubrir el monto del débito
 			while (debitAmount.compareTo(creditAmountSum.add(allowExchangeDifference)) > 0) { 
 				creditIdx++;
-				Document credit = getCredits().get(creditIdx); // Siguiente crédito
-				// Se actualiza la lista de créditos utilizados, la lista de montos
-				// y la suma de los montos de todos los créditos utilizados.
-				subCredits.add(credit);
-				if (credit.getConvertedAmount() == null)
-					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),credit.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
-				subCreditsAmounts.add(credit.getConvertedAmount());
-				creditAmountSum = creditAmountSum.add(credit.getConvertedAmount());
+				
+				// dREHER control para verificar que exista un credito siguiente...
+				// TODO: ver bien este control... porque llega hasta aca, sino hay proximo credito?
+				
+				if(getCredits().size() > creditIdx) {
+					Document credit = getCredits().get(creditIdx); // Siguiente crédito
+					// Se actualiza la lista de créditos utilizados, la lista de montos
+					// y la suma de los montos de todos los créditos utilizados.
+					subCredits.add(credit);
+					if (credit.getConvertedAmount() == null)
+						throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),credit.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
+					subCreditsAmounts.add(credit.getConvertedAmount());
+					creditAmountSum = creditAmountSum.add(credit.getConvertedAmount());
+				}else
+					break;
 			}
 			
 			// Si la suma de créditos supera el monto del débito, se resta la diferencia
 			// al último crédito utilizado y esta diferencia pasa a ser el monto sobrante
 			// del crédito actual.
+			
+			/**
+			 * allowExchangeDifference cuando es un solo debito el que se paga, este valor corresponde a la 
+			 * diferencia de cambio de ese unico comprobante, pero cuando hay mas de un comprobante debito
+			 * a pagar, esta diferencia de cambio no puede aplicarse a cada uno de los debitos, sino que en 
+			 * su lugar deberia aplicarse la diferencia de cambio que le corresponde al debito en particular
+			 * 
+			 * dREHER
+			 */
+			
 			if (debitAmount.compareTo(creditAmountSum.add(allowExchangeDifference)) < 0) {
 				int lastCreditIdx = subCreditsAmounts.size() - 1;
 				creditSurplus = creditAmountSum.subtract(debitAmount);
@@ -749,6 +978,9 @@ public class AllocationGenerator {
 				// Si la estructura soporta la imputación, entonces se crea una línea
 				// que imputa ambos documentos.
 				} else {
+					debug("generateImputationLines => " + creditApplyingAmt + "/" + discountAmt + "/" + writeoffAmt+ "/" + overunderAmt);
+					debug("generateImputationLines => # Debito (Incluye Dif Cambio): " + debitDocument.getAmount());
+					debug("generateImputationLines => # Credito: " + creditDocument.getAmount());
 					generateImputationLine( 
 							debitDocument, creditDocument, 
 							creditApplyingAmt, discountAmt, 
@@ -965,6 +1197,7 @@ public class AllocationGenerator {
 	 */
 	public abstract class Document {
 
+		public boolean IsInclude;
 		public Integer id;
 		public AllocationDocumentType type;
 		public BigDecimal amount;
@@ -974,6 +1207,10 @@ public class AllocationGenerator {
 		private BigDecimal amountAllocated = BigDecimal.ZERO;
 		private boolean isAuthorized = true; 
 		private String documentNo;
+		
+		// dREHER
+		private boolean isDiffExchange = false;
+		private BigDecimal DiffExchange = null;
 		
 		/**
 		 * @param id ID del documento
@@ -991,8 +1228,32 @@ public class AllocationGenerator {
 			return false;
 		}
 		
+		public boolean isIsInclude() {
+			return IsInclude;
+		}
+
+		public void setIsInclude(boolean isInclude) {
+			IsInclude = isInclude;
+		}
+		
 		public boolean needFiscalPrint() {
 			return false;
+		}
+
+		public BigDecimal getDiffExchange() {
+			return DiffExchange;
+		}
+
+		public void setDiffExchange(BigDecimal diffExchange) {
+			DiffExchange = diffExchange;
+		}
+		
+		public boolean isDiffExchange() {
+			return isDiffExchange;
+		}
+
+		public void setDiffExchange(boolean isDiffExchange) {
+			this.isDiffExchange = isDiffExchange;
 		}
 		
 		public boolean validateDocStatus() {
@@ -1120,6 +1381,12 @@ public class AllocationGenerator {
 			super(id, AllocationDocumentType.INVOICE, amount);
 			this.currencyId = getSqlCurrencyId();
 			this.date = getSqlDate();
+
+			// dREHER
+			// TODO: ver que otros datos se podrian guardar en Document
+			MInvoice inv = new MInvoice(Env.getCtx(), id, getTrxName());
+			this.setDocumentNo(inv.getDocumentNo());
+			
 			setAuthorized(getSqlAuthorized());
 		}
 		
@@ -1168,6 +1435,7 @@ public class AllocationGenerator {
 		}
 		
 		public boolean validateAmount() {
+			// TODO: CINTOLO. Esta validación no está dando OK.
 			return (getOpenAmt().subtract(amount.setScale(2, RoundingMode.HALF_EVEN)).setScale(2, RoundingMode.HALF_EVEN).compareTo(BigDecimal.ZERO) >= 0 );
 		}
 		
@@ -1178,7 +1446,8 @@ public class AllocationGenerator {
 
 		@Override
 		public BigDecimal getOpenAmt(){
-			return DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true);
+			BigDecimal amt = DB.getSQLValueBD(getTrxName(), "SELECT invoiceopen(?,0)", id, true);
+			return amt;
 		}
 		
 		@Override
@@ -1363,6 +1632,7 @@ public class AllocationGenerator {
 		return pays;	
 	}
 	
+	// dREHER sobreescribo metodo para guardar compatibilidad del llamado del metodo desde distintos escenarios y contextos
 	public void generateDebitCreditExchangeDifference() throws Exception{
 		BigDecimal amt = getExchangeDifference(generateDebitsForExchangeDifference(), generateCreditsForExchangeDifference(), ctx, trxName, getAllocationHdr().getDateAcct());
 		MInvoice credit = null; 
@@ -1439,7 +1709,118 @@ public class AllocationGenerator {
 			this.addDebitDocument(debit.getID(), amt, AllocationDocumentType.INVOICE);
 		}
 	}
+
+	// dREHER Se agrega parametro para poder recibir directamente la diferencia de cambio (Ej CINTOLO)
+	public void generateDebitCreditExchangeDifference(BigDecimal amtParam) throws Exception{
+		BigDecimal amt = getExchangeDifference(generateDebitsForExchangeDifference(), generateCreditsForExchangeDifference(), ctx, trxName, getAllocationHdr().getDateAcct());
+		debug("generateDebitCreditExchangeDifference. amt=" + amt + " amtParam=" + amtParam);
+		
+		if(amtParam != null)
+			amt = amtParam;
+		
+		if(amt.compareTo(Env.ZERO) == 0) {
+			return;
+		}
+		
+		// TODO: Esta implementación está pensada para pagos realizados en una misma moneda.
+		// Para multimoneda se debería analizar separando el caso moneda a moneda.
+		//int C_Currency_ID = Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"); // TODO: Revisar que esta moneda esté bien.
+		
+		int C_Currency_ID = getCreditsCurrency();
+		
+		boolean isFiscal = C_Currency_ID == PESOS_ARG && include;
+		boolean isForCurrentAccount = C_Currency_ID == PESOS_ARG; 
+		boolean isCredit = amt.compareTo(Env.ZERO) < 0;
+		
+		if(C_Currency_ID != PESOS_ARG && !include) {
+			// TODO: Acomodar el string con su traducción.
+			throw new Exception("Cobro en moneda extranjera debe 'incluir' siempre.");
+		}
+
+		debug("generateDebitCreditExchangeDifference. isFiscal=" + isFiscal + " isCredit=" + isCredit);
+		
+		// Se crea la cabecera de la invoice
+		MInvoice inv = createCreditDebitInvoiceForExchangeDif(isCredit, isFiscal, isForCurrentAccount);
+		
+		inv.setDateInvoiced(getAllocationHdr().getDateAcct());
+		inv.setDateAcct(getAllocationHdr().getDateAcct());
+		inv.setFechadeTCparaActualizarPrecios(getAllocationHdr().getDateAcct());
+		inv.setApplyPercepcion(false);
+		
+		int priceListID = DB.getSQLValue(trxName, "SELECT " + (isCredit? " Credit_PriceList " : " Debit_PriceList ") +" FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+		inv.setM_PriceList_ID(priceListID);
+		inv.setC_Currency_ID(PESOS_ARG);
+		
+		// dREHER esto se calcula al final cuando se agregan las lineas del comprobante
+		inv.setGrandTotal(amt);
+		
+		if(!inv.save()){
+			throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
+					+ " document for discounts. Original Error: "+CLogger.retrieveErrorAsString());
+		}
+		
+		// Se crea la invoiceLine 		
+		int productID = DB.getSQLValue(trxName, "SELECT M_Product_ID FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+		MProduct product = new MProduct(getCtx(), productID, getTrxName());
+		
+		List<MTax> taxes = MTax.getOfTaxCategory(getCtx(), product.getC_TaxCategory_ID(), getTrxName());
+		if (taxes==null || taxes.size()==0)
+			throw new Exception("No existe un impuesto para la categoria de impuesto definido en el artículo " + product.getValue());
+		MTax tax = taxes.get(0); 
+		
+		MInvoiceLine invoiceLine = createInvoiceLineForExchangeDif(inv,isCredit,amt,tax,product);		
+
+		if(!invoiceLine.save()){
+			throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
+					+ " document line for discounts. Original Error: "+CLogger.retrieveErrorAsString());  
+		}
+		
+		// Si no se incluye, el proceso de creación está terminado.
+		if(!include) {
+			debug("generateDebitCreditExchangeDifference. NO SE INCLUYE, debe quedar en borrador como propuesta de cambio DocumentNo=" + inv.getDocumentNo());
+			return;
+		}
+		
+		// El comprobante es fiscal, por lo que se debe completar.
+		if(isFiscal || !isForCurrentAccount){ // TODO: Revisar si esta bien completar el que no es para Cta Corriente.
+			// Completar el crédito en el caso que no requiera impresión fiscal,
+			// ya que si requieren se realiza al final del procesamiento
+			
+			debug("generateDebitCreditExchangeDifference. Es comprobante fiscal, DocumentNo=" + inv.getDocumentNo());
+			
+			if(isCredit){
+				if(!needFiscalPrint(inv)){
+					inv.setSkipAutomaticCreditAllocCreation(true);
+					processDocument(inv, MInvoice.DOCACTION_Complete);
+				}
+			}else {
+				if(!needFiscalPrint(inv)){
+					processDocument(inv, MInvoice.DOCACTION_Complete);
+				}
+			}
+		}
+		
+		// - Si es un crédito lo guardo como un medio de pago
+		// - Si es un débito lo guardo donde se encuentran las facturas
+		if(isCredit){			
+			this.addCreditDocument(inv.getID(), amt, AllocationDocumentType.INVOICE);
+		} else {
+
+			debug("generateDebitCreditExchangeDifference. Debe agregar DEBITO DocumentNo=" + inv.getDocumentNo());
+			this.addDebitDocument(inv.getID(), amt, AllocationDocumentType.INVOICE);
+		}
+	}
 	
+	// TODO: Mejorar la lógica de este método. Debe retornar la moneda en la que se está pagando las facturas.
+	private int getCreditsCurrency() {
+		int currency = PESOS_ARG;
+		for(Document doc: getCredits()) {
+			if(doc.getCurrencyId() != PESOS_ARG)
+				return doc.getCurrencyId();
+		}
+		return currency;
+	}
+
 	/**
 	 * Creo una factura como crédito o débito, dependiendo configuración.
 	 * 
@@ -1505,6 +1886,124 @@ public class AllocationGenerator {
 		invoiceLine.setC_Project_ID(invoice.getC_Project_ID());
 
 		invoiceLine.setM_Product_ID(getDebitCreditExchangeDiffProduct(isCredit));
+		return invoiceLine;
+	}
+	
+	private void debug(String string) {
+		if(SHOW_DEBUG)
+			System.out.println("AllocationGenerator => " + string);
+	}
+
+	/**
+	 * Creo una factura como crédito o débito, dependiendo configuración.
+	 * 
+	 * @param isCredit
+	 *            true si se debe crear un crédito o false si es débito
+	 * @return factura creada
+	 * @throws Exception en caso de error
+	 */
+	protected MInvoice createCreditDebitInvoiceForExchangeDif(boolean isCredit, boolean isFiscal, boolean isForCurrentAccount) throws Exception{
+		MInvoice invoice = new MInvoice(getCtx(), 0, getTrxName());
+		MBPartner bPartner = new MBPartner(getCtx(),getAllocationHdr().getC_BPartner_ID(), getTrxName());
+		invoice.setBPartner(bPartner);
+		invoice.setManualGeneralDiscount(Env.ZERO);
+
+		// TODO: Si las propuestas de diferencias de cambio NO se completan en forma secuencial
+		// y son fiscales, tenemos problemas con AFIP / Controlador Fiscal
+		// esto obliga a renumerar en orden secuencial
+		if(isFiscal || isForCurrentAccount) {
+			
+			int ptoVenta = DB.getSQLValue(trxName, " SELECT point_of_sale FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			
+			invoice = setDocType(invoice, isCredit, ptoVenta);
+			if(LOCALE_AR_ACTIVE){
+				invoice = addLocaleARData(invoice, isCredit);
+			}
+			
+		} else {
+			int docTypeID = DB.getSQLValue(trxName, "SELECT C_DocType_ID FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			invoice.setC_DocTypeTarget_ID(docTypeID);				
+		}
+		
+		
+		// Setear el tipo de documento segun la config de diferencia de cambio
+		/*
+		if(isFiscal) {
+			
+			int ptoVenta = DB.getSQLValue(trxName, " SELECT point_of_sale FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			
+			invoice = setDocType(invoice, isCredit, ptoVenta);
+			if(LOCALE_AR_ACTIVE){
+				invoice = addLocaleARData(invoice, isCredit);
+			}
+			
+		} else {
+			int docTypeID = 0;
+			if(isForCurrentAccount) {
+				docTypeID = DB.getSQLValue(trxName, "SELECT C_DocType_ID FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			} else {
+				// TODO: Obtener este valor de otra forma
+				docTypeID = DB.getSQLValue(trxName, "SELECT C_DocType_ID FROM C_DocType WHERE DocTypeKey = 'CDNU0001'");
+				if(docTypeID <= 0)
+					throw new Exception("Debe crear un tipo de comprobante cuya clave es: 'CDNU0001'");
+			}																				
+			invoice.setC_DocTypeTarget_ID(docTypeID);				
+		}
+		*/
+		
+		if(LOCALE_AR_ACTIVE){
+			String cuit = bPartner.getTaxID();
+			invoice.setCUIT(cuit);
+			invoice.setApplyPercepcion(!isCredit);			
+		}
+		
+		// Se indica que no se debe crear una línea de caja al completar la factura ya
+		// que es el propio TPV el que se encarga de crear los pagos e imputarlos con
+		// la factura (esto soluciona el problema de líneas de caja duplicadas que 
+		// se había detectado).
+		invoice.setCreateCashLine(false);
+		
+		invoice.setDocAction(MInvoice.DOCACTION_Complete);
+		invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
+		// Seteo el bypass de la factura para que no chequee el saldo del
+		// cliente porque ya lo chequea el tpv
+		invoice.setCurrentAccountVerified(true);
+		// Seteo el bypass para que no actualice el crédito del cliente ya
+		// que se realiza luego al finalizar las operaciones
+		invoice.setUpdateBPBalance(false);
+		return invoice;
+	}
+	
+	/**
+	 * Crea una línea de factura de la factura y datos parámetro.
+	 * 
+	 * @param invoice
+	 *            factura
+	 * @param isCredit
+	 *            true si estamos creando un crédito, false caso contrario
+	 * @param amt
+	 *            monto de la línea
+	 * @param tax
+	 *            impuesto para la línea
+	 * @return línea de la factura creada
+	 * @throws Excepción
+	 *             en caso de error
+	 */
+	public MInvoiceLine createInvoiceLineForExchangeDif(MInvoice invoice, boolean isCredit, BigDecimal amt, MTax tax, MProduct product) throws Exception{
+		
+		MInvoiceLine invoiceLine = new MInvoiceLine(invoice);
+		invoiceLine.setQty(1);
+		// Setear el precio con el monto del descuento
+		amt = amt.abs();
+
+		invoiceLine.setPriceEntered(amt);
+		invoiceLine.setPriceActual(amt);
+		invoiceLine.setPriceList(amt);
+		invoiceLine.setC_Tax_ID(tax.getID());
+		invoiceLine.setLineNetAmt();
+		invoiceLine.setC_Project_ID(invoice.getC_Project_ID());
+		invoiceLine.setM_Product_ID(product.getM_Product_ID());
+		
 		return invoiceLine;
 	}
 	
@@ -1671,6 +2170,7 @@ public class AllocationGenerator {
 			throw new Exception(getMsg("LetraCalculationError"));
 		}
 		// Se obtiene el PO de letra del comprobante.
+		debug("letraID=" + letraID);
 		return new MLetraComprobante(getCtx(), letraID, getTrxName());
 	}
 	
@@ -1751,6 +2251,13 @@ public class AllocationGenerator {
 		return docTypeKey;
 	}
 	
+	// dREHER
+	// sobrecargar el metodo para poder ser utilizado en otro contexto
+	protected MInvoice setDocType(MInvoice invoice, boolean isCredit) throws Exception{
+		return setDocType(invoice, isCredit, -1);
+	}
+	
+	
 	/**
 	 * Setea el tipo de documento a la factura parámetro
 	 * 
@@ -1761,7 +2268,7 @@ public class AllocationGenerator {
 	 *            un crédito
 	 * @return factura con el tipo de doc seteada
 	 */
-	protected MInvoice setDocType(MInvoice invoice, boolean isCredit) throws Exception{
+	protected MInvoice setDocType(MInvoice invoice, boolean isCredit, int puntoDeVenta) throws Exception{
 		MDocType documentType = null;
 
 		//buscar los doctype a partir de las nuevas preferencias
@@ -1784,6 +2291,10 @@ public class AllocationGenerator {
 						.GetCustomPreferenceValue("DIF_CAMBIO_PTO_VENTA",
 								Env.getAD_Client_ID(getCtx())));
 
+				// dREHER Si llega como parametro, tomar este punto de venta
+				if(puntoDeVenta>0)
+					posNumber = puntoDeVenta;
+				
 				if (Util.isEmpty(posNumber, true))
 					throw new Exception(getMsg("NotExistPOSNumber"));
 				// Se obtiene el tipo de documento para la factura.

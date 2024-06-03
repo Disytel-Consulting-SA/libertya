@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_BPartner
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-12-20 13:54:05.085 */
+ *  @version  - 2023-08-08 15:06:51.791 */
 public class X_C_BPartner extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -19,8 +19,9 @@ super (ctx, C_BPartner_ID, trxName);
 setAllowAdvancedPaymentReceipts (false);
 setAllowPartialPayment (false);
 setAutomaticCreditNotes (false);
-setC_BPartner_ID (0);
 setC_BP_Group_ID (0);
+setC_BPartner_ID (0);
+setCintolo_Acumulate_Exchange_Dif (false);
 setCreditMinimumAmt (Env.ZERO);
 setDiscountContext (null);	// B
 setEmitir_Mi_Pyme (false);
@@ -72,6 +73,21 @@ public String toString()
 {
 StringBuffer sb = new StringBuffer ("X_C_BPartner[").append(getID()).append("]");
 return sb.toString();
+}
+/** Set Check to */
+public void setA_Name_Check (String A_Name_Check)
+{
+if (A_Name_Check != null && A_Name_Check.length() > 60)
+{
+log.warning("Length > 60 - truncated");
+A_Name_Check = A_Name_Check.substring(0,60);
+}
+set_Value ("A_Name_Check", A_Name_Check);
+}
+/** Get Check to */
+public String getA_Name_Check() 
+{
+return (String)get_Value("A_Name_Check");
 }
 /** Set Acquisition Cost.
 The cost of gaining the prospect as a customer */
@@ -182,21 +198,6 @@ if (oo != null)
  return "Y".equals(oo);
 }
 return false;
-}
-/** Set Check to */
-public void setA_Name_Check (String A_Name_Check)
-{
-if (A_Name_Check != null && A_Name_Check.length() > 60)
-{
-log.warning("Length > 60 - truncated");
-A_Name_Check = A_Name_Check.substring(0,60);
-}
-set_Value ("A_Name_Check", A_Name_Check);
-}
-/** Get Check to */
-public String getA_Name_Check() 
-{
-return (String)get_Value("A_Name_Check");
 }
 /** Set Automatic Credit Notes */
 public void setAutomaticCreditNotes (boolean AutomaticCreditNotes)
@@ -406,6 +407,83 @@ Location or Address */
 public int getC_Location_ID() 
 {
 Integer ii = (Integer)get_Value("C_Location_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Acumulate Exchange Dif */
+public void setCintolo_Acumulate_Exchange_Dif (boolean Cintolo_Acumulate_Exchange_Dif)
+{
+set_Value ("Cintolo_Acumulate_Exchange_Dif", new Boolean(Cintolo_Acumulate_Exchange_Dif));
+}
+/** Get Acumulate Exchange Dif */
+public boolean isCintolo_Acumulate_Exchange_Dif() 
+{
+Object oo = get_Value("Cintolo_Acumulate_Exchange_Dif");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Amount Limit */
+public void setCintolo_Amount_Limit (BigDecimal Cintolo_Amount_Limit)
+{
+set_Value ("Cintolo_Amount_Limit", Cintolo_Amount_Limit);
+}
+/** Get Amount Limit */
+public BigDecimal getCintolo_Amount_Limit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cintolo_Amount_Limit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Checks Limit */
+public void setCintolo_Checks_Limit (BigDecimal Cintolo_Checks_Limit)
+{
+set_Value ("Cintolo_Checks_Limit", Cintolo_Checks_Limit);
+}
+/** Get Checks Limit */
+public BigDecimal getCintolo_Checks_Limit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cintolo_Checks_Limit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+public static final int CINTOLO_CURRENCY_LIMIT_AD_Reference_ID = MReference.getReferenceID("C_Currency");
+/** Set Currency Limit */
+public void setCintolo_Currency_Limit (int Cintolo_Currency_Limit)
+{
+set_Value ("Cintolo_Currency_Limit", new Integer(Cintolo_Currency_Limit));
+}
+/** Get Currency Limit */
+public int getCintolo_Currency_Limit() 
+{
+Integer ii = (Integer)get_Value("Cintolo_Currency_Limit");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set Percentage Limit */
+public void setCintolo_Percentage_Limit (BigDecimal Cintolo_Percentage_Limit)
+{
+set_Value ("Cintolo_Percentage_Limit", Cintolo_Percentage_Limit);
+}
+/** Get Percentage Limit */
+public BigDecimal getCintolo_Percentage_Limit() 
+{
+BigDecimal bd = (BigDecimal)get_Value("Cintolo_Percentage_Limit");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Point Of Sale */
+public void setCintolo_Point_Of_Sale (int Cintolo_Point_Of_Sale)
+{
+set_Value ("Cintolo_Point_Of_Sale", new Integer(Cintolo_Point_Of_Sale));
+}
+/** Get Point Of Sale */
+public int getCintolo_Point_Of_Sale() 
+{
+Integer ii = (Integer)get_Value("Cintolo_Point_Of_Sale");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -1152,33 +1230,6 @@ Integer ii = (Integer)get_Value("M_DiscountSchema_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
-/** Set Minimum Purchased Amt.
-Minimum purchased amt allowed */
-public void setMinimumPurchasedAmt (BigDecimal MinimumPurchasedAmt)
-{
-if (MinimumPurchasedAmt == null) throw new IllegalArgumentException ("MinimumPurchasedAmt is mandatory");
-set_Value ("MinimumPurchasedAmt", MinimumPurchasedAmt);
-}
-/** Get Minimum Purchased Amt.
-Minimum purchased amt allowed */
-public BigDecimal getMinimumPurchasedAmt() 
-{
-BigDecimal bd = (BigDecimal)get_Value("MinimumPurchasedAmt");
-if (bd == null) return Env.ZERO;
-return bd;
-}
-/** Set min_order_qty */
-public void setmin_order_qty (BigDecimal min_order_qty)
-{
-set_Value ("min_order_qty", min_order_qty);
-}
-/** Get min_order_qty */
-public BigDecimal getmin_order_qty() 
-{
-BigDecimal bd = (BigDecimal)get_Value("min_order_qty");
-if (bd == null) return Env.ZERO;
-return bd;
-}
 /** Set Price List.
 Unique identifier of a Price List */
 public void setM_PriceList_ID (int M_PriceList_ID)
@@ -1225,6 +1276,33 @@ public int getM_Shipper_ID()
 Integer ii = (Integer)get_Value("M_Shipper_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set min_order_qty */
+public void setmin_order_qty (BigDecimal min_order_qty)
+{
+set_Value ("min_order_qty", min_order_qty);
+}
+/** Get min_order_qty */
+public BigDecimal getmin_order_qty() 
+{
+BigDecimal bd = (BigDecimal)get_Value("min_order_qty");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set Minimum Purchased Amt.
+Minimum purchased amt allowed */
+public void setMinimumPurchasedAmt (BigDecimal MinimumPurchasedAmt)
+{
+if (MinimumPurchasedAmt == null) throw new IllegalArgumentException ("MinimumPurchasedAmt is mandatory");
+set_Value ("MinimumPurchasedAmt", MinimumPurchasedAmt);
+}
+/** Get Minimum Purchased Amt.
+Minimum purchased amt allowed */
+public BigDecimal getMinimumPurchasedAmt() 
+{
+BigDecimal bd = (BigDecimal)get_Value("MinimumPurchasedAmt");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set NAICS/SIC.
 Standard Industry Code or its successor NAIC - http://www.osha.gov/oshstats/sicser.html */

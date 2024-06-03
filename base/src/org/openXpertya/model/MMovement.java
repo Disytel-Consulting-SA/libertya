@@ -740,12 +740,40 @@ public class MMovement extends X_M_Movement implements DocAction {
      */
 
     public boolean voidIt() {
-        log.info( toString());
+        
+    	debug("voidIt(). Copia el movimiento actual, pero invierte los depositos... {Encabezado}");
+    	MMovement contraMov = new MMovement(Env.getCtx(), 0, get_TrxName());
+    	PO.copyValues(this, contraMov);
+    	contraMov.save();
+    	
+    	MMovementLine[] lines = this.getLines(false);
+    	for(MMovementLine line : lines) {
+    		debug("voidIt(). Copia las lineas..." + line);
+    		MMovementLine l = new MMovementLine(Env.getCtx(), 0, get_TrxName());
+    		PO.copyValues(line, l);
+    		l.setM_Movement_ID(contraMov.getM_Movement_ID());
+    		l.setM_Locator_ID(line.getM_LocatorTo_ID());
+    		l.setM_LocatorTo_ID(line.getM_Locator_ID());
+    		l.save();
+    	}
+    	
+    	contraMov.addDescription(". Contra Movimiento por Anulacion. Movimiento Original #" + getDocumentNo());
+    	contraMov.completeIt();
+    	contraMov.save();
 
-        return false;
+    	debug("voidIt(). Marca el movimiento como anulado!");
+    	
+    	setDocAction(DocAction.ACTION_None);
+    	addDescription(". Movimiento Anulado. Contramovimiento #" + contraMov.getDocumentNo());
+    	return save();
+    	
     }    // voidIt
 
-    /**
+    private void debug(String string) {
+		System.out.println("MMovement." + string);
+	}
+
+	/**
      * Descripción de Método
      *
      *

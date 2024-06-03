@@ -8,7 +8,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
+import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.ComboItem;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.Grid;
@@ -24,8 +26,8 @@ import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.window.FDialog;
 import org.compiere.swing.CComboBox;
-import org.compiere.swing.CTextField;
 import org.openXpertya.apps.form.VComponentsFactory;
 import org.openXpertya.apps.form.VOrdenCobroModel;
 import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
@@ -43,8 +45,14 @@ import org.openXpertya.model.MEntidadFinancieraPlan;
 import org.openXpertya.model.MLookup;
 import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MLookupInfo;
+import org.openXpertya.model.MPInstance;
+import org.openXpertya.model.MPInstancePara;
 import org.openXpertya.model.MPOSPaymentMedium;
+import org.openXpertya.model.MProcess;
 import org.openXpertya.model.RetencionProcessor;
+import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -60,7 +68,11 @@ import org.zkoss.zul.Space;
 
 public class WOrdenCobro extends WOrdenPago {
 
+	private static final long serialVersionUID = 1L;
+
 	protected static final String GOTO_TENDER_TYPE = "GOTO_TENDER_TYPE";
+
+	private static final boolean DEBUG = true;
 
 	private static Map<String, String> msgChanges;
 	static {
@@ -125,6 +137,33 @@ public class WOrdenCobro extends WOrdenPago {
 	
 	// Agregado para lector de cheques
 	protected WStringEditor txtCheckBarcode;
+	
+	// CINTOLO: Se agregan los campos para el PopUp
+    protected boolean isCintoloEmit = false;
+    protected boolean isCintoloInclude = false;
+    protected boolean shouldContinue = true;
+    
+    public void setContinue(boolean shouldContinue) {
+    	this.shouldContinue = shouldContinue;
+    }
+    
+    public boolean isCintoloEmit() {
+    	return isCintoloEmit;
+    }
+    
+    public boolean isCintoloInclude() {
+    	return isCintoloInclude;
+    }
+    
+    public void setCintoloEmit(boolean emit) {
+    	isCintoloEmit = emit;
+    	m_model.setCintoloEmit(emit);
+    }
+    
+    public void setCintoloInclude(boolean include) {
+    	isCintoloInclude = include;
+    	m_model.setCintoloInclude(include);
+    }
 
 	public WOrdenCobro() {
 		super();
@@ -146,6 +185,316 @@ public class WOrdenCobro extends WOrdenPago {
 	protected void chequeraChange(ValueChangeEvent e) {
 		// No se debe obtener el número de cheque automáticamente, se ingresa
 		// manualmente.
+	}
+	
+	// Este metodo es el mismo que se encuentra en VOrdenPago
+	// Se copia su funcionalidad para poder expandirla en vez de llamar a super
+	@Override
+	protected void cmdProcessActionPerformed(Event evt) {//GEN-FIRST:event_cmdProcessActionPerformed
+    	
+		doBPartnerValidations();
+    	
+    	final int idx = tabbox.getSelectedIndex();
+    	
+    	if (idx == 0) {
+
+			// Aviso si la OP tiene pagos parciales
+			if ((m_model.getPartialPayment()) && (!FDialog.ask(m_WindowNo, this,
+					Msg.getMsg(Env.getCtx(), "PartialPayment"))))
+				return;
+    		
+    		clearMediosPago();
+    		// Procesar
+    		
+    		BigDecimal monto = null;
+    		
+    		// Seteo acá el monto total que tiene que verse en la Info Customizada de Cheques de Terceros
+    		/* dREHER este codigo da error y no esta en VOrdenCobro TODO: verificar de que se trata 
+    		try {
+            	chequeTercero.setInfoCustomAttribute("toPayAmy", m_model.numberParse((String)txtTotalPagar1.getValue())); 
+    		} catch (Exception e) {
+    			showError("@SaveErrorNotUnique@ \n\n" + txtTotalPagar1.getLabel().getValue());
+    			
+        		txtTotalPagar1.getComponent().setFocus(true); // .requestFocusInWindow();
+        		if (txtTotalPagar1.getValue().toString().trim().length() > 0) 
+        			txtTotalPagar1.getValue().toString().substring(0, txtTotalPagar1.getValue().toString().length() - 1);
+    		}
+    		*/
+    		debug("txtTotalPagar1: " + txtTotalPagar1);
+    		
+    		try {
+    			
+    			monto = m_model.numberParse((String)txtTotalPagar1.getValue());
+    			setToPayAmtContext(monto);
+    			debug("Monto convertido: " + monto);
+    			
+    		} catch (Exception e) {
+    			
+    			debug("Error al formatear total a pagar. Exception=" + e.toString());
+    			
+    			showError("Ocurrio un error al leer monto total a pagar \n\n" + txtTotalPagar1.getLabel().getValue());
+    			
+        		txtTotalPagar1.getComponent().setFocus(true); // .requestFocusInWindow();
+        		if (txtTotalPagar1.getValue().toString().trim().length() > 0) 
+        			txtTotalPagar1.getValue().toString().substring(0, txtTotalPagar1.getValue().toString().length() - 1);
+        		
+        		return;
+    		}
+    		
+    		m_model.setActualizarFacturasAuto(false);
+    		dateTrx.setReadWrite(false);
+    		// Fuerzo la actualizacion de los valores de la interfaz
+    		onTipoPagoChange(true);
+    		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
+    		m_model.setActualizarFacturasAuto(true);
+    		m_model.setDocumentNo(fldDocumentNo.getValue().toString());
+    		// Realizar acciones antes del PreProcesar
+    		try {
+        		makeOperationsBeforePreProcesar();
+			} catch (Exception e) {
+				showError("Se produjo un error al pre procesar. "+e.getMessage());
+				return;
+			}
+  		
+    		int status = m_model.doPreProcesar();
+    		updateTreeModel();
+    		
+    		switch ( status )
+    		{
+    		case VOrdenPagoModel.PROCERROR_OK:
+    			break;
+    			
+    		case VOrdenPagoModel.PROCERROR_INSUFFICIENT_INVOICES:
+    			showError("@InsufficientInvoicesToPayError@");
+    			return;
+    		
+    		case VOrdenPagoModel.PROCERROR_NOT_SELECTED_BPARTNER:
+    			showError("@NotSelectedBPartner@");
+    			return;
+
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_NOT_SET:
+    			showError("Debe indicar el número de documento");
+    			return;
+    		
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_ALREADY_EXISTS:
+    			showError("Número de documento ya existente");
+    			return;
+    			
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_ALREADY_EXISTS_IN_OTHER_PERIOD:
+    			showError("El Nro. de Documento ingresado pertenece a un Recibo anulado pero no es posible reutilizarlo porque está fuera del período actual.");
+    			return;
+    		
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTTYPE_NOT_SET:
+    			showError("Debe indicar el tipo de documento");
+    			return;
+    			
+    		case VOrdenPagoModel.PROCERROR_BOTH_EXCHANGE_INVOICES:
+    			showError("@BothExchangeInvoices@");
+    			return;
+    			
+    		case VOrdenPagoModel.PROCERROR_DOCUMENTNO_INVALID:
+    			showError("El numero de documento no coincide con el esperado en la secuencia (prefijo - valor - sufijo)");
+    			return;
+    			
+    		default:
+    			showError("@ValidationError@");
+    			return;
+    		}
+    		
+    		// CINTOLO. Luego de las validaciones se agrega la ventana de Dif de Cambio	
+    		m_model.m_mediosPago.clear();
+    		m_model.calculateExchangeDifferenceValues();
+    		
+			// Verificar si algún comprobante seleccionado tiene marcado "clausula de ajuste"
+    		shouldContinue = true;
+    		isCintoloEmit = false;
+    		isCintoloInclude = false;
+			if(m_model.isAdjustmentClause() 
+					&& m_model.getExchangeDifference() != null && !m_model.getExchangeDifference().equals(Env.ZERO)) {
+				WExchangeDifferenceForm diffDialog;
+				try {
+					diffDialog = new WExchangeDifferenceForm(this, 
+							m_model.getExchangeDifference(),
+							m_model.getExchangeDifferencePercent().abs(),
+							m_model.getExchangeDifferenceLimit(),
+							m_model.getExchangeDifferencePercentLimit(),
+							m_model.shouldEmit());
+					AEnv.showWindow(diffDialog);
+					
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+			
+    		if(!shouldContinue) {
+				return;
+			}
+
+ 			// Actualizo componentes gráficos antes de pasar a la siguiente
+			// pestaña
+    		updateComponentsPreProcesar();
+    		// Avanza a la siguiente tab
+    		m_cambioTab = true;
+    		tabbox.setSelectedIndex(1);
+    		fldDocumentNo.setValue(getModel().getDocumentNo());
+//    		m_cambioTab = false;  // <- diferencias con Swing en los tiempos de eventos. Se pone a false en el evento 
+    		
+    		updatePaymentsTabsState();
+    		treeUpdated();
+    		// Actualizar el arbol para casos donde hay que mostrar retenciones
+	    	updateTreeModel();
+	    	pagosTree.setModel(getMediosPagoTreeModel());
+    		// Actualizar descuento de entidad comercial
+    		customUpdateBPartnerRelatedComponents(false);
+    		Object fecha = dateTrx.getValue();
+    		if(fecha!=null)
+    			m_model.setFechaOP((Timestamp)fecha);
+    		
+    		// CINTOLO. Si no se incluye la dif de cambio, solo se permite pagar en ARS.
+    		cboCurrency.setReadWrite(true);
+			if(!isCintoloInclude && 
+					(m_model.calculateExchangeDifference() != null && m_model.calculateExchangeDifference().compareTo(Env.ZERO) != 0)) {
+				cboCurrency.setReadWrite(false);
+				cboTenderType.setValue(Env.getC_Currency_ID(m_ctx));
+			}
+    		
+    		
+    	} else if (idx == 1) {
+    		
+    		//Autorización para OP si existen pagos anticipados
+    		CallResult res = validateDebitNote();
+
+    		if ((res != null )&& (res.isError())){
+				if(!Util.isEmpty(res.getMsg(), true)){
+					showError(res.getMsg());
+				}
+				return;
+			}
+    		
+    		getModel().setDescription(txtDescription.getComponent().getText());
+    		
+    		m_model.setProjectID(getC_Project_ID() == null?0:getC_Project_ID());
+    		m_model.setCampaignID(getC_Campaign_ID() == null?0:getC_Campaign_ID());
+    		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
+    		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
+    		
+    		/*
+    		 * Esta validacion se realiza primero porque no necesariamente bloquea el proceso
+    		 * si arroja error. 
+    		 * El usuario decide si desea continuar o no.
+    		 */
+    		int status = m_model.nonBlockingValidations();
+    		if(status == VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST) {
+	    		if(showAsk("PaymentsPartnerCheckWithoutBankList")) {
+	    			status = VOrdenPagoModel.PROCERROR_OK;
+	    		} else {
+	    			return;
+	    		}
+    		} 
+    		
+    		status = m_model.doPostProcesar(this.maxPaymentAllowed);
+    		
+    		switch (status) 
+    		{
+    		case VOrdenPagoModel.PROCERROR_OK:
+    			break;
+    		
+    		case VOrdenPagoModel.PROCERROR_PAYMENTS_AMT_MAX_ALLOWED:
+    			showError("@PaymentsAmtMaxAllowedExceeded@");
+    			break;
+    			
+    		case VOrdenPagoModel.PROCERROR_PAYMENTS_AMT_MATCH:
+    			showError("@PaymentsAmtMatchError@");
+    			break;
+    			
+    		case VOrdenPagoModel.PROCERROR_PAYMENTS_GENERATION:
+    			showError("@PaymentsGenerationError@ : "+ this.m_model.getMsgAMostrar());
+    			break;
+    			
+			/*
+    		 * Dado que en esta instancia, el usuario decidio
+    		 * no continuar con el pago por decision propia, no se muestra ningún mensaje
+    		 */
+    		case VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST:
+    			break;
+    			
+    		default:
+    			showError("@Error@"+ this.m_model.getMsgAMostrar());
+    			break;
+    		}
+    		
+    		if (status == VOrdenPagoModel.PROCERROR_OK)
+    		{	
+    			// FEDE:TODO refactor pending: similar a VOrdenPagoModel.mostrarInforme
+    			if (m_model.m_newlyCreatedC_AllocationHeader_ID <= 0)
+    				return;
+    	        int proc_ID = DB.getSQLValue( null, "SELECT AD_Process_ID FROM AD_Process WHERE value='" + m_model.getReportValue()+ "' " );
+    	        if( proc_ID > 0 ) {
+    	        	
+    	        	MPInstance instance = new MPInstance( Env.getCtx(), proc_ID, 0, null );
+    	            if( !instance.save()) {
+    	            	log.log(Level.SEVERE, "Error at mostrarInforme: instance.save()");
+    	                showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
+    	                return;
+    	            }
+    	            ProcessInfo pi = new ProcessInfo( getReportName(),proc_ID );
+    	            pi.setAD_PInstance_ID( instance.getAD_PInstance_ID());
+    	            
+    	            MPInstancePara ip;
+    	            
+    	            ip = new MPInstancePara( instance, 10 );
+    	            ip.setParameter( "C_AllocationHdr_ID",String.valueOf(m_model.m_newlyCreatedC_AllocationHeader_ID ));
+    	            if( !ip.save()) {
+    	            	log.log(Level.SEVERE, "Error al mostrar informe. ");
+    	            	showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
+    	                return;
+    	            }
+    	            
+    	            ip = new MPInstancePara(instance, 20);
+    				ip.setParameter("PrintRetentions", isPrintRetentions() ? "Y" : "N");
+    				if (!ip.save()) {
+    					log.log(Level.SEVERE, "Error al mostrar informe. ");
+    					showError("Error al mostrar informe. " + CLogger.retrieveErrorAsString());
+    					return;
+    				}
+    	            
+    	            MProcess process = new MProcess(Env.getCtx(), proc_ID, null);
+    	            try {
+    	            	MProcess.execute(Env.getCtx(), process, pi, null);
+    	            } catch (Exception e) {
+    	            	showError("Error al mostrar informe. " + e.getMessage());
+    	            	e.printStackTrace();
+    	            }
+    	        }
+	    		// Reset	    		
+	    		reset();
+    		}
+    	}    	
+    }//GEN-LAST:event_cmdProcessActionPerformed
+	
+// CINTOLO
+	// TODO: para ver luego sobre VOrdenCobro...
+    protected CallResult validateDebitNote() {
+		return new CallResult();
+	}
+	
+	public void processExchangeDifference() {
+		m_model.processExchangeDifference();
+	}
+	
+	// Seteo en el contexto el valor total a pagar de la OP para poder mostrarlo en la ventana info de Cheques
+	protected void setToPayAmtContext(BigDecimal amount) {
+		Env.setContext(m_ctx,m_WindowNo,"ToPayAmt", amount.setScale(2, BigDecimal.ROUND_HALF_UP).toString());
+	}
+	// ------------------------------ CINTOLO END ---------------------------------------
+	
+	// dREHER
+	private void debug(String string) {
+		if(DEBUG)
+			System.out.println("WOrdenCobro. " + string);
+		
 	}
 
 	@Override
@@ -387,7 +736,7 @@ public class WOrdenCobro extends WOrdenPago {
 		if (cboCheckReceiptMedium.getSelectedIndex() > 0 && cboCheckReceiptMedium.getSelectedItem().getValue() != null)
 			updateBank((MPOSPaymentMedium) cboCheckReceiptMedium.getSelectedItem().getValue());
 
-    	tabpanel.setHeight("150px");
+    	tabpanel.setHeight("200px"); // dREHER Original 150px
     	
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");

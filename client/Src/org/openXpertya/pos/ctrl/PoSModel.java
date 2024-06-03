@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.openXpertya.apps.AInfoElectronic.ElectronicDialogActionListener;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MPOSJournal;
