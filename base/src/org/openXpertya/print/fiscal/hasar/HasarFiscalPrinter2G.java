@@ -508,4 +508,13 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	public int getFooterTrailerMaxLength() {
 		return 120;
 	}
+	
+	@Override
+	protected boolean checkStatus(FiscalPacket command, FiscalPacket response) throws FiscalPrinterIOException {
+		// TODO: HARDCODE en varios comandos viene el estado de fiscal "" en lugar de "0000" pero en el spooler está correcto, hack para ignorar
+		if (response.get(1).length != 0)
+			return super.checkStatus(command, response);
+		else 
+			return false;
+	}
 }

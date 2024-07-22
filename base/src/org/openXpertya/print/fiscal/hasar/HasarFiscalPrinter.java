@@ -632,7 +632,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		return response;
 	}
 	
-	private boolean checkStatus(FiscalPacket command, FiscalPacket response) throws FiscalPrinterIOException {
+	protected boolean checkStatus(FiscalPacket command, FiscalPacket response) throws FiscalPrinterIOException {
 		int newPrinterStatus;
 		int newFiscalStatus;
 
