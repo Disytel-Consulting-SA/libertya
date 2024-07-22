@@ -15,7 +15,7 @@ import org.junit.platform.commons.logging.LoggerFactory;
 import test.util.StartupLY;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public abstract class GenericTest<T extends PO> {
+public abstract class DocumentTest<T extends PO> {
 	
 	
 	@BeforeAll
