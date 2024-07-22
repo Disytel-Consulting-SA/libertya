@@ -78,6 +78,12 @@ public class ExportPlugin extends SvrProcess{
 	/** Deshabilitar las entradas del changelog inconsistentes con los metadatos */
 	protected boolean disableInconsistentChangelog = false;
 	
+	/** El jar final fue copiado a destino definido por el desarrollador bajo PostBuildCopyJarToLocation */
+	protected static boolean postBuildjarCopied = false;
+	
+	/** El script post build fue ejecutado PostBuildCopyJarToLocation */
+	protected static boolean postBuildScriptExecuted = false; 
+	
 	// Heredados
 	
 	@Override
@@ -387,6 +393,10 @@ public class ExportPlugin extends SvrProcess{
 			
 			createJar();
 			
+			copyJar();
+			
+			callScript();
+			
 			finished();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -572,10 +582,46 @@ public class ExportPlugin extends SvrProcess{
 		if (process.exitValue() > 0) {
 			throw new Exception("Error en creacion de jar: " + inputStreamToString(process.getErrorStream())) ;
 		}
-		moveJarToFinalDestination();
+		moveJarToDestination();
 	}
 	
-	protected static void moveJarToFinalDestination() throws Exception {
+	protected static void copyJar() throws Exception {
+		if (Util.isEmpty(prop("PostBuildCopyJarToLocation")))
+			return;
+		try {
+			File source = file(prop("CreateJarTargetDir"), fileName.toString());
+			File target = file(prop("PostBuildCopyJarToLocation"), fileName.toString());
+			if (target.exists()) {
+	            FileUtils.forceDelete(target);
+			}
+			FileUtils.copyFile(source, target);
+			postBuildjarCopied = true;
+		} catch (Exception e) {
+			System.out.println("WARNING: Error en PostBuildCopyJarToLocation: " + e.getMessage());
+		}
+	}
+	
+	
+	protected static void callScript() throws Exception {
+		if (Util.isEmpty(prop("PostBuildExecuteScriptFile")) || Util.isEmpty(prop("PostBuildExecuteScriptDir"))) 
+			return;
+		try {
+			System.out.println("Ejecutando " + prop("PostBuildExecuteScriptFile"));
+			Process process = Runtime.getRuntime().exec(new String[] {prop("PostBuildExecuteScriptFile")}, null, file(prop("PostBuildExecuteScriptDir")));
+			process.waitFor();
+			if (process.exitValue() > 0) {
+				System.out.println("WARNING: Error en PostBuildExecuteScript: " + inputStreamToString(process.getErrorStream())) ;
+				return;
+			}
+		} catch (Exception e) {
+			System.out.println("WARNING: Exception en PostBuildExecuteScript: " + e.getMessage()) ;
+			return;
+		}
+		postBuildScriptExecuted = true;
+	}
+
+	
+	protected static void moveJarToDestination() throws Exception {
 		// Si es directorio de export de componente y el de creacion de jar es el mismo, no hay mas nada que hacer, en caso contrario mover el archivo 
 		if (!(prop("CreateJarTargetDir")).equals(prop("ExportDirectory"))) {
 			File target = file(prop("CreateJarTargetDir"), fileName.toString());
@@ -590,6 +636,14 @@ public class ExportPlugin extends SvrProcess{
 		System.out.println();
 		System.out.println("Archivos exportados a: " + prop("ExportDirectory"));
 		System.out.println("Jar final generado en: " + prop("CreateJarTargetDir"));
+		
+		if (postBuildjarCopied)
+			System.out.println("Jar final copiado en: " + prop("PostBuildCopyJarToLocation"));
+		
+		if (postBuildScriptExecuted)
+			System.out.println("Ejecutado script: " + prop("PostBuildExecuteScriptFile"));
+		
+		
 		System.out.println();
 		System.out.println("===========");
 		System.out.println("Finalizado!");
