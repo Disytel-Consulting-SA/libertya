@@ -385,6 +385,12 @@ public class RetencionSuSSSeguridad extends AbstractRetencionProcessor {
 	 */
 	private BigDecimal calculatePagosMensualAcumulados(){
 		Timestamp vFecha = Env.getContextAsDate(Env.getCtx(), "#Date");
+		
+		// dREHER leer la fecha de la OP y no la del dia
+		if(getDateTrx()!=null)
+			vFecha = getDateTrx();
+
+		
 		Timestamp vDesde = (Timestamp) DB.getSQLObject(getTrxName(),
 				"select date_trunc('month',?::timestamp)", new Object[] { vFecha });
 
@@ -402,6 +408,12 @@ public class RetencionSuSSSeguridad extends AbstractRetencionProcessor {
 	 */
 	private BigDecimal calculateRetencionesMensualAcumuladas(){
 		Timestamp vFecha = Env.getContextAsDate(Env.getCtx(), "#Date");
+
+		// dREHER leer la fecha de la OP y no la del dia
+		if(getDateTrx()!=null)
+			vFecha = getDateTrx();
+
+		
 		Timestamp vDesde = (Timestamp) DB.getSQLObject(getTrxName(),
 				"select date_trunc('month',?::timestamp)", new Object[] { vFecha });
 		

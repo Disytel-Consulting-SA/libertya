@@ -444,6 +444,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 
 			if (rs.next())
 				return rs.getBigDecimal(1);
+			
+			// dREHER cierre de conexion
+			DB.close(rs, pp);
 
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "currencyConvert", e);
@@ -701,6 +704,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 					new MInvoice(Env.getCtx(), rs.getInt("c_invoice_id"),
 							getTrxName()), rs.getBigDecimal("amount").add(amountRet));
 		}
+		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return allocatedAmts;
 	}
 	
@@ -740,9 +747,62 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			return rs.getBigDecimal("amountRetention");
 		}
 		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return BigDecimal.ZERO;
 	}
 	
+	/**
+	 * Obtiene todos los C_BPartner_ID que tengan el mismo CUIT
+	 * y sean del mismo TIPO 
+	 * @param taxID
+	 *            	CUIT
+	 * @return ArrayList
+	 * 				id de entidades comerciales coincidentes
+	 * @author dREHER
+	 */
+	public ArrayList<Integer> getC_BPartner_IDMismoCUIT(String taxID){
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		String sql = "SELECT C_BPartner_ID " +
+				" FROM C_BPartner " +
+				" WHERE IsActive='Y' " +
+				" AND REPLACE(TaxID,'-','') = ?" +
+				" AND IsVendor='Y'";
+
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
+		ResultSet rs = null;
+		try {
+			ps.setString(1, taxID.replace("-", ""));	
+			rs = ps.executeQuery();
+			while(rs.next()) {
+				ids.add(rs.getInt("C_BPartner_ID"));
+			}
+		} catch (SQLException e) {
+			log.warning(e.getLocalizedMessage());
+		}finally {
+			DB.close(rs, ps);
+		}
+
+		return ids;
+	}
+	
+	/**
+	 * 
+	 * @param ids
+	 * 			Identificadores para utilizar en clausula IN ...
+	 * @return Clausula IN formateada
+	 * @author dREHER
+	 */
+	public static String getIN(ArrayList<Integer> ids) {
+		String s = "(";
+		
+		for(Integer i : ids)
+			s+= (s.length()>1?",":"") + i.toString();
+		
+		s+= ")";
+		return s;
+	}
  
 
 	/**
@@ -771,11 +831,16 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public Map<Integer, BigDecimal> getSumaPagosAdelantadosAnteriores(
 			MBPartner bpartner, Integer clientID, Timestamp dateFrom,
 			Timestamp dateTo, MRetencionSchema retSchema) throws Exception {
+		
+		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
+		String C_BParner_IDIN = getIN(getC_BPartner_IDMismoCUIT(bpartner.getTaxID()));
+		
+		
 		Map<Integer, BigDecimal> pays = new HashMap<Integer, BigDecimal>();
 		String sql = "SELECT DISTINCT p.c_payment_id, currencybase(p.payamt, p.c_currency_id, p.datetrx, p.ad_client_id, p.ad_org_id) as prepayamt "
 				+ "FROM c_payment as p "
-				+ "WHERE p.docstatus in ('CO','CL') AND "
-				+ "			p.c_bpartner_id = ?	AND " 
+				+ "WHERE p.docstatus IN ('CO','CL') AND "
+				+ "			p.c_bpartner_id IN " +	C_BParner_IDIN + " AND " 
 				+ "			p.isreceipt = 'N' AND "
 				+ "			p.AD_Client_ID = ? AND ";
 		// Fecha desde
@@ -787,13 +852,13 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			sql += "			p.DateTrx::date <= ?::date AND ";
 		}
 		sql += "			(NOT EXISTS (SELECT c_payment_id "
-				+ "							FROM c_allocationhdr as ah "
-				+ "							INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "							WHERE ah.c_bpartner_id = ? and ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id) "
+				+ "							FROM c_allocationhdr AS ah "
+				+ "							INNER JOIN c_allocationline AS al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
+				+ "							WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id) "
 				+ "			OR EXISTS (SELECT c_payment_id "
 				+ "						FROM c_allocationhdr as ah "
 				+ "						INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "						WHERE ah.c_bpartner_id = ? and ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype = 'OPA')) AND "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype = 'OPA')) AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -805,7 +870,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Si el parámetro de compañía es null o 0 entonces tomo el de la
 		// entidad comercial
 		if (Util.isEmpty(clientID, true)) {
@@ -821,14 +888,21 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
-		ps.setInt(i++, bpartner.getID());
-		ps.setInt(i++, bpartner.getID());
+		
+		// ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Esquema de retención en subconsulta
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
 		while (rs.next()) {
 			pays.put(rs.getInt("c_payment_id"), rs.getBigDecimal("prepayamt"));
 		}
+		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return pays;
 	}
 
@@ -856,10 +930,14 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			MBPartner bpartner, Integer clientID, Timestamp dateFrom,
 			Timestamp dateTo, MRetencionSchema retSchema) throws Exception {
 		Map<Integer, BigDecimal> pays = new HashMap<Integer, BigDecimal>();
+		
+		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
+		String C_BParner_IDIN = getIN(getC_BPartner_IDMismoCUIT(bpartner.getTaxID()));
+		
 		String sql = "SELECT DISTINCT p.c_payment_id, p.isallocated "
 				+ "FROM c_payment p  "
 				+ "WHERE p.docstatus in ('CO','CL') AND "
-				+ "			p.c_bpartner_id = ?	AND " 
+				+ "			p.c_bpartner_id IN " + C_BParner_IDIN + " AND " 
 				+ "			p.isreceipt = 'N' AND "
 				+ "			p.AD_Client_ID = ? AND ";
 		// Fecha desde
@@ -870,12 +948,12 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			sql += "			p.DateTrx::date <= ?::date AND ";
 		}
-		sql += "				p.c_payment_id IN (SELECT al.c_payment_id "
+		sql += "				p.c_payment_id IN (SELECT c_payment_id "
 				+ "							FROM c_allocationhdr as ah "
 				+ "							INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
 				+ "							INNER JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id "
 				+ "							INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id "	
-				+ "							WHERE ah.c_bpartner_id = ? and ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
+				+ "							WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "		                INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -887,7 +965,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
+		
 		// Si el parámetro de compañía es null o 0 entonces tomo el de la
 		// entidad comercial
 		if (Util.isEmpty(clientID, true)) {
@@ -903,7 +984,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Esquema de retención en la subconsulta
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
@@ -925,6 +1008,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			}
 			pays.put(paymentID, netTotal);
 		}
+		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return pays;
 	}
 
@@ -955,12 +1042,16 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			MBPartner bpartner, Integer clientID, Timestamp dateFrom,
 			Timestamp dateTo, MRetencionSchema retSchema) throws Exception {
 		Map<Integer, BigDecimal> cashlines = new HashMap<Integer, BigDecimal>();
+		
+		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
+		String C_BParner_IDIN = getIN(getC_BPartner_IDMismoCUIT(bpartner.getTaxID()));
+		
 		String sql = "SELECT DISTINCT cl.c_cashline_id, currencybase(abs(cl.amount), cl.c_currency_id, c.statementdate, cl.ad_client_id, cl.ad_org_id) as precashlineamt "
 				+ "FROM c_cashline as cl "
 				+ "INNER JOIN c_cash as c ON c.c_cash_id = cl.c_cash_id "
 				+ "WHERE cl.docstatus IN ('CO','CL') AND "
 				+ "			cl.amount < 0 AND "
-				+ "			cl.c_bpartner_id = ? AND "
+				+ "			cl.c_bpartner_id IN " + C_BParner_IDIN + " AND "
 				+ "			cl.AD_Client_ID = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
@@ -971,13 +1062,13 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			sql += "			c.statementDate::date <= ?::date AND ";
 		}
 		sql += "			(NOT EXISTS (SELECT c_cashline_id "
-				+ "						FROM c_allocationline as al "
-				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE ah.c_bpartner_id = ? and al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y') "
+				+ "						FROM c_allocationline AS al "
+				+ "						INNER JOIN c_allocationhdr AS ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + "AND al.c_cashline_id = cl.c_cashline_id AND docstatus IN ('CO','CL') AND ah.isactive = 'Y') "
 				+ "			OR EXISTS (SELECT c_cashline_id "
 				+ "						FROM c_allocationline as al "
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE ah.c_bpartner_id = ? and al.c_cashline_id = cl.c_cashline_id and docstatus in ('CO','CL') and ah.isactive = 'Y' and allocationtype = 'OPA')) AND "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND docstatus IN ('CO','CL') AND ah.isactive = 'Y' AND allocationtype = 'OPA')) AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -989,7 +1080,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Si el parámetro de compañía es null o 0 entonces tomo el de la
 		// entidad comercial
 		if (Util.isEmpty(clientID, true)) {
@@ -1005,8 +1098,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
-		ps.setInt(i++, bpartner.getID());
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Esquema de retención
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
@@ -1014,6 +1109,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			cashlines.put(rs.getInt("c_cashline_id"),
 					rs.getBigDecimal("precashlineamt"));
 		}
+		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return cashlines;
 	}
 
@@ -1042,14 +1141,18 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			MBPartner bpartner, Integer clientID, Timestamp dateFrom,
 			Timestamp dateTo, MRetencionSchema retSchema) throws Exception {
 		Map<Integer, BigDecimal> cashlines = new HashMap<Integer, BigDecimal>();
+		
+		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
+		String C_BParner_IDIN = getIN(getC_BPartner_IDMismoCUIT(bpartner.getTaxID()));
+		
 		String sql = "SELECT DISTINCT cl.c_cashline_id, currencybase(abs(cl.amount), cl.c_currency_id, c.statementdate, cl.ad_client_id, cl.ad_org_id) as precashlineamt "
 				+ "FROM c_cashline as cl "
 				+ "INNER JOIN c_cash as c ON c.c_cash_id = cl.c_cash_id "
 				+ "LEFT JOIN c_invoice as i ON cl.c_invoice_id = i.c_invoice_id "
 				+ "WHERE cl.docstatus IN ('CO','CL') AND "
 				+ "			cl.amount < 0 AND "
-				+ "			(cl.c_bpartner_id = ? "
-				+ "			OR (cl.c_bpartner_id is null AND i.c_bpartner_id is not null AND i.c_bpartner_id = ?)) AND "
+				+ "			(cl.c_bpartner_id IN  " + C_BParner_IDIN
+				+ "			OR (cl.c_bpartner_id is null AND i.c_bpartner_id is not null AND i.c_bpartner_id IN " + C_BParner_IDIN + " )) AND "
 				+ "			cl.AD_Client_ID = ? AND ";
 		// Fecha desde
 		if (dateFrom != null) {
@@ -1064,7 +1167,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
 				+ "						INNER JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id "
 				+ "						INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id "
-				+ "						WHERE ah.c_bpartner_id = ? and al.c_cashline_id = cl.c_cashline_id and ah.docstatus in ('CO','CL') and ah.isactive = 'Y' and allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND docstatus in ('CO','CL') AND ah.isactive = 'Y' AND allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -1077,8 +1180,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
-		ps.setInt(i++, bpartner.getID());
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Si el parámetro de compañía es null o 0 entonces tomo el de la
 		// entidad comercial
 		if (Util.isEmpty(clientID, true)) {
@@ -1094,7 +1199,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			ps.setTimestamp(i++, dateTo);
 		}
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Esquema de retención
 		ps.setInt(i++, retSchema.getID());
 		ResultSet rs = ps.executeQuery();
@@ -1116,6 +1223,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			netTotal.setScale(2, BigDecimal.ROUND_HALF_EVEN);
 			cashlines.put(cashlineID, netTotal);
 		}
+		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return cashlines;
 	}
 
@@ -1221,11 +1332,15 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			Timestamp dateTo, MRetencionSchema retSchema, 
 			Integer srcInvoiceID) throws Exception {
 		Map<Integer, BigDecimal> retenciones = new HashMap<Integer, BigDecimal>();
+		
+		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
+		String C_BParner_IDIN = getIN(getC_BPartner_IDMismoCUIT(bpartner.getTaxID()));
+				
 		String sql = "SELECT DISTINCT ri.c_invoice_id, currencybase(ri.amt_retenc, ri.c_currency_id, i.dateinvoiced, ri.ad_client_id, ri.ad_org_id) as retamt "
 				+ "FROM m_retencion_invoice ri "
 				+ "INNER JOIN c_invoice i ON ri.c_invoice_id = i.c_invoice_id "
 				+ "WHERE i.docstatus in ('CO','CL') AND "
-				+ "			i.c_bpartner_id = ? AND " 
+				+ "			i.c_bpartner_id IN " + C_BParner_IDIN + " AND " 
 				+ "			i.ad_client_id = ? AND ";
 		if(!Util.isEmpty(srcInvoiceID, true)){
 			sql += "		ri.c_invoice_src_id = "+srcInvoiceID+" AND ";
@@ -1249,7 +1364,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		int i = 1;
 		// Entidad Comercial
-		ps.setInt(i++, bpartner.getID());
+		// ps.setInt(i++, bpartner.getID());
+		// dREHER reemplazo por si hay varias entidades con el mismo CUIT
+		
 		// Si el parámetro de compañía es null o 0 entonces tomo el de la
 		// entidad comercial
 		if (Util.isEmpty(clientID, true)) {
@@ -1286,6 +1403,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			netTotal.setScale(2, BigDecimal.ROUND_HALF_EVEN);
 			retenciones.put(retencionCreditID, netTotal);
 		}
+		
+		// dREHER cierre de conexion
+		DB.close(rs, ps);
+		
 		return retenciones;
 	}
 
@@ -1403,8 +1524,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	protected BigDecimal getPorcentajePadron(List<String> padronTypes, BigDecimal defaultPorcentaje){
 		BigDecimal porcentaje = null;
 		for (int i = 0; i < padronTypes.size() && porcentaje == null; i++) {
+			// dREHER fecha de la OP y no del dia
 			porcentaje = MBPartnerPadronBsAs.getBPartnerPerc("retencion",
-					getBPartner().getTaxID(), Env.getDate(), padronTypes.get(i),
+					getBPartner().getTaxID(), (getDateTrx()!=null?getDateTrx():Env.getDate()), padronTypes.get(i),
 					getTrxName());
 		}
 		// Si no lo encuentra, entonces el valor por defecto parámetro
