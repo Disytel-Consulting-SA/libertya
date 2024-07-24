@@ -11,10 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
-import org.openXpertya.apps.form.VOrdenPagoModel;
 import org.openXpertya.exchangedif.InvoiceExchangeDif;
-import org.openXpertya.model.AllocationGenerator.AllocationDocumentType;
-import org.openXpertya.model.AllocationGenerator.Document;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;

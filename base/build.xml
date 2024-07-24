@@ -52,6 +52,12 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="../lib/commons-codec-1.9.jar"/>
   	<pathelement path="../lib/commons-io-2.4.jar"/>
   	<pathelement path="../lib/lyws.jar"/>
+    <fileset dir="../lib/junit5">
+        <include name="**/*.jar"/>
+    </fileset>
+    <pathelement path="../lib/zxing-javase.jar"/>
+    <pathelement path="../lib/zxing.jar"/>
+    <pathelement path="../lib/swing-layout-1.0.2.jar"/>
   </path>
 
 

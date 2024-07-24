@@ -2,16 +2,10 @@ package test.model;
 
 import org.openXpertya.model.PO;
 import org.openXpertya.util.Env;
-import org.openXpertya.util.Trx;
-
-import common.Logger;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Properties;
 import org.junit.jupiter.api.*;
-import org.junit.platform.commons.logging.LoggerFactory;
-
 import test.util.StartupLY;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

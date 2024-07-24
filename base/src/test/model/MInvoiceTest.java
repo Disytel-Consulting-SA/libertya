@@ -6,11 +6,8 @@ import java.util.Properties;
 
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
-import org.openXpertya.model.MProduct;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.Env;
-
-import test.util.TestUtil;
 
 public class MInvoiceTest extends DocumentTest<MInvoice>{
 	

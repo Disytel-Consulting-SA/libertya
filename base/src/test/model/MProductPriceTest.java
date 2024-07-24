@@ -3,16 +3,10 @@ package test.model;
 import java.math.BigDecimal;
 import java.util.Properties;
 
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.openXpertya.model.MProduct;
 import org.openXpertya.model.MProductPrice;
-import org.openXpertya.model.M_Table;
 import org.openXpertya.model.PO;
-import org.openXpertya.model.X_AD_User;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
-import test.util.TestUtil;
 
 public class MProductPriceTest extends GenericTest<MProductPrice>{
 	

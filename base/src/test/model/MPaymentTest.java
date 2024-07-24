@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 import java.util.Properties;
 
 import org.openXpertya.model.MPayment;
-import org.openXpertya.model.MProduct;
 import org.openXpertya.model.PO;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
