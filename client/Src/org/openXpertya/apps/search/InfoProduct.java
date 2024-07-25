@@ -459,7 +459,7 @@ public class InfoProduct extends Info implements ActionListener {
 
         // Pick init
 
-        fillPicks(); //0 para no filtrar por la moneda de la pricelist predeterminada
+    	fillPicks( M_PriceList_ID );
 
         int M_PriceList_Version_ID = findPLV( M_PriceList_ID );
 
@@ -523,9 +523,6 @@ public class InfoProduct extends Info implements ActionListener {
     	// return "QtyAvailable ASC";
     }
     
-    private void fillPicks() {
-    	fillPicks(0);
-    }
     
     /**
      * Descripci�n de M�todo
