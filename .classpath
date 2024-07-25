@@ -231,7 +231,6 @@
 	<classpathentry kind="lib" path="lib/jstl.jar"/>
 	<classpathentry kind="lib" path="lib/jtds-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jTDS3.jar"/>
-	<classpathentry kind="lib" path="lib/junit.jar"/>
 	<classpathentry kind="lib" path="lib/log4j.jar"/>
 	<classpathentry kind="lib" path="lib/mail.jar"/>
 	<classpathentry kind="lib" path="lib/ojdbc14.jar"/>
@@ -270,7 +269,6 @@
 	<classpathentry kind="lib" path="tools/lib/jstl.jar"/>
 	<classpathentry kind="lib" path="tools/lib/jtds-1.0.jar"/>
 	<classpathentry kind="lib" path="tools/lib/jTDS3.jar"/>
-	<classpathentry kind="lib" path="tools/lib/junit.jar"/>
 	<classpathentry kind="lib" path="tools/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="tools/lib/mail.jar"/>
 	<classpathentry kind="lib" path="tools/lib/ojdbc14.jar"/>
@@ -348,5 +346,24 @@
 	<classpathentry kind="lib" path="lib/core-3.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/javase-3.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="tools/lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-jupiter-api_5.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-jupiter-engine_5.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-jupiter-migrationsupport_5.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-jupiter-params_5.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-commons_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-engine_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-launcher_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-runner_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-suite-api_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-suite-commons_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-platform-suite-engine_1.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/junit-vintage-engine_5.10.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/org.apiguardian.api_1.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/org.hamcrest_2.2.0.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/org.hamcrest.core_2.2.0.v20230809-1000.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/org.junit_4.13.2.v20230809-1000.jar"/>
+	<classpathentry kind="lib" path="lib/junit5/org.opentest4j_1.3.0.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>
