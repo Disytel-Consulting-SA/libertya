@@ -139,7 +139,11 @@ public class InfoProduct extends Info implements ActionListener {
     
     
     //Modificado por Lucas Hernandez - Kunan
-    private static  String s_productFrom_version = "M_Product p" + " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')" + " LEFT OUTER JOIN M_ProductUpc pu ON (p.M_Product_ID=pu.M_Product_ID AND pu.IsActive='Y') " + " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)" + " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')";
+    private static  String s_productFrom_version = "M_Product p" 
+    		+ " LEFT OUTER JOIN M_ProductPrice pr ON (p.M_Product_ID=pr.M_Product_ID AND pr.IsActive='Y')" 
+    		+ " LEFT OUTER JOIN M_ProductUpc pu ON (p.M_Product_ID=pu.M_Product_ID AND pu.IsActive='Y') " 
+    		+ " LEFT OUTER JOIN M_AttributeSet pa ON (p.M_AttributeSet_ID=pa.M_AttributeSet_ID)" 
+    		+ " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')";
     private static String s_productFrom= "M_Product p" + "p.IsActive='Y'";
    
     // dREHER, guardo la ultima linea seleccionada
@@ -764,7 +768,7 @@ public class InfoProduct extends Info implements ActionListener {
         }
 
         if( M_PriceList_Version_ID != 0 ) {
-            where.append( " AND pr.M_PriceList_Version_ID=?" );
+            where.append( " (AND pr.M_PriceList_Version_ID=? OR pr.M_PriceList_Version_ID ISNULL) " ); // dREHER sin lista de precios tambien mostrar
         }
 
         // Product Attribute Search
