@@ -409,9 +409,12 @@ public class ExportPlugin extends SvrProcess{
 		defaults.put("CreateJarBinariesLocation", 		"binarios");
 		defaults.put("CreateJarLibsLocation", 			".."+File.separator+".."+File.separator+"lib");
 		defaults.put("CreateJarClassesLocation", 		".."+File.separator+".."+File.separator+"bin");
-		defaults.put("CreateJarServerRootLocation", 	".."+File.separator+".."+File.separator+"serverRoot");
-		defaults.put("CreateJarOXPRootBaseLocation", 	".."+File.separator+".."+File.separator+"oxpRootBase");
-		defaults.put("CreateJarWebUILocation", 			".."+File.separator+".."+File.separator+"webui");
+		defaults.put("CreateJarServerRootLibLocation", 	".."+File.separator+".."+File.separator+"lib_serverRoot");
+		defaults.put("CreateJarServerRootLocation", 	".."+File.separator+".."+File.separator+"bin_serverRoot");
+		defaults.put("CreateJarOXPRootBaseLibLocation",	".."+File.separator+".."+File.separator+"lib_oxpRootBase");
+		defaults.put("CreateJarOXPRootBaseLocation", 	".."+File.separator+".."+File.separator+"bin_oxpRootBase");
+		defaults.put("CreateJarWebUILibLocation", 		".."+File.separator+".."+File.separator+"lib_webui");
+		defaults.put("CreateJarWebUILocation", 			".."+File.separator+".."+File.separator+"bin_webui");
 	}
 
 	protected static void validateArguments(String[] args) {
@@ -539,15 +542,18 @@ public class ExportPlugin extends SvrProcess{
 
 		// Copia de compilacion y librerias externas
 		if ("Y".equalsIgnoreCase(prop("IncludeClassesAndLibs"))) {
+			// Librerias externas
+			copyDirContents("CreateJarLibsLocation", "lib");			
 			// Clases compiladas
 			copyDirContents("CreateJarClassesLocation", "");
-			// Librerias externas
-			copyDirContents("CreateJarLibsLocation", "lib");
 			// Archivos con destino OXPRoot.jar
+			copyDirContents("CreateJarServerRootLibLocation", "serverRoot" + File.separator + "lib");			
 			copyDirContents("CreateJarServerRootLocation", "serverRoot");
-			// Archivos con destino OXPRootBase.war			
+			// Archivos con destino OXPRootBase.war
+			copyDirContents("CreateJarOXPRootBaseLibLocation", "oxpRootBase" + File.separator + "lib");			
 			copyDirContents("CreateJarOXPRootBaseLocation", "oxpRootBase");
 			// Archivos con destino webui.war
+			copyDirContents("CreateJarWebUILibLocation", "webui" + File.separator + "WEB-INF" + File.separator + "lib");
 			copyDirContents("CreateJarWebUILocation", "webui");
 		}
 	}
