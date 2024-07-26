@@ -127,7 +127,8 @@ public class Combobox extends org.zkoss.zul.Combobox
         		// if the classes of value and item are different convert both to String
         		String stringValue = value.toString();
         		String stringItem = item.getValue().toString();
-                if (stringValue.equals(stringItem))
+                // if (stringValue.equals(stringItem))
+                if (stringValue.compareTo(stringItem) == 0) // dREHER comparacion de cadenas en ComboBox
                 {
                     setSelectedItem(item);
                     break;
