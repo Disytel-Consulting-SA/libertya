@@ -1262,7 +1262,15 @@ public class GridController extends CPanel implements DataStatusListener,ListSel
 	        for( int i = 0;i < size;i++ ) {
 	            mField = m_mTab.getField(i);
 	            
-	            if( mField.isDisplayed()) {
+	            /**
+	             * Se agrego control para que solo se exporten aquellos campos
+	             * que estan marcados como de visualizacion tanto en vista estandard como en grilla.
+	             * De esta manera se puede manejar a traves del diccionario que columnas se deben exportar.
+	             * 
+	             * dREHER
+	             */
+	            
+	            if( mField.isDisplayed() && mField.isDisplayedInGrid() ) {
 	            	if(!justCreatedHeader){
 	            		header.append(mField.getHeader()).append("\t");
 	            	}
