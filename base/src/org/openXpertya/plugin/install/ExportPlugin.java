@@ -1,8 +1,10 @@
 package org.openXpertya.plugin.install;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -488,7 +490,10 @@ public class ExportPlugin extends SvrProcess{
 				FileUtils.forceMkdir(file("ExportDirectory"));
 			}
 			return;
-		} 
+		}
+		// Vaciado de directorio de exportacion y donde se copiarán los clases, libs, binarios
+		if ("Y".equalsIgnoreCase(prop("ExportDirectoryEmptyFirst")))
+			FileUtils.deleteDirectory(file(prop("ExportDirectory")));
 		
 		// Version de componente a exportar
 		int componentVersionID = Integer.parseInt(props.getProperty("ExportComponentVersionID"));
@@ -612,13 +617,39 @@ public class ExportPlugin extends SvrProcess{
 		if (Util.isEmpty(prop("PostBuildExecuteScriptFile")) || Util.isEmpty(prop("PostBuildExecuteScriptDir"))) 
 			return;
 		try {
-			System.out.println("Ejecutando " + prop("PostBuildExecuteScriptFile"));
-			Process process = Runtime.getRuntime().exec(new String[] {prop("PostBuildExecuteScriptFile")}, null, file(prop("PostBuildExecuteScriptDir")));
-			process.waitFor();
-			if (process.exitValue() > 0) {
-				System.out.println("WARNING: Error en PostBuildExecuteScript: " + inputStreamToString(process.getErrorStream())) ;
-				return;
-			}
+			System.out.println("\n Ejecutando " + prop("PostBuildExecuteScriptFile"));
+	        Process process = Runtime.getRuntime().exec(new String[] {prop("PostBuildExecuteScriptFile")}, null, file(prop("PostBuildExecuteScriptDir")));
+	        
+	        // Hilo para leer la salida estándar del proceso
+	        Thread outputThread = new Thread(() -> {
+	            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+	                String line;
+	                while ((line = reader.readLine()) != null) {
+	                    System.out.println(line);
+	                }
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	            }
+	        });
+
+	        // Hilo para leer la salida de error del proceso
+	        Thread errorThread = new Thread(() -> {
+	            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
+	                String line;
+	                while ((line = reader.readLine()) != null) {
+	                    System.err.println(line);
+	                }
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	            }
+	        });
+
+	        outputThread.start();
+	        errorThread.start();
+
+	        process.waitFor();
+	        outputThread.join();
+	        errorThread.join();
 		} catch (Exception e) {
 			System.out.println("WARNING: Exception en PostBuildExecuteScript: " + e.getMessage()) ;
 			return;
