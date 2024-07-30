@@ -12,6 +12,8 @@ import java.util.Properties;
 import java.util.Scanner;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.MProcess;
@@ -581,10 +583,25 @@ public class ExportPlugin extends SvrProcess{
 			return;
 		}
 		if (file(baseDir, prop(property)).isDirectory() && file(baseDir, prop(property)).exists()) {
-			FileUtils.copyDirectory(file(baseDir, prop(property)), file(prop("ExportDirectory"), exportSubDir));
+			FileUtils.copyDirectory(file(baseDir, prop(property)), file(prop("ExportDirectory"), exportSubDir), getFileFilter());
 		} else {
 			System.out.println("WARNING: Directorio " + prop(property) + " omitido (no encontrado)");
 		}
+	}
+	
+	protected static IOFileFilter getFileFilter(){
+		if (prop("CreateJarSkipFiles")==null || prop("CreateJarSkipFiles").trim().length()==0)
+			return null;
+		
+        String[] filesToSkip = prop("CreateJarSkipFiles").split(",");
+        IOFileFilter filter = FileFilterUtils.trueFileFilter();
+		
+        for (String fileName : filesToSkip) {
+            filter = FileFilterUtils.and(filter, FileFilterUtils.notFileFilter(FileFilterUtils.nameFileFilter(fileName.trim())));
+        }
+
+        return filter;
+
 	}
 	
 	protected static void createJar() throws Exception {
