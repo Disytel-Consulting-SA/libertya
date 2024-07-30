@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_Payment
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-12-14 10:23:00.237 */
+ *  @version  - 2024-07-12 09:15:20.795 */
 public class X_C_Payment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -297,10 +297,12 @@ public static final String AUDITSTATUS_ToVerify = "TV";
 public static final String AUDITSTATUS_Paid = "PA";
 /** Rejected = RE */
 public static final String AUDITSTATUS_Rejected = "RE";
+/** Verified = VE */
+public static final String AUDITSTATUS_Verified = "VE";
 /** Set AuditStatus */
 public void setAuditStatus (String AuditStatus)
 {
-if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("PA") || AuditStatus.equals("RE") || ( refContainsValue("SSTE2CORE-AD_Reference-1010279-20161130135946", AuditStatus) ) );
+if (AuditStatus == null || AuditStatus.equals("CP") || AuditStatus.equals("TV") || AuditStatus.equals("PA") || AuditStatus.equals("RE") || AuditStatus.equals("VE") || ( refContainsValue("SSTE2CORE-AD_Reference-1010279-20161130135946", AuditStatus) ) );
  else throw new IllegalArgumentException ("AuditStatus Invalid value: " + AuditStatus + ".  Valid: " +  refValidOptions("SSTE2CORE-AD_Reference-1010279-20161130135946") );
 if (AuditStatus != null && AuditStatus.length() > 2)
 {

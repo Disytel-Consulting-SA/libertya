@@ -66,9 +66,50 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		//Si marco la liquidación como conciliada, pongo los cupones como procesados
 		//para que ya no puedan utilizarse el "incluir", caso contrario lo pongo "no procesados"
 		setCouponsProcessed(isReconciled());
+		
+		/**
+		 * Si la Liquidacion de tarjeta pasa a conciliada, aquellos cupones que esten como rechazados deben ser marcados en MPayment con ese estado de auditoria
+		 * dREHER
+		 */
+		if(isReconciled() && !getDocStatus().equals(DOCSTATUS_Voided))
+			rechazarCupones();
+		
 		return true;
 	}
 	
+	/**
+	 * Recorrer todos los cupones rechazados y marcar el estado de auditoria como rechazado en el MPayment correspondiente
+	 * @author dREHER
+	 */
+	private void rechazarCupones() {
+		String sql = "SELECT C_Payment_ID FROM C_CouponsSettlements " +
+				" WHERE C_CreditCardSettlement_ID=? AND IsRefused='Y'";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		
+		try {
+			
+			pstmt = DB.prepareStatement(sql.toString());
+			pstmt.setInt(1, getC_CreditCardSettlement_ID());
+			rs = pstmt.executeQuery();
+
+			while (rs.next()) {
+				
+				MPayment pay = new MPayment(Env.getCtx(), rs.getInt("C_Payment_ID"), get_TrxName());
+				pay.setAuditStatus(MPayment.AUDITSTATUS_Rejected);
+				pay.save();
+				
+			}
+			
+		}catch(Exception ex) {
+			
+		}finally {
+			DB.close(rs, pstmt);
+			rs=null; pstmt=null;
+		}
+		
+	}
+
 	private void setCouponsProcessed(boolean procesed) {
 		StringBuffer sql = new StringBuffer();
 
@@ -79,6 +120,21 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		sql.append("	AND include = 'Y'");
 		
 		int no = DB.executeUpdate(sql.toString(), get_TrxName());
+		
+		// Si esta marcando como NO conciliado, debe desmarcar los cupones de Libertya y de I_FideliusCupones
+		// jdreher
+		if(!procesed) {
+			sql = new StringBuffer();
+			sql.append("UPDATE I_FideliusCupones SET is_reconciled='N'"); 
+			sql.append("	WHERE C_CouponsSettlements_ID IN "); 
+			sql.append("	( ");
+			sql.append("		SELECT x.C_CouponsSettlements_ID FROM C_CouponsSettlements x ");
+			sql.append("        WHERE include='Y' ");
+			sql.append("        AND x.C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
+			sql.append(") ");
+			
+			DB.executeUpdate(sql.toString(), get_TrxName());
+		}
 	}
 
 	@Override
@@ -748,6 +804,7 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 		// Si el acreditado es 0, entonces no se debe generar un payment
 		if(!Util.isEmpty(getNetAmount(), true)){
+			
 			// Genera el pago correspondiente.
 			MPayment payment = new MPayment(getCtx(), 0, get_TrxName());
 
@@ -886,6 +943,20 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 		// Desvincula los cupones
 		StringBuffer sql = new StringBuffer();
 
+		// jdreher previo al eliminado de los cupones desmarco los mismos en I_FideliusCupones
+		sql.append("UPDATE I_FideliusCupones SET is_reconciled='N', C_CouponsSettlements_ID=0"); 
+		sql.append("	WHERE C_CouponsSettlements_ID IN "); 
+		sql.append("	( ");
+		sql.append("		SELECT x.C_CouponsSettlements_ID FROM C_CouponsSettlements x ");
+		sql.append("        WHERE x.C_CreditCardSettlement_ID = " + getC_CreditCardSettlement_ID());
+		sql.append(") ");
+		
+		DB.executeUpdate(sql.toString(), get_TrxName());
+		
+		
+		// Ahora si elimino los cupones relacionados
+		sql = new StringBuffer();
+
 		sql.append("DELETE FROM ");
 		sql.append("	" + X_C_CouponsSettlements.Table_Name + " ");
 		sql.append("WHERE ");
@@ -962,6 +1033,8 @@ public class MCreditCardSettlement extends X_C_CreditCardSettlement implements D
 
 			DB.executeUpdate(sql.toString(), get_TrxName());
 		}
+		
+		
 		
 		setDocStatus(DOCSTATUS_Voided);
 		setProcessed(true);

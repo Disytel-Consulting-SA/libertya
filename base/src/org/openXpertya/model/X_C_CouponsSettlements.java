@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_CouponsSettlements
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-19 11:53:14.956 */
+ *  @version  - 2024-07-11 13:31:51.768 */
 public class X_C_CouponsSettlements extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -208,6 +208,22 @@ Payment is reconciled with bank statement */
 public boolean isReconciled() 
 {
 Object oo = get_Value("IsReconciled");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set IsRefused */
+public void setIsRefused (boolean IsRefused)
+{
+set_Value ("IsRefused", new Boolean(IsRefused));
+}
+/** Get IsRefused */
+public boolean isRefused() 
+{
+Object oo = get_Value("IsRefused");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

@@ -1540,5 +1540,281 @@ ALTER TABLE IF EXISTS libertya.i_bankstatement
 ALTER TABLE IF EXISTS libertya.i_bankstatement
     ADD COLUMN sucursal character varying(60),
     ADD COLUMN codigooperativo character varying(30);
+    
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221108-14:00 secuencia para tabla de importacion de liquidacion de tarjetas
+CREATE SEQUENCE libertya.seq_i_fideliusliquidaciones
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 9223372036854775807
+	START 1000001;
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221108-14:01 tabla de importacion de liquidacion de tarjetas	
+CREATE TABLE libertya.i_fideliusliquidaciones (
+	i_fideliusliquidaciones_id int4 NOT NULL DEFAULT nextval('seq_i_fideliusliquidaciones'::regclass),
+	ad_client_id int4 NOT NULL,
+	ad_org_id int4 NOT NULL,
+	isactive bpchar(1) NOT NULL DEFAULT 'Y'::bpchar,
+	created timestamp NOT NULL DEFAULT 'now'::text::timestamp(6) with time zone,
+	createdby int4 NOT NULL,
+	updated timestamp NOT NULL DEFAULT 'now'::text::timestamp(6) with time zone,
+	updatedby int4 NOT NULL,
+	i_errormsg varchar(2000) NULL,
+	i_isimported bpchar(1) NOT NULL DEFAULT 'N'::bpchar,
+	processing bpchar(1) NULL,
+	processed bpchar(1) NULL DEFAULT 'N'::bpchar,
+	id varchar(32) NULL,
+	archivo_id varchar(32) NULL,
+	empresa varchar(32) NULL,
+	fpag varchar(32) NULL,
+	fpres varchar(32) NULL,
+	fant varchar(32) NULL,
+	nroliq varchar(32) NULL,
+	anticipo varchar(32) NULL,
+	tarjeta varchar(32) NULL,
+	bancopag varchar(32) NULL,
+	num_com varchar(32) NULL,
+	pciaiibb varchar(32) NULL,
+	impbruto varchar(32) NULL,
+	impneto varchar(32) NULL,
+	totdesc varchar(32) NULL,
+	promo varchar(32) NULL,
+	arancel varchar(32) NULL,
+	iva_arancel varchar(32) NULL,
+	cfo_total varchar(32) NULL,
+	cfo_21 varchar(32) NULL,
+	cfo_105 varchar(32) NULL,
+	cfo_adel varchar(32) NULL,
+	iva_cfo21 varchar(32) NULL,
+	iva_cfo105 varchar(32) NULL,
+	iva_adel21 varchar(32) NULL,
+	iva_total varchar(32) NULL,
+	ret_iibb varchar(32) NULL,
+	ret_ibsirtac varchar(32) NULL,
+	ret_iva varchar(32) NULL,
+	ret_gcia varchar(32) NULL,
+	perc_iva varchar(32) NULL,
+	perc_iibb varchar(32) NULL,
+	ret_munic varchar(32) NULL,
+	liq_anttn varchar(32) NULL,
+	perc_1135tn varchar(32) NULL,
+	dto_financ varchar(32) NULL,
+	iva_dtofinanc varchar(32) NULL,
+	deb_cred varchar(32) NULL,
+	saldos varchar(32) NULL,
+	otros_costos varchar(32) NULL,
+	iva_otros varchar(32) NULL,
+	plan_a1218 varchar(32) NULL,
+	iva_plana1218 varchar(32) NULL,
+	porc_ivaplana1218 varchar(32) NULL,
+	cuit varchar(32) NULL,
+	revisado varchar(32) NULL,
+	CONSTRAINT fideliusliquidaciones_key PRIMARY KEY (i_fideliusliquidaciones_id),
+	CONSTRAINT fideliusliquidaciones_unique_id UNIQUE (id)
+);
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221108-14:01 foreign keys para tabla de importacion de cupones de tarjetas
+ALTER TABLE libertya.i_fideliusliquidaciones ADD CONSTRAINT fideliusliquidacionesclient FOREIGN KEY (ad_client_id) REFERENCES libertya.ad_client(ad_client_id);
+ALTER TABLE libertya.i_fideliusliquidaciones ADD CONSTRAINT fideliusliquidacionesorg FOREIGN KEY (ad_org_id) REFERENCES libertya.ad_org(ad_org_id);
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221108-14:02 secuencia para tabla de importacion de liquidacion de tarjetas
+CREATE SEQUENCE libertya.seq_i_fideliuscupones
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 9223372036854775807
+	START 1000001;
+	
+	
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221108-14:02 tabla de importacion de cupones de tarjetas	
+CREATE TABLE libertya.i_fideliuscupones (
+	i_fideliuscupones_id int4 NOT NULL DEFAULT nextval('seq_i_fideliuscupones'::regclass),
+	ad_client_id int4 NOT NULL,
+	ad_org_id int4 NOT NULL,
+	isactive bpchar(1) NOT NULL DEFAULT 'Y'::bpchar,
+	created timestamp NOT NULL DEFAULT 'now'::text::timestamp(6) with time zone,
+	createdby int4 NOT NULL,
+	updated timestamp NOT NULL DEFAULT 'now'::text::timestamp(6) with time zone,
+	updatedby int4 NOT NULL,
+	i_errormsg varchar(2000) NULL,
+	i_isimported bpchar(1) NOT NULL DEFAULT 'N'::bpchar,
+	processing bpchar(1) NULL,
+	processed bpchar(1) NULL DEFAULT 'N'::bpchar,
+	id varchar(32) NULL,
+	archivo_id varchar(32) NULL,
+	empresa varchar(32) NULL,
+	fvta varchar(32) NULL,
+	fpag varchar(32) NULL,
+	fant varchar(32) NULL,
+	nroliq varchar(32) NULL,
+	nroequipo varchar(32) NULL,
+	nomequipo varchar(32) NULL,
+	nrolote varchar(32) NULL,
+	nrocupon varchar(32) NULL,
+	tarjeta varchar(32) NULL,
+	ult4tarjeta varchar(32) NULL,
+	autorizacion varchar(32) NULL,
+	cuotas varchar(32) NULL,
+	imp_vta varchar(32) NULL,
+	extra_cash varchar(32) NULL,
+	num_com varchar(32) NULL,
+	bancopag varchar(32) NULL,
+	rechazo varchar(32) NULL,
+	arancel varchar(32) NULL,
+	iva_arancel varchar(32) NULL,
+	cfo varchar(32) NULL,
+	iva_cfo varchar(32) NULL,
+	alic_ivacfo varchar(32) NULL,
+	tipo_oper varchar(32) NULL,
+	id_unico varchar(32) NULL,
+	revisado varchar(32) NULL,
+	is_reconciled bpchar(1) NULL DEFAULT 'N'::bpchar,
+	CONSTRAINT fideliuscupones_key PRIMARY KEY (i_fideliuscupones_id),
+	CONSTRAINT fideliuscupones_unique_id UNIQUE (id)
+);
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221108-17:00 foreign keys para tabla de importacion de cupones de tarjetas
+ALTER TABLE libertya.i_fideliuscupones ADD CONSTRAINT fideliuscuponesclient FOREIGN KEY (ad_client_id) REFERENCES libertya.ad_client(ad_client_id);
+ALTER TABLE libertya.i_fideliuscupones ADD CONSTRAINT fideliuscuponesorg FOREIGN KEY (ad_org_id) REFERENCES libertya.ad_org(ad_org_id);
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221117-15:30 se agrega columna ImportCupFidelius a la tabla C_CreditCardCouponFilter
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('libertya.C_CreditCardCouponFilter','importcuponesfidelius','character(1)'));
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221118-16:30 se agrega columna de ID de cupones libertya en liquidacion
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('libertya.I_FideliusCupones','c_couponssettlements_id','numeric'));
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_0.0
+--20221122-18:05 se agrega columna de ID liquidaciones en cupones
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('libertya.I_FideliusCupones','i_fideliusliquidaciones_id','numeric'));
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240603-8:50 secuencia para cupones pendientes
+CREATE SEQUENCE libertya.seq_i_fideliuspendientes
+	INCREMENT BY 1
+	MINVALUE 1
+	MAXVALUE 9223372036854775807
+	START 1000001
+	NO CYCLE;
+	
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240603-8:50 cupones pendientes
+CREATE TABLE libertya.i_fideliuspendientes (
+	i_fideliuspendientes_id int4 DEFAULT nextval('seq_i_fideliuspendientes'::regclass) NOT NULL,
+	ad_client_id int4 NOT NULL,
+	ad_org_id int4 NOT NULL,
+	isactive bpchar(1) DEFAULT 'Y'::bpchar NOT NULL,
+	created timestamp DEFAULT 'now'::text::timestamp(6) with time zone NOT NULL,
+	createdby int4 NOT NULL,
+	updated timestamp DEFAULT 'now'::text::timestamp(6) with time zone NOT NULL,
+	updatedby int4 NOT NULL,
+	i_errormsg varchar(2000) NULL,
+	i_isimported bpchar(1) DEFAULT 'N'::bpchar NOT NULL,
+	processing bpchar(1) NULL,
+	processed bpchar(1) DEFAULT 'N'::bpchar NULL,
+	id varchar(32) NULL,
+	archivo_id varchar(32) NULL,
+	fechaoper varchar(32) NULL,
+	horaoper varchar(32) NULL,
+	nroterminal varchar(32) NULL,
+	equipo varchar(32) NULL,
+	nombre_comerc varchar(32) NULL,
+	tipotrx varchar(32) NULL,
+	id_clover varchar(32) NULL,
+	codcom varchar(32) NULL,
+	nrolote varchar(32) NULL,
+	ticket varchar(32) NULL,
+	codaut varchar(32) NULL,
+	factura varchar(32) NULL,
+	tarjeta varchar(32) NULL,
+	nrotarjeta varchar(32) NULL,
+	cuota_tipeada varchar(32) NULL,
+	importe varchar(32) NULL,
+	montosec varchar(32) NULL,
+	fechapagoest varchar(32) null,
+	CONSTRAINT fideliuspendientes_key PRIMARY KEY (i_fideliuspendientes_id),
+	CONSTRAINT fideliuspendientes_unique_id UNIQUE (id)
+);
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240603-8:50 indices de cupones pendientes
+ALTER TABLE libertya.i_fideliuspendientes ADD CONSTRAINT fideliuspendientesclient FOREIGN KEY (ad_client_id) REFERENCES libertya.ad_client(ad_client_id);
+ALTER TABLE libertya.i_fideliuspendientes ADD CONSTRAINT fideliuspendientesorg FOREIGN KEY (ad_org_id) REFERENCES libertya.ad_org(ad_org_id);
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240603-9:00 nombre de comercio
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_orginfo','nombrecomercio','varchar(32)')); 
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+DROP INDEX IF EXISTS i_fideliusliquidaciones_nroliq_idx;
+DROP INDEX IF EXISTS  i_fideliuscupones_nroliq_idx;
+DROP INDEX IF EXISTS  i_fideliuscupones_nroliqfec_idx;
+DROP INDEX IF EXISTS  i_fideliuspendientes_id_idx;
+--20240710-09:00
+DROP INDEX IF EXISTS  i_fideliuspendientes_match_idx;
+DROP INDEX IF EXISTS  i_fideliuscupones_match_idx;
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240708-13:00
+CREATE INDEX i_fideliusliquidaciones_nroliq_idx ON libertya.i_fideliusliquidaciones (nroliq,num_com,tarjeta);
+CREATE INDEX i_fideliuscupones_nroliq_idx ON libertya.i_fideliuscupones (nroliq,num_com,tarjeta,nrolote,extra_cash,nrocupon);
+CREATE INDEX i_fideliuscupones_nroliqfec_idx ON libertya.i_fideliuscupones (nroliq,fvta,nrocupon,tarjeta,num_com);
+CREATE INDEX i_fideliuspendientes_id_idx ON libertya.i_fideliuspendientes (id,codcom,nrotarjeta);
+--20240710-09:00
+CREATE INDEX i_fideliuspendientes_match_idx ON libertya.i_fideliuspendientes (fechaoper,importe,nrolote,ticket,cuota_tipeada);
+CREATE INDEX i_fideliuscupones_match_idx ON libertya.i_fideliuscupones (fvta,imp_vta,nrolote,nrocupon,cuotas);
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240711-14:00
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_couponssettlements','isrefused','character'));
+
+
+-- ### MERGE 2024-07-30 org.libertya.core.micro.r3025.dev_fidelius upgrade_from_1.2
+--20240712-13:30
+INSERT INTO ad_preference  (ad_preference_id, ad_client_id, ad_org_id, createdby, updatedby, "attribute", value)
+      VALUES (nextval('seq_ad_preference'), 1010016, 0, 0, 0, 'ImpCupPend_FromCierreTarjeta', 'Y'); 
+INSERT INTO ad_preference  (ad_preference_id, ad_client_id, ad_org_id, createdby, updatedby, "attribute", value)
+      VALUES (nextval('seq_ad_preference'), 1010016, 0, 0, 0, 'DaysFromBackCreditCardClose', '3'); 
+INSERT INTO ad_preference  (ad_preference_id, ad_client_id, ad_org_id, createdby, updatedby, "attribute", value)
+      VALUES (nextval('seq_ad_preference'), 1010016, 0, 0, 0, 'DaysToBackCreditCardClose', '0'); 
+INSERT INTO ad_preference  (ad_preference_id, ad_client_id, ad_org_id, createdby, updatedby, "attribute", value)
+      VALUES (nextval('seq_ad_preference'), 1010016, 0, 0, 0, 'DaysFromBackCreditCardCloseProcess', '3'); 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

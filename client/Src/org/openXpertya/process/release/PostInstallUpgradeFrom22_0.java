@@ -24,6 +24,10 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 	protected final static String FACTURA_ELECTRONICA_UID = "CORE-AD_JasperReport-1010118";
 	protected final static String FACTURA_ELECTRONICA_FILENAME = "rpt_Factura_Electronica.jasper";
 	
+	/** UID de la impresión cierre administrativo de tarjetas Merge fidelius 1.3*/
+	protected final static String CREDIT_CARD_CLOSE_JASPER_REPORT_UID = "CORE-AD_Process-1010445";
+	protected final static String CREDIT_CARD_CLOSE_JASPER_REPORT_FILENAME = "CreditCardClose.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -50,6 +54,9 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 		
 		/** PostInstallUpgradeFrom00 Merge Micro Cintolo*/
 		updateReport(FACTURA_ELECTRONICA_UID, FACTURA_ELECTRONICA_FILENAME);
+		
+		// Cierre administrativo de tarjetas Merge fidelius 1.3
+		updateAttachment(CREDIT_CARD_CLOSE_JASPER_REPORT_UID, CREDIT_CARD_CLOSE_JASPER_REPORT_FILENAME);
 		
 		return "";
 	}

@@ -1,19 +1,30 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Level;
 
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.process.ImportFromFidelius;
+import org.openXpertya.process.ProcessInfo;
+import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 
 public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction {
+
+	private static final long serialVersionUID = 1L;
 
 	public MCreditCardClose(Properties ctx, int C_CreditCard_Close_ID, String trxName) {
 		super(ctx, C_CreditCard_Close_ID, trxName);
@@ -242,11 +253,27 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 	@Override
 	public String completeIt() {
 		try {
+			
+			// dREHER se importan los cupones pendiente en una ventana de X dias hacia atras
+			String ic = MPreference.GetCustomPreferenceValue("ImpCupPend_FromCierreTarjeta", Env.getAD_Client_ID(getCtx()));
+			if(ic!=null && ic.equals("Y"))
+				doImportPendCoupons();
+			else
+				debug("Se evita importar cupones pendientes");
+			
 			// Se eliminan los cupones anulados del cierre actual
-			deleteVoidPayments();
+			int deleted = deleteVoidPayments();
+			debug("Elimino cupones (payments) anulados de las lineas del cierre: " + deleted);
 			
 			// Setear las líneas A Verificar
-			updatePayments(MPayment.AUDITSTATUS_ToVerify);
+			int updated = updatePayments(MPayment.AUDITSTATUS_ToVerify);
+			debug("Setea todos los cupones (payments) relacionados a las lineas de cierre a estado " + MPayment.AUDITSTATUS_ToVerify + " (A verificar): " + updated);
+
+			// dREHER se deben verificar todos los payments que coincidan, tanto pendientes como no pendientes
+			// desde los cupones recuperados desde Fidelius
+			int verified = doVerifyCoupons();
+			debug("Setea todos los cupones (payments) relacionados a las lineas de cierre a estado " + MPayment.AUDITSTATUS_Verified + " (Verificados): " + verified);
+			
 		} catch (Exception e) {
 			setProcessMsg(e.getMessage());
 			return DOCSTATUS_Invalid;
@@ -257,6 +284,249 @@ public class MCreditCardClose extends X_C_CreditCard_Close implements DocAction 
 		setDocAction(DOCACTION_None);
 
 		return DocAction.STATUS_Completed;
+	}
+
+	/**
+	 * Se deben verificar todos los cupones importados, sin importar si estan o no pendientes
+	 * y que esten para verificar
+	 * @author dREHER
+	 */
+	private int doVerifyCoupons() {
+		int verified = 0;
+		
+		StringBuffer sql = new StringBuffer();
+		Timestamp fromFecha = new Timestamp((new Date()).getTime());
+		
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		int saved = 0;
+		int lost = 0;
+		
+		sql.append("SELECT p.C_Payment_ID, p.DateTrx, ");
+		sql.append(" p.PayAmt, p.CouponBatchNumber AS Lote, ");
+		sql.append(" p.CouponNumber as Cupon, p.Posnet, ");
+		sql.append(" p.AuditStatus ");
+		sql.append("FROM C_Payment p ");
+		sql.append("WHERE p.tendertype='C' ");
+		sql.append(" AND p.DocStatus IN ('CO','CL') ");
+		sql.append(" AND NOT p.AuditStatus IN (?)");
+		sql.append(" AND p.IsActive='Y' ");
+		sql.append(" AND p.AD_Org_ID=?" );
+		sql.append(" AND p.DateTrx >= ?::date");
+		
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(fromFecha);
+		cal.add(Calendar.DATE, -getDays("FromProcess"));
+		
+
+		try {
+			pstmt = DB.prepareStatement(sql.toString(), get_TrxName(), true);
+			pstmt.setString(1, getCompleteStatus());
+			pstmt.setInt(2, Env.getAD_Org_ID(getCtx()));
+			pstmt.setTimestamp(3, fromFecha);
+
+			rs = pstmt.executeQuery();
+			while (rs.next()) {
+			
+				Timestamp fecha = rs.getTimestamp("DateTrx");
+				BigDecimal monto = rs.getBigDecimal("PayAmt");
+				String lote = rs.getString("Lote");
+				String cupon = rs.getString("Cupon");
+				int C_Payment_ID = rs.getInt("C_Payment_ID");
+				String posnet = rs.getString("Posnet");
+				String status = MPayment.AUDITSTATUS_Verified;
+				String auditStatus = rs.getString("AuditStatus");
+				
+				debug("Payment:" + C_Payment_ID + " Fecha:" + fecha + " Lote:" + lote +
+						" Cupon:" + cupon + "Cuotas:" + posnet + " Monto:" + monto);
+				
+				int I_Fidelius_ID = DB.getSQLValueEx(get_TrxName(), 
+								"SELECT I_FideliusPendientes_ID " +
+								"FROM I_FideliusPendientes " +
+								"WHERE fechaoper::date=?::date AND " +
+								" importe::numeric=? AND " +
+								" nrolote=? AND ticket=? AND " +
+								" cuota_tipeada=?", new Object[] {fecha, monto, lote, cupon, posnet});
+				if(I_Fidelius_ID > 0) {
+					debug("Encontro cupon pendiente en Fidelius..." + I_Fidelius_ID);
+				}else {
+					I_Fidelius_ID = DB.getSQLValueEx(get_TrxName(), 
+							"SELECT I_FideliusCupones_ID " +
+							"FROM I_FideliusCupones " +
+							"WHERE fvta::date=?::date AND " +
+							" imp_vta::numeric=? AND " +
+							" nrolote=? AND nrocupon=? AND " +
+							" cuotas=?", new Object[] {fecha, monto, lote, cupon, posnet});
+					if(I_Fidelius_ID > 0) {
+						debug("Encontro cupon en Fidelius..." + I_Fidelius_ID);
+						X_I_FideliusCupones fc = new X_I_FideliusCupones(Env.getCtx(), I_Fidelius_ID, get_TrxName());
+						if(fc.getrechazo()!=null && fc.getrechazo().equals("Y")) {
+							status = MPayment.AUDITSTATUS_Rejected;
+							debug("Cupon rechazado!");
+						}else
+							if(fc.getI_Fideliusliquidaciones_ID() > 0) {
+								status = MPayment.AUDITSTATUS_Paid;
+								debug("Cupon liquidado!");
+							}
+						
+					}
+				}
+				
+				if(I_Fidelius_ID > 0) {
+					debug("Encontro cupon fidelius, actualizar estado de auditoria del pago (VE): " + C_Payment_ID);
+					DB.executeUpdate("UPDATE C_Payment SET UpdatedBy=" + Env.getAD_User_ID(getCtx()) + ", " +
+							"Updated='" + Env.getDateFormatted(Env.getDate()) + "', " +
+							"AuditStatus='" + status + "' " +
+							"WHERE C_Payment_ID=" + C_Payment_ID, get_TrxName());
+					
+					debug("Se actualiza pago. status=" + status);
+					verified++;
+					
+				}else {
+					if(auditStatus==null || auditStatus.isEmpty()) {
+						status = MPayment.AUDITSTATUS_ToVerify;
+						debug("NO Encontro cupon fidelius, actualizar estado de auditoria del pago (TV): " + C_Payment_ID);
+						DB.executeUpdate("UPDATE C_Payment SET UpdatedBy=" + Env.getAD_User_ID(getCtx()) + ", " +
+								"Updated='" + Env.getDateFormatted(Env.getDate()) + "', " +
+								"AuditStatus='" + status + "' " +
+								"WHERE C_Payment_ID=" + C_Payment_ID, get_TrxName());
+						
+						debug("Se deja pago pendiente de verificacion. status=" + status);
+					}
+				}
+				
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Verificacion de Cupones.doIt", e);
+		} finally {
+			try {
+				rs.close();
+				pstmt.close();
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
+		}
+		
+		return verified;
+	}
+
+	/**
+	 * Salida por consola simple
+	 * @param string
+	 * @author dREHER
+	 */
+	private void debug(String string) {
+		System.out.println("--> MCreditCardClose. " + string);
+	}
+
+	/**
+	 * @return devuelve cadena de pagos con tarjetas pagados o rechazados
+	 * @author dREHER
+	 */
+	private String getCompleteStatus() {
+		return "'" + MPayment.AUDITSTATUS_Paid + "','" + MPayment.AUDITSTATUS_Rejected + "','" + MPayment.AUDITSTATUS_ToVerify + "'";
+	}
+
+	/**
+	 * Dispara el proceso de importacion de cupones pendientes desde Fidelius
+	 * 
+	 * @return resultado del proceso
+	 * @throws Exception
+	 * @author dREHER 
+	 */
+	private String doImportPendCoupons() throws Exception {
+		String msg = "";
+		
+		ImportFromFidelius iff = new ImportFromFidelius();
+		
+		boolean processSuccess = iff.startProcess(getCtx(), getProcessInfo(), getTrx(get_TrxName()));
+
+		if (!processSuccess) {
+			throw new Exception( iff.getProcessInfo().getSummary() + " - "
+					+ iff.getProcessInfo().getLogInfo());
+		}
+		else {
+			msg = iff.getProcessInfo().getSummary();
+		}
+		
+		return msg;
+	}
+	
+	/**
+	 * @return ProcessInfo de importacion desde Fidelius
+	 * @author dREHER
+	 */
+	private ProcessInfo getProcessInfo() {
+		int AD_Process_ID = DB.getSQLValue(get_TrxName(), "SELECT AD_Process_ID FROM AD_Process WHERE Name=?", 
+				"ImportFromFidelius");
+		
+		String nombreComercio; // Nombre del Comercio en la ORGInfo formato Fidelius-Clover
+		nombreComercio = DB.getSQLValueString(get_TrxName(), "SELECT NombreComercio FROM AD_OrgInfo WHERE AD_Org_ID=?", Env.getAD_Org_ID(getCtx()));
+		
+		ProcessInfo pi = new ProcessInfo("ImportFromFidelius", AD_Process_ID);
+		pi.setParameter(new ProcessInfoParameter[] {
+				new ProcessInfoParameter("DaysFromBack", getDays("From"),null,null,null),
+				new ProcessInfoParameter("DaysToBack", getDays("To"),null,null,null),
+				new ProcessInfoParameter("Type", new String("P"),null,null,null),
+				new ProcessInfoParameter("OrgName", nombreComercio,null,null,null)
+				});
+		
+		return pi;
+	}
+
+	/**
+	 * Devuelve los dias hacia atras para importar cupones pendientes
+	 * @param tipo
+	 * @author dREHER
+	 * @return
+	 */
+	private int getDays(String tipo) {
+		int dias = 3;
+		
+		if(tipo.equals("From")) {
+			
+			String tmp = MPreference.GetCustomPreferenceValue("DaysFromBackCreditCardClose", Env.getAD_Client_ID(getCtx()));
+			if(Util.isEmpty(tmp, true))
+				tmp = "3";
+			dias = Integer.parseInt(tmp);
+			
+		}else if(tipo.equals("To")) {
+			
+			String tmp = MPreference.GetCustomPreferenceValue("DaysToBackCreditCardClose", Env.getAD_Client_ID(getCtx()));
+			if(Util.isEmpty(tmp, true))
+				tmp = "0";
+			dias = Integer.parseInt(tmp);
+		}else if(tipo.equals("FromProcess")) {
+			
+			String tmp = MPreference.GetCustomPreferenceValue("DaysFromBackCreditCardCloseProcess", Env.getAD_Client_ID(getCtx()));
+			if(Util.isEmpty(tmp, true))
+				tmp = "3";
+			dias = Integer.parseInt(tmp);
+		}
+		
+		return dias;
+	}
+
+	/**
+	 * Retorna una transacción 
+	 * @return la transacción con el nombre contenido en la variable de instancia o una nueva
+	 */
+	private Trx getTrx(String trxName){
+		//Me fijo primero si esta la transacción con ese nombre
+		Trx trx = Trx.get(trxName, false);
+		
+		//Si no existe, la creo
+		if( trx == null){
+			trx = createTrx(trxName);
+		}
+		
+		return trx;
+	}
+	
+	private Trx createTrx(String trxName){
+		//Creo la transacción
+		return Trx.get(trxName, true);
 	}
 
 	/**

@@ -23,9 +23,11 @@ public class ReconcileCoupons extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
+		
 		if (!creditCardSettlement.getDocStatus().equals(MCreditCardSettlement.DOCSTATUS_Completed)) {
 			return Msg.getMsg(Env.getAD_Language(getCtx()), "ReconcileCouponsWrongDocStatus");
 		}
+		
 		// Llegado este punto, la liquidación no está completa, y
 		// el estado de auditoría de los cupones es "A verificar".
 		StringBuffer sql = new StringBuffer();
@@ -78,6 +80,19 @@ public class ReconcileCoupons extends SvrProcess {
 		sql.append("WHERE ");
 		sql.append("	C_CreditCardSettlement_ID = " + creditCardSettlement.getC_CreditCardSettlement_ID() + " ");
 
+		DB.executeUpdate(sql.toString(), get_TrxName());
+		DB.commit(true, get_TrxName());
+		
+		// Marcar los cupones conciliados entre Libertya y Fidelius en la tabla I_FideliusCupones
+		sql = new StringBuffer();
+		sql.append("UPDATE I_FideliusCupones SET is_reconciled='Y' "); 
+		sql.append("	WHERE C_CouponsSettlements_ID IN "); 
+		sql.append("	( ");
+		sql.append("		SELECT x.C_CouponsSettlements_ID FROM C_CouponsSettlements x ");
+		sql.append("        WHERE isReconciled='Y' AND processed='Y' " );
+		sql.append("        AND x.C_CreditCardSettlement_ID = " + creditCardSettlement.getC_CreditCardSettlement_ID());
+		sql.append(") ");
+				
 		DB.executeUpdate(sql.toString(), get_TrxName());
 
 		Object[] params = new Object[] { updated, deleted };
