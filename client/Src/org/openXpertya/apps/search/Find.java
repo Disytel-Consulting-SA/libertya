@@ -1443,10 +1443,11 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         int count = 0;
 
         // Execute Qusery
-
+        Statement stmt = null;
+        ResultSet rs   = null; 
         try {
-            Statement stmt = DB.createStatement();
-            ResultSet rs   = stmt.executeQuery( finalSQL );
+            stmt = DB.createStatement();
+            rs   = stmt.executeQuery( finalSQL );
 
             if( rs.next()) {
                 count = rs.getInt( 1 );
@@ -1457,7 +1458,19 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
         } catch( SQLException e ) {
             log.log( Level.SEVERE,finalSQL,e );
         }
-
+        finally {
+        	try {
+        		if (rs!=null)
+        			rs.close();
+        		if (stmt!=null)
+        			stmt.close();
+    			rs = null; 
+    			stmt = null;
+    		} catch (SQLException e) {
+    			log.log( Level.SEVERE,finalSQL,e );
+    		}
+        }
+        
         if( (count == 0) && alertZeroRecords ) {
             ADialog.info( m_targetWindowNo,this,"FindZeroRecords" );
         } else {
@@ -1569,13 +1582,13 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
     	"GROUP BY name";
 
     	PreparedStatement pstmt = DB.prepareStatement( sql );
-
+    	ResultSet rs = null;
 		try {
 			pstmt.setInt(1,m_AD_Table_ID);
 			pstmt.setInt(2,Env.getAD_Org_ID(Env.getCtx()));
 			pstmt.setInt(3,Env.getAD_Client_ID(Env.getCtx()));
 
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			advCName.addItem(null);
 			while (rs.next()){
 				advCName.addItem(rs.getString(1));
@@ -1584,7 +1597,18 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
 		}
 		catch(Exception e){
 			statusBar.setStatusLine("Error: Find.AdvancedSearchCombo()");
-		}
+		}finally { // dREHER cierre de conexiones
+        	try {
+        		if (rs!=null)
+        			rs.close();
+        		if (pstmt!=null)
+        			pstmt.close();
+    			rs = null; 
+    			pstmt = null;
+    		} catch (SQLException e) {
+    			log.log( Level.SEVERE,sql,e );
+    		}
+        }
     }
 
     /**
@@ -1620,14 +1644,14 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
 		    		"isactive='Y' AND name=" + name);
 
     	PreparedStatement pstmt = DB.prepareStatement( sql );
-
+    	ResultSet rs = null;
 		try {
 			pstmt.setInt(1,m_AD_Table_ID);
 			pstmt.setInt(2,Env.getAD_Org_ID(Env.getCtx()));
 			pstmt.setInt(3,Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setString(4,name);
 
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 
 			RemoveTableRows();
 			//RemoveTableRows();
@@ -1650,7 +1674,18 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
 		}
 		catch(Exception e){
 			statusBar.setStatusLine("Error: Find.AdvancedSearchLoad()");
-		}
+		} finally { // dREHER cierre de conexiones
+        	try {
+        		if (rs!=null)
+        			rs.close();
+        		if (pstmt!=null)
+        			pstmt.close();
+    			rs = null; 
+    			pstmt = null;
+    		} catch (SQLException e) {
+    			log.log( Level.SEVERE,sql,e );
+    		}
+        }
 
 
     }
@@ -1687,14 +1722,14 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
     		"isactive='Y' AND name=?";
 
     	PreparedStatement pstmt = DB.prepareStatement( sql );
-
+    	ResultSet rs = null;
 		try {
 			pstmt.setInt(1,m_AD_Table_ID);
 			pstmt.setInt(2,Env.getAD_Org_ID(Env.getCtx()));
 			pstmt.setInt(3,Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setString(4,name);
 
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 
 			if (rs.next()){
 				num=rs.getInt(1);
@@ -1703,7 +1738,19 @@ public final class Find extends CDialog implements ActionListener,ChangeListener
 		}
 		catch (Exception e){
 			FinalMessage= "Error: Find.AdvancedSearchSave()";
-		}
+		}finally { // dREHER cierre de conexiones
+        	try {
+        		if (rs!=null)
+        			rs.close();
+        		if (pstmt!=null)
+        			pstmt.close();
+    			rs = null; 
+    			pstmt = null;
+    		} catch (SQLException e) {
+    			log.log( Level.SEVERE,sql,e );
+    		}
+        }
+		
     	if (num==0){
 	    	//Variables que siempre serán las mismas para la serie de clausulas:
 

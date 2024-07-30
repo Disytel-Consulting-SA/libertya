@@ -921,12 +921,13 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                      + " AND c.ColumnName=?";
         String refColName = null;
 
+     // dREHER asegurar cierre de conexiones
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql );
-
+            pstmt = DB.prepareStatement( sql );
             pstmt.setString( 1,colName );
-
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 refColName = rs.getString( 1 );
@@ -938,6 +939,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             log.log( Level.SEVERE,"(ref) - Column=" + colName,e );
 
             return query.getWhereClause();
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         // Reference Column found
@@ -964,13 +974,17 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         sql = "SELECT t.TableName " + "FROM AD_Column c" + " INNER JOIN AD_Table t ON (c.AD_Table_ID=t.AD_Table_ID) " + "WHERE c.ColumnName=? AND IsKey='Y'"    // #1 Link Column
               + " AND EXISTS (SELECT * FROM AD_Column cc" + " WHERE cc.AD_Table_ID=t.AD_Table_ID AND cc.ColumnName=?)";    // #2 Tab Key Column
 
+        // dREHER asegurar cierre de conexiones
+        pstmt = null;
+        rs = null;
+        
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql );
+            pstmt = DB.prepareStatement( sql );
 
             pstmt.setString( 1,colName );
             pstmt.setString( 2,tabKeyColumn );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 tableName = rs.getString( 1 );
@@ -982,6 +996,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             log.log( Level.SEVERE,"Column=" + colName + ", Key=" + tabKeyColumn,e );
 
             return null;
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         // Causes could be functions in query
@@ -1389,14 +1412,17 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 // we have a link column identified (primary parent column)
 
             } else {
+            	
+            	// dREHER asegurar el cierre de conexiones
+            	PreparedStatement pstmt = null;
+                ResultSet rs = null;
+            	
                 String SQL = "SELECT ColumnName FROM AD_Column WHERE AD_Column_ID=?";
 
                 try {
-                    PreparedStatement pstmt = DB.prepareStatement( SQL );
-
+                    pstmt = DB.prepareStatement( SQL );
                     pstmt.setInt( 1,m_vo.AD_Column_ID );    // Parent Link Column
-
-                    ResultSet rs = pstmt.executeQuery();
+                    rs = pstmt.executeQuery();
 
                     if( rs.next()) {
                         m_linkColumnName = rs.getString( 1 );
@@ -1406,6 +1432,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                     pstmt.close();
                 } catch( SQLException e ) {
                     log.log( Level.SEVERE,"",e );
+                } finally {
+                	try {
+        				rs.close();
+        				pstmt.close();
+        				rs = null; pstmt = null;
+        			} catch (SQLException e) {
+        				// TODO Auto-generated catch block
+        				e.printStackTrace();
+        			}
                 }
 
                 log.fine( "AD_Column_ID=" + m_vo.AD_Column_ID + " - " + m_linkColumnName );
@@ -1948,14 +1983,13 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
             String sql = "SELECT COUNT(*), NVL(SUM(LineNetAmt),0), NVL(SUM(LineTotalAmt),0) " + "FROM C_InvoiceBatchLine " + "WHERE C_InvoiceBatch_ID=? AND IsActive='Y'";
 
-            //
-
+            // dREHER asegurar el cierre de conexiones
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql );
-
+                pstmt = DB.prepareStatement( sql );
                 pstmt.setInt( 1,Record_ID );
-
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
 
                 if( rs.next()) {
 
@@ -1983,6 +2017,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,m_vo.TableName + "\nSQL=" + sql,e );
+            }finally {
+            	try {
+    				rs.close();
+    				pstmt.close();
+    				rs = null; pstmt = null;
+    			} catch (SQLException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
             }
 
             if( filled ) {
@@ -2040,14 +2083,13 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             Object[] arguments = new Object[ 6 ];
             boolean  filled    = false;
 
-            //
-
+            // dREHER asegurar el cierre de conexiones
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql.toString());
-
+                pstmt = DB.prepareStatement( sql.toString());
                 pstmt.setInt( 1,Record_ID );
-
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
 
                 if( rs.next()) {
 
@@ -2089,6 +2131,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,m_vo.TableName + "\nSQL=" + sql,e );
+            } finally {
+            	try {
+    				rs.close();
+    				pstmt.close();
+    				rs = null; pstmt = null;
+    			} catch (SQLException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
             }
 
             if( filled ) {
@@ -2124,14 +2175,13 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
             String SQL = "SELECT COUNT(*) AS Lines, SUM(ConvertedAmt*Qty) " + "FROM S_TimeExpenseLine " + "WHERE S_TimeExpense_ID=?";
 
-            //
-
+            // dREHER asegurar el cierre de conexiones
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( SQL );
-
+                pstmt = DB.prepareStatement( SQL );
                 pstmt.setInt( 1,Record_ID );
-
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
 
                 if( rs.next()) {
 
@@ -2157,6 +2207,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,m_vo.TableName + "\nSQL=" + SQL,e );
+            } finally {
+            	try {
+    				rs.close();
+    				pstmt.close();
+    				rs = null; pstmt = null;
+    			} catch (SQLException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
             }
 
             if( filled ) {
@@ -2191,12 +2250,13 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
             String sql = "SELECT DocSubTypeSO FROM C_DocType WHERE C_DocType_ID=?";
 
+            // dREHER asegurar el cierre de conexiones
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql );
-
+                pstmt = DB.prepareStatement( sql );
                 pstmt.setInt( 1,C_DocTyp_ID );
-
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
 
                 if( rs.next()) {
                     Env.setContext( m_vo.ctx,m_vo.WindowNo,"OrderType",rs.getString( 1 ));
@@ -2206,6 +2266,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,"loadOrderType",e );
+            } finally {
+            	try {
+    				rs.close();
+    				pstmt.close();
+    				rs = null; pstmt = null;
+    			} catch (SQLException e) {
+    				// TODO Auto-generated catch block
+    				e.printStackTrace();
+    			}
             }
         }    // loadOrderInfo
         
@@ -2235,6 +2304,9 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
         String SQL = "SELECT AD_Attachment_ID, Record_ID FROM AD_Attachment " + "WHERE AD_Table_ID=?";
 
+        // dREHER asegurar el cierre de conexiones
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
             if( m_Attachment == null ) {
                 m_Attachment = new HashMap();
@@ -2242,11 +2314,9 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 m_Attachment.clear();
             }
 
-            PreparedStatement pstmt = DB.prepareStatement( SQL );
-
+            pstmt = DB.prepareStatement( SQL );
             pstmt.setInt( 1,m_vo.AD_Table_ID );
-
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             while( rs.next()) {
                 Integer key   = new Integer( rs.getInt( 2 ));
@@ -2259,6 +2329,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadAttachments",e );
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         log.config( "#" + m_Attachment.size());
@@ -2365,19 +2444,23 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
         String SQL = "SELECT Record_ID " + "FROM AD_protected_Access " + "WHERE AD_User_ID=? AND AD_Table_ID=? AND IsActive='Y' " + "ORDER BY Record_ID";
 
+        // dREHER asegurar cierre de conexiones
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            if( m_Lock == null ) {
+            
+        	if( m_Lock == null ) {
                 m_Lock = new ArrayList();
             } else {
                 m_Lock.clear();
             }
 
-            PreparedStatement pstmt = DB.prepareStatement( SQL );
+            pstmt = DB.prepareStatement( SQL );
 
             pstmt.setInt( 1,AD_User_ID );
             pstmt.setInt( 2,m_vo.AD_Table_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             while( rs.next()) {
                 Integer key = new Integer( rs.getInt( 1 ));
@@ -2389,6 +2472,15 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadLocks",e );
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         log.fine( "loadLocks #" + m_Lock.size());

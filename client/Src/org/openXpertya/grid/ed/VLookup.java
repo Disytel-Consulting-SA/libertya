@@ -994,12 +994,16 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
   			String sql = "SELECT ColumnName,isKey FROM AD_Column WHERE AD_Table_ID=?";
   			String Name = "";
   				
+  			// dREHER cerrado de conexiones
+  	        PreparedStatement	pstmt	= null;
+  	        ResultSet	rs	= null;
+  			
   	        try {
-  	            PreparedStatement pstmt = DB.prepareStatement( sql );
+  	            pstmt = DB.prepareStatement( sql );
 
   	            pstmt.setInt( 1,AD_Table_ID );
 
-  	            ResultSet rs = pstmt.executeQuery();
+  	            rs = pstmt.executeQuery();
 
   	            while ( rs.next()) {
   	            	if (rs.getString( 2 ).equals("Y"))
@@ -1010,6 +1014,15 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
   	            pstmt.close();
   	        } catch( SQLException e ) {
   	            log.log( Level.SEVERE,sql,e );
+  	        } finally {
+  	        	try {
+  					rs.close();
+  					pstmt.close();
+  					rs = null; pstmt = null;
+  				} catch (SQLException e) {
+  					// TODO Auto-generated catch block
+  					e.printStackTrace();
+  				}
   	        }
   	        
   	        m_keyColumnName = Name;
@@ -1143,9 +1156,12 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         int id = 0;
         int idInstance=0;
 
+        // dREHER cerrado de conexiones
+        PreparedStatement	pstmt	= null;
+        ResultSet	rs	= null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( finalSQL );
-            ResultSet         rs    = pstmt.executeQuery();
+            pstmt = DB.prepareStatement( finalSQL );
+            rs    = pstmt.executeQuery();
 
             if( rs.next()) {
                 id = rs.getInt( 1 );    // first
@@ -1163,6 +1179,15 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
         } catch( Exception e ) {
             log.log( Level.SEVERE,finalSQL,e );
             id = -2;
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         // No (unique) result
@@ -1300,13 +1325,15 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
             if( AD_Reference_ID != 0 ) {
                 String query = "SELECT kc.ColumnName, dc.ColumnName, t.TableName " + "FROM AD_Ref_Table rt" + " INNER JOIN AD_Column kc ON (rt.AD_Key=kc.AD_Column_ID)" + " INNER JOIN AD_Column dc ON (rt.AD_Display=dc.AD_Column_ID)" + " INNER JOIN AD_Table t ON (rt.AD_Table_ID=t.AD_Table_ID) " + "WHERE rt.AD_Reference_ID=?";
                 String            displayColumnName = null;
+                
+                // dREHER cierre de conexiones
                 PreparedStatement pstmt             = null;
-
+                ResultSet rs 						= null;
                 try {
                     pstmt = DB.prepareStatement( query );
                     pstmt.setInt( 1,AD_Reference_ID );
 
-                    ResultSet rs = pstmt.executeQuery();
+                    rs = pstmt.executeQuery();
 
                     if( rs.next()) {
                         m_keyColumnName   = rs.getString( 1 );
@@ -1322,10 +1349,11 @@ public class VLookup extends JComponent implements VEditor,ActionListener,FocusL
                 }
 
                 try {
+                	rs.close();
                     if( pstmt != null ) {
                         pstmt.close();
                     }
-
+                    rs = null;
                     pstmt = null;
                 } catch( Exception e ) {
                     pstmt = null;

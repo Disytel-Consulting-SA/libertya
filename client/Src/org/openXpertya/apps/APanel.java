@@ -2058,7 +2058,7 @@ public final class APanel extends CPanel implements DataStatusListener,ChangeLis
     		find = new Find( Env.getFrame( this ),m_curWindowNo,m_curTab.getName(),m_curTab.getAD_Table_ID(),m_curTab.getTableName(),m_curTab.getWhereExtended(),findFields,1 );
     		query = find.getQuery();	
 			if (find.getQuery()!=null)
-				records = find.getNoOfRecords(find.getQuery(),false);
+				records = find.getNoOfRecordsLastExec();  // find.getNoOfRecords(find.getQuery(),false);  // Evita reejecutar el query
 			else 
 				records=0;
 			if( records > MAX_RECORDS && find.getQuery() != null)

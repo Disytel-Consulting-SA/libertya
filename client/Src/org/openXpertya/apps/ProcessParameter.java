@@ -355,8 +355,11 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
             SQL = "SELECT t.Name, t.Description, t.Help, p.IsReport " + "FROM AD_Process p, AD_Process_Trl t " + "WHERE p.AD_Process_ID=t.AD_Process_ID" + " AND p.AD_Process_ID=? AND t.AD_Language=?";
         }
 
+        // dREHER Cierre de conexiones
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( SQL, PluginUtils.getPluginInstallerTrxName() );
+            pstmt = DB.prepareStatement( SQL, PluginUtils.getPluginInstallerTrxName() );
 
             pstmt.setInt(1, m_processInfo.getAD_Process_ID());
 
@@ -364,7 +367,7 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
                 pstmt.setString( 2,Env.getAD_Language( Env.getCtx()));
             }
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 String m_Name     = rs.getString( 1 );
@@ -398,6 +401,15 @@ public class ProcessParameter extends CDialog implements ActionListener,Vetoable
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,SQL,e );
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
     }
 

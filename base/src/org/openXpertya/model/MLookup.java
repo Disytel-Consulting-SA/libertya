@@ -526,8 +526,9 @@ public final class MLookup extends Lookup implements Serializable {
             // SELECT Key, Value, Name FROM ...
             log.finest(m_info.QueryDirect);
 
+            // dREHER control de conexiones
             PreparedStatement	pstmt	= DB.prepareStatement(m_info.QueryDirect, PluginUtils.getPluginInstallerTrxName());
-
+            ResultSet	rs	= null;
             try
             {
             	Integer.parseInt(key.toString());
@@ -537,48 +538,58 @@ public final class MLookup extends Lookup implements Serializable {
             {
             	pstmt.setString(1, key.toString());	
             }
-            
-            ResultSet	rs	= pstmt.executeQuery();
 
-            if (rs.next()) {
+            try {
 
-                String	name	= rs.getString(3);
+            	rs	= pstmt.executeQuery();
 
-                if (isNumber) {
+            	if (rs.next()) {
 
-                    int		keyValue	= rs.getInt(1);
-                    KeyNamePair	p		= new KeyNamePair(keyValue, name);
+            		String	name	= rs.getString(3);
 
-                    if (saveInCache) {		// save if
-                        m_lookup.put(new Integer(keyValue), p);
-                    }
+            		if (isNumber) {
 
-                    directValue	= p;
+            			int		keyValue	= rs.getInt(1);
+            			KeyNamePair	p		= new KeyNamePair(keyValue, name);
 
-                } else {
+            			if (saveInCache) {		// save if
+            				m_lookup.put(new Integer(keyValue), p);
+            			}
 
-                    String		value	= rs.getString(2);
-                    ValueNamePair	p	= new ValueNamePair(value, name);
+            			directValue	= p;
 
-                    if (saveInCache) {		// save if
-                        m_lookup.put(value, p);
-                    }
+            		} else {
 
-                    directValue	= p;
-                }
+            			String		value	= rs.getString(2);
+            			ValueNamePair	p	= new ValueNamePair(value, name);
 
-                if (rs.next()) {
-                    log.log(Level.SEVERE, m_info.KeyColumn + ": getDirect - not unique (first returned) for " + key + " SQL=" + m_info.QueryDirect);
-                }
+            			if (saveInCache) {		// save if
+            				m_lookup.put(value, p);
+            			}
 
-            } else {
+            			directValue	= p;
+            		}
 
-                m_directNullKey	= key;
-                directValue	= null;
+            		if (rs.next()) {
+            			log.log(Level.SEVERE, m_info.KeyColumn + ": getDirect - not unique (first returned) for " + key + " SQL=" + m_info.QueryDirect);
+            		}
+
+            	} else {
+
+            		m_directNullKey	= key;
+            		directValue	= null;
+            	}
+
+            	rs.close();
+            	pstmt.close();
+
+            }catch (Exception exC) {
+            	
             }
-
-            rs.close();
-            pstmt.close();
+            finally {
+            	DB.close(rs, pstmt);
+            	rs=null; pstmt=null;
+            }
 
             if (CLogMgt.isLevelFinest()) {
                 log.finest(m_info.KeyColumn + ": getDirect - " + directValue + " - " + m_info);
@@ -799,21 +810,24 @@ public final class MLookup extends Lookup implements Serializable {
         String	Name		= "";
         String	SQL		= "SELECT T.tablename " + "FROM ad_table T, ad_column C " + "WHERE T.ad_table_id=C.ad_table_id " + "and ad_column_id=?";
 
+        PreparedStatement	pstmt	= DB.prepareStatement(SQL, PluginUtils.getPluginInstallerTrxName());
+        ResultSet	rs	= null;
         try {
 
             log.finer("// Process by Zarius: " + SQL.replace("?", m_info.Column_ID + ""));
 
-            PreparedStatement	pstmt	= DB.prepareStatement(SQL, PluginUtils.getPluginInstallerTrxName());
+            pstmt	= DB.prepareStatement(SQL, PluginUtils.getPluginInstallerTrxName());
 
             pstmt.setInt(1, m_info.Column_ID);
 
-            ResultSet	rs	= pstmt.executeQuery();
+            rs	= pstmt.executeQuery();
 
             if (rs.next()) {
                 TableName	= rs.getString(1);
             }
 
             rs.close();
+            
             SQL	= "SELECT tablename " + "FROM ad_table " + "WHERE ad_table_id=?";
             log.finer("// Process by Zarius: " + SQL.replace("?", AD_Table_ID + ""));
             pstmt	= DB.prepareStatement(SQL);
@@ -831,7 +845,13 @@ public final class MLookup extends Lookup implements Serializable {
             log.finer("// Process by Zarius: ----------------- Controled Error -----------------");
 
             return "<" + key.toString() + ">";
+        }	// dREHER asegurar cierre de conexiones
+        finally {
+        	DB.close(rs, pstmt);
+        	rs = null;
+        	pstmt = null;
         }
+        
 
         int	rowID	= Env.getContextAsInt(Env.getCtx(), m_info.WindowNo, "Record_ID");
 
@@ -842,11 +862,11 @@ public final class MLookup extends Lookup implements Serializable {
 
         try {
 
-            PreparedStatement	pstmt	= DB.prepareStatement(SQL, PluginUtils.getPluginInstallerTrxName());
+            pstmt	= DB.prepareStatement(SQL, PluginUtils.getPluginInstallerTrxName());
 
             pstmt.setString(1, key.toString());
 
-            ResultSet	rs	= pstmt.executeQuery();
+            rs	= pstmt.executeQuery();
 
             if (rs.next()) {
                 return rs.getString(1);
@@ -859,6 +879,11 @@ public final class MLookup extends Lookup implements Serializable {
             log.finer("// Process by Zarius: ----------------- Controled Error -----------------");
 
             return "<" + key.toString() + ">";
+        }	// dREHER asegurar cierre de conexiones
+        finally {
+        	DB.close(rs, pstmt);
+        	rs = null;
+        	pstmt = null;
         }
 
         return "<" + key.toString() + ">";
@@ -1004,11 +1029,14 @@ public final class MLookup extends Lookup implements Serializable {
 
             int	rows	= 0;
 
+         // SELECT Key, Value, Name, IsActive FROM ...
+            PreparedStatement	pstmt	= DB.prepareStatement(sql, PluginUtils.getPluginInstallerTrxName());
+            ResultSet		rs	= null;
             try {
 
                 // SELECT Key, Value, Name, IsActive FROM ...
-                PreparedStatement	pstmt	= DB.prepareStatement(sql, PluginUtils.getPluginInstallerTrxName());
-                ResultSet		rs	= pstmt.executeQuery();
+                
+                rs	= pstmt.executeQuery();
 
                 // Get first ... rows
                 m_allLoaded	= true;
@@ -1061,6 +1089,11 @@ public final class MLookup extends Lookup implements Serializable {
                 pstmt.close();
             } catch (SQLException e) {
                 log.log(Level.SEVERE, m_info.KeyColumn + ": Loader - " + sql, e);
+            }	// dREHER asegurar cierre de conexiones
+            finally {
+            	DB.close(rs, pstmt);
+            	rs = null;
+            	pstmt = null;
             }
 
             int	size	= m_lookup.size();

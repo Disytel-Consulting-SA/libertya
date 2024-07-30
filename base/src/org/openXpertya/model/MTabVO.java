@@ -250,14 +250,17 @@ public class MTabVO implements Evaluatee, Serializable {
         mTabVO.Fields	= new ArrayList();
 
         String	sql	= MFieldVO.getSQL(mTabVO.ctx);
-
+        
+        // dREHER cerrado de conexiones
+        PreparedStatement	pstmt	= null;
+        ResultSet	rs	= null;
         try {
 
-            PreparedStatement	pstmt	= DB.prepareStatement(sql);
+            pstmt	= DB.prepareStatement(sql);
 
             pstmt.setInt(1, mTabVO.AD_Tab_ID);
 
-            ResultSet	rs	= pstmt.executeQuery();
+            rs	= pstmt.executeQuery();
 
             while (rs.next()) {
 
@@ -277,6 +280,15 @@ public class MTabVO implements Evaluatee, Serializable {
             CLogger.get().log(Level.SEVERE, "createFields", e);
 
             return false;
+        } finally {
+        	try {
+				rs.close();
+				pstmt.close();
+				rs = null; pstmt = null;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
 
         return mTabVO.Fields.size() != 0;

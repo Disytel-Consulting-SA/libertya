@@ -503,14 +503,47 @@ public class MTable extends AbstractTableModel implements Serializable {
             m_SQL += " ORDER BY " + m_orderClause;
         }
 
-        //
-
+        // LIMIT - LIMIT - Evitar recuperación por demás voluminosa en consulta sin filtros - Solo para la pestaña principal.
+        if (m_TabNo == 0) {
+        	appendSQLLimit();
+        }
+        
 //        log.fine( m_SQL_Count );
         Env.setContext( m_ctx,m_WindowNo,m_TabNo,"SQL",m_SQL );
 
         return m_SQL;
     }    // createSelectSql
 
+    /**
+     *  Límite al total de registros, el cual no puede superar el maximo especificado, ya sea una tabla de volumen alto o no
+     */
+    protected void appendSQLLimit() {
+    	
+    	// Si la query ya contiene un limit definido no incorporar uno adicional
+    	if (m_SQL.toLowerCase().contains("limit ")) {
+    		return;
+    	}
+    	
+    	// Limite general para cualquier tabla. Se utiliza este valor si no hay uno especifico por tabla
+    	Integer generalLimit = 0;
+    	// Redefinicion de limite para una tabla especifica.
+    	Integer tableLimit = 0;
+    	
+    	try {
+    		generalLimit = Integer.parseInt(MPreference.GetCustomPreferenceValue("MTABLE_FETCH_RECORDS_LIMIT"));
+    	} catch (Exception e) { /* Limite inexistente o mal definido */ }
+    	
+    	try {
+    		tableLimit = Integer.parseInt(MPreference.GetCustomPreferenceValue("MTABLE_FETCH_RECORDS_LIMIT_" + m_tableName.toUpperCase()));	
+    	} catch (Exception e) { /* Limite inexistente o mal definido */ }
+    	
+    	// Prioridad para el limite definido por tabla, si este no existe, se toma el limite general y si este tampoco existe no se define un limite
+    	Integer limit = tableLimit > 0 ? tableLimit : (generalLimit > 0 ? generalLimit : null);
+        if (!Util.isEmpty(limit)) {
+        	m_SQL += " LIMIT " + limit;	
+        }
+    }
+    
     /**
      * Descripción de Método
      *
