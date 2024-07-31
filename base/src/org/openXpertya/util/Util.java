@@ -919,6 +919,20 @@ public class Util {
 		return false;
 	}
 	
+	/**
+	 * Realiza la comparación de 2 números basados en una tolerancia
+	 * 
+	 * @param amt1      importe 1
+	 * @param amt2      importe 2
+	 * @param tolerance tolerancia de comparación
+	 * @return true si se cumple -> amt1 - tolerance <= amt2 <= amt1 + tolerance
+	 */
+	public static boolean compareAmounts(BigDecimal amt1, BigDecimal amt2, BigDecimal tolerance) {
+		BigDecimal min = amt1.subtract(tolerance);
+		BigDecimal max = amt1.add(tolerance);
+		return min.compareTo(amt2) <= 0 && amt2.compareTo(max) <= 0; 
+	}
+	
 }	// Util
 
 

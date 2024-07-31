@@ -103,6 +103,24 @@ BigDecimal bd = (BigDecimal)get_Value("AcqusitionCost");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set Permitir Precarga de Facturas.
+Permitir Precarga de Facturas de Proveedor desde AFIP */
+public void setAllowPreloadVendorInvoices (boolean AllowPreloadVendorInvoices)
+{
+set_Value ("AllowPreloadVendorInvoices", new Boolean(AllowPreloadVendorInvoices));
+}
+/** Get Permitir Precarga de Facturas.
+Permitir Precarga de Facturas de Proveedor desde AFIP */
+public boolean isAllowPreloadVendorInvoices() 
+{
+Object oo = get_Value("AllowPreloadVendorInvoices");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Actual Life Time Value.
 Actual Life Time Revenue */
 public void setActualLifeTimeValue (BigDecimal ActualLifeTimeValue)

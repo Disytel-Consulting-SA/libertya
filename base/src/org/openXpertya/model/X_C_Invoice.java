@@ -167,6 +167,22 @@ public String getAuthCode()
 {
 return (String)get_Value("AuthCode");
 }
+/** Set Preload Invoice */
+public void setPreloadInvoice (boolean PreloadInvoice)
+{
+set_Value ("PreloadInvoice", new Boolean(PreloadInvoice));
+}
+/** Get Preload Invoice */
+public boolean isPreloadInvoice() 
+{
+Object oo = get_Value("PreloadInvoice");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Authorization Matching */
 public void setAuthMatch (boolean AuthMatch)
 {

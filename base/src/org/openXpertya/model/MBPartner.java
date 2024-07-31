@@ -1241,24 +1241,20 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
 					log.saveError("InvalidCUIT", "");
 					return false;
 				}
-				// CUIT Repetido siempre que la configuración de la compañía
-				String whereClauseCUIT = newRecord ? "isactive = 'Y' AND trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = "
-						+ getAD_Client_ID()
-						: "isactive = 'Y' AND trim(translate(taxid,'-','')) = trim(translate(?,'-','')) AND ad_client_id = " + getAD_Client_ID()
-								+ " AND c_bpartner_id <> " + getID();
+				
+		
+				// CUIT Repetido siempre que la configuración de la compañía exija verificacion
 				MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID());
 				if (!Util.isEmpty(cuit, true)
 						&& clientInfo.isUniqueCuit()
 						&& !isMultiCUIT()
-						&& PO.existRecordFor(getCtx(), X_C_BPartner.Table_Name,
-								whereClauseCUIT, new Object[] { getTaxID() },
-								get_TrxName())) {
-					String sameCUITBPname = DB.getSQLValueString(get_TrxName(),
-							"select name from c_bpartner where "
-									+ whereClauseCUIT, getTaxID());
-					log.saveError("SaveError", Msg.getMsg(getCtx(), "SameCUITInBPartner", new Object[]{cuit,sameCUITBPname}));
-					return false;
+						&& verificaCUITRepetidos(getCtx(), get_TrxName())) {
+							
+							String sameCUITBPname = DB.getSQLValueString(get_TrxName(),	"select name from c_bpartner where REPLACE(REPLACE(taxid,'-',''),'.','') = '" + getTaxID().trim().replace("-", "").replace(".", "") + "'");
+							log.saveError("SaveError", Msg.getMsg(getCtx(), "SameCUITInBPartner", new Object[]{cuit,sameCUITBPname}));
+							return false;
 				}
+				
 			// Aquí el valor es un DNI
 			} else {
 				
@@ -1430,6 +1426,13 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
 //			}
 		}
 		
+		// Marcar convenio multilateral
+		if(!Util.isEmpty(getIIBB(), true)){
+			// setIsConvenioMultilateral(isConvenioMultilateral(getIIBB()));
+			// dREHER hasta agregar metadata y regenerar modelo
+			set_Value("IsConvenioMultilateral", isConvenioMultilateral(getIIBB()));
+		}
+		
 		// La configuración de lote de pagos debe estar completa
 		if (isVendor() && 
 				((!Util.isEmpty(getBatch_Payment_Rule(), true) && Util.isEmpty(getC_BankAccount_ID(), true))
@@ -1440,6 +1443,57 @@ public class MBPartner extends X_C_BPartner implements CurrentAccountDocument {
 		
 		return true;
 	}
+	
+	/** 
+	 * Si son repetidos y ambos son customer o vendor, return true
+	 * 
+	 * Se verifican socios de negocios activos y que coincida CUIT (solo numeros)
+	 * 
+	 * dREHER
+	 * 
+	*/
+	private boolean verificaCUITRepetidos(Properties ctx, String trxName) {
+		
+		if (isVendor()) {			
+			StringBuffer whereClauseCUIT = new StringBuffer(  );			
+			whereClauseCUIT.append("SELECT count(1)");
+			whereClauseCUIT.append(" FROM c_bpartner cb");
+			whereClauseCUIT.append(" WHERE cb.c_bpartner_id <> " + getC_BPartner_ID());
+			whereClauseCUIT.append(" AND REPLACE(REPLACE(taxid,'-',''),'.','') = '" + getTaxID().trim().replace("-", "").replace(".", "") + "'");
+			whereClauseCUIT.append(" AND isVendor = 'Y' AND IsActive='Y'");
+			
+			try{
+				System.out.println(DB.getSQLValue(trxName, whereClauseCUIT.toString()));
+				if (DB.getSQLValue(trxName, whereClauseCUIT.toString()) > 0) {
+					return true;				
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		
+		if (isCustomer()) {	
+			StringBuffer whereClauseCUIT = new StringBuffer(  );			
+			whereClauseCUIT.append("SELECT count(1)");
+			whereClauseCUIT.append(" FROM c_bpartner cb");
+			whereClauseCUIT.append(" WHERE c_bpartner_id <> " + getC_BPartner_ID());
+			whereClauseCUIT.append(" AND REPLACE(REPLACE(taxid,'-',''),'.','') = '" + getTaxID().trim().replace("-", "").replace(".", "") + "'");
+			whereClauseCUIT.append(" AND isCustomer = 'Y' AND IsActive='Y'");
+			
+			try{
+				System.out.println(DB.getSQLValue(trxName, whereClauseCUIT.toString()));
+				if (DB.getSQLValue(trxName, whereClauseCUIT.toString()) > 0) {
+					return true;
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}	
+		
+		return false;
+	}
+	
+	
 
 	/**
 	 * Valida que el estado de crédito esté en el parámetro y el estado

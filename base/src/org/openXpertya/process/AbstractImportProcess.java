@@ -82,7 +82,10 @@ import org.openXpertya.util.ValueNamePair;
 public abstract class AbstractImportProcess extends SvrProcess {
 
 	protected static String IMPORT_OK = "OK";
-		
+
+	/** Nombre del parámetro de eliminación de registros antiguos */
+	protected static final String DELETE_OLD_IMPORTED_PARAM_NAME = "DeleteOldImported";
+	
 	/** Parámetro que indica si se deben borrar los registros ya importados
 	 * que aún existen en la tabla de importación */
 	private boolean m_deleteOldImported = false;
@@ -90,11 +93,11 @@ public abstract class AbstractImportProcess extends SvrProcess {
 	/** PO de tabla de importación */
 	private M_Table importTable;
 	/** ID de la columna I_IsImported de la tabla de importación */
-	private int column_IsImported_ID;
+	protected int column_IsImported_ID;
 	/** ID de la columna I_ErrorMsg de la tabla de importación */
-	private int column_ErrorMsg_ID;
+	protected int column_ErrorMsg_ID;
 	/** ID de la columna Processed de la tabla de importación */
-	private int column_Processed_ID;
+	protected int column_Processed_ID;
 
 	/** Colección de parámetros del proceso que indexada por <Nombre,Valor> */
 	private Map<String, Object> parametersValues;
@@ -103,11 +106,11 @@ public abstract class AbstractImportProcess extends SvrProcess {
 	/** Chequeo de usuario para consultas SQL */
 	private String userSQLCheck;
 	/** Cantidad de líneas importadas */
-	private int importedLines = 0;
+	protected int importedLines = 0;
 	/** Cantidad total de líneas */
-	private int totalLines = 0;
+	protected int totalLines = 0;
 	/** Cantidad de líneas con error */
-	private int errorLines = 0;
+	protected int errorLines = 0;
 				
 	/**
 	 * Preparación especializada del proceso de importación. Aquí se debe incorporar
@@ -159,6 +162,20 @@ public abstract class AbstractImportProcess extends SvrProcess {
 	 */
 	protected abstract String afterImport() throws Exception;
 	
+	/**
+	 * Este método es invocado en caso que se haya producido un error y se aborta el
+	 * proceso, previo a finalizar el procedimiento.
+	 * 
+	 * @param e excepción producido por el error
+	 * @throws Exception En caso de producirse algún error en el procesamiento.
+	 */
+	protected void onError(Exception e) {
+		// Por lo pronto no se hace nada en ese método, queda para las subclases para
+		// que redefinan. No se crea como abstracta ya que puede traer problemas en
+		// instancias, donde habría que mergear todos los componentes custom que
+		// utilicen esta clase
+	}
+	
 	@Override
 	protected void prepare() {
 		// Se crea el Map de parámetros
@@ -171,7 +188,7 @@ public abstract class AbstractImportProcess extends SvrProcess {
 		}
 
 		// Se asignan los parámetros de importación generales.
-		m_deleteOldImported = "Y".equals((String)getParameterValue("DeleteOldImported","N"));
+		m_deleteOldImported = "Y".equals((String)getParameterValue(DELETE_OLD_IMPORTED_PARAM_NAME,"N"));
 		
 		// Se obtiene el PO de la tabla de importación.
 		setImportTable(new M_Table(getCtx(), getTable_ID(), null));
@@ -225,6 +242,7 @@ public abstract class AbstractImportProcess extends SvrProcess {
             processMsg = afterImport();
         	
         } catch (Exception e) {
+        	onError(e);
         	updateErrorLines();
         	// Se relanza una excepción con el mensaje de error detallado.
         	throw new Exception(getResultMsg(null,true) + e.getMessage(), e);
@@ -294,7 +312,9 @@ public abstract class AbstractImportProcess extends SvrProcess {
 	protected int deleteOldImported() {
         StringBuffer sql = new StringBuffer(
         		" DELETE FROM " + getImportTableName() +  
-        		" WHERE I_IsImported='Y' AND ").append(getSecuritySQLCheck());
+        		" WHERE I_IsImported='Y' AND ")
+        		.append(getSecuritySQLCheck())
+        		.append(getDeleteOldImportedAditionalWhereClause());
         
         return DB.executeUpdate( sql.toString());
 	}
@@ -358,21 +378,16 @@ public abstract class AbstractImportProcess extends SvrProcess {
 		// Se recorren los registros a importar...
 		while (rsImport.next ()) {
 			// Se obtiene el PO del registro actual a importar...
-			PO importPO = getImportTable().getPO(rsImport, null);
+			PO importPO = getPO(rsImport, null);
 			// Se invoca el método abstracto que implementan las subclases
 			// en el cual deben realizar la actividad de importación del registro.
 			String importMsg = importRecord(importPO);
 			if (importMsg.equals(IMPORT_OK)) {
 				// Si la importación fué correcta se setean los valores de los
 				// campos del registro de importación.
-				importPO.set_ValueOfColumn(column_IsImported_ID, true);
-				importPO.set_ValueOfColumn(column_ErrorMsg_ID, null);
-				importPO.set_ValueOfColumn(column_Processed_ID, true);
-				// Se incrementa la cantidad de líneas importadas.
-				importedLines++;
+				markImported(importPO);
 			} else {
-				importPO.set_ValueOfColumn(column_IsImported_ID, false);
-				importPO.set_ValueOfColumn(column_ErrorMsg_ID, importMsg);
+				markError(importPO, importMsg);
 			}
 			// Se guardan los cambios en el registro de importación.
 			if(!importPO.save()){
@@ -591,5 +606,46 @@ public abstract class AbstractImportProcess extends SvrProcess {
 		if (getImportTable() != null)
 			name = getImportTable().getTableName();
 		return name;
+	}
+	
+	/**
+	 * Marca el registro importado
+	 * @param importPO registro de importación
+	 */
+	protected void markImported(PO importPO) {
+		importPO.set_ValueOfColumn(column_IsImported_ID, true);
+		importPO.set_ValueOfColumn(column_ErrorMsg_ID, null);
+		importPO.set_ValueOfColumn(column_Processed_ID, true);
+		// Se incrementa la cantidad de líneas importadas.
+		importedLines++;
+	}
+	
+	/**
+	 * Marca el registro con error
+	 * @param importPO registro de importación
+	 */
+	protected void markError(PO importPO, String importMsg) {
+		importPO.set_ValueOfColumn(column_IsImported_ID, false);
+		importPO.set_ValueOfColumn(column_ErrorMsg_ID, importMsg);
+	}
+	
+	/**
+	 * Obtiene el PO para este registro
+	 * 
+	 * @param rsImport registro de importación
+	 * @param trxName  nombre de la transacción
+	 * @return el PO del registro de importación
+	 */
+	protected PO getPO(ResultSet rsImport, String trxName) {
+		return getImportTable().getPO(rsImport, trxName);
+	}
+	
+	/**
+	 * Condiciones adicionales a la eliminación de registros de importación
+	 * 
+	 * @return condiciones adicionales a la eliminación de registros de importación
+	 */
+	protected String getDeleteOldImportedAditionalWhereClause() {
+		return "";
 	}
 }

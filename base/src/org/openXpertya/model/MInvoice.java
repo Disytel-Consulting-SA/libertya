@@ -4032,7 +4032,7 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 * @return
 	 */
 
-	private boolean createPaySchedule() {
+	public boolean createPaySchedule() {
 		if (getC_PaymentTerm_ID() == 0) {
 			return false;
 		}
