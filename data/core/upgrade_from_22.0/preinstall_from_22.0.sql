@@ -1838,6 +1838,74 @@ UPDATE M_EntidadFinanciera SET CardSymbolClover='AX,AM,X1,X3' WHERE Name LIKE '%
 update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera','numerocomercioclover','varchar(45)'));
 
 
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r2993.dev.import_facturas_proveedor_afip upgrade_from_0.0
+-- tomar en cuenta que en produccion NO hay nada de esto instalado, pero si en preprod, por ende por ahora 
+-- en preprod solo se agrega la columna:
+-- update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','update_unpaid_invoices','character(1)'));
+
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r2993.dev.import_facturas_proveedor_afip upgrade_from_0.0
+--20210921-1240 Nueva tabla para registrar la importación de facturas de proveedor AFIP
+CREATE TABLE i_vendor_invoice_import
+(
+  i_vendor_invoice_import_id integer NOT NULL,
+  ad_client_id integer NOT NULL,
+  ad_org_id integer NOT NULL,
+  isactive character(1) DEFAULT 'Y'::bpchar,
+  created timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone,
+  createdby integer,
+  updated timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone,
+  updatedby integer,
+  c_invoice_id integer,
+  i_isimported character(1) NOT NULL DEFAULT 'N'::bpchar,
+  i_errormsg character varying(2000),
+  processing character(1),
+  processed character(1) DEFAULT 'N'::bpchar,
+  fecha timestamp without time zone,
+  tipocomprobante integer,
+  puntodeventa integer,
+  numerocomprobantedesde integer,
+  numerocomprobantehasta integer,
+  cae character varying(14),
+  tipoidentificacion character(2),
+  numeroidentificacion character varying(20),
+  razonsocial character varying(60),
+  tipocambio numeric(10,6),
+  moneda character(3),
+  netogravado numeric(20,2),
+  netonogravado numeric(20,2),
+  importeopexentas numeric(20,2),
+  iva numeric(20,2),
+  total numeric(20,2),
+  CONSTRAINT i_vendor_invoice_import_key PRIMARY KEY (i_vendor_invoice_import_id),
+  CONSTRAINT i_vendor_invoice_import_client FOREIGN KEY (ad_client_id)
+      REFERENCES ad_client (ad_client_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT i_vendor_invoice_import_invoice FOREIGN KEY (c_invoice_id)
+      REFERENCES c_invoice (c_invoice_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT i_vendor_invoice_import_org FOREIGN KEY (ad_org_id)
+      REFERENCES ad_org (ad_org_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE i_vendor_invoice_import
+  OWNER TO libertya;
+  
+  --Nuevas columna para configurar los proveedores que permiten precarga de facturas
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','allowpreloadvendorinvoices','character(1)'));
+--Nueva columna para marcar las facturas precargadas
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoice','preloadinvoice','character(1)'));
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r2993.dev.import_facturas_proveedor_afip upgrade_from_0.0
+--20211016-2030 Eliminar la constraint para que se permita eliminar facturas en borrador
+alter table i_vendor_invoice_import drop CONSTRAINT i_vendor_invoice_import_invoice;
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r2993.dev.import_facturas_proveedor_afip upgrade_from_0.0
+--20220624-1030 Nueva columna para controlar el proceso de actualizacion de vencimientos
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','update_unpaid_invoices','character(1)'));
 
 
 
