@@ -1797,9 +1797,45 @@ INSERT INTO ad_preference  (ad_preference_id, ad_client_id, ad_org_id, createdby
 
 
 
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r3000.dev.trxclover upgrade_from_0.0
+--20230919-1818 agrega columnas para configuracion del POS - Clover 
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','port_clover','numeric(10)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','ip_clover','varchar(32)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','authtoken_clover','varchar(255)'));
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r3000.dev.trxclover upgrade_from_0.0
+--20230926-1706 agrega columnas para configuracion del POS - Clover 
+
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','isintegra_clover','character'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','isalter_clover','character'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_POS','isonline_clover','character'));
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r3000.dev.trxclover upgrade_from_0.0
+-- 20230928-1552 agrega las columnas para los certificados Clover en los servicios externos
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ExternalService','testcrt','bytea'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ExternalService','productioncrt','bytea'));
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r3000.dev.trxclover upgrade_from_0.0
+-- 20231003-1607 agrega columna del codigo Clover (Symbol) para las tarjetas
+update ad_system set dummy = (SELECT addcolumnifnotexists('M_EntidadFinanciera','cardsymbolclover','varchar(30)'));
+
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r3000.dev.trxclover upgrade_from_0.0
+-- 20231004-0900 Configurar valores por defecto de codigos Clover para las entidades financieras:
+UPDATE M_EntidadFinanciera SET CardSymbolClover='V1' WHERE Name LIKE '%VISA%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='V3' WHERE Name LIKE '%ELECTRON%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='CA' WHERE Name LIKE '%CABAL%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='DI' WHERE Name LIKE '%DINERS%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='MC,M_' WHERE Name LIKE '%MASTERCARD%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='NA,NC' WHERE Name LIKE '%NATIVA%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='TN,NV' WHERE Name LIKE '%NARANJA%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='MA' WHERE Name LIKE '%MAESTRO%' AND IsActive='Y';
+UPDATE M_EntidadFinanciera SET CardSymbolClover='AX,AM,X1,X3' WHERE Name LIKE '%AMEX%' AND IsActive='Y';
 
 
-
+-- ### MERGE 2024-08-01 org.libertya.core.micro.r3000.dev.trxclover upgrade_from_1.0
+-- 20240313-17:05
+update ad_system set dummy = (SELECT addcolumnifnotexists('m_entidadfinanciera','numerocomercioclover','varchar(45)'));
 
 
 

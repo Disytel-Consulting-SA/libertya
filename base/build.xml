@@ -58,6 +58,9 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="../lib/zxing-javase.jar"/>
     <pathelement path="../lib/zxing.jar"/>
     <pathelement path="../lib/swing-layout-1.0.2.jar"/>
+    <fileset dir="../lib/clover">
+        <include name="**/*.jar"/>
+    </fileset>
   </path>
 
 

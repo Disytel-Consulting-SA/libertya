@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por C_ExternalService
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2017-05-08 21:01:19.848 */
+ *  @version  - 2023-09-28 17:07:49.819 */
 public class X_C_ExternalService extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -35,7 +35,7 @@ public static final int Table_ID = M_Table.getTableID("C_ExternalService");
 public static final String Table_Name="C_ExternalService";
 
 protected static KeyNamePair Model = new KeyNamePair(Table_ID,"C_ExternalService");
-protected static BigDecimal AccessLevel = new BigDecimal(3);
+protected static BigDecimal AccessLevel = new BigDecimal(7);
 
 /** Load Meta Data */
 protected POInfo initPO (Properties ctx)
@@ -156,6 +156,26 @@ public int getPort()
 Integer ii = (Integer)get_Value("Port");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set ProductionCRT */
+public void setProductionCRT (byte[] ProductionCRT)
+{
+set_Value ("ProductionCRT", ProductionCRT);
+}
+/** Get ProductionCRT */
+public byte[] getProductionCRT() 
+{
+return (byte[])get_Value("ProductionCRT");
+}
+/** Set TestCRT */
+public void setTestCRT (byte[] TestCRT)
+{
+set_Value ("TestCRT", TestCRT);
+}
+/** Get TestCRT */
+public byte[] getTestCRT() 
+{
+return (byte[])get_Value("TestCRT");
 }
 /** Set Timeout */
 public void setTimeout (int Timeout)

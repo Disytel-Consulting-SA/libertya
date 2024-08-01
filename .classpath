@@ -365,5 +365,11 @@
 	<classpathentry kind="lib" path="lib/junit5/org.hamcrest.core_2.2.0.v20230809-1000.jar"/>
 	<classpathentry kind="lib" path="lib/junit5/org.junit_4.13.2.v20230809-1000.jar"/>
 	<classpathentry kind="lib" path="lib/junit5/org.opentest4j_1.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/clover/clover_remote_client_r5883.jar"/>
+	<classpathentry kind="lib" path="lib/clover/clover_remote_interface_217_r5770.jar"/>
+	<classpathentry kind="lib" path="lib/clover/clover-android-sdk_v293.jar"/>
+	<classpathentry kind="lib" path="lib/clover/gson-2.8.6.jar"/>
+	<classpathentry kind="lib" path="lib/clover/json-20080701.jar"/>
+	<classpathentry kind="lib" path="lib/clover/nv-websocket-client-1.31.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>

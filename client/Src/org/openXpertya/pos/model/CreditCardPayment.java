@@ -17,6 +17,14 @@ public class CreditCardPayment extends Payment {
 	
 	private String couponBatchNumber;
 	
+	private String customerName;
+	
+	private com.clover.sdk.v3.payments.Payment payment;
+	
+	private boolean isCobrado = false;
+	
+	private boolean isCargaManual = false;
+	
 	public CreditCardPayment() {
 		super();
 	}
@@ -124,5 +132,37 @@ public class CreditCardPayment extends Payment {
 
 	public void setCouponBatchNumber(String couponBatchNumber) {
 		this.couponBatchNumber = couponBatchNumber;
+	}
+
+	public String getCustomerName() {
+		return customerName;
+	}
+
+	public void setCustomerName(String customerName) {
+		this.customerName = customerName;
+	}
+
+	public com.clover.sdk.v3.payments.Payment getPayment() {
+		return payment;
+	}
+
+	public void setPayment(com.clover.sdk.v3.payments.Payment payment) {
+		this.payment = payment;
+	}
+
+	public boolean isCobrado() {
+		return isCobrado;
+	}
+
+	public void setCobrado(boolean isCobrado) {
+		this.isCobrado = isCobrado;
+	}
+
+	public boolean isCargaManual() {
+		return isCargaManual;
+	}
+
+	public void setCargaManual(boolean isCargaManual) {
+		this.isCargaManual = isCargaManual;
 	}
 }
