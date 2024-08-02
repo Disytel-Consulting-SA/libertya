@@ -354,58 +354,13 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 	 * Calcula el importe total del retenciones realizadas en el mes al proveedor, 
 	 * Asigna el resultado al atributo <code>retencionesAnteriores</code>.	 
 	 * @return Retorna un <code>BigDecimal</code> con el importe total retenido.
+	 * 
+	 * dREHER el proceso de calculo real ahora esta en AbstractRetencionProcessor
 	 */
 	private BigDecimal calculateRetencionesMensualAcumuladas(){
 		Timestamp vFecha = Env.getContextAsDate(Env.getCtx(), "#Date");
 		
-		// dREHER leer la fecha de la OP y no la del dia
-		if(getDateTrx()!=null)
-			vFecha = getDateTrx();
-		
-		Timestamp vDesde = (Timestamp) DB.getSQLObject(getTrxName(),
-				"select date_trunc('month',?::timestamp)", new Object[] { vFecha });
-		
-		BigDecimal total = Env.ZERO;
-        String sql;
-        
-        sql = " SELECT SUM(amt_retenc) as total " + 
-              " FROM m_retencion_invoice mri " +
-       	      " WHERE EXISTS( SELECT c_invoice_id " +
-       	      "               FROM c_invoice ci " +
-       	      "               WHERE mri.c_invoice_id = ci.c_invoice_id AND " +
-       	      "                     c_bpartner_id = ? AND " +
-       	      "                     ci.DocStatus IN ('CO','CL') AND " +
-       	      "                     date_trunc('day',dateInvoiced) BETWEEN ?::date AND ?::date)";
-		
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-		try {
-		
-			pstmt = DB.prepareStatement(sql, null, true);
-			pstmt.setInt(1,getBPartner().getC_BPartner_ID());
-			pstmt.setTimestamp(2,vDesde);
-			pstmt.setTimestamp(3,vFecha);
-			rs = pstmt.executeQuery();
-			if (rs.next()){
-				if (rs.getBigDecimal("total") != null ){
-					total = rs.getBigDecimal("total");
-				}
-			}
-			if(pstmt != null) pstmt.close();
-			if(rs != null) rs.close();
-		
-		} catch (Exception ex) {
-			log.info("Error al buscar el total de retenciones acumuladas en el mes !!!! ");
-			ex.printStackTrace();
-		} finally {
-			try {
-				if(pstmt != null) pstmt.close();
-				if(rs != null) rs.close();
-			} catch (SQLException e) {
-				log.log( Level.SEVERE,"Cannot close statement or resultset" );
-			} 
-		}
-
+		BigDecimal total = calculateRetencionesMensualAcumuladas(true);
 		
 		setRetencionesAnteriores(total);
 		return total;

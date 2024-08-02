@@ -804,6 +804,91 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		return s;
 	}
  
+	/**
+	 * Calcula el importe total del retenciones realizadas en el mes al
+	 * proveedor, Asigna el resultado al atributo
+	 * <code>retencionesAnteriores</code>.
+	 * 
+	 * @return Retorna un <code>BigDecimal</code> con el importe total retenido.
+	 * 
+	 * dREHER se agrega metodo en la clase superior, para ser utilizada en los calculos
+	 * de retenciones que lo requieran, si bien esta como parametro filtrarEsquema
+	 * TODO: asegurar que SIEMPRE se filtre para no tomar cualquier tipo de retencion
+	 */
+	protected BigDecimal calculateRetencionesMensualAcumuladas(boolean filtrarEsquema) {
+		Timestamp vFecha = Env.getContextAsDate(Env.getCtx(), "#Date");
+		
+		// dREHER leer la fecha de la OP y no la del dia
+		if(getDateTrx()!=null)
+			vFecha = getDateTrx();
+				
+		Timestamp vDesde = (Timestamp) DB.getSQLObject(getTrxName(),
+						"select date_trunc('month',?::timestamp)",
+						new Object[] { vFecha });
+		
+		
+		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
+		String C_BParner_IDIN = getIN(getC_BPartner_IDMismoCUIT(getBPartner().getTaxID()));
+
+		BigDecimal total = Env.ZERO;
+		String sql;
+
+		sql = " SELECT SUM(amt_retenc) as total "
+				+ " FROM m_retencion_invoice mri ";
+		
+		if(filtrarEsquema)
+			sql += " WHERE mri.c_retencionschema_id = ? AND ";
+				
+				
+		sql +=	" EXISTS( SELECT c_invoice_id "
+				+ "               FROM c_invoice ci "
+				+ "               WHERE mri.c_invoice_id = ci.c_invoice_id AND "
+				+ "                     c_bpartner_id IN " +	C_BParner_IDIN + " AND " // original c_bpartner_id=?
+				+ "                     ci.DocStatus IN ('CO','CL') AND "
+				+ "                     date_trunc('day',dateInvoiced) BETWEEN ?::date AND ?::date)";
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try {
+
+			pstmt = DB.prepareStatement(sql, null, true);
+			int i = 1;
+			if(filtrarEsquema)
+				pstmt.setInt(i++, getRetencionSchema().getID());
+			
+			// dREHER reemplazado para traer las retenciones acumuladas a este mismo CUIT de todos los proveedores que lo comparten
+			// pstmt.setInt(i++, getBPartner().getC_BPartner_ID());
+			pstmt.setTimestamp(i++, vDesde);
+			pstmt.setTimestamp(i++, vFecha);
+			rs = pstmt.executeQuery();
+			if (rs.next()) {
+				if (rs.getBigDecimal("total") != null) {
+					total = rs.getBigDecimal("total");
+				}
+			}
+			if (pstmt != null)
+				pstmt.close();
+			if (rs != null)
+				rs.close();
+
+		} catch (Exception ex) {
+			log.info("Error al buscar el total de retenciones acumuladas en el mes !!!! ");
+			ex.printStackTrace();
+		} finally {
+			try {
+				if (pstmt != null)
+					pstmt.close();
+				if (rs != null)
+					rs.close();
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Cannot close statement or resultset");
+			}
+		}
+		
+		return total;
+	}
+
+	
 
 	/**
 	 * Obtener la suma de los pagos adelantados anteriores dentro del rango de
