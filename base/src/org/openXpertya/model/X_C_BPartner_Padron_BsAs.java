@@ -197,6 +197,10 @@ public static final String PADRONTYPE_PadrónDeRegímenesGenerales = "G";
 public static final String PADRONTYPE_CoeficientesTucuman = "C";
 /** Padron Contribuyentes Tucuman = T */
 public static final String PADRONTYPE_PadronContribuyentesTucuman = "T";
+/** Padron Comodoro Rivadavia Inscriptos = C */
+public static final String PADRONTYPE_PadronComodoroRivadaviaInscriptos = "C";
+/** Padron Comodoro Rivadavia Exentos = E */
+public static final String PADRONTYPE_PadronComodoroRivadaviaExentos = "E";
 /** Set Padron Type */
 public void setPadronType (String PadronType)
 {

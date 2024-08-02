@@ -2,6 +2,7 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 public class PercepcionStandard extends AbstractPercepcionProcessor {
@@ -114,6 +115,21 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 			}
 		}
 		return p;
+	}
+	
+	// dREHER
+	public BigDecimal getPercepcionPercToApply() {
+		BigDecimal perc = getPercepcionData().getAlicuota();
+		if(Util.isEmpty(perc, true)){
+			perc = getPercepcionData().getTax().getRate();
+		}
+		return perc;
+	}
+	
+	// dREHER
+	public BigDecimal getMinimumNetAmount() {
+		MOrgPercepcion orgPercepcion = MOrgPercepcion.getOrgPercepcion(Env.getCtx(), getPercepcionData().getDocument().getOrgID(), getPercepcionData().getTax().getC_Tax_ID(), null);
+		return orgPercepcion.getMinimumNetAmount();
 	}
 
 }
