@@ -3699,6 +3699,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         }
         
         
+        
         /*
 		 * Verificar, para los pedidos de clientes, que los productos tengan tildado el 
 		 * campo "Vendido" (checkbox en la ventana de artículos). La semántica de ese campo 
@@ -3708,6 +3709,21 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         
         // Si es un pedido de cliente
         if(docTarget.getDocTypeKey().equals(MDocType.DOCTYPE_StandarOrder)){
+        	
+        	/**
+             * En caso de tratarse de una orden de venta (Pedido de Cliente)
+             * asegurar que se recalcule el total del comprobante antes de completar
+             * 20230622 
+             * dREHER
+             */
+            if(isSOTrx()) {
+            	log.info("Se trata de un pedido de cliente, actualizar los totales segun importes de lineas");
+            	if(!updateAmounts()) {
+            		m_processMsg = "No se pudo actualizar el total del pedido";
+            		return DocAction.STATUS_Invalid;
+            	}
+            }
+        	
         	// Itero por las líneas del pedido verificando los artículos de venta
         	for (MOrderLine orderLine : lines) {
 				//MProduct lineProduct = MProduct.get(this.getCtx(),orderLine.getM_Product_ID());

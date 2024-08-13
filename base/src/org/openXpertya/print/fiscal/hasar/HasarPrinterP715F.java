@@ -170,4 +170,25 @@ public class HasarPrinterP715F extends HasarFiscalPrinter {
 		FiscalPacket cmd = createFiscalPacket(CMD_OPEN_DRAWER);
 		return cmd;
 	}
+	
+	@Override
+	public StringBuilder fiscalReportAudit(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StringBuilder fiscalAudit(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StringBuilder fiscalAuditComprimido(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

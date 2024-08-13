@@ -19,6 +19,7 @@ import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MUser;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -74,10 +75,48 @@ public class ManageElectronicInvoiceProcess extends SvrProcess {
 		
 		// Si no esta registrada en AFIP, marcar la factura para poder completar sin que requiera nuevamente la validacion contra AFIP
 		if (!isRegistered) {
-			anInvoice.setcae(null);
-			anInvoice.setvtocae(null);
-			anInvoice.setSkipIPNoCaeValidation(true);
-			returnMessage = "Gestion de factura satisfactoria. Intente completar nuevamente el documento a fin de obtener el CAE.";
+			
+			// dREHER
+			// Si el comprobante YA esta completo, solicitar CAE desde aca sin necesidad de cambiar estado al comprobante
+			if(anInvoice.getDocStatus().equals(MInvoice.DOCSTATUS_Completed) && anInvoice.getcae()==null) {
+			
+				if(anInvoice.isElectronicInvoice()) {
+
+					if (anInvoice.requireCAEGeneration() && !anInvoice.isIgnoreCAEGeneration()) {
+						
+						/**
+						 * Si se genera algun tipo de excepcion a la hora de generar CAE
+						 * se contiene dentro del bloque y se continua con el guardado de la factura
+						 * 
+						 * dREHER
+						 */
+						try {
+
+							CallResult callResult = anInvoice.doCAEGeneration(anInvoice.getNumeroComprobante());
+							if (callResult.isError()) {
+								anInvoice.setcaeerror(callResult.getMsg());
+								log.log(Level.SEVERE, callResult.getMsg());
+								returnMessage = callResult.getMsg();
+							}
+
+						}catch(Exception ex) {
+							log.log(Level.SEVERE, "El comprobante emitido no obtuvo el código de autorización correspondiente. Por favor gestionar manualmente");
+							returnMessage = "El comprobante emitido no obtuvo el código de autorización correspondiente. Por favor gestionar manualmente";
+						}
+						
+					}else
+						returnMessage = "NO requiere gestionar CAE";
+					
+				}else
+					returnMessage = "No es un comprobante electronico!";
+				
+			}else {
+				anInvoice.setcae(null);
+				anInvoice.setvtocae(null);
+				anInvoice.setSkipIPNoCaeValidation(true);
+				returnMessage = "Gestion de factura satisfactoria. Intente completar nuevamente el documento a fin de obtener el CAE.";
+			}
+			
 		} else {
 			// Si está registrada, simplemente almacenar los valores
 			if (cae == null || cae.length() == 0)

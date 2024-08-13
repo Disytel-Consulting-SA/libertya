@@ -62,11 +62,15 @@ public class FiscalPrintManager {
 	 *         caso que el resultado sea erróneo
 	 */
 	public static CallResult printDocument(Properties ctx, MInvoice invoice, boolean fireDocActionStatusChanged, boolean askAllowed, String trxName){
+		
 		// Creo la impresión del documento fiscal
 		FiscalDocumentPrint fdp = createFiscalDocumentPrint(ctx, invoice, trxName);
 		if (trxName != null) {
 			fdp.setTrx(Trx.get(trxName, false));
 		}
+		
+		log("Creo la impresión del documento fiscal");
+		
 		fdp.setThrowExceptionInCancelCheckStatus(invoice.isThrowExceptionInCancelCheckStatus());
 		fdp.setAskAllowed(askAllowed);
 		// Esto vale la pena solamente para impresiones locales
@@ -74,11 +78,63 @@ public class FiscalPrintManager {
 			invoice.fireDocActionStatusChanged(new DocActionStatusEvent(
 					invoice, DocActionStatusEvent.ST_FISCAL_PRINT_DOCUMENT,
 					new Object[] { fdp }));
+			log("DocActionStatusEvent.ST_FISCAL_PRINT_DOCUMENT");
 		}
+		
 		// Imprimir el documento y guardar el resultado
+		log("Imprimir el documento y guardar el resultado");
+		
 		CallResult result = new CallResult();
 		result.setError(!fdp.printDocument(invoice));
 		result.setMsg(fdp.getErrorMsg());
 		return result;
+	}
+	
+	public static CallResult getLastNoPrinted(Properties ctx, MInvoice invoice, boolean fireDocActionStatusChanged, boolean askAllowed, String trxName){
+		
+		// Creo la impresión del documento fiscal
+		FiscalDocumentPrint fdp = createFiscalDocumentPrint(ctx, invoice, trxName);
+		if (trxName != null) {
+			fdp.setTrx(Trx.get(trxName, false));
+		}
+		
+		log("Creo la impresión del documento fiscal solo para validar numeracion del ultimo impreso");
+		
+		fdp.setThrowExceptionInCancelCheckStatus(invoice.isThrowExceptionInCancelCheckStatus());
+		fdp.setAskAllowed(askAllowed);
+		
+		/* dREHER No necesario para esta operacion
+		// Esto vale la pena solamente para impresiones locales
+		if(fireDocActionStatusChanged){
+			invoice.fireDocActionStatusChanged(new DocActionStatusEvent(
+					invoice, DocActionStatusEvent.ST_FISCAL_PRINT_DOCUMENT,
+					new Object[] { fdp }));
+			log("DocActionStatusEvent.ST_FISCAL_PRINT_DOCUMENT");
+		}
+		*/
+		
+		// Imprimir el documento y guardar el resultado
+		log("Chequear ultimo numero impreso y y guardar el resultado");
+		
+		CallResult result = new CallResult();
+		result.setError(false);
+		try {
+			result.setMsg("#LastNoPrinted=" + fdp.getLastNoPrinted(invoice));
+			log("Leyo ultimo numero impreso: " + "#LastNoPrinted=" + fdp.getLastNoPrinted(invoice) + " sin errores!");
+		} catch (Exception e) {
+			result.setError(true);
+			log("Dio error al leer el ultimo numero de comprobante impreso!");
+		}
+		return result;
+	}
+	
+	
+	/**
+	 * Deja log en consola para seguimiento de ejecucion de acciones...
+	 * @param msg
+	 * dREHER
+	 */
+	private static void log(String msg) {
+		System.out.println("FiscalPrintManager. " + msg);
 	}
 }

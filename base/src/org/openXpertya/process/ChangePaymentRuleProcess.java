@@ -87,12 +87,16 @@ public class ChangePaymentRuleProcess extends AbstractSvrProcess {
 		}
 		
 		// Anular el comprobante parámetro
+
+		// dREHER ignorar control de borrador ya que por el momento el comprobante copia sigue estando en ese estado...
+		invoice.setIgnoreDraftValidation(true);
 		if(!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Void, false)){
 			throw new Exception(invoice.getProcessMsg());
 		}
 		
 		// Completar el comprobante parámetro
 		invoiceCopy.setFiscalAlreadyPrinted(false);
+		invoiceCopy.setIgnoreDraftValidation(true);
 		if(!DocumentEngine.processAndSave(invoiceCopy, MInvoice.DOCACTION_Complete, false)){
 			throw new Exception(invoiceCopy.getProcessMsg());
 		}

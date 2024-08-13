@@ -28,6 +28,10 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 	protected final static String CREDIT_CARD_CLOSE_JASPER_REPORT_UID = "CORE-AD_Process-1010445";
 	protected final static String CREDIT_CARD_CLOSE_JASPER_REPORT_FILENAME = "CreditCardClose.jasper";
 	
+	/** UID de la impresión de Entregas por Deposito Merge org.libertya.core.micro.r3000.dev.facturacion */
+	protected final static String ENTREGA_POR_DEPOSITO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010068";
+	protected final static String ENTREGA_POR_DEPOSITO_JASPER_REPORT_FILENAME = "WarehouseDeliverDocument.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -57,6 +61,9 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 		
 		// Cierre administrativo de tarjetas Merge fidelius 1.3
 		updateAttachment(CREDIT_CARD_CLOSE_JASPER_REPORT_UID, CREDIT_CARD_CLOSE_JASPER_REPORT_FILENAME);
+		
+		// Entrega por deposito Merge org.libertya.core.micro.r3000.dev.facturacion
+		updateReport(ENTREGA_POR_DEPOSITO_JASPER_REPORT_UID, ENTREGA_POR_DEPOSITO_JASPER_REPORT_FILENAME);
 		
 		return "";
 	}

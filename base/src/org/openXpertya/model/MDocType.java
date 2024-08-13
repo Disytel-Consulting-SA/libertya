@@ -819,15 +819,22 @@ public class MDocType extends X_C_DocType {
 	 */
 	public Integer getPosNumber() {
 		MSequence seq = new MSequence(getCtx(), getDocNoSequence_ID(), get_TrxName());
-		String docNo = seq.getPrefix() + seq.getCurrentNext();
+		
+		// dREHER controlar si el prefijo viene nulo
+		String docNo = (seq.getPrefix()==null?"":seq.getPrefix()) + seq.getCurrentNext().toString();
+		
+		log.info("MInvoice.getPosNumber(). DocTypeID=" + getC_DocType_ID() + " DocNoSequenceID=" + getDocNoSequence_ID() + ":" + getName() + " Prefijo:" + seq.getPrefix() + " CurrentNext:" + seq.getCurrentNext().toString());
+		
 		Integer posNumber = null;
 		// Validación hardcode. Fruto de poner el punto de venta y la letra del
 		// comprobante en la secuencia del documento.
 		// Número de comprobante fiscal esta compuesto por 13 caracteres:
 		// Ej -> A001500000012
+		log.info("MInvoice.getPosNumber() docNo=" + docNo);
 		if(docNo.length() == 13) {
 			try {
 				posNumber = Integer.parseInt(docNo.substring(1,5));
+				log.info("MInvoice.getPosNumber() posNumber=" + posNumber);
 			} catch (Exception e) {
 				posNumber = null;			
 			}

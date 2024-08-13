@@ -29,6 +29,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -52,6 +53,9 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	/** Tolerancia de centavos en importes de impuestos */
+	private static final String TAXAMT_TOLERANCE_PREFERENCE_NAME = "TaxAmt_Tolerance";
+	
 	/** Especifica si la línea debe actualizar los impuestos 
 	 *  en la cabecera (en caso que esto sea posible) */
 	boolean shouldUpdateHeader = true;
@@ -750,7 +754,10 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         }
 
         log.fine( "M_PriceList_ID=" + M_PriceList_ID );
-		m_productPricing = createProductPricing(M_PriceList_ID, C_BPartner_ID, m_DateInvoiced, m_IsSOTrx);
+		m_productPricing = new MProductPricing(getM_Product_ID(), C_BPartner_ID, getQtyInvoiced(), m_IsSOTrx,
+				!getInvoice().isManageDragOrderDiscountsSurcharges(false));
+        m_productPricing.setM_PriceList_ID( M_PriceList_ID );
+        m_productPricing.setPriceDate( m_DateInvoiced );
 
         //
 
@@ -1147,6 +1154,34 @@ public class MInvoiceLine extends X_C_InvoiceLine {
                 setPrice();
             }
         }
+        
+        /**
+         * Si se detecta que el precio de lista sigue siendo CERO 
+         * se toma el precio ingresado y se recalcula
+         * 
+         * El precio de lista en cero trae problemas a la hora de imprimir documentos como por ej NC's
+         * dREHER
+         */
+        
+        if(getPriceList().compareTo(Env.ZERO)==0) {
+        	if(getPriceEntered().compareTo(Env.ZERO) > 0) {
+        		
+        		// dREHER 2024-01-11 en caso de que la linea tenga un descuento, el precio de lista debe ser el ingresado + descuento
+        		debug("beforeSave. priceList=0. priceEntered>0...");
+        		BigDecimal priceList = getPriceEntered();
+        		if(this.getLineBonusAmt().compareTo(Env.ZERO) > 0) {
+        			priceList = priceList.add(getLineBonusAmt());
+        			
+        			debug("getLineBonusAmt=" + getLineBonusAmt() + ". priceList=" + priceList);
+        		}
+        		
+        		setPriceList(priceList);
+        		
+        	}else {
+        		log.warning("No se encontro precio de lista y tampoco se ingreso precio manualmente!");
+        		return false;
+        	}
+        }
 
         // Set Tax
 
@@ -1230,23 +1265,13 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			return false;
         }
         
-
-		// Si la tasa de impuesto es mayor a 0 y el importe de impuesto es menor o igual
-		// a 0 | mayor al neto de linea | mayor al total de linea
-        String sql = "select rate from c_tax where c_tax_id = ? ";
-        BigDecimal taxRate = DB.getSQLValueBD(get_TrxName(), sql, getC_Tax_ID());
-        if(!Util.isEmpty(taxRate, true) 
-        		&& getLineNetAmt().compareTo(BigDecimal.ZERO) > 0
-        		&& (getTaxAmt().compareTo(BigDecimal.ZERO) <= 0
-        				|| getTaxAmt().compareTo(getLineNetAmt()) >= 0
-        				|| getTaxAmt().compareTo(getLineNetAmount()) >= 0) 
-        		) {
-			log.saveError("SaveError",
-					Msg.getMsg(getCtx(), "TaxAmtInvalid", new Object[] { taxRate, getTaxAmt(), getLineNetAmount() }));
+        // Validar que el importe de impuesto y neto sean consistentes
+    	CallResult cr = validateTaxAmt();
+		if(cr.isError()) {
+			log.saveError("SaveError", Msg.getMsg(getCtx(), "TaxAmtInvalid",
+					new Object[] { cr.getResult(), getTaxAmt(), getNetTaxBaseAmt()}));
         	return false;
-        }
-        
-        
+		}       
         
         // Setear el proveedor del artículo actual y el precio de costo
         if(!Util.isEmpty(getM_Product_ID(), true)){    		
@@ -1418,7 +1443,11 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 				: getPriceActual();
 		BigDecimal lineDiscountAmtUnit = priceList.multiply(
 				generalManualDiscount).divide(HUNDRED, scale,
-				BigDecimal.ROUND_HALF_UP);
+				BigDecimal.ROUND_HALF_DOWN);
+		
+		// dREHER
+		debug("updateGeneralManualDiscount. before... priceList:" + priceList);
+		
 		// Seteo el precio ingresado con el precio de lista - monto de
 		// descuento
 		setPrice(priceList.subtract(lineDiscountAmtUnit));
@@ -1426,7 +1455,16 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 		setTaxAmt(BigDecimal.ZERO);
 	}
     
-    public BigDecimal getDiscountAmt(BigDecimal baseAmt, BigDecimal discountPerc, Integer scale){
+    /**
+     * Salida por consolta
+     * @param string
+     * dREHER
+     */
+    private void debug(String string) {
+    	System.out.println("==> MInvoiceLine. " + string);
+	}
+
+	public BigDecimal getDiscountAmt(BigDecimal baseAmt, BigDecimal discountPerc, Integer scale){
 		return getDiscountAmt(baseAmt, discountPerc.divide(HUNDRED, scale,
 				BigDecimal.ROUND_HALF_DOWN));
     }
@@ -1486,7 +1524,10 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	        MInvoice invoice = getInvoice();
 	        invoice.setSkipExtraValidations(true);
 	        invoice.setSkipModelValidations(true);
-        	if(!updateHeaderTax()){
+	        
+	        // dREHER, validar si viene de la actualizacion de factura (MInvoice)
+	        // para evitar bucle infinito
+        	if(!updateHeaderTax(isSkipManualGeneralDiscount())){
         		return false;
         	}
         	
@@ -1506,6 +1547,15 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			if (!pt.apply(invoice))
 				return false;
         }
+        
+        /**
+         * Se encontraron algunos casos donde existe error entre el monto neto y los impuestos
+         * 
+         * TODO: agregar validacion que controle estos valores y en caso de NO coincidir devolver error
+         * 
+         * 
+         * dREHER
+         */
 		
         return true;
     }    // afterSave
@@ -1541,13 +1591,23 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     }    // afterDelete
 
     /**
+     * Sobrecargo metodo para compatibilidad de llamadas varias
+     * 
+     * dREHER
+     */
+    private boolean updateHeaderTax() {
+    	return updateHeaderTax(false);
+    }
+    
+    
+    /**
      * Descripción de Método
      *
      *
      * @return
      */
 
-    private boolean updateHeaderTax() {
+    private boolean updateHeaderTax(boolean isSkipManualGeneralDiscount) {
     	if(getInvoice().isTPVInstance() || getInvoice().isVoidProcess()){
     		return true;
     	}
@@ -1599,11 +1659,13 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			e.printStackTrace();
 		}
         
-        if(!getInvoice().save()) {
-        	log.severe(CLogger.retrieveErrorAsString());
-        	no = 0;
-        }
-           
+        if(!isSkipManualGeneralDiscount) {
+        	if(!getInvoice().save()) {
+        		log.severe(CLogger.retrieveErrorAsString());
+        		no = 0;
+        	}
+        }else
+        	log.warning("Esta realizando recalculo de descuento global, no guardar comprobante!");           
         return no == 1;
     }    // updateHeaderTax
     
@@ -2000,6 +2062,57 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 				isTaxIncluded(), false);
     }
 
+/** dREHER, si se encuentra seteado el flag de ocultar descuento en el socio de negocios
+     * se debe igualar el PriceList con el PriceEntered
+     */
+    public BigDecimal getPriceList(boolean isVerificaMarcaOcultarDescuento) {
+
+    	BigDecimal priceList = super.getPriceList();
+    	
+    	// si viene con la opcion de verificar ocultar descuento, SOLO utilizado para las A4
+    	// dREHER
+    	if(isVerificaMarcaOcultarDescuento) {
+
+    		int C_Invoice_ID = getC_Invoice_ID();
+
+    		// en caso de que no haya precio ingresado manual, debe seguir trayendo precio de lista
+    		if(getPriceEntered().compareTo(Env.ZERO) > 0) {
+
+    			MInvoice inv = new MInvoice(getCtx(), C_Invoice_ID, get_TrxName());
+    			if(inv!=null) {
+    				MBPartner bp = new MBPartner(getCtx(), inv.getC_BPartner_ID(), get_TrxName());
+    				if(bp!=null) {
+    					boolean isOcultarDesctoLineaFC = false;
+    					if(bp.get_Value("IsOcultarDesctoLineaFC")!=null) {
+    						isOcultarDesctoLineaFC = (Boolean)bp.get_Value("IsOcultarDesctoLineaFC");
+    					}
+    					if(isOcultarDesctoLineaFC)
+    						priceList = getPriceEntered();
+
+    				}
+    			}
+
+    		}
+
+    	}
+    	
+    	log.info("getPriceList desde micro componente Facturacion :" + priceList);
+    	
+    	return priceList;
+    }
+    
+    /** dREHER, si se encuentra seteado el flag de ocultar descuento en el socio de negocios
+     * se debe igualar el PriceList con el PriceEntered
+     */
+    public BigDecimal getPriceList() {
+
+    	BigDecimal priceList = getPriceList(true);
+    	
+    	log.info("getPriceList desde micro componente Facturacion  (NO verifica ocultar descuento - estandar):" + priceList);
+    	
+    	return priceList;
+    }
+
 	/**
 	 * Obtengo el monto por unidad, o sea, se toma el monto parámetro y se
 	 * divide por la cantidad ingresada
@@ -2126,38 +2239,6 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	public boolean isDragOrderPrice() {
 		return dragOrderPrice;
 	}
-	
-	/** dREHER, si se encuentra seteado el flag de ocultar descuento en el socio de negocios
-     * se debe igualar el PriceList con el PriceEntered
-     */
-    public BigDecimal getPriceList() {
-
-    	BigDecimal priceList = super.getPriceList();
-    	int C_Invoice_ID = getC_Invoice_ID();
-
-    	// en caso de que no haya precio ingresado manual, debe seguir trayendo precio de lista
-    	if(getPriceEntered().compareTo(Env.ZERO) > 0) {
-    	
-    		MInvoice inv = new MInvoice(getCtx(), C_Invoice_ID, get_TrxName());
-    		if(inv!=null) {
-    			MBPartner bp = new MBPartner(getCtx(), inv.getC_BPartner_ID(), get_TrxName());
-    			if(bp!=null) {
-    				boolean isOcultarDesctoLineaFC = false;
-    				if(bp.get_Value("IsOcultarDesctoLineaFC")!=null) {
-    					isOcultarDesctoLineaFC = (Boolean)bp.get_Value("IsOcultarDesctoLineaFC");
-    				}
-    				if(isOcultarDesctoLineaFC)
-    					priceList = getPriceEntered();
-
-    			}
-    		}
-
-    	}
-    	
-    	log.finest("getPriceList desde MInvoiceLine :" + priceList);
-    	
-    	return priceList;
-    }
 	
 	/**
 	 * Crea el wrapper de esta línea para ser manipulada por un calculador de
@@ -2375,16 +2456,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             try {
             	BigDecimal rate = generator.totalPercepcionesRate();
             	rate = rate.divide(new BigDecimal(100));
-            	try
-                {
-            		net = net.divide( (BigDecimal.ONE.add(rate).add(tax)));
-                }
-                catch (Exception e)
-                {
-                	net = new BigDecimal(net.doubleValue() / (BigDecimal.ONE.add(rate).add(tax)).doubleValue());
-                }
-            	
-    		} catch (Exception e) {
+        		net = net.divide( (BigDecimal.ONE.add(rate).add(tax)), 6, BigDecimal.ROUND_HALF_DOWN);
+            } catch (Exception e) {
     			e.printStackTrace();
     		}	
         }
@@ -2428,12 +2501,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         try {
         	BigDecimal rate = generator.totalPercepcionesRate();
         	rate = rate.divide(new BigDecimal(100));
-        	try{
-        		net = net.divide( (BigDecimal.ONE.add(rate).add(tax)));
-            }
-            catch (Exception e){
-            	net = new BigDecimal(net.doubleValue() / (BigDecimal.ONE.add(rate).add(tax)).doubleValue());
-            }
+    		net = net.divide( (BigDecimal.ONE.add(rate).add(tax)), 6, BigDecimal.ROUND_HALF_DOWN);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}	
@@ -2444,6 +2512,20 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         }
         super.setTaxAmt(taxAmt);
     }    // setLineNetAmt
+    
+    private void updateNetAmount() {
+		BigDecimal taxamt = DB.getSQLValueBD(get_TrxName(), "SELECT coalesce(SUM(it.taxamt),0) FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?)", getC_Invoice_ID());
+		taxamt = taxamt == null?BigDecimal.ZERO:taxamt;
+		BigDecimal grandTotal = DB.getSQLValueBD(get_TrxName(), "SELECT coalesce(i.grandtotal,0) FROM C_Invoice i WHERE (i.C_Invoice_ID = ?)", getC_Invoice_ID());
+		BigDecimal taxbaseamt = DB.getSQLValueBD(get_TrxName(), "SELECT coalesce(it.taxbaseamt,0) FROM C_InvoiceTax it WHERE (it.C_Invoice_ID = ?) ORDER BY it.Created DESC LIMIT 1", getC_Invoice_ID());
+		taxbaseamt = taxbaseamt == null?BigDecimal.ZERO:taxbaseamt;
+		// Si existe un diferencia de hasta 0.02 se ajusta el neto.
+		if((Math.abs((grandTotal.subtract(taxamt).subtract(taxbaseamt)).doubleValue()) >= 0.01) && (Math.abs((grandTotal.subtract(taxamt).subtract(taxbaseamt)).doubleValue()) <= 0.02)){
+			String queryUpdate = "UPDATE C_Invoice SET NetAmount = " + (grandTotal.subtract(taxamt)) + " WHERE (C_Invoice_ID = " + getInvoice().getC_Invoice_ID() + ")";
+			getInvoice().setNetAmount(grandTotal.subtract(taxamt));
+			DB.executeUpdate(queryUpdate, get_TrxName());
+    	  }
+	}
 
 	public boolean isM_priceSet() {
 		return m_priceSet;
@@ -2525,6 +2607,48 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			updateGeneralManualDiscount(generalDiscountManual, stdPrecision);
 		}
 	}
+
+/**
+	 * Validación del importe de impuesto automático respecto al importe base y tasa
+	 * 
+	 * @return resultado de la operación
+	 */
+    private CallResult validateTaxAmt() {
+    	CallResult cr = new CallResult();
+    	BigDecimal taxBaseAmt = getTaxBaseAmtToEvaluateTax();
+    	// Si la tasa de impuesto es mayor a 0 y el importe de impuesto es menor o igual a 0
+        MTax tax = MTax.get(getCtx(), getC_Tax_ID(), get_TrxName());
+        MTaxCategory tc = MTaxCategory.get(getCtx(), tax.getC_TaxCategory_ID(), get_TrxName());
+        if(!tc.isManual() && !Util.isEmpty(tax.getRate(), true)) {
+        	// Verificar que tenga coherencia el importe de impuesto y el importe base
+        	// Casos a verificar
+        	// 1) Importe Base = 0 e Importe Impuesto > 0
+        	// 2) Importe Base > 0 e Importe Impuesto <= 0
+        	// 3) Importe Base > 0 e Importe Impuesto >= Importe Base
+			if ((taxBaseAmt.compareTo(BigDecimal.ZERO) == 0 && getTaxAmt().compareTo(BigDecimal.ZERO) > 0)
+					|| (taxBaseAmt.compareTo(BigDecimal.ZERO) > 0 && (getTaxAmt().compareTo(BigDecimal.ZERO) <= 0
+							|| getTaxAmt().compareTo(taxBaseAmt) >= 0))) {
+        		cr.setError(true);
+	        	cr.setResult(tax.getRate());
+	        	return cr;
+        	}
+        	
+        	// Si pasó la validación anterior significa que existe importe de iva y base,
+    		// verificar si es correcto
+			String p = MPreference.searchCustomPreferenceValue(TAXAMT_TOLERANCE_PREFERENCE_NAME, getAD_Client_ID(),
+					getAD_Org_ID(), getCreatedBy(), false);
+			BigDecimal tolerance = Util.isEmpty(p) ? BigDecimal.ZERO : new BigDecimal(p);
+			MPriceList pl = new MPriceList(getCtx(), getInvoice().getM_PriceList_ID(), get_TrxName());
+			BigDecimal newTaxAmt = tax.calculateTax(taxBaseAmt, pl.isTaxIncluded(), pl.getStandardPrecision());
+			BigDecimal diff = newTaxAmt.subtract(getTaxAmt()).abs();
+			if(diff.compareTo(tolerance) > 0) {
+	        	cr.setError(true);
+	        	cr.setResult(tax.getRate());
+	        	return cr;
+			}
+        }
+        return cr;
+    }
 }    // MInvoiceLine
 
 

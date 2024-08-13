@@ -4,15 +4,19 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jcp.xml.dsig.internal.dom.Utils;
 import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
 import org.openXpertya.print.fiscal.FiscalInitData;
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
 import org.openXpertya.print.fiscal.document.CreditNote;
+import org.openXpertya.print.fiscal.document.DiscountLine;
 import org.openXpertya.print.fiscal.document.Document;
+import org.openXpertya.print.fiscal.document.DocumentLine;
 import org.openXpertya.print.fiscal.document.Payment;
 import org.openXpertya.print.fiscal.document.Payment.TenderType;
 import org.openXpertya.print.fiscal.document.Tax;
@@ -32,6 +36,37 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	protected static final String PERCEPTION_DEFAULT_KEY = "PD";
 	/** Documento Genérico */
 	protected static final String GENERIC_DOCUMENT = "GD";
+	
+	/** Comando para obtener ConsultarAcumuladosComprobante 
+	 * dREHER 
+	 */
+	protected static final int CMD_CONSULTAR_ACUMULADOS_COMPROBANTE = 0x8C; 
+	
+	/**
+	 * Comando para obtener el primer bloque de auditoria guardado en la memoria fiscal
+	 * dREHER
+	 */
+	protected static final int CMD_CONSULTAR_PRIMER_BLOQUE_AUDITORIA = 166; // 0xA6;
+	
+	/**
+	 * Comando para obtener el siguiente bloque de auditoria guardado en la memoria fiscal
+	 * dREHER
+	 */
+	protected static final int CMD_CONSULTAR_SIGUIENTE_BLOQUE_AUDITORIA = 167; // 0xA7;
+	
+	/**
+	 * Comando para obtener el primer bloque de reporte de auditoria guardado en la memoria fiscal
+	 * dREHER
+	 */
+	protected static final int CMD_CONSULTAR_PRIMER_BLOQUE_REPORTE_AUDITORIA = 118; // 0x76;
+	
+	/**
+	 * Comando para obtener el siguiente bloque de reporte de auditoria guardado en la memoria fiscal
+	 * dREHER
+	 */
+	protected static final int CMD_CONSULTAR_SIGUIENTE_BLOQUE_REPORTE_AUDITORIA = 119; // 0x77;
+	
+	
 	/**
 	 * Asociación entre los tipos de pago con los esperados por la impresora
 	 * fiscal
@@ -142,6 +177,28 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		// Datos Adicionales 3
 		cmd.setText(i++, "", true);
 		return cmd;
+	}
+	
+	/**
+	 * Permite consultar los totales acumulados en un documento fiscal
+	 *  
+	 * @param docType
+	 * @param nroComprobante
+	 * @return paquete de info recibida desde el controlador fiscal
+	 * 
+	 * dREHER
+	 */
+	public BigDecimal getTotal(String docType, Integer nroComprobante) {
+		BigDecimal total = null;
+		
+		FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_ACUMULADOS_COMPROBANTE);
+		int i = 1;
+		cmd.setText(i++, docType, false);
+		cmd.setInt(i++, nroComprobante);
+		
+		total = cmd.getBigDecimal(6);
+		
+		return total;
 	}
 
 	@Override
@@ -512,9 +569,458 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	@Override
 	protected boolean checkStatus(FiscalPacket command, FiscalPacket response) throws FiscalPrinterIOException {
 		// TODO: HARDCODE en varios comandos viene el estado de fiscal "" en lugar de "0000" pero en el spooler está correcto, hack para ignorar
+		
+		// dREHER, puede darse que el response venga vacio y eso genera una excepcion!
+		if(response.getSize() <= 1)
+			return false;
+			
 		if (response.get(1).length != 0)
 			return super.checkStatus(command, response);
 		else 
 			return false;
 	}
+	
+	@Override
+	public String getLastDocumentNoPrinted(String documentType, String letra)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		String lastNro = "";
+		
+		//////////////////////////////////////////////////////////////
+		// Incia la transmisión de información de Estado de impresora
+		// Comando: @StatusRequest
+		// FiscalPacket response = execute(cmdStatusRequest());
+		int codigoComprobante = -1;
+		if(documentType.equals(Document.DT_INVOICE)) {
+			if(letra.equals(Document.DOC_LETTER_A))
+				codigoComprobante = 1;
+			else
+				codigoComprobante = 6;
+		}
+		if(documentType.equals(Document.DT_CREDIT_NOTE)) {
+				if(letra.equals(Document.DOC_LETTER_A))
+					codigoComprobante = 3;
+				else
+					codigoComprobante = 8;
+		}	
+		if(documentType.equals(Document.DT_DEBIT_NOTE)) {
+			if(letra.equals(Document.DOC_LETTER_A))
+				codigoComprobante = 2;
+			else
+				codigoComprobante = 7;
+		}
+		
+		FiscalPacket response = execute(cmdStatusRequestDocument(codigoComprobante));
+		
+		int index = 7;
+		
+		// Hasar 2da generacion siempre devuelve ultimo numero impreso en la misma posicion
+		/*
+		if(documentType.equals(Document.DT_CREDIT_NOTE)){
+			index = letra.equals(Document.DOC_LETTER_A)?8:7;
+		}
+		else{
+			index = letra.equals(Document.DOC_LETTER_A)?5:3;
+		}
+		 */
+		
+		
+		System.out.println("DocumentType=" + documentType + " Letra=" + letra);
+		
+		lastNro = response.getString(index);
+		
+		setLastDocumentNo(lastNro);
+		
+		return lastNro;
+	}
+	
+	/**
+	 * Ejecuta los comandos necesarios para cargar las líneas de item
+	 * del documento en la impresora fiscal.
+	 */
+	@Override
+	protected void loadDocumentLineItems(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// Se cargan los ítems del documento.
+		// Comando: @PrintLineItem
+		for (DocumentLine item : document.getLines()) {
+	        
+        	// dREHER sumarle la bonificacion de linea, para que luego lo descuente correctamente
+			// caso contrario el monto del item YA incluye el descuento y se vuelve a descontar 
+			// por segunda vez
+        	BigDecimal monto = item.getAbsUnitPrice();
+            DiscountLine discount = null;
+            
+            if (item.hasDiscount()) {
+				discount = item.getDiscount();
+                // monto = monto.add(discount.getAbsAmount());
+				// dREHER 2024-01-11 NO pasa en todos los casos, por lo tanto NO se puede generalizar este FIX
+            }
+            
+            debug("Se trata de un item con descuento? " + item.hasDiscount());
+            debug("Precio registrado (Precio Lista): " + item.getAbsUnitPrice());
+            debug("Descuento: " + item.getDiscount());
+            debug("Monto considerando descuento: " + monto);
+            
+        
+			execute(cmdPrintLineItem(
+				item.getDescription(), 
+				item.getQuantity(), 
+				monto, 
+				item.getIvaRate(), 
+				item.isSubstract(), 
+				BigDecimal.ZERO, // Impuestos internos
+				!item.isPriceIncludeIva(), 
+				null)
+			);
+			
+			// Se carga el descuento del ítem si es que posee.
+			// Comando: @LastItemDiscount
+			if (discount!=null) {
+				execute(cmdLastItemDiscount(
+					discount.getDescription(), 
+					discount.getAbsAmount(), 
+					false, 
+					!discount.isAmountIncludeIva(),
+					null));		
+			}
+		}
+	}
+
+	// dREHER
+	private void debug(String string) {
+		System.out.println("HasarFiscalPrint2G." + string);
+	}
+
+	// BLOQUE DE REPORTE DE AUDITORIA
+	// ES INFORMACION PARA CONOCER LOS COMPROBANTES EMITIDOS
+	// SE PRESENTA COMO DDJJ AFIP
+	
+	/**
+	 * Comando para consultar el inicio de bloque de reporte de auditoria
+	 * @param fechaDesde
+	 * @param fechaHasta
+	 * @return
+	 * 
+	 * dREHER
+	 */
+	private FiscalPacket cmdConsultarInicioBloqueReporteAuditoria(String fechaDesde, String fechaHasta) {
+		return cmdConsultarInicioBloqueReporteAuditoria(fechaDesde, fechaHasta, false);
+	}
+	
+	/**
+	 * Comando para consultar el inicio de bloque de auditoria
+	 * @param fechaDesde
+	 * @param fechaHasta
+	 * @return
+	 * 
+	 * dREHER
+	 */
+	private FiscalPacket cmdConsultarInicioBloqueReporteAuditoria(String fechaDesde, String fechaHasta, boolean completo) {
+		FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_PRIMER_BLOQUE_REPORTE_AUDITORIA);
+		int i = 1;
+		
+		// parametros necesarios
+		cmd.setText(i++, fechaDesde, false); // AAMMDD
+		cmd.setText(i++, fechaHasta, false); // AAMMDD
+		cmd.setText(i++, (completo?"P":"N"), false); // N=solo memoria fiscal, P=Completo
+		
+		return cmd;
+	}
+	
+	/**
+	 * Comando para consultar el siguiente de bloque de reporte de auditoria
+	 * @return
+	 * 
+	 * dREHER
+	 */
+	private FiscalPacket cmdConsultarSiguienteBloqueReporteAuditoria() {
+		FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_SIGUIENTE_BLOQUE_REPORTE_AUDITORIA);
+		return cmd;
+	}
+	
+	/**
+	 * Consultar primer bloque de reporte de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuffer consultarInicioBloqueReporteAuditoria(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuffer xml = new StringBuffer();
+		
+		FiscalPacket response = execute(cmdConsultarInicioBloqueReporteAuditoria(fechaDesde, fechaHasta));
+		System.out.println("response cmdConsultarInicioBloqueReporteAuditoria= " + response);
+		
+		if(response!=null)
+			xml.append(response.getString(4));
+		return xml;
+	}
+
+	/**
+	 * Consultar primer bloque de reporte de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuffer consultarInicioBloqueReporteAuditoria(String fechaDesde, String fechaHasta, boolean completo) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuffer xml = new StringBuffer();
+		
+		FiscalPacket response = execute(cmdConsultarInicioBloqueReporteAuditoria(fechaDesde, fechaHasta, completo));
+		System.out.println("response cmdConsultarInicioBloqueReporteAuditoria= " + response);
+		
+		if(response!=null)
+			xml.append(response.getString(4));
+		return xml;
+	}
+	
+	/**
+	 * Consultar siguiente bloque de reporte de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public ArrayList<StringBuffer> consultarSiguienteBloqueReporteAuditoria() throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuffer xml = new StringBuffer();
+		String bloque = "";
+		FiscalPacket response = execute(cmdConsultarSiguienteBloqueReporteAuditoria());
+		System.out.println("response ConsultarSiguienteBloqueReporteAuditoria= " + response);
+		
+		if(response!=null && response.getSize() >= 4) {
+			bloque = response.getString(3);
+			if(bloque.equals("1") || bloque.equals("0")) { // sigue habiendo informacion o es el ultimo bloque
+				System.out.println("Bloque: " + bloque + " Respuesta len: " + response.getSize());
+				if(response.getSize()>=4)
+					xml.append(response.getString(4));
+			}
+		}
+		ArrayList<StringBuffer> respuesta = new ArrayList<StringBuffer>();
+		respuesta.add(new StringBuffer(bloque));
+		respuesta.add(xml);
+		return respuesta;
+	}
+	
+	/**
+	 * Consultar primer bloque de reporte de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuilder fiscalReportAudit(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuilder xml = new StringBuilder();
+		
+		StringBuffer bloque = consultarInicioBloqueReporteAuditoria(fechaDesde, fechaHasta);
+		if(bloque!=null) {
+			xml.append(bloque);
+			while(true) {
+				ArrayList<StringBuffer>siguiente = consultarSiguienteBloqueReporteAuditoria();
+				if(siguiente.get(1)!=null && siguiente.get(1).length() > 0)
+					xml.append(siguiente.get(1));
+				else
+					break;
+				
+				if(siguiente.get(0).toString().equals("0"))
+					break;
+			}
+		}
+		return xml;
+	}
+	
+// ---------------------------------------------------------------------------------------------------------------
+	
+	// BLOQUE DE AUDITORIA
+	// ES INFORMACION PARA CONOCER LOS COMPROBANTES EMITIDOS
+	// NO SE PRESENTA COMO DDJJ AFIP
+	
+	/**
+	 * Comando para consultar el inicio de bloque de auditoria
+	 * @param fechaDesde
+	 * @param fechaHasta
+	 * @return
+	 * 
+	 * dREHER
+	 */
+	private FiscalPacket cmdConsultarInicioBloqueAuditoria(String fechaDesde, String fechaHasta) {
+		return cmdConsultarInicioBloqueAuditoria(fechaDesde, fechaHasta, false);
+	}
+	
+	/**
+	 * Comando para consultar el inicio de bloque de auditoria
+	 * @param fechaDesde
+	 * @param fechaHasta
+	 * @return
+	 * 
+	 * dREHER
+	 */
+	private FiscalPacket cmdConsultarInicioBloqueAuditoria(String fechaDesde, String fechaHasta, boolean comprimir) {
+		FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_PRIMER_BLOQUE_AUDITORIA);
+		int i = 1;
+		
+		// parametros necesarios
+		cmd.setText(i++, fechaDesde, false); // AAMMDD
+		cmd.setText(i++, fechaHasta, false); // AAMMDD
+		cmd.setText(i++, "F", false); // por rango de fechas del cierre Z (Z=Numero de cierre, utilizamos la opcion de rangos de fechas, mas facil)
+		cmd.setText(i++, (comprimir?"P":"N"), false); // N=no comprime, P=Comprime info
+		cmd.setText(i++, "P", false); // N=uno por cada jornada fiscal, P=Un solo archivo para todas las jornadas incluidas en el rango de fechas
+		
+		return cmd;
+	}
+	
+	/**
+	 * Comando para consultar el siguiente de bloque de auditoria
+	 * @return
+	 * 
+	 * dREHER
+	 */
+	private FiscalPacket cmdConsultarSiguienteBloqueAuditoria() {
+		FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_SIGUIENTE_BLOQUE_AUDITORIA);
+		return cmd;
+	}
+	
+	/**
+	 * Consultar primer bloque de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuffer consultarInicioBloqueAuditoria(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuffer xml = new StringBuffer();
+		
+		FiscalPacket response = execute(cmdConsultarInicioBloqueAuditoria(fechaDesde, fechaHasta));
+		System.out.println("response cmdConsultarInicioBloqueAuditoria= " + response);
+		
+		if(response!=null && response.getSize() >= 4)
+			xml.append(response.getString(4));
+		return xml;
+	}
+
+	/**
+	 * Consultar primer bloque de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuffer consultarInicioBloqueAuditoria(String fechaDesde, String fechaHasta, boolean comprimido) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuffer xml = new StringBuffer();
+		
+		FiscalPacket response = execute(cmdConsultarInicioBloqueAuditoria(fechaDesde, fechaHasta, comprimido));
+		System.out.println("response cmdConsultarInicioBloqueAuditoria= " + response);
+		
+		if(response!=null)
+			xml.append(response.getString(4));
+		return xml;
+	}
+	
+	/**
+	 * Consultar siguiente bloque de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public ArrayList<StringBuffer> consultarSiguienteBloqueAuditoria() throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuffer xml = new StringBuffer();
+		String bloque = "";
+		FiscalPacket response = execute(cmdConsultarSiguienteBloqueAuditoria());
+		System.out.println("response ConsultarSiguienteBloqueAuditoria= " + response);
+		
+		if(response!=null && response.getSize() >= 4) {
+			bloque = response.getString(3);
+			if(bloque.equals("1") || bloque.equals("0")) { // sigue habiendo informacion o es el ultimo bloque
+				System.out.println("Bloque: " + bloque + " Respuesta len: " + response.getSize());
+				if(response.getSize()>=4)
+					xml.append(response.getString(4));
+			}
+		}
+		ArrayList<StringBuffer> respuesta = new ArrayList<StringBuffer>();
+		respuesta.add(new StringBuffer(bloque));
+		respuesta.add(xml);
+		return respuesta;
+	}
+	
+	/**
+	 * Consultar primer bloque de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * 
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuilder fiscalAudit(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuilder xml = new StringBuilder();
+		
+		StringBuffer bloque = consultarInicioBloqueAuditoria(fechaDesde, fechaHasta);
+		if(bloque!=null) {
+			xml.append(bloque);
+			while(true) {
+				ArrayList<StringBuffer>siguiente = consultarSiguienteBloqueAuditoria();
+				if(siguiente.get(1)!=null && siguiente.get(1).length() > 0)
+					xml.append(siguiente.get(1));
+				else
+					break;
+				
+				if(siguiente.get(0).toString().equals("0"))
+					break;
+			}
+		}
+		return xml;
+	}
+	
+	/**
+	 * Consultar primer bloque de auditoria
+	 * 
+	 * Se abre el bloque y se continua pidiendo siguiente bloque hasta que no haya mas resultado
+	 * La informacion se recibe en ASCII85, debe convertirse a binario y luego eso guardarlo en un archivo con extension .ZIP
+	 * @return
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * dREHER
+	 */
+	public StringBuilder fiscalAuditComprimido(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException{
+		StringBuilder xml = new StringBuilder();
+		
+		StringBuffer bloque = consultarInicioBloqueAuditoria(fechaDesde, fechaHasta, true);
+		if(bloque!=null) {
+			xml.append(bloque);
+			while(true) {
+				ArrayList<StringBuffer>siguiente = consultarSiguienteBloqueAuditoria();
+				if(siguiente.get(1)!=null && siguiente.get(1).length() > 0)
+					xml.append(siguiente.get(1));
+				else
+					break;
+				
+				if(siguiente.get(0).toString().equals("0"))
+					break;
+			}
+		}
+		
+		return xml;
+	}
+	
 }

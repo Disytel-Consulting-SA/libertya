@@ -1099,5 +1099,26 @@ public class ESCPOSPrinter extends BasicFiscalPrinter implements ESCPOSCommands,
 		// TODO Auto-generated method stub
 		return 0;
 	}
+	
+	@Override
+	public StringBuilder fiscalReportAudit(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StringBuilder fiscalAudit(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StringBuilder fiscalAuditComprimido(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

@@ -496,7 +496,13 @@ public class MAllocationLine extends X_C_AllocationLine implements CurrentAccoun
 
         if( invoice != null ) {
             invoice.testAllocation();
-
+            
+            /**
+             * En el caso de que se este guardando la factura solo a los efectos de vincular 
+             * o no, con lineas de asignacion NO realizar validaciones extras sobre la factura en cuestion.
+             * dREHER
+             */
+            invoice.skipFiscalProcess=true;
             if( !invoice.save( get_TrxName())) {
                 log.log( Level.SEVERE,"Invoice not updated - " + invoice );
             }

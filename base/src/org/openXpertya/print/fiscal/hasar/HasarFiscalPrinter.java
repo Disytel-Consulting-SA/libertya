@@ -28,6 +28,7 @@ import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 import org.openXpertya.print.fiscal.msg.FiscalMessage;
 import org.openXpertya.print.fiscal.msg.FiscalMessages;
 import org.openXpertya.print.fiscal.msg.MsgRepository;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 /**
@@ -467,6 +468,13 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 
 	public FiscalPacket cmdStatusRequest() {
 		FiscalPacket cmd = createFiscalPacket(CMD_STATUS_REQUEST);
+		return cmd;
+	}
+	
+	public FiscalPacket cmdStatusRequestDocument(int codigoComprobante) {
+		FiscalPacket cmd = createFiscalPacket(CMD_STATUS_REQUEST);
+		int i = 1;
+		cmd.setNumber(i, codigoComprobante, true);
 		return cmd;
 	}
 
@@ -1409,7 +1417,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	 * Ejecuta los comandos necesarios para cargar las líneas de item
 	 * del documento en la impresora fiscal.
 	 */
-	private void loadDocumentLineItems(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+	protected void loadDocumentLineItems(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
 		// Se cargan los ítems del documento.
 		// Comando: @PrintLineItem
 		for (DocumentLine item : document.getLines()) {
@@ -1462,12 +1470,50 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Comando: @GeneralDiscount
 		if(document.hasGeneralDiscount()) {
 			DiscountLine generalDiscount = document.getGeneralDiscount();
-			execute(cmdGeneralDiscount(
-				generalDiscount.getDescription(), 
-				generalDiscount.getAmount(), 
-				false, 
-				!generalDiscount.isAmountIncludeIva(),
-				null));		
+			
+			// dREHER
+			System.out.println("HasarFiscalPrint - descuento general. Desc=" + generalDiscount.getDescription() + "\n Amount=" + generalDiscount.getAmount() + "\n AbsAmount=" + generalDiscount.getAbsAmount() + "\n ChargeAmt=" + document.getChargeAmt());
+			
+			/**
+			 * Si el valor del descuento general es negativo (<0) quiere decir que se trata de un recargo, tratarlo como tal...
+			 * 
+			 * dREHER
+			 */
+			if(generalDiscount.getAmount().compareTo(Env.ZERO) < 0)
+				execute(cmdGeneralDiscount(
+						generalDiscount.getDescription(), 
+						generalDiscount.getAmount(),
+						false, 
+						!generalDiscount.isAmountIncludeIva(),
+						null));
+			else {
+			
+				/**
+				 * Si no llega tasa de impuesto, tomarlo desde los impuestos del documento
+				 * TODO: ver si esto aplica a todos los casos
+				 */
+				
+				BigDecimal tax = generalDiscount.getTaxRate();
+				if(tax==null) {
+					for(Tax t : document.getTaxes()) {
+						tax = t.getRate();
+						if(tax!=null)
+							break;
+					}
+					
+				}
+				
+				execute(cmdReturnRecharge(
+						generalDiscount.getDescription(),
+						generalDiscount.getAmount(), 
+						tax, // ivaPercent 
+						false, // subtract
+						Env.ZERO, // internalTaxes 
+						!generalDiscount.isAmountIncludeIva(), // baseAmount 
+						null, // display
+						"Recargo")); // operation
+			}
+			
 		}
 	}
 
@@ -1553,7 +1599,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		String lastNro = "";
 		
 		//////////////////////////////////////////////////////////////
-		// Incia la transmisión de información de IVA
+		// Incia la transmisión de información de la impresora fiscal
 		// Comando: @StatusRequest
 		FiscalPacket response = execute(cmdStatusRequest());
 		int index = 0;

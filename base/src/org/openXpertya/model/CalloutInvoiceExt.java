@@ -169,6 +169,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	}
 	
 	public static Integer getNextNroComprobante(int docTypeID) {
+		
 		Integer nro = null;
 		Properties ctx = Env.getCtx();
 		MDocType mDocType = new MDocType(ctx, docTypeID, null);
@@ -177,7 +178,13 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			if (seq != null) {
 				String nextNo = String.valueOf(seq.getCurrentNext());
 				try {
-					nro = Integer.parseInt(nextNo.substring(1,nextNo.length()));
+					String number = nextNo.substring(1,nextNo.length());
+					// dREHER control extra para TPV terminados en CERO
+					if(seq.getPrefix()!=null && seq.getPrefix().length() <= 3 && nextNo.length() <= 8) {
+						number = nextNo;
+					}
+					nro = Integer.parseInt(number);
+					
 				} catch (Exception e) {
 					// retorna null
 				}

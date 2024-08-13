@@ -50,11 +50,16 @@ setM_PriceList_ID (0);
 setManageDragOrderDiscounts (false);
 setManageDragOrderSurcharges (false);
 setManualDocumentNo (false);
+setManualGeneralDiscount (Env.ZERO);
+setM_PriceList_ID (0);
 setNetAmount (Env.ZERO);
 setNotExchangeableCredit (false);
+setNumeroComprobante (0);
 setPaymentRule (null);	// P
 setPosted (false);	// N
+setPreloadInvoice (false);
 setProcessed (false);
+setPuntoDeVenta (0);
 setSendEMail (false);
 setTotalLines (Env.ZERO);
 setUpdateOrderQty (false);
@@ -251,6 +256,78 @@ public int getC_Activity_ID()
 Integer ii = (Integer)get_Value("C_Activity_ID");
 if (ii == null) return 0;
 return ii.intValue();
+}
+/** Set cae */
+public void setcae (String cae)
+{
+if (cae != null && cae.length() > 14)
+{
+log.warning("Length > 14 - truncated");
+cae = cae.substring(0,14);
+}
+set_Value ("cae", cae);
+}
+/** Get cae */
+public String getcae() 
+{
+return (String)get_Value("cae");
+}
+/** Set caecbte */
+public void setcaecbte (int caecbte)
+{
+set_Value ("caecbte", new Integer(caecbte));
+}
+/** Get caecbte */
+public int getcaecbte() 
+{
+Integer ii = (Integer)get_Value("caecbte");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set caeerror */
+public void setcaeerror (String caeerror)
+{
+if (caeerror != null && caeerror.length() > 255)
+{
+log.warning("Length > 255 - truncated");
+caeerror = caeerror.substring(0,255);
+}
+set_Value ("caeerror", caeerror);
+}
+/** Get caeerror */
+public String getcaeerror() 
+{
+return (String)get_Value("caeerror");
+}
+/** Set CAI */
+public void setCAI (String CAI)
+{
+if (CAI != null && CAI.length() > 14)
+{
+log.warning("Length > 14 - truncated");
+CAI = CAI.substring(0,14);
+}
+set_Value ("CAI", CAI);
+}
+/** Get CAI */
+public String getCAI() 
+{
+return (String)get_Value("CAI");
+}
+/** Set Caja */
+public void setCaja (String Caja)
+{
+if (Caja != null && Caja.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+Caja = Caja.substring(0,2);
+}
+set_Value ("Caja", Caja);
+}
+/** Get Caja */
+public String getCaja() 
+{
+return (String)get_Value("Caja");
 }
 /** Set Business Partner .
 Identifies a Business Partner */
@@ -589,78 +666,6 @@ public int getC_Region_ID()
 Integer ii = (Integer)get_Value("C_Region_ID");
 if (ii == null) return 0;
 return ii.intValue();
-}
-/** Set cae */
-public void setcae (String cae)
-{
-if (cae != null && cae.length() > 14)
-{
-log.warning("Length > 14 - truncated");
-cae = cae.substring(0,14);
-}
-set_Value ("cae", cae);
-}
-/** Get cae */
-public String getcae() 
-{
-return (String)get_Value("cae");
-}
-/** Set caecbte */
-public void setcaecbte (int caecbte)
-{
-set_Value ("caecbte", new Integer(caecbte));
-}
-/** Get caecbte */
-public int getcaecbte() 
-{
-Integer ii = (Integer)get_Value("caecbte");
-if (ii == null) return 0;
-return ii.intValue();
-}
-/** Set caeerror */
-public void setcaeerror (String caeerror)
-{
-if (caeerror != null && caeerror.length() > 255)
-{
-log.warning("Length > 255 - truncated");
-caeerror = caeerror.substring(0,255);
-}
-set_Value ("caeerror", caeerror);
-}
-/** Get caeerror */
-public String getcaeerror() 
-{
-return (String)get_Value("caeerror");
-}
-/** Set CAI */
-public void setCAI (String CAI)
-{
-if (CAI != null && CAI.length() > 14)
-{
-log.warning("Length > 14 - truncated");
-CAI = CAI.substring(0,14);
-}
-set_Value ("CAI", CAI);
-}
-/** Get CAI */
-public String getCAI() 
-{
-return (String)get_Value("CAI");
-}
-/** Set Caja */
-public void setCaja (String Caja)
-{
-if (Caja != null && Caja.length() > 2)
-{
-log.warning("Length > 2 - truncated");
-Caja = Caja.substring(0,2);
-}
-set_Value ("Caja", Caja);
-}
-/** Get Caja */
-public String getCaja() 
-{
-return (String)get_Value("Caja");
 }
 /** Set CAT_Iva_ID */
 public void setCAT_Iva_ID (int CAT_Iva_ID)
@@ -1093,7 +1098,7 @@ Total amount of document */
 public void setGrandTotal (BigDecimal GrandTotal)
 {
 if (GrandTotal == null) throw new IllegalArgumentException ("GrandTotal is mandatory");
-set_Value ("GrandTotal", GrandTotal);
+set_ValueNoCheck ("GrandTotal", GrandTotal);
 }
 /** Get Grand Total.
 Total amount of document */
@@ -1532,6 +1537,7 @@ return false;
 /** Set Manual General Discount */
 public void setManualGeneralDiscount (BigDecimal ManualGeneralDiscount)
 {
+if (ManualGeneralDiscount == null) throw new IllegalArgumentException ("ManualGeneralDiscount is mandatory");
 set_Value ("ManualGeneralDiscount", ManualGeneralDiscount);
 }
 /** Get Manual General Discount */
@@ -1850,10 +1856,12 @@ public static final String ORIGINVTIPO_CptesAConsignacionSectorPesqueroMaritimo 
 public static final String ORIGINVTIPO_CptesBConsignacionSectorPesqueroMaritimo = "26";
 /** Remito R = 91 */
 public static final String ORIGINVTIPO_RemitoR = "91";
+/** Remito Electronico Carnico = 995 */
+public static final String ORIGINVTIPO_RemitoElectronicoCarnico = "995";
 /** Set OrigInvTipo */
 public void setOrigInvTipo (String OrigInvTipo)
 {
-if (OrigInvTipo == null || OrigInvTipo.equals("01") || OrigInvTipo.equals("02") || OrigInvTipo.equals("03") || OrigInvTipo.equals("04") || OrigInvTipo.equals("05") || OrigInvTipo.equals("06") || OrigInvTipo.equals("07") || OrigInvTipo.equals("08") || OrigInvTipo.equals("09") || OrigInvTipo.equals("10") || OrigInvTipo.equals("20") || OrigInvTipo.equals("19") || OrigInvTipo.equals("21") || OrigInvTipo.equals("11") || OrigInvTipo.equals("13") || OrigInvTipo.equals("12") || OrigInvTipo.equals("16") || OrigInvTipo.equals("15") || OrigInvTipo.equals("202") || OrigInvTipo.equals("207") || OrigInvTipo.equals("212") || OrigInvTipo.equals("203") || OrigInvTipo.equals("208") || OrigInvTipo.equals("213") || OrigInvTipo.equals("51") || OrigInvTipo.equals("52") || OrigInvTipo.equals("53") || OrigInvTipo.equals("22") || OrigInvTipo.equals("201") || OrigInvTipo.equals("206") || OrigInvTipo.equals("211") || OrigInvTipo.equals("17") || OrigInvTipo.equals("18") || OrigInvTipo.equals("23") || OrigInvTipo.equals("25") || OrigInvTipo.equals("27") || OrigInvTipo.equals("28") || OrigInvTipo.equals("30") || OrigInvTipo.equals("32") || OrigInvTipo.equals("33") || OrigInvTipo.equals("34") || OrigInvTipo.equals("35") || OrigInvTipo.equals("36") || OrigInvTipo.equals("37") || OrigInvTipo.equals("38") || OrigInvTipo.equals("39") || OrigInvTipo.equals("40") || OrigInvTipo.equals("41") || OrigInvTipo.equals("43") || OrigInvTipo.equals("45") || OrigInvTipo.equals("46") || OrigInvTipo.equals("48") || OrigInvTipo.equals("49") || OrigInvTipo.equals("50") || OrigInvTipo.equals("54") || OrigInvTipo.equals("55") || OrigInvTipo.equals("56") || OrigInvTipo.equals("57") || OrigInvTipo.equals("58") || OrigInvTipo.equals("59") || OrigInvTipo.equals("60") || OrigInvTipo.equals("61") || OrigInvTipo.equals("63") || OrigInvTipo.equals("64") || OrigInvTipo.equals("66") || OrigInvTipo.equals("70") || OrigInvTipo.equals("81") || OrigInvTipo.equals("82") || OrigInvTipo.equals("83") || OrigInvTipo.equals("90") || OrigInvTipo.equals("99") || OrigInvTipo.equals("110") || OrigInvTipo.equals("111") || OrigInvTipo.equals("112") || OrigInvTipo.equals("113") || OrigInvTipo.equals("114") || OrigInvTipo.equals("115") || OrigInvTipo.equals("116") || OrigInvTipo.equals("117") || OrigInvTipo.equals("118") || OrigInvTipo.equals("119") || OrigInvTipo.equals("120") || OrigInvTipo.equals("331") || OrigInvTipo.equals("332") || OrigInvTipo.equals("24") || OrigInvTipo.equals("26") || OrigInvTipo.equals("91") || ( refContainsValue("CORE-AD_Reference-1010096", OrigInvTipo) ) );
+if (OrigInvTipo == null || OrigInvTipo.equals("01") || OrigInvTipo.equals("02") || OrigInvTipo.equals("03") || OrigInvTipo.equals("04") || OrigInvTipo.equals("05") || OrigInvTipo.equals("06") || OrigInvTipo.equals("07") || OrigInvTipo.equals("08") || OrigInvTipo.equals("09") || OrigInvTipo.equals("10") || OrigInvTipo.equals("20") || OrigInvTipo.equals("19") || OrigInvTipo.equals("21") || OrigInvTipo.equals("11") || OrigInvTipo.equals("13") || OrigInvTipo.equals("12") || OrigInvTipo.equals("16") || OrigInvTipo.equals("15") || OrigInvTipo.equals("202") || OrigInvTipo.equals("207") || OrigInvTipo.equals("212") || OrigInvTipo.equals("203") || OrigInvTipo.equals("208") || OrigInvTipo.equals("213") || OrigInvTipo.equals("51") || OrigInvTipo.equals("52") || OrigInvTipo.equals("53") || OrigInvTipo.equals("22") || OrigInvTipo.equals("201") || OrigInvTipo.equals("206") || OrigInvTipo.equals("211") || OrigInvTipo.equals("17") || OrigInvTipo.equals("18") || OrigInvTipo.equals("23") || OrigInvTipo.equals("25") || OrigInvTipo.equals("27") || OrigInvTipo.equals("28") || OrigInvTipo.equals("30") || OrigInvTipo.equals("32") || OrigInvTipo.equals("33") || OrigInvTipo.equals("34") || OrigInvTipo.equals("35") || OrigInvTipo.equals("36") || OrigInvTipo.equals("37") || OrigInvTipo.equals("38") || OrigInvTipo.equals("39") || OrigInvTipo.equals("40") || OrigInvTipo.equals("41") || OrigInvTipo.equals("43") || OrigInvTipo.equals("45") || OrigInvTipo.equals("46") || OrigInvTipo.equals("48") || OrigInvTipo.equals("49") || OrigInvTipo.equals("50") || OrigInvTipo.equals("54") || OrigInvTipo.equals("55") || OrigInvTipo.equals("56") || OrigInvTipo.equals("57") || OrigInvTipo.equals("58") || OrigInvTipo.equals("59") || OrigInvTipo.equals("60") || OrigInvTipo.equals("61") || OrigInvTipo.equals("63") || OrigInvTipo.equals("64") || OrigInvTipo.equals("66") || OrigInvTipo.equals("70") || OrigInvTipo.equals("81") || OrigInvTipo.equals("82") || OrigInvTipo.equals("83") || OrigInvTipo.equals("90") || OrigInvTipo.equals("99") || OrigInvTipo.equals("110") || OrigInvTipo.equals("111") || OrigInvTipo.equals("112") || OrigInvTipo.equals("113") || OrigInvTipo.equals("114") || OrigInvTipo.equals("115") || OrigInvTipo.equals("116") || OrigInvTipo.equals("117") || OrigInvTipo.equals("118") || OrigInvTipo.equals("119") || OrigInvTipo.equals("120") || OrigInvTipo.equals("331") || OrigInvTipo.equals("332") || OrigInvTipo.equals("24") || OrigInvTipo.equals("26") || OrigInvTipo.equals("91") || ( refContainsValue("CORE-AD_Reference-1010096", OrigInvTipo) ) || OrigInvTipo.equals("995") );
  else throw new IllegalArgumentException ("OrigInvTipo Invalid value: " + OrigInvTipo + ".  Valid: " +  refValidOptions("CORE-AD_Reference-1010096") );
 if (OrigInvTipo != null && OrigInvTipo.length() > 10)
 {
@@ -2212,7 +2220,7 @@ public boolean insertDirect()
 try 
 {
  
- 		 String sql = " INSERT INTO C_Invoice(Ref_Invoice_ID,IsPayScheduleValid,vtocae,C_Invoice_ID,cae,idcae,caeerror,C_Activity_ID,Description,DocAction,Posted,C_Order_ID,C_DocType_ID,GenerateTo,C_Campaign_ID,DocStatus,POReference,DateOrdered,Created,C_Currency_ID,IsTransferred,C_Project_ID,C_Payment_ID,TotalLines,IsPaid,DateAcct,AD_Client_ID,Processing,IsActive,UpdatedBy,DatePrinted,IsSOTrx,C_Charge_ID,CopyFrom,Processed,Updated,IsSelfService,IsDiscountPrinted,AD_OrgTrx_ID,SalesRep_ID,ChargeAmt,IsTaxIncluded,IsInDispute,SendEMail,C_CashLine_ID,C_ConversionType_ID,IsPrinted,NumeroDeDocumento,Authorize,C_Invoice_Orig_ID,OldGrandTotal,C_Letra_Comprobante_ID,DateInvoiced,IsVoidable,CAI,CUIT,Caja,DateCAI,FiscalAlreadyPrinted,M_PriceList_ID,PaymentRule,caecbte,CreateCashLine,IsCopy,AuthCode,AuthMatch,C_POSJournal_ID,IsApproved,TipoComprobante,IsExchange,NotExchangeableCredit,InitialCurrentAccountAmt,C_POSPaymentMedium_ID,ManageDragOrderDiscounts,ManualDocumentNo,ApplyPercepcion,M_RMA_ID,NetAmount,C_POSPaymentMedium_Credit_ID,FiscalDescription,PrintType,C_Region_Delivery_ID,UpdateOrderQty,DateRecepted,ImportClearance,SkipIPNoCaeValidation,ManageElectronicInvoice,M_InOutTransport_ID,AD_User_ID,C_BPartner_Location_ID,CreatedBy,C_Region_ID,User1_ID,User2_ID,AuthorizationChainStatus,FechadeTCparaActualizarPrecios,ManageDragOrderSurcharges,Invoice_Adress,NombreCli,NroIdentificCliente,C_BPartner_ID,C_DocTypeTarget_ID,DocumentNo,AD_Org_ID,NumeroComprobante,C_PaymentTerm_ID,CreateFrom,C_Order_Orig_ID,M_AuthorizationChain_ID,ManualGeneralDiscount,DeliveryViaRule,GrandTotal,PuntoDeVenta,OrigInvFecha,OrigInvNro,OrigInvPtoVta,OrigInvTipo,Direccion,Localidad,provincia,CP,CAT_Iva_ID," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
+ 		 String sql = " INSERT INTO C_Invoice(Ref_Invoice_ID,IsPayScheduleValid,vtocae,C_Invoice_ID,cae,idcae,caeerror,C_Activity_ID,Description,DocAction,Posted,C_Order_ID,C_DocType_ID,GenerateTo,C_Campaign_ID,DocStatus,POReference,DateOrdered,Created,C_Currency_ID,IsTransferred,C_Project_ID,C_Payment_ID,TotalLines,IsPaid,DateAcct,AD_Client_ID,Processing,IsActive,UpdatedBy,DatePrinted,IsSOTrx,C_Charge_ID,CopyFrom,Processed,Updated,IsSelfService,IsDiscountPrinted,AD_OrgTrx_ID,SalesRep_ID,ChargeAmt,IsTaxIncluded,IsInDispute,SendEMail,C_CashLine_ID,C_ConversionType_ID,IsPrinted,NumeroDeDocumento,Authorize,C_Invoice_Orig_ID,OldGrandTotal,C_Letra_Comprobante_ID,DateInvoiced,IsVoidable,CAI,CUIT,Caja,DateCAI,FiscalAlreadyPrinted,M_PriceList_ID,PaymentRule,caecbte,CreateCashLine,IsCopy,AuthCode,AuthMatch,C_POSJournal_ID,IsApproved,TipoComprobante,IsExchange,NotExchangeableCredit,InitialCurrentAccountAmt,C_POSPaymentMedium_ID,ManageDragOrderDiscounts,ManualDocumentNo,ApplyPercepcion,M_RMA_ID,NetAmount,C_POSPaymentMedium_Credit_ID,FiscalDescription,PrintType,C_Region_Delivery_ID,UpdateOrderQty,DateRecepted,ImportClearance,SkipIPNoCaeValidation,ManageElectronicInvoice,M_InOutTransport_ID,AD_User_ID,C_BPartner_Location_ID,CreatedBy,C_Region_ID,User1_ID,User2_ID,AuthorizationChainStatus,FechadeTCparaActualizarPrecios,ManageDragOrderSurcharges,Invoice_Adress,NombreCli,NroIdentificCliente,C_BPartner_ID,C_DocTypeTarget_ID,DocumentNo,AD_Org_ID,NumeroComprobante,C_PaymentTerm_ID,CreateFrom,C_Order_Orig_ID,M_AuthorizationChain_ID,ManualGeneralDiscount,DeliveryViaRule,GrandTotal,PuntoDeVenta,OrigInvFecha,OrigInvNro,OrigInvPtoVta,OrigInvTipo,Direccion,Localidad,provincia,CP,CAT_Iva_ID,PreloadInvoice," + getAdditionalParamNames() + ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," + getAdditionalParamMarks() + ") ";
 
 		 if (getRef_Invoice_ID() == 0) sql = sql.replaceFirst("Ref_Invoice_ID,","").replaceFirst("\\?,", "");
  		 if (getvtocae() == null) sql = sql.replaceFirst("vtocae,","").replaceFirst("\\?,", "");
@@ -2429,6 +2437,7 @@ try
 		 if (getprovincia() != null) pstmt.setString(col++, getprovincia());
 		 if (getCP() != null) pstmt.setString(col++, getCP());
 		 if (getCAT_Iva_ID() != 0) pstmt.setInt(col++, getCAT_Iva_ID());
+		 pstmt.setString(col++, isPreloadInvoice()?"Y":"N");
 		 col = setAdditionalInsertValues(col, pstmt);
  
 

@@ -131,6 +131,32 @@ public interface FiscalPrinter {
 	public void fiscalClose(String type) throws FiscalPrinterStatusError, FiscalPrinterIOException;
 	
 	/**
+	 * Realiza la consulta de la auditoria fiscal
+	 * @param  String fechaDesde, String fechaHasta
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * 
+	 * @return StringBuilder XML
+	 * 
+	 * dREHER
+	 */
+	public StringBuilder fiscalAudit(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException;
+	
+	public StringBuilder fiscalAuditComprimido(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException;
+	
+	/**
+	 * Realiza la consulta de los reportes de auditoria fiscal para presentar AFIP
+	 * @param  String fechaDesde, String fechaHasta
+	 * @throws FiscalPrinterStatusError
+	 * @throws FiscalPrinterIOException
+	 * 
+	 * @return StringBuilder XML
+	 * 
+	 * dREHER
+	 */
+	public StringBuilder fiscalReportAudit(String fechaDesde, String fechaHasta) throws FiscalPrinterStatusError, FiscalPrinterIOException;
+	
+	/**
 	 * @return Retorna el número del comprobante creado ultimamente por la
 	 * impresora.
 	 */

@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 
 import org.openXpertya.print.fiscal.FiscalPacket;
 import org.openXpertya.print.fiscal.comm.FiscalComm;
+import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
+import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 
 public class HasarPrinterP435F extends HasarFiscalPrinter {
 
@@ -92,5 +94,26 @@ public class HasarPrinterP435F extends HasarFiscalPrinter {
 	public FiscalPacket cmdOpenDrawer(){
 		FiscalPacket cmd = createFiscalPacket(CMD_OPEN_DRAWER);
 		return cmd;
+	}
+	
+	@Override
+	public StringBuilder fiscalReportAudit(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StringBuilder fiscalAudit(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public StringBuilder fiscalAuditComprimido(String fechaDesde, String fechaHasta)
+			throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

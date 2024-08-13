@@ -122,16 +122,21 @@ public class InvoiceGlobalVoiding extends SvrProcess {
             else if( name.equalsIgnoreCase( "C_POSJournalPayment_ID" )) {
             	setPosJournalPaymentID(para[ i ].getParameterAsInt());
             }
+
         }
 	}
 	
 	@Override
 	protected String doIt() throws Exception {
 		// Realizar las inicializaciones de las relaciones de la factura
+		log.info("Inicializo documentos a anular...");
 		initialize();
+		log.info("Termino inicializacion...");
 		
 		// Anular los allocations
+		log.info("Anulo asignaciones...");
 		voidAllocations();	
+		log.info("Termino de anular asignaciones...");
 		
 		// Anular el remito
 		// Se hace antes que la factura ya que para locale_ar, al anular una
@@ -140,24 +145,72 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		// pedido. Por eso es que al anular primero el remito, se actualizan las
 		// cantidades de entrega del pedido y luego se puede proceder a anular
 		// la factura tranquilamente.
+		log.info("Anulo Remito...");
 		voidInOut();
+		log.info("Termino de anular remitos...");
 		
 		// Anular la factura
+		log.info("Anulo factura...");
 		voidInvoice();
+		log.info("Termino de anular factura...");
 		
 		// Anular los débitos anulables asociados
+		log.info("Anulo otros debitos...");
 		voidOtherDebits();
+		log.info("Termino de anular otros debitos...");
 		
 		// Anular el pedido
+		log.info("Anulo pedido...");
 		voidOrder();
+		log.info("Termino de anular pedidos...");
 		
 		// Realización de operaciones luego de anular todas las transacciones
 		// y/o comprobantes
+		log.info("Operaciones luego de todas las anulaciones...");
 		afterVoid();
+		log.info("Termino el resto de las otras operaciones...");
+		
+		generarCAE();
+		
+		imprimirDoc();
 		
 		return getFinalMsg();
 	}
 
+	private void generarCAE() {
+		// Intenta generar CAE/Impresion Fiscal del comprobante Reversion
+		// dREHER
+		log.info("Termino todas las operaciones de anulacion, procesa el documento de reversion CAE/Fiscal...");
+		MInvoice reversal = invoice.getReversalInvoice();
+		try {
+			String result = invoice.doFiscalProcess(reversal, reversal.getNumeroComprobante());
+			if(result==null)
+				result="";
+			
+			// Armo el mensaje para la NC de reversion
+			HTMLList list = createHTMLList(null, Msg.translate(getCtx(),
+					"Nota de Credito Reversion"));
+			getMsg().createAndAddListElement(null, reversal.getDocumentNo(), list);
+			getMsg().createAndAddListElement(null, result, list);
+			getMsg().addList(list);
+
+			log.info("Termino el proceso de reversion CAE/Fiscal...");
+		}catch(Exception ex) {
+			log.warning("Se produjo un error al gestionar CAE/Impresion Fiscal");
+		}
+	}
+	
+	/**
+	 * Por ahora queda en InvoiceGlobalVoid del componente THS
+	 * 
+	 * dREHER
+	 * @throws Exception
+	 */
+	protected void imprimirDoc() throws Exception{
+		
+	}
+	
+	
 	/**
 	 * Inicializa la factura y sus relaciones, pedido, remito y allocations.
 	 * 
@@ -254,11 +307,35 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		// caso que éste deba setearse  
 		invoice.setVoidPOSJournalID(getPosJournalCreditID());
 		invoice.setSkipExtraValidations(true);
+		
+		
+		// dREHER en este proceso NO intenta generar el CAE ni la impresion fiscal del comprobante Revertido...
+		invoice.skipFiscalProcess = true;
+		invoice.setIgnoreCAEGeneration(true);
+		
 		// Anulo la factura
 		if (!DocumentEngine.processAndSave(invoice, MInvoice.DOCACTION_Void, false)) {
 			throw new Exception("@InvoiceVoidError@ # "
 					+ invoice.getDocumentNo() + ": " + invoice.getProcessMsg());
 		}
+		
+		/**
+		 *  Validar que si la factura que se anula es fiscal, tambien lo sea la reversion, 
+		 *  caso contrario abortar todo el proceso de anulacion
+		 *  
+		 *  20230622
+		 *  dREHER
+		 */
+		MInvoice reversal = invoice.getReversalInvoice();
+		if(reversal!=null) {
+			if(invoice.isFiscalInvoice() && !reversal.isFiscalInvoice()) 
+			{
+				throw new Exception("@InvoiceVoidError@ # "
+						+ invoice.getDocumentNo() + ": " + 
+						"Solo se pueden anular comprobantes fiscales entre si. Verificar configuracion de Tipos de Documento.");
+			}
+		}
+		
 		// Agrego los trabajos adicionales de cuenta corriente para después
 		// confirmarlos todos juntos
 		getAditionalWorks().putAll(getInvoice().getAditionalWorkResult());

@@ -78,6 +78,8 @@ public abstract class Document implements Serializable{
 	private Timestamp caeDueDate;
 	/** Importe del cargo que permite determinar el total real del comprobante */
 	private BigDecimal chargeAmt = null;
+	/** Código QR del comprobante */
+	private String QRCode = null;
 	
 	public Document() {
 		super();
@@ -451,5 +453,13 @@ public abstract class Document implements Serializable{
 
 	public void setChargeAmt(BigDecimal chargeAmt) {
 		this.chargeAmt = chargeAmt;
+	}
+	
+	public String getQRCode() {
+		return QRCode;
+	}
+
+	public void setQRCode(String QRCode) {
+		this.QRCode = QRCode;
 	}
 }

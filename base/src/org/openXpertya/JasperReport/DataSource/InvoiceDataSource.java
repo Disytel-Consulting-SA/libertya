@@ -100,8 +100,12 @@ public class InvoiceDataSource implements OXPJasperDataSource  {
 		Object output = null;
 		try
 		{
+			
 			// Invocar al metodo segun el campo correspondiente
 			name = field.getName().toUpperCase();
+			
+			debug("Llama a metodo Class.forName." + name);
+			
 		    clazz = Class.forName("org.openXpertya.model.MInvoiceLine");
 		    method = clazz.getMethod(methodMapper.get(name));
 		    output = (Object) method.invoke(invoiceLine);
@@ -120,6 +124,10 @@ public class InvoiceDataSource implements OXPJasperDataSource  {
 		}
 		return output;
 		
+	}
+
+	private void debug(String string) {
+		System.out.println("==> InvoiceDataSource." + string);
 	}
 
 	public boolean next() throws JRException {

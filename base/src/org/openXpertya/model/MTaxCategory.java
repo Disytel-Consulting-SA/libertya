@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.util.CCache;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
@@ -36,6 +37,33 @@ import org.openXpertya.util.Env;
 
 public class MTaxCategory extends X_C_TaxCategory {
 
+	/** Caché para evitar accesos a la BD */
+	private static CCache s_cache = new CCache( "C_TaxCategory",5 );
+	
+	/**
+	 * Obtener la categoría de impuesto a partir del ID parámetro
+	 * @param ctx
+	 * @param C_Tax_ID
+	 * @param trxName
+	 * @return categoría de impuesto del ID parámetro
+	 */
+	public static MTaxCategory get( Properties ctx,int C_TaxCategory_ID,String trxName ) {
+		Integer key = new Integer(C_TaxCategory_ID);
+		MTaxCategory retValue = (MTaxCategory)s_cache.get(key);
+
+        if( retValue != null ) {
+            return retValue;
+        }
+
+        retValue = new MTaxCategory( ctx,key,trxName );
+
+        if( retValue.getID() != 0 ) {
+            s_cache.put(key,retValue);
+        }
+
+        return retValue;
+    } 
+	
     /**
      * Constructor de la clase ...
      *

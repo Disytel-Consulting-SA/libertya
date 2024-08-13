@@ -1909,9 +1909,50 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','update_u
 
 
 
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.0
+--20230105-1636 agrega columnas para botones de gestion de comprobantes de ventas Reimpresion en Fiscal, Gestionar CAE 
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('C_Invoice','lyeimanageelectronicinvoice','character(1)'));
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('C_Invoice','managefiscalinvoice','character(1)'));
+
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.0
+--20230203-1811 agrega columnas para plan de contingencia CAEA (en configuracion de TPV)
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('C_POS','iscontingencia','character(1)'));
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('C_POS','ptovtacontingencia','numeric(10)'));
+
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.1
+--20230309-1656 agrega columna NO gravado para impuestos
+update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('c_tax','isnogravado','character(1)'));
+
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.7
+--20240115-17:30 Seteo propertie para configurar maxima cantidad de dias de comprobantes de venta en borrador 
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'Dias_ControlFCBorrador', '365');
 
 
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.8
+--20240315-1726 agrega columna para control de miPyme en facturacion
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','ismipyme','character(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','mipymeupdated','timestamp'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','mipymeamount',' numeric(20, 2)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_bpartner','validmipyme','character(1)'));
 
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.8
+--20240319-13:30 Seteo propertie para configurar si debe o no controlar FC MiPyme 
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'Validar_FC_MiPyme', 'Y');
+
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.8
+--2024-05-07 12:00
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_externalservice','validatecrt','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_externalservice','testcrtstatus','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_externalservice','productioncrtstatus','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_externalservice','homota','bytea'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_externalservice','prodta','bytea'));
+
+-- ### MERGE 2024-8-13 org.libertya.core.micro.r3000.dev.facturacion 1.8
+--20240507-18:00 Seteo propertie para configurar dias de vencimiento el control de FC MiPyme 
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'DiasPlazoActMiPyme', '365');
 
 
 
