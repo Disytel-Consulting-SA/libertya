@@ -47,6 +47,28 @@ public interface FiscalPrinterEventListener {
 	public void fiscalCloseEnded(FiscalPrinter source, FiscalMessages msgs);
 	
 	/**
+	 * Es invoicado cuando se finaliza correctamente la auditoria fiscal
+	 * 
+	 * @param source
+	 *            Impresora fiscal que realizó la auditoria fiscal.
+	 * @param msgs
+	 *            Mensajes de estado de la impresora fiscal.
+	 * dREHER
+	 */
+	public void fiscalAuditEnded(FiscalPrinter source, FiscalMessages msgs);
+	
+	/**
+	 * Es invoicado cuando se finaliza correctamente el reporte de la auditoria fiscal
+	 * 
+	 * @param source
+	 *            Impresora fiscal que realizó la auditoria fiscal.
+	 * @param msgs
+	 *            Mensajes de estado de la impresora fiscal.
+	 * dREHER
+	 */
+	public void fiscalReportAuditEnded(FiscalPrinter source, FiscalMessages msgs);
+	
+	/**
 	 * Es invocado cuando se finaliza correctamente el apertura del cajón de
 	 * dinero
 	 * 

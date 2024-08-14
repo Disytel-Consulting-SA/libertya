@@ -14,6 +14,7 @@ import java.util.concurrent.Semaphore;
 
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 
 import org.compiere.swing.CButton;
@@ -27,13 +28,18 @@ import org.openXpertya.apps.SwingWorker;
 import org.openXpertya.apps.form.FormFrame;
 import org.openXpertya.apps.form.FormPanel;
 import org.openXpertya.apps.form.VComponentsFactory;
+import org.openXpertya.grid.ed.VCheckBox;
+import org.openXpertya.grid.ed.VDate;
 import org.openXpertya.grid.ed.VLookup;
 import org.openXpertya.images.ImageFactory;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MReference;
+import org.openXpertya.print.fiscal.action.FiscalAuditAction;
 import org.openXpertya.print.fiscal.action.FiscalCloseAction;
 import org.openXpertya.print.fiscal.action.FiscalPrinterAction;
+import org.openXpertya.print.fiscal.action.FiscalReportAuditAction;
+import org.openXpertya.print.fiscal.action.FiscalStatusAction;
 import org.openXpertya.print.fiscal.action.OpenDrawerAction;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.DisplayType;
@@ -48,6 +54,8 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 
 	// Constantes
 	
+	private static final long serialVersionUID = 1L;
+
 	private final AInfoFiscalPrinter infoFiscalPrinter = 
 		new AInfoFiscalPrinter(
 				null,
@@ -101,6 +109,11 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	private String FISCAL_CLOSE_TYPES_REF_NAME;
 	private String MSG_OPEN_DRAWER;
 	private String MSG_OPEN;
+
+	// dREHER
+	private String MSG_AUDITORIA;
+	private String MSG_REPORTE_AUDITORIA;
+	private String MSG_STATUS;
 	
 	// *********************************
 	// 	   Panel principal
@@ -161,6 +174,18 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 	
 	private CLabel lblOpenDrawerControllers;
 	
+	/** Botón para obtener info auditoria fiscal 
+	 * dREHER
+	 */
+	private CButton btnConsultarAuditoria;
+	private VDate desde;
+	private VDate hasta;
+	private CButton btnConsultarReporteAuditoria;
+	private VCheckBox chkCompleto;
+	
+	// dREHER actualiza el estado de la impresora segun el controlador fiscal
+	private CButton btnActualizarStatus;
+	
 	// *********************************
 	// 	     Panel inferior
 	// *********************************
@@ -220,6 +245,8 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		infoFiscalPrinter.setFiscalDocumentPrint(getiFiscalPrinter());
 		infoFiscalPrinter.setCloseOnFiscalClose(true);
 		infoFiscalPrinter.setCloseOnOpenDrawer(true);
+		infoFiscalPrinter.setCloseOnFiscalAudit(true);
+		infoFiscalPrinter.setCloseOnFiscalReportAudit(true);
 	}
 	
 	/**
@@ -238,6 +265,11 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		MSG_OPEN = getMsg("Open");
 		// Nombres
 		FISCAL_CLOSE_TYPES_REF_NAME = "Fiscal_Close_Types";
+		
+		/** dREHER */
+		MSG_AUDITORIA = getMsg("Auditoria");
+		MSG_REPORTE_AUDITORIA = getMsg("Reporte Auditoria");
+		MSG_STATUS = getMsg("Estado");
 	}
 		
 	private void jbInit(){
@@ -280,6 +312,26 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		fiscalClosePanel.add(lblFiscalControllers, new GridBagConstraints(0, 1, 1, 1, 1, 1, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(5, 0, 5, 10), 0, 0));
 		fiscalClosePanel.add(getComboFiscalControllers(), new GridBagConstraints(1, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(5, 0, 5, 0), 0, 0));
 		fiscalClosePanel.add(getBtnFiscalClose(), new GridBagConstraints(0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(15, 0, 5, 0), 0, 0));
+
+		fiscalClosePanel.add(new CLabel("Informacion de Auditoria:"), new GridBagConstraints(0, 3, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(10, 0, 5, 0), 0, 0));
+		fiscalClosePanel.add(getDateDesde(), new GridBagConstraints(0, 4, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(10, 0, 5, 0), 0, 0));
+		fiscalClosePanel.add(getDateHasta(), new GridBagConstraints(1, 4, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(10, 0, 5, 0), 0, 0));
+		
+		fiscalClosePanel.add(getBtnConsultarAuditoria(), new GridBagConstraints(0, 5, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(10, 0, 5, 0), 0, 0));
+		fiscalClosePanel.add(getBtnStatusFiscal(),       new GridBagConstraints(1, 5, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(10, 0, 5, 0), 0, 0));
+		
+/**
+		
+		Esta informacion por ahora es leida con el utilitario getaudar.exe que distribuye Hasar
+		
+		dREHER
+		
+		TODO: terminar de probar el bajado de la informacion desde la Hasar y recien volver a habilitar esta funcionalidad!
+		
+		fiscalClosePanel.add(getRepFiscalCompleto(), new GridBagConstraints(0, 6, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(10, 0, 5, 0), 0, 0));
+		fiscalClosePanel.add(getBtnConsultarReporteAuditoria(), new GridBagConstraints(0, 7, 2, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.SOUTH, new Insets(15, 0, 5, 0), 0, 0));
+*/
+		
 	}
 	
 	/**
@@ -410,6 +462,108 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		return btnCloseForm;
 	}
 	
+	// dREHER
+	private VDate getDateDesde() {
+		if(desde == null) {
+			desde = new VDate();
+			desde.setValue(Env.getDate());
+		}
+		return desde;
+	}
+	
+	// dREHER
+	private VDate getDateHasta() {
+		if(hasta == null) {
+			hasta = new VDate();
+			hasta.setValue(Env.getDate());
+		}
+		return hasta;
+	}
+	
+	// dREHER
+	private VCheckBox getRepFiscalCompleto() {
+		if(chkCompleto==null) {
+			chkCompleto = new VCheckBox();
+			chkCompleto.setLabel("Completo:");
+		}
+		return chkCompleto;
+	}
+	
+	
+	/**
+	 * Retornar o crear el botón que dispara la consulta de auditoria fiscal
+	 * @return
+	 * dREHER
+	 */
+	private CButton getBtnConsultarAuditoria(){
+		if(btnConsultarAuditoria == null){
+			btnConsultarAuditoria = new CButton(MSG_AUDITORIA,ImageFactory.getImageIcon("Process24.gif"));
+			btnConsultarAuditoria.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					setActualAction(new FiscalAuditAction(getiFiscalPrinter(), 
+							null, // trxName
+							desde.getTimestamp(), // fechaDesde
+							hasta.getTimestamp(), // fechaHasta
+							(Integer)getComboFiscalControllers().getValue()));
+					executeAction(true);
+				}
+			});
+		}
+		return btnConsultarAuditoria;
+	}
+	
+	/**
+	 * Retornar o crear el botón que dispara la consulta del estado del controlador fiscal
+	 * @return
+	 * dREHER
+	 */
+	private CButton getBtnStatusFiscal(){
+		if(btnActualizarStatus == null){
+			btnActualizarStatus = new CButton(MSG_STATUS,ImageFactory.getImageIcon("Process24.gif"));
+			btnActualizarStatus.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					setActualAction(new FiscalStatusAction(getiFiscalPrinter(), 
+							null, // trxName
+							(Integer)getComboFiscalControllers().getValue()));
+					executeAction(true);
+				}
+			});
+		}
+		return btnActualizarStatus;
+	}
+	
+	/**
+	 * Retornar o crear el botón que dispara la consulta de reporte de auditoria fiscal
+	 * @return
+	 * dREHER
+	 */
+	private CButton getBtnConsultarReporteAuditoria(){
+		if(btnConsultarReporteAuditoria == null){
+			btnConsultarReporteAuditoria = new CButton(MSG_REPORTE_AUDITORIA,ImageFactory.getImageIcon("Process24.gif"));
+			btnConsultarReporteAuditoria.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					
+					setActualAction(new FiscalReportAuditAction(getiFiscalPrinter(), 
+							null, // trxName
+							desde.getTimestamp(), // fechaDesde
+							hasta.getTimestamp(), // fechaHasta
+							(Boolean) getRepFiscalCompleto().getValue(),
+							(Integer)getComboFiscalControllers().getValue()));
+					
+					executeAction(true);
+				}
+				
+			});
+		}
+		return btnConsultarReporteAuditoria;
+	}
+	
 	/**
 	 * Agregar las áreas del panel de control al panel principal
 	 */
@@ -419,14 +573,19 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 		mainPanel.add(bottomPanel,BorderLayout.SOUTH);
 	}
 	
+	// dREHER
+	private void executeAction() {
+		executeAction(false);
+	}
 	
 	// Funciones del panel de control
 	
-	private void executeAction(){
+	private void executeAction(final boolean closeInfoPrinter){
 		SwingWorker worker = new SwingWorker() {
 
 			private String errorMsg = null;
 			private String errorDesc = null;
+			private String actionMsg = null;
 			
 			@Override
 			public Object construct() {
@@ -452,11 +611,19 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 				}
 				setShowInfoFiscalPrinter(authorized);
 				getBarrerSem().release();
+				
+				System.out.println(getActualAction().getErrorMsg());
+				
 				// Ejeución de acción
 				if(authorized && !getActualAction().execute()){
 					errorMsg = getActualAction().getErrorMsg();
 					errorDesc = getActualAction().getErrorDesc();
-				}
+				}else
+					if(getActualAction().getErrorMsg()!=null) {
+						actionMsg = getActualAction().getErrorMsg();
+						System.out.println("Action Msg:" + actionMsg);
+					}
+				
 				return errorMsg == null;
 			}
 
@@ -469,10 +636,24 @@ public class FiscalPrinterControlPanel extends CPanel implements FormPanel{
 					else
 						errorMsg(errorMsg, errorDesc);
 				}
+				
+				if(closeInfoPrinter) {
+					
+					System.out.println("Tengo que mostrar boton Ok, muestro resultado de la action:" + actionMsg);
+					
+					if(actionMsg!=null)
+						infoFiscalPrinter.setInfoMessage("Auditoria Fiscal", actionMsg);
+					// errorMsg(actionMsg);
+					infoFiscalPrinter.setOkButtonActive(true);
+					infoFiscalPrinter.getOkButton().setVisible(true);
+					
+				}
+				
 				setActualAuthOperation(null);
 				userAuthPanel.clear();
 				getFrame().setBusy(false);
 				mNormal();
+				
 			}
 		};
 

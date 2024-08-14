@@ -368,6 +368,64 @@ public class FiscalDocumentPrint {
 		return !error;
 	}
 
+	/**
+	 * Setea el estado de la impresora y devuelve el mismo
+	 * @return <code>status</code> 
+	 * 
+	 * dREHER - 
+	 * @throws Exception 
+	 */
+	public String getAndSaveStatus(MControladorFiscal fiscal) throws Exception {
+		
+		String status = MControladorFiscal.STATUS_IDLE;
+		
+		// Se obtiene el controlador fiscal para chequear el status
+		cFiscal = fiscal;
+		log("Controlador Fiscal: " + cFiscal);
+		
+		// Se obtiene la impresora fiscal con la que se debe imprimir
+		// el documento segun su tipo de documento.
+		FiscalPrinter fiscalPrinter = cFiscal.getFiscalPrinter();
+		setFiscalPrinter(fiscalPrinter);
+		log("Se carga la impresora a utilizar. " + fiscalPrinter);
+		
+		// Chequeo el estado de la impresora
+		if(!checkPrinterStatus(cFiscal)) {
+			status = MControladorFiscal.STATUS_ERROR;
+		}
+					
+		// Se informa al manejador que se esta intentando conectar con
+		// la impresora fiscal.
+		fireActionStarted(FiscalDocumentPrintListener.AC_CONNECT_PRINTER);
+		fiscalPrinter.setEventListener(getPrinterEventListener());
+		log("Se informa al manejador que se esta intentando conectar con la impresora fiscal");
+					
+		// Se intenta conectar la impresora.
+		try {
+			getFiscalPrinter().connect();
+			log("Se conecto con la impresora fiscal");
+		}catch(Exception ex) {
+			status = MControladorFiscal.STATUS_ERROR;
+		}
+		
+		// Se libera la impresora fiscal.
+		setFiscalPrinterStatus(cFiscal, status);
+				
+		// Se efectiviza la transacción solo si no ocurrió un error.
+		if (getTrx() != null && isCreateTrx()) {
+			getTrx().commit();
+			getTrx().close();
+		}
+				
+		try {
+			closeFiscalPrinter();
+		}catch(Exception ex) {
+			status = MControladorFiscal.STATUS_ERROR;
+		}
+		
+		log("Resultado de la accion. Status fiscal printer: " + status);
+		return status;
+	}
 	
 	/**
 	 * Ejecuto la acción correspondiente a partir de la acción parámetro

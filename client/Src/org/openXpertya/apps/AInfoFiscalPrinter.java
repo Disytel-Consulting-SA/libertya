@@ -70,6 +70,9 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	private static final String ACTION_VOID = ConfirmPanel.A_REFRESH;
 	private static final String ACTION_EXPAND_INFO = ConfirmPanel.A_ZOOM;
 	
+	// dREHER posibilidad de continuar sin acciones
+	private static final String ACTION_CONTINUE = ConfirmPanel.A_HISTORY;
+	
     protected APanel parent;
 	protected ConfirmPanel confirmPanel;
     private CLabel iconLabel = new CLabel();
@@ -100,6 +103,10 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
     private boolean closeOnFiscalClose = false;
     
     private boolean closeOnOpenDrawer = false;
+    
+    // dREHER
+    private boolean closeOnFiscalAudit = false;
+    private boolean closeOnFiscalReportAudit = false;
     
     /**
 	 * Tirar Excepción al cancelar la impresión en el momento de chequeo de
@@ -250,6 +257,12 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
         getVoidButton().setVisible(false);
         getVoidButton().setText(Msg.getMsg(Env.getCtx(), "VoidInvoice"));
         getVoidButton().setIcon(Env.getImageIcon("Delete24.gif"));
+        
+        // dREHER
+        // History --> Continuar sin accion
+        getHistoryButton().setVisible(false);
+        getHistoryButton().setText(Msg.getMsg(Env.getCtx(), "Continue"));
+        getHistoryButton().setIcon(Env.getImageIcon("Edit24.gif"));
         
         // Zoom --> Expandir/Contraer detalle de info
         getExpandInfoButton().setVisible(true);
@@ -416,6 +429,11 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	        	fireVoidAction();
 	            dispose();
 			}
+        } else if ( e.getActionCommand().equals(ACTION_CONTINUE))	{
+        	
+        	// dREHER, lo utilizo para cerrar ventana y continuar normalmente...
+        	dispose();
+        	firePrintOKAction();
         } else if( e.getActionCommand().equals(ACTION_EXPAND_INFO))  {
         	infoDetail.setVisible(!infoDetail.isVisible());
         	pack();
@@ -529,6 +547,42 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 			}
 		};
 		invoke(doOpenDrawerEnded, false);
+	}
+	
+	// dREHER
+	@Override
+	public void fiscalAuditEnded(FiscalPrinter source, FiscalMessages msgs) {
+		Runnable doFiscalAuditEnded = new Runnable() {
+			public void run() {
+				addInfoMessage("ActionEndedOk");
+				if(closeOnFiscalAudit){
+					dispose();
+				}
+				else{
+					confirmPanel.getOKButton().setEnabled(true);
+					confirmPanel.getOKButton().setVisible(true);
+				}
+			}
+		};
+		invoke(doFiscalAuditEnded, false);
+	}
+
+	// dREHER
+	@Override
+	public void fiscalReportAuditEnded(FiscalPrinter source, FiscalMessages msgs) {
+		Runnable doFiscalAuditEnded = new Runnable() {
+			public void run() {
+				addInfoMessage("ActionEndedOk");
+				if(closeOnFiscalReportAudit){
+					dispose();
+				}
+				else{
+					confirmPanel.getOKButton().setEnabled(true);
+					confirmPanel.getOKButton().setVisible(true);
+				}
+			}
+		};
+		invoke(doFiscalAuditEnded, false);
 	}
 
 	public void statusChanged(FiscalPrinter source, final FiscalPacket command, FiscalPacket response, final FiscalMessages msgs) {
@@ -793,9 +847,14 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		return confirmPanel.getCancelButton();
 	}
 	
+	public JButton getHistoryButton() {
+		return confirmPanel.getHistoryButton();
+	}
+	
 	private boolean reprintButtonActive = false;
 	private boolean voidButtonActive = false;
 	private boolean okButtonActive = true;
+	private boolean historyButtonActive = true;
 
 	/**
 	 * @param reprintButtonActive el valor de reprintButtonActive a asignar
@@ -860,6 +919,24 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	public boolean isCloseOnFiscalClose() {
 		return closeOnFiscalClose;
 	}
+	
+	// dREHER
+	public void setCloseOnFiscalAudit(boolean closeOnFiscalAudit) {
+		this.closeOnFiscalAudit = closeOnFiscalAudit;
+	}
+
+	public boolean isCloseOnFiscalAudit() {
+		return closeOnFiscalAudit;
+	}
+
+	public void setCloseOnFiscalReportAudit(boolean closeOnFiscalAudit) {
+		this.closeOnFiscalAudit = closeOnFiscalAudit;
+	}
+
+	public boolean isCloseOnFiscalReportAudit() {
+		return closeOnFiscalAudit;
+	}
+	// ---------------------------------------------------------------
 
 	public boolean isThrowExceptionInCancelCheckStatus() {
 		return throwExceptionInCancelCheckStatus;
@@ -899,6 +976,13 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		 * Acción que indica que finalizó correctamente la impresión
 		 */
 		public void actionPrintFinishOK();
+		
+		/**
+		 * Acción que indica que se pulso boton Continuar...
+		 * 
+		 * dREHER
+		 */
+		public void actionContinue();
 	}
 
 	@Override
