@@ -137,4 +137,35 @@ public class MEntidadFinancieraPlan extends X_M_EntidadFinancieraPlan {
 	public String toString(){
 		return getName();
 	}
+	
+// dREHER Compatibilidad con TPV - Posnet/Clover
+// ------------------------------------------------------------	
+	/** Set CuotasPosnet */
+	public void setCuotasPosnet (int CuotasPosnet)
+	{
+	set_Value ("CuotasPosnet", new Integer(CuotasPosnet));
+	}
+	/** Get CuotasPosnet */
+	public int getCuotasPosnet() 
+	{
+	Integer ii = (Integer)get_Value("CuotasPosnet");
+	if (ii == null) return 0;
+	return ii.intValue();
+	}
+	/** Set UserMsg */
+	public void setUserMsg (String UserMsg)
+	{
+	if (UserMsg != null && UserMsg.length() > 256)
+	{
+	log.warning("Length > 256 - truncated");
+	UserMsg = UserMsg.substring(0,256);
+	}
+	set_Value ("UserMsg", UserMsg);
+	}
+	/** Get UserMsg */
+	public String getUserMsg() 
+	{
+	return (String)get_Value("UserMsg");
+	}
+// -----------------------------------------------------------------------	
 }

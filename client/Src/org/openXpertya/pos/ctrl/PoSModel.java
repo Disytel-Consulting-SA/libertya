@@ -48,6 +48,7 @@ import org.openXpertya.process.ElectronicEventListener;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.AUserAuthModel;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
@@ -85,6 +86,22 @@ public class PoSModel {
 	
 	/** Descuento base para el pago actual */
 	private BigDecimal currentPaymentDiscountBaseAmount = BigDecimal.ZERO;
+	
+	// ------------------------------------
+	// 				HTS 1.0
+	// ------------------------------------
+	// Variables de instancia para la gestión del FUTURAS COMPRAS
+	// 	------------------------------------
+
+	/** ID del artículo Futuras Compras */
+	private Integer futurasComprasProductID = null;
+
+	/** FUTURAS COMPRAS actuales */
+	private Map<String, OrderProduct> currentFuturas = null;
+
+	/** Relación entre el FUTURAS COMPRAS y el cobro */
+	private Map<Payment, OrderProduct> futurasPaymentsRelation = null;
+
 
 	public PoSModel() {
 		super();
@@ -93,14 +110,24 @@ public class PoSModel {
 		newOrder();
 		getMaxOrderLineQty();
 		isCopyRep=true;
+		
+		// ------------------------------------
+		// 				HTS 1.0
+		// ------------------------------------
+		// Variables de instancia para la gestión del FUTURAS COMPRAS
+		// 	------------------------------------
+		setCurrentFuturas(new HashMap<String, OrderProduct>());
+		setFuturasPaymentsRelation(new HashMap<Payment, OrderProduct>());
+		initFuturasProductID();
+		// 	------------------------------------
 	}
 
 	public void setAuthorizationModel(AUserAuthModel authModel){
 		getConnectionState().setAuthorizationModel(authModel);
 	}
 	
-	public void completeOrder() throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
-		getConnectionState().completeOrder(getOrder(), getAddedCustomerOrders().keySet());
+	public CallResult  completeOrder() throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
+		return getConnectionState().completeOrder(getOrder(), getAddedCustomerOrders().keySet());
 	}
 
 	public void setIntoOfflineMode() {
@@ -208,6 +235,11 @@ public class PoSModel {
 					product.getId(), count, product.getAttributeSetInstanceID());
 		
 		return valid;
+	}
+	
+	// dREHER
+	public void validateBPartner() throws PosException{
+		getConnectionState().validateBPartner(getOrder());
 	}
 	
 	public String validateSearchToday(){		
@@ -952,6 +984,189 @@ public class PoSModel {
 		return false;
 	}
 	
+	// ------------------------------------
+	// 				HTS 1.0
+	// ------------------------------------
+	// Gestión del FUTURAS COMPRAS
+	// 	------------------------------------
+	
+	public Map<String, OrderProduct> getCurrentFuturas(){
+		return currentFuturas;
+	}
+	
+	public OrderProduct getCurrentFuturas(String tenderType) {
+		if(Util.isEmpty(tenderType, true)){
+			return null;
+		}
+		return getCurrentFuturas().get(tenderType);
+	}
+
+	public void setCurrentFuturas(Map<String, OrderProduct> currentFuturas) {
+		this.currentFuturas = currentFuturas;
+		getOrder().updateDiscounts();
+	}
+	
+	public void addCurrentFuturas(String tenderType, OrderProduct currentFuturas) {
+		getCurrentFuturas().put(tenderType, currentFuturas);
+		getOrder().updateDiscounts();
+	}
+	
+	public void initFuturasProductID(){
+		setFuturasComprasProductID(DB
+				.getSQLValue(null,
+						"SELECT m_product_id FROM M_Product WHERE value = 'FUTURA' LIMIT 1"));
+	}
+	
+	public void updateFuturasCompras(String tenderType, BigDecimal amt){
+		OrderProduct currentFuturas = getCurrentFuturas(tenderType);
+		if(currentFuturas == null){
+			return;
+		}
+		BigDecimal futurasRealAmt = getFuturasRealAmount(tenderType, amt);
+		BigDecimal newAmt = currentFuturas.decomposePrice(futurasRealAmt);
+//		currentFuturas.setCount(newAmt.divide(currentFuturas.getTaxedPrice(),
+//				2, BigDecimal.ROUND_HALF_DOWN));
+		currentFuturas.setCount(getOrder().scaleAmount(newAmt));
+//		futurasComprasProduct.setStdPrice(futurasComprasLine.getPrice());
+//		futurasComprasLine.calculatePrice(futurasComprasLine.getDiscount());
+		
+	}
+	
+	public void removeFuturasCompras(String tenderType){
+		getCurrentFuturas().remove(tenderType);
+	}
+	
+	public void removeOrderProduct(OrderProduct orderProduct){
+		if(getCurrentFuturas().containsValue(orderProduct)){
+			String tt = null;
+			for (String tenderType : getCurrentFuturas().keySet()) {
+				if (getCurrentFuturas(tenderType) != null
+						&& getCurrentFuturas(tenderType).equals(orderProduct)) {
+					tt = tenderType;
+				}
+			}
+			getCurrentFuturas().remove(tt);
+		}
+	}
+	
+	/**
+	 * Calcula el monto final de Futuras compras INCLUYENDO descuentos
+	 * 
+	 * @param tenderType
+	 * @param amt
+	 * @return
+	 * dREHER
+	 */
+	public BigDecimal getFuturasRealAmount(String tenderType, BigDecimal amt) {
+		final int SCALE           = 10; 
+		
+		if(amt == null){
+			return BigDecimal.ZERO;
+		}
+		
+		// Previene la división por cero en el cálculo. (solo se puede dar para
+		// recálculos de descuentos de líneas).
+		if (amt.compareTo(BigDecimal.ZERO) <= 0) {
+			return BigDecimal.ZERO;
+		}
+		
+		
+		
+		// dREHER
+		/**
+		 * 
+		 * IMPORTANTE!!! a futuras compras NO aplicarle descuentos para no tener que andar
+		 * buscando el valor justo que compense los futuras compra contra los saldos abiertos...
+		
+		 
+		debug("getFuturasRealAmount. NO calcular descuentos en el producto futuras compras... Amt=" + amt);
+		if(true)
+			return amt;
+			
+			NO FUNCIONA CUANDO SE TRATA DE NOTAS DE CREDITOS CON DESCUENTOS GLOBALES, SE QUITA POR AHORA...
+		
+		*/ 
+	
+		// Efectúa el cálculo de la fórmula
+		BigDecimal discount       = BigDecimal.ZERO;     // D
+		BigDecimal rate           = BigDecimal.ZERO;     // T
+		BigDecimal ratesSum       = BigDecimal.ZERO;
+		BigDecimal futurasRealAmt = null;                // RP
+		BigDecimal constantAmt    = new BigDecimal(100); // C. Utilizado para calcular T
+		
+		// Determina el monto real en aplicación al descuento manual general
+		if(getOrder().getDiscountCalculator().getManualGeneralDiscount() != null 
+				&& getOrder().isManualDiscountApplicable(getCurrentFuturas(tenderType))){
+			ratesSum = getOrder().getDiscountCalculator().getManualGeneralDiscountSchema().getFlatDiscount()
+					.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_DOWN);
+			;
+		}
+		
+		// Determina el monto real en aplicación al descuento de BP
+		if(getOrder().getDiscountCalculator().getBPartnerDiscount() != null 
+				&& getOrder().isBPartnerDiscountApplicable()){
+			discount = getOrder().getDiscountCalculator().calculateDiscount(
+					getOrder().getDiscountCalculator().getBPartnerDiscountSchema(),
+					constantAmt);
+			rate = discount.divide(constantAmt, SCALE, BigDecimal.ROUND_HALF_DOWN);
+			ratesSum = ratesSum.add(rate); 
+		}
+		
+		// Calcula el importe real del futuras
+		futurasRealAmt = amt.divide(BigDecimal.ONE.subtract(ratesSum), SCALE,
+				BigDecimal.ROUND_HALF_DOWN);
+		
+		BigDecimal otherTaxesRatio = getOrder().getOtherTaxesRatio();
+		futurasRealAmt = futurasRealAmt.multiply(otherTaxesRatio);
+		
+		return futurasRealAmt;
+	}
+
+	// dREHER salida por consola
+	private void debug(String string) {
+		System.out.println("==> PoSModel." + string);
+	}
+
+	public void addFuturasPaymentRelation(Payment pay, OrderProduct futurasCompras){
+		if(futurasCompras == null && getCurrentFuturas(pay.getTenderType()) != null){
+			futurasCompras = getCurrentFuturas(pay.getTenderType());
+		}
+		
+		if(futurasCompras != null){
+			getFuturasPaymentsRelation().put(pay, futurasCompras);
+		}		
+	}
+	
+	public void removeFuturasPaymentRelation(Payment pay){
+		getFuturasPaymentsRelation().remove(pay);
+	}
+	
+	public boolean existsFuturasPaymentRelation(Payment pay){
+		return getFuturasPaymentsRelation().containsKey(pay);
+	}
+	
+	public OrderProduct getFuturasComprasRelationValue(Payment pay){
+		return getFuturasPaymentsRelation().get(pay);
+	}
+	
+	public Integer getFuturasComprasProductID() {
+		return futurasComprasProductID;
+	}
+
+	public void setFuturasComprasProductID(Integer futurasComprasProductID) {
+		this.futurasComprasProductID = futurasComprasProductID;
+	}
+
+	public Map<Payment, OrderProduct> getFuturasPaymentsRelation() {
+		return futurasPaymentsRelation;
+	}
+
+	public void setFuturasPaymentsRelation(Map<Payment, OrderProduct> futurasPaymentsRelation) {
+		this.futurasPaymentsRelation = futurasPaymentsRelation;
+	}
+
+	// -------------------------------------
+	
 	/**
 	 * Regeneración del CAE
 	 * @return true si fue exitoso, false caso contrario
@@ -962,5 +1177,36 @@ public class PoSModel {
 	
 	public void setElectronicListener(ElectronicEventListener evl) {
 		getConnectionState().setElectronicEventListener(evl);
+	}
+	
+	/**
+	 * Permite imprimir un ticket
+	 * 
+	 * dREHER
+	 * @throws PosException
+	 */
+	public void imprimirTicket() throws PosException {
+		getConnectionState().doImprimirTicket(getOrder());
+	}
+	
+	/**
+	 * Permite imprimir un ticket
+	 * 
+	 * dREHER
+	 * @throws PosException
+	 */
+	public boolean doFiscalPrint() throws PosException {
+		getConnectionState().doFiscalPrint();
+		return true;
+	}
+
+	/**
+	 * Controla info del cliente en relacion a los medios de pago utilizados
+	 * @param order2
+	 * @throws PosException
+	 * dREHER
+	 */
+	public void validatePayments(Order order2) throws PosException {
+		getConnectionState().validatePayments(order2);
 	}
 }

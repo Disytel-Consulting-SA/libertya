@@ -1029,4 +1029,11 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 	public void setVoidDocumentsConfirmationMsg(String voidDocumentsConfirmationMsg) {
 		this.voidDocumentsConfirmationMsg = voidDocumentsConfirmationMsg;
 	}
+	
+	/**
+	 * @param historyButtonActive el valor de historyButtonActive a asignar
+	 */
+	public void setHistoryButtonActive(boolean historyButtonActive) {
+		this.historyButtonActive = historyButtonActive;
+	}
 }

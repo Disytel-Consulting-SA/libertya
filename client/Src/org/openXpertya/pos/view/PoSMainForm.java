@@ -159,7 +159,7 @@ import org.openXpertya.utils.LYCloseWindowAdapter;
 
 import com.clover.remote.client.ICloverConnector;
 import com.clover.utils.Utilidades;
-import com.hipertehuelche.sucursales.model.LP_M_EntidadFinancieraPlan;
+// import com.hipertehuelche.sucursales.model.LP_M_EntidadFinancieraPlan;
 
 public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disposable, AuthContainer {
 
@@ -604,7 +604,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 */
 	public PoSMainForm() {
 		super();
-		this.model = getPoSModel();
+		debug("PosMainForm. org.libertya.core.micro.r3000.dev.trxclover...");
+		this.model = new PoSModel();
 		this.model.setProcessListener(this);
 		this.msgRepository = PoSMsgRepository.getInstance();
 		setAuthDialog(new AuthorizationDialog(this));
@@ -716,6 +717,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			poSConfig = posConfigs.get(0);
 			log.finer("Configuracion de TPV: " + poSConfig);
 		}
+		
 		getModel().setPoSConfig(poSConfig);
 		
 		try {
@@ -809,10 +811,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		String documentNo = getModel().getNextInvoiceDocumentNo(); 
 		if(!Util.isEmpty(documentNo, true)){
 			// Siguiente nro de factura
-			status.append(MSG_NEXT_INVOICE_DOCUMENTNO+" : "+documentNo);
-			// Separador
-			status.append(STATUS_DB_SEPARATOR);
+			status.append(MSG_NEXT_INVOICE_DOCUMENTNO + " : " + documentNo);
+
+		} else {
+			// Error de definicion proximo numero
+			status.append("ERROR: No se encontro proximo numero de comprobante!");
 		}
+		// Separador
+		status.append(STATUS_DB_SEPARATOR);
 		// Tarifa
 		status.append(MSG_PRICE_LIST+" : "+getModel().getPriceList().getName());
 		// Tasa de Conversión Dólar
@@ -991,9 +997,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		MSG_TAX = getMsg("Tax");
 		MSG_PROMOTIONS = getMsg("Promotions");
 		MSG_CREDIT_CARD_REPEATED = getMsg("POSCreditCardPaymentRepeated");
+		// ************************************************
+		// HTS 4.0
+		// ************************************************
+		MSG_CANCEL_ORDER_SUBMSG = getMsg("HTS_POSCancelOrderSubMsg");
+		// ************************************************
 		MSG_CAE_GENERATED = getMsg("DocumentNoPrintedCAEGeneratedAskMsg");
 		MSG_CAE_GENERATED_VOID = getMsg("DocumentVoidCAEGeneratedAskMsg");
-		
+		MSG_CARDHOLDER = getMsg("Cardholder");
+
 		// Estos mensajes no se asignan a variables de instancias dado que son mensajes
 		// devueltos por el modelo del TPV, pero se realiza la invocación a getMsg(...) para
 		// obtenerlos desde la BD y que queden cacheados en el Repositorio de mensajes.
@@ -1044,16 +1056,23 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				MSG_DISCOUNT_GENERAL, UserAuthConstants.POS_FINISH_MOMENT));
 		getManualDiscountAuthOperation().setLazyAuthorization(true);
 		getManualDiscountAuthOperation().setAuthTime(null);
-		getFrame().setTitle(
-				getFrame().getTitle() + "- "
-						+ getModel().getPoSConfig().getName());
+
+		refreshTitle(false);
+		debug("Inicializo el formulario POS...");
 	}
-	
-	protected void keyBindingsInit() {
-		// Deshabilito el F10 que algunos look and feel y 
-		// técnicas de focos asignan al primer componente menú de la barra de menú 
-		getFrame().getJMenuBar().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F10,0), "none");
+
+	private void refreshTitle(boolean clear) {
+		getFrame().setTitle((clear?"TPV - ":getFrame().getTitle() + "- ") + getModel().getPoSConfig().getName()
+				+ (getModel().getPoSConfig().isContingencia() ? " (Modo Contingencia)" : "")
+				+ (isOnLineMode() ? " (Clover Online)" : " (Clover Offline)")); // dREHER
+		debug("Ajusto titulo del formulario! - Limpia titulo previo:" + clear);
+	}
+
+	private void keyBindingsInit() {
+		// Deshabilito el F10 que algunos look and feel y
+		// t��cnicas de focos asignan al primer componente men�� de la barra de men��
+		getFrame().getJMenuBar().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+				.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F10, 0), "none");
 		// Se asignan las teclas shorcut de las acciones.
 		setActionKeys(new HashMap<String,KeyStroke>());
 		getActionKeys().put(UPDATE_ORDER_PRODUCT_ACTION, KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0));
@@ -1076,6 +1095,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getActionKeys().put(GOTO_INSERT_CARD, KeyStroke.getKeyStroke(KeyEvent.VK_F6, 0));
 		getActionKeys().put(INSERT_PROMOTIONAL_CODE, KeyStroke.getKeyStroke(KeyEvent.VK_F4, 0));
 		
+		// dREHER con Control+O alterna modo online/offline clover
+		// LO activo siempre pero si no se puede hacer por defecto, pide autorizacion!
+		if(isAlterClover || 1==1) 
+			getActionKeys().put(ALTER_ONOFFLINE_MODE, KeyStroke.getKeyStroke("ctrl O"));
+		
+		// dREHER con Control+Y alterna modo on/off contingencia
+		getActionKeys().put(ALTER_CONTINGENCY_MODE, KeyStroke.getKeyStroke("ctrl Y"));
+
 		// Accion: Abrir el dialogo para modificar el producto del pedido.
         getActionMap().put(UPDATE_ORDER_PRODUCT_ACTION,
         	new AbstractAction() {
@@ -1085,16 +1112,59 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
         	}
         );
 
-		// Accion: completar el pago de la orden.
-        getActionMap().put(PAY_ORDER_ACTION,
-        	new AbstractAction() {
-        		public void actionPerformed(ActionEvent e) {
-					if(getCFinishPayButton().isEnabled() && !isProcessing()){
-						updateProcessing(true);
-						completeOrder();
-					}
-				}
+        // Accion: completar el pago de la orden.
+        getActionMap().put(PAY_ORDER_ACTION, 
+        		new AbstractAction() {
+
+        	public void actionPerformed(ActionEvent e) {
+        		if (getCFinishPayButton().isEnabled() && !isProcessing()) {
+        			updateProcessing(true);
+
+        			// dREHER si NO esta en modo TrxClover Online hago las validaciones habituales
+        			// caso contrario debo esperar al final para validar contra Clover
+
+        			debug("Estoy en modo clover online? " + isOnLineMode());
+        			boolean isOk = true;
+        			if(isOnLineMode()) {
+
+        				// dREHER Valido importes, etc para adelantarme a los errores
+        				// del tipo Debe completar datos del cliente...
+        				try {
+        					getModel().validatePayments(getOrder());
+        				} catch (PosException ex) {
+        					ex.printStackTrace();
+        					errorMsg(ex.getMessage());
+
+        					debug("Verificar si debo anular pagos Clover...");
+        					CobrosClover(true);
+
+        					updateProcessing(false);
+        					return;
+        				}
+
+        				debug("Total orden: " + getCOrderTotalAmt().getValue());
+
+        				/**
+        				 * Recorrer los medios de Pago y sobre aquellos que son del tipo tarjeta
+        				 * ir llamando a Clover
+        				 * dREHER
+        				 */
+
+
+        				if(isOnLineMode())
+        					isOk = CobrosClover(false);
+
+        			}
+
+        			if(isOk)
+        				completeOrder();
+        			else {
+        				updateProcessing(false);
+        				cFinishPayButton.setEnabled(true);
+        			}
+        		}
         	}
+        }
         );
 
         // Accion: Cambiar a la pestaña de seleccion de medios de pago.
@@ -1257,6 +1327,30 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
 		});
 		
+		// Accion: Alternar modo On/Off line Clover
+		// dREHER
+		getActionMap().put(ALTER_ONOFFLINE_MODE, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				// dREHER, le dejo alternar siempre, pero si no esta habilitado en config TPV, 
+				// solo se puede con determinado perfil
+				// if(isAlterClover)
+					alterOnOffLineMode();
+			}
+		});
+		
+		// Accion: Alternar modo On/Off Contingencia
+		// dREHER
+		getActionMap().put(ALTER_CONTINGENCY_MODE, new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+					try {
+						alterOnOffContingencyMode();
+					} catch (PosException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+			}
+		});
+
 		// Acciones habilitadas al inicio.
 		setActionEnabled(GOTO_INSERT_CARD, false);
 		setActionEnabled(UPDATE_ORDER_PRODUCT_ACTION,true);
@@ -1276,38 +1370,521 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, false);
 		setActionEnabled(CANCEL_ORDER, true);
 		setActionEnabled(INSERT_PROMOTIONAL_CODE, true);
-	}
-
-	protected void setActionEnabled(String action, boolean enabled) {
-		String kAction = (enabled?action:"none");
-        KeyStroke keyStroke = getActionKeys().get(action);
-        
-		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
-            	keyStroke, kAction);
+		
+		// dREHER
+		setActionEnabled(ALTER_ONOFFLINE_MODE, isAlterClover);
+		
+		// dREHER
+		setActionEnabled(ALTER_CONTINGENCY_MODE, true);
 	}
 	
 	/**
-	 * This method initializes cPosTab	
-	 * 	
-	 * @return javax.swing.JTabbedPane	
+	 * Trae la data de la configuracion de C_POS 
+	 * @param property
+	 * @return String value
+	 * 
+	 * @author dREHER
 	 */
-	protected CTabbedPane getCPosTab() {
-		if (cPosTab == null) {
-			cPosTab = new CTabbedPane();
-			cPosTab.setPreferredSize(new java.awt.Dimension(750,580));
-			cPosTab.addTab(MSG_ORDER, null, getCOrderPanel(), null);
-			cPosTab.addTab(MSG_PAYMENT, null, getCPaymentPanel(), null);
+	public String getProperty(String property) {
+		
+		String data = null;
+		
+		if(property.equals(AUTH_TOKEN))
+			data = getModel().getPoSConfig().getAuthTokenClover();
+		else if(property.equals("IpClover"))
+			data = getModel().getPoSConfig().getIpClover();
+		else if(property.equals("PortClover"))
+			data = getModel().getPoSConfig().getPortClover();
+		
+		return data;
+		
+	}
 
-			cPosTab.addChangeListener(new ChangeListener() {
-				public void stateChanged(ChangeEvent event) {
-					selectTab(getCPosTab().getSelectedIndex());
+	/**
+	 * Setea las datas de configuracion y las guarda en C_POS
+	 * @param property
+	 * @param data
+	 * @author dREHER
+	 */
+	public void setProperty(String property, String data) {
+		debug("Propiedad: " + property);
+		debug("AUTH_TOKEN: " + AUTH_TOKEN);
+		
+		if(property.equals(AUTH_TOKEN))
+			getModel().getPoSConfig().setAuthTokenClover(data, true);
+		else if(property.equals("IpClover"))
+			getModel().getPoSConfig().setIpClover(data);
+		else if(property.equals("PortClover"))
+			getModel().getPoSConfig().setPortClover(data);
+	}
+	
+	// dREHER
+	public BigDecimal currencyConvert(BigDecimal amount, int fromCurrency) { 
+		return currencyConvert(amount, fromCurrency, getModel().getConfig().getCurrencyID());
+	}
+	// dREHER
+	public BigDecimal currencyConvert(BigDecimal amount, int fromCurrency, int toCurrency) {
+		return VModelHelper.currencyConvert(amount, fromCurrency, toCurrency, getOrder().getDate());
+	}
+	
+	/**
+	 * Recorre los medios de pago y para aquellos que sean del tipo tarjeta
+	 * se debera ir llamando a Clover con la respectiva data asociada
+	 * 
+	 * @return
+	 * dREHER
+	 */
+	private boolean CobrosClover(boolean isAnular) {
+		boolean isOk = true;
+		boolean[] isResultado = new boolean[] {false, false};
+		
+		List<Payment> payments = getOrder().getPayments();
+		
+		for(Payment pm : payments) {
+
+			if(pm.isCreditCardPayment()) {
+				
+				CreditCardPayment info = (CreditCardPayment)pm;
+
+				boolean isRealCreditCard = isRealCreditCard(info.getEntidadFinancieraID());
+				
+				debug("*** Es tarjeta real? " + (isRealCreditCard?"Si":"No") +
+						" Este medio fue cobrado? " + (info.isCobrado()?"Si":"No")+
+						" Estoy anulando? " + (isAnular?"Si":"No") +
+						" Es carga manual? " + (info.isCargaManual()?"Si":"No")
+						);
+				
+				if(isRealCreditCard) { // Solo para tarjetas reales
+
+					if( ((!info.isCobrado() && !isAnular ) // Todavia no se cobro y es pago nuevo 
+							|| 
+							(isAnular && info.isCobrado() ) ) // Ya esta cobrado, pero estoy anulando
+							) { 
+
+						debug("Medio de Pago tarjeta: " + pm.getTypeName() + " sin cobrar aun o anulando...");
+						if(!isAnular) {
+							isResultado = ShowTrxCloverInfo(pm);
+							isOk = isResultado[0];
+						}else {
+
+							// Solo enviar a anular en Clover si la carga NO fue manual
+							// Caso contrario NO contamos con la informacion de pago Clover para
+							// poder enviar anulacion automatica. En este caso el cajero debera
+							// realizar la anulacion manualmente.
+							if(!info.isCargaManual())
+								isOk = !AnularPagoClover(pm);
+							else
+								isOk = true;
+						}
+
+						debug("Volvio de transaccion: " + (isAnular?"Anulacion":"Cobro") + " Resultado=" + isOk);
+						
+						if(!isOk) {
+							if(isAnular) {
+								info.setCobrado(true);
+								debug("Como no pudo anular el pago sigue en modo YA COBRADO!");
+							}
+							break;
+						}else {
+
+							if(!isAnular) {
+								info.setCobrado(true);
+								
+								// Si cobro, decidio anular y no pudo por algun motivo
+								// el pago debe quedar como cobrado, PERO NO DEBE DEVOLVER OK
+								// para que NO continue el pago y el cajero decida que hace...
+								if(isResultado[1]) {
+									isOk = false;
+									debug("Cobro Ok, pero fallo la anulacion, NO DEBE CONTINUAR...");
+								}
+								
+							}else {
+								info.setCobrado(false);
+							}
+						}
+						
+						debug("El cobro quedo en modo " + (info.isCobrado()?"Cobrado":"Pendiente"));
+
+					}
+
 				}
-			});
-
-			cPosTab.setEnabledAt(1,false);
-			selectTab(0);
+			}
+			
+			// Calcular y refrescar el total del retiro en efectivo acumulado
+			refreshCashRetirementAmt();
+			
 		}
-		return cPosTab;
+		
+		return isOk;
+	}
+
+	/**
+	 * Este metodo despliega el popup de InfoTrxClover y valida que la info de tarjeta sea correcta para poder avanzar 
+	 * 
+	 * 1- Debe desplegar info TrxClover
+	 * 2- Debe interactuar con Clover y traer toda la info de la transaccion
+	 * 3- Debe actualizar el medio de pago tarjeta (quizas deba crearlo recien aca con la info recibida... TODO: ver mejor opcion!
+	 * 4- Debe validar la info recibida, si esta todo OK continua, sino devuelve mensaje y no avanza con el completeOrder()
+	 * 
+	 * 
+	 * Si coincide el importe total del cobro con tarjeta, actualizar la info del PaymentTarjeta que haga falta y dejar continuar
+	 * Si los importes NO coinciden, NO debe avanzar con completeOrder() y debe mostrar mensaje al usuario
+	 * 
+	 * dREHER
+	 */
+	private boolean[] ShowTrxCloverInfo(Payment pay) {
+
+		debug("ShowTrxCloverInfo. Mostrar la Info de TrxClover e interactuar con el terminal y traer info de tarjetas...");
+
+		String marcaTarjeta = "";
+		String medioPago = "";
+		String numeroComercioClover = "";
+		boolean isRetiraEfectivo = false;
+		boolean isFalloAnulacion = false;
+		
+		PaymentMedium paymentMedium = pay.getPaymentMedium();
+		if(paymentMedium != null) {
+			medioPago = paymentMedium.getName();
+			marcaTarjeta = paymentMedium.getName();
+			EntidadFinanciera ef = paymentMedium.getEntidadFinanciera();
+			if(ef!=null) {
+				
+				isRetiraEfectivo = ef.isCashRetirement();
+			
+				MEntidadFinanciera mef = new MEntidadFinanciera(Env.getCtx(), ef.getId(), null);
+				marcaTarjeta = mef.get_ValueAsString("CardSymbolClover");
+				numeroComercioClover = mef.get_ValueAsString("NumeroComercioClover");
+				/*
+				marcaTarjeta = DB.getSQLValueString(null, 
+						"SELECT CardSymbolClover FROM M_EntidadFinanciera WHERE M_EntidadFinanciera_ID=?",
+						ef.getId());
+				*/
+				
+			}
+		}
+		
+		CreditCardPayment info = (CreditCardPayment)pay;
+		BigDecimal amount = pay.getAmount();
+		
+		// dREHER si cuotas postnet es > 0, entonces esa es la cantidad que se envia a Clover
+		int cuotas = info.getPlan().getCoutasPago();
+		if(info.getPlan().getCuotasPosnet() > 0)
+			cuotas = info.getPlan().getCuotasPosnet();
+		
+		BigDecimal retiroEfe = info.getChangeAmt();
+		
+		debug("Medio Pago: " + medioPago + " Monto: " + amount + " Cuotas:" + cuotas + 
+				" $ Retiro Efec:" + retiroEfe +
+				" Entidad Financiera habilita retiro efec: " + isRetiraEfectivo);
+		
+		VTrxPaymentTerminalForm trxCloverForm = new VTrxPaymentTerminalForm(this, 
+				amount,
+				cuotas,
+				info.getPlan().getName(),
+				getModel().getNextInvoiceDocumentNo(),
+				isRetiraEfectivo,  // Retira Efectivo ?
+				retiroEfe, // monto retira efec dREHER - v 3.0
+				false,
+				info.getPayment(),
+				false,
+				marcaTarjeta,
+				medioPago,
+				numeroComercioClover);
+		trxCloverForm.setModal(true);
+		trxCloverForm.setVisible(true);
+		
+		
+		/**
+		 * Si es COBRO y anduvo todo OK guardo info y valido
+		 * O
+		 * Si ERA COBRO, pero el usuario decidio ANULAR y la ANULACION FALLO -> sigue siendo COBRO 
+		 *  
+		 * dREHER
+		 */
+		
+		
+		if( (isContinue() && !trxCloverForm.isError()) || 
+			(trxCloverForm.getTrxClover().getTipoTransaccion().equals("ANULACION") && !trxCloverForm.isError() && isContinue())) {
+
+			debug("Confirmo Ok trx Clover DEBO GUARDAR EL OK POR SI TENGO QUE ANULAR PAGO CLOVER...");
+			
+			// Guardo los datos recuperados de la transaccion Clover en el TPV
+			if(isValidCardData(trxCloverForm))
+				setDataCardFromClover(trxCloverForm.getTrxClover(), info);
+			
+			if(trxCloverForm.getTrxClover().getTipoTransaccion().equals("ANULACION") &&
+				    (trxCloverForm.getTrxClover().getErrorCode()==TrxClover.errorCode_NO_TERMINOANULACIONOK ||
+					 trxCloverForm.getTrxClover().getErrorCode()==TrxClover.errorCode_ENVIANDOINFOANULACION
+					)
+				) {
+				isFalloAnulacion = true;
+			}
+				
+			
+		}else {
+			
+			if(trxCloverForm.getTrxClover().isYaCobrado()) {
+			
+				debug("Ya se cobro anteriormente, no hacer nada al respecto!");
+				
+			}else {
+
+				// errorMsg("Se produjo un error en la transaccion Clover!");
+				debug("Por alguna razon la transaccion Clover NO termino ok! Tipo trx=" + trxCloverForm.getTrxClover().getTipoTransaccion());
+				return new boolean[]{false, false};
+
+			}
+		}
+		
+		return new boolean[] {true, isFalloAnulacion};
+	}
+	
+	public boolean isValidCardData(VTrxPaymentTerminalForm form) {
+		
+		TrxClover trxClover = form.getTrxClover();
+		
+		String creditCardNumber = trxClover.getCardNumber();
+		String couponNumber = trxClover.getCouponNumber();
+		String couponBatchNumber = trxClover.getCouponBatchNumber();
+		BigDecimal cashRetirementAmt = trxClover.getCashRetirementAmt();
+		
+		// Valida informacion referente a tarjeta de credito
+		CallResult extraValidationsResult = getExtraPOSPaymentAddValidations().validateCreditCardPayment(this,
+				creditCardNumber, couponNumber, couponBatchNumber, cashRetirementAmt);
+		if (extraValidationsResult.isError()) {
+			errorMsg(extraValidationsResult.getMsg());
+			return false;
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Valida que lo que indico el cajero es lo mismo que se utilizo en Clover
+	 * 
+	 * @param form
+	 */
+	public boolean isSameDataTrxClover(VTrxPaymentTerminalForm form, BigDecimal montoACobrar, 
+			String cardCodeClover, BigDecimal retiroEfectivoAmt, boolean isAnulando) {
+		boolean isOk = true;
+		TrxClover trxClover = form.getTrxClover();
+		
+		// IMPORTANTE!!! TODO: ver luego si es mejor SOLICITAR esta misma info de manera manual
+		// En caso de que la informacion venga desde una carga manual
+		// NO hacemos validacion, ya que tomamos que lo que cargo el usuario es correcto
+		if(trxClover.isCargaManual())
+			return true;
+		
+		
+		// Si se cobro OnLine - Validar :
+		// 1 Coincidencia monto abonado vs monto pasado para abonar
+		// 2 Misma tarjeta 
+		
+		BigDecimal montoCobrado = trxClover.getPayAmt();
+		String marcaTarjetaClover = trxClover.getCard(); // Card=V1 Cardtype=VISA
+		
+		debug("Datos obtenidos= Cobrado: " + montoCobrado.longValue() + " - A cobrar: " + montoACobrar.longValue());
+		
+		long montoACobrarL = montoACobrar.longValue();
+		long montoCobradoL = montoCobrado.longValue();
+		long diferencia = Math.abs(montoCobradoL - montoACobrarL);
+		if(diferencia > 1) {
+			errorMsg("No coincide el monto cobrado: " + montoCobrado 
+					+ ", con el monto a cobrar: " + montoACobrar);
+			return false;
+		};
+		
+		debug("Datos obtenidos= Entidad Financiera: " + cardCodeClover + " Clover puro: " + marcaTarjetaClover);
+
+		if(cardCodeClover.indexOf(marcaTarjetaClover) < 0) {
+			debug("Difiere tarjeta... Entidad Financiera: " + cardCodeClover + " Clover puro: " + marcaTarjetaClover);
+			
+			// TODO: ver luego si se muestra este mensaje o NO...
+			// v 2.0
+			// errorMsg("Difiere tarjeta... Entidad Financiera: " + cardCodeClover + " Clover puro: " + trxClover.getCardType());
+			return false;
+		}
+		
+		// dREHER v 3.0
+		// Verificar que el monto de retiro efectivo coincida
+		BigDecimal montoEfecARetirar = form.getCashARetirementAmt();
+		if(montoEfecARetirar==null)
+			montoEfecARetirar = Env.ZERO;
+		if(retiroEfectivoAmt==null)
+			retiroEfectivoAmt = Env.ZERO;
+		
+		debug("Datos obtenidos= Monto retiro efectivo: A Retirar: " +  getCCashReturnAmtText().getValue() + " Retirado Clover: " + retiroEfectivoAmt);
+		if(!isAnulando && montoEfecARetirar.compareTo(retiroEfectivoAmt) != 0) {
+			errorMsg("No coincide monto a Retirar Efectivo: " + montoEfecARetirar 
+					+ ", con el monto retirado: " + retiroEfectivoAmt);
+			return false;
+		}
+		
+		return isOk;
+	}
+	
+	
+	/**
+	 * Setea los campos de tarjeta a partir de los datos leidos desde Clover
+	 * dREHER
+	 */
+	protected void setDataCardFromClover(TrxClover trxClover, CreditCardPayment p) {
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: ver bien que datos pisar desde Clover en TPV
+///////////////////////////////////////////////////////////////////////////////////////////////
+		
+		p.setCouponBatchNumber(trxClover.getCouponBatchNumber());
+		p.setCouponNumber(trxClover.getCouponNumber());
+		
+// TODO: ver si esto es correcto o pisar siempre con lo que viene de Clover		
+		// dREHER si el nro de tarjeta que esta en el pago es mas largo que el que viene de Clover, NO pisar
+		// if(p.getCreditCardNumber()!=null && !p.getCreditCardNumber().isEmpty() && p.getCreditCardNumber().length() < trxClover.getCardNumber().length())	
+			
+		p.setCreditCardNumber(trxClover.getCardNumber());
+		
+		p.setPosnet(String.valueOf(trxClover.getTransactionNumber()));
+		p.setCustomerName(trxClover.getTitularName()!=null && !trxClover.getTitularName().isEmpty() ?
+				trxClover.getTitularName() : getOrder().getBusinessPartner().getCustomerName());
+		p.setPayment(trxClover.getPayment());
+		
+// TODO:ver si clover devuelve este monto, 
+//		caso contrario pisarlo con el que esta seteado en el campo de monto de retiro en efectivo
+// NO, solo pisar si llega de clover en modalidad Online
+		if(trxClover.getCashRetirementAmt()!=null) {
+			
+			// getCCashReturnAmtText().setValue(trxClover.getCashRetirementAmt());
+			p.setChangeAmt(trxClover.getCashRetirementAmt());
+		}
+			
+		//else {
+		//	if(getCCashReturnAmtText().getValue()!=null)
+		//		p.setChangeAmt((BigDecimal)getCCashReturnAmtText().getValue());
+		//}
+		
+		// No se pudo completar transaccion, se corto Clover/Tpv, pero como se cobro realmente
+		// se notifica que se hizo una carga manual, NO tenemos el payment recibido
+		debug("Volvio de Clover. Numero tarjeta:" + trxClover.getCardNumber() + " Carga manual: " + trxClover.isCargaManual());
+		p.setCargaManual(trxClover.isCargaManual());
+		
+	}
+	
+	/**
+	 * Setea el total de retiro de efectivo en el cuadro acumulado
+	 * dREHER
+	 */
+	public void refreshCashRetirementAmt() {
+		getCCashReturnAmtText().setValue(getTotalCashReturnAmt());
+	}
+	
+	/**
+	 * Recorrer los medios de pago tarjeta y acumular el retiro en 
+	 * efectivo de cada una
+	 * 
+	 * @return Total de retiros en efectivo
+	 * dREHER
+	 */
+	public BigDecimal getTotalCashReturnAmt() {
+		BigDecimal totalCashReturnAmt = Env.ZERO;
+		
+		for (Payment p : getOrder().getPayments()) {
+			
+			if (p.isCreditCardPayment()) {
+				BigDecimal ca = p.getChangeAmt();
+				if(ca==null) ca = Env.ZERO;
+				
+				totalCashReturnAmt = totalCashReturnAmt.add(ca);
+				
+				CreditCardPayment ccp = (CreditCardPayment)p;
+				
+				debug("Acumula total de retiro efectivo: " + p.getTypeName() + " # " + ccp.getCreditCardNumber() + "  - retiro efec=" + ca);
+				
+			}
+			
+		}
+		
+		debug("Total retiro efectivo=" + totalCashReturnAmt);
+		
+		return totalCashReturnAmt;
+	}
+	
+	/** 
+	 * Si se produjo un error en el ticket y hubo cobro con Clover, se debe anular
+	 * 
+	 * Termino Ticket con error, anular el ultimo pago
+	 * dREHER
+	 */
+	protected boolean AnularPagoClover(Payment pay) {
+		
+		String marcaTarjeta = "";
+		String medioPago = "";
+		String numeroComercioClover = "";
+		boolean isAnulo = false;
+
+		PaymentMedium paymentMedium = pay.getPaymentMedium();
+		if(paymentMedium != null) {
+			medioPago = paymentMedium.getTenderTypeName();
+			marcaTarjeta = paymentMedium.getName();
+			EntidadFinanciera ef = paymentMedium.getEntidadFinanciera();
+			if(ef!=null) {
+				
+				/*
+				 marcaTarjeta = DB.getSQLValueString(null, 
+						"SELECT CardSymbolClover FROM M_EntidadFinanciera WHERE M_EntidadFinanciera_ID=?",
+						ef.getId());
+				*/
+				
+				MEntidadFinanciera mef = new MEntidadFinanciera(Env.getCtx(), ef.getId(), null);
+				marcaTarjeta = mef.get_ValueAsString("CardSymbolClover");
+				numeroComercioClover = mef.get_ValueAsString("NumeroComercioClover");
+			}
+		}
+		
+		CreditCardPayment info = (CreditCardPayment)pay;
+		BigDecimal amount = pay.getAmount();
+		amount = amount
+				.add(Util.isEmpty(pay.getChangeAmt(), true) ? BigDecimal.ZERO : pay
+						.getChangeAmt());
+		
+		// dREHER si cuotas postnet es > 0, entonces esa es la cantidad que se envia a Clover
+		int cuotas = info.getPlan().getCoutasPago();
+		if(info.getPlan().getCuotasPosnet() > 0)
+			cuotas = info.getPlan().getCuotasPosnet();
+		
+		VTrxPaymentTerminalForm trxCloverForm = new VTrxPaymentTerminalForm(this, 
+				Env.ZERO,
+				cuotas,
+				info.getPlan().getName(),
+				getModel().getNextInvoiceDocumentNo(),
+				pay.getChangeAmt()!=null && pay.getChangeAmt().compareTo(Env.ZERO) > 0,  // Retira Efectivo ?
+				pay.getChangeAmt(), // v 3.0
+				true,
+				info.getPayment(),
+				false,
+				marcaTarjeta,
+				medioPago,
+				numeroComercioClover);
+		
+		trxCloverForm.setModal(true);
+		trxCloverForm.setVisible(true);
+		if(!isContinue() && trxCloverForm.isError()) {
+
+			debug("Confirmo Ok trx anulacion Clover...");
+			isAnulo = true;
+			
+		}else {
+			// errorMsg("Se produjo un error en la transaccion Clover!");
+			debug("Por alguna razon la transaccion de anulacion Clover NO termino ok!");
+		}
+		
+		return isAnulo;
+	}
+
+	private void setActionEnabled(String action, boolean enabled) {
+		String kAction = (enabled ? action : "none");
+		KeyStroke keyStroke = getActionKeys().get(action);
+
+		this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(keyStroke, kAction);
 	}
 
 	/**
@@ -1563,270 +2140,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cProductLookup;
 	}
 
-	/**
-	 * This method initializes cOrderCenterPanel	
-	 * 	
-	 * @return org.compiere.swing.CPanel	
-	 */
-	private CPanel getCOrderCenterPanel() {
-		if (cOrderCenterPanel == null) {
-			cOrderCenterPanel = new CPanel();
-			cOrderCenterPanel.setLayout(new BoxLayout(getCOrderCenterPanel(), BoxLayout.X_AXIS));
-			cOrderCenterPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5,0,0,0));
-			cOrderCenterPanel.add(getCOrderTableScrollPane(), null);
-			cOrderCenterPanel.add(getCCommandPanel(), null);
-		}
-		return cOrderCenterPanel;
-	}
-
-	/**
-	 * This method initializes cOrderTableScrollPane	
-	 * 	
-	 * @return javax.swing.JScrollPane	
-	 */
-	private JScrollPane getCOrderTableScrollPane() {
-		if (cOrderTableScrollPane == null) {
-			cOrderTableScrollPane = new CScrollPane();
-			cOrderTableScrollPane.setViewportView(getCOrderTable());
-		}
-		return cOrderTableScrollPane;
-	}
-
 	protected ProductTableModel getProductTableModel() {
 		return new ProductTableModel();
-	}
-	
-	/**
-	 * This method initializes cOrderTable	
-	 * 	
-	 * @return javax.swing.JTable	
-	 */
-	protected JTable getCOrderTable() {
-		if (cOrderTable == null) {
-			cOrderTable = new MiniTable();
-			cOrderTable.setRowSelectionAllowed(true);
-			
-			// Creo el Modelo de la tabla.
-			ProductTableModel orderTableModel = getProductTableModel();
-			// Se vincula la lista de productos en la orden con el table model
-			// para que se muestren en la tabla.
-			orderTableModel.setOrderProducts(getOrder().getOrderProducts());
-			orderTableModel.addColumName(MSG_COUNT);
-			orderTableModel.addColumName(MSG_PRODUCT);
-			orderTableModel.addColumName(MSG_TAXRATE);
-			orderTableModel.addColumName(MSG_UNIT_PRICE);
-			orderTableModel.addColumName(MSG_PRICE);
-			orderTableModel.addColumName(MSG_FINAL_PRICE);
-			orderTableModel.addColumName(MSG_CHECKOUT_IN);
-			cOrderTable.setModel(orderTableModel);
-			
-			// Configuracion del renderizado de la tabla.
-
-			// Renderer de cantidad.
-			cOrderTable.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
-				
-				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3, int arg4, int arg5) {
-					JLabel cmp = (JLabel)super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
-					cmp.setHorizontalAlignment(JLabel.CENTER);
-					return cmp;
-				}
-				
-			});
-			
-			// Renderer de importes por defecto.
-			cOrderTable.setDefaultRenderer(BigDecimal.class, getNumberCellRendered(amountFormat));
-			cOrderTable.setFocusable(false);
-
-			// Renderer de tasa de impuesto.
-			cOrderTable.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-
-				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3, int arg4, int arg5) {
-					JLabel cmp = (JLabel)super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
-					NumberFormat format = NumberFormat.getNumberInstance();
-					format.setMaximumFractionDigits(1);
-					format.setMinimumFractionDigits(1);
-					String number = format.format(Double.parseDouble(cmp.getText())) + "%";
-					cmp.setText(number);
-					cmp.setHorizontalAlignment(JLabel.CENTER);
-					return cmp;
-				}
-				
-			});
-
-			// Renderer de precio unitario
-			cOrderTable.getColumnModel().getColumn(3).setCellRenderer(getNumberCellRendered(priceFormat));
-			
-			// Renderer de precio de línea sin descuentos
-			cOrderTable.getColumnModel().getColumn(4).setCellRenderer(getNumberCellRendered(amountFormat));
-
-			// Renderer de Precio Final de línea con descuentos
-			cOrderTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3, int arg4, int arg5) {
-					JLabel cmp = (JLabel)super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
-					//BigDecimal amount = scaleAmount(((BigDecimal)arg1));
-					BigDecimal amount = ((BigDecimal)arg1);
-					cmp.setText(amountFormat.format(amount));
-					cmp.setHorizontalAlignment(JLabel.RIGHT);
-					Font f = cmp.getFont();
-					cmp.setFont(f.deriveFont(f.getStyle() ^ Font.BOLD));
-					return cmp;
-				};
-			});
-
-			// Renderer de Lugar de Retiro.
-			cOrderTable.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
-
-				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3, int arg4, int arg5) {
-					JLabel cmp = (JLabel)super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
-					cmp.setHorizontalAlignment(JLabel.CENTER);
-					return cmp;
-				}
-				
-			});
-			
-			// Funcionalidades extras.
-			ArrayList minWidth = new ArrayList();
-			minWidth.add(35);
-			minWidth.add(0);
-			minWidth.add(60);
-			minWidth.add(75);
-			minWidth.add(75);
-			minWidth.add(75);
-			minWidth.add(75);
-			
-			// Se wrapea la tabla con funcionalidad extra.
-			setOrderTableUtils(new TableUtils(minWidth,cOrderTable));
-			getOrderTableUtils().autoResizeTable();
-			getOrderTableUtils().removeSorting();
-		}
-		return cOrderTable;
-	}
-
-	/**
-	 * This method initializes cCommandPanel	
-	 * 	
-	 * @return org.compiere.swing.CPanel	
-	 */
-	protected CPanel getCCommandPanel() {
-		if (cCommandPanel == null) {
-			cCommandPanel = new CPanel();
-			cCommandPanel.setLayout(new BoxLayout(getCCommandPanel(), BoxLayout.Y_AXIS));
-			cCommandPanel.setMaximumSize(new java.awt.Dimension(180,400));
-			cCommandPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0,5,5,0));
-			cCommandPanel.setPreferredSize(new java.awt.Dimension(180,0));
-			cCommandPanel.setMaximumSize(new java.awt.Dimension(180,600));
-			cCommandPanel.add(getCLoadOrderPanel(), null);
-			cCommandPanel.add(getCCommandInfoPanel(), null);
-			cCommandPanel.add(getCPayCommandPanel(), null);
-		}
-		return cCommandPanel;
-	}
-
-	/**
-	 * This method initializes cCommandInfoPanel1	
-	 * 	
-	 * @return org.compiere.swing.CPanel	
-	 */
-	protected CPanel getCCommandInfoPanel() {
-		if (cCommandInfoPanel == null) {
-			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
-			gridBagConstraints2.gridx = 0;
-			gridBagConstraints2.weighty = 0.0D;
-			gridBagConstraints2.gridy = 1;
-			gridBagConstraints2.anchor = GridBagConstraints.WEST;
-			JLabel cCmdUpdateOrderProductLabel = new CLabel();
-			cCmdUpdateOrderProductLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(UPDATE_ORDER_PRODUCT_ACTION)) + " = " + MSG_UPDATE_PRODUCT);
-			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
-			gridBagConstraints1.gridx = 0;
-			gridBagConstraints1.anchor = java.awt.GridBagConstraints.WEST;
-			gridBagConstraints1.weightx = 0.0D;
-			gridBagConstraints1.weighty = 0.0D;
-			gridBagConstraints1.gridy = 0;
-			JLabel cCmdGotoPaymentsLabel = new CLabel();
-			cCmdGotoPaymentsLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYMENTS_ACTION)) + " = " + MSG_PAY);
-			GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
-			gridBagConstraints3.gridx = 0;
-			gridBagConstraints3.weightx = 0.0D;
-			gridBagConstraints3.weighty = 0.0D;
-			gridBagConstraints3.gridy = 2;
-			gridBagConstraints3.anchor = GridBagConstraints.WEST;
-			JLabel cCmdSetBpartnerInfoLabel = new CLabel();
-			cCmdSetBpartnerInfoLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(SET_BPARTNER_INFO_ACTION)) + " = " + MSG_CUSTOMER +"/"+MSG_PRICE_LIST);
-			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
-			gridBagConstraints4.gridx = 0;
-			gridBagConstraints4.weightx = 0.0D;
-			gridBagConstraints4.weighty = 0.0D;
-			gridBagConstraints4.gridy = 3;
-			gridBagConstraints4.anchor = GridBagConstraints.WEST;
-			JLabel cCmdChangeProductOrderLabel = new CLabel();
-			cCmdChangeProductOrderLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(CHANGE_FOCUS_PRODUCT_ORDER)) + " = " + MSG_CHANGE_PRODUCT_ORDER);
-			GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
-			gridBagConstraints5.gridx = 0;
-			gridBagConstraints5.weightx = 0.0D;
-			gridBagConstraints5.weighty = 0.0D;
-			gridBagConstraints5.gridy = 4;
-			gridBagConstraints5.anchor = GridBagConstraints.WEST;
-			JLabel cCmdCancelOrderInfoLabel = new CLabel();
-			cCmdCancelOrderInfoLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(CANCEL_ORDER)) + " = " + MSG_CANCEL_ORDER);
-			
-			GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
-			gridBagConstraints6.gridx = 0;
-			gridBagConstraints6.weightx = 0.0D;
-			gridBagConstraints6.weighty = 0.0D;
-			gridBagConstraints6.gridy = 5;
-			gridBagConstraints6.anchor = GridBagConstraints.WEST;
-			JLabel cCmdPromotionsLabel = new CLabel();
-			cCmdPromotionsLabel
-					.setText(KeyUtils.getKeyStr(getActionKeys().get(INSERT_PROMOTIONAL_CODE)) + " = " + MSG_PROMOTIONS);			
-			
-			cCommandInfoPanel = new CPanel();
-			cCommandInfoPanel.setLayout(new GridBagLayout());
-			cCommandInfoPanel.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
-			cCommandInfoPanel.setPreferredSize(new java.awt.Dimension(180,500));
-			cCommandInfoPanel.setName("cCommandInfoPanel");
-			cCommandInfoPanel.add(cCmdChangeProductOrderLabel, gridBagConstraints1);
-			cCommandInfoPanel.add(cCmdPromotionsLabel, gridBagConstraints2);
-			cCommandInfoPanel.add(cCmdUpdateOrderProductLabel, gridBagConstraints3);
-			cCommandInfoPanel.add(cCmdSetBpartnerInfoLabel, gridBagConstraints4);
-			cCommandInfoPanel.add(cCmdGotoPaymentsLabel, gridBagConstraints5);
-			cCommandInfoPanel.add(cCmdCancelOrderInfoLabel, gridBagConstraints6);
-		}
-		return cCommandInfoPanel;
-	}
-
-	/**
-	 * This method initializes cPayCommandPanel	
-	 * 	
-	 * @return org.compiere.swing.CPanel	
-	 */
-	private CPanel getCPayCommandPanel() {
-		if (cPayCommandPanel == null) {
-			cPayCommandPanel = new CPanel();
-			cPayCommandPanel.setName("cPayCommandPanel");
-			cPayCommandPanel.add(getCPayButton(), null);
-		}
-		return cPayCommandPanel;
-	}
-
-	/**
-	 * This method initializes cPayButton	
-	 * 	
-	 * @return org.compiere.swing.CButton	
-	 */
-	private CButton getCPayButton() {
-		if (cPayButton == null) {
-			cPayButton = new CButton();
-			cPayButton.setIcon(getImageIcon("Caunt24.gif"));
-			cPayButton.setText(MSG_PAY + " " + KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYMENTS_ACTION)));
-			cPayButton.addActionListener(new java.awt.event.ActionListener() {
-				public void actionPerformed(java.awt.event.ActionEvent e) {
-					goToPayments();
-				}
-			});
-			KeyUtils.setDefaultKey(cPayButton);
-			FocusUtils.addFocusHighlight(cPayButton);
-		}
-		return cPayButton;
 	}
 
 	/**
@@ -2287,10 +2602,33 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					if(isProcessing()){
 						return;
 					}
-					// Agregar o Actualizar el descuento manual general por el valor del porcentaje del monto
-					BigDecimal percentage = (BigDecimal) event
-									.getNewValue() == null ? BigDecimal.ZERO
-									: (BigDecimal) event.getNewValue();
+					
+					log.info("En descuento-recargo tecleo..." + event.getNewValue()!=null?event.getNewValue().toString():"");
+					
+					if(event.getNewValue() == null)
+						cGeneralDiscountPercText.setValue(BigDecimal.ZERO);
+					
+					// Agregar o Actualizar el descuento manual general por el valor del porcentaje
+					// del monto
+					BigDecimal percentage = Env.ZERO;
+					try {
+						percentage = event.getNewValue() == null 
+									|| event.getNewValue().toString().equals("-")
+									|| event.getNewValue().toString().equals("0E-12")
+							? BigDecimal.ZERO
+							: (BigDecimal) event.getNewValue();
+						
+						// dREHER si el porcentaje es cero, setear el cero dentro del control
+						if(percentage.compareTo(Env.ZERO)==0) {
+							cGeneralDiscountPercText.setValue(BigDecimal.ZERO);
+							cGeneralDiscountPercText.repaint();
+							cGeneralDiscountPercText.revalidate();
+						}
+						
+					}catch(Exception ex) {
+						percentage = Env.ZERO;
+					}
+					
 					getOrder().updateManualGeneralDiscount(percentage);
 					// Actualizar descuentos
 					getOrder().updateDiscounts();
@@ -2474,6 +2812,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cPaymentMediumInfoPanel.add(cPaymentToPayAmtLabel, gridBagConstraints3);
 			cPaymentMediumInfoPanel.add(getCPaymentToPayAmt(), gridBagConstraints4);
 			cPaymentMediumInfoPanel.add(getCCreditCardInfoPanel(), gridBagConstraints5);
+			cPaymentMediumInfoPanel.add(getCCheckInfoPanel(), gridBagConstraints5);
 		}
 		return cPaymentMediumInfoPanel;
 	}
@@ -2505,11 +2844,23 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints4.gridy = 3;
 			gridBagConstraints4.anchor = GridBagConstraints.WEST;
 			gridBagConstraints4.insets = new Insets(10, 0, 0, 0);
+			GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
+			gridBagConstraints5.gridx = 0;
+			gridBagConstraints5.gridy = 4;
+			gridBagConstraints5.anchor = GridBagConstraints.WEST;
+			gridBagConstraints5.insets = new Insets(9, 0, 0, 0);
+			GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
+			gridBagConstraints6.gridx = 0;
+			gridBagConstraints6.gridy = 5;
+			gridBagConstraints6.anchor = GridBagConstraints.WEST;
+			gridBagConstraints6.insets = new Insets(10, 0, 0, 0);
 
 			cCreditCardCuotasLabel = new CLabel();
 			cCreditCardCuotasLabel.setText(MSG_CUOTAS);
 			cCreditCardCuotaAmtLabel = new CLabel();
 			cCreditCardCuotaAmtLabel.setText(MSG_CUOTA_AMOUNT);
+			cCreditCardTitularLabel = new CLabel();
+			cCreditCardTitularLabel.setText(MSG_CARDHOLDER);
 			cCreditCardInfoPanel = new CPanel();
 			//cCreditCardInfoPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0,5,0,0), BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(0,5,5,5))));
 			cCreditCardInfoPanel.setLayout(new GridBagLayout());
@@ -2517,6 +2868,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardInfoPanel.add(getCCreditCardCuotas(), gridBagConstraints2);
 			cCreditCardInfoPanel.add(cCreditCardCuotaAmtLabel, gridBagConstraints3);
 			cCreditCardInfoPanel.add(getCCreditCardCuotaAmt(), gridBagConstraints4);
+			cCreditCardInfoPanel.add(cCreditCardTitularLabel, gridBagConstraints5);
+			cCreditCardInfoPanel.add(getcCreditCardTitularTxt(), gridBagConstraints6);
 		}
 		return cCreditCardInfoPanel;
 	}
@@ -2735,7 +3088,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CPanel	
 	 */
-	private CPanel getCCreditCardParamsPanel() {
+	private CPanel getCCreditCardParamsPanel(boolean onLineMode) {
 		if (cCreditCardParamsPanel == null) {
 			GridBagConstraints gridBagConstraints28 = new GridBagConstraints();
 			gridBagConstraints28.fill = java.awt.GridBagConstraints.WEST;
@@ -2756,8 +3109,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints25.insets = new java.awt.Insets(7,0,0,0);
 			gridBagConstraints25.anchor = java.awt.GridBagConstraints.WEST;
 			gridBagConstraints25.gridy = 2;
-			cCreditCardNumberLabel = new CLabel();
-			cCreditCardNumberLabel.setText(MSG_CARD_NUMBER);
+			
+			// dREHER
+			// cCreditCardNumberLabel = new CLabel();
+			// cCreditCardNumberLabel.setText(MSG_CARD_NUMBER);
+			
 			GridBagConstraints gridBagConstraints23 = new GridBagConstraints();
 			gridBagConstraints23.gridx = 0;
 			gridBagConstraints23.insets = new java.awt.Insets(7,0,0,0);
@@ -2790,27 +3146,32 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints29.insets = new java.awt.Insets(7,0,0,0);
 			gridBagConstraints29.anchor = java.awt.GridBagConstraints.WEST;
 			gridBagConstraints29.gridy = 6;
-			cCardLabel = new CLabel();
-			cCardLabel
-					.setText(MSG_INSERT_CARD
-							+ " "
-							+ KeyUtils.getKeyStr(getActionKeys().get(
-									GOTO_INSERT_CARD)));
+			
+			// dREHER
+			// cCardLabel = new CLabel();
+			// cCardLabel.setText(MSG_INSERT_CARD + " " + KeyUtils.getKeyStr(getActionKeys().get(GOTO_INSERT_CARD)));
+			
 			GridBagConstraints gridBagConstraints31 = new GridBagConstraints();
 			gridBagConstraints31.gridx = 0;
 			gridBagConstraints31.gridwidth = 2;
 			gridBagConstraints31.insets = new java.awt.Insets(7,0,0,0);
 			gridBagConstraints31.anchor = java.awt.GridBagConstraints.WEST;
 			gridBagConstraints31.gridy = 5;
-			cCardSeparator = new JSeparator();
-			cCardSeparator.setPreferredSize(new Dimension(S_TENDERTYPE_PANEL_WIDTH,5));
+			
+			// dREHER
+			// cCardSeparator = new JSeparator();
+			// cCardSeparator.setPreferredSize(new Dimension(S_TENDERTYPE_PANEL_WIDTH, 5));
+			
 			GridBagConstraints gridBagConstraints32 = new GridBagConstraints();
 			gridBagConstraints32.gridx = 0;
 			gridBagConstraints32.insets = new java.awt.Insets(7,0,0,0);
 			gridBagConstraints32.anchor = java.awt.GridBagConstraints.WEST;
 			gridBagConstraints32.gridy = 4;
-			cPosnetLabel = new CLabel();
-			cPosnetLabel.setText(MSG_POSNET);
+			
+			// dREHER
+			// cPosnetLabel = new CLabel();
+			// cPosnetLabel.setText(MSG_POSNET);
+			
 			GridBagConstraints gridBagConstraints33 = new GridBagConstraints();
 			gridBagConstraints33.fill = java.awt.GridBagConstraints.NONE;
 			gridBagConstraints33.anchor = java.awt.GridBagConstraints.EAST;
@@ -2826,8 +3187,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardParamsPanel.add(cCreditCardPlanLabel, gridBagConstraints19);
 			cCreditCardParamsPanel.add(getCCreditCardPlanCombo(), gridBagConstraints20);
 			cCreditCardParamsPanel.add(cBankLabel, gridBagConstraints23);
-			// Acá va el banco (ver mas adelante)
-			cCreditCardParamsPanel.add(cCreditCardNumberLabel, gridBagConstraints25);
+			// Ac�� va el banco (ver mas adelante)
+			
+			// dREHER utilizo misma logica de todos los componentes graficos para las etiquetas y separador
+			cCreditCardParamsPanel.add(getCCreditCardNumberLabel(), gridBagConstraints25);
 			cCreditCardParamsPanel.add(getCCreditCardNumberText(), gridBagConstraints26);
 			cCreditCardParamsPanel.add(getCCreditCardCouponParamsPanel(), gridBagConstraints28);
 			cCreditCardParamsPanel.add(cPosnetLabel, gridBagConstraints32);
@@ -2848,9 +3211,31 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		gridBagConstraints24.anchor = java.awt.GridBagConstraints.EAST;
 		gridBagConstraints24.gridx = 1;
 		cCreditCardParamsPanel.add(getCBankCombo(), gridBagConstraints24);
+		
 		return cCreditCardParamsPanel;
 	}
+	
+	// dREHER devuelve la cantidad de cuotas seteadas en el TPV
+	public int getCuotas() {
+		int cuotas = -1;
+		if(getCCreditCardCuotas().getValue()!=null)
+			cuotas = (Integer)getCCreditCardCuotas().getValue(); 
+		return cuotas;
+	}
 
+	// dREHER devuelve el plan de cuotas seteadas en el TPV
+	public String getPlan() {
+		String ret = null; 
+		
+		EntidadFinancieraPlan currentPlan = getSelectedCreditCardPlan();
+		if (currentPlan != null) {
+			
+			ret = String.valueOf(currentPlan.getCoutasPago());
+			currentPlan.getName();
+		}
+		
+		return ret;
+	}
 	
 	private CPanel getCCreditCardCouponParamsPanel(){
 		if(cCreditCardCouponParamsPanel == null){
@@ -2884,10 +3269,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			
 			cCreditCardCouponParamsPanel = new CPanel();
 			cCreditCardCouponParamsPanel.setLayout(new GridBagLayout());
-			cCreditCardCouponParamsPanel.add(cCouponNumberLabel, gridBagConstraints2);
-			cCreditCardCouponParamsPanel.add(getCCouponNumberText(), gridBagConstraints1);
-			cCreditCardCouponParamsPanel.add(cCouponBatchNumberLabel, gridBagConstraints4);
-			cCreditCardCouponParamsPanel.add(getCCouponBatchNumberText(), gridBagConstraints3);
+			/*
+			 * cCreditCardCouponParamsPanel.add(cCouponNumberLabel, gridBagConstraints2);
+			 * cCreditCardCouponParamsPanel.add(getCCouponNumberText(),
+			 * gridBagConstraints1);
+			 * cCreditCardCouponParamsPanel.add(cCouponBatchNumberLabel,
+			 * gridBagConstraints4);
+			 * cCreditCardCouponParamsPanel.add(getCCouponBatchNumberText(),
+			 * gridBagConstraints3);
+			 */
 		}
 		return cCreditCardCouponParamsPanel;
 	}
@@ -2944,7 +3334,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints27.gridx = 1;
 			gridBagConstraints27.insets = new java.awt.Insets(7,40,0,0);
 			gridBagConstraints27.anchor = java.awt.GridBagConstraints.WEST;
-			gridBagConstraints27.gridy = 3;
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Check para agregar FUTURAS COMPRAS
+			// ------------------------------------
+			gridBagConstraints27.gridy = 4;
+			// ------------------------------------
 			cCreditNoteCashReturnLabel = new CLabel();
 			cCreditNoteCashReturnLabel.setText(MSG_CASH_RETURNING);
 			getCCreditNoteCashReturnCheck().setText(cCreditNoteCashReturnLabel.getText());
@@ -2952,10 +3348,22 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints28.gridx = 0;
 			gridBagConstraints28.insets = new java.awt.Insets(7,0,0,0);
 			gridBagConstraints28.anchor = java.awt.GridBagConstraints.WEST;
-			gridBagConstraints28.gridy = 4;
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Check para agregar FUTURAS COMPRAS
+			// ------------------------------------
+			gridBagConstraints28.gridy = 5;
+			// ------------------------------------
 			GridBagConstraints gridBagConstraints29 = new GridBagConstraints();
 			gridBagConstraints29.fill = java.awt.GridBagConstraints.NONE;
-			gridBagConstraints29.gridy = 4;
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Check para agregar FUTURAS COMPRAS
+			// ------------------------------------
+			gridBagConstraints29.gridy = 5;
+			// ------------------------------------
 			gridBagConstraints29.weightx = 1.0;
 			gridBagConstraints29.insets = new java.awt.Insets(7,10,0,0);
 			gridBagConstraints29.anchor = java.awt.GridBagConstraints.EAST;
@@ -2986,6 +3394,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 //			// Panel de autorización
 //			cCreditNoteParamsPanel.add(getCCashRetunAuthPanel().getAuthPanel(), userAuthConstraints);
 		}
+		// ------------------------------------
+		// HTS 1.0
+		// ------------------------------------
+		// Check para agregar FUTURAS COMPRAS
+		// ------------------------------------
+		getCFuturasComprasCheck().setText("Agregar FUTURAS");
+		GridBagConstraints gridBagConstraints30 = new GridBagConstraints();
+		gridBagConstraints30.gridx = 1;
+		gridBagConstraints30.insets = new java.awt.Insets(7, 40, 0, 0);
+		gridBagConstraints30.anchor = java.awt.GridBagConstraints.WEST;
+		gridBagConstraints30.gridy = 3;
+
+		cCreditNoteParamsPanel.add(getCFuturasComprasCheck(), gridBagConstraints30);
+		// ------------------------------------
 		return cCreditNoteParamsPanel;
 	}
 	
@@ -3062,6 +3484,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private VCheckBox getCCreditNoteCashReturnCheck(){
 		if (cCreditNoteCashReturnCheck == null) {
 			cCreditNoteCashReturnCheck = new VCheckBox();
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Check para agregar FUTURAS COMPRAS
+			// ------------------------------------
+			cCreditNoteCashReturnCheck.setSelected(false);
+			// ------------------------------------
 			cCreditNoteCashReturnCheck.addActionListener(new ActionListener() {
 				
 				@Override
@@ -3071,10 +3500,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					boolean cashReturnSelected = checkToCompare.isSelected();
 					getCCreditNoteCashReturnAmtText().setVisible(cashReturnSelected);
 					cCreditNoteCashReturnAmtLabel.setVisible(cashReturnSelected);
-					BigDecimal amtToReturn = (BigDecimal) getCCreditNoteBalanceText()
-							.getValue();
-					getCCreditNoteCashReturnAmtText().setValue(
-							cashReturnSelected ? amtToReturn : BigDecimal.ZERO);
+					BigDecimal amtToReturn = (BigDecimal) getCCreditNoteBalanceText().getValue();
+					getCCreditNoteCashReturnAmtText().setValue(cashReturnSelected ? amtToReturn : BigDecimal.ZERO);
+					// ------------------------------------
+					// HTS 1.0
+					// ------------------------------------
+					// Visibilidad del Check FUTURAS COMPRAS
+					// ------------------------------------
+					getCFuturasComprasCheck().setVisible(visibleFuturasComprasCheck());
+					// ------------------------------------
 //					manageMaxCashReturnValue((BigDecimal) getCCreditNoteCashReturnAmtText()
 //							.getValue());
 				}
@@ -3104,20 +3538,105 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditNoteCashReturnAmtText.setValue(0);
 			cCreditNoteCashReturnAmtText.setVisible(false);
 			cCreditNoteCashReturnAmtText.setMandatory(true);
-			cCreditNoteCashReturnAmtText.addAction("updateAmount", KeyStroke.getKeyStroke(
-					KeyEvent.VK_ENTER, 0), new AbstractAction() {
+			cCreditNoteCashReturnAmtText.addAction("updateAmount", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+					new AbstractAction() {
+						@Override
+						public void actionPerformed(ActionEvent arg0) {
+							if (getCCreditNoteCashReturnAmtText().getValue() == null) {
+								getCCreditNoteCashReturnAmtText().setValue(getCCreditNoteBalanceText().getValue());
+							}
+							// ---------------------------------------
+							// HTS 1.0
+							// ---------------------------------------
+							// Visibilidad del Check FUTURAS COMPRAS
+							// ---------------------------------------
+							getCFuturasComprasCheck().setVisible(visibleFuturasComprasCheck());
+						}
+					});
+			cCreditNoteCashReturnAmtText.addVetoableChangeListener(new VetoableChangeListener() {
+
 				@Override
-				public void actionPerformed(ActionEvent arg0) {
+				public void vetoableChange(PropertyChangeEvent arg0) throws PropertyVetoException {
 					if (getCCreditNoteCashReturnAmtText().getValue() == null) {
 						getCCreditNoteCashReturnAmtText().setValue(getCCreditNoteBalanceText().getValue());
 					}
+					getCFuturasComprasCheck().setVisible(visibleFuturasComprasCheck());
+
 				}
 			});
+			// ------------------------------------
 			FocusUtils.addFocusHighlight(cCreditNoteCashReturnAmtText);
 		}
 		return cCreditNoteCashReturnAmtText;
 	}
 	
+	// ------------------------------------
+
+	// ------------------------------------
+	// HTS 1.0
+	// ------------------------------------
+	// Panel adicional del cheque para el check FUTURAS COMPRAS
+	// ------------------------------------
+	private CPanel getCCheckInfoPanel() {
+		if (cCheckInfoPanel == null) {
+			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+			gridBagConstraints1.gridx = 0;
+			gridBagConstraints1.gridy = 0;
+			gridBagConstraints1.anchor = GridBagConstraints.WEST;
+			gridBagConstraints1.insets = new Insets(3, 0, 0, 0);
+
+			getCFuturasComprasCheck().setText("Agregar FUTURAS");
+
+			cCheckInfoPanel = new CPanel();
+			cCheckInfoPanel.setLayout(new GridBagLayout());
+			cCheckInfoPanel.add(getCFuturasComprasCheck(), gridBagConstraints1);
+			cCheckInfoPanel.setVisible(false);
+		}
+		return cCheckInfoPanel;
+	}
+	// ------------------------------------
+	
+	// ------------------------------------
+	// HTS 1.0
+	// ------------------------------------
+	// Check para agregar el art��culo FUTURAS COMPRAS
+	// ------------------------------------
+	private VCheckBox getCFuturasComprasCheck() {
+		if (cFuturasComprasCheck == null) {
+			cFuturasComprasCheck = new VCheckBox();
+			cFuturasComprasCheck.addAction("setSelected", KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+					new AbstractAction() {
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					cFuturasComprasCheck.setSelected(!((VCheckBox) arg0.getSource()).isSelected());
+					fireActionPerformed(cFuturasComprasCheck.getActionListeners(), null);
+				}
+			});
+			FocusUtils.addFocusHighlight(cFuturasComprasCheck);
+		}
+
+		// dREHER TODO: verificar como agrega el futuras compras
+		cFuturasComprasCheck.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// Agregar el art��culo Futuras y actualizar los montos
+				VCheckBox checkToCompare = e == null ? cFuturasComprasCheck : ((VCheckBox) e.getSource());
+				boolean futurasComprasSelected = checkToCompare.isSelected();
+				String tenderType = getSelectedTenderType();
+				if (futurasComprasSelected) {
+					if (getModel().getCurrentFuturas(tenderType) == null) {
+						addFuturasCompras(tenderType, null);
+					}
+				} else {
+					removeFuturasCompras(tenderType);
+				}
+			}
+		});
+		return cFuturasComprasCheck;
+	}
+	// ------------------------------------
+
 	/**
 	 * This method initializes cTransferParamsPanel	
 	 * 	
@@ -3304,7 +3823,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 * 	
 	 * @return org.compiere.swing.CTextField	
 	 */
-	private CTextField getCCouponNumberText() {
+	public CTextField getCCouponNumberText() {
 		if (cCouponNumberText == null) {
 			cCouponNumberText = new CTextField();
 			cCouponNumberText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_SMALL_FIELD_WIDTH,20));
@@ -3314,7 +3833,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cCouponNumberText;
 	}
 	
-	private CTextField getCCouponBatchNumberText() {
+	public CTextField getCCouponBatchNumberText() {
 		if (cCouponBatchNumberText == null) {
 			cCouponBatchNumberText = new CTextField();
 			cCouponBatchNumberText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_SMALL_FIELD_WIDTH,20));
@@ -4210,7 +4729,45 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				public void actionPerformed(ActionEvent e) {
 					if(!isProcessing()){
 						updateProcessing(true);
-						completeOrder();
+						
+						// dREHER Valido importes, etc para adelantarme a los errores
+						// del tipo Debe completar datos del cliente...
+						try {
+							getModel().validatePayments(getOrder());
+						} catch (PosException ex) {
+							ex.printStackTrace();
+							errorMsg(ex.getMessage());
+							
+							
+							debug("Verificar si debo anular el ultimo pago Clover...");
+							if(isOnLineMode())
+								CobrosClover(true);
+							
+							updateProcessing(false);
+														
+							return;
+						}
+
+						// dREHER si NO esta en modo TrxClover Online hago las validaciones habituales
+						// caso contrario debo esperar al final para validar contra Clover
+						
+						debug("Estoy en modo clover online? " + isOnLineMode());
+						
+						/**
+						 * Recorrer los medios de Pago y sobre aquellos que son del tipo tarjeta
+						 * ir llamando a Clover
+						 * dREHER
+						 */
+						boolean isOk = true;
+						if(isOnLineMode())
+							isOk = CobrosClover(false);
+						
+						if(isOk)
+							completeOrder();
+						else {
+							updateProcessing(false);
+							
+						}
 					}
 				}
 				
@@ -4586,7 +5143,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return cAddOrderButton;
 	}
 
-
+	/**
+	 * Panel para el retiro de efectivo, cuando se paga con tarjeta
+	 * 
+	 * Este panel solo se muestra si el Pto Venta tiene configurado que se puede retirar efectivo
+	 * y la entidad financiera asociada a la marca de la tarjeta, tambien tiene habilitado retirar efectivo
+	 * 
+	 * dREHER
+	 * @return
+	 */
 	private CPanel getCCashReturnPanel() {
 		if (cCashReturnPanel == null) {
 			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
@@ -4594,13 +5159,34 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			gridBagConstraints1.gridy = 0;
 			gridBagConstraints1.anchor = GridBagConstraints.WEST;
 			gridBagConstraints1.insets = new Insets(3, 0, 0, 0);
+			
 			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
 			gridBagConstraints2.gridx = 0;
 			gridBagConstraints2.gridy = 1;
 			gridBagConstraints2.anchor = GridBagConstraints.WEST;
 			gridBagConstraints2.insets = new Insets(9, 0, 0, 0);
+			
+			GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
+			gridBagConstraints3.gridx = 1;
+			gridBagConstraints3.gridy = 0;
+			gridBagConstraints3.anchor = GridBagConstraints.WEST;
+			gridBagConstraints3.insets = new Insets(3, 0, 0, 0);
+			
+			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
+			gridBagConstraints4.gridx = 0;
+			gridBagConstraints4.gridy = 2;
+			gridBagConstraints4.anchor = GridBagConstraints.WEST;
+			gridBagConstraints4.insets = new Insets(9, 0, 0, 0);
+			
 			cCashReturnAmtLabel = new CLabel();
 			cCashReturnAmtLabel.setText(MSG_CASH_RETIREMENT);
+			
+			CLabel cCashReturnAmtLabel2 = new CLabel();
+			cCashReturnAmtLabel2.setText("Montos Disponibles");
+			// dREHER por ahora no lo dejo visible, ya que el monto del retiro en efectivo, se tomara desde Clover
+			cCashReturnAmtLabel2.setVisible(false);
+			
+			
 			cCashReturnPanel = new CPanel();
 			cCashReturnPanel.setBorder(BorderFactory.createCompoundBorder(
 					BorderFactory.createEmptyBorder(0, 6, 0, 0),
@@ -4608,14 +5194,60 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 							.createEtchedBorder(EtchedBorder.LOWERED),
 							BorderFactory.createEmptyBorder(0, 5, 5, 5))));
 			cCashReturnPanel.setLayout(new GridBagLayout());
+			
 			cCashReturnPanel.add(cCashReturnAmtLabel, gridBagConstraints1);
-			cCashReturnPanel.add(getCCashReturnAmtText(), gridBagConstraints2);
+			// cCashReturnPanel.add(cCashReturnAmtLabel, gridBagConstraints3);
+			
+			
+			// dREHER creo ambos editores de retiro efectivo
+			cCashReturnPanel.add(getCCashReturnCombo(), gridBagConstraints2);
+			cCashReturnPanel.add(getCCashReturnAmtText(), gridBagConstraints4);
+			
 		}
+
+		// dREHER dependiendo de la modalidad Clover, habilito uno u otro
+		getCCashReturnCombo().setEnabled(false);
+		getCCashReturnAmtText().setEnabled(false);
+		getCCashReturnAmtText().setReadWrite(false);
+		
+		// dREHER por ahora no lo dejo visible, ya que el monto del retiro en efectivo, se tomara desde Clover
+		
+		// 20240806 se reactiva mostrar valores y comparar con lo recibido desde Clover
+		// v 3.0
+		getCCashReturnCombo().setVisible(true);
+		getCCashReturnCombo().setEnabled(true);
+		
 		return cCashReturnPanel;
 	}
 	
-	private VNumber getCCashReturnAmtText(){
-		if(cCashReturnAmtText == null){
+	// dREHER
+	private CComboBox getCCashReturnCombo() {
+		if (cCashReturnCombo == null) {
+			cCashReturnCombo = new CComboBox();
+			cCashReturnCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH, 20));
+			cCashReturnCombo.setValue(0);
+			cCashReturnCombo.setMandatory(false);
+			cCashReturnCombo.addActionListener(new java.awt.event.ActionListener() {
+
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					
+					Object tmp = cCashReturnCombo.getSelectedItem();
+					if(tmp!=null) {
+						BigDecimal monto = new BigDecimal((String)tmp);
+						getCCashReturnAmtText().setValue(monto);			
+					}
+					
+				}
+			});
+			
+			FocusUtils.addFocusHighlight(cCashReturnCombo);
+			
+		}
+		return cCashReturnCombo;
+	}
+
+	private VNumber getCCashReturnAmtText() {
+		if (cCashReturnAmtText == null) {
 			cCashReturnAmtText = new VNumber();
 			cCashReturnAmtText.setDisplayType(DisplayType.Amount);
 			cCashReturnAmtText.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
@@ -4699,7 +5331,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		return result;
 	}
-	
+
+	// dREHER
+	private void debug(String msg) {
+		System.out.println("TPV - " + msg);
+	}
+
 	private void searchProduct(String code) {
 		TimeStatsLogger.beginTask(MeasurableTask.POS_SEARCH_PRODUCT);
 		TimeStatsLogger.beginTask(MeasurableTask.POS_SEARCH_PRODUCT_SHOW_INFOPRODUCT);
@@ -4910,6 +5547,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	
 	protected void removeOrderProduct(OrderProduct orderProduct) {
 		getOrder().removeOrderProduct(orderProduct);
+		// ------------------------------------
+		// HTS 1.0
+		// ------------------------------------
+		// Por si el eliminado es el FUTURAS COMPRAS, se elimina del modelo tmb
+		// ------------------------------------
+		getModel().removeOrderProduct(orderProduct);
+		// ------------------------------------
 		getOrderTableUtils().refreshTable();
 		getCProductNameDetailLabel().setText("");
 		updateTotalAmount();
@@ -4978,11 +5622,180 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					return;
 				}
 			}
+			
+			// Cancelar cobros Clover Online si esta activo
+			if(isOnLineMode()) {
+				
+				debug("Esta en modo Online Clover, verificar si hay cobros con tarjetas realizados y enviar anulacion de los mismos");
+				
+				AnularCobrosClover();
+				
+			}else
+				debug("Se encuentra en modo offline, no debe anular cobros Clover");
+			
 			// Nuevo pedido
 			newOrder();
 		}
 	}	
 	
+	/**
+	 * Metodo que permite alternar entre modo On/Off line mode (Clover)
+	 * 
+	 * dREHER
+	 */
+	private void alterOnOffLineMode() {
+		if(isOnLineMode()) {
+			
+			boolean puedoCambiarModoOffLine = true;
+			
+			if(!isAlterClover)
+				puedoCambiarModoOffLine = userHabilitaOffLineClover();
+
+			if(puedoCambiarModoOffLine) {
+				getModel().getPoSConfig().setOnLineClover(false);
+				isOnLineClover = false;
+
+				debug("Se cierra la conexion con Clover");
+			}else
+				errorMsg("NO tiene autorizacion para cambiar a modo OffLine Clover!");
+			
+		}else {
+
+			if(!isOnLineClover)
+				isOnLineClover = ValidaConnectClover(getModel().getPoSConfig());
+			
+			getModel().getPoSConfig().setOnLineClover(isOnLineClover);
+
+			debug("Se realizo la conexion con Clover...");
+		}
+		
+		debug("Alterno entre modo On/Off line mode (Clover)");
+		
+		showCamposTarjeta(isOnLineClover);
+		
+		refreshTitle(true);
+	}
+	
+	private boolean userHabilitaOffLineClover(){
+		boolean isOkCambiarOffLineMode=true;
+		
+		
+/**
+ * TODO: ver si se habilita algun usuario con permisos extras para alternar modo online/offline aunque NO este 
+ * habilitado en el TPV la posibilidad de cambio
+ * dREHER
+ * 
+ */ 		
+		AuthOperation authOperation = new AuthOperation(UserAuthConstants.POS_INIT_UID,
+				"Alternar modo OffLine Clover",
+				"POS_ALTER_CLOVER"); // UserAuthConstants.POS_INIT_MOMENT
+		authOperation.setMustSave(true);
+		getAuthDialog().addAuthOperation(authOperation);
+		getAuthDialog().authorizeOperation("POS_ALTER_CLOVER"); // \"UserAuthConstants.POS_INIT_MOMENT
+		CallResult result = getAuthDialog().getAuthorizeResult(true);
+		if (result == null) {
+			isOkCambiarOffLineMode=false;
+		}else {
+			if (result.isError()) {
+				if (!Util.isEmpty(result.getMsg(), true)) {
+					isOkCambiarOffLineMode=false;
+				}
+				isOkCambiarOffLineMode=false;
+			}
+		}
+		
+		return isOkCambiarOffLineMode;
+	}
+
+	// dREHER
+	private CLabel getCCreditCardNumberLabel() {
+		if(cCreditCardNumberLabel==null) {
+			cCreditCardNumberLabel = new CLabel();
+			cCreditCardNumberLabel.setText(MSG_CARD_NUMBER);
+		}
+		return cCreditCardNumberLabel;
+	}
+	
+	// dREHER
+	private CLabel getCCardLabel() {
+		if(cCardLabel==null) {
+			cCardLabel = new CLabel();
+			cCardLabel.setText(MSG_INSERT_CARD + " " + KeyUtils.getKeyStr(getActionKeys().get(GOTO_INSERT_CARD)));
+		}
+		return cCardLabel;
+	}
+	
+	// dREHER
+	private JSeparator getCCardSeparator() {
+		if(cCardSeparator==null) {
+			cCardSeparator = new JSeparator();
+			cCardSeparator.setPreferredSize(new Dimension(S_TENDERTYPE_PANEL_WIDTH, 5));
+		}
+		return cCardSeparator;
+	}
+	
+	// dREHER
+	private CLabel getCPosnetLabel(){
+		if(cPosnetLabel==null) {
+			cPosnetLabel = new CLabel();
+			cPosnetLabel.setText(MSG_POSNET);
+		}
+		return cPosnetLabel;
+	}
+	
+	/**
+	 * Si esta en modo Online ocultar/desactivar los campos que no llenan a mano, en modalidad offline
+	 * volver a desplegar todos los campos
+	 * 
+	 * dREHER
+	 * @param isOnLineClover2
+	 */
+	private void showCamposTarjeta(boolean isOnLineClover2) {
+		
+		if(cCreditCardNumberLabel!=null)
+			cCreditCardNumberLabel.setVisible(!isOnLineClover2);
+		if(cCardLabel!=null)
+			cCardLabel.setVisible(!isOnLineClover2);
+		if(cPosnetLabel!= null)
+			cPosnetLabel.setVisible(!isOnLineClover2);
+		if(cCardSeparator!=null)
+			cCardSeparator.setVisible(!isOnLineClover2);
+		
+		getCCreditCardNumberText().setEnabled(!isOnLineClover2);
+		getCCreditCardNumberText().setEditable(!isOnLineClover2);
+		getCCreditCardNumberText().setVisible(!isOnLineClover2);
+		getCPosnetText().setEnabled(!isOnLineClover2);
+		getCPosnetText().setEditable(!isOnLineClover2);
+		getCPosnetText().setVisible(!isOnLineClover2);
+		getCCardText().setEnabled(!isOnLineClover2);
+		getCCardText().setEditable(!isOnLineClover2);
+		getCCardText().setVisible(!isOnLineClover2);
+		
+		FocusUtils.addFocusHighlight(getCBankCombo());
+		
+	}
+
+	/**
+	 * Metodo que permite alternar entre modo On/Off contingencia mode (CAEA)
+	 * 
+	 * dREHER
+	 * @throws PosException 
+	 */
+	private void alterOnOffContingencyMode() throws PosException {
+		if(getModel().getPoSConfig().isContingencia())
+			getModel().getPoSConfig().setContingencia(false);
+		else
+			getModel().getPoSConfig().setContingencia(true);
+		
+		debug("Alterno entre modo On/Off contingencia mode (CAEA)");
+		
+		// Se valida la configuraci��n del TPV.
+		getModel().validatePoSConfig();
+		debug("Valido la configuracion del POS");
+		refreshTitle(true);
+		updateStatusDB();
+	}
+
 	/**
 	 * @return Devuelve actionKeys.
 	 */
@@ -5016,7 +5829,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		BusinessPartner bp = getModel().getBPartner(bPartnerID);
 		getOrder().setBusinessPartner(bp);
-		
+		getModel().getOtherTaxes();
+		getOrder().setOtherTaxes(getModel().loadBPOtherTaxes(bp));
+
 		getCTaxIdText().setText("");
 		getCCustomerDescriptionText().setText("");
 //		setCustomerDataVisible(getOrder().getBusinessPartner().getIVACategory() == MCategoriaIva.CONSUMIDOR_FINAL);
@@ -5048,6 +5863,22 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		 	refreshOrderProductsTable();
 		 	updatePaymentsTable();
 		}
+		
+		/*
+		 * Se comenta por las nuevas modificaciones a Cuenta Corriente, notificaci��n
+		 * obsoleta alertAutomaticCreditNote();
+		 */
+		
+		// dREHER
+		try {
+			getModel().validateBPartner();
+		} catch (PosException e) {
+			errorMsg("El cliente seleccionado tiene configurado 'Ocultar Descuento en Factura', NO se puede utilizar con Controladores Fiscales!");
+			getCClientText().setValue(null);
+			getOrder().setBusinessPartner(null);
+			load = false;
+		}
+		
 		setCustomerDataDescriptionText();
 		updateStatusDB();
 		
@@ -5104,23 +5935,78 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		refreshPaymentMediumInfo();
 	}
 	
+	/**
+	 * Verifica el modo en que trabaja Clover con TPV
+	 * @return true-> modo online clover, false-> modo offline clover
+	 * dREHER
+	 */
+	public boolean isOnLineMode() {
+		return getModel().getPoSConfig().isOnLineClover();
+	}
+	
+	/**
+	 * Determina si se puede o no retirar efectivo en funcion de la tarjeta seleccionada
+	 * 
+	 * Si estamos en modo manual de carga de tarjetas, debe coincidir la config del TPV y la de la entidad financiera
+	 * Si estamos en modo online clover, si el TPV lo permite, dependera del Clover si se puede o no retirar efectivo
+	 * 
+	 * @return true=SI se puede retirar efectivo, false=NO se puede retirar efectivo 
+	 * dREHER
+	 */
+	private boolean isRetiraEfectivo() {
+		boolean isRetiraTPV = getModel().getPoSConfig().isAllowCreditCardCashRetirement();
+		
+		debug("isRetiraEfectivo().OnLineClover=" + isOnLineMode() + " TPV habilita retiro de $=" + isRetiraTPV);
+		
+		return isRetiraTPV
+					&& (getSelectedPaymentMedium() != null && getSelectedPaymentMedium().getEntidadFinanciera() != null
+					&& getSelectedPaymentMedium().getEntidadFinanciera().isCashRetirement());
+	}
+
+	/**
+	 * Muestra los componentes del tipo de pago Tarjeta
+	 * En caso de trabajar en modo OnLine (Clover) este panel
+	 * cambia, ya que la informacion sera recibida desde Clover y actualizada
+	 * en el TPV y no cargada a mano
+	 * 
+	 * dREHER
+	 */
 	private void updateCreditCardTenderTypeComponents() {
-		showTenderTypeParamsPanel(getCCreditCardParamsPanel(), getCCreditCardInfoPanel());
+		
+		debug("updateCreditCardTenderTypeComponents...");
+		
+		showTenderTypeParamsPanel(getCCreditCardParamsPanel(isOnLineMode()), getCCreditCardInfoPanel());
 		getCCreditCardInfoPanel().setVisible(true);
-		getCCashReturnPanel()
-				.setVisible(
-						getModel().getPoSConfig()
-								.isAllowCreditCardCashRetirement()
-								&& (getSelectedPaymentMedium() != null
-										&& getSelectedPaymentMedium()
-												.getEntidadFinanciera() != null && getSelectedPaymentMedium()
-										.getEntidadFinanciera()
-										.isCashRetirement()));
+		
+		// dREHER En modo offLine, habilitar el campo de lectura / escritura segun corresponda
+		// Si esta Online pero NO es tarjeta real, ej QR Nave, continuar modalidad manual
+				
+		boolean isRealCreditCard = isRealCreditCard();
+		
+		getCCashReturnPanel().setVisible(isRetiraEfectivo());
+		
+		if(!isOnLineMode() || !isRealCreditCard) { 
+			// getCCashReturnAmtText().setReadWrite(isRetiraEfectivo());
+			
+			// v 3.0 el campo de monto siempre de solo lectura, se completa con el monto del combo
+			getCCashReturnAmtText().setReadWrite(false);
+			getCCashReturnCombo().setEnabled(isRetiraEfectivo());
+			debug("OffLine Clover o NO tarjeta real: retira efectivo? " + isRetiraEfectivo());
+		}else {
+			getCCashReturnAmtText().setReadWrite(false);
+			// v 3.0
+			if(!isRealCreditCard)
+				getCCashReturnCombo().setEnabled(false);
+			debug("Es Online Clover y NO Tarjeta real. NO puede retirar efectivo!");
+		}
+		
 		EntidadFinancieraPlan currentPlan = getSelectedCreditCardPlan();
 		getCAmountText().setReadWrite(currentPlan != null);
 		if (currentPlan == null) {
 			getCAmountText().setValue(null);
 		}
+		
+		
 	}
 	
 	private void updateCreditNoteTenderTypeComponents() {
@@ -5154,10 +6040,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			return;
 		// El importe no puede ser null
 		} else if (amount == null) {
+			debug("El importe del medio de pago es NULO!");
 			errorMsg(MSG_NO_AMOUNT_ERROR);
 			return;
 		// El importe no puede ser menor o igual que cero
 		} else if (amount.compareTo(new BigDecimal(0.0)) <= 0) {
+			debug("El importe del medio de pago es CERO o MENOS!");
 			errorMsg(MSG_INVALID_PAYMENT_AMOUNT_ERROR);
 			return;
 		// Si el balance es positivo implica que no hay mas nada que pagar (ya se
@@ -5253,8 +6141,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					acctDate, bankAccountID, paymentMedium.getCheckDeadLine());
 			payment.setTenderType(tenderType);
 			payment.setTypeName(paymentMedium.getName());
-			((CheckPayment)payment).setCuitLibrador(cuitLibrador); // Si locale AR no está activo esto es null;
-			
+			((CheckPayment) payment).setCuitLibrador(cuitLibrador); // Si locale AR no est�� activo esto es null;
+
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Esta relaci��n entre el cobro y el FUTURAS COMPRAS
+			// permite que al eliminar el cobro se elimine tambi��n el futuras relacionado
+			// ------------------------------------
+			// Agregar la relaci��n entre el cobro y el futuras actual
+			getModel().addFuturasPaymentRelation(payment, null);
+			getModel().removeFuturasCompras(tenderType);
+			getCFuturasComprasCheck().setSelected(false);
+			// ------------------------------------
+
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCheckNumberText().setText("");
 			getCCheckEmissionDate().setValue(TODAY);
@@ -5288,6 +6188,25 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			// -> Reemplazado por EntidadFinanciera Plan
 			// EntidadFinanciera entidadFinanciera = (EntidadFinanciera)getCCreditCardCombo().getValue();
 			// <-
+			
+			
+			/**
+			 * Si esta trabajando en modo Online Clover, traer los datos de:
+			 * 
+			 * Cupon, Lote y cantidad de cuotas, desde Clover y no cargando la ventana manual
+			 * 
+			 * Si NO se trata de una tarjeta REAL ej QR Nave, trabaja normalmente en modo manual
+			 * 
+			 * dREHER
+			 */
+			
+			boolean isRealCreditCard = isRealCreditCard();
+			
+			if(!isOnLineMode() || !isRealCreditCard)
+				openCreditCardPosnetDataDialog();
+			else 
+				debug("No habilita popup de tarjetas, porque trabaja con Clover Online...");
+			
 			EntidadFinancieraPlan creditCardPlan = getSelectedCreditCardPlan();
 			String posnet = getCPosnetText().getText();
 			String creditCardNumber = getCCreditCardNumberText().getText();
@@ -5319,25 +6238,38 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				errorMsg(MSG_CASH_RETIREMENT_EXCEEDS_LIMIT);
 				return;
 			}
-			extraValidationsResult = getExtraPOSPaymentAddValidations()
-					.validateCreditCardPayment(this, creditCardNumber,
-							couponNumber, couponBatchNumber, cashRetirementAmt);
-			if(extraValidationsResult.isError()){
-				errorMsg(extraValidationsResult.getMsg());
+
+			// dREHER
+			// Si no se valid�� con posnet
+			if (!isCreditCardPostnetValidated() && (!isOnLineMode() || !isRealCreditCard)) {
+				debug("Esta en Modo OffLine Clover, debe validar tarjeta mediante popup de datos...");
 				return;
 			}
 			
-			payment = new CreditCardPayment(creditCardPlan, creditCardNumber,
-					couponNumber, bankName, posnet, couponBatchNumber, cashRetirementAmt);
-						
-			payment.setTypeName(paymentMedium.getName());
+			// dREHER si NO esta en modo TrxClover Online hago las validaciones habituales
+			// caso contrario debo esperar al final para validar contra Clover
+			if(!isOnLineMode() || !isRealCreditCard) {
+				extraValidationsResult = getExtraPOSPaymentAddValidations().validateCreditCardPayment(this,
+						creditCardNumber, couponNumber, couponBatchNumber, cashRetirementAmt);
+				if (extraValidationsResult.isError()) {
+					errorMsg(extraValidationsResult.getMsg());
+					return;
+				}
+			}
 			
+			payment = new CreditCardPayment(creditCardPlan, creditCardNumber, couponNumber, bankName, posnet,
+					couponBatchNumber, cashRetirementAmt);
+
+			payment.setTypeName(paymentMedium.getName());
+			((CreditCardPayment) payment).setCustomerName(getcCreditCardTitularTxt().getText());
+
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCreditCardNumberText().setText("");
 			getCCouponNumberText().setText("");
 			getCCouponBatchNumberText().setText("");
 			getCCardText().setText("");
 			getCCashReturnAmtText().setValue(BigDecimal.ZERO);
+			getcCreditCardTitularTxt().setText("");
 			clearBankCombo();
 
 		} else if (MPOSPaymentMedium.TENDERTYPE_CreditNote.equals(tenderType)) {
@@ -5355,9 +6287,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			} else if(getOrder().existsCreditNote(invoiceID)){
 				errorMsg(MSG_CREDIT_NOTE_REPEATED_ERROR);
 				return;
-			// El importe no puede ser mayor al monto pendiente de la nota de crédito
-			} else if (amount.compareTo(availableAmt) > 0) {
+				// El importe no puede ser mayor al monto pendiente de la nota de cr��dito
+			} else if (amount.setScale(2, RoundingMode.HALF_UP).compareTo(availableAmt.setScale(2, RoundingMode.HALF_UP)) > 0) {
 				errorMsg(MSG_AMOUNT_GREATHER_THAN_AVAILABLE);
+				debug("addPayment. Monto de este pago (redondeo a 2 decimales): " + amount + " Saldo abierto NC:" + availableAmt);
+				debug("addPayment. Monto de este pago (redondeo a 2 decimales): " + amount.setScale(2, RoundingMode.HALF_UP) + " Saldo abierto NC:" + availableAmt.setScale(2, RoundingMode.HALF_UP));
 				getCAmountText().setValue(availableAmt);
 				return;
 			// El importe no puede superar el saldo pendiente del pedido
@@ -5412,6 +6346,18 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			payment = new CreditNotePayment(invoiceID, availableAmt, balanceAmt, returnCash, returnCashAmt);
 			payment.setTenderType(tenderType);
 			payment.setTypeName(paymentMedium.getName());
+
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Esta relaci��n entre el cobro y el FUTURAS COMPRAS
+			// permite que al eliminar el cobro se elimine tambi��n el futuras relacionado
+			// ------------------------------------
+			// Agregar la relaci��n entre el cobro y el futuras actual
+			getModel().addFuturasPaymentRelation(payment, null);
+			getModel().removeFuturasCompras(tenderType);
+			getCFuturasComprasCheck().setSelected(false);
+			// ------------------------------------
 
 			// Se limpian los campos para ingresar un nuevo pago.
 			getCCreditNoteSearch().setValue(null);
@@ -5494,7 +6440,38 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		TimeStatsLogger.endTask(MeasurableTask.POS_ADD_PAYMENT);
 	}
 	
-	protected void updatePaymentsTable() {
+	/**
+	 * Determina si la entidad financiera seleccionada es del tipo Tarjeta REAL
+	 * 
+	 * Si esta en modo Clover Online, debe validar si realmente se trata de Tarjetas para pasar por Clover
+	 * caso contrario comportamiento estandard (ingreso de informacion manual)
+	 * 
+	 * @return Si -> es tarjeta, No -> es una entidad NO tarjeta, Ej.QR Nave
+	 * dREHER
+	 */
+	private boolean isRealCreditCard() {
+		boolean isCreditCard = false;
+		
+		PaymentMedium paymentMedium = getSelectedPaymentMedium();
+		if(paymentMedium != null) {
+			EntidadFinanciera entidadFinanciera = paymentMedium.getEntidadFinanciera();
+			isCreditCard = isRealCreditCard(entidadFinanciera.getId());
+		}
+		
+		return isCreditCard;
+	}
+	
+	private boolean isRealCreditCard(int id) {
+		boolean isCreditCard = false;
+		
+		String ct = DB.getSQLValueString(null, "SELECT CardSymbolClover FROM M_EntidadFinanciera WHERE M_EntidadFinanciera_ID=?", id);
+		if(ct!=null && !ct.isEmpty())
+			isCreditCard = true;
+		
+		return isCreditCard;
+	}
+
+	private void updatePaymentsTable() {
 		getPaymentTableModel().fireTableDataChanged();
 		getPaymentsTableUtils().refreshTable();
 		if(getPaymentsTableUtils().getSelection() == null)
@@ -5540,6 +6517,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					}
 				}	
 			}
+			// ------------------------------------
+			// HTS 1.0
+			// ------------------------------------
+			// Si se elimina el cobro, el FUTURAS COMPRAS relacionado tambi��n
+			// ------------------------------------
+			removeFuturasPaymentRelation(payment);
+			// ------------------------------------
 			getOrder().removePayment(payment);
 			getPaymentTableModel().fireTableDataChanged();
 			getPaymentsTableUtils().refreshTable();
@@ -5611,12 +6595,26 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				errorMsg = null;
 				errorDesc = null;
 				try {
+					
 					getModel().setDocActionStatusListener(docActionStatusListener);
 					getModel().setFiscalPrintListeners(infoFiscalPrinter, infoFiscalPrinter);
 					getModel().setElectronicListener(infoElectronic);
 					CPreparedStatement.setNoConvertSQL(true);
 					getModel().setAuthorizationModel(getAuthDialog().getUserAuth().getUserAuthModel());
-					getModel().completeOrder();
+					CallResult result = getModel().completeOrder();
+					if (result.isError()) {
+						errorDesc = result.getMsg();
+						debug("Volvio de completeOrder con error: " + errorDesc);
+					}
+
+					/**
+					 * Si al guardar la factura correspondiente se produce una excepcion, mostrar
+					 * mensaje al usuario y volver al estado anterior al TPV (no perder todo lo
+					 * cargado hasta el momento)
+					 * 
+					 * dREHER
+					 */
+
 				} catch (InsufficientCreditException e) {
 					errorMsg = MSG_INSUFFICIENT_CREDIT_ERROR;
 					errorDesc = Util.isEmpty(e.getMessage()) ? e.getCause()
@@ -5630,6 +6628,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				} catch (InvoiceCreateException e) {
 					errorMsg = MSG_CANT_CREATE_TICKET_ERROR + ". " + MSG_INVOICE_CREATE_ERROR;
 					errorDesc = getMsg(e.getMessage());
+
+					debug("Se produjo un error al crear ticket: " + errorMsg + ":" + errorDesc);
+
 				} catch (FiscalPrintException e) {
 					errorMsg = FISCAL_PRINT_ERROR;
 				} catch (GeneratingCAEError e) {
@@ -5644,6 +6645,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				finally
 				{
 					CPreparedStatement.setNoConvertSQL(false);
+					
+					if(errorMsg!=null) {
+						// dREHER
+						if(isOnLineMode()) {
+							debug("Verificar si debo anular el ultimo pago Clover si es que termino Ok...");
+							AnularCobrosClover();
+						}
+					}
+					
 				}
 				return errorMsg == null;
 			}
@@ -5653,7 +6663,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				boolean success = (Boolean)getValue();
 				boolean fiscalPrintError = errorMsg != null && errorMsg.equals(FISCAL_PRINT_ERROR);
 				boolean generatingCAEError = errorMsg != null && errorMsg.equals(GENERATING_CAE_ERROR);
-				if(success) {
+				if (success) {
+
+					// dREHER, mostrar mensaje al usuario, pero completar nueva orden...
+					if (errorMsg == null && errorDesc != null) {
+						errorMsg(errorDesc);
+					}
+
 					newOrder();
 				} else if (!fiscalPrintError && !generatingCAEError) {
 					if(errorDesc == null)
@@ -5664,14 +6680,24 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					//waitingDialog.setVisible(false);
 					//getFrame().setEnabled(true);
 				}
+
 				if (!fiscalPrintError && !generatingCAEError) {
 					getFrame().setBusy(false);
 					mNormal();
 					updateProcessing(false);
 				}	
+			
+				/**
+				 * Comentado este metodo
+				 * dREHER
+				 */
+				
+				/*
 				if(!success) {
 					doOperationsOnErrorCompleteOrder();
 				}
+				*/
+				
 			}
 		};
 
@@ -5680,16 +6706,26 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getFrame().setBusyMessage(waitMsg);
 		getFrame().setBusyTimer(4);
 		getFrame().setBusy(true);
-		
-		//getFrame().setEnabled(false);
-		//waitingDialog.setVisible(true);
-		//waitingDialog.repaint();
-		
+
+		// getFrame().setEnabled(false);
+		// waitingDialog.setVisible(true);
+		// waitingDialog.repaint();
 
 		worker.start();
-	}	
-	
-	protected void newOrder() {
+	}
+
+	/**
+	 * Este metodo verifica los medios de pago tarjeta y si efectivamente se cobraron en Clover y envia anulacion de los mismos
+	 * dREHER 
+	 */
+	protected void AnularCobrosClover() {
+		
+		CobrosClover(true);
+		
+	}
+
+	private void newOrder() {
+		
 		if (infoFiscalPrinter != null) {
 			infoFiscalPrinter.setVisible(false);
 			infoFiscalPrinter.clearDetail();
@@ -5698,12 +6734,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			infoElectronic.setVisible(false);
 			infoElectronic.clearDetail();
 		}
+		
 		getManualDiscountAuthOperation().setAuthorized(true);
 		getManualDiscountAuthOperation().setAuthTime(null);
 		getAuthDialog().markAuthorized(UserAuthConstants.POS_FINISH_MOMENT, true);
 		getAuthDialog().reset();
 		getAuthDialog().getUserAuth().getUserAuthModel().resetAuthorizationsDone();
 		getModel().newOrder();
+		// ------------------------------------
+		// HTS 1.0
+		// ------------------------------------
+		// El cheque no puede superar la venta
+		// ------------------------------------
+		getOrder().setAllowSurpassCheckAmount(false);
+		// ------------------------------------
 		getModel().loadDefaultPriceList(windowNo);
 		getOrderTableUtils().refreshTable();
 		getPaymentsTableUtils().refreshTable();
@@ -5712,6 +6756,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		clearComponent(getCClientLocationCombo());
 		clearComponent(getCTaxIdText());
 		clearComponent(getCAmountText());
+		clearComponent(getCCreditCardNumberText());
+		
+		// dREHER
+		clearComponent(getCCashReturnAmtText());
+
+		// dREHER vuelve a la configuracion de Clover Original desde TPV
+		InicializaClover();
+		refreshTitle(true);
+		
 		loadBPartner(getModel().getDefaultBPartner());
 		selectTenderType(MPOSPaymentMedium.TENDERTYPE_Cash);
 		getCProductNameDetailLabel().setText("");
@@ -5725,6 +6778,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getCGeneralDiscountPercText().setValue(BigDecimal.ZERO);
 		updateAllowClose();
 		updateStatusDB();
+
+		// dREHER que siempre el foco en una nueva orden este en el campo PRODUCTO...
+		getCProductCodeText().requestFocus();
+		
+		// dREHER Inicializar ultimo pago Clover
+		lastPayment = null;
+		
 		TimeStatsLogger.endTask(MeasurableTask.POS_COMPLETE_ORDER);
 	}
 	
@@ -5801,6 +6861,15 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			setActionEnabled(CHANGE_FOCUS_CUSTOMER_AMOUNT, false);
 			setActionEnabled(CANCEL_ORDER, true);
 			setActionEnabled(INSERT_PROMOTIONAL_CODE, true);
+			
+			// dREHER
+			// Si estoy en la pesta��a de pedido, volver a habilitar el modo alternativo on/off line mode (clover)
+			setActionEnabled(ALTER_ONOFFLINE_MODE, true);
+			
+			// dREHER
+			// Si estoy en la pesta��a de pedido, volver a habilitar el modo on/off de contingencia (CAEA)
+			setActionEnabled(ALTER_CONTINGENCY_MODE, true);
+			
 			getStatusBar().setStatusLine(MSG_POS_ORDER_STATUS);
 			getCPosTab().setTitleAt(0, MSG_ORDER);
 			// Muestra el panel de total dentro del panel superior del pedido.
@@ -5827,6 +6896,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			setActionEnabled(CHANGE_FOCUS_GENERAL_DISCOUNT, true);
 			setActionEnabled(CANCEL_ORDER, true);
 			setActionEnabled(GOTO_INSERT_CARD, true);
+			
+			
+			// dREHER
+			// Solo alternar el funcionamiento estando en el pedido, una vez que se llego a la pesta��a pago, deshabilitar opcion
+			setActionEnabled(ALTER_ONOFFLINE_MODE, false);
+			
+			// dREHER
+			// Solo alternar el funcionamiento estando en el pedido, una vez que se llego a la pesta��a pago, deshabilitar opcion
+			setActionEnabled(ALTER_CONTINGENCY_MODE, false);
+			
 			getStatusBar().setStatusLine(MSG_POS_PAYMENT_STATUS);
 			// Se carga el cliente que tenga asignado el pedido. (pedidos pre creados)
 			/*if(getOrder().getBusinessPartner() != null) {
@@ -5888,10 +6967,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	protected void errorMsg(String msg, String subMsg) {
 		ADialog.error(getWindowNo(),this,msg,subMsg);
 	}
-	
+
+	// ************************************************
+	// HTS 4.0
+	// ************************************************
+	protected boolean askMsg(String msg, String subMsg, boolean warning) {
+		log.warning("askMsg: msg= " + msg + " subMsg= " + subMsg);
+		return ADialog.ask(getWindowNo(), this, msg, null, subMsg, warning);
+	}
+
 	protected boolean askMsg(String msg, String subMsg) {
 		return ADialog.ask(getWindowNo(),this,msg,subMsg);
 	}
+
+	// ************************************************
 
 	protected boolean askMsg(String msg) {
 		return askMsg(msg,null);
@@ -6308,6 +7397,13 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			}
     		// Posnet
     		getCPosnetText().setValue(getModel().getPoSConfig().getPosnet());
+
+		if(isOnLineMode() && isRealCreditCard())
+			showCamposTarjeta(true);
+		else
+			showCamposTarjeta(false);
+			
+		debug("Esta en el medio de pago, verifica si corresponde OnlineClover para la Entidad Financiera..." + isRealCreditCard());
     	}
     	// Para Tarjetas y Cheques se carga el Banco asociado al MP en el combo de Bancos.
     	// Si tiene banco el MP entonces no puede ser modificado por el usuario.
@@ -6468,10 +7564,16 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		if(amt != null && amt.compareTo(paymentToPayAmt) < 0){
 			oldPaymentToPayAmt = getOrder().getToPayAmount(getSelectedPaymentMediumInfo(), amt);
 			paymentToPayAmt = oldPaymentToPayAmt;
+			
+			// debug("refreshPaymentMediumInfo. amt < paymentToPayAmt");
+			// debug("refreshPaymentMediumInfo. oldPaymentToPayAmt=" + oldPaymentToPayAmt);
+			// debug("refreshPaymentMediumInfo. paymentToPayAmt=" + paymentToPayAmt);
 		}
 		
 		amt = amt == null?getCurrencyOrderOpenAmount():amt;
 		BigDecimal discountBaseAmt = null;
+
+		// debug("refreshPaymentMediumInfo. amt=" + amt);
 		
 		// Total del pedido
     	if(allRemains){
@@ -6510,8 +7612,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		// Importe ingresado o el resto pendiente
 		getCAmountText().setValue(amt);
+
 		// Importe de descuento base del payment actual
 		getModel().setCurrentPaymentDiscountBaseAmount(discountBaseAmt);
+
+		// debug("refreshPaymentMediumInfo. getCAmountText.setValue=" + amt);
+		// debug("refreshPaymentMediumInfo. setCurrentPaymentDiscountBaseAmount=" + discountBaseAmt);
 		
 		// Si es un pago con tarjeta de crédito se calcula y muestra el importe
 		// de cada cuota.
@@ -6523,30 +7629,82 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			BigDecimal cuotaAmt = getToPaymentAmount().divide(new BigDecimal(plan
 					.getCoutasPago()), 10, BigDecimal.ROUND_HALF_UP);
 			getCCreditCardCuotaAmt().setValue(cuotaAmt);
+			
+			// dREHER debe cargar los montos de retiro efectivo, si esto es valido
+			fillComboBoxCashReturn(paymentMedium);
+			
 		}
 		// Si estamos pagando con un crédito, entonces actualizo el saldo que
 		// quedará del crédito seleccionado
 		if(paymentMedium.isCreditNote()){
 			updateCreditNoteBalance();
+			
 		}
 		// Si estamos pagando con efectivo entonces se debe refrescar lo de
 		// efectivo
 		if(paymentMedium.isCash()){
 			updateConvertedAmount();
 		}
-    }
-    
-    /**
-     * Selecciona el esquema de vencimientos inicial default
-     */
-    private void loadDefaultPaymentTerm(){
-    	getCPaymentTermCombo().setSelectedItem(getModel().getDefaultInitialPaymentTerm());
-    }
-    
-    /**
-     * Actualiza el esquema de vencimientos
-     */
-    private void refreshPaymentTerm(PaymentMedium paymentMedium){
+		// ------------------------------------
+		// HTS 1.0
+		// ------------------------------------
+		// Actualizar el FUTURAS COMPRAS
+		// ------------------------------------
+		if (paymentMedium.isCheck()) {
+			boolean visibleFuturas = visibleFuturasComprasCheck();
+			getCFuturasComprasCheck().setVisible(visibleFuturas);
+			getCCheckInfoPanel().setVisible(visibleFuturas);
+			showTenderTypeParamsPanel(getCCheckParamsPanel(), getCCheckInfoPanel());
+		}
+		// ------------------------------------
+	}
+
+	/**
+	 * Vacia y carga los importes a retirar efectivo, segun el medio de pago seleccionado y la entidad financiera asociada
+	 * @param paymentMedium
+	 * dREHER
+	 */
+	private void fillComboBoxCashReturn(PaymentMedium paymentMedium) {
+		getCCashReturnCombo().removeAllItems();
+		
+		EntidadFinanciera ef = paymentMedium.getEntidadFinanciera();
+		if(ef!=null)
+			if(ef.isCashRetirement()) {
+				
+				getCCashReturnCombo().addItem("0");
+				
+				ArrayList<X_C_ExternalServiceAttributes> atts = Utilidades.getDataExtraSEFromTipo(IDServicioExternoClover, "ValoresDefaultRetiroEfectivo", null);
+				for(X_C_ExternalServiceAttributes att: atts) {
+				
+					String data = att.getValue();
+					String[] datas = null;
+					if(data.indexOf(";") > 0) {
+						datas = data.split(";");
+					}else if(data.indexOf(",") > 0) {
+						datas = data.split(",");
+					} else
+						getCCashReturnCombo().addItem(data);
+						
+					if(datas!=null) {
+						for(String tmp: datas)
+							getCCashReturnCombo().addItem(tmp);
+					}
+					
+				}
+			}
+	}
+
+	/**
+	 * Selecciona el esquema de vencimientos inicial default
+	 */
+	private void loadDefaultPaymentTerm() {
+		getCPaymentTermCombo().setSelectedItem(getModel().getDefaultInitialPaymentTerm());
+	}
+
+	/**
+	 * Actualiza el esquema de vencimientos
+	 */
+	private void refreshPaymentTerm(PaymentMedium paymentMedium) {
 		getCPaymentTermCombo().removeAllItems();
 		for (PaymentTerm paymentTerm : getModel().getPaymentTerms(paymentMedium)) {
 			getCPaymentTermCombo().addItem(paymentTerm);
@@ -6700,34 +7858,79 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				balanceCreditNote != null
 						&& balanceCreditNote.compareTo(BigDecimal.ZERO) > 0);
 		getCCreditNoteCashReturnAmtText().setValue(balanceCreditNote);
-    }
-    
-    /**
-     * @return Devuelve el nombre del banco seleccionado en el Combo de bancos.
-     *  Si no hay ningún banco seleccionado devuelve null
-     */
-    protected String getSelectedBankName() {
-    	String bankName = null;
-    	if (getCBankCombo().getValue() != null) {
-    		bankName = getCBankCombo().getDisplay();
-    	}
-    	return bankName;
-    }
-    
-    /**
-     * Limpia la selección del combo de bancos dependiendo del medio de pago
-     * seleccionado.
-     */
-    private void clearBankCombo() {
-    	PaymentMedium paymentMedium = getSelectedPaymentMedium();
-    	if (paymentMedium == null || !paymentMedium.hasBank()) {
-    		getCBankCombo().setValue(null);
-    	}
-    }
+		
+		
+		// debug("refreshPaymentMediumInfo. updateCreditNoteBalance=" + (balanceCreditNote == null ? null
+		//		: (balanceCreditNote.compareTo(BigDecimal.ZERO) >= 0 ? balanceCreditNote : BigDecimal.ZERO)));
+		
+		// ------------------------------------
+		// HTS 1.0
+		// ------------------------------------
+		// Visibilidad del FUTURAS COMPRAS
+		// ------------------------------------
+		getCFuturasComprasCheck().setVisible(visibleFuturasComprasCheck());
+		// ------------------------------------
+	}
+
+	// ------------------------------------
+	// HTS 1.0
+	// ------------------------------------
+	// Visibilidad del FUTURAS COMPRAS
+	// ------------------------------------
+	private boolean visibleFuturasComprasCheck() {
+		boolean visible = false;
+		String tenderType = getSelectedTenderType();
+		if (MPOSPaymentMedium.TENDERTYPE_CreditNote.equals(tenderType)) {
+			BigDecimal balanceCreditNote = (BigDecimal) getCCreditNoteBalanceText().getValue();
+			BigDecimal returningCash = (BigDecimal) getCCreditNoteCashReturnAmtText().getValue() == null
+					? BigDecimal.ZERO
+					: (BigDecimal) getCCreditNoteCashReturnAmtText().getValue();
+			visible = (balanceCreditNote != null && balanceCreditNote.compareTo(BigDecimal.ZERO) > 0
+					&& balanceCreditNote.compareTo(returningCash) > 0)
+					|| getModel().getCurrentFuturas(tenderType) != null
+					|| (((getModel().getCurrentFuturas(tenderType) == null
+							&& !getCCreditNoteCashReturnCheck().isSelected() && balanceCreditNote != null
+							&& balanceCreditNote.compareTo(BigDecimal.ZERO) > 0)
+							|| (getCCreditNoteCashReturnCheck().isSelected() && balanceCreditNote != null
+									&& balanceCreditNote.compareTo(BigDecimal.ZERO) > 0
+									&& balanceCreditNote.compareTo(returningCash) > 0)));
+		} else if (MPOSPaymentMedium.TENDERTYPE_Check.equals(tenderType)) {
+			BigDecimal openAmt = getCurrencyOrderOpenAmount();
+			BigDecimal amount = (BigDecimal) getCAmountText().getValue();
+			visible = (openAmt != null && amount != null && amount.compareTo(openAmt) > 0)
+					|| (openAmt != null && amount != null && getCFuturasComprasCheck().isSelected()
+							&& getModel().getCurrentFuturas(tenderType) != null);
+		}
+		return visible;
+	}
+	// ------------------------------------
 
 	/**
-	 * Muestra el panel de parámetros de un medio de pago junto con un panel de
-	 * información adicional (opcional)
+	 * @return Devuelve el nombre del banco seleccionado en el Combo de bancos. Si
+	 *         no hay ning��n banco seleccionado devuelve null
+	 */
+	protected String getSelectedBankName() {
+		String bankName = null;
+		if (getCBankCombo().getValue() != null) {
+			bankName = getCBankCombo().getDisplay();
+		}
+		return bankName;
+	}
+
+	/**
+	 * Limpia la selecci��n del combo de bancos dependiendo del medio de pago
+	 * seleccionado.
+	 */
+	private void clearBankCombo() {
+		PaymentMedium paymentMedium = getSelectedPaymentMedium();
+		if (paymentMedium == null || !paymentMedium.hasBank()) {
+			getCBankCombo().setValue(null);
+		}
+	}
+
+	/**
+	 * Muestra el panel de par��metros de un medio de pago junto con un panel de
+	 * informaci��n adicional (opcional)
 	 * 
 	 * @param paramsPanel Panel de parámetros a mostrar
 	 * @param infoPanel Panel de información adicional. Puede ser <code>null</code>
@@ -6738,6 +7941,345 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			infoPanel.setVisible(true);
 		}
     }
+    
+
+// dREHER    
+// Inicio de creacion o instancia de paneles -----------------------    
+    
+    /**
+	 * This method initializes cPosTab
+	 * 
+	 * @return javax.swing.JTabbedPane
+	 */
+	private CTabbedPane getCPosTab() {
+		if (cPosTab == null) {
+			cPosTab = new CTabbedPane();
+			cPosTab.setPreferredSize(new java.awt.Dimension(750, 580));
+			cPosTab.addTab(MSG_ORDER, null, getCOrderPanel(), null);
+			cPosTab.addTab(MSG_PAYMENT, null, getCPaymentPanel(), null);
+
+			cPosTab.addChangeListener(new ChangeListener() {
+				public void stateChanged(ChangeEvent event) {
+					selectTab(getCPosTab().getSelectedIndex());
+				}
+			});
+
+			cPosTab.setEnabledAt(1, false);
+			selectTab(0);
+		}
+		return cPosTab;
+	}
+
+    
+	/**
+	 * This method initializes cOrderCenterPanel
+	 * 
+	 * @return org.compiere.swing.CPanel
+	 */
+	private CPanel getCOrderCenterPanel() {
+		if (cOrderCenterPanel == null) {
+			cOrderCenterPanel = new CPanel();
+			cOrderCenterPanel.setLayout(new BoxLayout(getCOrderCenterPanel(), BoxLayout.X_AXIS));
+			cOrderCenterPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(5, 0, 0, 0));
+			cOrderCenterPanel.add(getCOrderTableScrollPane(), null);
+			cOrderCenterPanel.add(getCCommandPanel(), null);
+		}
+		return cOrderCenterPanel;
+	}
+
+	/**
+	 * This method initializes cOrderTableScrollPane
+	 * 
+	 * @return javax.swing.JScrollPane
+	 */
+	private JScrollPane getCOrderTableScrollPane() {
+		if (cOrderTableScrollPane == null) {
+			cOrderTableScrollPane = new CScrollPane();
+			cOrderTableScrollPane.setViewportView(getCOrderTable());
+		}
+		return cOrderTableScrollPane;
+	}
+
+	/**
+	 * This method initializes cOrderTable
+	 * 
+	 * @return javax.swing.JTable
+	 */
+	private JTable getCOrderTable() {
+		if (cOrderTable == null) {
+			cOrderTable = new MiniTable();
+			cOrderTable.setRowSelectionAllowed(true);
+
+			// Creo el Modelo de la tabla.
+			ProductTableModel orderTableModel = new ProductTableModel();
+			// Se vincula la lista de productos en la orden con el table model
+			// para que se muestren en la tabla.
+			orderTableModel.setOrderProducts(getOrder().getOrderProducts());
+			orderTableModel.addColumName(MSG_COUNT);
+			orderTableModel.addColumName(MSG_PRODUCT);
+			orderTableModel.addColumName(MSG_TAXRATE);
+			orderTableModel.addColumName(MSG_UNIT_PRICE);
+			orderTableModel.addColumName(MSG_PRICE);
+			orderTableModel.addColumName(MSG_FINAL_PRICE);
+			orderTableModel.addColumName(MSG_CHECKOUT_IN);
+			cOrderTable.setModel(orderTableModel);
+
+			// Configuracion del renderizado de la tabla.
+
+			// Renderer de cantidad.
+			cOrderTable.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+
+				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3,
+						int arg4, int arg5) {
+					JLabel cmp = (JLabel) super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
+					cmp.setHorizontalAlignment(JLabel.CENTER);
+					return cmp;
+				}
+
+			});
+
+			// Renderer de importes por defecto.
+			cOrderTable.setDefaultRenderer(BigDecimal.class, getNumberCellRendered(amountFormat));
+			cOrderTable.setFocusable(false);
+
+			// Renderer de tasa de impuesto.
+			cOrderTable.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+
+				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3,
+						int arg4, int arg5) {
+					JLabel cmp = (JLabel) super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
+					NumberFormat format = NumberFormat.getNumberInstance();
+					format.setMaximumFractionDigits(1);
+					format.setMinimumFractionDigits(1);
+					String number = format.format(Double.parseDouble(cmp.getText())) + "%";
+					cmp.setText(number);
+					cmp.setHorizontalAlignment(JLabel.CENTER);
+					return cmp;
+				}
+
+			});
+
+			// Renderer de precio unitario
+			cOrderTable.getColumnModel().getColumn(3).setCellRenderer(getNumberCellRendered(priceFormat));
+
+			// Renderer de precio de l��nea sin descuentos
+			cOrderTable.getColumnModel().getColumn(4).setCellRenderer(getNumberCellRendered(amountFormat));
+
+			// Renderer de Precio Final de l��nea con descuentos
+			cOrderTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
+				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3,
+						int arg4, int arg5) {
+					JLabel cmp = (JLabel) super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
+					// BigDecimal amount = scaleAmount(((BigDecimal)arg1));
+					BigDecimal amount = ((BigDecimal) arg1);
+					cmp.setText(amountFormat.format(amount));
+					cmp.setHorizontalAlignment(JLabel.RIGHT);
+					Font f = cmp.getFont();
+					cmp.setFont(f.deriveFont(f.getStyle() ^ Font.BOLD));
+					return cmp;
+				};
+			});
+
+			// Renderer de Lugar de Retiro.
+			cOrderTable.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+
+				public Component getTableCellRendererComponent(JTable arg0, Object arg1, boolean arg2, boolean arg3,
+						int arg4, int arg5) {
+					JLabel cmp = (JLabel) super.getTableCellRendererComponent(arg0, arg1, arg2, arg3, arg4, arg5);
+					cmp.setHorizontalAlignment(JLabel.CENTER);
+					return cmp;
+				}
+
+			});
+
+			// Funcionalidades extras.
+			ArrayList minWidth = new ArrayList();
+			minWidth.add(35);
+			minWidth.add(0);
+			minWidth.add(60);
+			minWidth.add(75);
+			minWidth.add(75);
+			minWidth.add(75);
+			minWidth.add(75);
+
+			// Se wrapea la tabla con funcionalidad extra.
+			setOrderTableUtils(new TableUtils(minWidth, cOrderTable));
+			getOrderTableUtils().autoResizeTable();
+			getOrderTableUtils().removeSorting();
+		}
+		return cOrderTable;
+	}
+
+	/**
+	 * This method initializes cCommandPanel
+	 * 
+	 * @return org.compiere.swing.CPanel
+	 */
+	private CPanel getCCommandPanel() {
+		if (cCommandPanel == null) {
+			cCommandPanel = new CPanel();
+			cCommandPanel.setLayout(new BoxLayout(getCCommandPanel(), BoxLayout.Y_AXIS));
+			cCommandPanel.setMaximumSize(new java.awt.Dimension(180, 400));
+			cCommandPanel.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 5, 5, 0));
+			cCommandPanel.setPreferredSize(new java.awt.Dimension(180, 0));
+			cCommandPanel.setMaximumSize(new java.awt.Dimension(180, 600));
+			cCommandPanel.add(getCLoadOrderPanel(), null);
+			cCommandPanel.add(getCCommandInfoPanel(), null);
+			cCommandPanel.add(getCPayCommandPanel(), null);
+		}
+		return cCommandPanel;
+	}
+
+	/**
+	 * This method initializes cCommandInfoPanel1
+	 * 
+	 * @return org.compiere.swing.CPanel
+	 */
+	private CPanel getCCommandInfoPanel() {
+		if (cCommandInfoPanel == null) {
+			GridBagConstraints gridBagConstraints2 = new GridBagConstraints();
+			gridBagConstraints2.gridx = 0;
+			gridBagConstraints2.weighty = 0.0D;
+			gridBagConstraints2.gridy = 1;
+			gridBagConstraints2.anchor = GridBagConstraints.WEST;
+			JLabel cCmdUpdateOrderProductLabel = new CLabel();
+			cCmdUpdateOrderProductLabel.setText(
+					KeyUtils.getKeyStr(getActionKeys().get(UPDATE_ORDER_PRODUCT_ACTION)) + " = " + MSG_UPDATE_PRODUCT);
+			GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
+			gridBagConstraints1.gridx = 0;
+			gridBagConstraints1.anchor = java.awt.GridBagConstraints.WEST;
+			gridBagConstraints1.weightx = 0.0D;
+			gridBagConstraints1.weighty = 0.0D;
+			gridBagConstraints1.gridy = 0;
+			JLabel cCmdGotoPaymentsLabel = new CLabel();
+			cCmdGotoPaymentsLabel
+					.setText(KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYMENTS_ACTION)) + " = " + MSG_PAY);
+			GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
+			gridBagConstraints3.gridx = 0;
+			gridBagConstraints3.weightx = 0.0D;
+			gridBagConstraints3.weighty = 0.0D;
+			gridBagConstraints3.gridy = 2;
+			gridBagConstraints3.anchor = GridBagConstraints.WEST;
+			JLabel cCmdSetBpartnerInfoLabel = new CLabel();
+			cCmdSetBpartnerInfoLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(SET_BPARTNER_INFO_ACTION)) + " = "
+					+ MSG_CUSTOMER + "/" + MSG_PRICE_LIST);
+			GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
+			gridBagConstraints4.gridx = 0;
+			gridBagConstraints4.weightx = 0.0D;
+			gridBagConstraints4.weighty = 0.0D;
+			gridBagConstraints4.gridy = 3;
+			gridBagConstraints4.anchor = GridBagConstraints.WEST;
+			JLabel cCmdChangeProductOrderLabel = new CLabel();
+			cCmdChangeProductOrderLabel.setText(KeyUtils.getKeyStr(getActionKeys().get(CHANGE_FOCUS_PRODUCT_ORDER))
+					+ " = " + MSG_CHANGE_PRODUCT_ORDER);
+			GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
+			gridBagConstraints5.gridx = 0;
+			gridBagConstraints5.weightx = 0.0D;
+			gridBagConstraints5.weighty = 0.0D;
+			gridBagConstraints5.gridy = 4;
+			gridBagConstraints5.anchor = GridBagConstraints.WEST;
+			JLabel cCmdCancelOrderInfoLabel = new CLabel();
+			cCmdCancelOrderInfoLabel
+					.setText(KeyUtils.getKeyStr(getActionKeys().get(CANCEL_ORDER)) + " = " + MSG_CANCEL_ORDER);
+
+			GridBagConstraints gridBagConstraints6 = new GridBagConstraints();
+			gridBagConstraints6.gridx = 0;
+			gridBagConstraints6.weightx = 0.0D;
+			gridBagConstraints6.weighty = 0.0D;
+			gridBagConstraints6.gridy = 5;
+			gridBagConstraints6.anchor = GridBagConstraints.WEST;
+			JLabel cCmdPromotionsLabel = new CLabel();
+			cCmdPromotionsLabel
+					.setText(KeyUtils.getKeyStr(getActionKeys().get(INSERT_PROMOTIONAL_CODE)) + " = " + MSG_PROMOTIONS);
+			
+			
+			// dREHER
+			
+			GridBagConstraints gridBagConstraints7 = new GridBagConstraints();
+			gridBagConstraints7.gridx = 0;
+			gridBagConstraints7.weightx = 0.0D;
+			gridBagConstraints7.weighty = 0.0D;
+			gridBagConstraints7.gridy = 6;
+			gridBagConstraints7.anchor = GridBagConstraints.WEST;
+			JLabel cCmdAlterModeLabel = new CLabel();
+			
+			// dREHER
+			GridBagConstraints gridBagConstraints8 = new GridBagConstraints();
+			gridBagConstraints8.gridx = 0;
+			gridBagConstraints8.weightx = 0.0D;
+			gridBagConstraints8.weighty = 0.0D;
+			gridBagConstraints8.gridy = 7;
+			gridBagConstraints8.anchor = GridBagConstraints.WEST;
+			JLabel cCmdAlterContingenciaModeLabel = new CLabel();
+			cCmdAlterContingenciaModeLabel
+			.setText(KeyUtils.getKeyStr(getActionKeys().get(ALTER_CONTINGENCY_MODE)) + " = " + "Contingencia");
+			
+
+			cCommandInfoPanel = new CPanel();
+			cCommandInfoPanel.setLayout(new GridBagLayout());
+			cCommandInfoPanel
+					.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.LOWERED));
+			cCommandInfoPanel.setPreferredSize(new java.awt.Dimension(180, 500));
+			cCommandInfoPanel.setName("cCommandInfoPanel");
+			cCommandInfoPanel.add(cCmdChangeProductOrderLabel, gridBagConstraints1);
+			cCommandInfoPanel.add(cCmdPromotionsLabel, gridBagConstraints2);
+			cCommandInfoPanel.add(cCmdUpdateOrderProductLabel, gridBagConstraints3);
+			cCommandInfoPanel.add(cCmdSetBpartnerInfoLabel, gridBagConstraints4);
+			cCommandInfoPanel.add(cCmdGotoPaymentsLabel, gridBagConstraints5);
+			cCommandInfoPanel.add(cCmdCancelOrderInfoLabel, gridBagConstraints6);
+			
+			// dREHER
+			if(isAlterClover) {
+				cCmdAlterModeLabel
+				.setText(KeyUtils.getKeyStr(getActionKeys().get(ALTER_ONOFFLINE_MODE)) + " = " + "Modo Clover");
+
+				cCommandInfoPanel.add(cCmdAlterModeLabel, gridBagConstraints7);
+			}
+			
+			// dREHER
+			cCommandInfoPanel.add(cCmdAlterContingenciaModeLabel, gridBagConstraints8);
+		}
+		return cCommandInfoPanel;
+	}
+
+	/**
+	 * This method initializes cPayCommandPanel
+	 * 
+	 * @return org.compiere.swing.CPanel
+	 */
+	private CPanel getCPayCommandPanel() {
+		if (cPayCommandPanel == null) {
+			cPayCommandPanel = new CPanel();
+			cPayCommandPanel.setName("cPayCommandPanel");
+			cPayCommandPanel.add(getCPayButton(), null);
+		}
+		return cPayCommandPanel;
+	}
+	
+	/**
+	 * This method initializes cPayButton
+	 * 
+	 * @return org.compiere.swing.CButton
+	 */
+	private CButton getCPayButton() {
+		if (cPayButton == null) {
+			cPayButton = new CButton();
+			cPayButton.setIcon(getImageIcon("Caunt24.gif"));
+			cPayButton.setText(MSG_PAY + " " + KeyUtils.getKeyStr(getActionKeys().get(GOTO_PAYMENTS_ACTION)));
+			cPayButton.addActionListener(new java.awt.event.ActionListener() {
+				public void actionPerformed(java.awt.event.ActionEvent e) {
+					goToPayments();
+				}
+			});
+			KeyUtils.setDefaultKey(cPayButton);
+			FocusUtils.addFocusHighlight(cPayButton);
+		}
+		return cPayButton;
+	}
+
+	
+// Fin de creacion o instancia de paneles -----------------------	
+
 
     /**
      * Devuelve la descripción a mostrar para un esquema de descuento. Si el esquema es <code>null</code> devuelve un String especial.
@@ -6770,6 +8312,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	}
 
 	private void setLoadedProduct(Product loadedProduct) {
+		// dREHER solo salida por consola...
+		if(loadedProduct!=null)
+			debug("Agrego el producto cargado..." + loadedProduct.getDescription());
+
 		this.loadedProduct = loadedProduct;
 	}
 
@@ -6843,6 +8389,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			public void actionVoidPerformed() {
 				// Anulación de los documentos.
 				voidDocuments();
+
 			}
 
 			@Override
@@ -6855,57 +8402,155 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			public void actionPrintFinishOK() {
 				finishAndNewOrder();				
 			}
+
+			@Override
+			public void actionContinue() {
+				continuarOk("El comprobante emitido no pudo imprimirse correctamente.",
+						"Por favor gestionar manualmente");
+			}
+
 		});
 		
 		infoFiscalPrinter.setReprintButtonActive(true);
-		infoFiscalPrinter.setVoidButtonActive(true);
+		infoFiscalPrinter.setVoidButtonActive(false);
+		infoFiscalPrinter.getVoidButton().setVisible(false);
+		infoFiscalPrinter.getVoidButton().setEnabled(false);
+		infoFiscalPrinter.getVoidButton().repaint();
+		infoFiscalPrinter.setHistoryButtonActive(true);
 		infoFiscalPrinter.setOkButtonActive(false);
+
 		infoFiscalPrinter.setThrowExceptionInCancelCheckStatus(true);
 	}
 
+	/**
+	 * Crea la ventana de confirmacion en caso de que no pueda generar CAE y permite
+	 * volver a generarlo, anular factura, continuar sin generar CAE
+	 * 
+	 * dREHER
+	 */
 	protected void createInfoElectronic() {
-		infoElectronic = new AInfoElectronic(
-				null,
-				getWindowNo(),
-				Msg.parseTranslation(Env.getCtx(),"@CAEGeneration@")		
-		);
-		
-		infoElectronic
-				.setDialogActionListener(new AInfoElectronic.ElectronicDialogActionListener() {
-					
-				@Override
-				public void actionVoidPerformed() {
-					// Anulación de los documentos.
-					voidDocuments();
-				}
-				
-				@Override
-				public void actionReprintPerformed(FiscalDocumentPrint fdp) {
-					// No hace nada ya que no es una impresión fiscal
-				}
-				
-				@Override
-				public void actionPrintFinishOK() {
-					// No hace nada ya que no es impresión fiscal
-				}
-				
-				@Override
-				public void actionReGenerateCAE() {
-					// TODO Auto-generated method stub
-					regenerateCAE();
-				}
+
+		infoElectronic = new AInfoElectronic(null, getWindowNo(),
+				Msg.parseTranslation(Env.getCtx(), "@CAEGeneration@"));
+
+		infoElectronic.setDialogActionListener(new AInfoElectronic.ElectronicDialogActionListener() {
+
+			@Override
+			public void actionVoidPerformed() {
+				// Anulaci��n de los documentos.
+
+				// TODO: dREHER Si permitimos esta accion, verificar controles de numeracion
+				voidDocuments();
+
+			}
+
+			@Override
+			public void actionReprintPerformed(FiscalDocumentPrint fdp) {
+				// No hace nada ya que no es una impresi��n fiscal
+
+			}
+
+			@Override
+			public void actionPrintFinishOK() {
+				// No hace nada ya que no es impresi��n fiscal
+
+			}
+
+			@Override
+			public void actionReGenerateCAE() {
+				// TODO Auto-generated method stub
+				regenerateCAE();
+			}
+
+			@Override
+			public void actionContinue() {
+				// dREHER fix
+				// Deberia intentar imprimir si corresponde, aun sin CAE y quedar pendiente de
+				// generacion de cae
+
+				debug("Eligio continuar, trata de imprimir ticket sin CAE...");
+				doFiscalPrint();
+				debug("Volvio de imprimir ticket sin CAE...");
+
+				// dREHER utilizamos esta accion para continuar con el TPV
+				// continuarOk("El comprobante emitido no obtuvo el c��digo de autorizaci��n correspondiente.",
+				//		"Por favor gestionar manualmente");
+			}
 
 		});
-		
-		infoElectronic.setReprintButtonActive(false);
-		infoElectronic.setVoidButtonActive(true);
+		// dREHER en este caso lo utilizamos para poder continuar sin CAE
+		infoElectronic.setVoidButtonActive(false);
+		infoElectronic.getVoidButton().setVisible(false);
+		infoElectronic.getVoidButton().setEnabled(false);
+		infoElectronic.getVoidButton().repaint();
+		infoElectronic.setHistoryButtonActive(true);
 		infoElectronic.setOkButtonActive(false);
+
 		infoElectronic.setThrowExceptionInCancelCheckStatus(true);
 	}
 	
 	/**
-	 * Invoca la anulación de los documentos generados debido a un error en la
-	 * impresión fiscal
+	 * En caso de producirse error en generacion CAE / impresion fiscal y el usuario
+	 * elige OK, en la ventana de alerta del error, debe continuar y avisar al
+	 * usuario que luego debe generar el CAE o impresion fiscal segun corresponda
+	 * 
+	 * dREHER
+	 */
+	private void continuarOk(final String msg, final String submsg) {
+
+		SwingWorker worker = new SwingWorker() {
+
+			private String errorMsg = null;
+
+			@Override
+			public Object construct() {
+				try {
+
+					CallResult result = new CallResult();
+					if (result.isError()) {
+						if (!Util.isEmpty(result.getMsg(), true)) {
+							errorMsg(result.getMsg());
+						}
+						return false;
+					}
+
+				} catch (Exception e) {
+					errorMsg = e.getMessage();
+				}
+				return errorMsg == null;
+			}
+
+			@Override
+			public void finished() {
+
+				infoMsg(msg, submsg);
+
+				boolean success = (Boolean) getValue();
+				if (!success) {
+					if (!Util.isEmpty(errorMsg, true)) {
+						errorMsg(errorMsg);
+					}
+
+					finishAndNewOrder();
+
+				} else {
+					finishAndNewOrder();
+					getStatusBar().setStatusLine(MSG_CAE_GENERATED_VOID);
+				}
+			}
+		};
+
+		String waitMsg = getMsg("Continue OK") + ", " + getMsg("PleaseWait");
+		getFrame().setBusyMessage(waitMsg);
+		getFrame().setBusyTimer(4);
+		getFrame().setBusy(true);
+
+		worker.start();
+	}
+
+	/**
+	 * Invoca la anulaci��n de los documentos generados debido a un error en la
+	 * impresi��n fiscal
 	 */
 	private void voidDocuments() {
 		SwingWorker worker = new SwingWorker() {
@@ -6942,6 +8587,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 					getModel().voidDocuments();
 				} catch (PosException e) {
 					errorMsg = e.getMessage();
+				} catch (Exception ex) {
+					errorMsg = ex.getMessage();
 				}
 				return errorMsg == null;
 			}
@@ -6989,6 +8636,11 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		worker.start();
 	}
 	
+	private void doFiscalPrint() {
+		SwingWorkerImpresionFiscal worker = new SwingWorkerImpresionFiscal();
+		worker.start();
+	}
+
 //	protected void manageMaxCashReturnValue(BigDecimal cashReturnAmt){
 //		getCCashRetunAuthPanel().getAuthPanel().setVisible(
 //				getModel().isCashReturnedSurpassMax(cashReturnAmt));
@@ -7222,7 +8874,101 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		}
 		return openAmt;
 	}
-	
+
+	// ------------------------------------
+	// HTS 1.0
+	// ------------------------------------
+	// Agregar/actualizar/eliminar el FUTURAS COMPRAS
+	// ------------------------------------
+	/**
+	 * Agregar el futuras compras a este pedido
+	 * 
+	 * @param amt
+	 * @return
+	 */
+	protected boolean addFuturasCompras(String tenderType, BigDecimal amt) {
+		if (getModel().getCurrentFuturas(tenderType) != null) {
+			updateFuturasCompras(tenderType, amt);
+			return true;
+		}
+
+		BigDecimal futurasRealAmt = getFuturasComprasAmt();
+
+		boolean added = false;
+		// Agregar Futuras Compras
+		Integer productID = getModel().getFuturasComprasProductID();
+		if (productID != null && productID <= 0) {
+			errorMsg("El articulo FUTURAS COMPRAS no existe", "");
+			return false;
+		}
+		if (!Util.isEmpty(productID, true)) {
+			Product futurasComprasProduct = getModel().getProduct(productID, 0);
+			getCCountText().setValue(futurasRealAmt);
+
+			if (!Util.isEmpty(futurasRealAmt, true) && addOrderProduct(futurasComprasProduct)) {
+				OrderProduct futurasComprasLine = getModel().getOrder().getOrderProducts()
+						.get(getModel().getOrder().getOrderProducts().size() - 1);
+				getModel().addCurrentFuturas(tenderType, futurasComprasLine);
+				updateFuturasCompras(tenderType, futurasRealAmt);
+				added = true;
+				loadPaymentMediumInfo();
+			}
+		}
+		return added;
+	}
+
+	/**
+	 * Agrega el producto futuras compras en caso de que una nota de credito o cheque sea de MAS valor (saldo abierto) que el 
+	 * monto a pagar 
+	 * @return
+	 * dREHER
+	 */
+	protected BigDecimal getFuturasComprasAmt() {
+		BigDecimal futurasAmt = BigDecimal.ZERO;
+		if (MPOSPaymentMedium.TENDERTYPE_CreditNote.equals(getSelectedTenderType())) {
+			BigDecimal balanceAmt = (BigDecimal) getCCreditNoteBalanceText().getValue() == null ? BigDecimal.ZERO
+					: (BigDecimal) getCCreditNoteBalanceText().getValue();
+			boolean returnCash = getCCreditNoteCashReturnCheck().isSelected();
+			BigDecimal returnCashAmt = returnCash ? (BigDecimal) getCCreditNoteCashReturnAmtText().getValue()
+					: BigDecimal.ZERO;
+			futurasAmt = balanceAmt.subtract(Util.isEmpty(returnCashAmt, false) ? BigDecimal.ZERO : returnCashAmt);
+		} else if (MPOSPaymentMedium.TENDERTYPE_Check.equals(getSelectedTenderType())) {
+			BigDecimal openAmt = getCurrencyOrderOpenAmount();
+			openAmt = openAmt == null ? BigDecimal.ZERO : openAmt;
+			BigDecimal amount = (BigDecimal) getCAmountText().getValue();
+			amount = amount == null ? BigDecimal.ZERO : amount;
+			futurasAmt = amount.subtract(openAmt);
+		}
+
+		return futurasAmt;
+	}
+
+	protected void removeFuturasCompras(String tenderType) {
+		if (Util.isEmpty(tenderType, true) || getModel().getCurrentFuturas(tenderType) == null) {
+			return;
+		}
+		removeOrderProduct(getModel().getCurrentFuturas(tenderType));
+		getModel().removeFuturasCompras(tenderType);
+		loadPaymentMediumInfo();
+	}
+
+	protected void removeFuturasPaymentRelation(Payment payment) {
+		if (getModel().existsFuturasPaymentRelation(payment)) {
+			removeOrderProduct(getModel().getFuturasComprasRelationValue(payment));
+			getModel().removeFuturasPaymentRelation(payment);
+		}
+	}
+
+	protected void updateFuturasCompras(String tenderType, BigDecimal amt) {
+		if (amt == null) {
+			amt = getFuturasComprasAmt();
+		}
+		getModel().updateFuturasCompras(tenderType, amt);
+		updateOrderProduct(getModel().getCurrentFuturas(tenderType));
+		loadPaymentMediumInfo();
+	}
+	// ------------------------------------
+
 	private TableUtils getTaxesTableUtils() {
 		return taxesTableUtils;
 	}
@@ -7261,8 +9007,36 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 	}
 	
-	private class SwingWorkerReGenerateCAE extends SwingWorker{
-		
+	private class SwingWorkerImpresionFiscal extends SwingWorker {
+
+		@Override
+		public Object construct() {
+			try {
+				return getModel().doFiscalPrint();
+			} catch (PosException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return true;
+		}
+
+		@Override
+		public void finished() {
+			boolean success = (Boolean) getValue();
+			if (success) {
+				
+				infoMsg("Recuerde gestionar el comprobante sin CAE", "");
+				
+				// Al finalizar una reimpresi��n de ticket, se
+				// reestablece la interfaz para un nuevo pedido
+				finishAndNewOrder();
+			}
+		}
+
+	}
+
+	private class SwingWorkerReGenerateCAE extends SwingWorker {
+
 		@Override
 		public Object construct() {
 			return getModel().regenerateCAE();
@@ -7270,7 +9044,12 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 
 		@Override
 		public void finished() {
-			boolean success = (Boolean)getValue();
+			boolean success = (Boolean) getValue();
+			if (success) {
+				// Al finalizar una reimpresi��n de ticket, se
+				// reestablece la interfaz para un nuevo pedido
+				finishAndNewOrder();
+			}
 		}
 		
 	}
@@ -7279,8 +9058,38 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		return true;
 	}
 
-	protected void doOperationsOnErrorCompleteOrder() {
-		// Realizar tareas luego de error al completar pedido
+	protected CTextField getcCreditCardTitularTxt() {
+		if (cCreditCardTitularTxt == null) {
+			cCreditCardTitularTxt = new CTextField();
+			cCreditCardTitularTxt.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH, 20));
+			cCreditCardTitularTxt.setValue(null);
+			cCreditCardTitularTxt.setReadWrite(false);
+		}
+		return cCreditCardTitularTxt;
 	}
-	
-}  //  @jve:decl-index=0:visual-constraint="10,10"
+
+	protected void setcCreditCardTitularTxt(CTextField cCreditCardTitularTxt) {
+		this.cCreditCardTitularTxt = cCreditCardTitularTxt;
+	}
+
+	/**
+	 * En caso de que se encuentra en Modo Online Clover, debe traer la data desde el Clover y no ser ingresada a mano
+	 * 
+	 * dREHER
+	 */
+	private void openCreditCardPosnetDataDialog() {
+		CreditCardPosnetDataDialog dialog = new CreditCardPosnetDataDialog(this, true);
+		AEnv.positionCenterScreen(dialog);
+		dialog.setModal(true);
+		dialog.setVisible(true);
+	}
+
+	public boolean isCreditCardPostnetValidated() {
+		return creditCardPostnetValidated;
+	}
+
+	protected void setCreditCardPostnetValidated(boolean creditCardPostnetValidated) {
+		this.creditCardPostnetValidated = creditCardPostnetValidated;
+	}
+
+} // @jve:decl-index=0:visual-constraint="10,10"
