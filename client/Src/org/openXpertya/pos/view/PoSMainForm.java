@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -33,6 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import javax.swing.AbstractAction;
@@ -65,6 +67,7 @@ import org.compiere.swing.CLabel;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CScrollPane;
 import org.compiere.swing.CTabbedPane;
+import org.compiere.swing.CTextArea;
 import org.compiere.swing.CTextField;
 import org.openXpertya.apps.ADialog;
 import org.openXpertya.apps.AEnv;
@@ -73,8 +76,11 @@ import org.openXpertya.apps.AInfoFiscalPrinter;
 import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.StatusBar;
 import org.openXpertya.apps.SwingWorker;
+import org.openXpertya.apps.VTrxPaymentTerminalForm;
 import org.openXpertya.apps.form.FormFrame;
 import org.openXpertya.apps.form.FormPanel;
+import org.openXpertya.apps.form.VModelHelper;
+import org.openXpertya.clover.model.TrxClover;
 import org.openXpertya.grid.VTable;
 import org.openXpertya.grid.ed.VCheckBox;
 import org.openXpertya.grid.ed.VDate;
@@ -86,7 +92,10 @@ import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.minigrid.ROCellEditor;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.FiscalDocumentPrint;
+import org.openXpertya.model.MEntidadFinanciera;
 import org.openXpertya.model.MPOSPaymentMedium;
+import org.openXpertya.model.X_C_ExternalServiceAttributes;
+import org.openXpertya.pos.CloverOnlineMode.CloverOnlineMode;
 import org.openXpertya.pos.ctrl.AddPOSPaymentValidations;
 import org.openXpertya.pos.ctrl.PoSConfig;
 import org.openXpertya.pos.ctrl.PoSModel;
@@ -135,6 +144,7 @@ import org.openXpertya.swing.util.FocusUtils;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.CPreparedStatement;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.MeasurableTask;
@@ -147,22 +157,28 @@ import org.openXpertya.util.ValueNamePair;
 import org.openXpertya.utils.Disposable;
 import org.openXpertya.utils.LYCloseWindowAdapter;
 
+import com.clover.remote.client.ICloverConnector;
+import com.clover.utils.Utilidades;
+import com.hipertehuelche.sucursales.model.LP_M_EntidadFinancieraPlan;
+
 public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disposable, AuthContainer {
+
+	private static final long serialVersionUID = 1L;
 
 	/** Singleton */
 	private static PoSMainForm instance = null;
-	
+
 	// --------------------------------------------------
-	// Constantes de Tamaños de Componentes
+	// Constantes de Tama��os de Componentes
 	// --------------------------------------------------
 	private final int S_MINIMIZED_WIDTH = 795;
 	private final int S_MINIMIZED_HEIGHT = 710;
 	private final int S_TENDERTYPE_PANEL_WIDTH = 325;
-	
-	protected final int S_PAYMENT_FIELD_WIDTH = 176;
+
+	private final int S_PAYMENT_FIELD_WIDTH = 176;
 	private final int S_PAYMENT_SMALL_FIELD_WIDTH = 55;
 	private final int S_PAYMENT_INFO_FIELD_WIDTH = 140;
-	
+
 	private final int S_PAYMENT_ACTION_BUTTON_WIDTH = 140;
 	private final int S_PAYMENT_ACTION_BUTTON_HEIGHT = 30;
 	// --------------------------------------------------
@@ -172,42 +188,48 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private final String STATUS_DB_SEPARATOR = " | ";
 
 	private String MSG_NO_POS_CONFIG = null;
-	
+
 	private static CLogger log = CLogger.getCLogger(PoSMainForm.class);
-	
+
 	private DateFormat dateFormat;
-	private NumberFormat amountFormat; 
+	private NumberFormat amountFormat;
 	private NumberFormat priceFormat;
+
+	private final String UPDATE_ORDER_PRODUCT_ACTION = "updOrdProdAction";
+	private final String GOTO_PAYMENTS_ACTION = "gotoPaymAction";
+	private final String PAY_ORDER_ACTION = "payOrdAction";
+	private final String ADD_PAYMENT_ACTION = "addPaymentAction";
+	private final String SET_CUSTOMER_DATA_ACTION = "setCusDataAction";
+	private final String SET_BPARTNER_INFO_ACTION = "setBPInfoAction";
+	private final String GOTO_ORDER = "gotoOrder";
+	private final String ADD_ORDER_ACTION = "addOrder";
+	private final String MOVE_ORDER_PRODUCT_FORWARD = "moveOrderProductForward";
+	private final String MOVE_ORDER_PRODUCT_BACKWARD = "moveOrderProductBackward";
+	private final String CHANGE_FOCUS_PRODUCT_ORDER = "changeFocusProductOrder";
+	private final String MOVE_PAYMENT_FORWARD = "movePaymentForward";
+	private final String MOVE_PAYMENT_BACKWARD = "movePaymentBackward";
+	private final String REMOVE_PAYMENT_ACTION = "removePaymentAction";
+	private final String CHANGE_FOCUS_CUSTOMER_AMOUNT = "changeFocusCustomerAmount";
+	private final String CHANGE_FOCUS_GENERAL_DISCOUNT = "changeFocusGeneralDiscount";
+	private final String CANCEL_ORDER = "cancelOrder";
+	private final String GOTO_INSERT_CARD = "gotoInsertCard";
+	private final String INSERT_PROMOTIONAL_CODE = "insertPromotionalCode";
 	
-	protected final String UPDATE_ORDER_PRODUCT_ACTION = "updOrdProdAction";
-	protected final String GOTO_PAYMENTS_ACTION = "gotoPaymAction";
-	protected final String PAY_ORDER_ACTION = "payOrdAction";	
-	protected final String ADD_PAYMENT_ACTION = "addPaymentAction";
-	protected final String SET_CUSTOMER_DATA_ACTION = "setCusDataAction";
-	protected final String SET_BPARTNER_INFO_ACTION = "setBPInfoAction";
-	protected final String GOTO_ORDER = "gotoOrder";
-	protected final String ADD_ORDER_ACTION = "addOrder";
-	protected final String MOVE_ORDER_PRODUCT_FORWARD = "moveOrderProductForward";
-	protected final String MOVE_ORDER_PRODUCT_BACKWARD = "moveOrderProductBackward";
-	protected final String CHANGE_FOCUS_PRODUCT_ORDER = "changeFocusProductOrder";
-	protected final String MOVE_PAYMENT_FORWARD = "movePaymentForward";
-	protected final String MOVE_PAYMENT_BACKWARD = "movePaymentBackward";
-	protected final String REMOVE_PAYMENT_ACTION = "removePaymentAction";
-	protected final String CHANGE_FOCUS_CUSTOMER_AMOUNT = "changeFocusCustomerAmount";
-	protected final String CHANGE_FOCUS_GENERAL_DISCOUNT = "changeFocusGeneralDiscount";
-	protected final String CANCEL_ORDER = "cancelOrder";
-	protected final String GOTO_INSERT_CARD = "gotoInsertCard";
-	protected final String INSERT_PROMOTIONAL_CODE = "insertPromotionalCode";
+	// dREHER cambiar a modo Clover Online
+	private final String ALTER_ONOFFLINE_MODE = "alterOnOffLineMode";
 	
+	// dREHER cambiar a modo Contingencia
+	private final String ALTER_CONTINGENCY_MODE = "alterContingencyMode";
+
 	private PoSModel model;
-	
+
 	private FormFrame frame;
 	private int windowNo = 0;
 	private TableUtils orderTableUtils;
 	private TableUtils paymentsTableUtils;
 	private TableUtils taxesTableUtils;
-	
-	private Map<String,KeyStroke> actionKeys;
+
+	private Map<String, KeyStroke> actionKeys;
 	private PoSComponentFactory componentFactory;
 	private PoSConfigDialog poSConfigDialog;
 	private boolean posConfigError = false;
@@ -215,7 +237,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private FocusTraversalPolicy compFocusTraversalPolicy = new ComponentsFocusTraversalPolicy();
 	private FocusTraversalPolicy oldFocusTraversalPolicy;
 	private Product loadedProduct = null;
-	
+
 	private StatusBar statusBar = new StatusBar();
 	private CTabbedPane cPosTab = null;
 	private CPanel cOrderPanel = null;
@@ -268,6 +290,30 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CTextField cCouponNumberText = null;
 	private CLabel cCouponBatchNumberLabel = null;
 	private CTextField cCouponBatchNumberText = null;
+	
+	// dREHER 
+	// Clase que guarda la informacion de Clover
+	CloverOnlineMode colm = null;
+	
+	// dREHER
+	// ID Servicio Externo Clover
+	private int IDServicioExternoClover = 0;
+	
+	// dREHER continua con TPV true=Ok Clover, false=Fallo Clover
+	public boolean isContinue = false;
+	
+	// dREHER permite alternar modo on/off line Clover
+	public boolean isAlterClover = false;
+
+	// dREHER es el modo inicial de trabajo Clover 
+	public boolean isOnLineClover = false;
+	
+	// dREHER ultimo pago hecho en Clover
+	public com.clover.sdk.v3.payments.Payment lastPayment = null;
+	
+	// dREHER si debe guardar archivo de log de las transacciones Clover
+	public boolean isTrxCloverLog = false;
+	
 	private CLabel cPosnetLabel = null;
 	private CTextField cPosnetText = null;
 	private CPanel cCheckParamsPanel = null;
@@ -352,6 +398,14 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private VCheckBox cCreditNoteCashReturnCheck = null;
 	private CLabel cCreditNoteCashReturnAmtLabel = null;
 	private VNumber cCreditNoteCashReturnAmtText = null;
+	// ------------------------------------
+	// HTS 1.0
+	// ------------------------------------
+	// Check para agregar FUTURAS COMPRAS
+	// ------------------------------------
+	private VCheckBox cFuturasComprasCheck = null;
+	private CPanel cCheckInfoPanel = null;
+	// ------------------------------------
 	private CPanel cCreditNoteParamsPanel = null;
 	private CPanel cTransferParamsPanel = null;
 	private CLabel cTransferNumberLabel = null;
@@ -371,6 +425,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private VNumber cCreditCardCuotas = null;
 	private CLabel cCreditCardCuotaAmtLabel = null;
 	private VNumber cCreditCardCuotaAmt = null;
+	private CLabel cCreditCardTitularLabel = null;
+	private CTextField cCreditCardTitularTxt = null;
 	private CLabel cBPartnerDiscountLabel = null;
 	private CTextField cBPartnerDiscountText = null;
 	private CLabel cOrderTotalLabel = null;
@@ -383,6 +439,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private CLabel cCashReturnAmtLabel = null;
 	private VNumber cCashReturnAmtText = null;
 	
+	// dREHER
+	private CComboBox cCashReturnCombo = null;
+
 //	private AUserAuth cCashRetunAuthPanel = null;
 	private AuthorizationDialog authDialog = null;
 	private AuthOperation manualDiscountAuthOperation = null;
@@ -390,7 +449,8 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	private AddPOSPaymentValidations extraPOSPaymentAddValidations = null;
 	private boolean processing = false;
 	private boolean duplicated = false;
-	
+	private boolean creditCardPostnetValidated = false;
+
 	protected String MSG_ORDER;
 	protected String MSG_PAYMENT;
 	protected String MSG_CODE;
@@ -517,11 +577,29 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	protected String MSG_TAXES;
 	protected String MSG_TAX;
 	protected String MSG_PROMOTIONS;
+	// ************************************************
+	// HTS 4.0
+	// ************************************************
+	private String MSG_CANCEL_ORDER_SUBMSG;
+	// ************************************************
 	private String MSG_CAE_GENERATED;
 	private String MSG_CAE_GENERATED_VOID;
+	private String MSG_CARDHOLDER;
+
+	// dREHER
+	public boolean isContinue() {
+		return isContinue;
+	}
+
+	public void setContinue(boolean isContinue) {
+		this.isContinue = isContinue;
+	}
+
+	// dREHER
+	private static final String AUTH_TOKEN = "AuthorizationTokenClover";
 	
 	/**
-	 * This method initializes 
+	 * This method initializes
 	 * 
 	 */
 	public PoSMainForm() {
@@ -553,56 +631,58 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		getFrame().setSize(S_MINIMIZED_WIDTH, S_MINIMIZED_HEIGHT);
 		getFrame().setPreferredSize(new Dimension(S_MINIMIZED_WIDTH, S_MINIMIZED_HEIGHT));
 		try {
-			getFrame().getContentPane().add(this,BorderLayout.CENTER);
-			getFrame().getContentPane().add(getStatusBar(),BorderLayout.SOUTH);
+			getFrame().getContentPane().add(this, BorderLayout.CENTER);
+			getFrame().getContentPane().add(getStatusBar(), BorderLayout.SOUTH);
 			this.revalidate();
 			this.repaint();
 			setComponentFactory(getPOSComponentFactory());
 			dateFormat = getComponentFactory().getDateFormat(DisplayType.Date);
 			amountFormat = getComponentFactory().getNumberFormat(DisplayType.Amount);
 			priceFormat = getComponentFactory().getNumberFormat(DisplayType.CostPrice);
-			
+
 			initPoSConfig();
-			if(!isPosConfigError()) {
+			if (!isPosConfigError()) {
 				getFrame().setMaximize(true);
 				reloadPoSConfig();
 				initialize();
 				initBusinessLogic();
-			// Si hubo un error al obtener la configuracion del TPV se
-			// se cierra la ventana.	
+				debug("Inicializo la configuracion del POS. ");
+
+				// Si hubo un error al obtener la configuracion del TPV se
+				// se cierra la ventana.
 			} else {
 				closeFrame();
 			}
-			
-			// Necesario hacerlo aquí porque se requiere el windowsNo para que
+
+			// Necesario hacerlo aqu�� porque se requiere el windowsNo para que
 			// se comporte correctamente el foco
 			createInfoFiscalPrinter();
 			createInfoElectronic();
-			
+
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "PoSMainForm.init", e);
 		}
 		Env.setContext(Env.getCtx(), getWindowNo(), "IsSOTrx", "Y");
-		
+
 		TimeStatsLogger.endTask(MeasurableTask.POS_INIT);
 	}
-	
-	
-	private void closeFrame(){
+
+	private void closeFrame() {
 		SwingUtilities.invokeLater(new Runnable() {
 
 			public void run() {
 //				getFrame().setVisible(false);
 				dispose();
 			}
-			
+
 		});
 	}
-	
+
 	private void initPoSConfig() {
 		List<PoSConfig> posConfigs = getModel().getPoSConfigs();
 		int posConfigCount = posConfigs.size();
 		PoSConfig poSConfig = null;
+
 		// No existe configuracion de TPV
 		if(posConfigCount == 0) {
 			log.severe("No existe una configuración de TPV para el usuario.");
@@ -644,19 +724,87 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			
 			// Se valida la configuración del TPV.
 			getModel().validatePoSConfig();
-		
+			debug("Valido la configuracion del POS");
+			
+			// Inicializar la configuracion Clover desde TPV
+			InicializaClover();
+
 		} catch (PosException e) {
 			setPosConfigError(true);
 			errorMsg(MSG_POS_CONFIG_ERROR, getMsg(e.getMessage()));
-		}		
+		}
+		
+		// dREHER
+		// SI el ID del servicio externo Clover es <= 0, lo obtengo
+		if(IDServicioExternoClover <= 0)
+			IDServicioExternoClover = Utilidades.getExternalServiceByName("Clover");
+		
 	}
 	
-	private void reloadPoSConfig(){
+	/**
+	 * Inicializa la configuracion Clover desde Config TPV
+	 * dREHER
+	 */
+	public void InicializaClover() {
+		
+		PoSConfig poSConfig = getModel().getPoSConfig();
+		poSConfig.RefreshCloverStatus();
+		
+		isAlterClover = poSConfig.isAlterClover();
+		isOnLineClover = poSConfig.isOnLineClover();
+		isTrxCloverLog = poSConfig.isTrxCloverLog();
+
+		if(isOnLineClover) {
+			isOnLineClover = ValidaConnectClover(poSConfig);
+			if(!isOnLineClover && isAlterClover) {
+				poSConfig.setOnLineClover(false);
+			}else {
+				if(!isOnLineClover && !isAlterClover) {
+					setPosConfigError(true);
+					errorMsg("Error en la terminal de Pago", "Esta caja SOLO opera en modalidad 'Online Clover', verifique el dispositivo!");
+				}
+
+			}
+		}else {
+			poSConfig.setOnLineClover(false);
+		}
+
+		showCamposTarjeta(isOnLineClover);
+	}
+
+	/**
+	 * Verifica si se puede conectar con el equipo Clover, caso contrario trabaja Clover OffLine notificando al usuario
+	 * @return
+	 * dREHER
+	 */
+	private boolean ValidaConnectClover(PoSConfig poSConfig) {
+	
+		VTrxPaymentTerminalForm trxCloverForm = new VTrxPaymentTerminalForm(this, 
+				Env.ZERO,
+				-1,
+				null,
+				null,
+				false,
+				null,
+				false,
+				null,
+				true,
+				null,
+				null,
+				null);
+		trxCloverForm.setModal(true);
+		trxCloverForm.setVisible(true);
+		
+		return	trxCloverForm.isConnect();
+		
+	}
+
+	private void reloadPoSConfig() {
 		getModel().reloadPoSConfig(getWindowNo());
 		updateStatusDB();
 	}
-	
-	public void updateStatusDB(){
+
+	public void updateStatusDB() {
 		StringBuffer status = new StringBuffer();
 		String documentNo = getModel().getNextInvoiceDocumentNo(); 
 		if(!Util.isEmpty(documentNo, true)){
