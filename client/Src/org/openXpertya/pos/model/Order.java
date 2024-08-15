@@ -74,6 +74,27 @@ public class Order  {
 		discountCalculator.loadConfiguredDiscounts();
 	}
 	
+	private Order(DiscountCalculator dc) {
+		super();
+		setOrderProducts(new ArrayList<OrderProduct>());
+		setPayments(new ArrayList<Payment>());
+		if(dc == null) {
+			discountCalculator = DiscountCalculator.create(
+					getDiscountableOrderWrapper(), MBPartner.DISCOUNTCONTEXT_Bill);
+			// Se cargan los descuentos configurados en este momento ya que la instanciación de un
+			// Order se debe hacer en modo online.
+			discountCalculator.loadConfiguredDiscounts();
+		}
+		else {
+			discountCalculator = DiscountCalculator.create(getDiscountableOrderWrapper(), dc);
+		}
+	}
+	
+	public Order(Organization organization, DiscountCalculator dc){
+		this(dc);
+		setOrganization(organization);
+	}
+	
 	public Order(Organization organization){
 		this();
 		setOrganization(organization);
@@ -1398,4 +1419,5 @@ public class Order  {
 	public void removePromotionalCode(String code){
 		getDiscountCalculator().removePromotionCode(code);
 	}
+
 }

@@ -17,6 +17,7 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 	private int entidadFinancieraID = 0;
 	private String name;
 	private int coutasPago;
+	private int cuotasPosnet; // dREHER
 	private DiscountSchema discountSchema;
 	/** ID utilizado para el Calculador de Descuentos */
 	private Map<String, Integer> internalIDs = null;
@@ -32,6 +33,22 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 		this.entidadFinancieraID = entidadFinancieraID;
 		this.name = name;
 		this.coutasPago = coutasPago;
+		this.cuotasPosnet = 0;
+		this.internalIDs = new HashMap<String, Integer>();
+	}
+	
+	/**
+	 * Constructor de la clase
+	 * @param name
+	 * @param coutasPago
+	 */
+	public EntidadFinancieraPlan(int entidadFinancieraPlanID, int entidadFinancieraID, String name, int coutasPago, int cuotasPosnet) {
+		super();
+		this.entidadFinancieraPlanID = entidadFinancieraPlanID;
+		this.entidadFinancieraID = entidadFinancieraID;
+		this.name = name;
+		this.coutasPago = coutasPago;
+		this.cuotasPosnet = cuotasPosnet;
 		this.internalIDs = new HashMap<String, Integer>();
 	}
 
@@ -155,4 +172,13 @@ public class EntidadFinancieraPlan implements IPaymentMediumInfo {
 		// planes
 		return getInternalIDs().put(((CreditCardPayment)payment).getBankName(), internalID);
 	}
+	
+	public int getCuotasPosnet() {
+		return cuotasPosnet;
+	}
+
+	public void setCuotasPosnet(int cuotasPosnet) {
+		this.cuotasPosnet = cuotasPosnet;
+	}
+	
 }

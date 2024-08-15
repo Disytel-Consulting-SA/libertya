@@ -1,12 +1,18 @@
 package org.openXpertya.pos.ctrl;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +40,7 @@ import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCategoriaIva;
 import org.openXpertya.model.MCheckCuitControl;
+import org.openXpertya.model.MControladorFiscal;
 import org.openXpertya.model.MConversionRate;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
@@ -66,6 +73,7 @@ import org.openXpertya.model.MProductPrice;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MRole;
+import org.openXpertya.model.MSequence;
 import org.openXpertya.model.MStorage;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.MUser;
@@ -128,6 +136,9 @@ import org.openXpertya.util.TimeStatsAccumulator;
 import org.openXpertya.util.TimeStatsLogger;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
+
+// import wsfecred.afip.gob.ar.FECredService.FECred;
+// dREHER se reemplaza por Reflect para evitar importar otro proyecto desde Core
 
 public class PoSOnline extends PoSConnectionState {
 
@@ -216,6 +227,35 @@ public class PoSOnline extends PoSConnectionState {
 	/** Modelo de autorizaciones de usuario utilizado en TPV */
 	private AUserAuthModel authorizationModel;
 	
+	/** Solo a los efectos de saltear la generacion de CAE 
+	 * 
+	 * IMPORTANTE: solo utilizar a fines de testing...
+	 * 
+	 * */
+	// dREHER
+	private final boolean SIMULA_GENERACION_CAE = false;
+	private final boolean FORZAR_RETIROPORALMACEN_JASPER = false;
+	private final String TOLERANCIA_DIFF = "ToleranciaDiffTK_TPV";
+	
+	/**
+	 * Para compatibilidad con los errores de PoSMainForm
+	 * dREHER
+	 */
+	private final String GENERATING_CAE_ERROR = "GeneratingCAEError";
+	
+	// dREHER
+	private final String GENERATING_CAE_MIPYME_ERROR = "GeneratingCAEMiPymeError";
+	
+	
+	/*********************************************************************
+	 * IMPORTANTE!!! solo activar cuando se quiera validar MiPyme
+	 * dREHER
+	 */
+	private final boolean VALIDAR_MI_PYME = getValidarMiPyme();
+	
+	// dREHER para guardar referencia a la ultima factura creada
+	MInvoice invoiceLastCreated = null;
+	
 	public PoSOnline() {
 		super();
 		setCreatePOSPaymentValidations(new CreatePOSPaymentValidations());
@@ -232,10 +272,34 @@ public class PoSOnline extends PoSConnectionState {
 				MDocType.DOCTYPE_POS, null));
 	}
 	
+	/**
+	 * Lee preferencia para validar miPyme
+	 * @return true-> debe validar, false-> no debe validar
+	 * dREHER
+	 */
+	private boolean getValidarMiPyme() {
+		boolean validar = false;
+		
+		// Si ya sabemos que debe validar miPyme en esta instancia NO volver a consultar
+		if(!VALIDAR_MI_PYME) {
+			String sValidar = MPreference.GetCustomPreferenceValue("Validar_FC_MiPyme", Env.getAD_Client_ID(Env.getCtx()));
+			if(sValidar!=null && (sValidar.equalsIgnoreCase("Y") || sValidar.equalsIgnoreCase("S")) )
+				validar = true;
+		}else
+			validar = true;
+		
+		debug("getValidarMiPyme. " + validar);
+		
+		return validar;
+	}
+	
 	private static void throwIfFalse(boolean b, DocAction sourceDocActionPO, Class posExceptionClass) throws PosException {
 		if (!b) 
 		{
 			String msg = null;
+
+		/**	
+			
 			// Se intenta obtener el mensaje a partir del Logger.
 			if (sourceDocActionPO == null) {
 				msg = CLogger.retrieveErrorAsString();
@@ -246,6 +310,17 @@ public class PoSOnline extends PoSConnectionState {
 				msg = Msg.parseTranslation(Env.getCtx(), sourceDocActionPO.getProcessMsg());
 			
 			}
+			
+			Codigo original, se mejora para poder mostrar mas info al usuario y ser utilizada desde TPV
+			
+			dREHER
+			
+		*/	
+			msg = CLogger.retrieveErrorAsString();
+			if (sourceDocActionPO != null && sourceDocActionPO.getProcessMsg() != null &&
+					 sourceDocActionPO.getProcessMsg().length() > 0) 
+				msg = msg==null?"":msg + " - " + Msg.parseTranslation(Env.getCtx(), sourceDocActionPO.getProcessMsg());
+			
 		
 			PosException e;
 			try {
@@ -256,6 +331,8 @@ public class PoSOnline extends PoSConnectionState {
 			}
 			if (msg != null)
 				e.setMessage(msg);
+			
+			debug("Error al ejecutar DocAction: " + msg);
 			
 			throw e;
 		}
@@ -273,6 +350,67 @@ public class PoSOnline extends PoSConnectionState {
 		throwIfFalse(b, sourceDocActionPO, PosException.class);
 	}
 	
+	
+	@Override
+	public void validateBPartner(Order order) throws PosException{
+		// dREHER
+		// Verificar que si el tipo de documento REQUIERE IMPRESION FISCAL y la Entidad Comercial tiene tilde de Ocultar Descuento NO permita avanzar
+		debug("validateBPartner.");
+		if(requireFiscalPrintNOElectronica()) {
+			debug("validateBPartner.Requiere impresion fiscal!");
+			if (order.getBusinessPartner() != null) {
+				partner = new MBPartner(ctx, order.getBusinessPartner().getId(), getTrxName());
+				boolean isOcultarDesctoLineaFC = false;
+				if(partner.get_Value("IsOcultarDesctoLineaFC")!=null) {
+						isOcultarDesctoLineaFC = (Boolean)partner.get_Value("IsOcultarDesctoLineaFC");
+						debug("validateBPartner.Ocultar Descuento en linea de FC: " + isOcultarDesctoLineaFC);
+				}
+				try {
+					if(isOcultarDesctoLineaFC)
+						throw new PosException("El cliente elegido tiene configurado 'Ocultar Descuento', NO puede imprimirse en controlador fiscal!");
+				} catch (PosException e) {
+					e.printStackTrace();
+					throw new PosException(e);
+				}
+			}
+		}
+	}
+
+	// dREHER -> MInvoice
+	public boolean requireFiscalPrintNOElectronica() {
+		return CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& (MDocType.isFiscalDocType(getActualDocTypeID())
+						|| isThermalFiscalPrint(getActualDocTypeID()))
+				&& !MDocType.isElectronicDocType(getActualDocTypeID());
+	}
+	
+	// dREHER -> MInvoice
+	public boolean isThermalFiscalPrint(int docTypeID) {
+		boolean isThermalPrint = false;
+		if(!Util.isEmpty(docTypeID, true)) {
+			MDocType dt = MDocType.get(getCtx(), docTypeID);
+			if(!Util.isEmpty(dt.getC_Controlador_Fiscal_ID(), true)) {
+				MControladorFiscal cf = new MControladorFiscal(getCtx(), dt.getC_Controlador_Fiscal_ID(),
+						getTrxName());
+				isThermalPrint = MControladorFiscal.CONTROLADORFISCALTYPE_Thermal.equals(cf.getControladorFiscalType());
+			}
+		}
+		return isThermalPrint;
+	}
+	
+	// dREHER determinar si tiene una impresora fiscal de segunda generacion
+	public boolean isFiscal2G() {
+		if(MDocType.isFiscalDocType(getActualDocTypeID()) &&
+		  !MDocType.isElectronicDocType(getActualDocTypeID()) ) {
+			debug("Se trata de un punto de venta con Controlador Fiscal!");
+			return true;
+		}
+		
+		debug("Se trata de un punto de venta Electronico!");
+		return false;
+	}
+	
+
 	/**
 	 * El metodo completeOrder:
 	 * 
@@ -297,7 +435,13 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws InsufficientCreditException
 	 */
 	@Override
-	public void completeOrder(Order order, Set <Integer> ordersId) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException {
+	public CallResult completeOrder(Order order, Set <Integer> ordersId) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException, InvoiceCreateException {
+		CallResult result = new CallResult();
+		
+		// dREHER
+		boolean isErrorMiPyme = false;
+		
+		
 		Trx trx = null; // LOCAL. Solo para hacer rollback o commit
 		try {
 		
@@ -341,9 +485,54 @@ public class PoSOnline extends PoSConnectionState {
 				debug("Creando Factura (MInvoice)");
 				invoice = createOxpInvoice(order);
 				
-				invoice.addDocActionStatusListener(getDocActionStatusListener());
-				debug("Chequeando Factura");
-				checkInvoice(order);
+				/**
+				 * En caso de que NO se pueda crear la factura, continuar creando solo el pedido
+				 * y notificar al usuario de lo sucedido para poder utilizar el pedido creado
+				 * dREHER
+				 */
+				
+				try {
+					invoiceLastCreated = null;
+					invoice = createOxpInvoice(order);
+
+					invoice.addDocActionStatusListener(getDocActionStatusListener());
+					debug("Chequeando Factura");
+					checkInvoice(order);
+					
+				}catch(PosException ex) {
+					
+					// dREHER 
+					// Si llega dar una excepcion que NO quede la factura en borrador
+					if(invoice!=null && !invoice.getDocStatus().equals("CO")) {
+						debug("Se produjo excepcion al crear factura e intentar completar. Docstatus=" + invoice.getDocStatus());
+						try {
+							invoice.delete(true, trxName);
+							debug("Elimina la factura en borrador!");
+							invoice=null;
+						}catch(Exception ex2) {
+							log.warning("Se produjo excepcion al intentar eliminar FC en borrador!");
+						}
+					}else {
+						
+						// dREHER si dio excepcion al completar por ej, no llega invoice, pero si se puede haber creado ok
+						// verificar que no exista en borrador, caso contrario eliminarla
+						if(invoiceLastCreated!=null && invoiceLastCreated.getDocStatus().equals("CO")) {
+							debug("Se produjo excepcion al crear factura e intentar completar. Docstatus=" + invoiceLastCreated.getDocStatus());
+							try {
+								invoiceLastCreated.delete(true, trxName);
+								debug("Elimina la factura en borrador!");
+								invoice=null;
+							}catch(Exception ex2) {
+								log.warning("Se produjo excepcion al intentar eliminar FC en borrador!");
+							}
+						}
+					}
+					
+					debug("No se pudo crear la factura, continuar igual e informarle al usuario para que pueda usar el pedido!");
+					debug(ex.getMessage());
+					if(ex.getMessage().startsWith("MIPYME"))
+						isErrorMiPyme = true;
+				}
 			}
 			
 			debug("Guardando los descuentos");
@@ -354,7 +543,7 @@ public class PoSOnline extends PoSConnectionState {
 			
 			// MInOut: Albarán, Remito.
 			
-			if (getShouldCreateInout()) {
+			if (getShouldCreateInout() && invoice != null) { // dREHER invoice != null
 				// Validaciones extras al crear el remito
 				getCompleteOrderPOSValidations().validateInOut(this, order);
 				debug("Creando Remito (MInOut)");
@@ -363,8 +552,9 @@ public class PoSOnline extends PoSConnectionState {
 			
 			// Se crea el allocation y los pagos en el caso que se cree la
 			// factura sino no tiene sentido
-			
-			if (getShouldCreateInvoice()) {
+
+			// dREHER - solo hacer estos pasos SI SE PUDO CREAR LA FACTURA
+			if (getShouldCreateInvoice() && invoice!=null) {
 				// Validaciones extras al crear el allocation
 				getCompleteOrderPOSValidations().validateAllocation(this, order);
 				// Allocation Header
@@ -386,8 +576,14 @@ public class PoSOnline extends PoSConnectionState {
 			}
 
 			// Validaciones extras al finalizar
+			debug("Verificar montos de pagos vs total ticket...");
 			getCompleteOrderPOSValidations().validateEndCompleteOrder(this, order);
+			debug("Verificado montos de pagos vs total ticket...");
 			
+			// Guardar las autorizaciones de usuario
+			// dREHER
+			if(invoice!=null)
+				getAuthorizationModel().confirmAuthorizationsDone(trxName, invoice.getID());
 			
 			// Realizar las tareas de cuenta corriente antes de finalizar
 			if (shouldUpdateBPBalance) {
@@ -480,11 +676,259 @@ public class PoSOnline extends PoSConnectionState {
 			orderTPV.save();
 		}
 		
+		
+		/**
+		 * Si al generar el Invoice, se verifico que el comprobante anterior a este
+		 * no tiene CAE generado o impresion fiscal, esquivar en este tambien hasta
+		 * que se gestione mediante ventana de gestion de comprobantes de venta
+		 * 
+		 * dREHER
+		 */
+		
+		if(invoice!=null)
+			debug("Invoice antes de generar CAE/Impresion fiscal: " + invoice +
+				" isIgnoreCAEGeneration: " + invoice.isIgnoreCAEGeneration());
+		
+		boolean isErrorCAE = false;
+		if(invoice!=null && !invoice.isIgnoreCAEGeneration() && !invoice.isIgnoreFiscalPrint()) {
+			result = invoice.doExtraCompleteNumberControls();
+			if(result.isError()) {
+				invoice.setIgnoreCAEGeneration(true);
+				// Fix - si tiene error de CAE, igualmente debe tratar de imprimir fiscal
+				// invoice.setIgnoreFiscalPrint(true);
+				isErrorCAE = true;
+				debug("Se produjo error con CAE, intenta igualmente imprimir fiscal si es necesario...");
+			}
+		}
+
 		// Generación de CAE
-		doGenerateCAE();
+		if(invoice!=null && !invoice.isIgnoreCAEGeneration()) {
+			
+				debug("Debe generar CAE...");
+				try {
+					doGenerateCAE();
+				}catch(PosException ex) {
+					
+					/**
+					 * Si dio error por FC MiPyme intentar cambiarle el tipo de documento y volver a generar CAE
+					 * o bien anularla YA que en AFIP no quedo OK y no se puede utilizar como miPyme
+					 * dREHER
+					 */
+					if(ex.getMessage().equals(GENERATING_CAE_MIPYME_ERROR)) {
+						
+						if(ChangeTipo(invoice)) {
+							
+							try {
+								
+								doGenerateCAE();
+								isErrorMiPyme = false;
+								result.setError(false);
+								
+							}catch(PosException ex2) {
+								if(ex2.getMessage().equals(GENERATING_CAE_MIPYME_ERROR)) {
+									isErrorMiPyme = true;	
+								}
+							}
+							
+						}else						
+							isErrorMiPyme = true;
+						
+					}else
+						isErrorMiPyme = false;
+				}
+			
+		}else
+			debug("Debe ignorar generacion de CAE");
 		
 		// Impresión Fiscal
-		doFiscalPrint();
+		if(invoice!=null && !invoice.isIgnoreFiscalPrint() || isErrorCAE) {
+			try{
+				doFiscalPrint();
+			}catch(Exception ex) {
+				log.warning("Se produjo un error al intentar imprimir ticket fiscal... continua con ticket!");
+			}
+		}
+		
+		// Imprimir Ticket Convencional
+		doImprimirTicket(order);
+		
+		/**
+		 * Si la factura no se pudo generar (tengo un error)
+		 * verificar si corresponde por miPyme o por otro problema...
+		 * 
+		 * dREHER
+		 */
+		
+		if(invoice==null || result.isError()) {
+			
+			if(isErrorMiPyme && isFiscal2G())
+				result.setMsg("El cliente corresponde facturar MiPyme, \n " +
+						"No es posible realizar este tipo de facturas en Impresores Fiscales. \n" +
+						"Por favor realizar la venta en un puesto con Facturación Electrónica " +
+						"ingresando el pedido nro.:" + morder.getDocumentNo(), true);
+			else {
+				if(isErrorMiPyme)
+					result.setMsg("El cliente corresponde facturar MiPyme, \n " +
+							"Por favor realizar la venta en un puesto con Facturación Electrónica o que tenga habilitado miPyme " +
+							"ingresando el pedido nro.:" + morder.getDocumentNo(), true);
+				else
+					if(invoice==null)
+						result.setMsg("No se pudo generar FACTURA."  + "\n" + 
+							  "Puede realizar la venta en otro puesto, ingresando el pedido nro.:" +
+							  morder.getDocumentNo() + "\n" +
+							  "(Verificar facturas anteriores en borrador y/o la numeracion de las mismas.)", true);
+			}
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Intenta cambiar el tipo de documento de MiPyme a FC A (normal)
+	 * renumera secuencias miPyme
+	 * renumera secuencias FC A
+	 * 
+	 * @param invoice2
+	 * @return true -> pudo cambiar el tipo de documento, false -> no pudo cambiar el tipo de documento
+	 * dREHER
+	 * @throws PosException 
+	 */
+	private boolean ChangeTipo(MInvoice invoice2) throws PosException {
+		boolean isOK = false;
+		int C_DocTypeMiPyme_ID = invoice2.getC_DocTypeTarget_ID();
+		String documentNoMiPyme = invoice2.getDocumentNo();
+		int numeroComprobanteMiPyme = invoice2.getNumeroComprobante();
+		
+		// Se obtiene la letra del comprobante
+		MLetraComprobante mLetraComprobante = getLocaleArLetraComprobante();
+				
+		// Se obtiene la letra y el nro de punto de venta para determinar el tipo
+		// de documento de la factura.
+		String letra = mLetraComprobante.getLetra();
+				
+		// Obtener el punto de venta específicamente para esta letra en la
+		// config
+		Integer posNumber = getPoSCOnfig().getPosNumberLetters().get(
+						mLetraComprobante.getLetra());
+		if(Util.isEmpty(posNumber, true)){
+				posNumber = getPoSCOnfig().getPosNumber();
+		}
+				
+		// Se obtiene el tipo de documento para la factura.
+		MDocType mDocType = MDocType.getDocType(ctx, Env.getAD_Org_ID(getCtx()),
+				MDocType.DOCTYPE_CustomerInvoice, letra, posNumber,
+				getTrxName());
+		if (mDocType == null) 
+					throw new InvoiceCreateException(Msg.getMsg(ctx, "NonexistentPOSDocType", new Object[] {letra, posNumber}));
+		
+		int numeroComprobante = getNextSequence(mDocType.getDocNoSequence_ID());
+		String documentNo = CalloutInvoiceExt
+				.GenerarNumeroDeDocumento(posNumber,
+						numeroComprobante, letra,
+						isSOTrx(), false);
+		
+		String sql = "UPDATE C_Invoice SET C_DocType_ID=" + mDocType.getC_DocType_ID() +
+				" ,C_DocTypeTarget_ID=" + mDocType.getC_DocType_ID() +
+				" ,DocumentNo='" + documentNo + "'" +
+				" ,NumeroComprobante=" + numeroComprobante +
+				" ,PuntoDeVenta=" + posNumber +
+				" ,C_Letra_Comprobante_ID=" + mLetraComprobante.getC_Letra_Comprobante_ID() +
+				" WHERE C_Invoice_ID=" + invoice2.getC_Invoice_ID();
+				
+		debug("Intenta cambiar el tipo y numero de comprobante. Actual=" + documentNoMiPyme + " Nuevo Numero=" + documentNo);
+		debug("sql=" + sql);
+		
+		// 1 - actualizar datos del comprobante 
+		if(DB.executeUpdate(sql, trxName) > -1) {
+			
+			debug("Cambio el tipo y numero de comprobante Ok!");
+			
+			// 2 - actualizar la secuencia del nuevo tipo de comprobante
+			int seqNo = mDocType.getDocNoSequence_ID();
+			MSequence seq = new MSequence(Env.getCtx(), seqNo, trxName);
+			
+			if(seq.getPrefix()!=null && seq.getPrefix().length()==3) {
+
+				String lastDocumentNos = documentNo;
+				if(lastDocumentNos!=null && lastDocumentNos.trim().length() > 8)
+					lastDocumentNos = lastDocumentNos.substring(lastDocumentNos.trim().length()-8);
+			
+				String prefix = invoice2.getDocumentNo().substring(3,5);
+				lastDocumentNos = prefix + lastDocumentNos;
+				seq.setCurrentNext((new BigDecimal(lastDocumentNos)).add(Env.ONE));
+				seq.save();
+
+
+			}else {
+				// Actualiza la secuencia con el nuevo número de documento
+				MSequence.setFiscalDocTypeNextNroComprobante(
+						mDocType.getDocNoSequence_ID(), numeroComprobante + 1,
+						getTrxName());
+			}
+			
+			debug("Actualizo secuencia del nuevo tipo de comprobante. Ultimo utilizado=" + (numeroComprobante + 1) );
+			
+			
+			// 3 - acomodar la secuencia de miPyme (valor actual - 1)
+			mDocType = new MDocType(Env.getCtx(), C_DocTypeMiPyme_ID, getTrxName());
+			seqNo = mDocType.getDocNoSequence_ID();
+			seq = new MSequence(Env.getCtx(), seqNo, trxName);
+			
+			if(seq.getPrefix()!=null && seq.getPrefix().length()==3) {
+
+				String lastDocumentNos = documentNoMiPyme;
+				if(lastDocumentNos!=null && lastDocumentNos.trim().length() > 8)
+					lastDocumentNos = lastDocumentNos.substring(lastDocumentNos.trim().length()-8);
+				
+				String prefix = documentNoMiPyme.substring(3,5);
+				lastDocumentNos = prefix + lastDocumentNos;
+				BigDecimal next = (new BigDecimal(lastDocumentNos)).subtract(Env.ONE);
+				seq.setCurrentNext(next.compareTo(Env.ZERO)==0?Env.ONE:next);
+				seq.save();
+
+			}else {
+				// Actualiza la secuencia descontado el ultimo numero utilizado
+				MSequence.setFiscalDocTypeNextNroComprobante(
+						mDocType.getDocNoSequence_ID(), (numeroComprobanteMiPyme==1?1:numeroComprobanteMiPyme - 1),
+						getTrxName());
+			}
+			
+			
+			debug("Actualizo secuencia del tipo de comprobante miPyme. Ultimo utilizado=" + (numeroComprobanteMiPyme - 1) );
+			
+			isOK = true;
+			
+		}else
+			log.warning("No se pudo actualizar datos de la factura miPyme Nro. " + invoice2.getDocumentNo());
+		
+		
+		return isOK;
+	}
+
+	/**
+	 * Metodo de MInvoice
+	 * @param AD_Sequence_ID
+	 * @return proximo numero de comprobante
+	 * dREHER
+	 */
+	public int getNextSequence(int AD_Sequence_ID) {
+
+		MSequence seq = new MSequence(getCtx(), AD_Sequence_ID, trxName);
+		String next = seq.getCurrentNext().toString();				// '300001000'
+		if(next.length() > 8)
+			next = next.substring(next.length()-8, next.length());   //'00001000'
+		
+		return new Integer(next);
+	}
+
+	/**
+	 * Utilizado para generar solo la impresion, cuando por ej falla CAE y el usuario cancela reintentar CAE
+	 * 
+	 * 
+	 * dREHER
+	 */
+	@Override
+	public void doImprimirTicket(Order order) throws PosException {
 		
 		try {
 			// Impresión del ticket convencional (solo si no fue emitido por
@@ -504,23 +948,65 @@ public class PoSOnline extends PoSConnectionState {
 	 * @throws PosException
 	 */
 	public void doGenerateCAE() throws PosException {
+		
+		/** 
+		 * IMPORTANTE! solo utilizar para debugging 
+		 * dREHER
+		 * 
+		 * 
+		 */
+		if(SIMULA_GENERACION_CAE) {
+			MInvoice tmpInvoice = new MInvoice(getCtx(), invoice.getC_Invoice_ID(), null);
+			tmpInvoice.setcae(invoice.getDocumentNo().substring(1).trim());
+			tmpInvoice.setvtocae(invoice.getDateInvoiced());
+			tmpInvoice.setcaeerror("*** CAE Simulado tomando el DocumentNo ***");
+			if(!tmpInvoice.save())
+				debug("No pudo simular CAE!");
+			
+			debug("*** SE SIMULA CAE TOMANDO EL DocumentNo del comprobante. cae= " + tmpInvoice.getcae());
+			
+			return ;
+		}
+		
+		boolean shouldCreateInvoice = getShouldCreateInvoice();
+		boolean requireCAEGeneration = invoice.requireCAEGeneration(); 
+		
+		debug("shouldCreateInvoice=" + shouldCreateInvoice + " " + "requireCAEGeneration=" + requireCAEGeneration);
+		
 		// Aquí estamos fuera de la transacción. Ahora sí registramos la FE
-		if (getShouldCreateInvoice() && invoice.requireCAEGeneration()) {
-			debug("Registro de FE");
+		if ( shouldCreateInvoice && requireCAEGeneration) {
+			debug("Metodo: doGenerateCAE Registro de FE");
 			getElectronicEventListener().electronicStatus(ElectronicEventListener.GENERATING_CAE);
 			// Recargamos la factura con TRX NULL. Si usamos la MInvoice con un
 			// nombre de transacción entonces obtendríamos los mismos bloqueos.
 			MInvoice tmpInvoice = new MInvoice(getCtx(), invoice.getC_Invoice_ID(), null);
 			tmpInvoice.addDocActionStatusListener(getDocActionStatusListener());
+			
 			// Registro de FE
-			CallResult callResult = tmpInvoice.doCAEGeneration(true);
+			// dREHER
+			CallResult callResult = tmpInvoice.doCAEGeneration(true, tmpInvoice.getNumeroComprobante()); 
+			
+			debug("Metodo: doGenerateCAE Vuelve de CAEGeneration...");
 			if (callResult.isError()) {
 				getElectronicEventListener().electronicStatus(ElectronicEventListener.GENERATING_CAE_ERROR);
 				getElectronicEventListener().errorOcurred("", callResult.getMsg());
-				throw new GeneratingCAEError();
+				debug("Metodo: doGenerateCAE Dio error al generar CAE, sale por excepcion de CAE Generator...");
+				
+				// dREHER
+				String errorMsg = callResult.getMsg();
+				if(errorMsg!=null && errorMsg.startsWith("No puede realizar una factura MiPyme para este cliente en este momento, intente con una Factura Normal!")) {
+					
+					debug("Devolvio error: " + errorMsg + "\n" +
+							"ignoreMiPymeValidation = true");
+					throw new GeneratingCAEError(GENERATING_CAE_MIPYME_ERROR);
+				}else				
+					throw new GeneratingCAEError(GENERATING_CAE_ERROR);
 			}
 			getElectronicEventListener().electronicStatus(ElectronicEventListener.GENERATING_CAE_OK);
-		}
+				
+		}else
+			debug("No debe generar CAE...");
+		
 	}
 	
 	/**
@@ -542,6 +1028,39 @@ public class PoSOnline extends PoSConnectionState {
 			CallResult callResult = tmpInvoice.doFiscalPrint(true);
 			if (callResult.isError()) {
 				throw new FiscalPrintException(callResult.getMsg());				
+			}else{
+				
+				// dREHER, controlar si volvio de imprimir sin error y NO posee marca de AlreadyFiscalPrinted marcarla aca en una nueva transaccion
+				
+				Trx trx = null; // LOCAL. Solo para hacer rollback o commit
+				String trxName2 = null;
+				try {
+				
+					trxName2 = createTrxName();
+					trx = Trx.get(trxName2, true);
+
+					log.warning("Fuerza marcado de impresion fiscal en una nueva transaccion!");
+					DB.executeUpdate("UPDATE C_Invoice SET fiscalalreadyprinted='Y' WHERE C_Invoice_ID=" +
+							tmpInvoice.getC_Invoice_ID(),
+							trxName2);
+
+					debug("Commit de Transaccion");
+					throwIfFalse(trx.commit());
+					trxName2 = null;
+					
+				}catch(Exception ex) {
+					log.warning("No pudo forzado de marca de impresion fiscal!");
+					try {
+						trx.rollback();
+					} catch (Exception e2) {}
+				}finally {
+					trxName2 = null;
+					try {
+						trx.close();
+					} catch (Exception e2) {
+						
+					}
+				}
 			}
 		}
 	}
@@ -562,11 +1081,11 @@ public class PoSOnline extends PoSConnectionState {
 		return success;
 	}
 	
-	protected boolean getShouldCreateInvoice() {
+	private boolean getShouldCreateInvoice() {
 		return shouldCreateInvoice;
 	}
 	
-	protected boolean getShouldCreateInout() {
+	private boolean getShouldCreateInout() {
 		return shouldCreateInout;
 	}
 	
@@ -629,12 +1148,12 @@ public class PoSOnline extends PoSConnectionState {
 		}
 	}
 	
-	protected String getTrxName() {
+	private String getTrxName() {
 		//return trx != null ? trx.getTrxName() : null;
 		return trxName;
 	}
 	
-	protected void clearState(Order order) {
+	private void clearState(Order order) {
 		
 		ctx = Env.getCtx();
 		invoiceDate = Env.getTimestamp();
@@ -759,6 +1278,39 @@ public class PoSOnline extends PoSConnectionState {
 		
 		BigDecimal redondeo = getRedondeo();
 		
+		// dREHER
+		// existen casos donde el total de factura NO coincide con el total de la orden POS, se agrega control!
+		// Verificar que el total de la Order sea igual al de la Invoice, caso contrario lanzar excepcion...
+		// CDA - 1870
+		BigDecimal totalOrder = order.getTotalAmount().setScale(2, RoundingMode.DOWN);		
+		BigDecimal totalInvoice = invoice.getGrandTotal().setScale(2, RoundingMode.DOWN);
+		
+		if(totalInvoice.compareTo(Env.ZERO) <= 0) {
+			totalInvoice = invoice.getTotalLines();
+		}
+		
+		
+		BigDecimal diferencia = (totalOrder.subtract(totalInvoice)).abs();
+				
+		String diffTolerancia = MPreference.GetCustomPreferenceValue(TOLERANCIA_DIFF);
+		if(diffTolerancia == null || diffTolerancia.isEmpty())
+			diffTolerancia = "0.05";
+		
+		BigDecimal tolerancia = Env.ZERO;
+		try {
+			tolerancia = new BigDecimal(diffTolerancia);
+		}catch(Exception ex) {
+			tolerancia = new BigDecimal(0.05);
+		}
+		
+		if(tolerancia.compareTo(new BigDecimal(0.05)) < 0)
+			tolerancia = new BigDecimal(0.05);
+		
+		debug("totalPoSOrder=" + totalOrder + " totalInvoice=" + totalInvoice + " diferencia=" + diferencia + " tolerancia=" + tolerancia);
+		
+		if(diferencia.compareTo(tolerancia) > 0)
+			throw new PosException("El total de la Factura NO coincide con el total de la orden POS!");
+		
 		// Diff es la cantidad exacta que FALTA PAGAR para que la diferencia sea PRECISAMENTE CERO. 
 		BigDecimal diff = totalPagar.subtract(sumaPagos);
 
@@ -794,7 +1346,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * @param order
 	 * @throws PosException
 	 */
-	protected void checkSaldo(Order order) throws PosException {
+	private void checkSaldo(Order order) throws PosException {
 		
 		BigDecimal cashChange = BigDecimal.ZERO;
 		boolean invalidPayment = false;
@@ -1537,6 +2089,9 @@ public class PoSOnline extends PoSConnectionState {
 		else
 			inv = new MInvoice(morder, getPoSCOnfig().getInvoiceDocTypeID(), invoiceDate);
 		
+		// Referencio a la ultima factura creada
+		invoiceLastCreated = inv;
+		
 		// Se indica que no se debe crear una línea de caja al completar la factura ya
 		// que es el propio TPV el que se encarga de crear los pagos e imputarlos con
 		// la factura (esto soluciona el problema de líneas de caja duplicadas que 
@@ -1610,8 +2165,23 @@ public class PoSOnline extends PoSConnectionState {
 			invLine.setTaxAmt(orderLineProductIDs.get(line.getID()).getTotalTaxAmt());
 			invLine.setLineTotalAmt(invLine.getLineNetAmt().add(invLine.getTaxAmt()));
 			
+			// dREHER 2024-01-11 Forzar pasarle el precio de lista del producto
+			// En algunas bonificaciones por TPV este monto incluye el descuento, por lo tanto termina restandose dos veces...
+			invLine.setPriceList(line.getPriceList());
+			
 			debug("Guardando línea #" + invLine.getLine());
 			throwIfFalse(invLine.save(), InvoiceCreateException.class);
+			
+			// dREHER forzar que el precio de lista de la linea de factura SEA IGUAL al de la linea de orden
+			if(invLine.getPriceList().compareTo(line.getPriceList()) != 0) {
+				
+				debug("FORZAR IGUALAR PRECIO LISTA: Al crear la linea de factura, el precio de lista difiere de la orden, forzar igualar! \nPrecio List FC:" 
+						+ invLine.getPriceList() + " " 
+						+ "\nPrecio lista orden: " + line.getPriceList());
+				
+				DB.executeUpdate("UPDATE C_InvoiceLine SET PriceList=" + line.getPriceList() + " WHERE C_InvoiceLine_ID=" + invLine.getC_InvoiceLine_ID(), getTrxName());
+				
+			}
 			
 			line.setTpvGeneratedInvoiceLineID(invLine.getID());
 			orderLineProductIDs.get(line.getC_OrderLine_ID()).setInvoiceLineID(invLine.getID());
@@ -1687,13 +2257,16 @@ public class PoSOnline extends PoSConnectionState {
 			invoiceTax.setIsTaxIncluded(mi.isTaxIncluded());
 			throwIfFalse(invoiceTax.save(), mi);
 		}
-		/* patch 22.03
+		MTax t;
 		for (MInvoiceTax it : mi.getTaxes(true)) {
-			it.calculateTaxFromLines();
-			if(!it.save()) {
-				throw new PosException(CLogger.retrieveErrorAsString());
+			t = MTax.get(getCtx(), it.getC_Tax_ID(), getTrxName());
+			if(!t.isPercepcion()) {
+				it.calculateTaxFromLines();
+				if(!it.save()) {
+					throw new PosException(CLogger.retrieveErrorAsString());
+				}
 			}
-		} fin patch 22.03 */ 
+		}
 		try {
 			mi.recalculatePercepciones();
 		} catch(Exception e) {
@@ -1724,6 +2297,187 @@ public class PoSOnline extends PoSConnectionState {
 		if (mDocType == null) 
 			throw new InvoiceCreateException(Msg.getMsg(ctx, "NonexistentPOSDocType", new Object[] {letra, posNumber}));
 		
+		String cuit = partner.getTaxID();
+		
+		/**
+		 * Verificar si corresponde MiPyme, en caso de corresponder configurar automaticamente
+		 * si existe para el mismo punto de venta un tipo de comprobante miPyme
+		 * 
+		 * dREHER
+		 */
+		boolean isOkMiPyme = true;
+		if(VALIDAR_MI_PYME && !mDocType.isMiPyME() && letra.equals("A")) {
+			cuit = cuit.replace(" ", "").replace("-", "");
+			Long taxID = Long.valueOf(cuit); 
+			
+			// dREHER Verificar si ya se hizo control miPyme en el ultimo año y no volver a hacerlo ------------------------
+			boolean validarAhora = true;
+			Date desde = null;
+			BigDecimal Amount = Env.ZERO;
+			
+			// Alguna vez se valido miPyme, verificar que no haya pasado mas de 365 dias
+			if(partner.get_Value("MiPymeUpdated")!=null) {
+				
+				desde = (Date)partner.get_Value("MiPymeUpdated");
+				Date hoy = invoiceDate;
+				int dias = DB.getSQLValue(null, "SELECT '" + hoy + "'::date - '" + desde + "'::date");
+				String svence = MPreference.GetCustomPreferenceValue("DiasPlazoActMiPyme", Env.getAD_Client_ID(getCtx()));
+				if(Util.isEmpty(svence, true))
+					svence = "365";
+				if(!Util.isEmpty(svence, true)) {
+					int vence = Integer.valueOf(svence);
+					if(dias <= vence) {
+						validarAhora = false;
+						if(partner.get_Value("MiPymeAmount")!=null && !partner.get_ValueAsString("MiPymeAmount").isEmpty()) {
+							Amount = (BigDecimal)partner.get_Value("MiPymeAmount");
+						}
+					}
+				}
+
+			}
+			
+			// dREHER
+			// FECred fc = new FECred();
+			// Instanciar mediante Reflect para evitar importacion de otro componente
+			
+			try {
+	            // Nombre completo de la clase incluyendo el paquete
+	            String className = "wsfecred.afip.gob.ar.FECredService.FECred";
+	            
+	            // Obteniendo el objeto Class
+	            Class<?> cls = Class.forName(className);
+	            
+	            // Creando una instancia de la clase
+	            Object instance = cls.newInstance();
+	            
+	            // Aquí puedes utilizar la instancia para invocar métodos, etc.
+	            System.out.println("Instancia creada: " + instance.toString());
+	            
+	            if(!validarAhora) {
+					if("Y".equals(partner.get_Value("IsMiPyme").toString())) {
+
+						/*
+						fc.setMiPyme(true);
+						fc.setAmount(Amount);
+						fc.setUpdated(new Timestamp(desde.getTime()));
+						fc.setCUIT(taxID);
+						*/
+						
+					    // Obtener el método setMiPyme que acepta un parámetro boolean
+					    Method setMiPymeMethod = cls.getMethod("setMiPyme", Boolean.class);
+					    // Invocar el método setMiPyme en el objeto instance
+					    setMiPymeMethod.invoke(instance, true);
+					    
+					    // Obtener el método setAmount que acepta un parámetro BigDecimal
+					    Method setAmountMethod = cls.getMethod("setAmount", BigDecimal.class);
+					    // Invocar el método setAmount en el objeto instance
+					    setAmountMethod.invoke(instance, Amount);
+
+					    // Obtener el método setUpdated que acepta un parámetro Timestamp
+					    Method setUpdatedMethod = cls.getMethod("setUpdated", Timestamp.class);
+					    // Invocar el método setUpdated en el objeto instance
+					    setAmountMethod.invoke(instance, new Timestamp(desde.getTime()));
+					    
+					    // Obtener el método setUpdated que acepta un parámetro Long 
+					    Method setCUITMethod = cls.getMethod("setCUIT", Long.class);
+					    // Invocar el método setUpdated en el objeto instance
+					    setCUITMethod.invoke(instance, taxID);
+
+					}
+				}
+	            
+	         // ---------------------------------------------------------------------------- fin verificacion de control previo
+				
+				try {
+					
+					if(validarAhora) {
+						// fc.consultarCUIT(taxID, invoiceDate);
+
+						// Obtener el método setUpdated que acepta un parámetro Long 
+					    Method setConsultarCUITMethod = cls.getMethod("setConsultarCUIT", Long.class, Timestamp.class);
+					    // Invocar el método setUpdated en el objeto instance
+					    setConsultarCUITMethod.invoke(instance, taxID, invoiceDate);
+					}
+					
+					boolean isMiPyme = false;
+					BigDecimal amount = null;
+					
+					// Obtener el método isMiPyme, devuelve un boolean 
+				    Method IsMiPymeMethod = cls.getMethod("isMiPyme");
+				    // Invocar el método isMiPyme en el objeto instance
+				    isMiPyme = (boolean)IsMiPymeMethod.invoke(instance);
+					
+				    // Obtener el método getAmount, devuelve un BigDecimal 
+				    Method getAmountMethod = cls.getMethod("getAmount");
+				    // Invocar el método getAmount en el objeto instance
+				    amount = (BigDecimal)getAmountMethod.invoke(instance);
+					
+					if(isMiPyme &&
+							order.getTotalAmount().compareTo(amount) >= 0) {
+						
+						debug("doMiPymeControls. Corresponde factura miPyme...");
+						
+						// Obtener el método updatedBPMiPyme
+					    Method updatedBPMiPymeMethod = cls.getMethod("updatedBPMiPyme", MBPartner.class);
+					    // Invocar el método updatedBPMiPyme en el objeto instance
+					    updatedBPMiPymeMethod.invoke(instance, partner);
+						
+						// dREHER - Si se trata de una caja con impresora fiscal y corresponde mipyme directamente 
+						// volver con el mensaje al usuario
+						if(isFiscal2G()) {
+							throw new InvoiceCreateException("MIPYME_" + letra +
+									"_POS_" + posNumber);
+						}
+						
+						// Si es una caja electronica, intentara cambiar de tipo de comprobante
+						if(!mDocType.isMiPyME()) {
+							
+							mDocType = getMiPymeDocType(letra, posNumber);
+							if (mDocType == null) 
+								throw new InvoiceCreateException("MIPYME_" + letra +
+										"_POS_" + posNumber);
+							
+							debug("doMiPymeControls. El tipo de documento seleccionado NO es miPyme, lo busca automaticamente!");
+						}
+
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					if(isFiscal2G())
+						isOkMiPyme = true;
+					else
+						isOkMiPyme = false;
+				}
+	            
+	            
+	        } catch (ClassNotFoundException e) {
+	            System.out.println("Clase no encontrada: " + e.getMessage());
+	        } catch (InstantiationException e) {
+	            System.out.println("No se pudo instanciar la clase: " + e.getMessage());
+	        } catch (IllegalAccessException e) {
+	            System.out.println("Acceso ilegal: " + e.getMessage());
+	        } catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IllegalArgumentException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	
+			
+		}
+		// Si no pudo superar validacion miPyme devuelve excepcion...
+		if(!isOkMiPyme)
+			throw new InvoiceCreateException("MIPYME_" + letra +
+					"_POS_" + posNumber);
+		
 		MInvoice inv = new MInvoice(morder, mDocType.getC_DocType_ID(), invoiceDate);
 		
 		// Se asigna la letra de comprobante, punto de venta y número de comprobante
@@ -1738,7 +2492,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// Asignación de CUIT en caso de que se requiera.
 //		MCategoriaIva mCategoriaIvaCus = new MCategoriaIva(ctx, partner.getC_Categoria_Iva_ID(), getTrxName());
-		String cuit = partner.getTaxID();
+		cuit = partner.getTaxID();
 		inv.setCUIT(cuit);
 
 		// Siempre se asignan los datos del comprador
@@ -1754,6 +2508,20 @@ public class PoSOnline extends PoSConnectionState {
 		return inv;
 	}
 	
+	/**
+	 * Obtiene el tipo de documento miPyme para el mismo punto de venta y letra
+	 * @param letra
+	 * @param posNumber
+	 * @return tipo de documento MiPyme para el mismo punto de venta y letra
+	 * dREHER
+	 */
+	private MDocType getMiPymeDocType(String letra, Integer posNumber) {
+    	
+		return MDocType.getDocType(ctx, Env.getAD_Org_ID(getCtx()),
+				MDocType.DOCTYPE_CustomerInvoice_MiPyME, letra, posNumber,
+				getTrxName());
+	}
+
 	private MInOut createOxpInOut(Order order) throws PosException {
 		/*
 		 * Ampliado y corregido por Franco Bonafine - Disytel - 2010-04-07
@@ -1967,8 +2735,40 @@ public class PoSOnline extends PoSConnectionState {
 		return allocLine;
 	}
 	
+	/**
+	 * Realizar validaciones de pagos
+	 * @throws PosException
+	 * dREHER . cambio visibilidad del metodo
+	 */
+	public void validatePayments(Order order) throws PosException {
+
+		if(order.getBusinessPartner()==null)
+			throw new PosException("Debe seleccionar un cliente Valido!");
+		
+		// Controlar que si los pagos superan el límite de cada medio de cobro y no se
+		// encuentran cargados los datos del cliente, notificar al usuario que cargue
+		// los datos para poder continuar
+		if(Util.isEmpty(order.getBusinessPartner().getCustomerName(), true)
+				|| order.getBusinessPartner().getCustomerName().equalsIgnoreCase("Consumidor Final")
+				|| Util.isEmpty(order.getBusinessPartner().getCustomerIdentification(), true)) {
+			for (Payment p : order.getPayments()) {
+				if(p.getPaymentMedium().getCustomerDataLimit() != null
+						&& p.getPaymentMedium().getCustomerDataLimit().compareTo(p.getAmount()) < 0) {
+					throw new PosException(Msg.getMsg(getCtx(), "NoCustomerDataPaymentMediumLimit",
+							new Object[] { p.getPaymentMedium().getName(), p.getPaymentMedium().getCustomerDataLimit(),
+									p.getAmount() }));
+				}
+			}
+		}
+	}
+	
 	private void createOxpPayments(Order order) throws PosException {
 		createPOSPaymentValidations.validatePayments(this, order);
+		
+		// Realizar validaciones de pagos
+		validatePayments(order);
+		
+		BigDecimal totPayAmt = Env.ZERO;
 		
 		for (CashPayment p : cashPayments)
 			createOxpCashPayment(p);
@@ -2004,6 +2804,16 @@ public class PoSOnline extends PoSConnectionState {
 		// Por ahora no se ajusta el cambio y se deja sólo el cambio de efectivo
 		// para setearse en la factura
 //		adjustChange(order);
+	}
+	
+	/**
+	 * Devuelve la lista de todos los pagos de esta orden de TPV
+	 * 
+	 * @return coleccion con las asignaciones generadas
+	 * dREHER
+	 */
+	public Vector<MAllocationLine> getAllocatedLines(){
+		return allocLines; 
 	}
 	
 	private void createOxpCashPayment(CashPayment p) throws PosException {
@@ -2148,6 +2958,13 @@ public class PoSOnline extends PoSConnectionState {
 		pay.setPosnet(p.getPosnet());
 		pay.setC_POSPaymentMedium_ID(p.getPaymentMedium().getId());
 		
+		// v 2.0
+		if(p.isCargaManual()) {
+			// dREHER identifica que se realizo con carga manual de datos
+			pay.addDescription(" Carga Manual.");
+			debug("Se registro de forma manual, indicarlo en el pago!");
+		}
+		
 		throwIfFalse(pay.save(), pay);
 		mpayments.put(pay.getC_Payment_ID(), pay);
 		createOxpMAllocationLine(p, pay);
@@ -2239,12 +3056,14 @@ public class PoSOnline extends PoSConnectionState {
 				getCtx(),
 				"@CashRetirement@" + " " + "@CouponNumber@" + " " 
 						+ p.getCouponNumber()));
+		
 		// Cargo de retiro de efectivo de tarjeta de crédito de la config del tpv
 		MCashLine cashLine = createOxpCashPayment(0, cashPayment,
 				getPoSCOnfig().getCreditCardCashRetirementChargeID(), false,
 				false);
 		// Asocio la línea de caja con el pago de tarjeta para futuras consultas
 		cashLine.setC_Payment_ID(pay.getID());
+		
 		throwIfFalse(cashLine.save(), cashLine);
 		// Agregar al allocation de manera unidireccional
 		createOxpMAllocationLine(0, cashPayment, null, cashLine, null, null, true);
@@ -2588,6 +3407,7 @@ public class PoSOnline extends PoSConnectionState {
 	public void printTicket() throws Exception{
 		// Salimos si ya se imprimió mediante controlador fiscal
 		if (invoice != null && invoice.requireFiscalPrint()) {
+			debug("Requiere ticket fiscal por lo tanto no imprime nada!");
 			return;
 		}
 
@@ -2604,7 +3424,7 @@ public class PoSOnline extends PoSConnectionState {
 		
 		// En caso de que se haya emitido una factura, entonces se lanza el informe
 		// de la factura.
-		if (getShouldCreateInvoice()) {
+		if (getShouldCreateInvoice() && invoice!=null) { // dREHER invoice != null
 			// Primero se busca el informe en el Tipo de Documento de la Factura
 			MDocType docType = MDocType.get(getCtx(), invoice.getC_DocType_ID());
 			if (docType.getAD_Process_ID() > 0) {
@@ -2846,11 +3666,11 @@ public class PoSOnline extends PoSConnectionState {
 	}
 
 	@Override
-	public Order loadOrder(int orderId, boolean loadLines) throws InvalidOrderException, PosException {
+	public Order loadOrder(int orderId, boolean loadLines, Order actualOrder) throws InvalidOrderException, PosException {
 		if (orderId == 0)
 			throw new InvalidOrderException();
 		
-		Order order = new Order(getOrganization());
+		Order order = new Order(getOrganization(), (actualOrder == null ? null : actualOrder.getDiscountCalculator()));
 		MOrder mOrder = new MOrder(ctx, orderId, getTrxName());
 		if (!"CO".equals(mOrder.getDocStatus()) && ! "CL".equals(mOrder.getDocStatus()))
 			throw new InvalidOrderException(Msg.translate(ctx, "POSOrderStatusError"));
@@ -3324,14 +4144,21 @@ public class PoSOnline extends PoSConnectionState {
 		// El pedido tiene al menos un artículo que se retira por almacén, 
 		// además se creó la factura y el TPV está configurado para emitir el 
 		// documento de retiro 		
+		int prodsCount = order.getWarehouseCheckoutProductsCount(); 
 		if (getPoSCOnfig().isPrintWarehouseDeliverDocument()  
 				&& invoice != null 
 				&& order.getWarehouseCheckoutProductsCount() > 0) {
 			debug("Imprimiendo salida por deposito");
+			
 			// El tipo de documento de la factura debe ser fiscal y tener asociado
 			// un controlador fiscal.
 			MDocType docType = MDocType.get(ctx, invoice.getC_DocType_ID());
-			if (docType.getC_Controlador_Fiscal_ID() > 0) {
+			
+			// dREHER, tiene que tener el controlador fiscal asociado Y no tener forzado salida por JASPER
+			if (docType.getC_Controlador_Fiscal_ID() > 0 && !FORZAR_RETIROPORALMACEN_JASPER) {
+				
+				debug("Debe imprimir salida por deposito en Controlador Fiscal: " + docType.getC_Controlador_Fiscal_ID());
+				
 				// Impresor de comprobantes.
 				FiscalDocumentPrint fdp = new FiscalDocumentPrint();
 				fdp.addDocumentPrintListener(getFiscalDocumentPrintListener());
@@ -3342,10 +4169,16 @@ public class PoSOnline extends PoSConnectionState {
 				if(!fdp.printDeliveryDocument(docType.getC_Controlador_Fiscal_ID(), orderAux, invoiceAux)) {
 					log.severe("Error en impresion de salida por deposito");
 				}
+				
+				debug("Termino proceso de impresion salida por deposito en Controlador Fiscal");
+				
 			}
 			// Impresión del comprobante Jasper que muestra los artículos que 
 			// se deben retirar por almacén
 			else{
+				
+				debug("Debe imprimir salida por deposito en Vista Previa");
+				
 				Map<String, Object> params = new HashMap<String, Object>();
 				params.put("C_Order_ID", morder.getID());
 				params.put("C_Invoice_ID", invoice.getID());
@@ -3355,7 +4188,14 @@ public class PoSOnline extends PoSConnectionState {
 				if(info.isError()){
 					log.severe("Error en impresion de salida por deposito");
 				}
+				
+				debug("Termino de imprimir salida por deposito en Vista Previa");
+				
 			}
+		}else {
+			debug("No imprime salida por deposito!");
+			debug("Productos con salida por deposito: " + prodsCount);
+			debug("TPV con impresion de salida por deposito: " + getPoSCOnfig().isPrintWarehouseDeliverDocument());
 		}
 	}
 
@@ -3576,13 +4416,30 @@ public class PoSOnline extends PoSConnectionState {
 		EntidadFinancieraPlan plan = null;
 		int discountSchemaID;
 		for (MEntidadFinancieraPlan mEntidadFinancieraPlan : mCreditCardPlans) {
+			
+			// dREHER
+			// En el caso de que el campo cuotas posnet tenga valor, tomar esa cantidad de cuotas 
+			int cuotas = mEntidadFinancieraPlan.getCuotasPago(); 
+			int cuotasPosnet = 0;
+			String cuotasPOS = mEntidadFinancieraPlan.get_ValueAsString("CuotasPosnet");
+			if(cuotasPOS!=null && !cuotasPOS.isEmpty()) {
+				try {
+					cuotasPosnet = Integer.valueOf(cuotasPOS);
+				}catch(Exception ex) {
+					debug("No se pudo leer la cantidad cuotas Posnet de " + mEntidadFinancieraPlan.getName());
+					cuotasPosnet = 0;
+				}
+			}
+			
 			// Crea la instancia del plan
 			plan = new EntidadFinancieraPlan(
 				mEntidadFinancieraPlan.getID(),
 				entidadFinancieraID,
 				mEntidadFinancieraPlan.getName(),
-				mEntidadFinancieraPlan.getCuotasPago()
+				cuotas,
+				cuotasPosnet // dREHER para separar lo que va al Clover de lo que se utiliza para calcular
 			);
+			
 			// Asocia el esquema de descuento si tiene
 			discountSchemaID = mEntidadFinancieraPlan.getM_DiscountSchema_ID();
 			if (discountSchemaID > 0) {
@@ -3664,6 +4521,10 @@ public class PoSOnline extends PoSConnectionState {
 			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "POS: Error getting POS Journals", e);
+		}finally { // dREHER forzar cierres correctamente
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 		
 		
@@ -3737,7 +4598,7 @@ public class PoSOnline extends PoSConnectionState {
 		return pm;
 	}
 	
-	private void debug(String text) {
+	private static void debug(String text) {
 		System.out.println("TPV DEBUG ==> "
 				+ DB.getSQLValueTimestamp(null, "select now()") + " - " + text);
 	}

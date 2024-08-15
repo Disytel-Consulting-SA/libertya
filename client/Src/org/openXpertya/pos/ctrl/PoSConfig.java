@@ -12,8 +12,11 @@ import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPOSLetter;
 import org.openXpertya.model.MRole;
 import org.openXpertya.pos.exceptions.PosException;
+import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+
+import com.izforge.izpack.util.Debug;
 
 public class PoSConfig {
 
@@ -67,6 +70,27 @@ public class PoSConfig {
 	private boolean allowCreditNoteSearch;
 	private boolean voidDocuments_EF;
 	
+	// dREHER - datos de contingencia (CAEA)
+	private boolean isContingencia = false;
+	private Integer ptoVtaContingencia = -1;
+	private int ptoVentaNormal = -1;
+
+	// dREHER trabajar en linea con Clover
+	private boolean isOnLineClover = false;
+	private String ipClover = "";
+	private String portClover = "";
+	private String authTokenClover = "";
+	private boolean isAlterClover = false;
+	private boolean isTrxCloverLog = false;
+	
+	// dREHER
+	private MPOS pos = null;
+	
+	
+	// dREHER log para mensajes...
+	protected CLogger log = CLogger.getCLogger(PoSConfig.class);
+	
+	
 	// Del sistema
 	private int currencyID;
 	private boolean userCanAccessInfoProduct;
@@ -75,7 +99,18 @@ public class PoSConfig {
 	private int costingPrecision = 4;
 	private int priceListIDInConfig;
 
+	public int getPtoVentaNormal() {
+		return ptoVentaNormal;
+	}
+
+	public void setPtoVentaNormal(int ptoVentaNormal) {
+		this.ptoVentaNormal = ptoVentaNormal;
+	}
+
 	public PoSConfig(MPOS pos) {
+		
+		this.pos = pos;  
+		
 		setCurrencyID(Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"));
 		MCurrency currency = MCurrency.get(pos.getCtx(), getCurrencyID());
 		stdPrecision = currency.getStdPrecision();
@@ -146,9 +181,120 @@ public class PoSConfig {
 			
 			setAllowCreditNoteSearch(pos.isAllowCreditNoteSearch());
 			setVoidDocuments_EF(pos.isVoidDocuments_EF());
+			
+			// dREHER
+			// Datos de Contingencia
+			// TODO: crear modelo C_POS
+			Boolean contingencia = false;
+			Object iscon = pos.get_Value("IsContingencia");
+			if(iscon!=null)
+				if(iscon.equals("Y") || iscon.equals(true))
+					contingencia = true;
+
+			setContingencia(contingencia);
+			log.info("1- Contingencia=" + isContingencia());
+			
+			Object ptoVtaCont = pos.get_Value("PtoVtaContingencia");
+			log.info("2- ptoVtaCont=" + ptoVtaCont);
+			if(ptoVtaCont==null)
+				ptoVtaCont = 0;
+			
+			log.info("3- ptoVtaCont=" + ptoVtaCont);
+			
+			if(ptoVtaCont.equals(0))
+				setContingencia(false);
+			else
+				setPtoVtaContingencia( (Integer) ptoVtaCont);
+			
+			setPtoVentaNormal(pos.getPOSNumber());
+			
+			log.info("4- Contingencia=" + isContingencia());
+			
+			// dREHER
+			// Configurar si debe trabajar online con Clover
+
+			/* Lo separo en un metodo aparte 202400419
+			iscon = pos.get_Value("IsOnline_Clover");
+			if(iscon!=null)
+				if(iscon.equals("Y") || iscon.equals(true))
+					isOnLineClover = true;
+
+			setOnLineClover(isOnLineClover);
+			log.info("1- Clover Online=" + isOnLineClover());
+			*/
+			
+			// Por ahora no utilizamos Clisitef, sino directamente Remote Pay SDK via java nativo...
+			/*
+			if(isOnLineClover) {
+				// TODO: validar que ClisiTef esta Online, sino pasar a modo normal con tarjetas
+				
+				if(!OnLineClisiTef()) {
+					isOnLineClover = false;
+					log.warning("No se puede conectar a ClisiTef, se opera en modo Clover OffLine");
+				}
+			}
+			*/
+			
+			// dREHER Leer el estado siempre desde el POS original
+			RefreshCloverStatus();
+			
+			// Cargar informacion de terminal Clover
+			ipClover = pos.get_ValueAsString("IP_Clover");
+			portClover = pos.get_ValueAsString("Port_Clover");
+			authTokenClover = pos.get_ValueAsString("AuthToken_Clover");
+			
+			iscon = pos.get_Value("IsAlter_Clover");
+			if(iscon!=null)
+				if(iscon.equals("Y") || iscon.equals(true))
+					isAlterClover = true;
+			
+			// dREHER debe guardar log de transacciones ?
+			iscon = pos.get_Value("IsTrxCloverLog");
+			if(iscon!=null)
+				if(iscon.equals("Y") || iscon.equals(true))
+					isTrxCloverLog = true;
+			
+			
+			log.info("Clover. ip=" + ipClover + " port=" + portClover + " authToken=" + authTokenClover + 
+					" isOnlineClover=" + isOnLineClover + " alterClover=" + isAlterClover + 
+					" isTrxCloverLog=" + isTrxCloverLog);
+			
 		}	
 	}
+
+	/**
+	 * Asegura que siempre se lee el dato de estado Clover desde el objeto POS
+	 * dREHER
+	 */
+	public void RefreshCloverStatus() {
 	
+		isOnLineClover = false;
+		
+		// Configurar si debe trabajar online con Clover
+		Object iscon = pos.get_Value("IsOnline_Clover");
+		if(iscon!=null)
+			if(iscon.equals("Y") || iscon.equals(true))
+				isOnLineClover = true;
+		
+		setOnLineClover(isOnLineClover);
+		log.warning("1- Clover Online=" + isOnLineClover());
+	}
+	
+	/**
+	 * Debe validar la conectividad con ClisiTef
+	 * 
+	 * @return true ClisiTef=On, false=ClisiTef=off
+	 * dREHER
+	 */
+	private boolean OnLineClisiTef() {
+		boolean isOnline = true;
+		
+		// TODO.. ver como validar ClisiTef...
+		// Se desestimo uso de Clisitef y en su lugar se utiliza la libreria java RemotePay
+		
+		return isOnline;
+	}
+
 	public PoSConfig(MPOSJournal journal) {
 		this(journal.getPOS());
 		setCashID(journal.getC_Cash_ID());
@@ -165,6 +311,21 @@ public class PoSConfig {
 		if (locs.length == 0) {
 			throw new PosException("POSCashBPNoLocationError");
 		}
+		
+		// dREHER
+		// Validar si esta en modo contingencia, debe tener especificado un pto de vta de contigencia
+		if(isContingencia()) {
+			int newPOSNumber = getPtoVtaContingencia();
+			if(newPOSNumber <= 0)
+				throw new PosException("ContingencyPOSNumberError");
+			else {
+				log.finest("Se cambia a POS number de contingencia... POS Actual=" + getPosNumber() + " Nuevo POS=" + newPOSNumber);
+				setPosNumber(newPOSNumber);
+			}
+		}else {
+			setPosNumber(getPtoVentaNormal());
+			log.finest("Vuelve a setear el punto de venta de funcionamiento estandard");
+		}
 
 	}
 	
@@ -172,6 +333,32 @@ public class PoSConfig {
 		// Nada que validar aun
 	}
 	
+	public Integer getPtoVtaContingencia() {
+		if(ptoVtaContingencia==null)
+			return -1;
+		return ptoVtaContingencia;
+	}
+
+	public void setPtoVtaContingencia(Integer ptoVtaContingencia) {
+		this.ptoVtaContingencia = ptoVtaContingencia;
+	}
+
+	public boolean isContingencia() {
+		return isContingencia;
+	}
+
+	public void setContingencia(boolean isContingencia) {
+		this.isContingencia = isContingencia;
+	}
+	
+	public boolean isOnLineClover() {
+		return isOnLineClover;
+	}
+
+	public void setOnLineClover(boolean isOnline) {
+		this.isOnLineClover = isOnline;
+	}
+
 	/**
 	 * @return Devuelve bPartnerCashTrxID.
 	 */
@@ -838,5 +1025,61 @@ public class PoSConfig {
 
 	public void setVoidDocuments_EF(boolean voidDocuments_EF) {
 		this.voidDocuments_EF = voidDocuments_EF;
+	}
+
+	public String getIpClover() {
+		return ipClover;
+	}
+
+	public void setIpClover(String ip_clover) {
+		this.ipClover = ip_clover;
+	}
+
+	public String getPortClover() {
+		return portClover;
+	}
+
+	public void setPortClover(String port_clover) {
+		this.portClover = port_clover;
+	}
+
+	public String getAuthTokenClover() {
+		return authTokenClover;
+	}
+
+	public void setAuthTokenClover(String authTokenClover) {
+		setAuthTokenClover(authTokenClover, false);
+	}
+	
+	public void setAuthTokenClover(String authTokenClover, boolean save) {
+		this.authTokenClover = authTokenClover;
+		if(save)
+			DB.executeUpdate("update C_POS set authtoken_clover='" + authTokenClover 
+					+ "' WHERE C_POS_ID="
+					+ getPos().getC_POS_ID(), null);
+	}
+
+	public MPOS getPos() {
+		return pos;
+	}
+
+	public void setPos(MPOS pos) {
+		this.pos = pos;
+	}
+
+	public boolean isAlterClover() {
+		return isAlterClover;
+	}
+
+	public void setAlterClover(boolean isAlterClover) {
+		this.isAlterClover = isAlterClover;
+	}
+
+	public boolean isTrxCloverLog() {
+		return isTrxCloverLog;
+	}
+
+	public void setTrxCloverLog(boolean isTrxCloverLog) {
+		this.isTrxCloverLog = isTrxCloverLog;
 	}
 }

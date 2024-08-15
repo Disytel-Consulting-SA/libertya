@@ -286,7 +286,7 @@ public class PoSModel {
 	 */
 	public Order loadCustomerOrder(int orderId) throws InvalidOrderException, PosException {
 		// Carga solo el encabezado del pedido de cliente
-		setCustomerOrder(getConnectionState().loadOrder(orderId, false));
+		setCustomerOrder(getConnectionState().loadOrder(orderId, false, getOrder()));
 		return getCustomerOrder();
 	}
 	

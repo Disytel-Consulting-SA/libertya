@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.FiscalDocumentPrint;
+import org.openXpertya.pos.exceptions.InvalidOrderException;
 import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.pos.exceptions.UserException;
 import org.openXpertya.pos.model.BusinessPartner;
@@ -22,14 +23,21 @@ import org.openXpertya.pos.model.Product;
 import org.openXpertya.pos.model.ProductList;
 import org.openXpertya.pos.model.Tax;
 import org.openXpertya.pos.model.User;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.AUserAuthModel;
 
 public class PoSOffline extends PoSConnectionState {
 
+	/**
+	 * Implementar metodos de PoSOnline - hoy estan autogenerados
+	 * 
+	 * dREHER
+	 */
+	
 	@Override
-	public void completeOrder(Order order, Set <Integer> ordersId) {
-		// TODO Auto-generated method stub
-		
+	public CallResult completeOrder(Order order, Set <Integer> ordersId) {
+		CallResult r = new CallResult();
+		return r;
 	}
 
 	@Override
@@ -116,11 +124,6 @@ public class PoSOffline extends PoSConnectionState {
 		return null;
 	}
 
-	@Override
-	public Order loadOrder(int orderId, boolean loadLines) throws PosException {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public void validatePoSConfig() throws PosException {
@@ -368,5 +371,36 @@ public class PoSOffline extends PoSConnectionState {
 	public int getDefaultPriceListIDInConfig() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public Order loadOrder(int orderId, boolean loadLines, Order actualOrder)
+			throws InvalidOrderException, PosException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	protected void doImprimirTicket(Order order) throws PosException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void doFiscalPrint() throws PosException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void validatePayments(Order order) throws PosException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	protected void validateBPartner(Order order) throws PosException {
+		// TODO Auto-generated method stub
+		
 	}
 }

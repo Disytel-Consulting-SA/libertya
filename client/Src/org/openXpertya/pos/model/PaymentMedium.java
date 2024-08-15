@@ -1,5 +1,6 @@
 package org.openXpertya.pos.model;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.openXpertya.model.MPOSPaymentMedium;
@@ -51,6 +52,9 @@ public class PaymentMedium implements IPaymentMediumInfo {
 	/** Esquema de descuento. Todos los MP menos tarjeta */
 	private DiscountSchema discountSchema = null;
 	
+	/** Límite de medio de cobro para no pedir los datos de cliente */
+	private BigDecimal customerDataLimit = null;
+	
 	/**
 	 * Constructor de la clase
 	 * @param name
@@ -63,6 +67,21 @@ public class PaymentMedium implements IPaymentMediumInfo {
 		this.name = name;
 		this.tenderType = tenderType;
 		this.currencyID = currencyID;
+	}
+	
+	/**
+	 * Constructor de la clase
+	 * @param name
+	 * @param tenderType
+	 * @param currencyID
+	 */
+	public PaymentMedium(int id, String name, String tenderType, int currencyID, BigDecimal customerDataLimit) {
+		super();
+		this.id = id;
+		this.name = name;
+		this.tenderType = tenderType;
+		this.currencyID = currencyID;
+		this.customerDataLimit = customerDataLimit;
 	}
 	
 	public void setId(int id) {
@@ -318,6 +337,14 @@ public class PaymentMedium implements IPaymentMediumInfo {
 
 	public EntidadFinanciera getEntidadFinanciera() {
 		return entidadFinanciera;
+	}
+	
+	public BigDecimal getCustomerDataLimit() {
+		return customerDataLimit;
+	}
+
+	public void setCustomerDataLimit(BigDecimal customerDataLimit) {
+		this.customerDataLimit = customerDataLimit;
 	}
 	
 }

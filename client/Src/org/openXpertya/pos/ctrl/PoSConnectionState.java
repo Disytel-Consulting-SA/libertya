@@ -32,6 +32,7 @@ import org.openXpertya.pos.model.User;
 import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.process.DocActionStatusListener;
 import org.openXpertya.process.ElectronicEventListener;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.AUserAuthModel;
 import org.openXpertya.util.CLogger;
@@ -42,7 +43,7 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	
 	protected CLogger log = CLogger.getCLogger(PoSConnectionState.class);
 	
-	public abstract void completeOrder(Order order, Set <Integer> ordersId) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException ;
+	public abstract CallResult completeOrder(Order order, Set <Integer> ordersId) throws PosException, InsufficientCreditException, InsufficientBalanceException, InvalidPaymentException, InvalidProductException ;
 	
 	public abstract boolean balanceValidate(Order order);
 	
@@ -76,7 +77,7 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	
 	public abstract Tax getProductTax(int productId, int locationID);
 	
-	public abstract Order loadOrder(int orderId, boolean loadLines) throws InvalidOrderException, PosException;
+	public abstract Order loadOrder(int orderId, boolean loadLines, Order actualOrder) throws InvalidOrderException, PosException;
 
 	public abstract void loadOrderLines(Order order);
 	
@@ -243,4 +244,31 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 	public void setElectronicEventListener(ElectronicEventListener electronicEventListener) {
 		this.electronicEventListener = electronicEventListener;
 	}
+
+	/**
+	 * Utilizado para generar solo la impresion, cuando por ej falla CAE y el usuario cancela reintentar CAE
+	 * 
+	 * 
+	 * dREHER
+	 */
+	protected abstract void doImprimirTicket(Order order) throws PosException;
+	
+	/**
+	 * Utilizado para generar solo la impresion fiscal, cuando por ej falla CAE y el usuario elige continuar
+	 * 
+	 * 
+	 * dREHER
+	 */
+	protected abstract void doFiscalPrint() throws PosException;
+
+	/**
+	 * Para validar informacion del cliente en relacion a los medios de pago utilizados
+	 * dREHER
+	 * @param order
+	 */
+	protected abstract void validatePayments(Order order) throws PosException;
+
+	// Valida si el cliente puede imprimirse en una fiscal
+	protected abstract void validateBPartner(Order order) throws PosException;
+	
 }
