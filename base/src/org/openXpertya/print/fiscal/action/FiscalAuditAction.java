@@ -6,7 +6,6 @@ import java.util.Calendar;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
-import org.openXpertya.xml.util.xmlParser;
 
 public class FiscalAuditAction extends FiscalPrinterAction {
 

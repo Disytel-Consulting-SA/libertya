@@ -16,8 +16,6 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
-import com.izforge.izpack.util.Debug;
-
 public class PoSConfig {
 
 	private String name;

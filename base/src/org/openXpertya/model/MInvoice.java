@@ -15,8 +15,6 @@
 package org.openXpertya.model;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,7 +39,6 @@ import org.openXpertya.electronicInvoice.ElectronicInvoiceProvider;
 import org.openXpertya.model.DiscountCalculator.ICreditDocument;
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
-import org.openXpertya.pos.ctrl.PoSConfig;
 import org.openXpertya.print.ReportEngine;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.DocActionStatusEvent;

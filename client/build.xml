@@ -35,8 +35,10 @@
 	<pathelement path="../tools/lib/JasperReports/jasperreports-2.0.1.jar" />
 	<pathelement path="../lib/iText-1.5.4.jar" />
   	<pathelement path="../lib/AxisJar.jar" />
-  </path>
-
+    <fileset dir="../lib/clover">
+        <include name="**/*.jar"/>
+    </fileset>
+    </path>
 
   <target name="clientInit" description="initialization target">
     <echo message="=========== Construyendo cliente de openXpertya"/>
