@@ -61,7 +61,7 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <fileset dir="../lib/clover">
         <include name="**/*.jar"/>
     </fileset>
-    <pathelement path="../lib/jdom-2.0.6.1.jar">
+    <pathelement path="../lib/jdom-2.0.6.1.jar"/>
   </path>
 
 
