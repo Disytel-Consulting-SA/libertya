@@ -1221,8 +1221,27 @@ END; $BODY$
 ALTER FUNCTION libertya.getexternalserviceattribute(character, character)
   OWNER TO libertya;
   
+-- ### MERGE 2024-05-17 org.libertya.core.micro.r3019.dev.jacofer_11b_cot_arba upgrade_from_1.0
+CREATE TABLE libertya.m_shipper_vehicle (
+    m_shipper_vehicle_id integer NOT NULL,
+    ad_client_id integer NOT NULL,
+    ad_org_id integer NOT NULL,
+    isactive character(1) DEFAULT 'Y'::bpchar NOT NULL,
+    created timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone NOT NULL,
+    createdby integer NOT NULL,
+    updated timestamp without time zone DEFAULT ('now'::text)::timestamp(6) with time zone NOT NULL,
+    updatedby integer NOT NULL,
+    m_shipper_id integer NOT NULL,
+    vehicle_name character varying(40) NOT NULL,
+    description character varying(255),
+    license character varying(7) NOT NULL,
+    trailer character(1) DEFAULT 'N'::bpchar NOT NULL
+);
 
+ALTER TABLE libertya.m_shipper_vehicle OWNER TO libertya;
 
+ALTER TABLE ONLY libertya.m_shipper_vehicle
+    ADD CONSTRAINT m_shipper_vehicle_key PRIMARY KEY (m_shipper_vehicle_id);
 
 
 
