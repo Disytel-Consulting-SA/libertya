@@ -333,7 +333,7 @@ public class VPluginInstallerUtils  {
 		for (String sql : sqls)
 			if (sql != null && sql.length() > 0) {
 				PluginUtils.appendStatus("[" + (iter++) + "] Sentencias SQL de preinstalación", true, false, false, true);
-				PluginXMLUpdater.executeUpdate(sql, m_trx);
+				PluginXMLUpdater.executeUpdate(replaceOIDSWithFalse(sql), m_trx);
 		}
 	}
 	
@@ -536,4 +536,18 @@ public class VPluginInstallerUtils  {
 			System.out.println("Error en escritura de log: " + e);
 		}
 	}
+	
+	/**
+	 * A partir de Postgres 12, el uso de OIDS ya no es soportado, por lo tanto cualquier sentencia
+	 * SQL que contenga OIDS=TRUE deberá modificarse a OIDS=FALSE, dado que en caso de no modificarse,
+	 * el proceso de preinstall elevará una excepción por error de ejecución en la sentencia correspondiente
+	 * 
+	 * @param sql el query a modificar
+	 * @return el mismo query cambiado de OIDS=TRUE (o alguna de sus variantes) a OIDS=FALSE
+	 */
+	protected static String replaceOIDSWithFalse(String sql) {
+        // ER para detectar cualquier variante de "OIDS=TRUE" con espacios y mayusculas/minusculas.
+        String regex = "\\b(?i)OIDS\\s*=\\s*TRUE\\b";
+        return sql.replaceAll(regex, "OIDS=FALSE");
+    }
 }
