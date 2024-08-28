@@ -14,6 +14,7 @@ package org.adempiere.webui;
 
 import org.adempiere.webui.desktop.IDesktop;
 import org.adempiere.webui.util.UserPreference;
+import org.zkforge.keylistener.Keylistener;
 
 /**
  * 
@@ -50,5 +51,11 @@ public interface IWebClient {
 	 * @return UserPreference
 	 */
 	public UserPreference getUserPreference();
+	
+	/**
+	 * @return keylistener
+	 * dREHER
+	 */
+	public abstract Keylistener getKeylistener();
 
 }

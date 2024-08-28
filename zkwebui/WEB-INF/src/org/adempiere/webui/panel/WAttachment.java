@@ -23,22 +23,29 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.DesktopTabpanel;
 import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.session.SessionManager;
+import org.adempiere.webui.window.ADWindow;
 import org.adempiere.webui.window.FDialog;
+import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.attachment.AttachmentIntegrationInterface;
 import org.openXpertya.model.MAttachment;
 import org.openXpertya.model.MAttachmentEntry;
+import org.openXpertya.model.MTab;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.media.Media;
 import org.zkoss.zk.au.AuScript;
 import org.zkoss.zk.au.out.AuEcho;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -107,11 +114,24 @@ public class WAttachment extends Window implements EventListener
 	
 	/** Eliminar adjunto de externo */
 	private Button externalDelete = new Button();
+	
+	// dREHER
+	private MTab mTab;
+	private AbstractADWindowPanel mPanel;
+	private String titulo;
+	private int ID;
 
-
+	//se agrego para dar compatibilidad a WSocialCOnversation
+	//sin mTab y mPanel
 	public WAttachment(	int WindowNo, int AD_Attachment_ID,
 			int AD_Table_ID, int Record_ID, String trxName) {
 		this(WindowNo, AD_Attachment_ID, AD_Table_ID, Record_ID, trxName, null, null);
+	}
+	
+	public WAttachment(	int WindowNo, int AD_Attachment_ID,
+			int AD_Table_ID, int Record_ID, String trxName, MTab mTab, AbstractADWindowPanel mPanel) {
+		this(WindowNo, AD_Attachment_ID, AD_Table_ID, Record_ID, trxName, null, null, mTab, mPanel);
+
 	}
 	
 	/**
@@ -126,11 +146,21 @@ public class WAttachment extends Window implements EventListener
 	
 	public WAttachment(	int WindowNo, int AD_Attachment_ID,
 						int AD_Table_ID, int Record_ID, String trxName,
-						Integer recordClientID, Integer recordOrgID)
+						Integer recordClientID, Integer recordOrgID, MTab mTab,
+						AbstractADWindowPanel mPanel)
 	{
+		
 		super();
 		
-		log.config("ID=" + AD_Attachment_ID + ", Table=" + AD_Table_ID + ", Record=" + Record_ID);
+		// dREHER
+		this.mTab = mTab;
+		this.mPanel = mPanel;
+		String title = "Adjunto: " +
+				mTab.getName() + " (" + Record_ID + ")"; 
+		this.setTitulo(title);
+		this.setID(AD_Attachment_ID);
+		
+		System.out.println("--> " + title + "\nID=" + AD_Attachment_ID + ", Table=" + AD_Table_ID + ", Record=" + Record_ID + " mTab=" + mTab + " WindowNo=" + WindowNo);
 
 		m_WindowNo = WindowNo;
 
@@ -158,21 +188,58 @@ public class WAttachment extends Window implements EventListener
 
 		try
 		{
-			setAttribute(Window.MODE_KEY, Window.MODE_HIGHLIGHTED);			
-			AEnv.showWindow(this);
+			// setAttribute(Window.MODE_KEY, Window.MODE_HIGHLIGHTED);		
+			
+			// dREHER se cambia el modo de la ventana para que lo agregue como una nueva pestaña 
+			setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
+			
+			// dREHER esta linea despliega el popup de adjuntos
+			// AEnv.showWindow(this);
+			
 			displayData(0, true);
 			String script = "setTimeout(\"$e('"+ preview.getUuid() + "').src = $e('" +
 			preview.getUuid() + "').src\", 1000)";
-			Clients.response(new AuScript(null, script));
 			
-			//enter modal
-			doModal();
+			// dREHER esta linea muestra la vista previa si existe
+			Clients.response(new AuScript(null, script)); 
+			
+			// enter modal
+			// doModal(); // <-- dREHER
 		}
 		catch (Exception e)
 		{
 		}
 		
 	} // WAttachment
+	
+	
+	public int getID() {
+		return ID;
+	}
+
+	public void setID(int iD) {
+		ID = iD;
+	}
+
+	public String getTitulo() {
+		return titulo;
+	}
+
+	public void setTitulo(String titulo) {
+		this.titulo = titulo;
+	}
+
+	/**
+	 * internal use, don't call this directly
+	 * dREHER
+	 */
+	public void runProcess() {
+		try {
+			// ProcessCtl.process(null, m_WindowNo, parameterPanel, m_pi, null);					
+		} finally {
+			dispose();
+		}
+	}
 
 	/**
 	 *	Static setup.
@@ -190,13 +257,19 @@ public class WAttachment extends Window implements EventListener
 	
 	void staticInit() throws Exception
 	{
-		this.setMaximizable(true);
-		this.setWidth("700px");
-		this.setHeight("600px");
+		this.setMaximizable(true); 
+		
+		// Component comp = this.getParent();
+
+		// dREHER TODO: ver de que se maximize segun tamaño de la pestaña del explorador (idem ventanas normales)
+		this.setWidth("900px"); // 700px
+		this.setHeight("700px"); // 600px
+		this.setMaximized(true); // true
+		
 		this.setTitle("Attachment");
-		this.setClosable(true);
-		this.setSizable(true);
-		this.setBorder("normal");
+		this.setClosable(false); // true
+		this.setSizable(false); // true
+		this.setBorder("solid"); // solid
 		this.appendChild(mainPanel);
 		mainPanel.setHeight("100%");
 		mainPanel.setWidth("100%");		
@@ -289,7 +362,13 @@ public class WAttachment extends Window implements EventListener
 	public void dispose ()
 	{
 		preview = null;
-		this.detach();
+		
+		// dREHER al cerrar ventana debe cerrar pestaña
+		if (Window.MODE_EMBEDDED.equals(getAttribute(Window.MODE_KEY)))
+        	SessionManager.getAppDesktop().closeActiveWindow();
+		else
+			this.detach();
+		
 	} // dispose
 	
 	/**
@@ -454,6 +533,14 @@ public class WAttachment extends Window implements EventListener
 					shouldDispose = false;		
 				}
 			}
+			
+			// dREHER TODO: debe refrescar el registro del cual fue llamado
+			if (shouldDispose) {
+				if(mPanel != null) {
+					mPanel.refreshButtonAttachment();
+				}
+			}
+			
 			if (shouldDispose)
 				dispose();
 		}

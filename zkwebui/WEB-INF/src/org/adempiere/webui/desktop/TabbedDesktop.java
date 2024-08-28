@@ -21,6 +21,7 @@ import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.panel.ADForm;
+import org.adempiere.webui.panel.WAttachment;
 import org.adempiere.webui.part.WindowContainer;
 import org.adempiere.webui.window.ADWindow;
 import org.adempiere.webui.window.WTask;
@@ -242,8 +243,26 @@ public abstract class TabbedDesktop extends AbstractDesktop {
 		Tabpanel tabPanel = new Tabpanel();
     	window.setParent(tabPanel);
     	String title = window.getTitle();
+    	
+    	/**
+    	 * En caso de tratarse de una ventana de Adjunto, no abrir dos veces la misma tabla/registro
+    	 * dREHER
+    	 */
+    	System.out.println("==> TabbedDesktop.showEmbedded: " + window);
+    	if(window instanceof WAttachment) {
+    		System.out.println("Se trata de una ventana de adjuntos -> " + ((WAttachment)window).getTitulo());
+    		title = ((WAttachment)window).getTitulo();
+    		boolean isOpen = isWindowAttachmentOpen( ((WAttachment)window).getID());
+    		if(isOpen) {
+    			System.out.println("La ventana de adjunto para este registro ya se encuentra abierta, poner en foco...");
+    			setFocusWindowAttachment(((WAttachment)window).getID());
+    			return;
+    		}
+    	}
+    	
     	window.setTitle(null);
     	preOpenNewTab();
+    	
     	if (Window.INSERT_NEXT.equals(window.getAttribute(Window.INSERT_POSITION_KEY)))
     		windowContainer.insertAfter(windowContainer.getSelectedTab(), tabPanel, title, true, true);
     	else
@@ -316,6 +335,66 @@ public abstract class TabbedDesktop extends AbstractDesktop {
 					{
 						return false;
 					}
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 *
+	 * @param windowNo
+	 * @return boolean
+	 * @author dREHER
+	 */
+	public boolean isWindowAttachmentOpen(int windowNo)
+	{
+		Tabbox tabbox = windowContainer.getComponent();
+		Tabpanels panels = tabbox.getTabpanels();
+		List<?> childrens = panels.getChildren();
+		for (Object child : childrens)
+		{
+			Tabpanel panel = (Tabpanel) child;
+			Component component = panel.getFirstChild();
+			
+			if (component != null && (component instanceof WAttachment))
+			{
+				if (windowNo == ((WAttachment)component).getID())
+				{
+					// System.out.println("Adjunto abierto");
+					return true;
+				}
+			}
+		}
+		// System.out.println("Adjunto cerrado");
+		return false;
+	}
+	
+	/**
+	 * Pone en foco el tab correspondiente (por ahora solo para WAttachment)
+	 * @param windowNo
+	 * @return boolean
+	 * @author dREHER
+	 */
+	public boolean setFocusWindowAttachment(int windowNo)
+	{
+		Tabbox tabbox = windowContainer.getComponent();
+		Tabpanels panels = tabbox.getTabpanels();
+	
+		List<?> childrens = panels.getChildren();
+		for (Object child : childrens)
+		{
+			Tabpanel panel = (Tabpanel) child;
+			Component component = panel.getFirstChild();
+			
+			if (component != null && (component instanceof WAttachment))
+			{
+				if (windowNo == ((WAttachment)component).getID())
+				{
+					panel.getLinkedTab().setFocus(true);
+					panel.setFocus(true);
+					tabbox.setSelectedPanel(panel);
+					return true;
 				}
 			}
 		}

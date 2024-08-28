@@ -39,6 +39,7 @@ import org.adempiere.webui.apps.form.WCreateFrom;
 import org.adempiere.webui.apps.form.WPayment;
 import org.adempiere.webui.apps.form.WSocialConversation;
 import org.adempiere.webui.component.CWindowToolbar;
+import org.adempiere.webui.component.DesktopTabpanel;
 import org.adempiere.webui.component.IADTab;
 import org.adempiere.webui.component.IADTabList;
 import org.adempiere.webui.component.Listbox;
@@ -49,7 +50,9 @@ import org.adempiere.webui.event.ActionListener;
 import org.adempiere.webui.event.ToolbarListener;
 import org.adempiere.webui.exception.ApplicationException;
 import org.adempiere.webui.part.AbstractUIPart;
+import org.adempiere.webui.part.WindowContainer;
 import org.adempiere.webui.session.SessionManager;
+import org.adempiere.webui.window.ADWindow;
 import org.adempiere.webui.window.FDialog;
 import org.adempiere.webui.window.FindWindow;
 import org.adempiere.webui.window.WRecordAccessDialog;
@@ -817,16 +820,37 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
         	recordClientID = null;
         	recordOrgID = null;
         }
+        
+        SessionManager.getAppDesktop().findWindow(curWindowNo);
 		
-		//	Attachment va =
-		new WAttachment (	curWindowNo, curTab.getAD_AttachmentID(),
+        /**
+         * Este codigo solo agrega variable wnda, no cambia nada...
+         * dREHER
+         */
+		WAttachment wnda = new WAttachment (curWindowNo, curTab.getAD_AttachmentID(),
 							curTab.getAD_Table_ID(), record_ID, null,
-							recordClientID, recordOrgID);
+							recordClientID, recordOrgID, curTab, this);
+		
+		// dREHER esto se comenta ya que al ser una ventana en pestaña y no ser modal
+		// el estado del boton de adjuntos debe realizarse desde la propia ventana al cerrarla y no desde este punto.
 
-		curTab.loadAttachments();				//	reload
+		// curTab.loadAttachments();				//	reload
+		// toolbar.getButton("Attachment").setPressed(curTab.hasAttachment());
+		// focusToActivePanel();
+		
+		// dREHER mostrar ventana de attachment
+		System.out.println("AbstractADWindowPanel. showWindow attachment...");
+		
+		// Termina agregando el tab con esta ventana la clase TabbedDesktop con el metodo showEmbedded(window)
+		AEnv.showWindow(wnda);
+	}
+    
+    // dREHER
+    public void refreshButtonAttachment() {
+    	curTab.loadAttachments();				//	reload
 		toolbar.getButton("Attachment").setPressed(curTab.hasAttachment());
 		focusToActivePanel();
-	}
+    }
 
     /**
      * @see ToolbarListener#onConversation()

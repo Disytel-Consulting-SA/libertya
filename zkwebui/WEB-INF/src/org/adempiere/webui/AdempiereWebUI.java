@@ -47,6 +47,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.PGStatementUtils;
+import org.zkforge.keylistener.Keylistener;
 import org.zkoss.zk.au.Command;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
@@ -99,6 +100,9 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 	public static final String EXECUTION_CARRYOVER_SESSION_KEY = "execution.carryover";
 
 	public static final String ZK_DESKTOP_SESSION_KEY = "zk.desktop";
+	
+	// dREHER
+	private Keylistener keyListener;
 
     public AdempiereWebUI()
     {
@@ -193,6 +197,14 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 		String autoNew = userPreference.getProperty(UserPreference.P_AUTO_NEW);
 		Env.setAutoNew(ctx, "true".equalsIgnoreCase(autoNew) || "y".equalsIgnoreCase(autoNew));
 
+		// dREHER - ver de capturar teclas
+		keyListener = new Keylistener();
+		keyListener.setPage(this.getPage());
+		keyListener.setCtrlKeys("@a@c@d@e@f@h@l@m@n@o@p@r@s@t@w@x@z@#left@#right@#up@#down@#home@#end#enter^u@u@#pgdn@#pgup$#f2^#f2");
+		keyListener.setAutoBlur(false);
+		
+		System.out.println("Creo el keyListener de AdempiereWebUI...");
+		
 		IDesktop d = (IDesktop) currSess.getAttribute("application.desktop");
 		if (d != null && d instanceof IDesktop)
 		{
@@ -287,6 +299,16 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 				logout();
 			}
 		}
+		
+    }
+    
+    /**
+     * @return key listener
+     * dREHER
+     */
+    @Override
+	public Keylistener getKeylistener() {
+    	return keyListener;
     }
 
     private void createDesktop()
@@ -323,6 +345,12 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
     		PGStatementUtils.getInstance().removeAllStatements(mSession.getAD_Session_ID());    		
     		mSession.logout();
     	}
+    	
+    	// dREHER
+    	if (keyListener != null) {
+			keyListener.detach();
+			keyListener = null;
+		}
 
         SessionManager.clearSession();
         super.getChildren().clear();
