@@ -717,13 +717,6 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			
 			rs = ps.executeQuery();
 			
-			if (AD_Org_ID != 0)
-				ps.setInt(i++, AD_Org_ID);
-			
-			if (!m_allInvoices && !getBPartner().isGroupInvoices())
-				ps.setTimestamp(i++, m_fechaFacturas);
-
-			rs = ps.executeQuery();
 			//int ultimaFactura = -1;
 			while (rs.next()) {
 				

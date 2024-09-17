@@ -22,7 +22,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -70,10 +69,8 @@ import org.compiere.swing.CComboBox;
 import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
-import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
-import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoAdelantado;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCredito;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoEfectivo;
@@ -336,7 +333,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         txtDescription = new javax.swing.JTextField();
 		txtDescription.setEditable(true);	
 		lblDocumentType = new javax.swing.JLabel();
-		cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),false);
+		cboDocumentType = VComponentsFactory.VLookupFactory("C_DOCTYPE_ID", "C_DOCTYPE", m_WindowNo, DisplayType.Table,m_model.getDocumentTypeSqlValidation(),true); //jv debe ser obligatorio
 		lblDateTrx = new javax.swing.JLabel();
 		createDate();
 		
@@ -2437,7 +2434,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private javax.swing.JLabel lblChequeTerceroImporte;
     private javax.swing.JLabel lblChequeTerceroDescripcion;
     private VLookup chequeTerceroCuenta;
-    private VLookup chequeTercero;
+    protected VLookup chequeTercero; //jv cambio a protected en referencia a protected WSearchEditor chequeTercero; en WOrdenPago
     private VNumber txtChequeTerceroImporte;
     private javax.swing.JTextField txtChequeTerceroDescripcion;
     
@@ -2450,7 +2447,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected int m_C_Currency_ID = Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" );
 
-    private static CLogger log = CLogger.getCLogger( VOrdenPago.class );
+    protected static CLogger log = CLogger.getCLogger( VOrdenPago.class ); //jv cambio a protected en referencia a WOrdenPago
     protected VOrdenPagoModel m_model;
     protected Properties m_ctx = Env.getCtx();
     private String m_trxName;
