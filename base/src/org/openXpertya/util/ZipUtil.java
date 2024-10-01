@@ -518,7 +518,8 @@ public class ZipUtil {
             }
         }
 
-        path        = System.getProperty( "sun.boot.class.path" );
+//      path        = System.getProperty( "sun.boot.class.path" ); //deprecado java 8
+        path        = System.getProperty( "java.class.path" ); //java 11
         pathEntries = path.split( System.getProperty( "path.separator" ));
 
         for( int i = 0;i < pathEntries.length;i++ ) {

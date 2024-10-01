@@ -665,7 +665,8 @@ public class LaunchInvoice extends SvrProcess {
 		BigDecimal rate = invoice.get_Value("Cintolo_Exchange_Rate") != null ? 
 				(BigDecimal)invoice.get_Value("Cintolo_Exchange_Rate") : Env.ZERO;
 		
-		if(rate.equals(Env.ZERO)) {
+//		if(rate.equals(Env.ZERO)) { jviejo => al utilizar equals falla al comparar la escala
+		if(rate.compareTo(Env.ZERO) == 0) {
 			conversion = MCurrency.currencyConvert(
 				invoice.getGrandTotal(), 
 				invoice.getC_Currency_ID(), 

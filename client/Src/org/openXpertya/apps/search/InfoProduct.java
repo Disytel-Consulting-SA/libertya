@@ -768,7 +768,7 @@ public class InfoProduct extends Info implements ActionListener {
         }
 
         if( M_PriceList_Version_ID != 0 ) {
-            where.append( " (AND pr.M_PriceList_Version_ID=? OR pr.M_PriceList_Version_ID ISNULL) " ); // dREHER sin lista de precios tambien mostrar
+            where.append( " AND (pr.M_PriceList_Version_ID=? OR pr.M_PriceList_Version_ID IS NULL) " ); // dREHER sin lista de precios tambien mostrar
         }
 
         // Product Attribute Search
