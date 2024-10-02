@@ -13,11 +13,14 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 public class CurrentAccountBPartnerDataSource extends QueryDataSource {
-
+	
 	protected static final String DOC_INVOICE = "C_Invoice";
 	protected static final String DOC_PAYMENT = "C_Payment";
 	protected static final String DOC_CASHLINE = "C_CashLine";
 	protected static final String DOC_ALLOCATIONHDR = "C_AllocationHdr";
+
+	/** Consulta de Cuentas Corrientes */
+	CurrentAccountQuery caq;
 	
 	/** Contexto actual */
 	private Properties ctx;
@@ -72,6 +75,32 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 		setDateTo(dateTo);
 		setDebit_signo_issotrx(1);
 		setCredit_signo_isotrx(-1);
+		
+		setActualCAQ(new CurrentAccountQuery(getCtx(), null, null, false, getDateFrom(), getDateTo(), "A", bPartnerID,
+				getAccountType(), true));
+		setCaq(getActualCAQ());
+	}
+	
+	public CurrentAccountBPartnerDataSource(Properties ctx, Integer pInstanceID, Timestamp dateFrom, Timestamp dateTo,
+			String accountType, Integer bPartnerID, String trxName, Integer orgId, Integer currencyID) {
+		super(trxName);
+		setCtx(ctx);
+		setpInstanceID(pInstanceID);
+		setMassiveInsert(new StringBuffer());
+		setClientCurrencyID(currencyID);
+		setAccountType(accountType);
+		setBpParamID(bPartnerID);
+		setDateFrom(dateFrom);
+		setDateTo(dateTo);
+		setDebit_signo_issotrx(1);
+		setCredit_signo_isotrx(-1);
+		
+		CurrentAccountQuery caq = new CurrentAccountQuery(getCtx(), null, null, false, getDateFrom(), getDateTo(), "A", bPartnerID,
+				getAccountType(), true);
+		caq.setOrgID(orgId);
+		caq.setCurrencyID(currencyID);
+		setActualCAQ(caq);
+		setCaq(getActualCAQ());
 	}
 
 	@Override
@@ -113,8 +142,9 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	 * @param bpartnerID entidad comercial actual
 	 */
 	protected void loadCurrentAccountDataForCurrentBP(int bPartnerID) throws Exception {
-		setActualCAQ(new CurrentAccountQuery(getCtx(), null, null, false, getDateFrom(), getDateTo(), "A", bPartnerID,
-				getAccountType(), true));
+// se quita por merge con micro jacofer_14_cc
+//		setActualCAQ(new CurrentAccountQuery(getCtx(), null, null, false, getDateFrom(), getDateTo(), "A", bPartnerID,
+//				getAccountType(), true));
 		int subIndex = 0;
 		// Obtener el saldo acumulado a fecha desde
 		subIndex = makeInsertInitialAcumBalance(subIndex);
@@ -133,17 +163,19 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 		if(getDateFrom() == null) {
 			return subIndex;
 		}
-			
-		PreparedStatement ps = DB.prepareStatement(getActualCAQ().getAcumBalanceQuery(), getTrxName(), true);
-		int i = 1;
-		// Parámetros de sqlDoc
-		ps.setInt(i++, getDebit_signo_issotrx());
-		ps.setInt(i++, getCredit_signo_isotrx());
-		ps.setInt(i++, getClientCurrencyID());
-		ps.setInt(i++, Env.getAD_Client_ID(getCtx()));
-		ps.setInt(i++, getActualCAQ().getbPartnerID());
-		ps.setTimestamp(i++, getDateFrom());
+// se quita por merge con micro jacofer_14_cc			
+//		PreparedStatement ps = DB.prepareStatement(getActualCAQ().getAcumBalanceQuery(), getTrxName(), true);
+//		int i = 1;
+//		// Parámetros de sqlDoc
+//		ps.setInt(i++, getDebit_signo_issotrx());
+//		ps.setInt(i++, getCredit_signo_isotrx());
+//		ps.setInt(i++, getClientCurrencyID());
+//		ps.setInt(i++, Env.getAD_Client_ID(getCtx()));
+//		ps.setInt(i++, getActualCAQ().getbPartnerID());
+//		ps.setTimestamp(i++, getDateFrom());
 		
+		PreparedStatement ps = DB.prepareStatement(getActualCAQ().getAcumBalanceQuery(), getTrxName(), true);
+		ps.setTimestamp(1, getDateFrom());
 		ResultSet rs = ps.executeQuery();
 		if(rs.next()) {
 			if(!Util.isEmpty(rs.getBigDecimal("Debit"), true) || 
@@ -172,7 +204,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 						+ ", "
 						+ rs.getBigDecimal("Credit")
 						+ ", "
-						+ getAcumBalance()
+						+ getAcumBalance().multiply(new BigDecimal((getAccountType().equals("C") ? 1 : -1)))
 						+ ", '"
 						+ "Saldo inicial"
 						+ "', "
@@ -201,14 +233,16 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	
 	protected void makeInsertAllDocuments(int subIndex) throws Exception {
 		PreparedStatement ps = DB.prepareStatement(getActualCAQ().getQuery(), getTrxName(), true);
+		
 		int i = 1;
 		// Parámetros de sqlDoc
-		ps.setInt(i++, getDebit_signo_issotrx());
-		ps.setInt(i++, getCredit_signo_isotrx());
-		ps.setInt(i++, getClientCurrencyID());
-		ps.setInt(i++, Env.getAD_Client_ID(getCtx()));
-		ps.setInt(i++, getActualCAQ().getbPartnerID());
-		
+// se quita por merge con micro jacofer_14_cc
+//		ps.setInt(i++, getDebit_signo_issotrx());
+//		ps.setInt(i++, getCredit_signo_isotrx());
+//		ps.setInt(i++, getClientCurrencyID());
+//		ps.setInt(i++, Env.getAD_Client_ID(getCtx()));
+//		ps.setInt(i++, getActualCAQ().getbPartnerID());
+//		
 		if(getDateFrom() != null) {
 			ps.setTimestamp(i++, getDateFrom());
 		}
@@ -243,7 +277,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 					+ ", "
 					+ rs.getBigDecimal("Credit")
 					+ ", "
-					+ getAcumBalance()
+					+ getAcumBalance().multiply(new BigDecimal((getAccountType().equals("C") ? 1 : -1)))
 					+ ", '"
 					+ rs.getString("DocumentNo")
 					+ "', "
@@ -253,7 +287,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 					+ "', '"
 					+ rs.getTimestamp("DateTrx")
 					+ "', '"
-					+ rs.getTimestamp("DateTrx")
+					+ rs.getTimestamp("DateAcct")
 					+ "', "
 					+ rs.getInt("C_DocType_ID")
 					+ ", "
@@ -277,7 +311,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	}
 	
 	/**
-	 * @return sql de las entidades comerciales
+	 * @return sql de las entidades comerciales    ===== OK Aita =====
 	 */
 	protected String getBPQuery() {
 		return 	" Select distinct c_bpartner_id " +
@@ -298,7 +332,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	
 	@Override
 	protected String getQuery() {
-		String sql = "select *, bp.value as bpartner_value, bp.name as bpartner_name, dt.name as tipo "
+		String sql = "select *, bp.value as bpartner_value, bp.name as bpartner_name, CASE WHEN cc.c_doctype_id != 0 THEN dt.name ELSE (CASE WHEN cc.c_cashline_id IS NOT NULL THEN 'Efectivo' ELSE 'Asignación Manual' END) END as tipo "
 				+ "from t_cuentacorriente cc "
 				+ "join c_bpartner bp on bp.c_bpartner_id = cc.c_bpartner_id "
 				+ "left join c_doctype dt on dt.c_doctype_id = cc.c_doctype_id "
@@ -406,6 +440,14 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 
 	protected void setCredit_signo_isotrx(int credit_signo_isotrx) {
 		this.credit_signo_isotrx = credit_signo_isotrx;
+	}
+
+	public CurrentAccountQuery getCaq() {
+		return caq;
+	}
+
+	public void setCaq(CurrentAccountQuery caq) {
+		this.caq = caq;
 	}
 
 }

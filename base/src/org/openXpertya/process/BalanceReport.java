@@ -97,6 +97,9 @@ public class BalanceReport extends SvrProcess {
         		valueTo = valueToOrigin.equals("%")?null:valueToOrigin;
         	} else if (name.equalsIgnoreCase("Condition")) {
 				setCondition((String) para[i].getParameter());
+			} else if (name.equalsIgnoreCase("C_Currency_ID")) {
+				BigDecimal tmp = (BigDecimal) para[i].getParameter();
+				client_Currency_ID = tmp == null ? 0 : tmp.intValue();
 			} else if( name.equalsIgnoreCase( "FilterInternalEC" )) {
             	filterInternalEC = ((String)para[ i ].getParameter()).equals("Y");
             }
@@ -113,9 +116,15 @@ public class BalanceReport extends SvrProcess {
  		credit_signo_issotrx = p_AccountType.equalsIgnoreCase("C") ? -1 : 1;
         isSOtrx = p_AccountType.equalsIgnoreCase("C")?"'Y'":"'N'";
      // Moneda de la compañía utilizada para conversión de montos de documentos.
-        client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
-        setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
-					getCondition(), null, p_AccountType));
+        if (client_Currency_ID == 0)  
+			client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+        
+        CurrentAccountQuery caq = new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
+				getCondition(), null, p_AccountType);
+        caq.setOrgID(p_AD_Org_ID);
+        caq.setCurrencyID(client_Currency_ID);
+        
+        setCurrentAccountQuery(caq);
 	}
 
 	
@@ -137,13 +146,17 @@ public class BalanceReport extends SvrProcess {
 			
 			if (iterativeLogic) {
 				// Solo BPartner actual
-				setCurrentAccountQuery(new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
-						getCondition(), rsBP.getInt("c_bpartner_id"), p_AccountType));
+				CurrentAccountQuery caq = new CurrentAccountQuery(getCtx(), p_AD_Org_ID, null, true, null, p_DateTrx_To,
+						getCondition(), rsBP.getInt("c_bpartner_id"), p_AccountType);
+		        caq.setOrgID(p_AD_Org_ID);
+		        caq.setCurrencyID(client_Currency_ID);
+		        
+		        setCurrentAccountQuery(caq);
 			}
 		
 			// calcular el estado de cuenta de cada E.C.
 			StringBuffer sqlDoc = new StringBuffer();
-			sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, coalesce(T.totalopenbalance,0.00) as actualbalance, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0) AS balance,  ");
+			sqlDoc.append(" SELECT T.C_BPARTNER_ID, T.NAME, C_BP_Group_ID, COALESCE(T.so_description,'') AS so_description, coalesce(T.totalopenbalance,0.00) as actualbalance, COALESCE(SUM(t.Credit),0.0) AS Credit, COALESCE(SUM(t.Debit),0.0) AS Debit, (COALESCE(SUM(t.Debit),0.0) - COALESCE(SUM(t.Credit),0.0)) * (CASE WHEN " + isSOtrx.trim() + " = 'Y' THEN 1 ELSE -1 END) AS balance,  ");
 			sqlDoc.append(" 	( SELECT dateacct FROM C_INVOICE WHERE issotrx = ")
 					.append(isSOtrx)
 					.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT asc LIMIT 1 ) as fecha_fact_antigua, ");
@@ -233,15 +246,8 @@ public class BalanceReport extends SvrProcess {
 					p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
 			pstmt.setTimestamp(i++,
 					p_DateTrx_To != null ? p_DateTrx_To : Env.getDate());
-			pstmt.setInt(i++, debit_signo_issotrx);
-			pstmt.setInt(i++, credit_signo_issotrx);
-			pstmt.setInt(i++, client_Currency_ID);
-			pstmt.setInt(i++, getAD_Client_ID());
-			// Logica iterativa unicamente
-			if (iterativeLogic) {
-				i = pstmtSetParam(i, rsBP.getInt("c_bpartner_id"), pstmt);
-			}
-			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
+			// pstmt.setInt(i++, client_Currency_ID);
+			
 			// Parámetros para el filtro de fechas
 			i = pstmtSetParam(i, p_DateTrx_To, pstmt);
 	
@@ -256,7 +262,7 @@ public class BalanceReport extends SvrProcess {
 				subindice++;
 				usql.append(" INSERT INTO T_BALANCEREPORT (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, ");
 				usql.append("								credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, ");
-				usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition, FilterInternalEC) ");
+				usql.append("								onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, Condition, FilterInternalEC, c_currency_id) ");
 				usql.append(" VALUES ( ")	.append(getAD_PInstance_ID()).append(",")
 											.append(getAD_Client_ID()).append(",")
 											.append(p_AD_Org_ID == null?"0":p_AD_Org_ID).append(",")
@@ -301,6 +307,8 @@ public class BalanceReport extends SvrProcess {
 				usql.append("'"+getCondition()+"'");
 				usql.append(" , ");
 				usql.append("'"+(filterInternalEC?"Y":"N")+"'");
+				usql.append(", ");
+				usql.append(client_Currency_ID);
 				usql.append(" ); ");
 			}
 		}
@@ -323,8 +331,8 @@ public class BalanceReport extends SvrProcess {
 					
 					// Reinsertar, pero ordenando segun el criterio que corresponda, a partir de maxSubIndice+1.  Ordenar por el balance,  bien por fecha mas antigua... y sino queda como estaba
 					DB.executeUpdate(
-						" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition, FilterInternalEC) " + 
-						" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition, FilterInternalEC " +
+						" insert into t_balancereport (ad_pinstance_id, ad_client_id, ad_org_id, subindice, c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition, FilterInternalEC, c_currency_id) " + 
+						" (	select ad_pinstance_id, ad_client_id, ad_org_id, "+maxSubIndice+"+ROW_NUMBER() OVER (ORDER BY "+getOrderBy()+"), c_bpartner_id, observaciones, credit, debit, balance, date_oldest_open_invoice, date_newest_open_invoice, datecreated, sortcriteria, scope, c_bp_group_id, truedatetrx, accounttype, onlycurrentaccounts, valuefrom, valueto, duedebt, actualbalance, chequesencartera, generalbalance, condition, FilterInternalEC, c_currency_id "  +
 						" 	from t_balancereport " +
 						"	where ad_pinstance_id = " + getAD_PInstance_ID() +
 						"	order by " + getOrderBy() +

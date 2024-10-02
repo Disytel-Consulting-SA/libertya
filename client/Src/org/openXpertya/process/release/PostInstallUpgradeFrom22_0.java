@@ -1,5 +1,6 @@
 package org.openXpertya.process.release;
 
+import org.openXpertya.JasperReport.MJasperReport;
 import org.openXpertya.model.MProcess;
 import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.utils.JarHelper;
@@ -31,6 +32,10 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 	/** UID de la impresión de Entregas por Deposito Merge org.libertya.core.micro.r3000.dev.facturacion */
 	protected final static String ENTREGA_POR_DEPOSITO_JASPER_REPORT_UID = "CORE-AD_JasperReport-1010068";
 	protected final static String ENTREGA_POR_DEPOSITO_JASPER_REPORT_FILENAME = "WarehouseDeliverDocument.jasper";
+	
+	/** Reporte de Cuenta Corriente por Entidad Comercial Merge org.libertya.core.micro.r3019.dev.jacofer_14_cc*/
+	protected final static String BALANCE_BY_BPARTNER_JASPER_REPORT_UID = "JACLBY-AD_JasperReport-20200413133217034-110405";
+	protected final static String BALANCE_BY_BPARTNER_JASPER_REPORT_FILENAME = "CurrentAccountByBPartner.jasper";
 	
 	@Override
 	protected String doIt() throws Exception {
@@ -64,6 +69,17 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 		
 		// Entrega por deposito Merge org.libertya.core.micro.r3000.dev.facturacion
 		updateReport(ENTREGA_POR_DEPOSITO_JASPER_REPORT_UID, ENTREGA_POR_DEPOSITO_JASPER_REPORT_FILENAME);
+		
+		// Reporte de Cuenta Corriente por Entidad Comercial Merge org.libertya.core.micro.r3019.dev.jacofer_14_cc
+				MJasperReport
+					.updateBinaryData(
+							get_TrxName(),
+							getCtx(),
+							BALANCE_BY_BPARTNER_JASPER_REPORT_UID,
+							JarHelper
+									.readBinaryFromJar(
+											jarFileURL,
+											getBinaryFileURL(BALANCE_BY_BPARTNER_JASPER_REPORT_FILENAME)));
 		
 		return "";
 	}

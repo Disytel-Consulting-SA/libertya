@@ -107,6 +107,9 @@ public class CurrentAccountReport extends SvrProcess {
 				p_C_DocType_ID = tmp == null ? null : tmp.intValue();
 			} else if (name.equalsIgnoreCase("Condition")) {
 				condition = (String) para[i].getParameter();
+			} else if (name.equalsIgnoreCase("C_Currency_ID")) {
+				BigDecimal tmp = (BigDecimal) para[i].getParameter();
+				client_Currency_ID = tmp == null ? 0 : tmp.intValue();
 			} else if (name.equalsIgnoreCase("IncludeCreditNotesRequest")) {
 				p_includeCreditNoteRequest = "Y".equals((String) para[i].getParameter());
 				p_includeCreditNoteRequest_char = (String)para[i].getParameter();
@@ -127,8 +130,9 @@ public class CurrentAccountReport extends SvrProcess {
 		credit_signo_isotrx = getCreditSignoIsSOTrx();
 
 		// Moneda de la compañía utilizada para conversión de montos de
-		// documentos.
-		client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		// documentos. (Si no se setea por parámetro, toma moneda base del sistema) 
+		if (client_Currency_ID == 0)  
+			client_Currency_ID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
 		// Generador de consulta de cuenta corriente
 		setCurrentAccountQuery(buildCurrentAccountQuery());
 	}
@@ -162,16 +166,12 @@ public class CurrentAccountReport extends SvrProcess {
 					get_TrxName(), true);
 			int i = 1;
 			// Parámetros de sqlDoc
-			pstmt.setInt(i++, debit_signo_issotrx);
-			pstmt.setInt(i++, credit_signo_isotrx);
-			pstmt.setInt(i++, client_Currency_ID);
-			pstmt.setInt(i++, getAD_Client_ID());
-			pstmt.setInt(i++, p_C_BPartnerID);
-			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
-			i = pstmtSetParam(i, p_C_DocType_ID, pstmt);
+			
 			// Parámetros para el filtro de fechas
-			i = pstmtSetParam(i, p_DateTrx_From, pstmt);
-			i = pstmtSetParam(i, p_DateTrx_To, pstmt);
+			if (p_DateTrx_From != null)
+				i = pstmtSetParam(i, p_DateTrx_From, pstmt);
+			
+			i = pstmtSetParam(i, p_DateTrx_To != null ? p_DateTrx_To : new Timestamp(System.currentTimeMillis()), pstmt);
 
 			rs = pstmt.executeQuery();
 
@@ -184,7 +184,7 @@ public class CurrentAccountReport extends SvrProcess {
 				subIndice++;
 				// insert first row: before query balance period
 				// Field used for 'date field' in temporary table: DATETRX
-				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, Condition, IncludeCreditNotesRequest) "
+				usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, Condition, IncludeCreditNotesRequest, C_Currency_ID) "
 						+ " VALUES ("
 						+ subIndice
 						+ ", '"
@@ -205,8 +205,8 @@ public class CurrentAccountReport extends SvrProcess {
 						+ ", "
 						+ acumCredit
 						+ ", "
-						+ acumBalance
-						+ ", '-', "
+						+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
+						+ ", 'Saldo Inicial', "
 						+ p_C_BPartnerID
 						+ ", '"
 						+ p_AccountType
@@ -216,6 +216,8 @@ public class CurrentAccountReport extends SvrProcess {
 						+ "'"+getCondition()+"'"
 						+ ", "
 						+ "'"+p_includeCreditNoteRequest_char+"'"
+						+ ", "
+						+ client_Currency_ID
 						+ ");");
 			}
 
@@ -274,7 +276,7 @@ public class CurrentAccountReport extends SvrProcess {
 					// ANTONIO: La cuenta es al reves acumBalance =
 					// acumBalance.add(credit.subtract(debit));
 					acumBalance = acumBalance.add(debit.subtract(credit));
-					usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, Condition,IncludeCreditNotesRequest) "
+					usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, C_ALLOCATIONHDR_ID, duedate, Condition,IncludeCreditNotesRequest, C_Currency_ID) "
 							+ " VALUES ("
 							+ subIndice
 							+ ", '"
@@ -297,7 +299,7 @@ public class CurrentAccountReport extends SvrProcess {
 							+ ", "
 							+ rs.getBigDecimal("Credit")
 							+ ", "
-							+ acumBalance
+							+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
 							+ ", '"
 							+ rs.getString("DocumentNo")
 							+ "', "
@@ -305,7 +307,7 @@ public class CurrentAccountReport extends SvrProcess {
 							+ ", '"
 							+ p_AccountType
 							+ "', '"
-							+ rs.getTimestamp("DateTrx")
+							+ rs.getTimestamp("DateAcct")
 							+ "', "
 							+ rs.getInt("C_DocType_ID") 
 							+ ", ");
@@ -339,6 +341,7 @@ public class CurrentAccountReport extends SvrProcess {
 					
 					usql.append(" , '"+(getCondition())+"'");
 					usql.append(" , '"+p_includeCreditNoteRequest_char+"'");
+					usql.append(" , "+client_Currency_ID);
 					usql.append(" ); ");
 					documents.put(documentKey, trx_Org_ID);
 				}
@@ -379,13 +382,7 @@ public class CurrentAccountReport extends SvrProcess {
 			pstmt = DB.prepareStatement(sqlBalance.toString(), get_TrxName(), true);
 			// Parámetros de sqlDoc
 			int i = 1;
-			pstmt.setInt(i++, debit_signo_issotrx);
-			pstmt.setInt(i++, credit_signo_isotrx);
-			pstmt.setInt(i++, client_Currency_ID);
-			pstmt.setInt(i++, getAD_Client_ID());
-			pstmt.setInt(i++, p_C_BPartnerID);
-			i = pstmtSetParam(i, p_AD_Org_ID, pstmt);
-			i = pstmtSetParam(i, p_C_DocType_ID, pstmt);
+			
 			// Parámetros de sqlBalance
 			pstmt.setTimestamp(i++, p_DateTrx_From);
 
@@ -466,7 +463,7 @@ public class CurrentAccountReport extends SvrProcess {
 		StringBuffer usql = new StringBuffer();
 		while (rs.next()) {
 			subIndice++;
-			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition, IncludeCreditNotesRequest) "
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition, IncludeCreditNotesRequest, C_Currency_ID) "
 					+ " VALUES ("
 					+ subIndice
 					+ ", '"
@@ -492,7 +489,7 @@ public class CurrentAccountReport extends SvrProcess {
 							.getBigDecimal("pendingToInvoiceAmt")
 							: BigDecimal.ZERO)
 					+ ", "
-					+ acumBalance
+					+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
 					+ ", '"
 					+ rs.getString("DocumentNo")
 					+ "', "
@@ -507,6 +504,8 @@ public class CurrentAccountReport extends SvrProcess {
 					+ "'"+getCondition()+"'"
 					+ ", "
 					+ "'"+p_includeCreditNoteRequest_char+"'"
+					+ ", "
+					+ client_Currency_ID
 					+ "); ");
 		}
 
@@ -553,7 +552,7 @@ public class CurrentAccountReport extends SvrProcess {
 			subIndice++;
 			creditRequest = rs.getBigDecimal("grandtotalConverted").multiply(creditSign);
 			acumBalance = acumBalance.subtract(creditRequest);
-			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition, IncludeCreditNotesRequest) "
+			usql.append(" INSERT INTO T_CUENTACORRIENTE (SUBINDICE, IncludeOpenOrders, ShowDetailedReceiptsPayments, AD_CLIENT_ID, AD_ORG_ID, AD_PINSTANCE_ID, ISO_CODE, AMOUNT, DEBE, HABER, SALDO, NUMEROCOMPROBANTE, C_BPARTNER_ID, ACCOUNTTYPE, DATETRX, C_DOCTYPE_ID, C_INVOICE_ID, C_PAYMENT_ID, C_CASHLINE_ID, Condition, IncludeCreditNotesRequest, C_Currency_ID) "
 					+ " VALUES ("
 					+ subIndice
 					+ ", '"
@@ -576,7 +575,7 @@ public class CurrentAccountReport extends SvrProcess {
 					+ ", "
 					+ creditRequest
 					+ ", "
-					+ acumBalance
+					+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
 					+ ", '"
 					+ rs.getString("DocumentNo")
 					+ "', "
@@ -591,6 +590,8 @@ public class CurrentAccountReport extends SvrProcess {
 					+ "'"+getCondition()+"'"
 					+ ", "
 					+ "'"+p_includeCreditNoteRequest_char+"'"
+					+ ", "
+					+ client_Currency_ID
 					+ "); ");
 		}
 
@@ -626,9 +627,13 @@ public class CurrentAccountReport extends SvrProcess {
 	 *         corriente
 	 */
 	protected CurrentAccountQuery buildCurrentAccountQuery() {
-		return new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
+		CurrentAccountQuery caq = new CurrentAccountQuery(getCtx(), p_AD_Org_ID,
 				p_C_DocType_ID, p_ShowDetailedReceiptsPayments, p_DateTrx_From,
 				p_DateTrx_To, getCondition(), p_C_BPartnerID, p_AccountType);
+		caq.setOrgID(p_AD_Org_ID);
+		caq.setCurrencyID(client_Currency_ID);
+		
+		return caq;
 	}
 
 	protected Integer getP_AD_Org_ID() {
@@ -686,4 +691,13 @@ public class CurrentAccountReport extends SvrProcess {
 	protected void setP_C_BPartnerID(Integer p_C_BPartnerID) {
 		this.p_C_BPartnerID = p_C_BPartnerID;
 	}
+
+	public int getClient_Currency_ID() {
+		return client_Currency_ID;
+	}
+
+	public void setClient_Currency_ID(int client_Currency_ID) {
+		this.client_Currency_ID = client_Currency_ID;
+	}
+	
 }

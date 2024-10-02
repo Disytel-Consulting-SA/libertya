@@ -209,7 +209,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			"	  JOIN c_doctype dt on i.c_doctype_id = dt.c_doctype_id    " +
 			"	  JOIN c_bpartner bp on i.c_bpartner_id = bp.c_bpartner_id    " +
 			"	  WHERE i.ispayschedulevalid <> 'Y'::bpchar " + 
-			"	  AND " +getDocStatusWhereClause("i") +
+			"	  AND " +getInvoicesStatusWhereClause("i") +
 			"	  AND i.AD_Client_ID = " + getAD_Client_ID() +
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
@@ -262,7 +262,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			" FROM c_invoice i" +
 			" JOIN c_doctype d ON i.c_doctype_id = d.c_doctype_id " +
 			" JOIN c_bpartner bp ON bp.c_bpartner_id = i.c_bpartner_id " +
-			" WHERE "+getDocStatusWhereClause("i")+ 
+			" WHERE "+getInvoicesStatusWhereClause("i")+ 
 			(condition.equals(X_T_EstadoDeCuenta.CONDITION_All)?
 					"":
 					" AND i.paymentrule = '"+condition+"' ") +
@@ -775,6 +775,13 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	 */
 	protected String getDocStatusWhereClause(String tableAlias){
 		return tableAlias+".docstatus IN ('CO','CL','WC') ";
+	}
+	
+	/**
+	 * @return cláusula where para el estado de los documentos
+	 */
+	protected String getInvoicesStatusWhereClause(String tableAlias){
+		return "(("+tableAlias+".issotrx = 'Y' AND "+tableAlias+".docstatus IN ('CO', 'CL', 'WC', 'VO')) OR ("+tableAlias+".issotrx = 'N' AND "+tableAlias+".docstatus IN ('CO', 'CL', 'WC')))";
 	}
 	
 	/**
