@@ -983,11 +983,6 @@ update ad_column set ad_reference_id = 30 where ad_componentobjectuid = 'CORE-AD
 update ad_column set ad_reference_id = 30 where ad_componentobjectuid = 'CORE-AD_Column-1757' and ad_reference_id = 19;
 
 
---MERGE Marca en facturas 2024-04-25
---20220817-1756 Se agrega entrada en AD_Preference para permitir seteo de 'print_mark_in_invoices' Y/N
-INSERT INTO libertya.AD_Preference (ad_preference_id,isactive,ad_client_id,ad_org_id,createdby,updatedby,value,attribute,updated) 
-VALUES ((select coalesce(max(ad_preference_id)+1,1) from libertya.AD_Preference where ad_preference_id < 100000),'Y',0,0,0,0,'N','print_mark_in_invoices',NOW());
-
 --MERGE JACLBY23 upgrade_from_3.0 2024-05-06
 -- 20230316 Fix en las retenciones de IIBB sufridas para que muestre correctamente el campo fecha (el cual es dateinvoiced, y no dateacct).
 
