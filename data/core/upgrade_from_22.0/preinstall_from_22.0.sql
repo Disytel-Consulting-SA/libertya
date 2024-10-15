@@ -2836,5 +2836,7 @@ SET name = 'Efectivo/Otro'
 WHERE c_doctype_id = 0;
 
 
+-- Fix Import facturas proveedor afip
+update ad_system set dummy = (SELECT addcolumnifnotexists('I_Vendor_Invoice_Import','otros_tributos','NUMERIC(20,2)'));
 
 

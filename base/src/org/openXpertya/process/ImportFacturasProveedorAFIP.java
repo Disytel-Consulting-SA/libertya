@@ -278,6 +278,15 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 			return e.getMessage();
 		}
 		
+		// Otros tributos tiene algun valor?
+		if(vim.getotros_tributos().compareTo(BigDecimal.ZERO) != 0) {			
+			try {
+				createInvoiceTax(vim, vim.getnetogravado(), invoice);
+			} catch(Exception e) {
+				return e.getMessage();
+			}
+		}
+		
 		return IMPORT_OK;
 	}
 
@@ -606,6 +615,29 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 						+ minRateByTolerance + " and " + maxRateByTolerance + " and t.isactive = 'Y'", Env.getAD_Client_ID(getCtx()));
 	}
 	
+	
+	//duplicado de metodo obtainTax
+	//se setea ismanual = Y y perceptiontype != B para que no me traiga ingresos brutos
+	protected Integer obtainTaxManual(BigDecimal taxBaseAmt, BigDecimal taxAmt) {
+		// Verificar si es posible crear la línea dependiendo si concuerda el importe
+		// neto con el de iva
+		BigDecimal rate = null;
+		if(!Util.isEmpty(taxBaseAmt, true)) {
+			rate = taxAmt.multiply(Env.ONEHUNDRED).divide(taxBaseAmt, 2, BigDecimal.ROUND_HALF_UP);
+		}
+		// Si no se pudo obtener una tasa entre los datos, 
+		if(rate == null) {
+			return -1;
+		}
+		// Si la tasa es null no se crea la línea ya que no se puede determinar el
+		// impuesto
+		BigDecimal minRateByTolerance = rate.subtract(getTolerance());
+		BigDecimal maxRateByTolerance = rate.add(getTolerance());
+		return DB.getSQLValue(get_TrxName(),
+				"SELECT c_tax_id FROM c_tax t JOIN c_taxcategory tc ON tc.c_taxcategory_id = t.c_taxcategory_id WHERE t.ad_client_id = ? AND tc.ismanual = 'Y' AND perceptiontype <> 'B' AND rate between "
+						+ minRateByTolerance + " and " + maxRateByTolerance + " and t.isactive = 'Y'", Env.getAD_Client_ID(getCtx()));
+	}
+	
 	/**
 	 * Crea el impuesto de factura
 	 * 
@@ -627,6 +659,28 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 			it = new MInvoiceTax(getCtx(), 0, get_TrxName());
 			it.setC_Invoice_ID(invoice.getID());
 			it.setC_Tax_ID(getNoGravadoTaxID());
+			it.setTaxBaseAmt(taxBaseAmt);
+			if(!it.save()) {
+				throw new Exception(CLogger.retrieveErrorAsString());
+			}
+			log.info("Impuesto de factura creado para la base "+taxBaseAmt);
+		}
+		return it;
+	}
+	
+	//el base es el gravado
+	protected MInvoiceTax createInvoiceTaxOtrosTributos(X_I_Vendor_Invoice_Import vim, BigDecimal taxBaseAmt, MInvoice invoice) throws Exception {
+		MInvoiceTax it = null;
+		if(!Util.isEmpty(taxBaseAmt, true)) {
+			if(obtainTaxManual(taxBaseAmt, vim.getotros_tributos()) <= 0) {
+				vim.setI_ErrorMsg((vim.getI_ErrorMsg() != null ? vim.getI_ErrorMsg() : "")
+						+ "No existe impuesto por defecto configurado para registrar el importe de otros tributos. ");
+				return null;
+			}
+			// Crear el impuesto de la factura
+			it = new MInvoiceTax(getCtx(), 0, get_TrxName());
+			it.setC_Invoice_ID(invoice.getID());
+			it.setC_Tax_ID(obtainTaxManual(taxBaseAmt, vim.getotros_tributos()));
 			it.setTaxBaseAmt(taxBaseAmt);
 			if(!it.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());

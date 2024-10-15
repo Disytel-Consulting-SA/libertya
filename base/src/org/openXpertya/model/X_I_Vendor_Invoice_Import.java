@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Vendor_Invoice_Import
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2021-09-21 11:58:15.562 */
+ *  @version  - 2024-10-11 14:38:31.173 */
 public class X_I_Vendor_Invoice_Import extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -235,6 +235,18 @@ set_Value ("numeroidentificacion", numeroidentificacion);
 public String getnumeroidentificacion() 
 {
 return (String)get_Value("numeroidentificacion");
+}
+/** Set otros_tributos */
+public void setotros_tributos (BigDecimal otros_tributos)
+{
+set_Value ("otros_tributos", otros_tributos);
+}
+/** Get otros_tributos */
+public BigDecimal getotros_tributos() 
+{
+BigDecimal bd = (BigDecimal)get_Value("otros_tributos");
+if (bd == null) return Env.ZERO;
+return bd;
 }
 /** Set Processed.
 The document has been processed */
