@@ -110,6 +110,49 @@ public class GeneratorRetenciones {
 		if(isPago_anticipado()){
 			procesador.addInvoice(null, getM_FacturasTotalPagar());
 		}else{
+			
+// TODO: para el caso de que el C_BPartner_ID comparta CUIT's cargar TODAS LAS FACTURAS DEL PERIODO
+/*
+Al realizar pagos a un proveedor que comparte el mismo CUIT con otros, debes considerar el monto total de los comprobantes emitidos por ese CUIT durante el período fiscal
+(por ejemplo, el mes) para determinar la base de cálculo de las retenciones, incluso si solo estás pagando una factura en ese momento.
+Esto se debe a que las retenciones se calculan sobre la base acumulada de las operaciones realizadas con el mismo CUIT, independientemente de cuántos pagos se efectúen o 
+a cuántos comprobantes correspondan esos pagos.
+
+Cómo Funciona en la Práctica:
+-----------------------------
+
+Acumulación por CUIT:
+---------------------
+
+Aunque pagues una sola factura, debes considerar el total facturado en el período (en este caso, las tres facturas: $36.340,59 + $40.516,48 + $201.946,49 = $278.803,56) 
+para calcular las retenciones.
+Si realizas un pago parcial, la retención se calcula sobre la proporción correspondiente, pero siempre considerando la base total acumulada.
+
+Ejemplo: Pago de la Primera Factura
+
+Supongamos que pagas únicamente la factura de $36.340,59.
+El total facturado por el CUIT en el período es $278.803,56.
+Si la alícuota de retención de Ingresos Brutos es del 3%, deberás calcular la retención considerando el monto total facturado en el período, 
+no solo el importe de la factura que estás pagando.
+
+Cálculo:
+--------
+
+Base acumulada: $278.803,56
+Alícuota: 3% 
+	Retencion total acumulada=278.803,56 × 0,03 = 8.364,11
+Ahora, calcula la proporción correspondiente al monto que estás pagando:
+Retencion sobre el pago = Monto del pago / Monto total facturado × Retencion total acumulada
+Retencion sobre el pago = 36.340,59 / 278.803,56 × 8.364,11 = 1.090,72
+
+Por lo tanto, al pagar esta primera factura, deberás retener $1.090,72.
+
+Pagos Posteriores:
+
+Cuando realices los pagos de las otras facturas, deberás considerar las retenciones acumuladas menos lo que ya hayas retenido en pagos anteriores.
+			 */
+			 
+			
 			for(int i = 0; i< m_facturas.size(); i++){
 				MInvoice fc;
 				MDocType dt;

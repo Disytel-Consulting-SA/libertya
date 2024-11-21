@@ -794,16 +794,22 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * @return Clausula IN formateada
 	 * @author dREHER
 	 */
-	public static String getIN(ArrayList<Integer> ids) {
+	public String getIN(ArrayList<Integer> ids) {
 		String s = "(";
 		
 		for(Integer i : ids)
 			s+= (s.length()>1?",":"") + i.toString();
 		
 		s+= ")";
+		debug("Busqueda contemplando multiples CUIT's -> " + s);
 		return s;
 	}
  
+	// dREHER salida por consola
+	protected void debug(String string) {
+		System.out.println("==> AbstractRetencionProcessor. " + string);
+	}
+
 	/**
 	 * Calcula el importe total del retenciones realizadas en el mes al
 	 * proveedor, Asigna el resultado al atributo
