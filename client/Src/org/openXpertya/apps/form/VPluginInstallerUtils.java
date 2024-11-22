@@ -14,6 +14,9 @@ import org.openXpertya.apps.ProcessParameter;
 import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.M_Column;
+import org.openXpertya.model.M_Table;
+import org.openXpertya.model.PO;
 import org.openXpertya.model.POInfo;
 import org.openXpertya.model.X_AD_Plugin;
 import org.openXpertya.model.X_AD_Plugin_Detail;
@@ -28,7 +31,9 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
+import org.openXpertya.util.Util;
 import org.openXpertya.utils.JarHelper;
+
 
 
 public class VPluginInstallerUtils  {
@@ -41,6 +46,9 @@ public class VPluginInstallerUtils  {
 
 	/** Plugin que se esta registrando o actualizando */
 	protected static X_AD_Plugin plugin = null;
+	
+	/** Detalles de instalacion del plugin */
+	protected static X_AD_Plugin_Detail pluginDetail = null;
 
 	/** Numero de errores en instalacion */
 	protected static int installErrorsLength = 0;
@@ -50,6 +58,9 @@ public class VPluginInstallerUtils  {
 
 	/** Trx a usar en la instalacion */
 	protected static String m_trx;
+	
+	/** Almacenar los queries de registracion, encargados de impactar en las tablas AD_Component, AD_ComponentVersion, AD_Plugin, AD_Plugin_Detail */
+	protected static StringBuffer registerComponentVersionAndPluginSQL;
 	
 	/**
 	 * Realiza todos los pasos de la instalación.  Pre-actual-Post.  
@@ -69,6 +80,11 @@ public class VPluginInstallerUtils  {
 		PluginUtils.startInstalation(m_trx);
 		installErrorsLength = 0;
 		postInstallErrorsLength = 0;
+		
+		/** La emulacion no impacta en base de datos y permite visualizar los queries correspondientes */
+		if (emulateInstall()) {
+			PluginUtils.appendStatus(" === EMULANDO INSTALACION === ");
+		}
 		
 		/* Instalacion por etapas: pre - install - post */
 		PluginUtils.appendStatus(" === Instalando Componente y Version. Registrando Plugin === ");
@@ -144,18 +160,36 @@ public class VPluginInstallerUtils  {
 		
 		/* Finalizar la transacción y resetear componente global */
 		if (m_trx!=null) {
-			Trx.getTrx(m_trx).commit();
+			finalizeTrx();
 			Trx.getTrx(m_trx).close();
 			m_trx=null;
 		}
 		PluginUtils.stopInstalation();
 	
+		/* Queries de registracion de componente */
+		if (emulateInstall()) {
+			PluginUtils.appendStatus(" === Queries de registracion === ");
+			PluginUtils.appendStatus(registerComponentVersionAndPluginSQL.toString());
+		}
+		
 		/* Informar todo OK */
-		PluginUtils.appendStatus(" === Instalación finalizada " + (errors?"con errores":"") + " === ");
+		PluginUtils.appendStatus(" === " + (emulateInstall()?"Emulacion":"Instalacion") + " finalizada " + (errors?"con errores":"") + " === ");
 		writeInstallLog(m_component_props);
 	}
 
+	/** Finalizar la transaccion.  Si se está emulando entonces retrotraer todos los cambios */
+	protected static void finalizeTrx() {
+		if (emulateInstall())
+			Trx.getTrx(m_trx).rollback();
+		else
+			Trx.getTrx(m_trx).commit();
+	}
 	
+	/** ¿Estamos simplemente emulando la instalacion para validar ejecucion o ver SQL generado? */
+	protected static boolean emulateInstall() {
+		return "Y".equals(Env.getContext(Env.getCtx(), "#EmulateInstall"));
+	}
+
 	
 	/**
 	 * Inserta o actualiza las entradas en las tablas: AD_Plugin, AD_Component y AD_ComponentVersion
@@ -269,8 +303,16 @@ public class VPluginInstallerUtils  {
 				ReplicationCache.mappedUIDs = new HashMap<String, String>();
 			}
 		}
+		
+		/* En la emulacion del install se generan los SQL de registracion para poder usarlos en una instalacion ad-hoc */
+		if (emulateInstall()) {
+			registerComponentVersionAndPluginSQL = new StringBuffer();
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(component)).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(componentVersion)).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin)).append("\n");
+		}
+
 	}
-	
 	
 	/**
 	 * Incorpora información adicional a las entradas vacias de las tablas: AD_Plugin, AD_Component y AD_ComponentVersion
@@ -299,7 +341,7 @@ public class VPluginInstallerUtils  {
 
 		// Incorporacion del detalle de la instalacion (si se encuentra en una version con dicho soporte)
 		if (persistInstallationDetails()) {
-			X_AD_Plugin_Detail pluginDetail = new X_AD_Plugin_Detail(ctx, 0, m_trx);
+			pluginDetail = new X_AD_Plugin_Detail(ctx, 0, m_trx);
 			pluginDetail.setAD_Plugin_ID(plugin.getAD_Plugin_ID());
 			pluginDetail.setComponent_First_Changelog((String)m_component_props.get(PluginConstants.PROP_FIRST_CHANGELOG));
 			pluginDetail.setComponent_Last_Changelog((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG));
@@ -312,6 +354,13 @@ public class VPluginInstallerUtils  {
 			pluginDetail.setComponent_Last_Changelog_Group_UID((String)m_component_props.get(PluginConstants.PROP_LAST_CHANGELOG_GROUP_UID));
 			if (!pluginDetail.save())
 				throw new Exception(" - Error al intentar registrar información detallada del plugin ");
+		}
+		
+		
+		/* En la emulacion del install se generan los SQL de registracion para poder usarlos en una instalacion ad-hoc */
+		if (emulateInstall()) {
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin)).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(pluginDetail)).append("\n");
 		}
 		
 	}
@@ -550,4 +599,124 @@ public class VPluginInstallerUtils  {
         String regex = "\\b(?i)OIDS\\s*=\\s*TRUE\\b";
         return sql.replaceAll(regex, "OIDS=FALSE");
     }
+	
+	
+	/** Recrea el último SQL generado en la persistencia de un PO (insert/update) 
+	 * @param entity alguna de las entidades relacionadas con registracion como AD_Component, AD_ComponentVersion, AD_Plugin, AD_Plugin_Detail
+	 * @return el query asociado a la última actividad de persistencia de la entidad
+	 */
+	protected static String generateSQLFor(PO entity) {
+		
+		// Si no hay lastSQL nada por hacer
+		if (Util.isEmpty(entity.getLastSQL())) {
+			return null;
+		}
+
+		// informacion de tabla y columnas
+		String query = entity.getLastSQL().trim().toLowerCase();
+		boolean inserting = query.startsWith("insert");
+		M_Table aTable = M_Table.get(Env.getCtx(), entity.get_TableName());
+		M_Column[] columns = aTable.getColumns(false);
+		String tableName = entity.get_TableName().toLowerCase();
+
+		// UPDATE...?
+		if (!inserting) {
+			// colX=?,colY=?...
+			String[] sets = entity.getLastSQL().trim().substring(query.indexOf("set")+3, query.indexOf("where")).replace(" ", "").split(",");
+			// keyColumn=?
+			String[] where = entity.getLastSQL().trim().substring(query.indexOf("where")+5).replace(" ", "").split("=");
+			String clause = where[0] + "=(select " + tableName + "_id from " + tableName + " order by updated desc limit 1)";
+			// Cargar cada par columna=valor
+			StringBuffer newSets = new StringBuffer();
+			int i=0;
+			for (String set : sets) {
+				// Procesar cada par col=?
+				String[] pair = set.split("=");
+				Object value = entity.get_Value(pair[0]);
+				String argument = ""+value;
+				set = set.replaceFirst("\\?", specialValues(tableName, pair[0], findColumn(columns, pair[0]), value, argument));
+				newSets.append(set);
+				if (i++<sets.length-1) {
+					newSets.append(",");
+				}
+			}
+			return query.substring(0, query.indexOf("set")+4) + " " + newSets.toString() + " where " + clause + ";";
+		}
+		
+		
+		// INSERT...?
+		// Iterar por cada columna a fin de reemplazar los argumentos, considerando casos especiales
+		for (M_Column aColumn : columns) {
+			String colName = aColumn.getColumnName().toLowerCase();
+			Object value = entity.get_Value(aColumn.getColumnName());
+			String argument = ""+value;
+			
+			// Skip columnas no contenidas en la query
+			if (!query.contains(colName))
+				continue;
+			
+			// PK (usar nextval)
+			if (inserting && colName.equals(tableName+"_id")) {
+				argument = "(select nextval('seq_"+tableName+"'))";
+			}
+			
+			argument = specialValues(tableName, colName, aColumn, value, argument);
+			
+			query = query.replaceFirst("\\?", argument);
+
+		}
+		
+		return query + ";";
+	}
+	
+	/* Dada una lista de columnas, encontrar coincidencia por su nombre */
+	protected static M_Column findColumn(M_Column[] columns, String columnName) {
+		for (M_Column aColumn : columns) {
+			if (aColumn.getColumnName().equalsIgnoreCase(columnName)) {
+				return aColumn;
+			}
+		}
+		return null;
+	}
+	
+	/** Procesa valores especiales para el SQL */
+	protected static String specialValues(String tableName, String colName, M_Column aColumn, Object value, String argument) {
+		// FK especificos:  AD_ComponentVersion -> AD_Component,  AD_Plugin -> AD_ComponentVersion, AD_Plugin_Detail -> AD_Plugin
+		if (tableName.equals("ad_componentversion") && colName.equals("ad_component_id")) {
+			argument = "(select ad_component_id from ad_component where ad_componentobjectuid = '" + component.getAD_ComponentObjectUID() + "')"; 
+		}
+		if (tableName.equals("ad_plugin") && colName.equals("ad_componentversion_id")) {
+			argument = "(select ad_componentversion_id from ad_componentversion where ad_componentobjectuid = '" + componentVersion.getAD_ComponentObjectUID() + "')"; 
+		}
+		if (tableName.equals("ad_plugin_detail") && colName.equals("ad_plugin_id")) {
+			argument = "(select ad_plugin_id from ad_plugin order by updated desc limit 1)"; 
+		}
+		
+		// columnas que requieren quotes
+		if (DisplayType.requiresQuotes(aColumn.getAD_Reference_ID())) {
+			argument = "'" + value + "'"; 
+		}
+		
+		// columnas booleanas
+		if (aColumn.getAD_Reference_ID()==20) {
+			argument = (Boolean.TRUE.equals(value) ? "'Y'" : "'N'" );
+		}
+		
+		// columnas createdby y updatedby forzadas a 0 (system)
+		if (colName.equals("createdby") || colName.equals("updatedby")) {
+			argument = "0";
+		}
+		
+		// columnas created y updated forzadas a now()
+		if (colName.equals("created") || colName.equals("updated"))
+			argument = "now()";
+		
+		// Si es el valor guardado en el PO es null, el query debe ser null directo (sin quotes)
+		if (value==null) {
+			argument = "null";
+		}
+		
+		return argument;
+	}
+
 }
