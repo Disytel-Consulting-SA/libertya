@@ -85,11 +85,13 @@ public class PluginXMLUpdater {
 	
 	/** Valor a propagar hacia persistInChangelog */
 	int keyColumnValue = -1;
-	
+
 	/** Getter: devuelve el documento entero a procesar */
 	public XMLUpdateDocument getUpdateDocument() {
 		return updateDocument;
 	}
+	
+	
 	
 	/**
 	 * Crear un parser de update y rellena el contenido estructural según el XML
@@ -165,7 +167,7 @@ public class PluginXMLUpdater {
 				if (sentence != null && sentence.length() > 0)
 				{
 					/* Impactar la bitácora */
-					appendStatus("[" + iter + "." + changeGroup.getChangelogGroupID() + "]: " + sentence);
+					appendStatus((includePrefix() ? "[" + iter + "." + changeGroup.getChangelogGroupID() + "]: " : "") + sentence);
 					executeUpdate(sentence, m_trxName);
 					
 					/* Impactar en el changelog */ 
@@ -181,6 +183,16 @@ public class PluginXMLUpdater {
 				handleException(e, changeGroup);
 			}
 		}
+	}
+	
+	/** Cuando se emula el install, se omiten prefijos a fin de que las sentencias SQL queden "limpias" en la terminal */
+	protected boolean includePrefix() {
+		return !emulateInstall();
+	}
+	
+	/** ¿Estamos simplemente emulando la instalacion para validar ejecucion o ver SQL generado? */
+	protected boolean emulateInstall() {
+		return "Y".equals(Env.getContext(Env.getCtx(), "#EmulateInstall"));
 	}
 	
 	/* En esta clase actualmente se deben procesar todos los registros.
@@ -203,7 +215,7 @@ public class PluginXMLUpdater {
 	 */
 	protected void appendStatus(String sentence)
 	{
-		PluginUtils.appendStatus(" SQL: " + sentence, false, false, true, true);
+		PluginUtils.appendStatus((includePrefix() ? " SQL: " : "") + sentence, false, false, true, true);
 	}
 	
 	/**
@@ -244,7 +256,7 @@ public class PluginXMLUpdater {
 		StringBuffer sql = new StringBuffer("");
 
 		/* Si el registro ya existe, no insertarlo nuevamente (subclases implemenarán segun sea necesario) */
-		if ( recordExists(changeGroup) ) {
+		if ( recordExists(changeGroup)) {
 			StringBuffer result = handleRecordExistsOnInsert(changeGroup);
 			return (result != null ? result : sql);
 		}
@@ -514,6 +526,14 @@ public class PluginXMLUpdater {
 	 */
 	protected void appendKeyColumnValue(StringBuffer columnNames, StringBuffer columnValues, String tableName, String valueID)
 	{
+		if (emulateInstall()) {
+			// Para la emulacion necesitamos que el SQL generado no contenga valores de IDs hardcodeados
+			String secuencia= MSequence.getSequenceName(tableName);
+			String keyColumnValueSQL = "(select nextval('" + secuencia + "'))";
+			columnValues.append( keyColumnValueSQL + "," );
+			return;
+		}
+		// Para una instalacion tradicional, se obtiene el ID con las facilidades que brinda MSequence
 		keyColumnValue = MSequence.getNextID(Env.getAD_Client_ID(Env.getCtx()), tableName, m_trxName);
 		columnValues.append( keyColumnValue + "," );	
 	}
@@ -582,8 +602,12 @@ public class PluginXMLUpdater {
 		{
 			/* Determinar columna ID y registro al cual referenciar */
 			String refKeyColumnName = getKeyColumnName(column.getRefTable());
+			if (emulateInstall()) {
+				String refRecordIDQuery = getReferenceRecordIDQuery(refKeyColumnName, column);
+				query.append( refRecordIDQuery ).append( "," );
+				return; 
+			}
 			int refRecordID = getReferenceRecordID(refKeyColumnName, column);
-			
 			/* Insertar la referencia basandose en los valores de identificadores de la nueva base de datos */
 			query.append( (refRecordID==-1?"null":refRecordID) ).append( "," );
 		}	
@@ -602,6 +626,22 @@ public class PluginXMLUpdater {
 	}
 	
 	/**
+	 * Recupera el query para recuperar el ID referencial a partir del ObjectComponentUID.
+	 * @param refKeyColumnName columna ID de la tabla donde hay que buscar la referencia
+	 * @param column columna con la información relacionada a la busqueda
+	 * @return el query para recuperar el ID a utilizar para la foreign-key
+	 */
+	protected String getReferenceRecordIDQuery(String refKeyColumnName, Column column)
+	{ 
+		/* Verificar si el refUID apunta a un registro mapeado insertado en esta ejecución (de ser así, mapear al nuevo UID generado) */
+		String uid = ReplicationCache.mappedUIDs.get(column.getRefUID())!=null ? ReplicationCache.mappedUIDs.get(column.getRefUID()) : column.getRefUID();
+		/* Valor a retornar */
+		String refRecordIDSQL = " (SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + " WHERE " + getUIDWhereClause(uid) + ")";
+
+		return refRecordIDSQL;
+	}
+	
+	/**
 	 * Recupera el ID referencial a partir del ObjectComponentUID
 	 * (Outline a método de recuperación para redefinición en subclases) 
 	 * @param refKeyColumnName columna ID de la tabla donde hay que buscar la referencia
@@ -611,10 +651,8 @@ public class PluginXMLUpdater {
 	 */
 	protected int getReferenceRecordID(String refKeyColumnName, Column column) throws Exception
 	{
-		/* Verificar si el refUID apunta a un registro mapeado insertado en esta ejecución (de ser así, mapear al nuevo UID generado) */
-		String uid = ReplicationCache.mappedUIDs.get(column.getRefUID())!=null ? ReplicationCache.mappedUIDs.get(column.getRefUID()) : column.getRefUID();
 		/* Valor a retornar */
-		String refRecordIDSQL = " SELECT " + refKeyColumnName + " FROM " + column.getRefTable() + " WHERE " + getUIDWhereClause(uid);
+		String refRecordIDSQL = getReferenceRecordIDQuery(refKeyColumnName, column);
 		int retValue = DB.getSQLValue(m_trxName, refRecordIDSQL, true );
 		
 		/* Elevar una excepción si no pudieron mapearse correctamente las referencias se dispara la excepción correspondiente */
@@ -623,6 +661,7 @@ public class PluginXMLUpdater {
 	
 		return retValue;
 	}
+	
 	
 	/**
 	 * @return Sentencia sql para el retorno del UID
@@ -1134,8 +1173,8 @@ public class PluginXMLUpdater {
 					if (isReferenceColumn(column))
 					{
 						String refKeyColumnName = getKeyColumnName(column.getRefTable());
-						int refRecordID = getReferenceRecordID(refKeyColumnName, column);
-						newValue = (refRecordID == -1 ? MChangeLog.NULL : Integer.toString(refRecordID));
+						String refRecordIDQuery = getReferenceRecordIDQuery(refKeyColumnName, column);
+						newValue = (refRecordIDQuery);
 					}
 				}
 				// Instanciar y persistir en el changelog

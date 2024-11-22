@@ -81,6 +81,13 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 
 	public static final BigDecimal HUNDRED = new BigDecimal(100);
 	
+	/** Ultimo query generado en un save new/update */
+	protected String lastSQL = null; 
+	
+	public String getLastSQL() {
+		return lastSQL;
+	}
+	
 	/**
 	 * Set Document Value Workflow Manager
 	 * 
@@ -2176,6 +2183,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				colIdx = setColToStatementWhere(consulta, colIdx);
 
 				no = consulta.executeUpdate();
+				lastSQL = consulta.getSql();
 
 				if (m_trxName == null)
 					consulta.commit();
@@ -2632,6 +2640,7 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 
 		try {
 			no = consulta.executeUpdate();
+			lastSQL = consulta.getSql();
 
 			if (m_trxName == null)
 				consulta.commit();
