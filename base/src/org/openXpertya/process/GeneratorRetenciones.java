@@ -58,7 +58,18 @@ public class GeneratorRetenciones {
 		this.setM_C_Currency_ID(currency);
 		this.setPago_anticipado(m_facturas.isEmpty());
 		setPaymentRule(paymentRule);
+		
+		/*
+			TODO: si la logica es que debe cargar todas las facturas del periodo, sin importar si estan o no afectadas por el pago, hay q agregar un metodo que agregue
+			a m_factura todas las demas facturas que no llegan en el vector m_factura
+		
+			Por otro lado tambien hay q agregar en m_facturaManualAmount el monto del saldo abierto de cada una, ya que aca llega cuanto se esta pagando por cada factura
+	
+			dREHER Nov-24
+		 */
+		
 	}
+	
 	public GeneratorRetenciones(int C_BPartner_ID, Vector<Integer> m_factura, Vector<BigDecimal> m_facturaManualAmount,BigDecimal amttotal, boolean isSOTrx, Timestamp dateTrx, String paymentRule){
 		// seteo de variables
 		this.setC_BPartner_ID(C_BPartner_ID);
@@ -73,6 +84,15 @@ public class GeneratorRetenciones {
 		this.setPago_anticipado(m_facturas.isEmpty());
 		this.vfechaPago = dateTrx;
 		setPaymentRule(paymentRule);
+		
+		/*
+			TODO: si la logica es que debe cargar todas las facturas del periodo, sin importar si estan o no afectadas por el pago, hay q agregar un metodo que agregue
+			a m_factura todas las demas facturas que no llegan en el vector m_factura
+			
+			Por otro lado tambien hay q agregar en m_facturaManualAmount el monto del saldo abierto de cada una, ya que aca llega cuanto se esta pagando por cada factura
+		
+			dREHER Nov-24
+		*/
 	}
 	
 	private void setM_C_Currency_ID(MCurrency currency) {	
@@ -90,11 +110,11 @@ public class GeneratorRetenciones {
 
 		MBPartner bpr = new MBPartner(getM_ctx(),getC_BPartner_ID(), getTrxName());
 		Vector<MRetencionSchema> esquemas = bpr.get_EsquemasRetencion();
-		
+
 		for (int i = 0; i < esquemas.size(); i++){
 			addRetencion(esquemas.get(i));
-				}
 		}
+	}
 	
 	private boolean cargarFacturas(RetencionProcessor procesador) throws Exception{
 		/*

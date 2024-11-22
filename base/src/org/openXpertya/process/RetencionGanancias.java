@@ -142,8 +142,16 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		// Se calcula la base imponible. (el monto sujeto a la aplicación de la
 		// retención).
 		// BI = PAA + EP - INI
-		baseImponible = getPagosAnteriores().add(getPayNetAmt()).subtract(
-				getImporteNoImponible());
+		
+		BigDecimal PPA = getPagosAnteriores();
+		BigDecimal PNA = getPayNetAmt();
+		BigDecimal INI = getImporteNoImponible();
+		
+		baseImponible = PPA.add(PNA).subtract(
+				INI);
+		
+		debug("baseImponible= " + baseImponible + " Pagos anteriores=" + PPA + " Neto Pago=" + PNA + " Importe NO Imponible=" + INI);
+		
 		// Si la base imponible es menor que cero, entonces no hay retención que
 		// aplicar y
 		// se asigna la base imponible a cero.
@@ -153,10 +161,12 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		// Se calcula el importe determinado.
 		// ID = BI * T / 100
 		importeDeterminado = calculateImporteDeterminado(baseImponible);
+		debug("Importe Determinado= " + importeDeterminado);
 
 		// Se calcula el importe retenido.
 		// IR = ID - RAA
 		importeRetenido = calculateImporteRetenido(importeDeterminado);
+		debug("Importe Retenido= " + importeRetenido);
 
 		// Una vez calculado el importe a retener, se compara con el importe
 		// mínimo de
