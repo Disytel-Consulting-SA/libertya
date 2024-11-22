@@ -307,9 +307,9 @@ public class VPluginInstallerUtils  {
 		/* En la emulacion del install se generan los SQL de registracion para poder usarlos en una instalacion ad-hoc */
 		if (emulateInstall()) {
 			registerComponentVersionAndPluginSQL = new StringBuffer();
-			registerComponentVersionAndPluginSQL.append(generateSQLFor(component)).append("\n");
-			registerComponentVersionAndPluginSQL.append(generateSQLFor(componentVersion)).append("\n");
-			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin)).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(component, idResolveForComponent())).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(componentVersion, idResolveForComponentVersion())).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin, idResolveForPlugin())).append("\n");
 		}
 
 	}
@@ -359,8 +359,8 @@ public class VPluginInstallerUtils  {
 		
 		/* En la emulacion del install se generan los SQL de registracion para poder usarlos en una instalacion ad-hoc */
 		if (emulateInstall()) {
-			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin)).append("\n");
-			registerComponentVersionAndPluginSQL.append(generateSQLFor(pluginDetail)).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin, idResolveForPlugin())).append("\n");
+			registerComponentVersionAndPluginSQL.append(generateSQLFor(pluginDetail, null)).append("\n");
 		}
 		
 	}
@@ -605,7 +605,7 @@ public class VPluginInstallerUtils  {
 	 * @param entity alguna de las entidades relacionadas con registracion como AD_Component, AD_ComponentVersion, AD_Plugin, AD_Plugin_Detail
 	 * @return el query asociado a la última actividad de persistencia de la entidad
 	 */
-	protected static String generateSQLFor(PO entity) {
+	protected static String generateSQLFor(PO entity, String idResolveCriteria) {
 		
 		// Si no hay lastSQL nada por hacer
 		if (Util.isEmpty(entity.getLastSQL())) {
@@ -625,7 +625,8 @@ public class VPluginInstallerUtils  {
 			String[] sets = entity.getLastSQL().trim().substring(query.indexOf("set")+3, query.indexOf("where")).replace(" ", "").split(",");
 			// keyColumn=?
 			String[] where = entity.getLastSQL().trim().substring(query.indexOf("where")+5).replace(" ", "").split("=");
-			String clause = where[0] + "=(select " + tableName + "_id from " + tableName + " order by updated desc limit 1)";
+			//String clause = where[0] + "=(select " + tableName + "_id from " + tableName + " order by updated desc limit 1)";
+			String clause = where[0] + "=(select " + tableName + "_id from " + tableName + " where " + idResolveCriteria + ")";
 			// Cargar cada par columna=valor
 			StringBuffer newSets = new StringBuffer();
 			int i=0;
@@ -682,14 +683,14 @@ public class VPluginInstallerUtils  {
 	/** Procesa valores especiales para el SQL */
 	protected static String specialValues(String tableName, String colName, M_Column aColumn, Object value, String argument) {
 		// FK especificos:  AD_ComponentVersion -> AD_Component,  AD_Plugin -> AD_ComponentVersion, AD_Plugin_Detail -> AD_Plugin
-		if (tableName.equals("ad_componentversion") && colName.equals("ad_component_id")) {
+		if (tableName.equalsIgnoreCase("ad_componentversion") && colName.equalsIgnoreCase("ad_component_id")) {
 			argument = "(select ad_component_id from ad_component where ad_componentobjectuid = '" + component.getAD_ComponentObjectUID() + "')"; 
 		}
-		if (tableName.equals("ad_plugin") && colName.equals("ad_componentversion_id")) {
+		if (tableName.equalsIgnoreCase("ad_plugin") && colName.equalsIgnoreCase("ad_componentversion_id")) {
 			argument = "(select ad_componentversion_id from ad_componentversion where ad_componentobjectuid = '" + componentVersion.getAD_ComponentObjectUID() + "')"; 
 		}
-		if (tableName.equals("ad_plugin_detail") && colName.equals("ad_plugin_id")) {
-			argument = "(select ad_plugin_id from ad_plugin order by updated desc limit 1)"; 
+		if (tableName.equalsIgnoreCase("ad_plugin_detail") && colName.equalsIgnoreCase("ad_plugin_id")) {
+			argument = "(select ad_plugin_id from ad_plugin order by updated desc limit 1)";
 		}
 		
 		// columnas que requieren quotes
@@ -703,12 +704,12 @@ public class VPluginInstallerUtils  {
 		}
 		
 		// columnas createdby y updatedby forzadas a 0 (system)
-		if (colName.equals("createdby") || colName.equals("updatedby")) {
+		if (colName.equalsIgnoreCase("createdby") || colName.equalsIgnoreCase("updatedby")) {
 			argument = "0";
 		}
 		
 		// columnas created y updated forzadas a now()
-		if (colName.equals("created") || colName.equals("updated"))
+		if (colName.equalsIgnoreCase("created") || colName.equalsIgnoreCase("updated"))
 			argument = "now()";
 		
 		// Si es el valor guardado en el PO es null, el query debe ser null directo (sin quotes)
@@ -717,6 +718,19 @@ public class VPluginInstallerUtils  {
 		}
 		
 		return argument;
+	}
+	
+	protected static String idResolveForComponent() {
+		return "AD_ComponentObjectUID='"+component.getAD_ComponentObjectUID()+"'";	
+	}
+	
+	protected static String idResolveForComponentVersion() {
+		return "AD_ComponentObjectUID='"+componentVersion.getAD_ComponentObjectUID()+"'";
+	}
+	
+	protected static String idResolveForPlugin() {
+		return "AD_Plugin_ID = (SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_ComponentObjectUID = '" + component.getAD_ComponentObjectUID() + "')";
+		//return "AD_ComponentVersion_ID = (select ad_componentversion_id from ad_componentversion WHERE AD_ComponentObjectUID='"+componentVersion.getAD_ComponentObjectUID()+"')";		
 	}
 
 }
