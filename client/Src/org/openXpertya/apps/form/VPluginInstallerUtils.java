@@ -690,7 +690,7 @@ public class VPluginInstallerUtils  {
 			argument = "(select ad_componentversion_id from ad_componentversion where ad_componentobjectuid = '" + componentVersion.getAD_ComponentObjectUID() + "')"; 
 		}
 		if (tableName.equalsIgnoreCase("ad_plugin_detail") && colName.equalsIgnoreCase("ad_plugin_id")) {
-			argument = "(select ad_plugin_id from ad_plugin order by updated desc limit 1)";
+			argument = "(SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_ComponentObjectUID = '" + component.getAD_ComponentObjectUID() + "')";
 		}
 		
 		// columnas que requieren quotes
@@ -729,8 +729,7 @@ public class VPluginInstallerUtils  {
 	}
 	
 	protected static String idResolveForPlugin() {
-		return "AD_Plugin_ID = (SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_ComponentObjectUID = '" + component.getAD_ComponentObjectUID() + "')";
-		//return "AD_ComponentVersion_ID = (select ad_componentversion_id from ad_componentversion WHERE AD_ComponentObjectUID='"+componentVersion.getAD_ComponentObjectUID()+"')";		
+		return "AD_Plugin_ID = (SELECT P.AD_Plugin_ID FROM " + getGeneralPluginQuery() + " WHERE C.AD_ComponentObjectUID = '" + component.getAD_ComponentObjectUID() + "')";	
 	}
 
 }
