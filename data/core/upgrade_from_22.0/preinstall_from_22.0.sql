@@ -2840,4 +2840,90 @@ WHERE c_doctype_id = 0;
 -- Fix Import facturas proveedor afip
 update ad_system set dummy = (SELECT addcolumnifnotexists('I_Vendor_Invoice_Import','otros_tributos','NUMERIC(20,2)'));
 
+-- 20241126-1005 Nuevas funciones para simplificar la actualizacion de reportes jasper, ya sea en tabla ad_jasperreport o bajo ad_attachment de un ad_process
+/**
+ * Actualiza el campo binarydata de un registro de la tabla ad_jasperreport
+ * 
+ * Recibe 2 argumentos
+ *   - La ruta al archivo .jasper
+ *   - El UID del ad_jasperreport a actualizar
+ *  
+ * Ejemplos de uso:
+ *   - select * from updatejasper('/tmp/Inventory.jasper', 'CORE-AD_JasperReport-1010069') -- OK: Devuelve 1 (registro actualizado)
+ *   - select * from updatejasper('/tmp/Inventory.jasper', 'XXX') -- OK: Devuelve 0 (registros actualizados)
+ *   - select * from updatejasper('/tmp/XXX', 'CORE-AD_JasperReport-1010069') -- ERROR: no existe el archivo
+ */
+CREATE OR REPLACE FUNCTION updatejasper(filepath VARCHAR, jasperreportuid VARCHAR)
+RETURNS INTEGER AS $$
+DECLARE
+    registros_actualizados INTEGER;
+BEGIN
+    -- Actualiza el campo binarydata con el contenido del archivo proporcionado
+    UPDATE ad_jasperreport
+    SET binarydata = bytea_import(filepath)::bytea
+    WHERE ad_componentobjectuid = jasperreportuid;
+    
+    -- Obtiene el número de filas afectadas
+    GET DIAGNOSTICS registros_actualizados = ROW_COUNT;
 
+    -- Retorna el número de registros actualizados
+    RETURN registros_actualizados;
+END;
+$$ LANGUAGE plpgsql;
+
+/**
+ * Actualiza el adjunto de un informe/proceso, eliminando el actual y creando uno nuevo
+ * 
+ * Recibe 2 argumentos
+ *   - La ruta al archivo a adjuntar, el cual DEBE estar en formato ZIP
+ *   - El UID del ad_process que referenciará el ad_attachment a crear
+ *  
+ * Ejemplos de uso:
+ *   - select * from updateattachment('/tmp/PhysicalInventoryAudit.zip', 'CORE-AD_Process-1010369') -- OK: Devuelve 1
+ *   - select * from updateattachment('/tmp/PhysicalInventoryAudit.zip', 'XXX') -- ERROR: no existe el proceso
+ *   - select * from updateattachment('/tmp/XXX', 'CORE-AD_Process-1010369') -- ERROR: no existe el archivo 
+ */
+CREATE OR REPLACE FUNCTION updateattachment(filepath VARCHAR, processuid VARCHAR)
+RETURNS INTEGER AS $$
+DECLARE
+    registros_insertados INTEGER;
+BEGIN
+    -- Elimina cualquier entrada previa en ad_attachment para el proceso identificado
+    DELETE FROM ad_attachment
+    WHERE ad_table_id = (
+        SELECT ad_table_id
+        FROM ad_table
+        WHERE tablename = 'AD_Process'
+        LIMIT 1
+    )
+    AND record_id = (
+        SELECT ad_process_id
+        FROM ad_process
+        WHERE ad_componentobjectuid = processuid
+        LIMIT 1
+    );
+
+    -- Inserta una nueva entrada en ad_attachment
+    INSERT INTO ad_attachment (
+        ad_attachment_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby,
+        ad_table_id, record_id, title, binarydata
+    )
+    VALUES (
+        NEXTVAL('seq_ad_attachment'), -- ID único
+        0, 0, -- Cliente y organización
+        'Y', -- Activo
+        NOW(), 0, -- Creación (fecha y usuario)
+        NOW(), 0, -- Actualización (fecha y usuario)
+        (SELECT ad_table_id FROM ad_table WHERE tablename = 'AD_Process' LIMIT 1),
+        (SELECT ad_process_id FROM ad_process WHERE ad_componentobjectuid = processuid LIMIT 1),
+        'zip', -- Título
+        bytea_import(filepath)::bytea -- Datos binarios
+    );
+
+    -- Obtiene el número de filas afectadas por la última operación (INSERT)
+    GET DIAGNOSTICS registros_insertados = ROW_COUNT;
+
+    -- Retorna el número de registros insertados
+    RETURN registros_insertados;
+END;
+$$ LANGUAGE plpgsql;
