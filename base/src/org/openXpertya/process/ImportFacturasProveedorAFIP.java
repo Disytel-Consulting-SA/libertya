@@ -281,7 +281,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		// Otros tributos tiene algun valor?
 		if(vim.getotros_tributos().compareTo(BigDecimal.ZERO) != 0) {			
 			try {
-				createInvoiceTax(vim, vim.getnetogravado(), invoice);
+				createInvoiceTaxOtrosTributos(vim, vim.getnetogravado(), invoice);
 			} catch(Exception e) {
 				return e.getMessage();
 			}
@@ -429,10 +429,12 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		invoice.setDateAcct(vim.getFecha());
 		invoice.setcae(vim.getcae());
 		invoice.setvtocae(getVtoCAE(vim.getFecha()));
-		MPriceList pl = getPriceList(orgID);
-		if(pl == null) {
+		
+		/*Se toma la pricelist en base a la EC principalmente sino toma de la Org*/
+		MPriceList pl = getPriceListFromBPOrOrg(bp, orgID);
+		if (pl == null) {
 			MOrg o = MOrg.get(getCtx(), orgID);
-			throw new Exception("No se pudo encontrar la tarifa de compra relacionada a la organización " + o.getValue()
+			throw new Exception("No se pudo encontrar la tarifa de compra relacionada a la EC ni a la organización " + o.getValue()
 					+ " - " + o.getName());
 		}
 		invoice.setM_PriceList_ID(pl.getID());
@@ -455,6 +457,16 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		return invoice;
 	}
 	
+	private MPriceList getPriceListFromBPOrOrg(MBPartner bp, int orgID) {
+	    MPriceList priceList = bp.getM_PriceList_ID() > 0 
+	        ? new MPriceList(getCtx(), bp.getM_PriceList_ID(), get_TrxName()) 
+	        : null;
+
+	    // Si no existe tarifa para EC buscar por organización
+	    return priceList != null ? priceList : getPriceList(orgID);
+	}
+	
+	
 	/**
 	 * @param orgID id de la organización
 	 * @return tarifa de compra relacionada con la organización
@@ -473,6 +485,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		}
 		return pl;
 	}
+	
 	
 	/**
 	 * Obtiene la fecha de vencimiento de CAE
@@ -682,6 +695,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 			it.setC_Invoice_ID(invoice.getID());
 			it.setC_Tax_ID(obtainTaxManual(taxBaseAmt, vim.getotros_tributos()));
 			it.setTaxBaseAmt(taxBaseAmt);
+			it.setTaxAmt(vim.getotros_tributos());
 			if(!it.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
