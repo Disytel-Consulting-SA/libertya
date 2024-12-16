@@ -2927,3 +2927,7 @@ BEGIN
     RETURN registros_insertados;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 2024-12-16
+-- Se agrega columna faltante para micro de facturacion/ocultar descuento en lineas de facturas
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner','isocultardesctolineafc','character(1)'));
