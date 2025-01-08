@@ -1259,7 +1259,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
 				+ "						INNER JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id "
 				+ "						INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id "
-				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND docstatus in ('CO','CL') AND ah.isactive = 'Y' AND allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND i.docstatus in ('CO','CL') AND ah.isactive = 'Y' AND allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
