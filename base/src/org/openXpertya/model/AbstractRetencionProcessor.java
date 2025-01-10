@@ -942,7 +942,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			sql += "			p.DateTrx::date <= ?::date AND ";
 		}
-		sql += "			(NOT EXISTS (SELECT c_payment_id "
+		sql += "			(NOT EXISTS (SELECT al.c_payment_id "
 				+ "							FROM c_allocationhdr AS ah "
 				+ "							INNER JOIN c_allocationline AS al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
 				+ "							WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id) "
@@ -1054,6 +1054,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "                        		exc.IsActive = 'Y' AND "
 				+ "                        		p.DateTrx BETWEEN exc.Date_From AND exc.Date_To)";
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
+		
 		int i = 1;
 		// Entidad Comercial
 		// ps.setInt(i++, bpartner.getID());
@@ -1152,11 +1153,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if (dateTo != null) {
 			sql += "			c.statementDate::date <= ?::date AND ";
 		}
-		sql += "			(NOT EXISTS (SELECT c_cashline_id "
+		sql += "			(NOT EXISTS (SELECT al.c_cashline_id "
 				+ "						FROM c_allocationline AS al "
 				+ "						INNER JOIN c_allocationhdr AS ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
 				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + "AND al.c_cashline_id = cl.c_cashline_id AND docstatus IN ('CO','CL') AND ah.isactive = 'Y') "
-				+ "			OR EXISTS (SELECT c_cashline_id "
+				+ "			OR EXISTS (SELECT al.c_cashline_id "
 				+ "						FROM c_allocationline as al "
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
 				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND docstatus IN ('CO','CL') AND ah.isactive = 'Y' AND allocationtype = 'OPA')) AND "
