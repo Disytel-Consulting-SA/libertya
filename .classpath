@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="base/src"/>
 	<classpathentry kind="src" path="zkwebui/WEB-INF/src"/>
-	<classpathentry kind="src" path="test/src"/>
 	<classpathentry kind="src" path="convert/src"/>
 	<classpathentry kind="src" path="client/Src"/>
 	<classpathentry kind="src" path="extend/src"/>
