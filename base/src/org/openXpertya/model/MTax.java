@@ -66,7 +66,8 @@ public class MTax extends X_C_Tax {
 
         // Create it
 
-        String sql = "SELECT * FROM C_Tax WHERE AD_Client_ID=?" + "ORDER BY C_Country_ID, C_Region_ID, To_Country_ID, To_Region_ID";
+        String sql = "SELECT * FROM C_Tax WHERE AD_Client_ID=?" + // dREHER 
+        " ORDER BY C_Country_ID, C_Region_ID, To_Country_ID, To_Region_ID";
         ArrayList         list  = new ArrayList();
         PreparedStatement pstmt = null;
 
