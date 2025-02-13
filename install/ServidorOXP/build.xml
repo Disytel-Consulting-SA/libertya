@@ -73,10 +73,11 @@
 	  tofile="utils/VariablesWindows.bat" filtering="yes" overwrite="yes"/>
 	<!--	<copy file="utils/openxpertya.exe"
 	  tofile="openxpertya.exe" filtering="yes" overwrite="yes"/>-->
-	<delete> 
+	<!--
+  	<delete> 
 	  <fileset dir="." includes="**/*.sh" excludes="Libertya.sh,utils/Libertya.sh"/>
 	</delete>
-
+	-->
   </target>
 
 
