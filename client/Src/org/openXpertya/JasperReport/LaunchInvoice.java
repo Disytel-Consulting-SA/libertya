@@ -50,6 +50,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.FacturaElectronicaBarcodeGenerator;
 import org.openXpertya.util.FacturaElectronicaQRCodeGenerator;
 import org.openXpertya.util.Util;
+import org.openXpertya.util.Utils;
 
 public class LaunchInvoice extends SvrProcess {
 
@@ -652,6 +653,16 @@ public class LaunchInvoice extends SvrProcess {
 
 			}
 
+		}
+		
+		/**
+		 * Agregar leyenda de impuestos agrupados en caso de que asi corresponda
+		 * dREHER Mar 25
+		 */
+		if(invoice.isSOTrx() && Utils.isMostrarImpuestosFCB()) {
+			jasperwrapper.addParameter("PREFIJO_IMPUESTOS", Utils.getPrefijoMostrarImpuestosFCB());
+			jasperwrapper.addParameter("IVA_LEYENDA", Utils.getStringTotalInvoiceTaxes(invoice.getC_Invoice_ID(), true));
+			jasperwrapper.addParameter("IMPUESTOS_LEYENDA", Utils.getStringTotalInvoiceTaxes(invoice.getC_Invoice_ID(), false));
 		}
 		
 		

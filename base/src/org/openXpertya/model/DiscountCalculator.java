@@ -2830,6 +2830,14 @@ public class DiscountCalculator {
 		
 		/** Obtiene la regla de envío de mercadería */
 		public String getDeliveryViaRule();
+
+		public void setC_Invoice_ID(int id);
+
+		public void setTrxName(String get_TrxName);
+
+		public int getC_Invoice_ID();
+
+		public String getTrxName();
 	}
 	
 	

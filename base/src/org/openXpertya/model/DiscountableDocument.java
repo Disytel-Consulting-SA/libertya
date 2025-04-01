@@ -145,4 +145,14 @@ public abstract class DiscountableDocument implements IDocument {
 	public List<Percepcion> getAppliedPercepciones(){
 		return null;
 	}
+
+	public void setTrxName(String trxNamep) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public String getTrxName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

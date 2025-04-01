@@ -55,6 +55,7 @@ import org.openXpertya.util.ReservedUtil;
 import org.openXpertya.util.StringUtil;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
+import org.openXpertya.util.Utils;
 import org.openXpertya.xml.util.xmlParser;
 
 /**
@@ -1611,6 +1612,35 @@ public class FiscalDocumentPrint {
 	 * imprimibles
 	 */
 	protected void setStdFooterObservations(MInvoice invoice, NonFiscalDocument nfd){
+		
+		
+		/**
+		 * Si corresponde agregar leyendas de impuestos (Facturas B/C)
+		 * dREHER - Mar 25
+		 */
+		if(!document.getLetter().equals(Document.DOC_LETTER_A)) {
+
+			if(Utils.isMostrarImpuestosFCB()) {
+				// dREHER 5.0
+				// String leyImp = Utils.getStringInvoiceTaxes(invoice.getC_Invoice_ID());
+				
+				String leyImp = Utils.getPrefijoMostrarImpuestosFCB();
+				
+				document.addFooterObservation(Util.isEmpty(
+						leyImp) ? "-" : leyImp);
+				
+				leyImp = Utils.getStringTotalInvoiceTaxes(invoice.getC_Invoice_ID(), true);
+				document.addFooterObservation(Util.isEmpty(
+						leyImp) ? "" : leyImp);
+				
+				leyImp = Utils.getStringTotalInvoiceTaxes(invoice.getC_Invoice_ID(), false);
+				document.addFooterObservation(Util.isEmpty(
+						leyImp) ? "" : leyImp);
+				
+			}
+			
+		}
+		
 		// Si tiene relacionado una caja diaria, entonces se agrega el nombre de
 		// la config del tpv y el usuario asociados a la caja		
 		if(!Util.isEmpty(invoice.getC_POSJournal_ID(), true)){

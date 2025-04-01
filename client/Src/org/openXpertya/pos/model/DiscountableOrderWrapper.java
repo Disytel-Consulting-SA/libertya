@@ -162,6 +162,18 @@ public class DiscountableOrderWrapper extends DiscountableDocument {
 		return null;
 	}
 
+	@Override
+	public void setC_Invoice_ID(int id) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public int getC_Invoice_ID() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	/*@Override
 	public BigDecimal getLinesTotalAmt(boolean includeOtherTaxesAmt) {
 		return getOrder().getOrderProductsTotalAmt(includeOtherTaxesAmt, false);

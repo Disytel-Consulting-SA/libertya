@@ -8162,6 +8162,10 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 	 */
 	private class DiscountableMInvoiceWrapper extends DiscountableDocument {
 
+		// dREHER Feb'25
+		private int C_Invoice_ID;
+		private String trxName;
+		
 		@Override
 		protected List<? extends Object> getOriginalLines() {
 			return Arrays.asList(getLines(false));
@@ -8310,6 +8314,26 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 			}
 			return creditDocument;
 			//return null;
+		}
+		
+		// dREHER Feb'25
+		public int getC_Invoice_ID() {
+			return C_Invoice_ID;
+		}
+
+		public void setC_Invoice_ID(int c_Invoice_ID) {
+			C_Invoice_ID = c_Invoice_ID;
+		}
+
+		// dREHER Feb '25
+		@Override
+		public void setTrxName(String trxNamep) {
+			trxName = trxNamep;
+		}
+
+		@Override
+		public String getTrxName() {
+			return trxName;
 		}
 	}
 

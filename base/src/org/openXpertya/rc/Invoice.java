@@ -416,4 +416,15 @@ public class Invoice extends DiscountableDocument implements Serializable{
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public void setC_Invoice_ID(int id) {
+		invoiceID = id;
+		
+	}
+
+	@Override
+	public int getC_Invoice_ID() {
+		return invoiceID;
+	}
 }
