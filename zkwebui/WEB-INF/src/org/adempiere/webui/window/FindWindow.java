@@ -217,11 +217,12 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         }
         this.setBorder("normal");
         this.setWidth("750px");
-        this.setHeight("350px");
+        this.setHeight("550px"); // dREHER Mayo 25 default 350
         this.setTitle(Msg.getMsg(Env.getCtx(), "Find").replaceAll("&", "") + ": " + title);
         this.setAttribute(Window.MODE_KEY, Window.MODE_MODAL);
         this.setClosable(false);
         this.setSizable(true);
+        this.setStyle("overflow:auto;"); // dREHER Mayo 25
         
         this.setVisible(true);
         AEnv.showWindow(this);
@@ -1345,7 +1346,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
                 String ColumnSQL = field.getColumnSQL(false);
                 if (value.toString().indexOf('%') != -1)
                     m_query.addRestriction(ColumnSQL, MQuery.LIKE, value, ColumnName, wed.getDisplay());
-                else if (isProductCategoryField && value instanceof Integer)
+                else if (isProductCategoryField && value instanceof Integer && 1==2) // dREHER Este filtro parece NO tener ningun sentido
                     m_query.addRestriction(getSubCategoryWhereClause(((Integer) value).intValue()));
                 else
                     m_query.addRestriction(ColumnSQL, MQuery.EQUAL, value, ColumnName, wed.getDisplay());
