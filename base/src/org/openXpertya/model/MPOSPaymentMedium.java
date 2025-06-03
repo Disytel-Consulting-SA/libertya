@@ -447,7 +447,7 @@ public class MPOSPaymentMedium extends X_C_POSPaymentMedium {
 	protected boolean beforeSave(boolean newRecord) {
 		// La fecha final de validez no puede ser anterior a la fecha
 		// inicial.
-		if (getDateTo().compareTo(getDateFrom()) < 0) {
+		if (getDateTo()!=null && getDateTo().compareTo(getDateFrom()) < 0) {
 			log.saveError("SaveError", Msg.translate(getCtx(), "InvalidDateRange"));
 			return false;
 		}
