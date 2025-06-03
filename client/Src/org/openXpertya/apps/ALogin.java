@@ -498,7 +498,9 @@ public final class ALogin extends JDialog implements ActionListener,ChangeListen
 
         //
 
-        languageCombo.setSelectedItem( Ini.getProperty( Ini.P_LANGUAGE ));
+        languageCombo.setSelectedItem( "Espa\u00F1ol (Argentina)" ); 
+        languageCombo.setVisible(false);
+        languageLabel.setVisible(false);
         
         // AutoLogin - assumes that connection is OK
 

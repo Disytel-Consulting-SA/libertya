@@ -295,13 +295,15 @@ public class LoginPanel extends Window implements EventListener
         for(int i = 0; i < lstLanguage.getItemCount(); i++)
         {
         	Comboitem li = lstLanguage.getItemAtIndex(i);
-        	if(li.getLabel().equals(baseLanguage))
+        	if(li.getLabel().equals("Espa\u00F1ol (Argentina)"))
         	{
         		lstLanguage.setSelectedIndex(i);
         		languageChanged(li.getLabel());
         		break;
         	}
         }
+        lblLanguage.setVisible(false);
+        lstLanguage.setVisible(false);
    }
 
     public void onEvent(Event event)
@@ -343,7 +345,7 @@ public class LoginPanel extends Window implements EventListener
 				for(int i = 0; i < lstLanguage.getItemCount(); i++)
 		        {
 		        	Comboitem li = lstLanguage.getItemAtIndex(i);
-		        	if(li.getLabel().equals(initDefault))
+		        	if(li.getLabel().equals("Espa\u00F1ol (Argentina)"))
 		        	{
 		        		lstLanguage.setSelectedIndex(i);
 		        		languageChanged(li.getLabel()); // Elaine 2009/04/17 language changed
@@ -464,3 +466,4 @@ public class LoginPanel extends Window implements EventListener
 	}
 
 }
+
