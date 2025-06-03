@@ -52,7 +52,7 @@ public class MLetraComprobante extends X_C_Letra_Comprobante {
 	
 	protected boolean beforeSave(boolean newRecord) {
 		
-		int x = DB.getSQLValue(this.get_TrxName(), " SELECT COUNT(*) FROM C_Letra_Comprobante WHERE AD_Client_ID = ? AND Letra = ? ", this.getAD_Client_ID(), this.getLetra());
+		int x = DB.getSQLValue(this.get_TrxName(), " SELECT COUNT(*) FROM C_Letra_Comprobante WHERE AD_Client_ID = " + getAD_Client_ID() + " AND Letra = ? AND C_Letra_Comprobante_ID <> " + getC_Letra_Comprobante_ID(), getLetra());
 		if (x != 0) {
 			log.saveError("SQLErrorNotUnique", "Letra");
 			return false;
