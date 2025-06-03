@@ -124,7 +124,7 @@ public class MBankAccount extends X_C_BankAccount {
      */
 
     protected boolean afterSave( boolean newRecord,boolean success ) {
-        if( newRecord ) {
+        if( newRecord && success ) {
             return insert_Accounting( "C_BankAccount_Acct","C_AcctSchema_Default",null );
         }
 
