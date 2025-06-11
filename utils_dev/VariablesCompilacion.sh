@@ -46,12 +46,12 @@ export ANT_PROPERTIES=-Dpassword=$KEYTOOL_PASS
 #	Enviar un mail mediante Ant - Cambiar o Borrar
 export ANT_PROPERTIES="$ANT_PROPERTIES -DMailLogger.mailhost=xxx -DMailLogger.from=xxxx -DMailLogger.failure.to=xxxx -DMailLogger.success.to=xxxx"
 #	Instalacion automatica, donde se descomprime Libertya
-export ROOT_OXP=/
+export ROOT_OXP=${ROOT_OXP:-/}
 #	Instalacion Automatica, donde se genera la carpeta final Libertya
-export OXP_HOME=/ServidorOXP
+export OXP_HOME=${OXP_HOME:-/ServidorOXP}
 echo "-> OXP_HOME es $OXP_HOME"
 #	Instalacion Automatica
-INSTALACION_OXP=/install
+INSTALACION_OXP=${INSTALACION_OXP:-/install}
 export INSTALACION_OXP
 if [ ! -d $INSTALACION_OXP ] ; then
     mkdir -p $INSTALACION_OXP
