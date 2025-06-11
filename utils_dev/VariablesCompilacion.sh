@@ -52,6 +52,7 @@ export OXP_HOME=${OXP_HOME:-/ServidorOXP}
 echo "-> OXP_HOME es $OXP_HOME"
 #	Instalacion Automatica
 INSTALACION_OXP=${INSTALACION_OXP:-/install}
+INSTALACION_EXPORT=${INSTALACION_EXPORT:-/install}
 export INSTALACION_OXP
 if [ ! -d $INSTALACION_OXP ] ; then
     mkdir -p $INSTALACION_OXP
@@ -59,6 +60,12 @@ if [ ! -d $INSTALACION_OXP ] ; then
    else
     echo "-> Ya existe el directorio de instalación $INSTALACION_OXP"
 fi  
+if [ ! -d $INSTALACION_EXPORT ] ; then
+    mkdir -p $INSTALACION_EXPORT
+    echo "-> Creamos el directorio $INSTALACION_EXPORT"
+   else
+    echo "-> Ya existe el directorio $INSTALACION_EXPORT"
+fi
 
 #  ---------------------------------------------------------------
 #  En condiciones generales no tiene porque tocar nada por debajo

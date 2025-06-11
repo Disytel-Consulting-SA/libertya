@@ -21,7 +21,7 @@ cd $UTILS_DEV
 $JAVA_HOME/bin/java -Dant.home="." $ANT_PROPERTIES org.apache.tools.ant.Main clean
 
 echo Construyendo ...
-$JAVA_HOME/bin/java -Dant.home="." $ANT_PROPERTIES org.apache.tools.ant.Main -logger org.apache.tools.ant.listener.MailLogger complete
+$JAVA_HOME/bin/java -Dant.home="." $ANT_PROPERTIES org.apache.tools.ant.Main complete
 
 ls -la $INSTALACION_OXP
 

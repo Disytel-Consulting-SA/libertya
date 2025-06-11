@@ -19,7 +19,8 @@
   <property name="data.dir" value="${openxpertya.dir}data"/>
   <property name="jboss.dir" value="${openxpertya.dir}jboss"/>
   <property name="client.dir" value="${openxpertya.dir}client"/>
-  <property name="instalacion.dir" value="${openxpertya.dir}../install"/>
+  <!--property name="instalacion.dir" value="${openxpertya.dir}../install"/-->
+  <property name="instalacion.dir" value="${env.INSTALACION_EXPORT}"/>
 
   <property name="src" value="src"/>
   <property name="compile.dir" value="lib"/>
