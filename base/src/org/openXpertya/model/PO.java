@@ -1890,12 +1890,14 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 				updateTranslations();
 		}
 		try {
-			success = handlePersistence(newRecord, success,
-					new PluginPOAfterSaveHandler());
+			// Debe ser considerado el success original previo al handlePersistence 
+			if (success || invokeAfterMethodsOnError()) {
+				handlePersistence(newRecord, success, new PluginPOAfterSaveHandler());		
+			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "afterSave", e);
 			log.saveError("Error", e.toString(), false);
-			success = false;
+			// success = false;
 			// throw new DBException(e);
 		}
 		// OK
@@ -2871,12 +2873,14 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 		m_attachment = null;
 
 		try {
-			success = handlePersistence(false, success,
-					new PluginPOAfterDeleteHandler());
+			// Debe ser considerado el success original previo al handlePersistence
+			if (success || invokeAfterMethodsOnError()) {
+				handlePersistence(false, success, new PluginPOAfterDeleteHandler()); 	
+			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "afterDelete", e);
 			log.saveError("Error", e.toString(), false);
-			success = false;
+			// success = false;
 			// throw new DBException(e);
 		}
 		// Reset
@@ -5054,6 +5058,23 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 			e.printStackTrace();
 			return false;
 		}
+	}
+	
+	
+	// Cache para performance
+	protected volatile static Boolean invokeAfterMethodsOnError = null;
+	/** 
+	 * Ante un error en un save o delete, deberían invocarse los métodos [pre|post]After[Save|Delete] de los plugins instalados?
+	 * La lógica original siempre los invocaba incluso en casos en donde la persistencia fallaba (success = false, ver PO.saveFinish() y PO.delete())
+	 * Ahora solo se invoca en alguno de los siguientes casos:
+	 * 		a. si la persistencia no falla (success es true), o bien 
+	 * 		b. si la persistencia falla pero la preferencia PLUGIN_PO_POLICY_INVOKE_AFTER_METHODS_ON_ERROR existe y se encuentra habilitada   
+	 */
+	public static boolean invokeAfterMethodsOnError() {
+		if (invokeAfterMethodsOnError == null) {
+			invokeAfterMethodsOnError = "Y".equals(MPreference.GetCustomPreferenceValue("PLUGIN_PO_POLICY_INVOKE_AFTER_METHODS_ON_ERROR"));			
+		}
+		return invokeAfterMethodsOnError;
 	}
 	
 } // PO
