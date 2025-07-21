@@ -788,6 +788,9 @@ public class AllocationGenerator {
 	private BigDecimal getExchangeDif(int C_Invoice_ID) {
 		BigDecimal dif = Env.ZERO;
 		
+		if (this.invoiceExchangeDif==null)
+			return dif;
+		
 		for(InvoiceExchangeDif dc : this.invoiceExchangeDif) {
 			if(dc.getC_Invoice_ID() == C_Invoice_ID) {
 				dif = dc.getExchangeDiff();
