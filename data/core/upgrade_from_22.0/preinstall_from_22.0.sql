@@ -2934,3 +2934,7 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_BPartner','isoculta
 
 -- 2025-06-03 Fix en default value para columna C_CashBook.C_Currency_ID.  Faltaba el @ inicial en la expresion
 update ad_column set defaultvalue = '@' || defaultvalue where ad_componentobjectuid = 'CORE-AD_Column-5521' and defaultvalue ilike 'SQL%';
+
+-- 2025-07-23 Al eliminar una organizacion tambien deben eliminarse los accesos por usuario
+ALTER TABLE ad_user_orgaccess DROP CONSTRAINT IF EXISTS adorg_aduserorgaccess;
+ALTER TABLE ad_user_orgaccess ADD CONSTRAINT adorg_aduserorgaccess FOREIGN KEY (ad_org_id) REFERENCES ad_org(ad_org_id) ON DELETE CASCADE;
