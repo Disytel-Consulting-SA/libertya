@@ -4,7 +4,7 @@
 
 @Rem Check OXP
 @Rem Si %OXP_HOME% esta seteado dejarlo, sino setearlo en el directorio actual
-@if not %OXP_HOME% == "" goto OXP_HOME_OK
+@if not "%OXP_HOME%" == "" goto OXP_HOME_OK
 @Set OXP_HOME=%~dp0
 @Echo OXP_HOME establecido en %OXP_HOME%
 
