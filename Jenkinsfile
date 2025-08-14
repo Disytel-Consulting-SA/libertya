@@ -149,56 +149,56 @@ pipeline {
                 def colorStatus = (status == 'SUCCESS') ? '#28a745' : '#dc3545'
                 def emoji = (status == 'SUCCESS') ? '✅' : '❌'
                 withCredentials([string(credentialsId: 'report-url', variable: 'REPORT_URL')]) {
-                def linkReport = "${env.REPORT_URL}"
+                    def linkReport = "${env.REPORT_URL}"
 
-                def mensaje = """
-                <html>
-                    <body style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 30px;">
-                        <div style="background: #fff; border-radius: 12px; box-shadow: 0 4px 16px #0001; padding: 24px; max-width: 540px; margin: 0 auto;">
-                            <h2 style="color:#2277BB; margin-top:0;">${emoji} Notificación de Jenkins - Libertya Core</h2>
-                            <p>¡Hola equipo! Les dejamos el resumen del último build ejecutado.</p>
-                            <hr style="border:none; border-top:1px solid #eee; margin:16px 0;">
-                            <table style="width:100%; font-size: 15px;">
-                                <tr>
-                                    <td><b>Estado de los tests:</b></td>
-                                    <td><span style="color:${colorStatus}; font-weight:bold;">${status}</span></td>
-                                </tr>
-                                <tr>
-                                    <td><b>Fecha y hora:</b></td>
-                                    <td>${fechaHora}</td>
-                                </tr>
-                                <tr>
-                                    <td><b>Commit Libertya:</b></td>
-                                    <td><code style="font-size:13px;">${commitLibertya}</code></td>
-                                </tr>
-                                <tr>
-                                    <td><b>Commit lyrestapi:</b></td>
-                                    <td><code style="font-size:13px;">${commitLyrestapi}</code></td>
-                                </tr>
-                                <tr>
-                                    <td><b>Ver reporte completo:</b></td>
-                                    <td><a href="${linkReport}" style="color:#2277BB;">${linkReport}</a></td>
-                                </tr>
-                            </table>
-                            <br>
-                            <ul style="color:#666; font-size:14px;">
-                                <li>Notificación automática del pipeline Jenkins</li>
-                            </ul>
-                            <p style="font-size: 12px; color: #aaa; text-align: right;">Este mensaje fue generado automáticamente por Jenkins.</p>
-                        </div>
-                    </body>
-                </html>
-                """
+                    def mensaje = """
+                    <html>
+                        <body style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 30px;">
+                            <div style="background: #fff; border-radius: 12px; box-shadow: 0 4px 16px #0001; padding: 24px; max-width: 540px; margin: 0 auto;">
+                                <h2 style="color:#2277BB; margin-top:0;">${emoji} Notificación de Jenkins - Libertya Core</h2>
+                                <p>¡Hola equipo! Les dejamos el resumen del último build ejecutado.</p>
+                                <hr style="border:none; border-top:1px solid #eee; margin:16px 0;">
+                                <table style="width:100%; font-size: 15px;">
+                                    <tr>
+                                        <td><b>Estado de los tests:</b></td>
+                                        <td><span style="color:${colorStatus}; font-weight:bold;">${status}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Fecha y hora:</b></td>
+                                        <td>${fechaHora}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Commit Libertya:</b></td>
+                                        <td><code style="font-size:13px;">${commitLibertya}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Commit lyrestapi:</b></td>
+                                        <td><code style="font-size:13px;">${commitLyrestapi}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>Ver reporte completo:</b></td>
+                                        <td><a href="${linkReport}" style="color:#2277BB;">${linkReport}</a></td>
+                                    </tr>
+                                </table>
+                                <br>
+                                <ul style="color:#666; font-size:14px;">
+                                    <li>Notificación automática del pipeline Jenkins</li>
+                                </ul>
+                                <p style="font-size: 12px; color: #aaa; text-align: right;">Este mensaje fue generado automáticamente por Jenkins.</p>
+                            </div>
+                        </body>
+                    </html>
+                    """
 
-                emailext (
-                    from: 'Jenkins <lby.ic@libertya.org>',
-                    subject: "${emoji} Build ${status} - Libertya Core (dev)",
-                    body: mensaje,
-                    mimeType: 'text/html',
-                    to: 'julian.viejo@disytel.net', 
-                )
+                    emailext (
+                        from: 'Jenkins <lby.ic@libertya.org>',
+                        subject: "${emoji} Build ${status} - Libertya Core (dev)",
+                        body: mensaje,
+                        mimeType: 'text/html',
+                        to: 'julian.viejo@disytel.net', 
+                    )
+                }
             }
         }
     }
 }
-
