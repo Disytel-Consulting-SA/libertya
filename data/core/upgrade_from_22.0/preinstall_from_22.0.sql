@@ -2938,3 +2938,12 @@ update ad_column set defaultvalue = '@' || defaultvalue where ad_componentobject
 -- 2025-07-23 Al eliminar una organizacion tambien deben eliminarse los accesos por usuario
 ALTER TABLE ad_user_orgaccess DROP CONSTRAINT IF EXISTS adorg_aduserorgaccess;
 ALTER TABLE ad_user_orgaccess ADD CONSTRAINT adorg_aduserorgaccess FOREIGN KEY (ad_org_id) REFERENCES ad_org(ad_org_id) ON DELETE CASCADE;
+
+-- 2025-08-19 Fix: A field with precision 12, scale 2 must round to an absolute value less than 10^10 en ejecucion del informe de saldos
+ALTER TABLE t_balancereport ALTER COLUMN credit TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE t_balancereport ALTER COLUMN debit TYPE numeric(22, 2) USING debit::numeric(22, 2);
+ALTER TABLE t_balancereport ALTER COLUMN balance TYPE numeric(22, 2) USING balance::numeric(22, 2);
+ALTER TABLE t_balancereport ALTER COLUMN duedebt TYPE numeric(22, 2) USING duedebt::numeric(22, 2);
+ALTER TABLE t_balancereport ALTER COLUMN actualbalance TYPE numeric(22, 2) USING actualbalance::numeric(22, 2);
+ALTER TABLE t_balancereport ALTER COLUMN chequesencartera TYPE numeric(22, 2) USING chequesencartera::numeric(22, 2);
+ALTER TABLE t_balancereport ALTER COLUMN generalbalance TYPE numeric(22, 2) USING generalbalance::numeric(22, 2);
