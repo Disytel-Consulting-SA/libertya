@@ -25,8 +25,8 @@ pipeline {
         stage('Clonar y Compilar Libertya') {
             steps {
                 dir('libertya'){
-                    git branch: 'dev', url: 'https://github.com/Disytel-Consulting-SA/libertya.git'
-                
+					git branch: "${env.BRANCH_NAME}", url: 'https://github.com/Disytel-Consulting-SA/libertya.git'               
+ 
                     // Guardar commit de LY CORE
                     script {
                         env.LIBERTYA_COMMIT = sh(
