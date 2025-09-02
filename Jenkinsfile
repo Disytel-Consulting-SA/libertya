@@ -13,7 +13,9 @@ pipeline {
         INSTALACION_EXPORT = "${WORKDIR}/install_export"
         ROOT_OXP = "${WORKDIR}"
 		LIBERTYA_ENV_FILE_ID = 'LibertyaEnvDev.properties'
-        REPORTS_DIR = "/var/reportes"
+        
+		REPORTS_DIR = "/var/reportes"
+		BRANCH_NAME = 'dev'
 
         DB_NAME = 'libertya_test'
         DB_USER = 'libertya'
