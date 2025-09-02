@@ -12,10 +12,14 @@ pipeline {
         OXP_HOME = "${WORKDIR}/ServidorOXP"
         INSTALACION_EXPORT = "${WORKDIR}/install_export"
         ROOT_OXP = "${WORKDIR}"
-		LIBERTYA_ENV_FILE_ID = 'LibertyaEnvDev.properties'
-        
-		REPORTS_DIR = "/var/reportes"
-		BRANCH_NAME = 'dev'
+        LIBERTYA_ENV_FILE_ID = 'LibertyaEnvDev.properties'
+
+        REPORTS_DIR = "/var/reportes"
+        BRANCH_NAME = 'dev'
+
+        //Metadata
+        DEVINFO_FILE_LOCATION = "${WORKDIR}/libertya/data/core/upgrade_from_22.0"
+        DEVINFO_FILE = "${DEVINFO_FILE_LOCATION}/devinfo.properties"
 
         DB_NAME = 'libertya_test'
         DB_USER = 'libertya'
@@ -23,13 +27,13 @@ pipeline {
         DB_PORT = '5434'
     }
 
-    stages {   
+    stages {
 
         stage('Clonar y Compilar Libertya') {
             steps {
                 dir('libertya'){
-					git branch: "${env.BRANCH_NAME}", url: 'https://github.com/Disytel-Consulting-SA/libertya.git'               
- 
+                    git branch: "${env.BRANCH_NAME}", url: 'https://github.com/Disytel-Consulting-SA/libertya.git'
+
                     // Guardar commit de LY CORE
                     script {
                         env.LIBERTYA_COMMIT = sh(
@@ -41,14 +45,14 @@ pipeline {
                     sh '''
                         echo "==> Listando directorios y archivos"
                         ls -lhst
-                    
+
                         INSTALL_DIR="${WORKDIR}/install"
                         mkdir -p ${INSTALL_DIR}
                         chmod -R u+w ${INSTALL_DIR}
-            
+
                         echo "==> Habilitando permisos de ejecución..."
                         find . -type f -name "*.sh" -exec chmod +x {} \\;
-            
+
                         echo "==> Ejecutando script de compilación..."
                         cd utils_dev && ./Compilar.sh
                         '''
@@ -105,7 +109,7 @@ pipeline {
 
         stage('Clonar lyrestapi') {
             steps {
-                
+
                 dir('lyrestapi'){
                     git branch: 'main', url: 'https://github.com/Disytel-Consulting-SA/lyrestapi.git'
 
@@ -132,6 +136,51 @@ pipeline {
                 }
             }
         }
+
+        stage('Exportar metadata') {
+            steps {
+                script {
+                    configFileProvider([
+                        configFile(
+                            fileId: 'dev-devinfo.properties',
+                            targetLocation: env.DEVINFO_FILE
+                        )
+                    ]) {
+                        echo '✅ Archivo devinfo.properties configurado en ${env.DEVINFO_FILE}.'
+                    }
+
+                    sh """
+                        cd ${OXP_HOME}/utils
+                        chmod +x *.sh
+                        ./PluginExporter.sh ${DEVINFO_FILE}
+                    """
+                }
+            }
+        }
+
+        stage('Exportar a servidor de releases') {
+            steps {
+                script {
+                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V22.0.zip"
+                    def destinoPath = "/home/developers/releases/libertya-core/dev"
+                    def destinoName = "ServidorOXP25-dev-${env.LIBERTYA_COMMIT}.zip"
+                    def metadata = "/tmp/export/*.jar"
+
+                    withCredentials([
+                        sshUserPrivateKey(credentialsId: 'releases', keyFileVariable: 'KEYFILE', usernameVariable: 'USER'),
+                        string(credentialsId: 'releases-ip', variable: 'SERVER_IP'),
+                        string(credentialsId: 'releases-port', variable: 'SERVER_PORT')
+                    ]) {
+                        sh """
+                            echo '==> Copiando archivos al servidor de releases...'
+                            scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${archivo} ${USER}@${SERVER_IP}:${destinoPath}/${destinoName}
+                            scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${metadata} ${USER}@${SERVER_IP}:${destinoPath}
+                        """
+                    }
+                }
+            }
+        }
+
 
     }
 
@@ -198,10 +247,12 @@ pipeline {
                         subject: "${emoji} Build ${status} - Libertya Core (dev)",
                         body: mensaje,
                         mimeType: 'text/html',
-                        to: 'julian.viejo@disytel.net', 
+                        to: 'julian.viejo@disytel.net, federico.cristina@disytel.net, ignacio.aita@disytel.net',
                     )
                 }
             }
         }
     }
 }
+
+
