@@ -2515,6 +2515,12 @@ public class MInvoice extends X_C_Invoice implements DocAction,Authorization, Cu
 				return false;
 			}
 
+			if(getNumeroComprobante()==0){
+				Integer nroComprobante = CalloutInvoiceExt.getNextNroComprobante(getC_DocTypeTarget_ID());
+				if (nroComprobante != null)
+					setNumeroComprobante(nroComprobante);
+			}
+			
 			// Numero de documento
 
 			try {

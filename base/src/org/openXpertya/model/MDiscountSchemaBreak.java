@@ -207,8 +207,54 @@ public class MDiscountSchemaBreak extends X_M_DiscountSchemaBreak {
 			setC_BPartner_ID(0);
 		}
 		
+		/**
+		 * Si es un esquema de cortes y NO tiene condiciones, el descuento NO puede ser mayor a CERO
+		 * dREHER Sep 25
+		 */
+		if (isEmptyCondition() && getBreakDiscount().compareTo(BigDecimal.ZERO) > 0) {
+			log.saveError("SaveError", Msg.translate(getCtx(), "Debe especificar alguna Condicion para poder establacer un Descuento en un Corte"));
+			return false;
+		}
+		
 		return true;
 	}
+	
+	/**
+	 * Evalua si todas las condiciones formadas por las configuraciones de filtro del corte,
+	 * estan vacias 
+	 * 
+	 * @param productID ID de artículo a consultar
+	 * @param productCategoryID ID de Subfamilia a consultar (si es 0 se consulta la
+	 * subfamiliar del artículo)
+	 * @return <code>true</code> si el corte es aplicable en cuanto a estos filtros,
+	 * <code>false</code> en caso contrario.
+	 * @author dREHER Sep 25
+	 */
+	private boolean isEmptyCondition() {
+        // Se evaluan el conjunto de condiciones del corte según el operador 
+        // configurado como política de aplicación. Las condiciones evaluadas por
+        // el operador son:
+		// 0. Línea 	 (M_Product_Lines_ID)
+        // 1. Familia    (M_Product_Gamas_ID)
+        // 2. Subfamilia (M_Product_Category_ID)
+        // 3. Artículo   (M_Product_ID)
+        // 4. Proveedor  (C_BPartner_ID)
+
+        boolean allEmptyCondition;   // Indica si todas las entradas están vacías
+            
+        // 99. Todas las entradas vacías.
+        // Si el corte no contiene Línea, Familia, Subfamilia, Artículo o Proveedor (ninguna
+        // de ellas) entonces, independientemente del operador, el corte es aplicable.
+        allEmptyCondition =
+        	   getM_Product_Lines_ID() == 0
+        	&& getM_Product_Gamas_ID() == 0 
+        	&& getM_Product_Category_ID() == 0
+        	&& getM_Product_ID() == 0
+        	&& getC_BPartner_ID() == 0;
+        
+        return allEmptyCondition;
+	}
+	
 
 	/**
 	 * Devuelve una lista con los IDs de las Entidades Comerciales que son actualmente
