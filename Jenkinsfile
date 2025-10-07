@@ -247,7 +247,7 @@ pipeline {
                         subject: "${emoji} Build ${status} - Libertya Core (dev)",
                         body: mensaje,
                         mimeType: 'text/html',
-                        to: 'julian.viejo@disytel.net, federico.cristina@disytel.net, ignacio.aita@disytel.net',
+                        to: 'julian.viejo@disytel.net, federico.cristina@disytel.net, ignacio.aita@disytel.net, jorge.dreher@disytel.net',
                     )
                 }
             }
