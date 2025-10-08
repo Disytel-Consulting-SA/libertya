@@ -85,8 +85,8 @@ pipeline {
             steps {
                 script {
                     // Usar archivo de configuración según la rama
-                    // def envFileId = (env.BRANCH_NAME == 'dev') ? 'LibertyaEnvDev.properties' : 'LibertyaEnvMaster.properties'
-                    def envFileId = 'LibertyaEnvMultibranch.properties'
+                    def envFileId = (env.BRANCH_NAME == 'dev') ? 'LibertyaEnvMultibranchDev.properties' : 'LibertyaEnvMultibranchMaster.properties'
+                    
                     
                     configFileProvider([
                         configFile(
