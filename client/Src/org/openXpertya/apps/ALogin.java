@@ -268,7 +268,7 @@ public final class ALogin extends JDialog implements ActionListener,ChangeListen
 
     /** Descripción de Campos */
 
-    private ConfirmPanel confirmPanel = new ConfirmPanel( true,false,false,false,false,false,false );
+    private ConfirmPanel confirmPanel = new ConfirmPanel( true,false,false,true,false,false,false ); // dREHER Oct 25
 
     /** Descripción de Campos */
 
@@ -466,6 +466,9 @@ public final class ALogin extends JDialog implements ActionListener,ChangeListen
         mainPanel.add( southPanel,BorderLayout.SOUTH );
 
         //
+        // dREHER Oct 25
+        confirmPanel.getCustomizeButton().setLabel("Olvide mi contraseña");
+        confirmPanel.getCustomizeButton().setText("Olvide mi contraseña");
 
         southPanel.add( confirmPanel,BorderLayout.NORTH );
         southPanel.add( statusBar,BorderLayout.SOUTH );
@@ -660,6 +663,12 @@ public final class ALogin extends JDialog implements ActionListener,ChangeListen
 
             //
 
+        } if( e.getActionCommand().equals( ConfirmPanel.A_CUSTOMIZE)) { // dREHER Oct 25
+        	
+        	CallResult cr = UtilsLogin.olvideContrasena(userTextField.getText());
+        	statusBar.setStatusLine(cr.getMsg(), cr.isError());
+        	
+            
         } else if( e.getSource() == hostField ) {
             validateConnection();
         } else if( e.getSource() == languageCombo ) {
