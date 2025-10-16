@@ -35,6 +35,7 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.openXpertya.model.MLocator;
 import org.openXpertya.model.MLocatorLookup;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -137,6 +138,13 @@ public class WLocatorDialog extends Window implements EventListener
 	
 	private void initComponents()
 	{
+		
+		// dREHER Jun - 25
+    	boolean isHabilitaNew = false;
+    	String habilitarNew = MPreference.GetCustomPreferenceValue("VLocator_HabilitaNew", Env.getAD_Client_ID(Env.getCtx()));
+    	if(habilitarNew!=null && habilitarNew.equals("Y")) 
+    		isHabilitaNew = true;
+		
 		txtWarehouse.setEnabled(false);
 		
 		lblLocator.setValue("Locator");
@@ -163,6 +171,10 @@ public class WLocatorDialog extends Window implements EventListener
 		boxCheckbox.setStyle("text-align:left");
 		
 		chkCreateNew.setLabel(Msg.getMsg(Env.getCtx(), "Create New Record"));
+		
+		// dREHER Jun 25
+        if(!isHabilitaNew)
+        	chkCreateNew.setEnabled(false);
 		
 		boxCheckbox.appendChild(new Label());
 		boxCheckbox.appendChild(chkCreateNew);
