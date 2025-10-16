@@ -220,15 +220,20 @@ public class ProcessCtl extends Thread implements ProcessCall {
                 
                 // Si tiene definido un jasper dinamico, entonces usar la clase encargada para ésto
                 if (rs.getString("dynamicreport") != null && "Y".equalsIgnoreCase(rs.getString("dynamicreport")) &&
-                	rs.getString("jasperreport") != null && rs.getString("jasperreport").trim().length() > 0) 
+                	rs.getString("jasperreport") != null && rs.getString("jasperreport").trim().length() > 0 &&
+                	rs.getString("jasperreport").indexOf("xls") == -1) // dREHER Oct 25 
                 	m_pi.setClassName( DYNAMIC_JASPER_CLASSNAME );
                 else{
-	                /**
+                	
+                	 /**
 	                 * Logica para plugins, verificar si existe una clase que redefina el proceso original 
 	                 */
-	                String pluginProcessClassName = PluginProcessUtils.findPluginProcessClass(rs.getString(3));
-	                if (pluginProcessClassName != null)
-	                	m_pi.setClassName(pluginProcessClassName);
+                	if(rs.getString("jasperreport") == null || rs.getString("jasperreport").indexOf("xls") == -1) { // dREHER Sep 25
+                		String pluginProcessClassName = PluginProcessUtils.findPluginProcessClass(rs.getString(3));
+                		if (pluginProcessClassName != null)
+                			m_pi.setClassName(pluginProcessClassName);
+                	}
+	             
                 }
                 
                 m_pi.setAD_Process_ID( rs.getInt( 4 ));
