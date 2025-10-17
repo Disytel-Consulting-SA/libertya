@@ -512,16 +512,26 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		if(monedaID != null) {
 			return monedaID;
 		}
+
+		if (Util.isEmpty(moneda, true)) {
+			moneda = "ARS";
+		}
+		// Si la moneda es PES o DOL, se cambia a ARS o USD respectivamente
+		if(moneda.equals("PES"))
+			moneda = "ARS"; // Para compatibilidad con el formato de importación de AFIP"
+		else if (moneda.equals("DOL"))
+			moneda = "USD"; // Para compatibilidad con el formato de importación de AFIP
+
 		MCurrency c = getMonedaBy("cursymbol", moneda);
 		if(c == null) {
 			c = getMonedaBy("iso_code", moneda);
 		}
-		
+
 		if(c != null) {
 			monedaID = c.getID();
 			cacheCurrency.put(moneda, monedaID);
 		}
-		
+
 		return monedaID;
 	}
 	
@@ -728,11 +738,28 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		// Se incrementa la cantidad de líneas importadas.
 		importedLines++;
 	}
+	
+	/**
+	 * Si queda relacionada la factura, marcar como importada y mostrar igualmente el error
+	 * dREHER Sep 25
+	 */
+	@Override
+	public void markError(PO importPO, String importMsg) {
+		
+		if (importPO.get_Value("C_Invoice_ID") != null) {
+			importPO.set_ValueOfColumn(column_IsImported_ID, true);
+			// Se incrementa la cantidad de líneas importadas.
+			importedLines++;
+		}else
+			importPO.set_ValueOfColumn(column_IsImported_ID, false);
+		
+		importPO.set_ValueOfColumn(column_ErrorMsg_ID, importMsg);
+	}
 
 	@Override
 	protected String getDeleteOldImportedAditionalWhereClause() {
 		return " AND EXISTS (select c_invoice_id from c_invoice i where i.c_invoice_id = "
-				+ MVendorImportInvoice.Table_Name + ".c_invoice_id AND docstatus NOT IN ('DR','IP'))";
+				+ MVendorImportInvoice.Table_Name + ".c_invoice_id AND i.IsActive = 'Y')"; // dREHER Oct 25: se quita control: AND docstatus NOT IN ('DR','IP')
 	}
 	
 	/**

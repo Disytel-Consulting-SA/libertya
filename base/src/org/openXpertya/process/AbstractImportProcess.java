@@ -12,6 +12,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Trx;
 import org.openXpertya.util.ValueNamePair;
 
 /**
@@ -310,13 +311,33 @@ public abstract class AbstractImportProcess extends SvrProcess {
 	 * Borra los registros previamente importados de la tabla de importación. 
 	 */
 	protected int deleteOldImported() {
-        StringBuffer sql = new StringBuffer(
-        		" DELETE FROM " + getImportTableName() +  
-        		" WHERE I_IsImported='Y' AND ")
-        		.append(getSecuritySQLCheck())
-        		.append(getDeleteOldImportedAditionalWhereClause());
+		 // Crear una nueva transacción
+        String trxName = Trx.createTrxName("DeleteOldImportedTrx");
+        Trx trx = Trx.get(trxName, true);
+
+        int upds = 0;
+        try {
+        	StringBuffer sql = new StringBuffer(
+            		" DELETE FROM " + getImportTableName() +  
+            		" WHERE I_IsImported='Y' AND ")
+            		.append(getSecuritySQLCheck())
+            		.append(getDeleteOldImportedAditionalWhereClause());
+            
+            // Ejecutar la consulta dentro de la transacción
+            upds = DB.executeUpdate(sql.toString(), trxName);
+
+            // Confirmar la transacción si todo fue exitoso
+            trx.commit();
+        } catch (Exception e) {
+            // Revertir la transacción en caso de error
+            trx.rollback();
+            throw new RuntimeException("Error al eliminar registros importados: " + e.getMessage(), e);
+        } finally {
+            // Cerrar la transacción
+            trx.close();
+        }
         
-        return DB.executeUpdate( sql.toString());
+        return upds;
 	}
 	
 	/**
@@ -377,23 +398,52 @@ public abstract class AbstractImportProcess extends SvrProcess {
 		ResultSet rsImport = getRecordsToImport();
 		// Se recorren los registros a importar...
 		while (rsImport.next ()) {
-			// Se obtiene el PO del registro actual a importar...
-			PO importPO = getPO(rsImport, null);
-			// Se invoca el método abstracto que implementan las subclases
-			// en el cual deben realizar la actividad de importación del registro.
-			String importMsg = importRecord(importPO);
-			if (importMsg.equals(IMPORT_OK)) {
-				// Si la importación fué correcta se setean los valores de los
-				// campos del registro de importación.
-				markImported(importPO);
-			} else {
-				markError(importPO, importMsg);
+			
+			// dREHER Oct 25 asegurar que cada registro en particular se guarde correctamente
+			// o en su defecto solo rollback de ese registro y no de todos
+
+			// Crear una nueva transacción para este registro
+			String trxName = Trx.createTrxName("ImportTrx");
+			Trx trx = Trx.get(trxName, true);
+
+			try {
+				// Se obtiene el PO del registro actual a importar...
+				PO importPO = getPO(rsImport, null);
+				// Se invoca el método abstracto que implementan las subclases
+				// en el cual deben realizar la actividad de importación del registro.
+				String importMsg = importRecord(importPO);
+				if (importMsg.equals(IMPORT_OK)) {
+					// Si la importación fué correcta se setean los valores de los
+					// campos del registro de importación.
+					markImported(importPO);
+					debug("Registro importado correctamente: " + importPO);
+				} else {
+					markError(importPO, importMsg);
+					debug("Error en la importación del registro: " + importPO + " - " + importMsg);
+				}
+				// Se guardan los cambios en el registro de importación.
+				if(!importPO.save()){
+					throw new Exception(CLogger.retrieveErrorAsString());
+				}
+
+				// Confirmar la transacción si todo fue exitoso
+				trx.commit();
+
+			} catch (Exception e) {
+				// Revertir la transacción en caso de error
+				trx.rollback();
+				throw new Exception("Error al importar el registro: " + e.getMessage(), e);
+			} finally {
+				// Cerrar la transacción
+				trx.close();
 			}
-			// Se guardan los cambios en el registro de importación.
-			if(!importPO.save()){
-				throw new Exception(CLogger.retrieveErrorAsString());
-			}				
 		}
+		
+		debug("importRecords - Imported=" + getImportedLines());
+	}
+	
+	private void debug(String string) {
+		System.out.println("--> AbstractImportProcess - " + string);
 	}
 	
 	/**
