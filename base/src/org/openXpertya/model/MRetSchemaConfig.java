@@ -81,10 +81,18 @@ public class MRetSchemaConfig extends X_C_RetSchema_Config {
 			this.setIs_Range(false);
 			setValor("");
 		}
+		
+		// dREHER Sep 25 si es rango, entonces no tiene valor (limpiar el campo y setear rango)
 		if(getParamType().equals(PARAMTYPE_Rango)) {
 			this.setValor("");
 			this.setIs_Range(true);
 		}
+		
+		// dREHER Sep 25 si es valor, entonces no es rango (setear rango a N)
+		if(getParamType().equals(PARAMTYPE_Valor)) {
+			this.setIs_Range(false);
+		}
+		
 		//Si el parámetro es "Por Región Origen Y Destino" y el valor es 'Y'
 		// no debe permitir guardar el parámetro si el esquema de retención no tiene región seteada
 		MRetencionSchema retencionSchema = new MRetencionSchema(getCtx(), getC_RetencionSchema_ID(), get_TrxName());

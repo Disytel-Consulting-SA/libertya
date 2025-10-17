@@ -1,8 +1,11 @@
 package org.adempiere.webui.apps;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,6 +30,8 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.zkoss.util.media.AMedia;
+import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.au.out.AuEcho;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
@@ -84,6 +89,9 @@ public class ProcessDialog extends Window implements EventListener//, ASyncProce
 	private Div messageDiv;
 	private Center center;
 	private North north;
+	
+	// dREHER Jul 25
+	private String fileNameXLSDownload = null;
 
 
 	/**
@@ -372,6 +380,13 @@ public class ProcessDialog extends Window implements EventListener//, ASyncProce
 		bOK.setLabel("");		
 		m_ids = pi.getIDs();
 		
+		// dREHER Jul 25
+		fileNameXLSDownload = null;
+		if(pi.getSummary().startsWith("XLS_"))
+			fileNameXLSDownload = pi.getSummary().replace("XLS_", "");
+
+		System.out.println("fileNameXLSDownload: " + pi.getSummary());
+		
 		//move message div to center to give more space to display potentially very long log info
 		centerPanel.detach();
 		messageDiv.detach();
@@ -412,8 +427,47 @@ public class ProcessDialog extends Window implements EventListener//, ASyncProce
 			else if (m_AD_Process_ID == 118)
 				printShipments();
 		}
+		
+		// dREHER Jul 25, debe descargar el archivo XLS ?
+		if(fileNameXLSDownload!=null) {
+
+			byte[] data;
+			try {
+
+				File file = new File(fileNameXLSDownload);
+				data = readFileToByteArray(file);
+
+				// Descargar
+				String fileName = file.getName();
+				AMedia media = null;
+				if (fileName != null && fileName.indexOf("xlsx") > 0)
+					media = new AMedia(fileName, "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data);
+				else
+					media = new AMedia(fileName, "xls", "application/vnd.ms-excel", data);
+
+				Filedownload.save(media);
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
 
 	}	//	afterProcessTask
+	
+	// dREHER Jul 25
+	public static byte[] readFileToByteArray(File file) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream((int)file.length());
+		BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
+		int read;
+		byte[] buffer = new byte[4096];
+		while ((read = in.read(buffer)) > 0) {
+			bos.write(buffer, 0, read);
+		}
+		in.close();
+		return bos.toByteArray();
+	}
 	
 	/**************************************************************************
 	 *	Print Shipments

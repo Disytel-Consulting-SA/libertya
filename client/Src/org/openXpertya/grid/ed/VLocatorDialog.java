@@ -44,6 +44,7 @@ import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.ConfirmPanel;
 import org.openXpertya.model.MLocator;
 import org.openXpertya.model.MLocatorLookup;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -254,6 +255,13 @@ public class VLocatorDialog extends JDialog implements ActionListener,KeyListene
      */
 
     private void jbInit() throws Exception {
+    	
+    	// dREHER Jun - 25
+    	boolean isHabilitaNew = false;
+    	String habilitarNew = MPreference.GetCustomPreferenceValue("VLocator_HabilitaNew", Env.getAD_Client_ID(Env.getCtx()));
+    	if(habilitarNew!=null && habilitarNew.equals("Y")) 
+    		isHabilitaNew = true;
+    	
         CompiereColor.setBackground( this );
         panel.setLayout( panelLayout );
         southPanel.setLayout( southLayout );
@@ -284,6 +292,10 @@ public class VLocatorDialog extends JDialog implements ActionListener,KeyListene
         lValue.setText( Msg.translate( Env.getCtx(),"Value" ));
         getContentPane().add( panel );
         panel.add( mainPanel,BorderLayout.CENTER );
+        
+        // dREHER Jun 25
+        if(!isHabilitaNew)
+        	fCreateNew.setEnabled(false);
 
         //
 

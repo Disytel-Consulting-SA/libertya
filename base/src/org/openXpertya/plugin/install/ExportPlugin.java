@@ -538,7 +538,7 @@ public class ExportPlugin extends SvrProcess{
 	
 	protected static void copyFiles() throws Exception {
 		// Pisado de preinstall
-		if (!Util.isEmpty(prop("CreateJarPreinstallFile"))) {
+		if ("Y".equalsIgnoreCase(prop("IncludeComponentExport")) && !Util.isEmpty(prop("CreateJarPreinstallFile"))) {
 			copyFileContents("CreateJarPreinstallFile", "", "preinstall.sql");
 		}
 		
@@ -760,8 +760,24 @@ public class ExportPlugin extends SvrProcess{
 			return fileName.toString();
 		}
 		
+		// Forzar un prefijo? (Ya sea si se usa un componente CORE u otro
+		String packageName = "";
+		String packageNameCore = "";
+		if (!Util.isEmpty(prop("CreateJarForcePackageName"), true)) {
+			packageName = "'" + prop("CreateJarForcePackageName") + "'";
+			packageNameCore = "'" + prop("CreateJarForcePackageName") + "'";
+		} else {
+			packageName = "c.packagename";
+			packageNameCore = "'org.libertya.core'";
+		}
+		
 		// Nombre principal - Si se definio un component version, se intenta generarlo desde los metadats
-		fileName = new StringBuffer(DB.getSQLValueString(null, "select case when c.prefix = 'CORE' then 'org.libertya.core' ELSE c.packagename end || '_v' || cv.version from ad_component c inner join ad_componentversion cv on c.ad_component_id  = cv.ad_component_id where cv.ad_componentversion_id = ? ", Integer.parseInt(props.getProperty("ExportComponentVersionID"))));
+		String cname = DB.getSQLValueString(null, "	select case when c.prefix = 'CORE' then " + packageNameCore + " ELSE " + packageName + " end || '_v' || cv.version "
+												+ "	from ad_component c "
+												+ "	inner join ad_componentversion cv on c.ad_component_id  = cv.ad_component_id "
+												+ " where cv.ad_componentversion_id = ? ", 
+											Integer.parseInt(props.getProperty("ExportComponentVersionID")));
+		fileName = (cname!=null ? new StringBuffer(cname) : new StringBuffer(Util.isEmpty(prop("CreateJarForcePackageName")) ? "" : prop("CreateJarForcePackageName")));
 		if (fileName.length()==0) {
 			fileName.append("component");
 		}

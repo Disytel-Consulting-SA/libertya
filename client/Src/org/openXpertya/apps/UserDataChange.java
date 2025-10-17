@@ -316,6 +316,13 @@ public class UserDataChange extends JDialog {
 		} else if (currentPassword.equals(newPassword)) {
 			return "EqualCurrentAndNewPassword";
 		}
+		
+		// dREHER Oct 25 Verificar que el nuevo password cumpla con:
+		// 8 caracteres minimos, debe tener algun numero y Mayusculas y minusculas
+				
+		if (!newPassword.matches("^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).{8,}$")) {
+			return "Minimo 8 caracteres, combinando mayusculas/minusculas y numeros.";
+		}
 
 		String currentUserPassword = MUser.getCurrentPassword(ctx, Env.getAD_User_ID(ctx), null);
 		if (!currentPassword.equals(currentUserPassword)) {

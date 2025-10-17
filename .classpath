@@ -371,5 +371,7 @@
 	<classpathentry kind="lib" path="lib/clover/json-20080701.jar"/>
 	<classpathentry kind="lib" path="lib/clover/nv-websocket-client-1.31.jar"/>
 	<classpathentry kind="lib" path="lib/jdom-2.0.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/jxl.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>

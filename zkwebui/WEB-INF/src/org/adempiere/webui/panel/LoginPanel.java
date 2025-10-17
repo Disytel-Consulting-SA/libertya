@@ -45,9 +45,11 @@ import org.adempiere.webui.util.BrowserToken;
 import org.adempiere.webui.util.UserPreference;
 import org.adempiere.webui.window.LoginWindow;
 import org.openXpertya.OpenXpertya;
+import org.openXpertya.apps.UtilsLogin;
 import org.openXpertya.model.MSession;
 import org.openXpertya.model.MSystem;
 import org.openXpertya.model.MUser;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -104,6 +106,9 @@ public class LoginPanel extends Window implements EventListener
     private Combobox lstLanguage;
     private LoginWindow wndLogin;
     private Checkbox chkRememberMe;
+    
+    // dREHER Oct 25
+    private Label msg;
 
     public LoginPanel(Properties ctx, LoginWindow loginWindow)
     {
@@ -196,6 +201,16 @@ public class LoginPanel extends Window implements EventListener
         	td.appendChild(chkRememberMe);
     	}
     	
+    	// dREHER Oct 25 mostrar un label de mensajes
+    	tr = new Tr();
+    	tr.setId("mensajeLogin");
+    	table.appendChild(tr);
+    	td = new Td();
+    	td.setDynamicProperty("colspan", "2");
+    	tr.appendChild(td);
+    	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
+    	td.appendChild(msg);
+    	
     	div = new Div();
     	div.setSclass(ITheme.LOGIN_BOX_FOOTER_CLASS);
         ConfirmPanel pnlButtons = new ConfirmPanel(false);
@@ -203,6 +218,11 @@ public class LoginPanel extends Window implements EventListener
         LayoutUtils.addSclass(ITheme.LOGIN_BOX_FOOTER_PANEL_CLASS, pnlButtons);
         pnlButtons.setWidth(null);
         pnlButtons.getButton(ConfirmPanel.A_OK).setSclass(ITheme.LOGIN_BUTTON_CLASS);
+        
+        // dREHER Oct 25
+        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setLabel("Olvide mi contraseña");
+        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setSclass(ITheme.LOGIN_BUTTON_CLASS);
+        
         div.appendChild(pnlButtons);
         this.appendChild(div);
         
@@ -304,6 +324,11 @@ public class LoginPanel extends Window implements EventListener
         }
         lblLanguage.setVisible(false);
         lstLanguage.setVisible(false);
+        
+        // dREHER Oct 25
+        msg = new Label();
+        msg.setId("lblMsgLoginId");
+        msg.setValue("");
    }
 
     public void onEvent(Event event)
@@ -313,6 +338,26 @@ public class LoginPanel extends Window implements EventListener
         if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
         {
             validateLogin();
+        }
+        // dREHER Oct 25
+        if (event.getTarget().getId().equals(ConfirmPanel.A_CUSTOMIZE))
+        {
+        	 // Mostrar mensaje de "Procesando"
+            Clients.showBusy("Procesando, por favor espere...", false);
+            CallResult cr = new CallResult();
+            try {
+            	cr = UtilsLogin.olvideContrasena(txtUserId.getText());
+            } finally {
+                // Ocultar el mensaje de "Procesando"
+            	 Clients.showBusy(null, false); 
+            }	
+        
+        	if(cr.isError()) {
+        		throw new WrongValueException(cr.getMsg());
+        	}else {
+        		msg.setValue(cr.getMsg());
+        		System.out.println("Envio email desde webui correctamente...");
+        	}
         }
         if (event.getName().equals(Events.ON_SELECT))
         {
