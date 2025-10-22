@@ -112,13 +112,14 @@ public class Doc_Bank extends Doc {
     private DocLine[] loadLines() {
         ArrayList list = new ArrayList();
         String    sql  = "SELECT * FROM C_BankStatementLine WHERE C_BankStatement_ID=? ORDER BY Line";
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,getRecord_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             //
 
@@ -152,6 +153,9 @@ public class Doc_Bank extends Doc {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadLines",e );
+        }  finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         // Return Array

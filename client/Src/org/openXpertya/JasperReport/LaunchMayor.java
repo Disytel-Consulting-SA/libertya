@@ -5,9 +5,11 @@ import java.sql.Timestamp;
 import org.openXpertya.JasperReport.DataSource.DiarioMayorJasperDataSource;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MProject;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 
 
@@ -21,6 +23,10 @@ public class LaunchMayor extends SvrProcess {
 	private Timestamp	p_DateAcct_From = null;
 	/** Date Acct To			*/
 	private Timestamp	p_DateAcct_To = null;
+	
+	
+	/** C_Project_ID			*/
+	private int 		p_C_Project_ID = 0;
 	
 	
 	/** Jasper Report			*/
@@ -63,6 +69,9 @@ public class LaunchMayor extends SvrProcess {
 			else if (name.equals("AD_Org_ID"))	{
 				orgID = para[i].getParameterAsInt();
 			}
+			else if (name.equals("C_Project_ID"))	{
+				p_C_Project_ID = para[i].getParameterAsInt();
+			}
 			else
 				log.severe("prepare - Unknown Parameter: " + name);
 		}
@@ -96,6 +105,12 @@ public class LaunchMayor extends SvrProcess {
 		// Establecemos parametros
 		jasperwrapper.addParameter("TEMPDIR", System.getProperty("java.io.tmpdir"));
 		jasperwrapper.addParameter("orgName", (MClient.get(getCtx())).getName());
+
+		// dREHER si se filtro un proyecto, mostrar cual es...
+		if(p_C_Project_ID > 0) {
+			MProject p = new MProject(Env.getCtx(), p_C_Project_ID, get_TrxName());
+			jasperwrapper.addParameter("projectName", p.getName());
+		}
 		
 		try {
 			jasperwrapper.fillReport(ds, this);
@@ -113,7 +128,7 @@ public class LaunchMayor extends SvrProcess {
 	
 	protected DiarioMayorJasperDataSource getDS() {
 		return new DiarioMayorJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To,
-				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable, orgID);
+				p_1_ElementValue_ID, p_2_ElementValue_ID, p_factAcctTable, orgID, p_C_Project_ID); // dREHER
 	}
 
 
@@ -128,6 +143,15 @@ public class LaunchMayor extends SvrProcess {
 		this.orgID = orgID;
 	}
 
+// dREHER	
+	protected int getC_Project_ID() {
+		return p_C_Project_ID;
+	}
+
+	protected void setC_Project_ID(int C_Project_ID) {
+		this.p_C_Project_ID = C_Project_ID;
+	}
+//
 
 
 	protected int getP_1_ElementValue_ID() {

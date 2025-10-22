@@ -17,4 +17,9 @@ public class MSumsAndBalance extends X_T_SumsAndBalance {
 	public void setAD_Org_ID(int ad_Org_ID) {
 		set_ValueNoCheck("AD_Org_ID", ad_Org_ID);
 	}
+	
+	// dREHER
+	public void setC_Project_ID(int c_Project_ID) {
+		set_ValueNoCheck("C_Project_ID", c_Project_ID);
+	}
 }

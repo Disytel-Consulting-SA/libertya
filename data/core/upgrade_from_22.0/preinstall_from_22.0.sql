@@ -2939,6 +2939,7 @@ update ad_column set defaultvalue = '@' || defaultvalue where ad_componentobject
 ALTER TABLE ad_user_orgaccess DROP CONSTRAINT IF EXISTS adorg_aduserorgaccess;
 ALTER TABLE ad_user_orgaccess ADD CONSTRAINT adorg_aduserorgaccess FOREIGN KEY (ad_org_id) REFERENCES ad_org(ad_org_id) ON DELETE CASCADE;
 
+
 -- 2025-08-19 Fix: A field with precision 12, scale 2 must round to an absolute value less than 10^10 en ejecucion del informe de saldos
 ALTER TABLE t_balancereport ALTER COLUMN credit TYPE numeric(22, 2) USING credit::numeric(22, 2);
 ALTER TABLE t_balancereport ALTER COLUMN debit TYPE numeric(22, 2) USING debit::numeric(22, 2);
@@ -2947,3 +2948,147 @@ ALTER TABLE t_balancereport ALTER COLUMN duedebt TYPE numeric(22, 2) USING duede
 ALTER TABLE t_balancereport ALTER COLUMN actualbalance TYPE numeric(22, 2) USING actualbalance::numeric(22, 2);
 ALTER TABLE t_balancereport ALTER COLUMN chequesencartera TYPE numeric(22, 2) USING chequesencartera::numeric(22, 2);
 ALTER TABLE t_balancereport ALTER COLUMN generalbalance TYPE numeric(22, 2) USING generalbalance::numeric(22, 2);
+
+--2025-10-17 => metadata merge org.libertya.core.micro.r3000.dev.vlocator 2025-06-05-17:05
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'VLocator_HabilitaNew', 'N');
+
+
+
+--2025-10-17 merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea
+-- 20240117-17:20 tabla de base distributiva de elementos contables
+CREATE TABLE c_distributivebase (
+	c_distributivebase_id int4 NOT NULL,
+	ad_client_id int4 NOT NULL,
+	ad_org_id int4 NOT NULL,
+	isactive bpchar(1) NOT NULL DEFAULT 'Y'::bpchar,
+	created timestamp NOT NULL DEFAULT 'now'::text::timestamp(6) with time zone,
+	createdby int4 NOT NULL,
+	updated timestamp NOT NULL DEFAULT 'now'::text::timestamp(6) with time zone,
+	updatedby int4 NOT NULL,
+	value varchar(40) NOT NULL,
+	"name" varchar(255) NOT NULL,
+	description varchar(255) NULL,
+	percentage numeric not null,
+	c_project_id int4 not null,
+	c_elementvalue_id int4 not null,
+	ad_componentobjectuid varchar(100) NULL,
+	CONSTRAINT c_distributivebase_key PRIMARY KEY (c_distributivebase_id)
+);
+CREATE INDEX c_distributivebase_name ON c_distributivebase USING btree (name);
+CREATE INDEX c_distributivebase_value ON c_distributivebase USING btree (ad_client_id, value);
+CREATE INDEX c_distributivebase_element ON c_distributivebase USING btree (c_elementvalue_id);
+CREATE INDEX c_distributivebase_project ON c_distributivebase USING btree (c_elementvalue_id, c_project_id);
+
+--2025-10-17 merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea
+-- 20240117-17:25 contabilidad en linea
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_AcctSchema','cintolo_onlineaccounting','varchar(1)'));
+-- 20240117-17:25 centro de costo obligatorio
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ElementValue','cintolo_mandatorycostcenter','varchar(1)'));
+-- 20240117-17:25 utiliza base distributiva
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ElementValue','cintolo_usesdistributivebase','varchar(1)'));
+-- 20240117-17:25  validar distribucion
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ElementValue','cintolo_validatedistribution','varchar(1)'));
+-- 20240117-17:25 distribucion validada
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_ElementValue','cintolo_validateddistribution','varchar(1)'));
+
+--2025-10-17 merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea
+--20240119-18:10 - ajuste de la vista utilizada para el reporte diario mayor
+CREATE OR REPLACE VIEW libertya.v_diariomayor
+AS SELECT fa.ad_client_id,
+    fa.ad_org_id,
+    fa.created,
+    fa.createdby,
+    fa.updated,
+    fa.updatedby,
+    ev.c_elementvalue_id,
+    fa.dateacct,
+    fa.journalno,
+    ev.value,
+    (ev.value::text || ' '::text) || ev.name::text AS name,
+        CASE
+            WHEN fa.description IS NOT NULL THEN fa.description
+            WHEN t.name::text = 'Invoice'::text AND di.issotrx = 'N'::bpchar THEN ((('Referencia: '::text || di.poreference::text) || ' / '::text) || di.documentno::text)::character varying
+            WHEN t.name::text = 'Invoice'::text AND di.issotrx = 'Y'::bpchar THEN ('Factura: '::text || di.documentno::text)::character varying
+            WHEN t.name::text = 'Allocation'::text THEN ((dah.documentno::text || ' | '::text) || fa.description::text)::character varying
+            WHEN t.name::text = 'GL Journal'::text THEN ((dglb.documentno::text || ' | '::text) || dglb.description::text)::character varying
+            WHEN t.name::text = 'Payment'::text THEN ((dp.documentno::text || ' | '::text) || dp.description::text)::character varying
+            ELSE ev.name
+        END AS description,
+    fa.amtacctdr AS debe,
+    fa.amtacctcr AS haber,
+    fa.amtacctdr - fa.amtacctcr AS saldo,
+    t.name AS tablename,
+    ttrl.name AS tr_tablename,
+    fa.record_id,
+        CASE
+            WHEN t.name::text = 'Invoice'::text THEN di.documentno
+            WHEN t.name::text = 'Allocation'::text THEN dah.documentno
+            WHEN t.name::text = 'GL Journal'::text THEN dglb.documentno
+            WHEN t.name::text = 'Payment'::text THEN dp.documentno
+            ELSE NULL::character varying
+        END AS documentno,
+        CASE
+            WHEN t.name::text = 'Invoice'::text THEN di.c_bpartner_id
+            WHEN t.name::text = 'Payment'::text THEN dp.c_bpartner_id
+            WHEN t.name::text = 'Allocation'::text THEN ( SELECT min(al.c_bpartner_id) AS min
+               FROM c_allocationline al
+              WHERE al.c_allocationhdr_id = dah.c_allocationhdr_id)
+            ELSE NULL::integer
+        END AS c_bpartner_id,
+        CASE
+            WHEN t.name::text = 'Invoice'::text THEN di.dateinvoiced
+            WHEN t.name::text = 'Allocation'::text THEN dah.datetrx
+            WHEN t.name::text = 'GL Journal'::text THEN dglb.datedoc
+            WHEN t.name::text = 'Payment'::text THEN dp.datetrx
+            ELSE NULL::timestamp without time zone
+        END AS datedoc,
+        pr.c_project_id,
+        pr.name as proyectname
+        
+   FROM c_elementvalue ev,
+    ad_table t,
+    fact_acct fa
+     JOIN ad_table_trl ttrl ON fa.ad_table_id = ttrl.ad_table_id AND ttrl.ad_language::text = 'es_ES'::text
+     LEFT JOIN c_invoice di ON fa.record_id = di.c_invoice_id::numeric
+     LEFT JOIN c_allocationhdr dah ON fa.record_id = dah.c_allocationhdr_id::numeric
+     LEFT JOIN c_payment dp ON fa.record_id = dp.c_payment_id::numeric
+     LEFT JOIN gl_journal dgl ON fa.record_id = dgl.gl_journal_id::numeric
+     LEFT JOIN gl_journalbatch dglb ON dgl.gl_journalbatch_id = dglb.gl_journalbatch_id
+     left join C_Project pr on pr.C_Project_ID=fa.C_Project_ID
+  WHERE fa.account_id = ev.c_elementvalue_id AND t.ad_table_id = fa.ad_table_id
+  ORDER BY ev.name, fa.dateacct;
+  
+--2025-10-17 merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea
+-- 20240119-18:15 libertya.v_diariomayor_balance source
+CREATE OR REPLACE VIEW libertya.v_diariomayor_balance
+AS SELECT fa.ad_client_id,
+    fa.ad_org_id,
+    fa.created,
+    fa.createdby,
+    fa.updated,
+    fa.updatedby,
+    ev.c_elementvalue_id,
+    fa.dateacct,
+    fa.journalno,
+    ev.value,
+    (ev.value::text || ' '::text) || ev.name::text AS name,
+    COALESCE(fa.description, ev.name) AS description,
+    fa.amtacctdr AS debe,
+    fa.amtacctcr AS haber,
+    fa.amtacctdr - fa.amtacctcr AS saldo,
+    fa.c_bpartner_id,
+    fa.dateacct AS datedoc,
+    pr.c_project_id,
+    pr.name as proyectname
+   FROM fact_acct_balance fa
+     JOIN c_elementvalue ev ON ev.c_elementvalue_id = fa.account_id
+     left join C_Project pr on pr.C_Project_ID=fa.C_Project_ID
+  ORDER BY ev.name, fa.dateacct;
+
+--2025-10-17 merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea 
+-- 20240131-16:25 temporales de balance
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_Acct_Balance','c_project_id','int4'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','c_project_id','int4'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','isgroupbyproject','character'));
+

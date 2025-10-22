@@ -217,6 +217,9 @@ public class DocVO {
     /** Descripción de Campos */
 
     public int C_DocType_ID = 0;
+    
+    /** Tasa de Conversion dREHER Mayo 25 */
+    public BigDecimal tasaConversion = null;
 
     /**
      * Descripción de Método

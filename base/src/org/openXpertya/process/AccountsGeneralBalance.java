@@ -1,5 +1,6 @@
 package org.openXpertya.process;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,6 +29,12 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	/** Gestionar los datos de ajuste */
 	protected boolean manageAdjustedAmts = true;
 	
+	// dREHER
+	protected boolean isGroupByProject = false;
+	
+	/** C_Project_ID			*/
+	protected int 		p_C_Project_ID = 0;
+	
 	@Override
 	protected boolean loadParameter(String name, ProcessInfoParameter param) {
 		if( name.equalsIgnoreCase( "DateAcct" )) {
@@ -41,6 +48,14 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		}
 		if( name.equalsIgnoreCase( "FactAcctTable" )) {
 			p_factAcctTable = (String)param.getParameter();
+			return true;
+		}
+		if( name.equalsIgnoreCase( "C_Project_ID" )) { // dREHER
+			p_C_Project_ID = param.getParameterAsInt();
+			return true;
+		}
+		if(name.equalsIgnoreCase( "isGroupByProject" )){ // dREHER
+			isGroupByProject = ((String)param.getParameter()).equals("Y");
 			return true;
 		}
 		return false;
@@ -69,6 +84,11 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		sql.append(" 	    FROM thesumamt v ");
 		sql.append(" 	    WHERE  v.HierarchicalCode LIKE t.HierarchicalCode || '%' ");
 		sql.append("     ) ");
+		
+		// dREHER
+		if(isGroupByProject)
+			sql.append(" ,C_Project_ID=t.C_Project_ID");
+		
 		sql.append(" WHERE t.AD_PInstance_ID = ? ");
 		
 		PreparedStatement pstmt = null;
@@ -273,6 +293,9 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		line.setIsAdjustable(applyInflationIndexes?accountElement.adjustable:false);
 		line.setFactAcctTable(p_factAcctTable);
 		
+		// Proyecto - dREHER
+		line.setC_Project_ID(p_C_Project_ID);
+		
 		// El Debe y Haber se calculan masivamente en el doIt. 
 		line.setDebit(null);
 		line.setCredit(null);
@@ -289,7 +312,11 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 	
 	protected String getCTE(boolean withInflationIndex, MInflationIndex inflationIndex) {
 		StringBuffer sqlView = new StringBuffer();
-		sqlView.append(" SELECT ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode,");
+		
+		if(!isGroupByProject)
+			sqlView.append(" SELECT ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode,");
+		else
+			sqlView.append(" SELECT fa.C_Project_ID, ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode,");
 		
 		if(withInflationIndex) {
 			sqlView.append( "COALESCE(SUM(AmtAcctDr * (CASE WHEN inflationindex = 0 THEN 0 ELSE ((" + inflationIndex.getInflationIndex() + " - inflationindex) / inflationindex) END)), 0.0) as thesumdr, ");
@@ -300,6 +327,7 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		
 		sqlView.append(" FROM C_ElementValue ev ");
 		sqlView.append(" LEFT JOIN "+p_factAcctTable+" fa ON (fa.Account_ID = ev.C_ElementValue_ID) ");
+		// sqlView.append(" LEFT JOIN C_Project pr ON (fa.C_Project_ID = pr.C_Project_ID) "); // dREHER
 		sqlView.append(" INNER JOIN " + getReportTableName() + " tb ON (tb.C_ElementValue_ID = ev.C_ElementValue_ID AND tb.AD_PInstance_ID = ?) ");
 		if(withInflationIndex){
 			sqlView.append(" INNER JOIN c_period p on fa.DateAcct::date between startdate and enddate "); 
@@ -310,11 +338,21 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 		sqlAppend     ("   AND fa.AD_Org_ID = ? ", p_AD_Org_ID > 0, sqlView);
 		sqlAppend     ("   AND ?::date <= fa.DateAcct::date ", p_DateAcct_From, sqlView);
 		sqlAppend     ("   AND fa.DateAcct::date <= ?::date ", p_DateAcct_To, sqlView);
+		sqlAppend     ("   AND fa.C_Project_ID = " + p_C_Project_ID, p_C_Project_ID > 0, sqlView);
 		if(withInflationIndex){
 			sqlView.append("   AND ev.isadjustable = 'Y' ");
 		}
-		sqlView.append(" GROUP BY ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode ");
-		return sqlView.toString();
+		
+
+		// dREHER
+		if(!isGroupByProject)
+			sqlView.append(" GROUP BY ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode ");
+		else
+			sqlView.append(" GROUP BY fa.C_Project_ID, ev.C_ElementValue_ID, tb.C_ElementValue_To_ID, tb.HierarchicalCode ");
+		
+		// dREHER
+		return sqlView.toString().replace("current_date()", "current_date");
+		
 	}
 		
 	/**
@@ -348,26 +386,38 @@ public class AccountsGeneralBalance extends AccountsHierarchicalReport {
 				sql += "	and startdate <= date_trunc('month', ?::date)";
 			}
 			sql += " ORDER BY startdate ";
+
+			// dREHER
+			sql = sql.replace("current_date()", "current_date");
 					
-			PreparedStatement ps = DB.prepareStatement(sql, get_TrxName(), true);
-			int i = 1;
-			ps.setInt(i++, getAD_Client_ID());
-			ps.setTimestamp(i++, p_DateAcct_From);
-			if(p_DateAcct_To != null) {
-				ps.setTimestamp(i++, p_DateAcct_To);
-			}
-			ps.setInt(i++, getAD_Client_ID());
-			ps.setTimestamp(i++, p_DateAcct_From);
-			if(p_DateAcct_To != null) {
-				ps.setTimestamp(i++, p_DateAcct_To);
-			}
-			ResultSet rs = ps.executeQuery();
+			PreparedStatement ps = null;
+			ResultSet rs = null;
 			String periodNames = "";
-			while(rs.next()) {
-				periodNames += ","+rs.getString("name");
+			try {
+				ps = DB.prepareStatement(sql, get_TrxName(), true);
+				int i = 1;
+				ps.setInt(i++, getAD_Client_ID());
+				ps.setTimestamp(i++, p_DateAcct_From);
+				if(p_DateAcct_To != null) {
+					ps.setTimestamp(i++, p_DateAcct_To);
+				}
+				ps.setInt(i++, getAD_Client_ID());
+				ps.setTimestamp(i++, p_DateAcct_From);
+				if(p_DateAcct_To != null) {
+					ps.setTimestamp(i++, p_DateAcct_To);
+				}
+				rs = ps.executeQuery();
+				
+				while(rs.next()) {
+					periodNames += ","+rs.getString("name");
+				}
+			}catch(Exception ex) {
+
+			}finally { // dREHER cierre controlado
+				DB.close(rs, ps);
+				rs = null; ps = null;
 			}
-			rs.close();
-			ps.close();
+			
 			if(periodNames.length() > 0) {
 				periodNames = periodNames.substring(1);
 				throw new Exception(Msg.getMsg(getCtx(), "NoInflationIndexPeriods", new Object[] {periodNames}));

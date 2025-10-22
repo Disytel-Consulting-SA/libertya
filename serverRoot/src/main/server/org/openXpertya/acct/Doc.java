@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.model.X_C_ElementValue;
 import org.openXpertya.model.MAccount;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MAllocationHdr;
@@ -53,6 +54,7 @@ import org.openXpertya.model.ModelValidator;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_M_Production;
 import org.openXpertya.process.DocumentEngine;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DBException;
@@ -78,6 +80,9 @@ public abstract class Doc {
     /** Descripción de Campos */
 
     public static String[] documentsTableName = null;
+
+    /** show log console - dREHER */
+	private static boolean isDebug = true;
 
     static{
     	documentsTableID = new int[] {
@@ -309,7 +314,13 @@ public abstract class Doc {
      */
 
     public static boolean postImmediate( MAcctSchema[] ass,int AD_Table_ID,int Record_ID,boolean force ) {
-        Doc doc = get( ass,AD_Table_ID );
+        
+    	
+    	debug("postImmediate. pre Doc get...");
+    	
+    	Doc doc = get( ass,AD_Table_ID );
+    	
+    	debug("Post Doc get= " + doc);
 
         if( doc != null ) {
             return doc.post( Record_ID,force );
@@ -318,19 +329,44 @@ public abstract class Doc {
         return false;
     }    // post
 
-    /**
+    // dREHER para mostrar salidas en consola / eclipse
+    private static void debug(String string) {
+    	if(isDebug ) {
+    		System.out.println("====> Doc. " + string);
+    		s_log.info("====> Doc. " + string);
+    	}
+	}
+
+	/**
      * Invocado desde ZK.  TODO: Unificar logica de aplicacion contable (ZK / Swing)
      */
 	public static String postImmediate (MAcctSchema[] ass, 
 			int AD_Table_ID, int Record_ID, boolean force, String trxName)
 		{
-			Doc doc = get (ass, AD_Table_ID, Record_ID, trxName);
+			return postImmediate(ass, AD_Table_ID, Record_ID, force, trxName, " Processed='Y'");
+		}   //  post
+	
+	/**
+     * Invocado desde ZK.  TODO: Unificar logica de aplicacion contable (ZK / Swing)
+     * 
+     * Sobrecargo para poder modificar la forma en que busca el comprobante, si esta CO deberia avanzar
+     * 
+     * dREHER
+     */
+	public static String postImmediate (MAcctSchema[] ass, 
+			int AD_Table_ID, int Record_ID, boolean force, String trxName, String where)
+		{
+		
+			debug("postInmmediate. Busca el documento a postear desde BDD...");
+		
+			Doc doc = get (ass, AD_Table_ID, Record_ID, trxName, where);
 			if (doc != null)
-				return doc.post( Record_ID,force)?null:"PostServerError";	//	repost
+				return doc.post( Record_ID, force, where)?null:"PostServerError";	//	repost dREHER
 			return "NoDoc";
 		}   //  post
     
 	
+
 	/**
 	 *  Create Posting document
 	 *	@param ass accounting schema
@@ -339,7 +375,22 @@ public abstract class Doc {
 	 *  @param trxName transaction name
 	 *  @return Document or null
 	 */
-	public static Doc get (MAcctSchema[] ass, int AD_Table_ID, int Record_ID, String trxName)
+	public static Doc get (MAcctSchema[] ass, int AD_Table_ID, int Record_ID, String trxName) {
+		return get(ass, AD_Table_ID, Record_ID, trxName, "Processed='Y'");
+	}
+	
+	/**
+	 *  Create Posting document
+	 *	@param ass accounting schema
+	 *  @param AD_Table_ID Table ID of Documents
+	 *  @param Record_ID record ID to load
+	 *  @param trxName transaction name
+	 *  @return Document or null
+	 *  
+	 *  dREHER sobrecargo para poder modificar la forma en que busca el comprobante, si esta CO avanzar
+	 *  
+	 */
+	public static Doc get (MAcctSchema[] ass, int AD_Table_ID, int Record_ID, String trxName, String where)
 	{
 		String TableName = null;
 		for (int i = 0; i < getDocumentsTableID().length; i++)
@@ -347,19 +398,24 @@ public abstract class Doc {
 			if (getDocumentsTableID()[i] == AD_Table_ID)
 			{
 				TableName = getDocumentsTableName()[i];
+				debug("Encontro que se trata de una tabla que requiere contabilidad. Name=" + TableName);
 				break;
 			}
 		}
 		if (TableName == null)
 		{
 			s_log.severe("Not found AD_Table_ID=" + AD_Table_ID);
+			debug("Not found AD_Table_ID=" + AD_Table_ID);
 			return null;
 		}
 		//
 		Doc doc = null;
 		StringBuffer sql = new StringBuffer("SELECT * FROM ")
 			.append(TableName)
-			.append(" WHERE ").append(TableName).append("_ID=? AND Processed='Y'");
+			.append(" WHERE ").append(TableName).append("_ID=? AND " + (where==null?"Processed='Y'":where) ); // dREHER permito modificar el filtro
+		
+		debug("Doc.get sql busca documento=" + sql + " Record_ID:" + Record_ID + " trxName=" + trxName);
+		
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -370,9 +426,15 @@ public abstract class Doc {
 			if (rs.next ())
 			{
 				doc = get (ass, AD_Table_ID);
+				debug("Encontro el documento procesado, avanzar con el posteo...");
 			}
-			else
-				s_log.severe("Not Found: " + TableName + "_ID=" + Record_ID);
+			else {
+			
+				if(doc==null) {
+					s_log.severe("Not Found: " + TableName + "_ID=" + Record_ID);
+					debug("NO Encontro el documento procesado, NO se puede avanzar con el posteo...");
+				}
+			}
 		}
 		catch (Exception e)
 		{
@@ -622,12 +684,14 @@ public abstract class Doc {
 		{
 			String sql = "SELECT GL_Category_ID FROM C_DocType "
 				+ "WHERE AD_Client_ID=? AND DocBaseType=?";
+			PreparedStatement pstmt = null;
+			ResultSet rsDT = null;
 			try
 			{
-				PreparedStatement pstmt = DB.prepareStatement(sql, null);
+				pstmt = DB.prepareStatement(sql, null);
 				pstmt.setInt(1, getAD_Client_ID());
 				pstmt.setString(2, m_DocumentType);
-				ResultSet rsDT = pstmt.executeQuery();
+				rsDT = pstmt.executeQuery();
 				if (rsDT.next())
 					m_GL_Category_ID = rsDT.getInt(1);
 				rsDT.close();
@@ -636,6 +700,10 @@ public abstract class Doc {
 			catch (SQLException e)
 			{
 				log.log(Level.SEVERE, sql, e);
+			}
+			finally { // dREHER cierre de conexion controlado
+				DB.close(rsDT, pstmt);
+				rsDT = null; pstmt=null;
 			}
 		}
 
@@ -645,11 +713,13 @@ public abstract class Doc {
 			String sql = "SELECT GL_Category_ID FROM GL_Category "
 				+ "WHERE AD_Client_ID=? "
 				+ "ORDER BY IsDefault DESC";
+			PreparedStatement pstmt = null;
+			ResultSet rsDT = null;
 			try
 			{
-				PreparedStatement pstmt = DB.prepareStatement(sql, null);
+				pstmt = DB.prepareStatement(sql, null);
 				pstmt.setInt(1, getAD_Client_ID());
-				ResultSet rsDT = pstmt.executeQuery();
+				rsDT = pstmt.executeQuery();
 				if (rsDT.next())
 					m_GL_Category_ID = rsDT.getInt(1);
 				rsDT.close();
@@ -658,6 +728,10 @@ public abstract class Doc {
 			catch (SQLException e)
 			{
 				log.log(Level.SEVERE, sql, e);
+			}
+			finally { // dREHER cierre de conexion controlado
+				DB.close(rsDT, pstmt);
+				rsDT = null; pstmt=null;
 			}
 		}
 		//
@@ -1029,6 +1103,20 @@ public abstract class Doc {
         return p_Record_ID;
     }    // getRecord_ID
 
+
+    /**
+     * 
+     * @param Record_ID
+     * @param force
+     * @return
+     * 
+     * dREHER 
+     */
+    public final boolean post( int Record_ID,boolean force ) {
+    	return post(Record_ID, force, "Processed='Y'");
+    }
+    
+    
     /**
      * Descripción de Método
      *
@@ -1037,17 +1125,26 @@ public abstract class Doc {
      * @param force
      *
      * @return
+     * 
+     * 
+     * LLega aca desde PluginDocAction...
+     * Sobrecargo para poder mantener compatibilidad con otras llamadas
+     * 
+     * dREHER
      */
 
-    public final boolean post( int Record_ID,boolean force ) {
+    public final boolean post( int Record_ID,boolean force,String where ) {
         boolean retValue = false;
         String  trxName  = null;    // no p_vo
 
+       
+        debug("post. Record_ID=" + Record_ID + " force=" + force);
+        
         // Lock Record ----
 
         StringBuffer sql = new StringBuffer( "UPDATE " );
 
-        sql.append( p_TableName ).append( " SET Processing='Y' WHERE " ).append( p_TableName ).append( "_ID=" ).append( Record_ID ).append( " AND Processed='Y' AND IsActive='Y'" );
+        sql.append( p_TableName ).append( " SET Processing='Y' WHERE " ).append( p_TableName ).append( "_ID=" ).append( Record_ID ).append( " AND " + (where==null?" Processed='Y'":where) + " AND IsActive='Y'" ); // dREHER
 
         if( !force ) {
             sql.append( " AND (Processing='N' OR Processing IS NULL) AND Posted<>'Y'" );
@@ -1055,7 +1152,8 @@ public abstract class Doc {
 
         if( DB.executeUpdate( sql.toString(),trxName ) != 1 ) {
             log.log( Level.SEVERE,"Cannot lock Document - ignored: " + p_TableName + "_ID=" + Record_ID );
-
+            debug("Cannot lock Document - ignored: " + p_TableName + "_ID=" + Record_ID);
+            debug("sqlUpdate=" + sql);
             return false;
         }
 
@@ -1065,16 +1163,20 @@ public abstract class Doc {
         sql.append( p_TableName ).append( " WHERE AD_Client_ID=? AND " )    // additional security
             .append( p_TableName ).append( "_ID=?" );
 
+        PreparedStatement pstmt = null;
+        ResultSet rs = null; 
+        
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql.toString(),trxName );
+            pstmt = DB.prepareStatement( sql.toString(),trxName );
 
             pstmt.setInt( 1,m_ass[ 0 ].getAD_Client_ID());
             pstmt.setInt( 2,Record_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
-                retValue = post( rs,force );    // ----
+            	debug("Encontro registro, llama a post(rs, force)");
+                retValue = post( rs, force );    // ----
             }
 
             rs.close();
@@ -1082,6 +1184,9 @@ public abstract class Doc {
         } catch( Exception e ) {
             log.log( Level.SEVERE,"Record_ID=" + Record_ID,e );
             retValue = false;
+        } finally { // dREHER cierre de conexion controlado
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
         }
 
         return retValue;
@@ -1109,7 +1214,10 @@ public abstract class Doc {
 
         p_vo = new DocVO();
 
+        debug("post(rs, force)... preLoadDocument()");
+        
         if( !loadDocument( rs,force )) {
+        	debug("Not load document... return!");
             return false;
         }
 
@@ -1236,13 +1344,20 @@ public abstract class Doc {
         
         // check accounts
 
-        if( !m_fact.get(index).checkAccounts()) {
+        CallResult rs = m_fact.get(index).checkAccounts();
+        
+        if(rs.isError()) {
+        	debug("Error al chequear cuenta contable=" + m_fact.get(index));
+        	p_vo.Error = rs.getMsg();
             return STATUS_InvalidAccount;
         }
 
         // distribute
 
         if( !m_fact.get(index).distribute()) {
+        	debug("No pudo distribuir asiento...");
+        	
+        	p_vo.Error = "No se pudo distribuir asiento contable";
             return STATUS_Error;
         }
 
@@ -1252,8 +1367,13 @@ public abstract class Doc {
         // Modificaciones custom para cada tipo de documento
 
         String status = applyCustomSettings(m_fact.get(index), index);
-        if (status != null)
+        if (status != null) {
+        	debug("Status en customizaciones...");
+        	p_vo.Error = "Error al aplicar customizaciones del documento actual!";
         	return status;
+        }
+        
+        debug("end postLogic...");
         
         return STATUS_Posted;
     }    // postLogic
@@ -1295,7 +1415,8 @@ public abstract class Doc {
      */
 
     private final String postCommit( String status ) {
-        log.info( "Sta=" + status + " DT=" + p_vo.DocumentType + " ID=" + p_Record_ID );
+        
+    	debug( "start postCommit(status) Sta=" + status + " DT=" + p_vo.DocumentType + " ID=" + p_Record_ID );
         p_vo.Status = status;
 
         Trx trx = Trx.get( getTrxName(),true );
@@ -1507,6 +1628,11 @@ public abstract class Doc {
                 else if( col.equalsIgnoreCase( "Accounting_C_Charge_ID" )) {
                     p_vo.Accounting_C_Charge_ID = rs.getInt( i );
                 }
+                
+                else if( col.equalsIgnoreCase("Cintolo_Exchange_Rate")) { // dREHER Mayo 25
+                	p_vo.tasaConversion = rs.getBigDecimal("Cintolo_Exchange_Rate");
+                	debug("Tasa de conversion del documento: " + p_vo.tasaConversion);
+                }
             }    // for all columns
 
             p_vo.Status = STATUS_NotPosted;
@@ -1616,13 +1742,14 @@ public abstract class Doc {
 
         if( (p_vo.DocumentType == null) && (p_vo.C_DocType_ID != 0) ) {
             String sql = "SELECT DocBaseType, GL_Category_ID FROM C_DocType WHERE C_DocType_ID=?";
-
+            PreparedStatement pstmt = null;
+			ResultSet rsDT = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql );
+                pstmt = DB.prepareStatement( sql );
 
                 pstmt.setInt( 1,p_vo.C_DocType_ID );
 
-                ResultSet rsDT = pstmt.executeQuery();
+                rsDT = pstmt.executeQuery();
 
                 if( rsDT.next()) {
                     p_vo.DocumentType   = rsDT.getString( 1 );
@@ -1633,6 +1760,9 @@ public abstract class Doc {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,sql,e );
+            } finally { // dREHER cierre controlado
+            	DB.close(rsDT, pstmt);
+            	rsDT=null; pstmt=null;
             }
         }
 
@@ -1645,14 +1775,15 @@ public abstract class Doc {
 
         if( p_vo.GL_Category_ID == 0 ) {
             String sql = "SELECT GL_Category_ID FROM C_DocType " + "WHERE AD_Client_ID=? AND DocBaseType=?";
-
+            PreparedStatement pstmt = null;
+			ResultSet rsDT = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql );
+                pstmt = DB.prepareStatement( sql );
 
                 pstmt.setInt( 1,p_vo.AD_Client_ID );
                 pstmt.setString( 2,p_vo.DocumentType );
 
-                ResultSet rsDT = pstmt.executeQuery();
+                rsDT = pstmt.executeQuery();
 
                 if( rsDT.next()) {
                     p_vo.GL_Category_ID = rsDT.getInt( 1 );
@@ -1662,6 +1793,9 @@ public abstract class Doc {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,sql,e );
+            } finally { // dREHER cierre controlado
+            	DB.close(rsDT, pstmt);
+            	rsDT=null; pstmt=null;
             }
         }
 
@@ -1669,13 +1803,14 @@ public abstract class Doc {
 
         if( p_vo.GL_Category_ID == 0 ) {
             String sql = "SELECT GL_Category_ID FROM GL_Category " + "WHERE AD_Client_ID=? " + "ORDER BY IsDefault DESC";
-
+            PreparedStatement pstmt = null;
+			ResultSet rsDT = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql );
+                pstmt = DB.prepareStatement( sql );
 
                 pstmt.setInt( 1,p_vo.AD_Client_ID );
 
-                ResultSet rsDT = pstmt.executeQuery();
+                rsDT = pstmt.executeQuery();
 
                 if( rsDT.next()) {
                     p_vo.GL_Category_ID = rsDT.getInt( 1 );
@@ -1685,6 +1820,9 @@ public abstract class Doc {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,sql,e );
+            } finally {
+            	DB.close(rsDT, pstmt);
+            	rsDT=null; pstmt=null;
             }
         }
 
@@ -2102,9 +2240,10 @@ public abstract class Doc {
         // Get Acct
 
         int Account_ID = 0;
-
+        PreparedStatement pstmt = null;
+		ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql );
+            pstmt = DB.prepareStatement( sql );
 
             if( para_1 == -1 ) {    // GL Accounts
                 pstmt.setInt( 1,as.getC_AcctSchema_ID());
@@ -2113,7 +2252,7 @@ public abstract class Doc {
                 pstmt.setInt( 2,as.getC_AcctSchema_ID());
             }
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 Account_ID = rs.getInt( 1 );
@@ -2125,6 +2264,9 @@ public abstract class Doc {
             log.log( Level.SEVERE,"AcctType=" + AcctType + " - SQL=" + sql,e );
 
             return null;
+        } finally {
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         // No account
@@ -2276,6 +2418,17 @@ public abstract class Doc {
 	public void setUpdateFactBalance(boolean updateFactBalance) {
 		this.updateFactBalance = updateFactBalance;
 	}
+	
+	/**
+	 * Traer el LP_C_ElementValue segun el Account_ID
+	 * dREHER
+	 */
+	public X_C_ElementValue getElementValue(int Account_ID) {
+		X_C_ElementValue ev = new X_C_ElementValue(Env.getCtx(), Account_ID, null);
+		return ev;
+	}
+	
+	
 	
     // To be overwritten by Subclasses
 

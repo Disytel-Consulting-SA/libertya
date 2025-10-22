@@ -102,13 +102,14 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
     private void setCashBookInfo() {
         int    retValue = 0;
         String sql      = "SELECT cb.C_CashBook_ID, cb.AD_Org_ID, cb.C_Currency_ID " + "FROM C_Cash c, C_CashBook cb " + "WHERE c.C_CashBook_ID=cb.C_CashBook_ID AND c.C_Cash_ID=?";
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,getRecord_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 p_vo.C_CashBook_ID = rs.getInt( 1 );
@@ -120,6 +121,9 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"setCashBookInfo",e );
+        } finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
     }    // setCashBookInfo
 
@@ -133,13 +137,14 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
     private DocLine[] loadLines() {
         ArrayList list = new ArrayList();
         String    sql  = "SELECT * FROM C_CashLine WHERE C_Cash_ID=? ORDER BY Line";
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,getRecord_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             //
 
@@ -161,6 +166,9 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadLines",e );
+        }finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         // Return Array
@@ -379,7 +387,10 @@ public class Doc_Cash extends Doc implements DocProjectSplitterInterface   {
     	}
     	catch (Exception e)	{
     		return null;
-    	}
+    	}finally { // dREHER cierre controlado
+        	DB.close(rs, stmt);
+        	rs=null; stmt=null;
+        }
     	
     	return map;
 	}

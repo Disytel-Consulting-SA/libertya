@@ -52,7 +52,10 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 	/** Organización */
 	private int orgID = 0;
 	
-	public DiarioMayorJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, String factAcctTable, Integer orgID)	{
+	/** Proyecto */
+	private int p_C_Project_ID = 0;
+	
+	public DiarioMayorJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, String factAcctTable, Integer orgID, Integer C_Project_ID)	{
 		p_ctx = ctx;
 		
 		p_DateAcct_From = dateFrom;
@@ -62,6 +65,8 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		p_2_ElementValue_ID = elementTo_ID;
 		
 		p_factAcctTable = factAcctTable;
+		
+		p_C_Project_ID = C_Project_ID;
 		
 		this.orgID = orgID;
 		
@@ -95,6 +100,11 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		sql.append(" AND DateAcct::date BETWEEN ").append(DB.TO_DATE(p_DateAcct_From)).append(" AND ").append(DB.TO_DATE(p_DateAcct_To));
 		
 		
+		// dREHER
+		if(!Util.isEmpty(p_C_Project_ID, true)){
+			sql.append( " AND C_Project_ID=").append(p_C_Project_ID);
+		}
+		
 		// Obtenemos la clausula de las cuentas basandonos en el nombre.
 		if (p_1_ElementValue_ID > 0  && p_2_ElementValue_ID > 0)	{
 
@@ -112,7 +122,7 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		// Orden
 		sql.append( " ORDER BY Name, DateAcct, JournalNo");
 
-		return  sql.toString();
+		return  sql.toString().replace("current_date()", "current_date");
 	}
 	
 	/**
@@ -129,6 +139,12 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		if(!Util.isEmpty(orgID, true)){
 			sql.append( " AND ac.AD_Org_ID=").append(orgID);
 		}
+		
+		// dREHER
+		if(!Util.isEmpty(p_C_Project_ID, true)){
+			sql.append( " AND C_Project_ID=").append(p_C_Project_ID);
+		}
+		
 		sql.append(" AND ac.DateAcct::date < ").append(DB.TO_DATE(p_DateAcct_From));
 		
 		// Obtenemos la clausula de las cuentas basandonos en el nombre.
@@ -146,16 +162,18 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		sql.append(" GROUP BY ac.account_id, ev.name, ev.value ");
 		
 		log.info("SQL: " + sql.toString());
-		return sql.toString();
+		return sql.toString().replace("current_date()", "current_date");
 	}
 	
 	
 	protected  void loadSaldos()	{
 		m_saldos = new HashMap();
 		
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try	{
-			PreparedStatement pstmt = DB.prepareStatement(getSQLSaldos(), null, true);
-			ResultSet rs = pstmt.executeQuery();
+			pstmt = DB.prepareStatement(getSQLSaldos(), null, true);
+			rs = pstmt.executeQuery();
 			while (rs.next())	{
 				M_DiarioMayor line = new M_DiarioMayor(rs.getInt("C_ElementValue_ID"), rs.getString("Name"), rs.getString("Value"));
 				
@@ -172,6 +190,9 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		}
 		catch (SQLException e)	{
 			log.severe("No se pueden cargar los saldos." + e.toString());
+		} finally { // Cierre controlado
+			DB.close(rs, pstmt);
+			rs=null;pstmt=null;
 		}
 	}
 	
@@ -185,10 +206,11 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		
 		// Cargamos los datos del informe
 		ArrayList list = new ArrayList();
-		
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(getSQLData(), null, true);
-			ResultSet rs = pstmt.executeQuery();
+			pstmt = DB.prepareStatement(getSQLData(), null, true);
+			rs = pstmt.executeQuery();
 			
 			BigDecimal saldo = Env.ZERO;
 			
@@ -223,7 +245,10 @@ public class DiarioMayorJasperDataSource implements JRDataSource {
 		catch (SQLException e)	{
 			throw new RuntimeException("No se puede ejecutar la consulta para crear las lineas del informe.");
 		}
-		
+		finally { // Cierre controlado
+			DB.close(rs, pstmt);
+			rs=null;pstmt=null;
+		}
 		// Guardamos la lista en m_reportLines
 		m_reportLines = new M_DiarioMayor[list.size()];
 		list.toArray(m_reportLines);
