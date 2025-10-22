@@ -105,12 +105,14 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
         	// No se debe contabilizar ninguna línea de una OPA o RCA.
         	" WHERE al.C_AllocationHdr_ID=? AND ah.AllocationType NOT IN ('OPA','RCA')"; 
 
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,getRecord_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             //
 
@@ -154,6 +156,9 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadLines",e );
+        } finally { // dREHER cierre de conexiones controlado
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
         }
 
         // Return Array
@@ -508,12 +513,12 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
 
         String sql = "SELECT p.C_BankAccount_ID, d.DocBaseType, p.IsReceipt, p.IsPrepayment " + "FROM C_Payment p INNER JOIN C_DocType d ON (p.C_DocType_ID=d.C_DocType_ID) " + "WHERE C_Payment_ID=?";
         PreparedStatement pstmt = null;
-
+        ResultSet rs = null;
         try {
             pstmt = DB.prepareStatement( sql,m_trxName );
             pstmt.setInt( 1,C_Payment_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 p_vo.C_BankAccount_ID = rs.getInt( 1 );
@@ -539,16 +544,10 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
             pstmt = null;
         } catch( Exception e ) {
             log.log( Level.SEVERE,"getPaymentAcct",e );
-        }
+        } finally { // dREHER cierre de conexiones controlado
 
-        try {
-            if( pstmt != null ) {
-                pstmt.close();
-            }
-
-            pstmt = null;
-        } catch( Exception e ) {
-            pstmt = null;
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         //
@@ -620,13 +619,13 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
         // AND C_Currency_ID=102
 
         PreparedStatement pstmt = null;
-
+        ResultSet rs = null;
         try {
             pstmt = DB.prepareStatement( sql,m_trxName );
             pstmt.setInt( 1,C_Invoice_ID );
             pstmt.setInt( 2,as.getC_AcctSchema_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 invoiceSource    = rs.getBigDecimal( 1 );
@@ -638,16 +637,10 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
             pstmt = null;
         } catch( Exception e ) {
             log.log( Level.SEVERE,"createRealizedGainLoss",e );
-        }
+        } finally { // dREHER cierre de conexiones controlado
 
-        try {
-            if( pstmt != null ) {
-                pstmt.close();
-            }
-
-            pstmt = null;
-        } catch( Exception e ) {
-            pstmt = null;
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         // Requires that Invoice is Posted
@@ -739,13 +732,13 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
         String sql = "SELECT * " + "FROM Fact_Acct " + "WHERE AD_Table_ID=318 AND Record_ID=?"    // Invoice
                      + " AND C_AcctSchema_ID=?" + " AND Line_ID IS NULL";    // header lines like tax or total
         PreparedStatement pstmt = null;
-
+        ResultSet rs = null;
         try {
             pstmt = DB.prepareStatement( sql,m_trxName );
             pstmt.setInt( 1,line.getC_Invoice_ID());
             pstmt.setInt( 2,as.getC_AcctSchema_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             while( rs.next()) {
                 tax.addInvoiceFact( new MFactAcct( getCtx(),rs,fact.get_TrxName()));
@@ -756,17 +749,12 @@ public class Doc_Allocation extends Doc implements DocProjectSplitterInterface  
             pstmt = null;
         } catch( Exception e ) {
             log.log( Level.SEVERE,"createTaxCorrection",e );
+        } finally { // dREHER cierre de conexiones controlado
+
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
-        try {
-            if( pstmt != null ) {
-                pstmt.close();
-            }
-
-            pstmt = null;
-        } catch( Exception e ) {
-            pstmt = null;
-        }
 
         // Invoice Not posted
 

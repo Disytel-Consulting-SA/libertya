@@ -303,13 +303,14 @@ public class Doc_MatchInv extends Doc {
         int M_Product_ID = -1;
 
         m_InvoiceQty = new BigDecimal( 1.0 );
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,m_M_InOutLine_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 m_M_InOut_ID             = rs.getInt( 1 );
@@ -330,6 +331,9 @@ public class Doc_MatchInv extends Doc {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,sql,e );
+        } finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         if( M_Product_ID == -1 ) {
@@ -348,11 +352,11 @@ public class Doc_MatchInv extends Doc {
         M_Product_ID = -1;
 
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,m_C_InvoiceLine_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 m_C_Invoice_ID = rs.getInt( 1 );
@@ -370,6 +374,9 @@ public class Doc_MatchInv extends Doc {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,sql,e );
+        }finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         if( M_Product_ID == -1 ) {

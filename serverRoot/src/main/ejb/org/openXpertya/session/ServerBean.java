@@ -78,6 +78,10 @@ public class ServerBean implements SessionBean
 	private static CLogger log = CLogger.getCLogger(ServerBean.class);
 	//
 	private static int		s_no = 0;
+	
+	/** show log console - dREHER */
+	private static boolean isDebug = true;
+	
 	private int				m_no = 0;
 	//
 	private int				m_windowCount = 0;
@@ -129,11 +133,23 @@ public class ServerBean implements SessionBean
 		int AD_Client_ID, int AD_Table_ID, int Record_ID, boolean force)
 		throws RemoteException
 	{
-		log.info ("[" + m_no + "] Table=" + AD_Table_ID + ", Record=" + Record_ID);
+		// dREHER
+		debug ("ServerBean. postImmediate [" + m_no + "] Table=" + AD_Table_ID + ", Record=" + Record_ID);
+		
 		m_postCount++;
 		MAcctSchema[] ass = MAcctSchema.getClientAcctSchema(ctx, AD_Client_ID);
+		
 		return Doc.postImmediate(ass, AD_Table_ID, Record_ID, force);
 	}	//	postImmediate
+	
+    // dREHER para mostrar salidas en consola / eclipse
+    private static void debug(String string) {
+    	if(isDebug ) {
+    		System.out.println("==> ServerBean. " + string);
+    		log.warning("==> ServerBean. " + string);
+    	}
+	}
+
 
 	/*************************************************************************
 	 *  Get Prepared Statement ResultSet

@@ -200,13 +200,14 @@ public class Doc_MatchPO extends Doc {
         // get PO Amount (probably no Acct_Fact)
 
         String sql = "SELECT ol.PriceActual, COALESCE(ol.C_Project_ID, o.C_Project_ID) " + "FROM C_OrderLine ol INNER JOIN C_Order o ON (ol.C_Order_ID=o.C_Order_ID) " + "WHERE ol.C_OrderLine_ID=?";
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,m_C_OrderLine_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 poAmt             = rs.getBigDecimal( 1 );
@@ -217,6 +218,9 @@ public class Doc_MatchPO extends Doc {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadInfo",e );
+        }finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         if( poAmt == null ) {

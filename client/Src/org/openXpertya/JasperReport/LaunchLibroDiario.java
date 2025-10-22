@@ -3,6 +3,7 @@ package org.openXpertya.JasperReport;
 import java.sql.Timestamp;
 
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MProject;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
@@ -19,6 +20,8 @@ public class LaunchLibroDiario extends SvrProcess {
 	/** Date Acct To			*/
 	private Timestamp	p_DateAcct_To = null;
 	
+	/** C_Project_ID			*/
+	private int 		p_C_Project_ID = 0;
 	
 	/** Jasper Report			*/
 	private int 		AD_JasperReport_ID;
@@ -49,6 +52,9 @@ public class LaunchLibroDiario extends SvrProcess {
 			{
 				p_DateAcct_From = (Timestamp)para[i].getParameter();
 				p_DateAcct_To = (Timestamp)para[i].getParameter_To();
+			}
+			else if (name.equals("C_Project_ID"))	{
+				p_C_Project_ID = para[i].getParameterAsInt();
 			}
 			else
 				log.severe("prepare - Unknown Parameter: " + name);
@@ -81,6 +87,12 @@ public class LaunchLibroDiario extends SvrProcess {
 		jasperwrapper.addParameter("1_DateAcct", p_DateAcct_From);
 		jasperwrapper.addParameter("2_DateAcct", p_DateAcct_To);
 		
+		// dREHER si se filtro un proyecto, mostrar cual es...
+		if(p_C_Project_ID > 0) {
+			MProject p = new MProject(Env.getCtx(), p_C_Project_ID, get_TrxName());
+			jasperwrapper.addParameter("projectName", p.getName());
+		}
+		
 		try {
 			jasperwrapper.fillReport(DB.getConnectionRO());
 			
@@ -96,8 +108,14 @@ public class LaunchLibroDiario extends SvrProcess {
 		
 	}
 	
+	// dREHER	
+	protected int getC_Project_ID() {
+		return p_C_Project_ID;
+	}
 
-	
-	
+	protected void setC_Project_ID(int C_Project_ID) {
+		this.p_C_Project_ID = C_Project_ID;
+	}
+	//
 	
 }

@@ -7,6 +7,7 @@ import net.sf.jasperreports.engine.JRException;
 import org.openXpertya.JasperReport.DataSource.SumasYSaldosJasperDataSource;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MProcess;
+import org.openXpertya.model.MProject;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoParameter;
 import org.openXpertya.process.SvrProcess;
@@ -24,9 +25,14 @@ public class LaunchSumasYSaldos extends SvrProcess {
 	/** Date Acct To			*/
 	private Timestamp	p_DateAcct_To = null;
 	
+	/** C_Project_ID			*/
+	private int 		p_C_Project_ID = 0;
 	
 	/** Jasper Report			*/
 	private int 		AD_JasperReport_ID;
+	
+	/** dREHER */
+	private boolean 	p_groupByProjects = false;
 	
 	/** Nombre del informe	*/
 	private final String p_reportName = "Sumas y Saldos";
@@ -53,8 +59,14 @@ public class LaunchSumasYSaldos extends SvrProcess {
 				p_DateAcct_From = (Timestamp)para[i].getParameter();
 				p_DateAcct_To = (Timestamp)para[i].getParameter_To();
 			}
+			else if (name.equals("C_Project_ID"))	{
+				p_C_Project_ID = para[i].getParameterAsInt();
+			}
+			else if(name.equalsIgnoreCase( "isGroupByProject" )){ // dREHER
+				p_groupByProjects = ((String)para[i].getParameter()).equals("Y");
+			}
 			else
-				log.severe("prepare - Unknown Parameter: " + name);
+				log.severe("prepare - Unknown Parameter= " + name);
 		}
 		
 		
@@ -75,7 +87,8 @@ public class LaunchSumasYSaldos extends SvrProcess {
 	private String createReport()	throws Exception{
 		MJasperReport jasperwrapper = new MJasperReport(getCtx(), AD_JasperReport_ID, get_TrxName());
 		
-		 SumasYSaldosJasperDataSource ds = new SumasYSaldosJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To, p_1_ElementValue_ID, p_2_ElementValue_ID, 0);
+		 SumasYSaldosJasperDataSource ds = new SumasYSaldosJasperDataSource(getCtx(), p_DateAcct_From, p_DateAcct_To, 
+				 p_1_ElementValue_ID, p_2_ElementValue_ID, 0, p_C_Project_ID, p_groupByProjects);
 		
 		 try {
 				ds.loadData();
@@ -89,6 +102,13 @@ public class LaunchSumasYSaldos extends SvrProcess {
 			jasperwrapper.addParameter("TEMPDIR", System.getProperty("java.io.tmpdir"));
 			jasperwrapper.addParameter("orgName", (MClient.get(getCtx())).getName());
 			
+			// dREHER si se filtro un proyecto, mostrar cual es...
+			if(p_C_Project_ID > 0) {
+				MProject p = new MProject(Env.getCtx(), p_C_Project_ID, get_TrxName());
+				jasperwrapper.addParameter("projectName", p.getName());
+			}else
+				jasperwrapper.addParameter("projectName", "Todos los Proyectos");
+			
 			try {
 				jasperwrapper.fillReport(ds, this);
 				
@@ -100,5 +120,15 @@ public class LaunchSumasYSaldos extends SvrProcess {
 			
 			return "doIt";
 	}
+	
+	// dREHER	
+	protected int getC_Project_ID() {
+		return p_C_Project_ID;
+	}
+
+	protected void setC_Project_ID(int C_Project_ID) {
+		this.p_C_Project_ID = C_Project_ID;
+	}
+	//
 
 }

@@ -21,14 +21,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import org.openXpertya.model.X_C_ElementValue;
 import org.openXpertya.model.MAccount;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MAcctSchemaElement;
 import org.openXpertya.model.MDistribution;
 import org.openXpertya.model.MDistributionLine;
 import org.openXpertya.model.MElementValue;
+import org.openXpertya.model.PO;
+import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -103,6 +108,12 @@ public final class Fact {
     /** Descripción de Campos */
 
     private ArrayList m_lines = new ArrayList();
+    
+    /** Show log console - dREHER */
+    private boolean isDebug = true;
+    
+    /** permite calcular montos segun una tasa de conversion que puede estar configurada en el documento dREHER Mayo 25 */
+	private BigDecimal tasaConversion = null;
 
     /**
      * Descripción de Método
@@ -150,6 +161,9 @@ public final class Fact {
         line.setDocumentInfo( m_docVO,docLine );
         line.setPostingType( m_postingType );
         line.setAccount( m_acctSchema,account );
+        
+        // dREHER Mayo 25, trasladar la tasa de conversion desde fact a factLine
+        line.setTasaConversion(getTasaConversion());
 
         // Amounts - one needs to not zero
 
@@ -344,6 +358,8 @@ public final class Fact {
         line.setPostingType( m_postingType );
 
         // Amount
+        // dREHER Mayo 25, trasladar la tasa de conversion desde Fact a factLine
+        line.setTasaConversion(getTasaConversion());
 
         if( diff.compareTo( BigDecimal.ZERO ) < 0 ) {    // negative balance => DR
             line.setAmtSource( m_docVO.C_Currency_ID,diff.abs(),BigDecimal.ZERO );
@@ -451,6 +467,16 @@ public final class Fact {
         return true;
     }    // isSegmentBalanced
 
+    // dREHER para mostrar salidas en consola / eclipse
+    private void debug(String string) {
+    	
+    	if(isDebug) {
+    		System.out.println("====> Fact. " + string);
+    		log.info("====> Fact. " + string);
+    	}
+	}
+
+    
     /**
      * Descripción de Método
      *
@@ -538,7 +564,9 @@ public final class Fact {
                     line.setPostingType( m_postingType );
 
                     // Amount & Account
-
+                 // dREHER Mayo 25, trasladar la tasa de conversion desde Fact a factLine
+                    line.setTasaConversion(getTasaConversion());
+                    
                     if( difference.compareTo( Env.ZERO ) < 0 ) {
                         line.setAmtSource( m_docVO.C_Currency_ID,difference.abs(),Env.ZERO );
                         line.setAccount( m_acctSchema,m_acctSchema.getDueFrom_Acct( elementType ));
@@ -636,7 +664,9 @@ public final class Fact {
             line.setAccount( m_acctSchema,m_acctSchema.getCurrencyBalancing_Acct());
 
             // Amount
-
+         // dREHER Mayo 25, trasladar la tasa de conversion desde Fact a factLine
+            line.setTasaConversion(getTasaConversion());
+            
             line.setAmtSource( m_docVO.C_Currency_ID,BigDecimal.ZERO,BigDecimal.ZERO );
             line.convert();
 
@@ -700,15 +730,18 @@ public final class Fact {
      * Descripción de Método
      *
      *
-     * @return
+     * @return CallResult para poder devolver errores mas claros y no solo True/False 
+     * dREHER Mayo 25
      */
 
-    public boolean checkAccounts() {
-
+    public CallResult checkAccounts() {
+    	CallResult cr = new CallResult();
+    	
         // no lines -> nothing to distribute
 
         if( m_lines.size() == 0 ) {
-            return true;
+            // return true;
+        	return cr;
         }
 
         // For all fact lines
@@ -719,32 +752,99 @@ public final class Fact {
 
             if( account == null ) {
                 log.warning( "No Account for " + line );
-
-                return false;
+                debug("No account for " + line);
+                cr.setMsg("No account for " + line, true);
+                return cr;
             }
 
+            // dREHER - traer instancia custom de la cuenta contable (C_ElementValue)
+            // LP_C_ElementValue ev = account.getCustomAccount();
+            // En la version web trae problemas para postear asientos...
+            
             MElementValue ev = account.getAccount();
 
             if( ev == null ) {
                 log.warning( "No Element Value for " + account + ": " + line );
-
-                return false;
+                debug( "No Element Value for " + account + ": " + line );
+                cr.setMsg("No Element Value for " + account + ": " + line, true);
+                return cr;
             }
 
             if( ev.isSummary()) {
                 log.warning( "Cannot post to Summary Account " + ev + ": " + line );
-
-                return false;
+                debug( "Cannot post to Summary Account " + ev + ": " + line );
+                cr.setMsg("Cannot post to Summary Account " + ev + ": " + line, true);
+                return cr;
             }
 
             if( !ev.isActive()) {
                 log.warning( "Cannot post to Inactive Account " + ev + ": " + line );
-
-                return false;
+                debug( "Cannot post to Inactive Account " + ev + ": " + line );
+                cr.setMsg("Cannot post to Inactive Account " + ev + ": " + line, true);
+                return cr;
             }
-        }    // for all lines
+            
+            /**
+             * Si la cuenta requiere que sea obligatorio un proyecto y la linea no lo tiene y el encabezado tampoco 
+             * -> excepcion. 
+             * Contemplar tambien que si NO es mandatorio, pero utiliza base distributiva y dicha base NO
+             * esta validada, tambien excepcion
+             * dREHER
+             */
+            
+            // boolean isDistributiveBase = ev.isCintolo_UsesDistributiveBase();
+            // boolean isValidatedDistribution = ev.isCintolo_ValidatedDistribution();
+            
+            boolean isDistributiveBase = ev.get_Value("Cintolo_UsesDistributiveBase")==null?false:
+            							(Boolean)ev.get_Value("Cintolo_UsesDistributiveBase");
+            boolean isValidatedDistribution = ev.get_Value("Cintolo_ValidatedDistribution")==null?false:
+            							(Boolean)ev.get_Value("Cintolo_ValidatedDistribution");
+            
+            debug("ev.isCintolo_UsesDistributiveBase()..." + isDistributiveBase + " Validated=" + isValidatedDistribution);
+            if(isDistributiveBase && !isValidatedDistribution) {
+            	log.warning("Falta validar la base distributiva: " + ev);
+            	debug("Falta validar la base distributiva: " + ev);
+        		cr.setMsg("Falta validar la base distributiva: " + ev, true);
+            	return cr;
+            }
+            
+            // boolean isMandatoryCostCenter = ev.isCintolo_MandatoryCostCenter();
+            boolean isMandatoryCostCenter = ev.get_Value("Cintolo_MandatoryCostCenter")==null?false:
+            								(Boolean)ev.get_Value("Cintolo_MandatoryCostCenter");
+            debug("ev.isCintolo_MandatoryCostCenter()..." + isMandatoryCostCenter);
+            if(	isMandatoryCostCenter ) {
+            	boolean isProyecto = false;
 
-        return true;
+            	PO po = m_doc.getPO();
+            	if(po!=null) {
+            		Object proyecto = po.get_Value("C_Project_ID");
+            		if(proyecto!=null && (Integer)proyecto > 0)
+            			isProyecto = true;
+            	}else {
+            		if(m_docVO.C_Project_ID > 0)
+            			isProyecto = true;
+            	}
+            	
+            	debug("Requiere proyecto obligatorio, tiene uno ?" + isProyecto);
+            	
+            	// Si utiliza base distributiva NO ejecutar este control, ya que luego los proyectos se postean automaticamente segun
+            	// la base distributiva configurada
+            	if(!isDistributiveBase && line.getC_Project_ID() <= 0 && !isProyecto) {
+            		log.warning("Es obligatorio indicar el centro de costos (Proyecto) ev= " + ev);
+            		debug("Es obligatorio indicar el centro de costos (Proyecto) ev=" + ev);
+            		cr.setMsg("Es obligatorio indicar el centro de costos (Proyecto) ev=" + ev, true);
+            		return cr;
+            	}
+            }
+            
+            debug("account Ok! account="+account + " line=" + line);
+            
+        }    // for all lines
+        
+        debug("end checkAccounts... " + true);
+        
+        cr.setError(false);
+        return cr;
     }    // checkAccounts
 
     /**
@@ -818,6 +918,9 @@ public final class Fact {
 
                 //
 
+                // dREHER Mayo 25, trasladar la tasa de conversion desde Fact a factLine
+                factLine.setTasaConversion(getTasaConversion());
+                
                 if( dl.getAmt().compareTo( Env.ZERO ) < 0 ) {
                     factLine.setAmtSource( dLine.getC_Currency_ID(),null,dl.getAmt().abs());
                 } else {
@@ -901,17 +1004,104 @@ public final class Fact {
         // save Lines
 
         for( int i = 0;i < m_lines.size();i++ ) {
-            FactLine fl = ( FactLine )m_lines.get( i );
+
+        	FactLine fl = ( FactLine )m_lines.get( i );
 
             // log.fine("save - " + fl);
 
-            if( !fl.save( trxName )) {    // abort on first error
-                return false;
-            }
+        	// dREHER Mayo 25 - si la linea NO tiene CENTRO DE COSTOS, pero el encabezado SI, tomar ese Centro de Costos tambien para las lineas
+    		if(Util.isEmpty(fl.getC_Project_ID(), true) && !Util.isEmpty(m_docVO.C_Project_ID, true)) {
+    			// fl.setC_Project_ID(m_docVO.C_Project_ID);
+    			// debug("Seteo centro de costos en la linea, tomandolo del encabezado C_Project_ID=" + fl.getC_Project_ID());
+    		}
+        	
+        	if( !fl.save( trxName )) {    // abort on first error
+				return false;
+			}
+        	
         }
+        
+        debug("Guarda las lineas del asiento contable, verificar si debe generar base distributiva...");
+        
+        DistributeBase(trxName);
 
         return true;
     }    // commit
+    
+    /**
+     * Base distributiva si asi se requiere
+     * 
+     * dREHER
+     */
+
+    public void DistributeBase(String trxName) {
+    	/**
+    	 * Si requiere base distributiva, debo reemplazar la linea original por la distribucion correspondiente
+    	 * 
+    	 * dREHER
+    	 */
+
+    	for( int i = 0;i < m_lines.size();i++ ) {
+    		
+    		FactLine factLine = ( FactLine )m_lines.get( i );
+    		
+    		// dREHER Mayo 25 - si la linea TIENE CENTRO DE COSTOS, se toma ese, NO DISTRIBUIR...
+    		if(!Util.isEmpty(factLine.getC_Project_ID(), true)) {
+    			continue;
+    		}
+    		
+    		// dREHER Mayo 25 - si la linea NO tiene CENTRO DE COSTOS, pero el encabezado SI, tomar ese Centro de Costos tambien para las lineas
+    		if(!Util.isEmpty(m_docVO.C_Project_ID, true)) {
+    			// factLine.setC_Project_ID(m_docVO.C_Project_ID);
+    			// factLine.save(trxName);
+    			// debug("Seteo centro de costos en la linea, tomandolo del encabezado C_Project_ID=" + factLine.getC_Project_ID());
+    			continue;
+    		}
+    		
+
+    		MAccount account = factLine.getAccount();
+
+    		// dREHER - traer instancia custom de la cuenta contable (C_ElementValue)
+    		// LP_C_ElementValue ev = account.getCustomAccount();
+    		MElementValue ev = account.getAccount();
+    		boolean isDistributiveBase = ev.get_Value("Cintolo_UsesDistributiveBase")==null?false:
+    									(Boolean)ev.get_Value("Cintolo_UsesDistributiveBase");
+            boolean isValidatedDistribution = ev.get_Value("Cintolo_ValidatedDistribution")==null?false:
+            							(Boolean)ev.get_Value("Cintolo_ValidatedDistribution");
+            
+            
+            
+            
+            
+            debug("afterSave.ev.isCintolo_UsesDistributiveBase()..." + isDistributiveBase + " Validated=" + isValidatedDistribution);
+    		String desc = factLine.getDescription();
+    		if(isDistributiveBase && isValidatedDistribution
+    				&& (desc==null || desc.indexOf("Base Distributiva.") < 0)) { // TODO mejorar esta validacion (por ahora para no hacerlo dos veces)
+
+    			// TODO: Si distribuyo Elimino o Desactivo ?
+    			if(factLine.DistribuirLinea(ev, trxName)) {
+    				
+    				int Fact_Acct_ID = factLine.getFact_Acct_ID();
+    				
+    				// this.setIsActive(false);
+    				// this.delete(true);
+    				// int upd = DB.executeUpdate("UPDATE Fact_Acct SET IsActive='N', Description=COALESCE(description,'') || ' Base Distributiva.', updated=now() WHERE Fact_Acct_ID=" + factLine.getFact_Acct_ID(), get_TrxName());
+    				// int upd = DB.executeUpdate("DELETE FROM Fact_Acct WHERE Fact_Acct_ID=" + factLine.getFact_Acct_ID(), get_TrxName());
+    				
+    				debug("Distribuyo linea, desactivar linea original... Fact_Acct_ID= " + Fact_Acct_ID);
+    				
+    				boolean isDel = factLine.delete(true, trxName);
+    				if(isDel)
+    					debug("Desactivo Ok linea Fact_Acct_ID=" + Fact_Acct_ID);
+    				else
+    					debug("NO pudo desactivar linea Fact_Acct_ID=" + Fact_Acct_ID);
+    				
+    			}
+
+    		}
+
+    	}
+    }
 
     /**
      * Descripción de Método
@@ -969,6 +1159,14 @@ public final class Fact {
 
         }
     }
+
+	public BigDecimal getTasaConversion() {
+		return tasaConversion;
+	}
+
+	public void setTasaConversion(BigDecimal tasaConversion) {
+		this.tasaConversion = tasaConversion;
+	}
 }    // Fact
 
 
