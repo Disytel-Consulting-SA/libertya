@@ -664,7 +664,11 @@
 	<war destfile="${basedir}/lib/webui.war" update="true" >
 		<lib dir="${basedir}/lib2">
 			<include name="OXP.jar"/>
+		</lib>
+		<lib dir="${basedir}/lib">
 			<include name="OXPSLib.jar"/>
+			<include name="OXPXLib.jar"/>
+			<include name="JasperReports.jar"/>
 		</lib>
    	</war>
 	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>
