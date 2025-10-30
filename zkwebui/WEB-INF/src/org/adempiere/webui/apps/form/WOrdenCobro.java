@@ -332,6 +332,10 @@ public class WOrdenCobro extends WOrdenPago {
 				return;
 			}
 
+    		// dREHER sep 24, setear comportamiento en el modelo
+    		m_model.setCintoloEmit(isCintoloEmit);
+    		m_model.setCintoloInclude(isCintoloInclude);
+
  			// Actualizo componentes gráficos antes de pasar a la siguiente
 			// pestaña
     		updateComponentsPreProcesar();
@@ -566,7 +570,8 @@ public class WOrdenCobro extends WOrdenPago {
 		if (m_model == null || m_model.m_facturasTableModel == null)
 			return false;
 		// Ocultar la columna Canje
-		return columnNo == listModel.getColumnCount() - 3;
+		// dREHER sep 24 NO HAY CANJE return columnNo == listModel.getColumnCount() - 3;
+		return false;
 	}
 	
 	@Override
@@ -2179,6 +2184,12 @@ public class WOrdenCobro extends WOrdenPago {
     	super.reset();
     	updateGroupingAmt(false);
     	setPOS();
+    	
+    	// dREHER Forzar el refresco segun el tipo de pago Normal/Adelantado
+    	onTipoPagoChange(false);
+    	
+    	// dREHER Volver a cargar los medios de pago desde CERO...
+    	updateTenderTypeCombo();
     }
     
     protected void setCashJournalToComponent(){

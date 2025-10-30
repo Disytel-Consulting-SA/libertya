@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Column
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2011-09-26 09:57:19.237 */
+ *  @version  - 2024-09-26 09:41:20.264 */
 public class X_AD_Column extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -320,8 +320,8 @@ Dictionary Entity Type;
  Determines ownership and synchronization */
 public void setEntityType (String EntityType)
 {
-if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST"));
- else throw new IllegalArgumentException ("EntityType Invalid value - Reference = ENTITYTYPE_AD_Reference_ID - A - C - D - U - CUST");
+if (EntityType.equals("A") || EntityType.equals("C") || EntityType.equals("D") || EntityType.equals("U") || EntityType.equals("CUST") || ( refContainsValue("CORE-AD_Reference-245", EntityType) ) );
+ else throw new IllegalArgumentException ("EntityType Invalid value: " + EntityType + ".  Valid: " +  refValidOptions("CORE-AD_Reference-245") );
 if (EntityType == null) throw new IllegalArgumentException ("EntityType is mandatory");
 if (EntityType.length() > 4)
 {
@@ -433,6 +433,22 @@ This column is the key in this table */
 public boolean isKey() 
 {
 Object oo = get_Value("IsKey");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set IsLink */
+public void setIsLink (boolean IsLink)
+{
+set_Value ("IsLink", new Boolean(IsLink));
+}
+/** Get IsLink */
+public boolean isLink() 
+{
+Object oo = get_Value("IsLink");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
@@ -564,6 +580,21 @@ Alphanumeric identifier of the entity */
 public String getName() 
 {
 return (String)get_Value("Name");
+}
+/** Set PrefijoLink */
+public void setPrefijoLink (String PrefijoLink)
+{
+if (PrefijoLink != null && PrefijoLink.length() > 2000)
+{
+log.warning("Length > 2000 - truncated");
+PrefijoLink = PrefijoLink.substring(0,2000);
+}
+set_Value ("PrefijoLink", PrefijoLink);
+}
+/** Get PrefijoLink */
+public String getPrefijoLink() 
+{
+return (String)get_Value("PrefijoLink");
 }
 /** Set Read Only Logic.
 Logic to determine if field is read only (applies only when field is read-write) */

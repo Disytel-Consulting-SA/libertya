@@ -237,7 +237,7 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
 		
 		fieldTaxID.setWidth("100%");
 		
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -669,4 +669,10 @@ public class InfoBPartnerPanel extends InfoPanel implements EventListener, WTabl
     	String sqlReal = MRole.getDefault().addAccessSQL( sql.toString(),getTableName(),MRole.SQL_NOTQUALIFIED,MRole.SQL_RO );
     	return DB.getSQLValue(PluginUtils.getPluginInstallerTrxName(), sqlReal, text);    	
     }
+    
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
+	}
+
 }

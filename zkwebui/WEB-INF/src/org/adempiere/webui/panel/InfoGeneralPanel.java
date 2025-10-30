@@ -120,7 +120,7 @@ public class InfoGeneralPanel extends InfoPanel implements EventListener
 	
 	private void initComponents()
 	{
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -456,5 +456,10 @@ public class InfoGeneralPanel extends InfoPanel implements EventListener
     {
 		southBody.insertBefore(paging, southBody.getFirstChild());
 		layout.invalidate();
+    }
+    
+    @Override
+   	protected Grid getFilterGrid() {
+   		return grid;
     }
 }

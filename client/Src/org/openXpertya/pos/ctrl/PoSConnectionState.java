@@ -270,5 +270,8 @@ public abstract class PoSConnectionState implements CurrentAccountDocument {
 
 	// Valida si el cliente puede imprimirse en una fiscal
 	protected abstract void validateBPartner(Order order) throws PosException;
+
+	// dREHER
+	protected abstract Order loadOrder(int orderId, boolean b) throws InvalidOrderException, PosException;
 	
 }

@@ -1,6 +1,7 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -49,11 +50,43 @@ public class MFixedTerm extends X_C_FixedTerm {
 			BigDecimal yearDays = new BigDecimal(365); 
 			BigDecimal tnaTerm = new BigDecimal(getTNATerm());
 			BigDecimal termDays = new BigDecimal(term);
-			BigDecimal tna = getTNA().divide(yearDays, 10, BigDecimal.ROUND_UP).multiply(tnaTerm);
-			BigDecimal returnAmt = getInitialAmount().multiply(tna).divide(tnaTerm, 10, BigDecimal.ROUND_UP).multiply(termDays); //.setScale(2, BigDecimal.ROUND_UP) , 4, BigDecimal.ROUND_UP
+			BigDecimal capital = getInitialAmount();
+			BigDecimal tna = getTNA().divide(yearDays, 15, BigDecimal.ROUND_UP).multiply(tnaTerm).setScale(15, RoundingMode.HALF_UP);
+			
+			// Original - nov 24
+			// BigDecimal returnAmt = getInitialAmount().multiply(tna).divide(tnaTerm, 10, BigDecimal.ROUND_UP).multiply(termDays); // .setScale(2, BigDecimal.ROUND_UP) , 4, BigDecimal.ROUND_UP
+			
+			// Simular precisión de Excel: redondear valores iniciales a 15 cifras significativas
+	        tna = redondear15Cifras(tna);
+	        capital = redondear15Cifras(capital);
+	        
+	        debug("=================================");
+			debug("tna= " + tna);
+			debug("capital= " + capital);
+	        
+
+	        // Multiplicación con redondeo intermedio
+	        BigDecimal resultadoParcial = tna.multiply(capital);
+	        resultadoParcial = redondear15Cifras(resultadoParcial);
+
+	        // Redondear el resultado final a dos decimales
+	        BigDecimal resultadoFinal = resultadoParcial.setScale(2, RoundingMode.HALF_UP);
+
+	        // Mostrar resultados
+	        debug("tna= " + tna);
+	        debug("capital= " + capital);
+	        debug("Resultado parcial: " + resultadoParcial);
+	        debug("Resultado final (como Excel): " + resultadoFinal);
+	     	
+			BigDecimal segundoParcial = resultadoFinal.divide(tnaTerm, 10, BigDecimal.ROUND_UP);
+			debug("Segundo parcial= " + segundoParcial);
+			
+			BigDecimal returnAmt = segundoParcial.multiply(termDays);
+			debug("rendimiento= " + returnAmt);
+			
 			setReturnAmt(returnAmt);
 			
-			//Calculo y seteo el importe de renteciones
+			//Calculo y seteo el importe de retenciones
 			calculateAndSetRetentionAmt();
 			
 			//Calculo y seteo neto a cobrar 
@@ -71,7 +104,16 @@ public class MFixedTerm extends X_C_FixedTerm {
 		
 		return true;
 	}
+
+	// dREHER salida por consola
+	private void debug(String string) {
+		System.out.println("==> MFixedTerm= " + string);
+	}
 	
+	private static BigDecimal redondear15Cifras(BigDecimal valor) {
+        return new BigDecimal(valor.toPlainString(), new java.math.MathContext(15, RoundingMode.HALF_UP));
+    }
+
 	protected void calculateAndSetRetentionAmt() {
 		BigDecimal retentionAmt = BigDecimal.ZERO;
 		

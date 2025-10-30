@@ -240,6 +240,7 @@ public class WindowContainer extends AbstractUIPart implements EventListener // 
 			}
 		}if(e.isAltKey()) {
 			System.out.println("Tecla ALT. KeyCode=" + e.getKeyCode());
+			/*
 			if(e.getKeyCode()==37 || e.getKeyCode() == KeyEvent.PAGE_UP
 				|| e.getKeyCode() == KeyEvent.UP || e.getKeyCode() == 109
 				|| e.getKeyCode() == 65) { // Izq / menos
@@ -254,7 +255,21 @@ public class WindowContainer extends AbstractUIPart implements EventListener // 
 				}
 			}else if(e.getKeyCode()==72 || e.getKeyCode()==36) { // H o Inicio
 				setSelectedTab(tabbox.getTabpanel(0).getLinkedTab());
+			}*/
+			
+			
+			if(e.getKeyCode() == 65) { // Izq / menos alt+A
+				if(tabbox.getSelectedTab() != null && tabbox.getSelectedTab().getPreviousSibling() != null) {
+					tabbox.setSelectedTab((org.zkoss.zul.Tab)tabbox.getSelectedTab().getPreviousSibling());
 			}
+			}else if(e.getKeyCode() == 80 || e.getKeyCode() == 83) { // Der alt+P y alt+S
+				if(tabbox.getSelectedTab() != null && tabbox.getSelectedTab().getNextSibling() != null) {
+					tabbox.setSelectedTab((org.zkoss.zul.Tab)tabbox.getSelectedTab().getNextSibling());
+				}
+			}else if(e.getKeyCode()==72 || e.getKeyCode()==36) { // H o Inicio
+				setSelectedTab(tabbox.getTabpanel(0).getLinkedTab());
+			}
+			
 		}else {
 			System.out.println("Toco otra tecla (NO alt/shift/ctrl), voy a onEvent..." + e);
 		}

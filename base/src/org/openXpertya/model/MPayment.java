@@ -281,7 +281,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
      */
     public void setIsReceipt (boolean IsReceipt)
     {
-    setIsReceipt((IsReceipt)?"Y":"N");
+    	setIsReceipt((IsReceipt)?"Y":"N");
     }
     
     public void resetNew() {
@@ -716,7 +716,17 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         // Prepayment: No charge and order or project (not as acct dimension)
 
         if( newRecord || is_ValueChanged( "C_Charge_ID" ) || is_ValueChanged( "C_Invoice_ID" ) || is_ValueChanged( "C_Order_ID" ) || is_ValueChanged( "C_Project_ID" )) {
-            setIsPrepayment( (getC_Charge_ID() == 0) && (getC_BPartner_ID() != 0) && ( (getC_Order_ID() != 0) || ( (getC_Project_ID() != 0) && (getC_Invoice_ID() == 0) ) ) );
+            /**
+             * Este codigo SIEMPRE deja en false el pago adelantado...
+             * 
+             * Solo afectarlo cuando se cambio un campo de los indicados
+             * 
+             * dREHER
+             */
+        	if(!newRecord)
+        		setIsPrepayment( (getC_Charge_ID() == 0) && (getC_BPartner_ID() != 0) && ( (getC_Order_ID() != 0) || ( (getC_Project_ID() != 0) && (getC_Invoice_ID() == 0) ) ) );
+        	
+            System.out.println("MPayment. prepayment= " + isPrepayment());
         }
 
         if( isPrepayment()) {
@@ -911,6 +921,10 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         // log.fine("getAllocatedAmt - " + retValue);
         // ? ROUND(NVL(v_AllocatedAmt,0), 2);
 
+        // dREHER
+        if(retValue==null)
+        	retValue = Env.ZERO;
+        
         return retValue;
     }    // getAllocatedAmt
 

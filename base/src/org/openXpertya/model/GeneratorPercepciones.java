@@ -17,6 +17,11 @@ import org.openXpertya.util.Util;
 
 
 public class GeneratorPercepciones {
+	
+	/** Tipos de domicilios dREHER Feb'25 */
+	protected final String DOMICILIO_FACTURACION = "F";
+	protected final String DOMICILIO_ENTREGA = "E";
+	protected final String DOMICILIO_DESTINO_FINAL = "L";
 
 	/** Logger */
 	protected CLogger log = CLogger.getCLogger(AbstractPercepcionProcessor.class);
@@ -71,6 +76,22 @@ public class GeneratorPercepciones {
 	}
 	
 	/**
+	 * Elimina las percepciones de un documento en particular
+	 * @param id id del documento
+	 * @param trxName
+	 * @throws Exception
+	 */
+	public static void deletePercepciones(Integer docID, Integer taxID, boolean isSOTrx, String tableTaxName, String relatedDocColumnName, String trxName) throws Exception{
+		if(isSOTrx){
+			DB.executeUpdate(
+					"DELETE FROM "+tableTaxName+" WHERE "+relatedDocColumnName+" = "
+							+ docID
+							+ " AND c_tax_id = " + taxID,
+					trxName);
+		}
+	}
+	
+	/**
 	 * Eliminar percepciones de factura parámetro
 	 * @param invoice
 	 * @param trxName trx específica, si es null se utiliza el trx de la factura parámetro
@@ -82,6 +103,17 @@ public class GeneratorPercepciones {
 	}
 	
 	/**
+	 * Eliminar percepciones de factura parámetro
+	 * @param invoice
+	 * @param trxName trx específica, si es null se utiliza el trx de la factura parámetro
+	 * @throws Exception
+	 */
+	public static void deletePercepciones(MInvoice invoice, int taxID, String trxName) throws Exception{
+		deletePercepciones(invoice.getID(), taxID, invoice.isSOTrx(), X_C_InvoiceTax.Table_Name, "c_invoice_id",
+				Util.isEmpty(trxName, true) ? invoice.get_TrxName() : trxName);
+	}
+	
+	/**
 	 * Eliminar percepciones de pedido parámetro
 	 * @param order
 	 * @param trxName trx específica, si es null se utiliza el trx del pedido parámetro
@@ -89,6 +121,17 @@ public class GeneratorPercepciones {
 	 */
 	public static void deletePercepciones(MOrder order, String trxName) throws Exception{
 		deletePercepciones(order.getID(), order.isSOTrx(), X_C_OrderTax.Table_Name, "c_order_id", 
+				Util.isEmpty(trxName, true) ? order.get_TrxName() : trxName);
+	}
+	
+	/**
+	 * Eliminar percepciones de pedido parámetro
+	 * @param order
+	 * @param trxName trx específica, si es null se utiliza el trx del pedido parámetro
+	 * @throws Exception
+	 */
+	public static void deletePercepciones(MOrder order, int taxID, String trxName) throws Exception{
+		deletePercepciones(order.getID(), taxID, order.isSOTrx(), X_C_OrderTax.Table_Name, "c_order_id", 
 				Util.isEmpty(trxName, true) ? order.get_TrxName() : trxName);
 	}
 	
@@ -146,7 +189,33 @@ public class GeneratorPercepciones {
 			data.setDocument(getDocument());
 			data.setBpartner(getBpartner());
 			data.setCategoriaIVA(getCategoriaIVA());
-			data.setAlicuota(orgPercepcion.getAlicuota());
+			
+			tax = new MTax(getCtx(), orgPercepcion.getC_Tax_ID(), getTrxName());
+			data.setTax(tax);
+			
+			/**
+			 * En caso de que la entidad comercial tenga configurada una tasa para este padron
+			 * tomarla desde ahi, caso contrario tomarla desde la organizacion
+			 * dREHER Feb '25
+			 */
+			
+			BigDecimal alicuota = getAlicuotaFromEC(getBpartner().getC_BPartner_ID(), tax.getC_Region_ID()); 
+			debug("createPercepcionProcessors. Alicuota de la EC y Region del impuesto:" + alicuota 
+					+ " Impuesto:" + tax.getName() 
+					+ " Region ID:" + tax.getC_Region_ID());
+			
+			if(Util.isEmpty(alicuota, true)) {		
+					alicuota = orgPercepcion.getAlicuota();
+					if(!Util.isEmpty(alicuota, true)) {
+						debug("createPercepcionProcessors. Como no encontro alicuota segun EC/Impuesto, toma la de la OrgPercepcion:" + alicuota);
+					}else {
+						alicuota = tax.getRate();
+						debug("createPercepcionProcessors. Como no encontro alicuota segun en la OrgPercepcion, toma la del impuesto:" + alicuota);
+					}
+			}
+			
+			data.setAlicuota(alicuota);
+			
 			data.setConvenioMultilateral(orgPercepcion.isConvenioMultilateral());
 			data.setUseCABAJurisdiction(orgPercepcion.isUseCABAJurisdiction());
 			data.setAllowPartialReturn(orgPercepcion.isPartialReturn());
@@ -156,8 +225,16 @@ public class GeneratorPercepciones {
 			data.setMinimumNetAmtByPadronType(MOrgPercepcionConfig.getOrgPercepcionConfigData(getCtx(),
 					orgPercepcion.getAD_Org_ID(), getTrxName()));
 			data.setMinimumPercepcionAmt(orgPercepcion.getMinimumPercepcionAmt());
-			tax = new MTax(getCtx(), orgPercepcion.getC_Tax_ID(), getTrxName());
-			data.setTax(tax);
+			
+			
+			/** Agrega el tipo de domicilio dREHER Feb '25 */
+			data.setTipoDomicilio(orgPercepcion.getTipoDomicilio()!=null ? orgPercepcion.get_ValueAsString("TipoDomicilio") : DOMICILIO_FACTURACION);
+			
+			/** Agrega si debe priorizar domicilio sobre padron dREHER Feb '25 */
+			data.setPriorizaDomicilio( orgPercepcion.get_Value("IsPriorizaDomicilio")!=null ?
+							(Boolean)orgPercepcion.get_Value("IsPriorizaDomicilio") : 
+							false);
+			
 			try{
 				percepcionProcessor = AbstractPercepcionProcessor
 						.getPercepcionProcessor(getCtx(),
@@ -171,7 +248,27 @@ public class GeneratorPercepciones {
 		}
 		setPercepcionProcessors(percepcionProcessors);
 	}
-	
+
+	// dREHER Feb '25
+	private void debug(String string) {
+		System.out.println("GeneratorPercepciones." + string);
+	}
+
+	/**
+	 * Busca si existe configuracion de alicuota percepcion cliente para la region indicada
+	 * @param c_BPartner_ID
+	 * @param c_Region_ID
+	 * @return alicuota desde percepcion cliente
+	 * @author dREHER
+	 */
+	public BigDecimal getAlicuotaFromEC(int c_BPartner_ID, int c_Region_ID) {
+		BigDecimal alicuota = DB.getSQLValueBD(trxName, "SELECT alicuota FROM c_bpartner_percepcion WHERE C_BPartner_ID=" + c_BPartner_ID +
+				" AND COALESCE(C_Region_ID,0)=? AND IsActive='Y'", c_Region_ID);
+		debug("getAlicuotaFromEC. Busca alicuota en la entidad comercial/region:" + alicuota);
+		
+		return alicuota;
+	}
+
 	/**
 	 * Actualizar los procesadores de percepción al actualizar la entidad
 	 * comercial
@@ -227,6 +324,7 @@ public class GeneratorPercepciones {
 		if(!isApplyPercepcion()){
 			return percepciones;
 		}
+		
 		Percepcion percepcion;
 		for (MOrgPercepcion orgPercepcion : getOrgPercepciones()) {
 			// Aplicar la percepción
@@ -376,6 +474,37 @@ public class GeneratorPercepciones {
 		MInvoiceTax invoiceTax;
 		BigDecimal exencionPerc;
 		for (Percepcion percepcion : percepciones) {
+			
+			debug("--> Percepcion a calcular: " + percepcion.getClass());
+			
+			/**
+			 * dREHER
+			 * 
+			 * Validar si la Orden tiene excepcion de IIBB por bien de uso 
+			 * 
+			 */
+			String taxType = DB.getSQLValueString(getTrxName(), 
+							"SELECT t.PerceptionType " +
+							"FROM C_Tax t " +
+							"WHERE t.C_Tax_ID=?", percepcion.getTaxID());
+			if(taxType==null)
+				taxType = "";
+			
+			if(taxType.equals(MTax.PERCEPTIONTYPE_IngresosBrutos)) {
+				
+				boolean isExcepcionIIBB = false;
+				if(invoice.get_Value("Cintolo_Is_IIBB_Exemption")!=null)
+					isExcepcionIIBB = (Boolean)invoice.get_Value("Cintolo_Is_IIBB_Exemption");
+				
+				if(isExcepcionIIBB) {
+					debug("--> La orden tiene la marca de excepcion de IIBB, no calcula esta percepcion!");
+					// Eliminar las percepciones de la factura
+					deletePercepciones(invoice, percepcion.getTaxID(), getTrxName());
+					continue;
+				}
+			}
+			
+			
 			// Porcentaje de exención de la entidad comercial
 			exencionPerc = MBPartner.getPercepcionExencionMultiplierRate(
 					getBpartner().getID(), percepcion.orgPercepcionID,
@@ -440,6 +569,7 @@ public class GeneratorPercepciones {
 			deletePercepciones(order, getTrxName());
 			return;
 		}
+		
 		// Poner todas las percepciones en 0
 		String sql = "UPDATE c_ordertax SET taxamt = 0, taxbaseamt = 0 WHERE c_order_id = "
 				+ order.getID()
@@ -453,6 +583,36 @@ public class GeneratorPercepciones {
 		MOrderTax orderTax;
 		BigDecimal exencionPerc;
 		for (Percepcion percepcion : percepciones) {
+			
+			debug("--> Percepcion a calcular: " + percepcion.getClass());
+			
+			/**
+			 * dREHER
+			 * 
+			 * Validar si la Orden tiene excepcion de IIBB por bien de uso 
+			 * 
+			 */
+			String taxType = DB.getSQLValueString(getTrxName(), 
+							"SELECT t.PerceptionType " +
+							"FROM C_Tax t " +
+							"WHERE t.C_Tax_ID=?", percepcion.getTaxID());
+			if(taxType==null)
+				taxType = "";
+			
+			if(taxType.equals(MTax.PERCEPTIONTYPE_IngresosBrutos)) {
+				
+				boolean isExcepcionIIBB = false;
+				if(order.get_Value("Cintolo_Is_IIBB_Exemption")!=null)
+					isExcepcionIIBB = (Boolean)order.get_Value("Cintolo_Is_IIBB_Exemption");
+				
+				if(isExcepcionIIBB) {
+					debug("--> La orden tiene la marca de excepcion de IIBB, no calcula esta percepcion!");
+					// Eliminar las percepciones de la factura
+					deletePercepciones(order, percepcion.getTaxID(), getTrxName());
+					continue;
+				}
+			}
+			
 			// Porcentaje de exención de la entidad comercial
 			exencionPerc = MBPartner.getPercepcionExencionMultiplierRate(
 					getBpartner().getID(), percepcion.orgPercepcionID,

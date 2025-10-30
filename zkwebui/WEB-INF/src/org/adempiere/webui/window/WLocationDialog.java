@@ -159,6 +159,7 @@ public class WLocationDialog extends Window implements EventListener
 		initLocation();
 		//               
 		this.setWidth("550px"); // dREHER Original 290, para evitar scroll horizontal
+		// this.setHeight("550px"); // dREHER Abril 25
 		this.setClosable(true);
 		this.setBorder("normal");
 		this.setAttribute("mode","modal");
@@ -343,7 +344,7 @@ public class WLocationDialog extends Window implements EventListener
         if (ds == null || ds.length() == 0)
         {
             log.log(Level.SEVERE, "CaptureSequence empty - set default, country=" + country);
-            ds = "@A1@ @A2@ @A3@ @A4@ @C@,  @P@ @CO@ "; // dREHER, por defecto setear configuracion de captura en el caso de que no este definida en C_Country correspondiente
+            ds = "@A1@ @A2@ @A3@ @A4@ @R@ @C@,  @P@ @CO@ "; // dREHER, por defecto setear configuracion de captura en el caso de que no este definida en C_Country correspondiente
         }
 		isCityMandatory = false;
 		isRegionMandatory = false;

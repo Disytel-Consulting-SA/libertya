@@ -18,22 +18,36 @@
 package org.adempiere.webui.panel;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Vector;
 import java.util.logging.Level;
 
+import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.apps.BusyDialog;
+import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Checkbox;
+import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
+import org.adempiere.webui.component.Datebox;
+import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ListModelTable;
+import org.adempiere.webui.component.Listbox;
+import org.adempiere.webui.component.NumberBox;
+import org.adempiere.webui.component.Row;
+import org.adempiere.webui.component.Searchbox;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.WListItemRenderer;
 import org.adempiere.webui.component.WListbox;
@@ -45,8 +59,22 @@ import org.adempiere.webui.event.WTableModelListener;
 import org.adempiere.webui.part.ITabOnSelectHandler;
 import org.adempiere.webui.plugin.common.PluginInfoPanelUtils;
 import org.adempiere.webui.session.SessionManager;
+import org.adempiere.webui.window.FDialog;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.DataFormat;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
+import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.M_Table;
 import org.openXpertya.util.CLogger;
@@ -54,11 +82,16 @@ import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
+import org.zkoss.util.media.AMedia;
+import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.au.out.AuEcho;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
+import org.zkoss.zul.Div;
+import org.zkoss.zul.Hbox;
 import org.zkoss.zul.ListModelExt;
 import org.zkoss.zul.Listitem;
 import org.zkoss.zul.Paging;
@@ -141,6 +174,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
             info = new InfoGeneralPanel (value, WindowNo, tableName, keyColumn, isSoTrx, multiSelection, whereClause);
         //
         info.setAddSecurityValidation(addSecurityValidation);
+        
         return info;
 	}
 
@@ -365,6 +399,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 			confirmPanel.getButton(ConfirmPanel.A_OK).setVisible(false);
 		}
 		
+		// dREHER Jun 25 por ahora no activar...
+		customizeButtons();
+		
         this.setSizable(true);      
         this.setMaximizable(true);
         
@@ -429,6 +466,14 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	
 	private static final String[] lISTENER_EVENTS = {};
 
+	/** layout para excel de las columnas 
+	 * dREHER Jun 25
+	 * */
+	protected LayoutXLS[]  p_layoutXLS;
+	protected Grid grid;
+	protected abstract Grid getFilterGrid();
+	protected String title = null;
+
 	/**
 	 *  Loaded correctly
 	 *  @return true if loaded OK
@@ -473,9 +518,53 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		m_sqlUserOrder = "";
 		if (orderBy != null && orderBy.length() > 0)
 			m_sqlOrder = " ORDER BY " + orderBy;			
+		
+		
+		layotXLSFromLayout(layout);
+		
+		debug("InfoPanel.sql main=" + m_sqlMain);
+		debug("InfoPanel.sql count=" + m_sqlCount);
+		debug("InfoPanel.sql order=" + m_sqlOrder);
+		
 	}   //  prepareTable
 
 	
+	/**
+	 * Set Layout for XLS export
+	 * 
+	 * @param layout layout
+	 */
+	protected void layotXLSFromLayout(ColumnInfo[] layout) {
+		
+		if (layout == null || layout.length == 0) {
+			p_layoutXLS = null;
+			return;
+		}
+
+		p_layoutXLS = new LayoutXLS[layout.length];
+		for (int i = 0; i < layout.length; i++) {
+			debug("InfoPanel.layotXLSFromLayout: " + layout[i].getColHeader() + " - " + layout[i].getColClass());
+			p_layoutXLS[i] = new LayoutXLS(layout[i].getColSQL(), // colSQL
+											layout[i].getColClass().equals(BigDecimal.class)||layout[i].getColClass().equals(Double.class), // totalize 
+											layout[i].getColClass().equals(Integer.class)||layout[i].getColClass().equals(Long.class), // count
+											layout[i].getColHeader(), // title
+											25, // width
+											15, // height
+											false, // bold
+											"#000000" // color
+											);
+		}
+		debug("InfoPanel.layotXLSFromLayout: " + p_layoutXLS.length + " columns");
+		if (p_layoutXLS.length == 0) {
+			debug("InfoPanel.layotXLSFromLayout: No columns defined");
+		}
+	} // layotXLSFromLayout
+	
+
+	private void debug(String string) {
+		System.out.println("InfoPanel." + string);
+	}
+
 	/**************************************************************************
 	 *  Execute Query
 	 */
@@ -648,6 +737,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         log.finer(dataSql);
 		try
 		{
+
 			m_pstmt = DB.prepareStatement(dataSql, null);
 			setParameters (m_pstmt, false);	//	no count
 			log.fine("Start query - " + (System.currentTimeMillis()-startTime) + "ms");
@@ -1360,4 +1450,515 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	protected void setAddSecurityValidation(boolean addSecurityValidation) {
 		this.addSecurityValidation = addSecurityValidation;
 	}
+	
+	// dREHER Jun 25
+	private void exportarCSV() {
+	    try {
+	        StringBuilder sb = new StringBuilder();
+
+	        // Encabezado
+	        List<String> columnNames = getColumnNames(); // método heredado de InfoZK
+	        int col  = 0;
+	        for (String columnName : columnNames) {
+	        	if(col > 1)
+	        		sb.append(columnName).append(";");
+	        	col++;
+	        }
+	        sb.append("\n");
+
+	        // Datos
+	        ListModelTable model = getTableModel(); // también heredado de InfoZK
+	        for (int row = 0; row < model.getSize(); row++) {
+	            ArrayList<Object> rowData = (ArrayList<Object>) model.getElementAt(row);
+	            col  = 0;
+	            for (Object value : rowData) {
+	            	if(col > 1)
+	            		sb.append(value != null ? value.toString().replace(";", ",") : "").append(";");
+	            	col++;
+	            }
+	            sb.append("\n");
+	        }
+
+	        // Convertir a archivo y lanzar descarga
+	        String fileName = "export_" + p_tableName.trim().replace(" ", "_") + "_" + Env.getDate(Env.getCtx()) + ".csv";
+	        AMedia media = new AMedia(fileName, "csv", "text/csv",
+	                sb.toString().getBytes("UTF-8"));
+
+	        Filedownload.save(media);
+	    } catch (Exception e) {
+	        FDialog.error(0, this, "Error al exportar CSV: " + e.getMessage());
+	        e.printStackTrace();
+	    }
+	}
+
+	// dREHER Jun 25
+	private List<String> getColumnNames() {
+		ArrayList<String> names = new ArrayList<String>();
+		ColumnInfo[] ci = contentPanel.getLayout();
+		for(ColumnInfo i: ci) {
+			names.add(i.getColHeader());
+		}
+		return names;
+	}
+	
+	/*
+	 * Apache POI en el classpath:
+
+		Para XLSX necesitás al menos:
+
+		poi-*.jar
+
+		poi-ooxml-*.jar
+
+		commons-collections4
+
+		xmlbeans
+
+		ooxml-schemas
+
+		En Libertya ya se incluye poi-3.9 ?
+	 */
+	
+	
+	private void exportarXLSX() {
+	    try {
+	        // Crear workbook
+	        XSSFWorkbook workbook = new XSSFWorkbook();
+	        XSSFSheet sheet = workbook.createSheet("Exportado desde Libertya");
+
+	        List<String> columnNames = getColumnNames();
+	        ListModelTable model = getTableModel();
+
+	        // Estilo para encabezados
+	        XSSFCellStyle headerStyle = workbook.createCellStyle();
+	        headerStyle.setFont(workbook.createFont());
+	        headerStyle.getFont().setBold(true);
+	        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+	        // Agregar el título de la ventana como la primera fila
+	        String translatedTableName = getTitleXLS(); // Obtener el título de la ventana
+
+	        // Formatear la fecha actual
+	        String formattedDate = new SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date());
+
+	        // Construir descripción de los filtros aplicados
+	        String appliedFilters = "Filtro Aplicado: " + getFilterDescription();
+			if (appliedFilters.isEmpty()) {
+				appliedFilters = "No se aplicaron filtros.";
+			}
+	        // Título
+	        int rowNum = 0;
+	        XSSFRow titleRow = sheet.createRow(rowNum++);
+	        XSSFCell titleCell = titleRow.createCell(0);
+	        titleCell.setCellValue("Exportación de " + translatedTableName);
+	        titleCell.setCellStyle(headerStyle);
+	        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, columnNames.size())); // Combinar celdas
+
+	        // Fecha actual
+	        XSSFRow dateRow = sheet.createRow(rowNum++);
+	        XSSFCell dateCell = dateRow.createCell(0);
+	        dateCell.setCellValue("Fecha de exportación: " + formattedDate);
+	        dateCell.setCellStyle(headerStyle);
+	        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, columnNames.size())); // Combinar celdas
+
+	        // Filtros aplicados
+	        XSSFRow filterRow = sheet.createRow(rowNum++);
+	        XSSFCell filterCell = filterRow.createCell(0);
+	        filterCell.setCellValue(appliedFilters);
+	        filterCell.setCellStyle(headerStyle);
+	        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(2, 2, 0, columnNames.size())); // Combinar celdas
+	        // Espacio en blanco
+	        rowNum++;
+
+	        // Encabezados
+	        XSSFRow headerRow = sheet.createRow(rowNum++);
+	        int col = 0;
+	        int columna = 0;
+	        
+	        BigDecimal[] totals = new BigDecimal[p_layoutXLS.length];
+	        BigDecimal[] counts = new BigDecimal[p_layoutXLS.length];
+	        
+	        
+	        for (int i = 0; i < columnNames.size(); i++) {
+	        	if(i>1) {
+	        		XSSFCell cell = headerRow.createCell(columna);
+	        		cell.setCellValue(columnNames.get(col));
+					XSSFCellStyle style = workbook.createCellStyle();
+					style.setFont(workbook.createFont());
+					style.getFont().setBold(true);
+					style.getFont().setColor(IndexedColors.WHITE.getIndex());
+					style.setAlignment(HorizontalAlignment.CENTER);
+			        style.setFillPattern(FillPatternType.BIG_SPOTS);
+			        style.setBorderBottom(BorderStyle.THIN);
+			        style.setFillBackgroundColor(IndexedColors.AQUA.index);
+			        headerRow.setRowStyle(style);
+					cell.setCellStyle(style);
+	        		columna++;
+	        	}
+	        	col++;
+	        }
+	        
+	        // Inicializar totales y conteos
+			for (int i = 0; i < p_layoutXLS.length; i++) {
+				if (p_layoutXLS[i].isTotalize()) {
+					totals[i] = BigDecimal.ZERO;
+				}
+				if (p_layoutXLS[i].isCount()) {
+					counts[i] = BigDecimal.ZERO;
+				}
+			}
+			
+			int round = MCurrency.getStdPrecision(Env.getCtx(), Env.getC_Currency_ID(Env.getCtx()));
+
+	        // Filas de datos
+	        for (int row = 0; row < model.getSize(); row++) {
+	        	ArrayList<Object> rowData = (ArrayList<Object>) model.getElementAt(row);
+	            col  = 0;
+	            XSSFRow dataRow = sheet.createRow(rowNum++);
+	            columna = 0;
+	            for (Object value : rowData) {
+	            	if(col > 1) {
+	            		
+	            		boolean isNumber = false;
+	            		boolean isDate = false;
+	            		
+	            		XSSFCell cell = dataRow.createCell(columna);
+	            		if (value != null) {
+	            			
+	            			if(value instanceof Date || value instanceof Timestamp) 
+	            				isDate = true;
+	            			
+							if (value instanceof BigDecimal || value instanceof Double || value instanceof Integer) {
+								isNumber = true;
+							}
+	            			
+							if(isDate) {
+								cell.setCellValue((Timestamp)value);
+							}else if(isNumber) {
+								
+								if (value instanceof BigDecimal) {
+									cell.setCellValue(((BigDecimal) value).setScale(round).doubleValue());
+								} else if (value instanceof Integer) {
+									cell.setCellValue(((Integer) value).doubleValue());
+								} else if (value instanceof Double) {
+									cell.setCellValue((Double) value);
+								} else
+									cell.setCellValue((Double)value);
+							}else {
+								String valorFinal = value.toString();
+		            			valorFinal = valorFinal.equals("true") ? "Si": valorFinal.equals("false") ? "No" : valorFinal;
+		            			cell.setCellValue(valorFinal);	
+							}
+	            		}
+	            		
+						if (p_layoutXLS[col].isTotalize()) {
+							if (value instanceof BigDecimal) {
+								totals[col] = totals[col].add((BigDecimal) value);
+							} else if (value instanceof Double) {
+								totals[col] = totals[col].add(BigDecimal.valueOf((Double) value));
+							}
+							isNumber = true;
+						}
+						
+						if (p_layoutXLS[col].isCount()) {
+							if (value instanceof BigDecimal) {
+                                counts[col] = counts[col].add(new BigDecimal(1));
+                            } else if (value instanceof Integer) {
+                                counts[col] = counts[col].add(new BigDecimal(1));
+                            } else if (value instanceof Double) {
+                                counts[col] = counts[col].add(new BigDecimal(1));
+                            } else {
+                                counts[col] = counts[col].add(BigDecimal.ONE);
+                            }
+							isNumber = true;
+                        }
+                		
+						XSSFCellStyle style = workbook.createCellStyle();
+						style.setFont(workbook.createFont());
+						
+						if (p_layoutXLS[col].isBold()) {
+							style.getFont().setBold(true);
+						}
+
+						if (isNumber) {
+							setLocalizedNumberFormat(workbook, style);
+						}
+						
+						if (isDate) {
+							setLocalizedDateFormat(workbook, style);
+						}
+						
+						if (p_layoutXLS[col].getColWidth() > 0) {
+							style.setWrapText(true);
+						}
+						
+						cell.setCellStyle(style);
+
+						// Ajustar el ancho de la columna
+						if (p_layoutXLS[col].getColWidth() > 0) {
+							sheet.setColumnWidth(columna, p_layoutXLS[columna].getColWidth() * 256); // ancho en caracteres
+						} else {
+							sheet.autoSizeColumn(columna);
+						}
+	            		
+	            		columna++;
+	            	}
+	            	col++;
+	            }
+	        }
+	        
+	        // Totales
+	        XSSFRow totalRow = sheet.createRow(rowNum++);
+	        
+	        columna = 0;
+			for (int i = 0; i < p_layoutXLS.length; i++) {
+				
+				if(i>1) {
+
+					XSSFCell  cell = null;
+					boolean isNumber = false;
+					if (p_layoutXLS[i].isTotalize()) {
+						cell = totalRow.createCell(columna);
+						cell.setCellValue(((BigDecimal) totals[i]).setScale(round).doubleValue());
+						isNumber = true;
+					} else if (p_layoutXLS[i].isCount()) {
+						cell = totalRow.createCell(columna);
+						cell.setCellValue(((BigDecimal) counts[i]).setScale(round).doubleValue());
+						isNumber = true;
+					} else {
+						cell = totalRow.createCell(columna);
+						cell.setCellValue("");
+					}
+					
+					XSSFCellStyle style = workbook.createCellStyle();
+					style.setFont(workbook.createFont());
+					style.getFont().setBold(true);
+					style.getFont().setColor(IndexedColors.WHITE.getIndex());
+			        style = getCellStyleBackgroundColorWithPattern(style);
+			        style.setBorderTop(BorderStyle.THIN);
+			        totalRow.setRowStyle(style);
+					if (isNumber) {
+						setLocalizedNumberFormat(workbook, style);
+					}
+					cell.setCellStyle(style);
+
+					columna++;
+
+				}
+			}
+
+
+			// Ajustar el ancho de las columnas después de escribir los datos
+			for (int colIndex = 0; colIndex < columnNames.size(); colIndex++) {
+			    sheet.autoSizeColumn(colIndex);
+			}
+
+			
+	        // Convertir a byte[]
+	        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+	        workbook.write(bos);
+	        workbook.close();
+
+	        byte[] data = bos.toByteArray();
+
+	        // Descargar
+	        String fileName = "export_" + p_tableName.trim().replace(" ", "_") + "_" + Env.getDate(Env.getCtx()) + ".xlsx";
+	        AMedia media = new AMedia(fileName, "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data);
+	        Filedownload.save(media);
+	    } catch (Exception e) {
+	        FDialog.error(0, this, "Error al exportar XLSX: " + e.getMessage());
+	        e.printStackTrace();
+	    }
+	}
+	
+	// dREHER Jun 25
+	private String getTitleXLS() {
+		if (getTitle() != null && !getTitle().isEmpty()) {
+			return getTitle();
+		}
+		return title != null && !title.isEmpty() ? title : p_tableName != null ? p_tableName : "Ventana de Informacion Libertya";
+	}
+
+	private String getFilterDescription() {
+		StringBuilder description = new StringBuilder();
+
+		String lastLabel = "";
+		
+		// Obtener las filas del Grid
+		for (Object rowObject : grid.getRows().getChildren()) {
+			if (rowObject instanceof Component) {
+				Component rowComponent = (Component) rowObject;
+
+				if (rowComponent instanceof Row) {
+					Row row = (Row) rowComponent;
+
+					// Recorrer los componentes de cada fila
+					for (Object componentObject : row.getChildren()) {
+						if (componentObject instanceof Component) {
+							Component component = (Component) componentObject;
+
+							// debug("Component: " + component.getClass().getSimpleName());
+							
+							if (component instanceof Textbox) {
+								Textbox textbox = (Textbox) component;
+								if (textbox.getValue() != null && !textbox.getValue().isEmpty()) {
+									if (description.length() > 0) {
+										description.append(", ");
+									}
+									description.append(lastLabel).append("=").append(textbox.getValue());
+								}
+							} else if (component instanceof Checkbox) {
+								Checkbox checkbox = (Checkbox) component;
+								if (checkbox.isChecked()) {
+									if (description.length() > 0) {
+										description.append(", ");
+									}
+									description.append(lastLabel).append("=Sí");
+								}
+							} else if (component instanceof Combobox) {
+								Combobox combobox = (Combobox) component;
+								if (combobox.getSelectedItem() != null) {
+									String selectedValue = combobox.getSelectedItem().getLabel();
+									if (selectedValue != null && !selectedValue.isEmpty()) {
+										if (description.length() > 0) {
+											description.append(", ");
+										}
+										description.append(lastLabel).append("=").append(selectedValue);
+									}
+								}
+							} else if (component instanceof Listbox) {
+								Listbox combobox = (Listbox) component;
+								if (combobox.getSelectedItem() != null) {
+									String selectedValue = combobox.getSelectedItem().getLabel();
+									if (selectedValue != null && !selectedValue.isEmpty()) {
+										if (description.length() > 0) {
+											description.append(", ");
+										}
+										description.append(lastLabel).append("=").append(selectedValue);
+									}
+								}
+							} else if (component instanceof Searchbox) {
+								Searchbox searchbox = (Searchbox) component;
+								if (searchbox.getText() != null) {
+									String selectedValue = searchbox.getText();
+									if (selectedValue != null && !selectedValue.isEmpty()) {
+										if (description.length() > 0) {
+											description.append(", ");
+										}
+										description.append(lastLabel).append("=").append(selectedValue);
+									}
+								}
+							} else if (component instanceof NumberBox) {
+								NumberBox numberbox = (NumberBox) component;
+								if (numberbox.getValue() != null) {
+									if (description.length() > 0) {
+										description.append(", ");
+									}
+									description.append(lastLabel).append("=").append(numberbox.getValue());
+								}
+							} else if (component instanceof Datebox) {
+								Datebox datebox = (Datebox) component;
+								if (datebox.getValue() != null) {
+									if (description.length() > 0) {
+										description.append(", ");
+									}
+									description.append(lastLabel).append("=").append(datebox.getValue());
+								}
+							} else if (component instanceof Label) {
+								Label label = (Label) component;
+								if (label.getValue() != null) {
+									if (description.length() > 0) {
+										description.append(", ");
+									}
+									description.append(lastLabel).append(label.getValue());
+								}
+							} else if (component instanceof Div) {
+								Div div = (Div) component;
+								if (div.getFirstChild() instanceof Label) {
+									Label label = (Label) div.getFirstChild();
+									lastLabel = label.getValue();
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Si no hay filtros aplicados
+		if (description.length() == 0) {
+			description.append("No se aplicaron filtros.");
+		}
+
+		return description.toString();
+	}
+
+	
+	private void setLocalizedNumberFormat(Workbook workbook, XSSFCellStyle style) {
+		
+		// Configurar el Locale para español de Argentina
+	    Locale locale = new Locale("es", "AR");
+
+	    // Crear un formato numérico con separadores de miles y decimales adecuados
+	    String pattern = "#,##0.00"; // Separador de miles con punto y decimal con coma
+
+	    // Configurar el formato en el estilo de la celda
+	    DataFormat dataFormat = workbook.createDataFormat();
+	    style.setAlignment(HorizontalAlignment.RIGHT);
+	    style.setDataFormat(dataFormat.getFormat(pattern));
+	}
+	
+	private void setLocalizedDateFormat(Workbook workbook, XSSFCellStyle style) {
+		
+		// Configurar el Locale para español de Argentina
+	    Locale locale = new Locale("es", "AR");
+
+	    // Crear un formato de fecha adecuado
+	    String pattern = "dd/MM/yyyy"; // dias, mes y año
+
+	    // Configurar el formato en el estilo de la celda
+	    DataFormat dataFormat = workbook.createDataFormat();
+	    style.setAlignment(HorizontalAlignment.LEFT);
+	    style.setDataFormat(dataFormat.getFormat(pattern));
+	}
+
+	public XSSFCellStyle getCellStyleBackgroundColorWithPattern(XSSFCellStyle cellStyle) {
+	    // Cambiar el color de fondo de la celda con un patrón
+	    cellStyle.setFillBackgroundColor(IndexedColors.GREY_25_PERCENT.index);
+	    cellStyle.setFillPattern(FillPatternType.FINE_DOTS);
+	    
+	    return cellStyle;
+	}
+	
+
+	// dREHER Jun 25
+	protected ListModelTable getTableModel() {
+		return model;
+	};
+
+	protected void customizeButtons() {
+		// Crear un contenedor para los botones
+		Hbox buttonContainer = new Hbox();
+		buttonContainer.setSpacing("5px"); // Ajustar el espaciado entre botones
+
+		// Botón Exportar CSV
+		Button btnExport = new Button("Exportar");
+		btnExport.setTooltiptext("Exportar resultados a CSV");
+		btnExport.setImage("/images/Export24.png");
+		LayoutUtils.addSclass("action-text-button", btnExport);
+		btnExport.addEventListener(Events.ON_CLICK, ev -> exportarCSV());
+		buttonContainer.appendChild(btnExport);
+
+		// Botón Exportar XLSX
+		Button btnXLSX = new Button("Exportar XLSX");
+		btnXLSX.setImage("/images/Export24.png");
+		btnXLSX.setTooltiptext("Exportar resultados a Excel");
+		LayoutUtils.addSclass("action-text-button", btnXLSX);
+		btnXLSX.addEventListener(Events.ON_CLICK, ev -> exportarXLSX());
+		buttonContainer.appendChild(btnXLSX);
+
+		// Insertar el contenedor antes del último botón de confirmPanel
+		confirmPanel.insertBefore(buttonContainer, (Component) confirmPanel.getChildren().get(confirmPanel.getChildren().size() - 1));
+	}
+	
 }	//	Info

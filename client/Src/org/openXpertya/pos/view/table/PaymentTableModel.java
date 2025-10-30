@@ -26,6 +26,10 @@ public class PaymentTableModel extends AbstractPoSTableModel {
 			case 0: 
 				return payment.getTypeName();
 			case 1: 
+				// dREHER sep 24
+				if(payment==null)
+					return null;
+				
 			return (payment.getAmount().compareTo(payment.getRealAmount()) != 0 ? payment.getAmount()
 					: payment.getRealAmount())
 					.setScale(2, BigDecimal.ROUND_HALF_UP)

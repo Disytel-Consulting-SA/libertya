@@ -3092,3 +3092,241 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('T_Acct_Balance','c_pr
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','c_project_id','int4'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','isgroupbyproject','character'));
 
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
+-- 20240926-11:15
+ALTER TABLE libertya.ad_column ADD islink bpchar(1) DEFAULT 'N'::bpchar NOT NULL;
+ALTER TABLE libertya.ad_column ADD prefijolink varchar(2000) NULL;
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
+-- 20240926-11:15
+/* libertya.ad_field_v source */
+CREATE OR REPLACE VIEW libertya.ad_field_v
+AS SELECT t.ad_window_id,
+    f.ad_tab_id,
+    f.ad_field_id,
+    tbl.ad_table_id,
+    f.ad_column_id,
+    f.name,
+    f.description,
+    f.help,
+    f.isdisplayed,
+    f.displaylogic,
+    f.displaylength,
+    f.seqno,
+    f.sortno,
+    f.issameline,
+    f.isheading,
+    f.isfieldonly,
+    f.isreadonly,
+    f.isencrypted AS isencryptedfield,
+    f.obscuretype,
+    c.columnname,
+    c.columnsql,
+    c.fieldlength,
+    c.vformat,
+        CASE
+            WHEN f.defaultvalue IS NULL THEN c.defaultvalue
+            ELSE f.defaultvalue
+        END AS defaultvalue,
+    c.iskey,
+    c.isparent,
+    c.ismandatory,
+    c.isidentifier,
+    c.istranslated,
+    c.ad_reference_value_id,
+    c.callout,
+    c.ad_reference_id,
+        CASE
+            WHEN f.ad_val_rule_id IS NULL THEN c.ad_val_rule_id
+            ELSE f.ad_val_rule_id
+        END AS ad_val_rule_id,
+    c.ad_process_id,
+    c.isalwaysupdateable,
+    c.readonlylogic,
+    c.isupdateable,
+    c.isencrypted AS isencryptedcolumn,
+    c.isselectioncolumn,
+    tbl.tablename,
+    c.valuemin,
+    c.valuemax,
+    fg.name AS fieldgroup,
+    vr.code AS validationcode,
+    f.isdisplayedingrid,
+    c.calloutalsoonload,
+    f.exportrealvalue,
+    c.islink,
+    c.prefijolink
+   FROM ad_field f
+     JOIN ad_tab t ON f.ad_tab_id = t.ad_tab_id
+     LEFT JOIN ad_fieldgroup fg ON f.ad_fieldgroup_id = fg.ad_fieldgroup_id
+     LEFT JOIN ad_column c ON f.ad_column_id = c.ad_column_id
+     JOIN ad_table tbl ON c.ad_table_id = tbl.ad_table_id
+     JOIN ad_reference r ON c.ad_reference_id = r.ad_reference_id
+     LEFT JOIN ad_val_rule vr ON COALESCE(f.ad_val_rule_id, c.ad_val_rule_id) = vr.ad_val_rule_id
+  WHERE f.isactive = 'Y'::bpchar AND c.isactive = 'Y'::bpchar;
+  
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
+-- 20240926-12:15  
+/* libertya.ad_field_vt source */
+CREATE OR REPLACE VIEW libertya.ad_field_vt
+AS SELECT trl.ad_language,
+    t.ad_window_id,
+    f.ad_tab_id,
+    f.ad_field_id,
+    tbl.ad_table_id,
+    f.ad_column_id,
+    trl.name,
+    trl.description,
+    trl.help,
+    f.isdisplayed,
+    f.displaylogic,
+    f.displaylength,
+    f.seqno,
+    f.sortno,
+    f.issameline,
+    f.isheading,
+    f.isfieldonly,
+    f.isreadonly,
+    f.isencrypted AS isencryptedfield,
+    f.obscuretype,
+    c.columnname,
+    c.columnsql,
+    c.fieldlength,
+    c.vformat,
+        CASE
+            WHEN f.defaultvalue IS NULL THEN c.defaultvalue
+            ELSE f.defaultvalue
+        END AS defaultvalue,
+    c.iskey,
+    c.isparent,
+    c.ismandatory,
+    c.isidentifier,
+    c.istranslated,
+    c.ad_reference_value_id,
+    c.callout,
+    c.ad_reference_id,
+        CASE
+            WHEN f.ad_val_rule_id IS NULL THEN c.ad_val_rule_id
+            ELSE f.ad_val_rule_id
+        END AS ad_val_rule_id,
+    c.ad_process_id,
+    c.isalwaysupdateable,
+    c.readonlylogic,
+    c.isupdateable,
+    c.isencrypted AS isencryptedcolumn,
+    c.isselectioncolumn,
+    tbl.tablename,
+    c.valuemin,
+    c.valuemax,
+    fgt.name AS fieldgroup,
+    vr.code AS validationcode,
+    f.isdisplayedingrid,
+    c.calloutalsoonload,
+    f.exportrealvalue,
+    c.islink,
+    c.prefijolink
+   FROM ad_field f
+     JOIN ad_field_trl trl ON f.ad_field_id = trl.ad_field_id
+     JOIN ad_tab t ON f.ad_tab_id = t.ad_tab_id
+     LEFT JOIN ad_fieldgroup_trl fgt ON f.ad_fieldgroup_id = fgt.ad_fieldgroup_id AND trl.ad_language::text = fgt.ad_language::text
+     LEFT JOIN ad_column c ON f.ad_column_id = c.ad_column_id
+     JOIN ad_table tbl ON c.ad_table_id = tbl.ad_table_id
+     JOIN ad_reference r ON c.ad_reference_id = r.ad_reference_id
+     LEFT JOIN ad_val_rule vr ON COALESCE(f.ad_val_rule_id, c.ad_val_rule_id) = vr.ad_val_rule_id
+  WHERE f.isactive = 'Y'::bpchar AND c.isactive = 'Y'::bpchar;
+  
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.3
+--20250210 9:10
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion','deliveryrule','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion','tipodomicilio','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoiceline','c_retencionschema_id','int4'));
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.4
+--20250218 10:30
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion','ispriorizadomicilio','varchar(1)'));
+
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.6
+--20250306-10:10
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'MostrarImpuestosFC_B', 'Y');
+--20250306-10:10
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_B', 'Regimen de Transparencia Fiscal al Consumidor (Ley 27.743)');
+
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrintLabelPriceCmd07', 'A550,5,0,2,1,1,N,"@TAX_LEGEND@"');
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.6
+--20250306-10:15
+update ad_preference set value='A155,165,0,2,1,1,N,"@NET_PRICE@"' where "attribute" = 'PrintLabelPriceCmd07';
+update ad_preference set value='A560,190,0,1,1,1,N,"@DATE@"' where "attribute" = 'PrintLabelPriceCmd02';
+update ad_preference set value='A570,70,0,4,1,1,N,"@UOM_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd05';
+update ad_preference set value='A155,145,0,3,1,1,N,"@PROD_VALUE@     @PROD_UPC@"' where "attribute" = 'PrintLabelPriceCmd06';
+update ad_preference set value='A200,38,0,5,1,2,N,"@PRICESTD@"' where "attribute" = 'PrintLabelPriceCmd04';
+update ad_preference set value='A155,70,0,5,1,1,N,"@CUR_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd03';
+
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_BLabel', 'PRECIO SIN IMPUESTOS NACIONALES: $');
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.6
+--20250306-10:15
+CREATE OR REPLACE FUNCTION libertya.bompricetaxamts(product_id integer, pricelist_version_id integer, type_return varchar)
+ RETURNS numeric
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+	v_Price	NUMERIC;
+	v_ProductPrice	NUMERIC;
+	v_taxIncluded CHARACTER;
+	v_TaxRate NUMERIC;
+	v_Tax NUMERIC;
+	v_Net NUMERIC;
+	v_TaxCategory_ID NUMERIC;
+	bom RECORD;
+
+BEGIN
+	--	Try to get price from pricelist directly
+	SELECT	COALESCE(pl.IsTaxIncluded,'N'), p.C_TaxCategory_ID
+	INTO	v_taxIncluded, v_TaxCategory_ID
+	FROM	M_PriceList_Version plv
+	INNER JOIN M_ProductPrice pp ON plv.M_PriceList_Version_ID=pp.M_PriceList_Version_ID
+	INNER JOIN M_PriceList pl ON pl.M_PriceList_ID=plv.M_PriceList_ID
+	INNER JOIN M_Product p ON p.M_Product_ID=pp.M_Product_ID
+	WHERE pp.M_PriceList_Version_ID=PriceList_Version_ID AND pp.M_Product_ID=Product_ID;
+
+	v_Price = bompricelist(product_id, pricelist_version_id);
+	IF v_Price ISNULL THEN
+		v_Price := 0;
+	END IF;
+
+	SELECT t.rate 
+	INTO v_TaxRate
+	FROM C_Tax t 
+	WHERE t.c_taxcategory_id = v_TaxCategory_ID
+	ORDER BY issummary ASC, isdefault DESC, created DESC LIMIT 1;	
+
+	IF v_taxIncluded = 'Y' THEN
+		v_Net := v_Price / (1 + (v_TaxRate/100) );
+		v_Tax := v_Price - v_Net;
+	END IF;
+
+	IF type_return = 'Tax' THEN
+		v_Price := v_Tax;
+	ELSE 
+		v_Price := v_Net;
+	END IF;
+
+	RETURN v_Price;
+	
+END;
+
+$function$
+;
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.7
+-- 20250520-13:30
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Cintolo_Exchange_Dif_Settings','umbral_ajuste_aut','numeric'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Cintolo_Exchange_Dif_Settings','c_bankaccount_ajuste_id','integer'));

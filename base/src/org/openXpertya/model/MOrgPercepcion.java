@@ -98,4 +98,9 @@ public class MOrgPercepcion extends X_AD_Org_Percepcion {
 		}
 		return null;
 	}
+
+	// dREHER Feb '25
+	public String getTipoDomicilio() {
+		return DB.getSQLValueString(null, "SELECT TipoDomicilio FROM AD_Org_Percepcion WHERE AD_Org_ID=? AND AD_Org_Percepcion_ID=?", getAD_Org_ID(), getAD_Org_Percepcion_ID());
+	}
 }

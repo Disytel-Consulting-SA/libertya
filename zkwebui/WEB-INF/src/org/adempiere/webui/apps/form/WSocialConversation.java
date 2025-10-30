@@ -22,7 +22,9 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.panel.AbstractADWindowPanel;
 import org.adempiere.webui.panel.WAttachment;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
 import org.adempiere.webui.window.FindWindow;
 import org.openXpertya.apps.form.SocialConversationModel;
@@ -50,8 +52,8 @@ import org.zkoss.zul.Space;
 public class WSocialConversation extends Window  implements EventListener  {
 
 	// Constantes
-	protected static final int DEF_WIDTH = 1000;
-	protected static final int DEF_HEIGHT = 600;
+	protected static final int DEF_WIDTH = 1200;
+	protected static final int DEF_HEIGHT = 700; // dREHER tamaño de ventana
 	protected static final int COLUMN_MESSAGE = 0;
 	protected static final int COLUMN_ATTACH = 1;
 	protected static final String ATTACH_BUTTON_TEXT = Msg.translate(Env.getCtx(), "Attachment") + " (0)";
@@ -63,6 +65,7 @@ public class WSocialConversation extends Window  implements EventListener  {
     protected MTab m_tab;
     protected int tableID = -1;
     protected int recordID = -1;
+    
     protected int windowID = -1;
     protected int tabID = -1;
     protected SocialConversationModel.ConversationTableModel tableModel = null;
@@ -110,6 +113,37 @@ public class WSocialConversation extends Window  implements EventListener  {
     protected GridRenderer renderer;
     MessagesModel listModel = null;
     
+	// dREHER
+	private AbstractADWindowPanel mPanel;
+	private String titulo;
+	
+    public int getRecordID() {
+		return recordID;
+	}
+
+	public void setRecordID(int recordID) {
+		this.recordID = recordID;
+	}
+	
+	public int getID() {
+		return recordID;
+	}
+	
+	public void setID(int recordID) {
+		this.recordID = recordID;
+	}
+
+	public String getTitulo() {
+		return titulo;
+	}
+
+	public void setTitulo(String titulo) {
+		this.titulo = titulo;
+	}
+
+
+
+    
     /** Creates new form WSocialConversation */
     public WSocialConversation() {
     	conversations = MSocialConversation.getNotReadConversationsForUser(Env.getAD_User_ID(Env.getCtx()));
@@ -123,6 +157,17 @@ public class WSocialConversation extends Window  implements EventListener  {
     	recordID = m_tab.getRecord_ID();
     	windowID = m_tab.getAD_Window_ID();
     	tabID = m_tab.getAD_Tab_ID();
+    	this.mPanel = null;
+    }
+    
+    public WSocialConversation( int windowNo, MTab mTab, AbstractADWindowPanel mPanel ) {
+    	m_WindowNo = windowNo;
+    	m_tab = mTab;
+    	tableID = m_tab.getAD_Table_ID();
+    	recordID = m_tab.getRecord_ID();
+    	windowID = m_tab.getAD_Window_ID();
+    	tabID = m_tab.getAD_Tab_ID();
+    	this.mPanel = mPanel;
     	
     	initForm();
     }
@@ -184,10 +229,14 @@ public class WSocialConversation extends Window  implements EventListener  {
 			// Conversacion actual a partir de una tabla/registro
 			currentConversation = MSocialConversation.getForTableAndRecord(Env.getCtx(), tableID, recordID, windowID, tabID, null);
 		}		
+		
+		// dREHER
+		if(mPanel==null) {
 		if (currentConversation.getC_SocialConversation_ID() > 0)
 			setTitle(Msg.translate(Env.getCtx(), "Conversation") + " " + currentConversation.getC_SocialConversation_ID());
 		else 
 			setTitle(Msg.translate(Env.getCtx(), "Conversations"));
+	}
 	}
 	
     protected void initComponents() {
@@ -229,18 +278,28 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	txtInThisConversation.setReadWrite(false);
 	    	txtInThisConversation.setBackground(UIManager.getColor("TextField.background"));
 	    	
+	    	txtInThisConversation.getComponent().setMultiline(true); 
+	    	txtInThisConversation.getComponent().setStyle("overflow: auto;"); // dREHER sep 24
+	    	
 	    	// Definiciones visuales adicionales
 	    	txtMessage.getComponent().setRows(3);
 	    	txtMessage.getComponent().setMultiline(true); 
+	    	txtMessage.getComponent().setStyle("overflow: auto;"); // dREHER sep 24
 	    	
-	    	String defComponentWidth = "" + (int)((DEF_WIDTH - 50) / 5) + "px"; 	// 5 columnas de componentes
-	    	String defComponentWidthDouble = "" + (int)((DEF_WIDTH - 50) / 2.5) + "px";
+	    	String defComponentWidth = "" + (int)((DEF_WIDTH - 60) / 5) + "px"; 	// 5 columnas de componentes
+	    	String defComponentWidthDouble = "" + (int)((DEF_WIDTH - 60) / 2.5) + "px";
 			this.setMaximizable(true);
 			this.setWidth(DEF_WIDTH+"px");
 			this.setHeight(DEF_HEIGHT+"px");
-			this.setClosable(true);
-			this.setSizable(true);
+			this.setClosable(false); // dREHER
+			this.setSizable(false);
 			this.setBorder("normal");
+			
+			// setAttribute(Window.MODE_KEY, Window.MODE_HIGHLIGHTED);		
+			
+			// dREHER se cambia el modo de la ventana para que lo agregue como una nueva pestaña 
+			this.setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
+						
 			
 			buttonGoToRecord.setWidth(defComponentWidth);
 			buttonPrevious.setWidth(defComponentWidth);
@@ -471,6 +530,15 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	lblStatus.setText("[" + Msg.translate(Env.getCtx(), "WriteAMessage") + "]");	    	
     	}
     	toggleComponents(false);
+    	
+    	// dREHER
+    	String title = "";
+    	if(m_tab==null) {
+    		title = "Conversaciones";
+    	}else
+    		title = "Conversacion: " +
+				m_tab.getName() + " (" + this.getRecordID() + ")"; 
+		this.setTitulo(title);
     }
 
     /** Habilitar o deshabilitar componentes segun situacion */
@@ -511,7 +579,7 @@ public class WSocialConversation extends Window  implements EventListener  {
     	listModel = new MessagesModel(tableModel, m_WindowNo);
     	tblConversation.setModel(listModel);
     	
-		if (currentConversation.getC_SocialConversation_ID() > 0)
+		if (currentConversation.getC_SocialConversation_ID() > 0 && mPanel==null)
 			setTitle(Msg.translate(Env.getCtx(), "Conversation") + " " + currentConversation.getC_SocialConversation_ID());
     }
 
@@ -609,6 +677,30 @@ public class WSocialConversation extends Window  implements EventListener  {
 		dispose();
 	}
 	
+	/**
+	 * 	Dispose
+	 */
+	
+	public void dispose ()
+	{
+		// TODO: ver si agregar logica aca...
+		boolean shouldDispose = true;
+		
+		// dREHER TODO: debe refrescar el registro del cual fue llamado
+		if (shouldDispose) {
+			if(mPanel != null) {
+				mPanel.refreshButtonSocialConversation();
+			}
+		}
+		
+		// dREHER al cerrar ventana debe cerrar pestaña
+		if (Window.MODE_EMBEDDED.equals(getAttribute(Window.MODE_KEY)))
+        	SessionManager.getAppDesktop().closeActiveWindow();
+		else
+			this.detach();
+		
+	} // dispose
+	
 	protected void newConversation() {
 		try {
 			currentConversation = new MSocialConversation(Env.getCtx(), 0, null);
@@ -621,6 +713,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 			loadValues();
 			tableModel.reload(currentConversation);
 			toggleComponents(false);
+			if(mPanel==null)
 			setTitle(Msg.translate(Env.getCtx(), "NewConversation"));
 		} catch (Exception e) {
 			FDialog.error(m_WindowNo, this, e.getMessage());
@@ -633,7 +726,19 @@ public class WSocialConversation extends Window  implements EventListener  {
         if( record_ID <= 0 )    // No Key
             return;
 
-        WAttachment va = new WAttachment(  m_WindowNo, currentConversation.getAttachmentID(), M_Table.getTableID("C_SocialConversation"), record_ID, null );       
+        
+        // dREHER sep 24, ver tema de paramtros...
+        WAttachment va = new WAttachment(  m_WindowNo, 
+        		currentConversation.getAttachmentID(), 
+        		M_Table.getTableID("C_SocialConversation"), 
+        		record_ID, 
+        		null,
+        		null,
+        		mPanel); 
+        va.setTableName("Conversacion");
+        va.setTitulo( "Adjunto: Conversacion " + " (" + record_ID + ")"); 
+        va.setTitle( "Adjunto: Conversacion " + " (" + record_ID + ")"); 
+        AEnv.showWindow(va); // dREHER sep 24
         buttonAttach.setLabel(SocialConversationModel.getAttachmentCountStr(ATTACH_BUTTON_TEXT, currentConversation));
 	}
 	

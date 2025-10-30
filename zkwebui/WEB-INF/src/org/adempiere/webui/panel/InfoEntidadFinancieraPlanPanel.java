@@ -127,7 +127,7 @@ public class InfoEntidadFinancieraPlanPanel extends InfoPanel implements ValueCh
 	protected void init() {
     	fEntidadFinancieraPlanValue.setWidth("50%");
 
-    	Grid grid = GridFactory.newGridLayout();
+    	grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -239,5 +239,10 @@ public class InfoEntidadFinancieraPlanPanel extends InfoPanel implements ValueCh
 	protected void insertPagingComponent() {
 		southBody.insertBefore(paging, southBody.getFirstChild());
 		layout.invalidate();
+	}
+
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
 	}
 }

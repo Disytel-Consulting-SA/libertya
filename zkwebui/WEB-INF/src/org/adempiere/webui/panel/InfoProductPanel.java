@@ -40,6 +40,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 import java.util.logging.Level;
 
@@ -54,6 +55,7 @@ import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.ListModelTable;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.ListboxFactory;
+import org.adempiere.webui.component.NumberBox;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Tab;
@@ -63,6 +65,7 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.WListbox;
+import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.session.SessionManager;
 import org.openXpertya.apps.search.InfoProduct;
 import org.openXpertya.apps.search.InfoProductAttribute;
@@ -70,6 +73,8 @@ import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MDocType;
+import org.openXpertya.model.MLookup;
+import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
@@ -78,6 +83,7 @@ import org.openXpertya.pos.view.PoSInfoProductAttribute;
 import org.openXpertya.process.ComponentActivation;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
@@ -90,6 +96,8 @@ import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zkex.zul.North;
 import org.zkoss.zkex.zul.South;
+import org.zkoss.zul.Paging;
+import org.zkoss.zul.event.ZulEvents;
 
 /**
  * Search Product and return selection
@@ -142,6 +150,27 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 	private Label labelUnique = new Label();
 	private Textbox fieldUnique = new Textbox();
 	
+	
+	// dREHER Cintolo
+	private Label lblMedida1 = new Label();
+	private NumberBox fieldMedida1 = new NumberBox(false);
+	private Label lblMedida2 = new Label();
+	private NumberBox fieldMedida2 = new NumberBox(false);
+	private Label lblEspesor = new Label();
+	private WSearchEditor pickEspesor;
+	private Label lblNorma = new Label();
+	private WSearchEditor pickNorma;
+	private Label lblCalidad = new Label();
+	private WSearchEditor pickCalidad;
+	
+	private Label lblTipoComprobante = new Label();
+	private Listbox pickTipoComprobante = new Listbox();
+	
+	private North northParameter = new North();
+	private North northPaging;
+	private Center centerPanel = new Center();
+	private Center centerPaging = new Center();
+	
 	// Elaine 2008/11/25
 	private Borderlayout borderlayout = new Borderlayout();
 	private Textbox fieldDescription = new Textbox();
@@ -170,7 +199,11 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		+ " LEFT OUTER JOIN M_Product_PO ppo ON (p.M_Product_ID=ppo.M_Product_ID)"
 		+ " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')"
 		+ " LEFT OUTER JOIN M_ProductUpc pu ON (p.M_Product_ID=pu.M_Product_ID AND pu.IsActive='Y') "
-		+ " LEFT OUTER JOIN C_BPartner bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)";
+		+ " LEFT OUTER JOIN C_BPartner bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)"
+		+ " LEFT OUTER JOIN M_Product_Espesor es ON (es.M_Product_Espesor_ID=p.M_Product_Espesor_ID)" // dREHER Tablas Cintolo
+		+ " LEFT OUTER JOIN M_Product_Norma no ON (no.M_Product_Norma_ID=p.M_Product_Norma_ID)"
+		+ " LEFT OUTER JOIN M_Product_Calidad ca ON (ca.M_Product_Calidad_ID=p.M_Product_Calidad_ID)";
+	
 		
 	/**  Array of Column Info    */
 	private static ColumnInfo[] s_productLayout = null;
@@ -214,8 +247,25 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		 String whereClause, boolean lookup)
 	{
 		super (windowNo, "p", "M_Product_ID",multipleSelection, whereClause, lookup);
+		
+		// dREHER si llega nulo el campo value, si esta en el entorno, setearlo
+		if(Util.isEmpty(value, true)) {
+			String m_product_id = Env.getContext(Env.getCtx(), windowNo, "M_Product_ID");
+			if(!Util.isEmpty(m_product_id, true)) {
+				try {
+					String envValue = DB.getSQLValueString(null, "SELECT value FROM M_Product WHERE M_Product_ID=?", Integer.parseInt(m_product_id));
+					if(!Util.isEmpty(envValue, true))
+						value = envValue;
+				}catch (Exception ex) {}
+			}
+		}
+		
 		log.info(value + ", Wh=" + M_Warehouse_ID + ", PL=" + M_PriceList_ID + ", WHERE=" + whereClause);
 		setTitle(Msg.getMsg(Env.getCtx(), "InfoProduct"));
+		
+		// dREHER Jun 25
+		title = Msg.getMsg(Env.getCtx(), "InfoProduct");
+		
 		//
 		initComponents();
 		init();
@@ -230,6 +280,25 @@ public class InfoProductPanel extends InfoPanel implements EventListener
         {
 			executeQuery();
             renderItems();
+            // dREHER sep 24 Solo pararse en el primero si encontro resultado
+            if(contentPanel.getItemCount() > 0)
+            	contentPanel.setSelectedIndex(0);
+            int row = contentPanel.getSelectedRow();
+			if (row >= 0) {
+				M_Warehouse_ID = 0;
+				ListItem listitem = pickWarehouse.getSelectedItem();
+				if (listitem != null)
+					M_Warehouse_ID = (Integer)listitem.getValue();
+
+				int M_PriceList_Version_ID = 0;
+				listitem = pickPriceList.getSelectedItem();
+				if (listitem != null)
+					M_PriceList_Version_ID = (Integer)listitem.getValue();
+
+    			refresh(contentPanel.getValueAt(row,2), M_Warehouse_ID, M_PriceList_Version_ID);
+    			borderlayout.getSouth().setOpen(true);
+			}
+           
         }
 
 		tabbedPane.setSelectedIndex(0);
@@ -268,6 +337,21 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		lblVendor = new Label();
 		lblVendor.setValue(Msg.translate(Env.getCtx(), "Vendor"));
 
+		// dREHER Filtros Cintolo -------------------------------------------------
+		lblMedida1 = new Label();
+		lblMedida1.setValue(Msg.translate(Env.getCtx(), "Medida 1"));
+		lblMedida2 = new Label();
+		lblMedida2.setValue(Msg.translate(Env.getCtx(), "Medida 2"));
+		lblEspesor = new Label();
+		lblEspesor.setValue(Msg.translate(Env.getCtx(), "Espesor"));
+		lblNorma = new Label();
+		lblNorma.setValue(Msg.translate(Env.getCtx(), "Norma"));
+		lblCalidad = new Label();
+		lblCalidad.setValue(Msg.translate(Env.getCtx(), "Calidad"));
+		lblTipoComprobante = new Label();
+		lblTipoComprobante.setValue(Msg.translate(Env.getCtx(), "Tipo de Comprobante"));
+		// ------------------------------------------------------------------------
+		
 		m_InfoPAttributeButton.setImage("/images/PAttribute16.png");
 		m_InfoPAttributeButton.setTooltiptext(Msg.getMsg(Env.getCtx(), "PAttribute"));
 		m_InfoPAttributeButton.addEventListener(Events.ON_CLICK,this);
@@ -321,12 +405,75 @@ public class InfoProductPanel extends InfoPanel implements EventListener
         labelUnique.setText( Msg.getMsg( Env.getCtx(),"UniqueField" ));
         labelUnique.setTooltip(Msg.getMsg(Env.getCtx(), "UniqueFieldDescription"));
 		
+        
+        // dREHER - Filtros Cintolo
+
+        MLookup lookup = MLookupFactory.get(Env.getCtx(), p_WindowNo,
+                0, getColumnID("M_Product_Espesor_ID"), DisplayType.Search);
+        pickEspesor = new WSearchEditor(lookup, Msg.translate(
+                Env.getCtx(), "M_Product_Espesor_ID"), "", false, false, true);
+        // pickEspesor.addValueChangeListener(this);
+
+        lookup = MLookupFactory.get(Env.getCtx(), p_WindowNo,
+                0, getColumnID("M_Product_Norma_ID"), DisplayType.Search);
+        pickNorma = new WSearchEditor(lookup, Msg.translate(
+                Env.getCtx(), "M_Product_Norma_ID"), "", false, false, true);
+        
+        lookup = MLookupFactory.get(Env.getCtx(), p_WindowNo,
+                0, getColumnID("M_Product_Calidad_ID"), DisplayType.Search);
+        pickCalidad = new WSearchEditor(lookup, Msg.translate(
+                Env.getCtx(), "M_Product_Calidad_ID"), "", false, false, true);
+        
+        
+        pickTipoComprobante = new Listbox();
+        pickTipoComprobante.setRows(0);
+        pickTipoComprobante.setMultiple(false);
+        pickTipoComprobante.setMold("select");
+        pickTipoComprobante.setWidth("100%");
+        pickTipoComprobante.addEventListener(Events.ON_SELECT, this);
+        
+        /*
+		pickEspesor = new Listbox();
+		pickEspesor.setRows(0);
+		pickEspesor.setMultiple(false);
+		pickEspesor.setMold("select");
+		pickEspesor.setWidth("100%");
+		pickEspesor.addEventListener(Events.ON_SELECT, this);
+        
+		pickNorma = new Listbox();
+		pickNorma.setRows(0);
+		pickNorma.setMultiple(false);
+		pickNorma.setMold("select");
+		pickNorma.setWidth("100%");
+		pickNorma.addEventListener(Events.ON_SELECT, this);
+		
+		pickCalidad = new Listbox();
+		pickCalidad.setRows(0);
+		pickCalidad.setMultiple(false);
+		pickCalidad.setMold("select");
+		pickCalidad.setWidth("100%");
+		pickCalidad.addEventListener(Events.ON_SELECT, this);
+		*/
+		
+		
+		// fin filtros Cintolo
+		
         contentPanel.setVflex(true);
 	}	//	initComponents
 
+	// dREHER busca el ID de la columna
+	private int getColumnID(String string) {
+		return DB.getSQLValue(null, "SELECT AD_Column_ID FROM AD_Column WHERE Name=?", string);
+	}
+	
+	@Override
+	protected Grid getFilterGrid() {
+	    return grid; // Devuelve el Grid definido en InfoBPartnerPanel
+	}
+	
 	private void init()
 	{
-    	Grid grid = GridFactory.newGridLayout();
+    	grid = GridFactory.newGridLayout();
 
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -361,9 +508,34 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		row.appendChild(lblAS.rightAlign());
 		row.appendChild(pickAS);
 		
+		// dREHER Filtro Cintolo
+		// Medida 1, Medida 2, Espesor
+		row = new Row();
+		rows.appendChild(row);
+		row.appendChild(lblMedida1.rightAlign());
+		row.appendChild(fieldMedida1);
+		row.appendChild(lblMedida2.rightAlign());
+		row.appendChild(fieldMedida2);
+		
+		
+		// Norma Calidad
+		row = new Row();
+		rows.appendChild(row);
+		row.appendChild(lblEspesor.rightAlign());
+		row.appendChild(pickEspesor.getComponent());
+		row.appendChild(lblNorma.rightAlign());
+		row.appendChild(pickNorma.getComponent());
+		row.appendChild(lblCalidad.rightAlign());
+		row.appendChild(pickCalidad.getComponent());
+		
 		// Disyel: Merge desde r2570LP
 		row = new Row();
 		rows.appendChild(row);
+
+		// dREHER Filtro de tipo de comprobante
+		row.appendChild(lblTipoComprobante.rightAlign());
+		row.appendChild(pickTipoComprobante);
+		
 		row.appendChild(labelUnique.rightAlign());
 		row.appendChild(fieldUnique);
 		row.appendChild(checkBP);
@@ -446,9 +618,16 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		Tabs tabs = new Tabs();
 		tabbedPane.appendChild(tabs);
 
-		Tab tab = new Tab(Msg.translate(Env.getCtx(), "Warehouse"));
+		Tab tab = new Tab(Msg.getMsg(Env.getCtx(), "ATP"));
 		tabs.appendChild(tab);
 		Tabpanel desktopTabPanel = new Tabpanel();
+		desktopTabPanel.setHeight("100%");
+		desktopTabPanel.appendChild(m_tableAtp);
+		tabPanels.appendChild(desktopTabPanel);
+		
+		tab = new Tab(Msg.translate(Env.getCtx(), "Warehouse"));
+		tabs.appendChild(tab);
+		desktopTabPanel = new Tabpanel();
 		desktopTabPanel.setHeight("100%");
 		desktopTabPanel.appendChild(warehouseTbl);
 		tabPanels.appendChild(desktopTabPanel);
@@ -492,40 +671,73 @@ public class InfoProductPanel extends InfoPanel implements EventListener
         	borderlayout.setStyle("border: none; position: relative");
         else
         	borderlayout.setStyle("border: none; position: absolute");
-        Center center = new Center();
-        center.setAutoscroll(true);
-        center.setFlex(true);
-		borderlayout.appendChild(center);
-		center.appendChild(contentPanel);
+
+        int detailHeight = (height * 32 / 100);
+
+        // dREHER panel colapsable de filtros
+        northParameter = new North();
+        northParameter.setHeight(detailHeight + "px");
+        northParameter.setCollapsible(true);
+        northParameter.setSplittable(true);
+        northParameter.setFlex(true);
+        northParameter.setTitle(Msg.translate(Env.getCtx(), "Filtros"));
+        northParameter.setTooltiptext(Msg.translate(Env.getCtx(), "Filtros"));
+        borderlayout.appendChild(northParameter);  
+        northParameter.appendChild(grid); // panel que contiene los filtros
+        
+        
+        centerPanel = new Center();
+        centerPanel.setAutoscroll(true);
+        centerPanel.setFlex(true);
+		borderlayout.appendChild(centerPanel);
+		centerPanel.appendChild(contentPanel); // panel que contiene la grilla de datos
+		
 		South south = new South();
-		int detailHeight = (height * 25 / 100);
+		detailHeight = (height * 25 / 100);
 		south.setHeight(detailHeight + "px");
 		south.setCollapsible(true);
 		south.setSplittable(true);
 		south.setFlex(true);
 		south.setTitle(Msg.translate(Env.getCtx(), "WarehouseStock"));
 		south.setTooltiptext(Msg.translate(Env.getCtx(), "WarehouseStock"));
+		south.setOpen(false); // dREHER por defecto cerrado
 		borderlayout.appendChild(south);
 		south.appendChild(tabbedPane);
 
         Borderlayout mainPanel = new Borderlayout();
         mainPanel.setWidth("100%");
         mainPanel.setHeight("100%");
+
+        /** codigo original
         North north = new North();
         mainPanel.appendChild(north);
         north.appendChild(grid);
-        center = new Center();
+        */
+        
+		/* funciona y queda feo porque la barra de paginado queda abajo de todo */
+        northPaging = new North();
+        detailHeight = (height * 5 / 100);
+        northPaging.setHeight(detailHeight + "px");
+        mainPanel.appendChild(northPaging);
+        
+        Center center = new Center();
         mainPanel.appendChild(center);
-        center.appendChild(borderlayout);
+        center.appendChild(borderlayout); // panel que contiene filtros+grilla de datos+tabs de detalles
+        
+        /* funciona ok */
         south = new South();
+        detailHeight = (height * 6 / 100);
+        south.setHeight(detailHeight + "px");
         mainPanel.appendChild(south);
-        south.appendChild(confirmPanel);
+        south.appendChild(confirmPanel); // panel que contiene los botones de confirmacion
+        
         if (!isLookup())
         {
         	mainPanel.setStyle("position: absolute");
         }
 
 		this.appendChild(mainPanel);
+
 		if (isLookup())
 		{
 			this.setWidth(width + "px");
@@ -555,10 +767,21 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 
 	@Override
 	protected void insertPagingComponent() {
-		North north = new North();
-		north.appendChild(paging);
-		borderlayout.appendChild(north);
+		
+		// North north = new North();
+		// north.appendChild(paging);
+		// borderlayout.appendChild(north);
+		
+		// dREHER ya tenemos un norte con los filtros colapsables en la layout
+		// va abajo de todo, feo pero funciona...
+		northPaging.appendChild(paging);
+		northParameter.setOpen(false); // Cuando agrega paginado, cierra parametros
+		
+		// ATENCION zk - NO permite agregar mas de un hijo por North/Center/South !!!
+		// contentPanel.getParent().insertBefore(paging, contentPanel.getNextSibling());
 	}
+
+  
 
 	/**
 	 * 	Refresh Query
@@ -662,7 +885,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		int M_PriceList_Version_ID = findPLV (M_PriceList_ID);
 		//	Set Value or Name
 		if (value.startsWith("@") && value.endsWith("@"))
-			fieldName.setText(value.substring(1,value.length()-1));
+			fieldName.setText("%" + value.substring(1,value.length()-1) + "%"); // dREHER sep 24
 		else
 			fieldValue.setText(value);
 		//	Set Warehouse
@@ -710,10 +933,10 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			+ "WHERE M_PriceList_Version.M_PriceList_ID=pl.M_PriceList_ID"
 			+ " AND pl.C_Currency_ID=c.C_Currency_ID"
 			+ " AND M_PriceList_Version.IsActive='Y' AND pl.IsActive='Y'";
-		//	Same PL currency as original one
-		if (M_PriceList_ID != 0)
-			SQL += " AND EXISTS (SELECT * FROM M_PriceList xp WHERE xp.M_PriceList_ID=" + M_PriceList_ID
-				+ " AND pl.C_Currency_ID=xp.C_Currency_ID)";
+		//	Same PL currency as original one (CINTOLO - Se comenta esta filtro para que traiga cualquier pricelist sin importar la moneda)
+		//if (M_PriceList_ID != 0)
+		//	SQL += " AND EXISTS (SELECT * FROM M_PriceList xp WHERE xp.M_PriceList_ID=" + M_PriceList_ID
+		//		+ " AND pl.C_Currency_ID=xp.C_Currency_ID)";
 		//	Add Access & Order
 		SQL = MRole.getDefault().addAccessSQL (SQL, "M_PriceList_Version", true, false)	// fully qualidfied - RO
 			+ " ORDER BY M_PriceList_Version.Name";
@@ -768,6 +991,48 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
 				pickAS.addItem(kn);
 			}
+			
+			// dREHER filtros Cintolo ----------------------------------------------------------
+			// Reemplazados por busquedas
+			// Norma
+			/*
+			SQL = MRole.getDefault().addAccessSQL (
+				"SELECT M_Product_Norma_ID, Value || ' - ' || Name FROM M_Product_Norma WHERE IsActive='Y'",
+						"M_Product_Norma", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO)
+					+ " ORDER BY Value";
+			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
+					pickNorma.addItem(kn);
+			}
+			
+			// Calidad
+			SQL = MRole.getDefault().addAccessSQL (
+					"SELECT M_Product_Calidad_ID, Value || ' - ' || Name FROM M_Product_Calidad WHERE IsActive='Y'",
+							"M_Product_Calidad", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO)
+						+ " ORDER BY Value";
+			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
+					pickCalidad.addItem(kn);
+			}
+			
+			// Espesor
+			SQL = MRole.getDefault().addAccessSQL (
+					"SELECT M_Product_Espesor_ID, Value || ' - ' || Name FROM M_Product_Espesor WHERE IsActive='Y'",
+							"M_Product_Espesor", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO)
+						+ " ORDER BY Value";
+			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
+					pickEspesor.addItem(kn);
+			}
+			*/
+			
+			pickTipoComprobante.appendItem("Pedido/O.Despacho", 1);
+			pickTipoComprobante.appendItem("Presupuesto/Pedido/O.Despacho", 2);
+			pickTipoComprobante.appendItem("Presupuesto", 3);
+			pickTipoComprobante.appendItem("Pedido", 4);
+			pickTipoComprobante.appendItem("Orden de Despacho", 5);
+			pickTipoComprobante.appendItem("Remito", 6);
+			pickTipoComprobante.appendItem("Factura", 7);
+			pickTipoComprobante.appendItem("Pedido a Proveedor", 8);
+			
+			// ---------------------------------------------------------------------------------
 		}
 		catch (SQLException e)
 		{
@@ -975,6 +1240,35 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			}
 		}
 
+		// dREHER Filtros Cintolo -------------------------------------------------------------------------
+		
+		//  => Medida 1
+		BigDecimal tmp = fieldMedida1.getValue();
+		if (tmp!=null)
+			where.append(" AND p.Cintolo_Measure_One = ?");
+
+		//  => Medida 2
+		tmp = fieldMedida2.getValue();
+		if (tmp!=null)
+			where.append(" AND p.Cintolo_Measure_Two = ?");
+		
+		//  => Espesor
+		if (getEspesor_ID() > 0) {
+			where.append(" AND p.M_Product_Espesor_ID=?");
+		}
+		
+		//  => Norma
+		if (getNorma_ID() > 0) {
+			where.append(" AND p.M_Product_Norma_ID=?");
+		}
+
+		//  => Calidad
+		if (getCalidad_ID() > 0) {
+			where.append(" AND p.M_Product_Calidad_ID=?");
+		}
+		
+		// ------------------------------------------------------------------------------------------------
+
 		// Disytel: Merge desde r253GC
 		// => Unique
 
@@ -1046,11 +1340,20 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		{
 			for (int i = 0; i < p_layout.length; i++)
 			{
-				if (p_layout[i].getColSQL().indexOf('?') != -1)
+				
+				// if (p_layout[i].getColSQL().indexOf('?') != -1)
+				//	pstmt.setInt(index++, M_Warehouse_ID);
+				
+				// dREHER Marzo 25
+				int cant = countOccurrences(p_layout[i].getColSQL(), '?');
+				for(int p=0; p<cant; p++) {
 					pstmt.setInt(index++, M_Warehouse_ID);
+					// debug("Param= " + p_layout[i].getColSQL() + " M_Warehouse_ID= " + cant);
 			}
 		}
-		log.fine("M_Warehouse_ID=" + M_Warehouse_ID + " (" + (index-1) + "*)");
+			
+		}
+		debug("M_Warehouse_ID=" + M_Warehouse_ID + " (" + (index-1) + "*)");
 
 		//  => PriceList
 		int M_PriceList_Version_ID = 0;
@@ -1060,14 +1363,14 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		if (M_PriceList_Version_ID != 0)
 		{
 			pstmt.setInt(index++, M_PriceList_Version_ID);
-			log.fine("M_PriceList_Version_ID=" + M_PriceList_Version_ID);
+			debug("M_PriceList_Version_ID=" + M_PriceList_Version_ID);
 		}
 		// Elaine 2008/11/29
 		//  => Product Category
 		int M_Product_Category_ID = getM_Product_Category_ID();
 		if (M_Product_Category_ID > 0) {
 			pstmt.setInt(index++, M_Product_Category_ID);
-			log.fine("M_Product_Category_ID=" + M_Product_Category_ID);
+			debug("M_Product_Category_ID=" + M_Product_Category_ID);
 		}
 		//
 		int M_AttributeSet_ID = getM_AttributeSet_ID();
@@ -1155,7 +1458,49 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			pstmt.setString(index++, vendor);
 			log.fine("Vendor: " + vendor);
 		}
+		
+		// dREHER Filtros Cintolo ---------------------------------------------------------------------
+		BigDecimal tmp = fieldMedida1.getValue();
+		if(tmp!=null)
+			pstmt.setBigDecimal(index++, tmp);
+		
+		tmp = fieldMedida2.getValue();
+		if(tmp!=null)
+			pstmt.setBigDecimal(index++, tmp);
+		
+		int M_ID = getEspesor_ID();
+		if (M_ID > 0) {
+			pstmt.setInt(index++, M_ID);
+		}
+		
+		M_ID = getNorma_ID();
+		if (M_ID > 0) {
+			pstmt.setInt(index++, M_ID);
+		}
+
+		M_ID = getCalidad_ID();
+		if (M_ID > 0) {
+			pstmt.setInt(index++, M_ID);
+		}
+
+		
+		// --------------------------------------------------------------------------------------------
 	}   //  setParameters
+
+	// dREHER Mar 25
+	private void debug(String string) {
+		System.out.println("--> InfoProductPanel." + string);
+	}
+
+	public static int countOccurrences(String str, char target) {
+        int count = 0;
+        for (int i = 0; i < str.length(); i++) {
+            if (str.charAt(i) == target) {
+                count++;
+            }
+        }
+        return count;
+    }
 
 	/**
 	 * 	Query per Product Attribute.
@@ -1332,12 +1677,39 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Discontinued").substring(0, 1), "p.Discontinued", Boolean.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Value"), "p.Value", String.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Name"), "p.Name", String.class));
+			
+			// dREHER - Columnas Cintolo ----------------------------------------------------------------------------------------------
+			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Medida 1"), "p.Cintolo_Measure_One", BigDecimal.class));
+			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Medida 2"), "p.Cintolo_Measure_Two", BigDecimal.class));
+			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Espesor"), "es.Name", String.class));
+			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Norma"), "no.Name", String.class));
+			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Calidad"), "ca.Name", String.class));
+			// ------------------------------------------------------------------------------------------------------------------------
+			
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "QtyAvailable"), "bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable", Double.class, true, true, null));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "PriceList"), "bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",  BigDecimal.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "PriceStd"), "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd", BigDecimal.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOnHand"), "bomQtyOnHand(p.M_Product_ID,?,0) AS QtyOnHand", Double.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "QtyReserved"), "bomQtyReserved(p.M_Product_ID,?,0) AS QtyReserved", Double.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "QtyOrdered"), "bomQtyOrdered(p.M_Product_ID,?,0) AS QtyOrdered", Double.class));
+			
+			// ------------------------------------------- Nuevas columnas de Stock dREHER Marzo 25
+			list.add(new ColumnInfo("Disponible Operativo", 
+					" ( bomQtyOnHand(p.M_Product_ID,?,0) - (SELECT COALESCE(SUM(ol.QtyOrdered),0) "
+					+ "FROM C_OrderLine ol "
+					+ "INNER JOIN C_Order o ON (o.C_Order_ID=ol.C_Order_ID) "
+					+ "INNER JOIN C_DocType t ON (t.C_DocType_ID=o.C_DocType_ID) "
+					+ "WHERE o.Processed='Y' AND ol.M_Warehouse_ID=? "
+					+ "AND o.DocStatus IN ('CL','CO','CP') AND t.DocSubTypeSO='RO' "
+					+ "AND ol.M_Product_ID=p.M_Product_ID) ) AS QtyDisponibleOperativo", Double.class));			
+			list.add(new ColumnInfo("A Despachar", 
+					"(SELECT COALESCE(SUM(ol.QtyOrdered),0) "
+					+ "FROM C_OrderLine ol "
+					+ "INNER JOIN C_Order o ON (o.C_Order_ID=ol.C_Order_ID) "
+					+ "INNER JOIN C_DocType t ON (t.C_DocType_ID=o.C_DocType_ID) "
+					+ "WHERE o.Processed='Y' AND ol.M_Warehouse_ID= ? "
+					+ "AND o.DocStatus = 'CP' AND t.DocSubTypeSO='RO' "
+					+ "AND ol.M_Product_ID=p.M_Product_ID) AS QtyADespachar", Double.class));
 			if (isUnconfirmed())
 			{
 				list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "QtyUnconfirmed"), "(SELECT SUM(c.TargetQty) FROM M_InOutLineConfirm c INNER JOIN M_InOutLine il ON (c.M_InOutLine_ID=il.M_InOutLine_ID) INNER JOIN M_InOut i ON (il.M_InOut_ID=i.M_InOut_ID) WHERE c.Processed='N' AND i.M_Warehouse_ID=? AND il.M_Product_ID=p.M_Product_ID) AS QtyUnconfirmed", Double.class));
@@ -1429,7 +1801,17 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			if (m_M_AttributeSetInstance_ID != -1)
 				dispose(true);
 			return;
+			
+		}else if(e.getTarget() == pickTipoComprobante && row != -1) { // dREHER
+			
+			ListItem warehouse = pickWarehouse.getSelectedItem();
+			int M_Warehouse_ID = 0;
+			if(warehouse.getValue() != null)
+				M_Warehouse_ID = ((Integer)warehouse.getValue()).intValue();
+			initAtpTab (M_Warehouse_ID);
+			return;
 		}
+		
 		//
 		super.onEvent(e);
     }
@@ -1458,23 +1840,37 @@ public class InfoProductPanel extends InfoPanel implements EventListener
     // Elaine 2008/11/26
 	/**
 	 *	Query ATP
+	 *
+	 *
+	 *  dREHER query ATP 
+	 *  (movimientos de stock relacionados)
+	 *  (movimientos de pedidos relacionados - cantidad reservada > 0)
 	 */
 	private void initAtpTab (int  m_M_Warehouse_ID)
 	{
+		int pickTC = 1;
+		int index = pickTipoComprobante.getSelectedIndex();
+		if(index > 0) {
+			ListItem li = pickTipoComprobante.getSelectedItem();
+			pickTC = (Integer)li.getValue();
+		}
+		
 		//	Header
 		Vector<String> columnNames = new Vector<String>();
 		columnNames.add(Msg.translate(Env.getCtx(), "Date"));
 		columnNames.add(Msg.translate(Env.getCtx(), "QtyOnHand"));
 		columnNames.add(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
-		columnNames.add(Msg.translate(Env.getCtx(), "QtyOrdered"));
-		columnNames.add(Msg.translate(Env.getCtx(), "QtyReserved"));
-		columnNames.add(Msg.translate(Env.getCtx(), "M_Locator_ID"));
-		columnNames.add(Msg.translate(Env.getCtx(), "M_AttributeSetInstance_ID"));
 		columnNames.add(Msg.translate(Env.getCtx(), "DocumentNo"));
+		columnNames.add(Msg.translate(Env.getCtx(), "QtyEntered"));
+		columnNames.add(Msg.translate(Env.getCtx(), "QtyReserved"));
+		columnNames.add(Msg.translate(Env.getCtx(), "QtyOrdered"));
 		columnNames.add(Msg.translate(Env.getCtx(), "M_Warehouse_ID"));
+		columnNames.add(Msg.translate(Env.getCtx(), "M_Locator_ID"));
+		// columnNames.add(Msg.translate(Env.getCtx(), "M_AttributeSetInstance_ID"));
 
 		//	Fill Storage Data
 		boolean showDetail = CLogMgt.isLevelFine();
+		
 		String sql = "SELECT s.QtyOnHand, s.QtyReserved, s.QtyOrdered,"
 			+ " productAttribute(s.M_AttributeSetInstance_ID), s.M_AttributeSetInstance_ID,";
 		if (!showDetail)
@@ -1494,10 +1890,36 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			sql += " GROUP BY productAttribute(s.M_AttributeSetInstance_ID), w.Name, l.Value";
 		sql += " ORDER BY l.Value";
 
+		
+		// Si son remitos, cambio la query
+		// InOut
+		sql = "SELECT o.MovementDate as DateOrdered, (ol.QtyOrdered-ol.QtyDelivered) as QtyOrdered,"
+						+ " productAttribute(ol.M_AttributeSetInstance_ID), ol.M_AttributeSetInstance_ID,"
+						+ " dt.DocBaseType, bp.Name,"
+						+ " dt.PrintName || ' ' || o.DocumentNo As DocumentNo, w.Name, il.QtyEntered "
+						+ "FROM M_InOut o"
+						+ " INNER JOIN M_InOutLine il ON (o.M_InOut_ID=il.M_InOut_ID)"
+						+ " LEFT JOIN C_OrderLine ol ON (ol.C_OrderLine_ID=il.C_OrderLine_ID)"
+						+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+						+ " INNER JOIN M_Locator lo ON (lo.M_Locator_ID=il.M_Locator_ID)"
+						+ " INNER JOIN M_Warehouse w ON (lo.M_Warehouse_ID=w.M_Warehouse_ID)"
+						+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) "
+						+ "WHERE (ol.QtyOrdered-ol.QtyDelivered)<>0"   
+						+ " AND ol.M_Product_ID=?";
+		if (m_M_Warehouse_ID != 0)
+			sql += " AND w.M_Warehouse_ID=?";
+		if (m_M_AttributeSetInstance_ID > 0)
+			sql += " AND il.M_AttributeSetInstance_ID=?";
+				
+		sql += " ORDER BY o.MovementDate";
+		
 		Vector<Vector<Object>> data = new Vector<Vector<Object>>();
 		double qty = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
+
+		if(pickTC == 6) { // Remito
+
 		try
 		{
 			pstmt = DB.prepareStatement(sql, null);
@@ -1509,21 +1931,25 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				Vector<Object> line = new Vector<Object>(9);
+					Vector<Object> line = new Vector<Object>(8);
 				line.add(null);							//  Date
 				double qtyOnHand = rs.getDouble(1);
-				qty += qtyOnHand;
-				line.add(new Double(qtyOnHand));  		//  Qty
-				line.add(null);							//  BPartner
+					
+					qty = rs.getDouble(9);
+					
+					line.add(rs.getString(6));			//  BPartner
+					line.add(null);						//  DocumentNo
+					line.add(new Double(qty));  		//  Qty
+					line.add(new Double(rs.getDouble(2)));  //  QtyReserved
 				line.add(new Double(rs.getDouble(3)));  //  QtyOrdered
-				line.add(new Double(rs.getDouble(2)));  //  QtyReserved
+					
+					line.add(rs.getString(6));  			//	Warehouse
 				line.add(rs.getString(7));      		//  Locator
 				String asi = rs.getString(4);
 				if (showDetail && (asi == null || asi.length() == 0))
 					asi = "{" + rs.getInt(5) + "}";
-				line.add(asi);							//  ASI
-				line.add(null);							//  DocumentNo
-				line.add(rs.getString(6));  			//	Warehouse
+					// line.add(asi);							//  ASI
+					
 				data.add(line);
 			}
 		}
@@ -1536,23 +1962,85 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			rs = null; pstmt = null;
 		}
 
+		}
+		
+		// Solo ordenes (presupuesto/orden de despacho/pedido)
+		if((pickTC >= 1 && pickTC <= 5)) {
 		//	Orders
-		sql = "SELECT o.DatePromised, ol.QtyReserved,"
+			sql = "SELECT o.DateOrdered, (ol.QtyOrdered-ol.QtyDelivered) as QtyOrdered,"
 			+ " productAttribute(ol.M_AttributeSetInstance_ID), ol.M_AttributeSetInstance_ID,"
 			+ " dt.DocBaseType, bp.Name,"
-			+ " dt.PrintName || ' ' || o.DocumentNo As DocumentNo, w.Name "
+					+ " dt.PrintName || ' ' || o.DocumentNo As DocumentNo, w.Name, ol.QtyOrdered, dt.DocSubTypeSO "
 			+ "FROM C_Order o"
 			+ " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)"
 			+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
 			+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
 			+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) "
-			+ "WHERE ol.QtyReserved<>0"
+					+ "WHERE (ol.QtyOrdered-ol.QtyDelivered)<>0"   
 			+ " AND ol.M_Product_ID=?";
+		}else { 
+			if(pickTC == 7) // Solo facturas
+				//	Invoices
+				sql = "SELECT o.DateInvoiced AS DateOrdered, (ol.QtyOrdered-ol.QtyDelivered) AS QtyOrdered,"
+					+ " productAttribute(ol.M_AttributeSetInstance_ID), ol.M_AttributeSetInstance_ID,"
+					+ " dt.DocBaseType, bp.Name,"
+					+ " dt.PrintName || ' ' || o.DocumentNo As DocumentNo, w.Name, il.QtyEntered, dt.DocSubTypeSO "
+					+ "FROM C_Invoice o"
+					+ " INNER JOIN C_InvoiceLine il ON (o.C_invoice_ID=il.C_Invoice_ID)"
+					+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+					+ " LEFT JOIN C_OrderLine ol ON ol.C_OrderLine_ID=il.C_OrderLine_ID"
+					+ " LEFT JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
+					+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) "
+					+ "WHERE (ol.QtyOrdered-ol.QtyDelivered)<>0"   
+					+ " AND il.M_Product_ID=?";
+			else
+//				Purchase Orders // dREHER Ene 25 
+				sql = "SELECT o.DateOrdered, (ol.QtyOrdered-ol.QtyDelivered) as QtyOrdered,"
+						+ " productAttribute(ol.M_AttributeSetInstance_ID), ol.M_AttributeSetInstance_ID,"
+						+ " dt.DocBaseType, bp.Name,"
+						+ " dt.PrintName || ' ' || o.DocumentNo As DocumentNo, w.Name, ol.QtyOrdered, dt.DocSubTypeSO "
+						+ "FROM C_Order o"
+						+ " INNER JOIN C_OrderLine ol ON (o.C_Order_ID=ol.C_Order_ID)"
+						+ " INNER JOIN C_DocType dt ON (o.C_DocType_ID=dt.C_DocType_ID)"
+						+ " INNER JOIN M_Warehouse w ON (ol.M_Warehouse_ID=w.M_Warehouse_ID)"
+						+ " INNER JOIN C_BPartner bp  ON (o.C_BPartner_ID=bp.C_BPartner_ID) "
+						+ "WHERE ol.M_Product_ID=? AND o.IsSoTrx='N' ";
+			
+				
+		}
+		
 		if (m_M_Warehouse_ID != 0)
 			sql += " AND ol.M_Warehouse_ID=?";
 		if (m_M_AttributeSetInstance_ID > 0)
 			sql += " AND ol.M_AttributeSetInstance_ID=?";
-		sql += " ORDER BY o.DatePromised";
+
+		if(pickTC == 2) { // presupuesto, pedido y orden de despacho
+			sql += " AND ('SO'=dt.DocSubTypeSO OR 'RO'=dt.DocSubTypeSO OR 'ON'=dt.DocSubTypeSO)";
+		}
+		if(pickTC == 1) { // pedido y orden de despacho
+			sql += " AND ('SO'=dt.DocSubTypeSO OR 'RO'=dt.DocSubTypeSO)";
+		}
+		if(pickTC == 3) { // presupuesto
+			sql += " AND 'ON'=dt.DocSubTypeSO";
+		}else 
+			if(pickTC == 4) { // pedido
+					sql += " AND 'SO'=dt.DocSubTypeSO";
+			}else if(pickTC == 5) { // orden de despacho
+				sql += " AND 'RO'=dt.DocSubTypeSO";
+			}
+		
+		if(pickTC == 7)
+			sql += "ORDER BY o.DateInvoiced";
+		else if(pickTC != 8)
+			sql += " ORDER BY o.DateOrdered"; // o.DatePromised
+		else if(pickTC == 8)
+			sql += " ORDER BY " + 
+					"CASE WHEN (ol.QtyOrdered - ol.QtyDelivered) <> 0 THEN 0 ELSE 1 END, " +
+					"o.DateOrdered DESC " +
+					"LIMIT 5";
+		
+		System.out.println("sql ATP: " + sql);
+		
 		try
 		{
 			pstmt = DB.prepareStatement(sql, null);
@@ -1561,11 +2049,13 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 				pstmt.setInt(2, m_M_Warehouse_ID);
 			if (m_M_AttributeSetInstance_ID > 0)
 				pstmt.setInt(3, m_M_AttributeSetInstance_ID);
+			
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				Vector<Object> line = new Vector<Object>(9);
+				Vector<Object> line = new Vector<Object>(8);
 				line.add(rs.getTimestamp(1));			//  Date
+				
 				double oq = rs.getDouble(2);
 				String DocBaseType = rs.getString(5);
 				Double qtyReserved = null;
@@ -1580,17 +2070,31 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 					qtyReserved = new Double(oq);
 					qty -= oq;
 				}
-				line.add(new Double(qty)); 		 		//  Qty
+				
+				// dREHER sep 24 - Las O de despacho NO reservan stock
+				if("RO".equals(rs.getString("DocSubTypeSO")) || 
+						"ON".equals(rs.getString("DocSubTypeSO")))
+						qtyReserved = null;
+				
+				
 				line.add(rs.getString(6));				//  BPartner
-				line.add(qtyOrdered);					//  QtyOrdered
+				line.add(rs.getString(7));				//  DocumentNo
+
+				// dREHER
+				qty = rs.getDouble(9);
+				line.add(new Double(qty)); 		 		//  Qty
 				line.add(qtyReserved);					//  QtyReserved
-				line.add(null);				      		//  Locator
+				line.add(qtyOrdered);					//  QtyOrdered
+				
 				String asi = rs.getString(3);
 				if (showDetail && (asi == null || asi.length() == 0))
 					asi = "{" + rs.getInt(4) + "}";
 				line.add(asi);							//  ASI
 				line.add(rs.getString(7));				//  DocumentNo
 				line.add(rs.getString(8));  			//	Warehouse
+				line.add(null);				      		//  Locator
+				// line.add(asi);							//  ASI
+				
 				data.add(line);
 			}
 		}
@@ -1603,19 +2107,22 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			rs = null; pstmt = null;
 		}
 
+		
+
 		//  Table
 		ListModelTable model = new ListModelTable(data);
 		m_tableAtp.setData(model, columnNames);
 		//
 		m_tableAtp.setColumnClass(0, Timestamp.class, true);   //  Date
-		m_tableAtp.setColumnClass(1, Double.class, true);      //  Quantity
-		m_tableAtp.setColumnClass(2, String.class, true);      //  Partner
+		m_tableAtp.setColumnClass(1, String.class, true); 		// bPartner
+		m_tableAtp.setColumnClass(2, String.class, true);      //  DocNo
 		m_tableAtp.setColumnClass(3, Double.class, true);      //  Quantity
 		m_tableAtp.setColumnClass(4, Double.class, true);      //  Quantity
-		m_tableAtp.setColumnClass(5, String.class, true);   	  //  Locator
-		m_tableAtp.setColumnClass(6, String.class, true);   	  //  ASI
-		m_tableAtp.setColumnClass(7, String.class, true);      //  DocNo
-		m_tableAtp.setColumnClass(8, String.class, true);   	  //  Warehouse
+		m_tableAtp.setColumnClass(5, Double.class, true);      //  Quantity
+		m_tableAtp.setColumnClass(6, String.class, true);   	  //  Warehouse
+		m_tableAtp.setColumnClass(7, String.class, true);   	  //  Locator
+		// m_tableAtp.setColumnClass(6, String.class, true);   	  //  ASI
+		
 		//
 		m_tableAtp.autoSize();
 	}	//	initAtpTab
@@ -1633,6 +2140,49 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		return M_Product_Category_ID;
 	}
     //
+    
+    // dREHER Espesor
+    public int getEspesor_ID()
+    {
+		int M_ID = 0;
+		/*
+		ListItem pick = (ListItem)pickEspesor.getSelectedItem();
+		if (pick!=null)
+			M_ID = Integer.parseInt(pick.getValue().toString());
+		*/
+		if(pickEspesor.getValue()!=null)
+			M_ID = (Integer)pickEspesor.getValue();
+		return M_ID;
+	}
+    
+    // dREHER Norma
+    public int getNorma_ID()
+    {
+		int M_ID = 0;
+		/*
+		ListItem pick = (ListItem)pickNorma.getSelectedItem();
+		if (pick!=null)
+			M_ID = Integer.parseInt(pick.getValue().toString());
+		*/
+		if(pickNorma.getValue()!=null)
+			M_ID = (Integer)pickNorma.getValue();
+		
+		return M_ID;
+	}
+    
+    // dREHER Calidad
+    public int getCalidad_ID()
+    {
+		int M_ID = 0;
+		/*
+		ListItem pick = (ListItem)pickCalidad.getSelectedItem();
+		if (pick!=null)
+			M_ID = Integer.parseInt(pick.getValue().toString());
+		 */
+		if(pickCalidad.getValue()!=null)
+			M_ID = (Integer)pickCalidad.getValue();
+		return M_ID;
+	}    
     
     public int getM_AttributeSet_ID()
     {

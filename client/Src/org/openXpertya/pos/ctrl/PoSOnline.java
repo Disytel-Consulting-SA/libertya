@@ -1,6 +1,5 @@
 package org.openXpertya.pos.ctrl;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -10,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -81,7 +79,6 @@ import org.openXpertya.model.M_Tab;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.Percepcion;
 import org.openXpertya.model.PrintInfo;
-import org.openXpertya.model.X_C_Categoria_Iva;
 import org.openXpertya.pos.exceptions.FiscalPrintException;
 import org.openXpertya.pos.exceptions.GeneratingCAEError;
 import org.openXpertya.pos.exceptions.InsufficientBalanceException;
@@ -303,11 +300,13 @@ public class PoSOnline extends PoSConnectionState {
 			// Se intenta obtener el mensaje a partir del Logger.
 			if (sourceDocActionPO == null) {
 				msg = CLogger.retrieveErrorAsString();
-			// Se intenta obtener un mensaje a partir del mensaje de los POs que implementan DocAction.
-			} else if (sourceDocActionPO != null && sourceDocActionPO.getProcessMsg() != null &&
+				// Se intenta obtener un mensaje a partir del mensaje de los POs que implementan DocAction.
+			 } 
+			
+			if (sourceDocActionPO != null && sourceDocActionPO.getProcessMsg() != null &&
 					 sourceDocActionPO.getProcessMsg().length() > 0) {
 			
-				msg = Msg.parseTranslation(Env.getCtx(), sourceDocActionPO.getProcessMsg());
+				msg = msg==null?"":msg + " - " + Msg.parseTranslation(Env.getCtx(), sourceDocActionPO.getProcessMsg());
 			
 			}
 			
@@ -431,6 +430,7 @@ public class PoSOnline extends PoSConnectionState {
 	 * </ol>
 	 * 
 	 * @param order la orden que se desea completar
+	 * @return 
 	 * @throws PosException
 	 * @throws InsufficientCreditException
 	 */
@@ -1372,6 +1372,9 @@ public class PoSOnline extends PoSConnectionState {
 		// Suma productos se calcula según el algoritmo del Order, que tiene en
 		// cuenta los redondeos en el cálculo general de impuestos
 		sumaProductos = currencyConvert(order.getTotalAmount(), priceListCurrencyID);
+		// dREHER controlar que no de nulo (Si da nulo es porque no hay tasa de cambio, no deberia suceder TODO: notificar al usuario)
+		if(sumaProductos==null)
+			sumaProductos = Env.ZERO;
 		
 		for (Payment p : order.getPayments()) {
 			int fromCurrency = p.getCurrencyId();
@@ -1381,7 +1384,10 @@ public class PoSOnline extends PoSConnectionState {
 				payAmount = p.getAmount().compareTo(p.getRealAmount()) > 0 ? p.getAmount() : p.getRealAmount();
 			}
 			
-			sumaPagos = sumaPagos.add(currencyConvert(payAmount, fromCurrency));
+			// dREHER sep 24
+			BigDecimal pagoConvertido = currencyConvert(payAmount, fromCurrency);
+			if(pagoConvertido==null) pagoConvertido = Env.ZERO;
+			sumaPagos = sumaPagos.add(pagoConvertido);
 		}
 		
 		// Scalado de importes finales. Si hay descuento, puede suceder que
@@ -1898,6 +1904,10 @@ public class PoSOnline extends PoSConnectionState {
 		
 		String cuit = partner.getTaxID();
 		mo.setCUIT(cuit);
+		
+		
+		// dREHER exigido por Cintolo que sea el mismo termino de pago
+		mo.setC_PaymentTerm_ID(partner.getC_PaymentTerm_ID());
 
 		mo.setNombreCli(order.getBusinessPartner().getCustomerName());
 		mo.setInvoice_Adress(order.getBusinessPartner().getCustomerAddress());
@@ -2029,6 +2039,11 @@ public class PoSOnline extends PoSConnectionState {
 		// borrador
 		mo.setForceReserveStock(getPoSCOnfig().isCreateInOut()
 				&& getPoSCOnfig().isDraftedInOut());
+		
+		// dREHER exigido por Cintolo que sea el mismo termino de pago
+		mo.setC_PaymentTerm_ID(partner.getC_PaymentTerm_ID());
+		
+		
 		// Completar Orden
 		debug("Completando el pedido");
 		throwIfFalse(mo.processIt(DocAction.ACTION_Complete), mo);
@@ -2257,7 +2272,9 @@ public class PoSOnline extends PoSConnectionState {
 			invoiceTax.setIsTaxIncluded(mi.isTaxIncluded());
 			throwIfFalse(invoiceTax.save(), mi);
 		}
+		
 		MTax t;
+		boolean isPercepcion = false;
 		for (MInvoiceTax it : mi.getTaxes(true)) {
 			t = MTax.get(getCtx(), it.getC_Tax_ID(), getTrxName());
 			if(!t.isPercepcion()) {
@@ -2265,13 +2282,19 @@ public class PoSOnline extends PoSConnectionState {
 				if(!it.save()) {
 					throw new PosException(CLogger.retrieveErrorAsString());
 				}
-			}
+			}else
+				isPercepcion = true;
 		}
+		
+		// dREHER solo recalcular percepcion si YA no lo hizo anteiormente, caso contrario lo esta eliminando...
+		// TODO: estudiar mejor porque sucede esto...
 		try {
-			mi.recalculatePercepciones();
+			if(!isPercepcion)
+				mi.recalculatePercepciones();
 		} catch(Exception e) {
 			throw new PosException(e.getMessage());
 		}
+		
 	}
 	
 	private MInvoice createLocaleInvoice(Order order) throws PosException {
@@ -3190,6 +3213,11 @@ public class PoSOnline extends PoSConnectionState {
 			 * 
 			 */
 			throwIfFalse(allocHdr.processIt(DocAction.ACTION_Void), allocHdr);
+			
+			// dREHER sep 24
+			if(allocHdr.getApprovalAmt().compareTo(Env.ZERO) < 0)
+				allocHdr.setApprovalAmt(Env.ZERO);
+			
 			throwIfFalse(allocHdr.save(), allocHdr);
 		} else {
 			throw new PosException("doCompleteAllocation: allocLines.size() == 0 && creditPayments.size() == 0");
@@ -3665,6 +3693,11 @@ public class PoSOnline extends PoSConnectionState {
 		return getProductTax(productID, locID);
 	}
 
+	// dREHER
+	public Order loadOrder(int orderId) throws InvalidOrderException, PosException {
+		return loadOrder(orderId, false);
+	}
+	
 	@Override
 	public Order loadOrder(int orderId, boolean loadLines, Order actualOrder) throws InvalidOrderException, PosException {
 		if (orderId == 0)
@@ -5145,5 +5178,13 @@ public class PoSOnline extends PoSConnectionState {
 				priceList.getC_Currency_ID(), priceList.isTaxIncluded(), priceList.isPerceptionsIncluded(),
 				priceList.isSOPriceList(), priceList.isDefault(), priceList.getPricePrecision());
 		return newPriceList;
+	}
+
+	/*
+	 * Obliga a implementar, por defecto llamamos con null por compatibilidad (merge micro cintolo)
+	 */
+	@Override
+	protected Order loadOrder(int orderId, boolean b) throws InvalidOrderException, PosException {
+		return loadOrder(orderId, b, null);
 	}
 }

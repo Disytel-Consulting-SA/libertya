@@ -21,6 +21,7 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Timer;
 
 import org.adempiere.webui.component.Bandbox;
 import org.adempiere.webui.component.Button;
@@ -74,6 +75,15 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
 
 	protected boolean hasFocus;
 
+	/** Campos links dREHER sep 24 */
+	protected boolean isLink;
+	protected String prefijoLink;
+	
+	// dREHER iDemiere
+	public static final String INIT_EDIT_EVENT = "onInitEdit";    
+	
+	protected boolean isEditing = false;
+	
     /**
      *
      * @param comp
@@ -100,10 +110,50 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
         this.updateable = mField.isUpdateable();
         this.columnName = mField.getColumnName();
         this.strLabel = mField.getHeader();
+        
+        /** links dREHER sep 24 */
+        this.isLink = mField.isLink();
+        this.prefijoLink = mField.getPrefijoLink();
+        
+        // System.out.println("WEditor. MField=" + mField + " isLink=" + isLink + " prefijo=" + prefijoLink);
+        
         init();
     }
 
     /**
+     * Normal zk component just fire onChange event when user loss focus
+     * call this method with true value let component fire event when user type first character
+     * 
+     * remark: editor set true for this method also need handle INIT_EDIT_EVENT to take effect, 
+     * can refer implement at {@link WStringEditor#onEvent(Event)}
+     * @param isChangeEventWhenEditing
+     * 
+     * dREHER - iDempiere
+     */
+    public void setChangeEventWhenEditing (boolean isChangeEventWhenEditing){
+    	// Original iDempiere
+    	// this.component.setWidgetOverride("isChangeEventWhenEditing", String.valueOf(isChangeEventWhenEditing));
+    	
+    	// NO Compatible con zk 1.4
+    	// this.component.setAttribute("isChangeEventWhenEditing", isChangeEventWhenEditing);
+    	// getComponent().setAttribute("isChangeEventWhenEditing", isChangeEventWhenEditing);
+    	
+    	/* NO Compatible con zk 1.4
+    	String jsScript = "var widget = zk.Widget.$('$" + this.component.getUuid() + "');"
+                + "if (widget) { widget.isChangeEventWhenEditing = " + isChangeEventWhenEditing + "; }";
+    	org.zkoss.zk.ui.util.Clients.evalJavaScript(jsScript);
+    	 */
+    	
+    	// debug("setChangeEventWhenEditing= " + isChangeEventWhenEditing + " component=" + getComponent().getId());
+
+    	
+    }  
+    
+    protected void debug(String string) {
+		System.out.println("==> WEditor." + string);
+	}
+
+	/**
      * Method is used to distinguish between 2 similar WSearchEditors
      *
      */
@@ -213,6 +263,9 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
 			}
 
         });
+        
+        // dREHER - iDempiere
+        component.addEventListener(INIT_EDIT_EVENT, this);  
     }
 
     /**
@@ -437,6 +490,43 @@ public abstract class WEditor implements EventListener, PropertyChangeListener
     {
         return this.mandatory;
     }
+    
+    /**
+     * @return boolean
+     * dREHER sep 24
+     */
+    public boolean isLink()
+    {
+    	return this.isLink;
+    }
+    /**
+     * Set Link
+     * @param set Link
+     * dREHER sep 24
+     */
+    public void setLink (boolean link)
+    {
+    	this.isLink = link;
+    }
+
+    /**
+     * @return String
+     * dREHER sep 24
+     */
+    public String prefijoLink()
+    {
+    	return this.prefijoLink;
+    }
+    /**
+     * Set Prefijo Link
+     * @param set PrefijoLink
+     * dREHER sep 24
+     */
+    public void setPrefijoLink (String prefijolink)
+    {
+    	this.prefijoLink = prefijolink;
+    }
+
 
     /**
      * allow subclass to perform dynamic loading of data

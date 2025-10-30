@@ -22,6 +22,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -69,6 +70,7 @@ import org.compiere.swing.CComboBox;
 import org.compiere.swing.CPanel;
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.apps.ADialog;
+import org.openXpertya.apps.AEnv;
 import org.openXpertya.apps.AuthContainer;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPago;
 import org.openXpertya.apps.form.VOrdenPagoModel.MedioPagoCheque;
@@ -2257,26 +2259,30 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		}
 		
 		/**
-		 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
-		 * del recibo/pago y para cada factura
+		 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para
+		 * la fecha del recibo/pago y para cada factura
 		 * 
 		 * dREHER
 		 */
 		
-		// 1- valido tasa de conversion para la fecha del recibo/pago
-		if(!getModel().validateConvertionRate()){
+		// 1- valido tasa de conversion para la fecha de cada factura
+		CallResult rs = getModel().validateConvertionRate();
+		if (rs.isError()) {
 			
-			showError("No se encontro tasa de conversion para la moneda y fecha " 
-					+ "de alguno de los comprobantes a pagar");
+			showError(rs.getMsg());
 			
 			return false;
 		}
 
-		// 2- valido tasa de conversion para la fecha de cada factura
-		if(!getModel().validateConvertionRate(getModel().m_fechaTrx)){
+		// 2- valido tasa de conversion para la fecha del recibo/pago
+		rs = getModel().validateConvertionRate(getModel().m_fechaTrx);
+		if (rs.isError()) {
 			
-			showError("No se encontro tasa de conversion para la moneda y fecha " 
-					+ "de la transaccion!");
+			// showError("No se encontro tasa de conversion para la moneda y fecha "
+			// + "de la transaccion! " + Env.getDate());
+
+			// dREHER Feb '25
+			showError(rs.getMsg());
 			
 			return false;
 		}
@@ -2286,10 +2292,12 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	}
 
 	/**
-     * Metodo que determina el valor que se encuentra dentro de la entidad comercial.
-     * Si es null y está seteado el radio button de pago anticipado, no se puede pasar a Siguiente.
-     * Para que el boton Siguiente se encuentre habilitado, debería ingresar una entidad comercial en el VLookUP
-     * Además chequea si la entidad comercial está habilitada para recibir pagos.
+	 * Metodo que determina el valor que se encuentra dentro de la entidad
+	 * comercial. Si es null y está seteado el radio button de pago anticipado, no
+	 * se puede pasar a Siguiente. Para que el boton Siguiente se encuentre
+	 * habilitado, debería ingresar una entidad comercial en el VLookUP Además
+	 * chequea si la entidad comercial está habilitada para recibir pagos.
+	 * 
      * @param evt
      */
     
@@ -2594,24 +2602,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		
 		// TableCellRenderer cellRend = tblFacturas.getDefaultRenderer(Float.class);
 		// tblFacturas.setDefaultRenderer(Number.class, cellRend);
-		tblFacturas
-				.getColumnModel()
-				.getColumn(tblFacturas.getColumnModel().getColumnCount() - 1)
-				.setCellRenderer(
-						new MyNumberTableCellRenderer(m_model.getNumberFormat()));
-		tblFacturas
-				.getColumnModel()
-				.getColumn(tblFacturas.getColumnModel().getColumnCount() - 2)
-				.setCellRenderer(
-						new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+
+		// dREHER ultimas dos columnas (donde se ingresan los montos a pagar)
+		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 1)
+				.setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+		tblFacturas.getColumnModel().getColumn(tblFacturas.getColumnModel().getColumnCount() - 2)
+				.setCellRenderer(new MyNumberTableCellRenderer(m_model.getNumberFormat()));
+
 		// Deshabilito los atajos F4 y F8 del jtable ya que sino me los toma ahí
-		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4,0), "none");
-		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F6,0), "none");
-		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
-	              KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8,0), "none");
+		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F4, 0), "none");
+		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F6, 0), "none");
+		tblFacturas.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT)
+				.put(KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F8, 0), "none");
 		tblFacturas.setSurrendersFocusOnKeystroke(true);
+
 		tblFacturas.addKeyListener(new KeyListener() {
 			
 			@Override
@@ -3150,22 +3156,27 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					// relacionados con el cambio de la entidad comercial
 	            	customUpdateBPartnerRelatedComponents(true);
 	            	buscarPagos();
+
+					// dREHER 5.0
+					boolean isTasaConvertOk = true;
+
 	            	// Actualizar interfaz grafica para null value
 					if (BPartnerSel.getValue() == null)
 						cmdBPartnerSelActionPerformed(null);
 					else {
 						/**
-						 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para la fecha 
-						 * del recibo/pago y para cada factura
+						 * Si no esta nulo la entidad comercial, validar si hay tasas de conversion para
+						 * la fecha del recibo/pago y para cada factura
 						 * 
 						 * dREHER
 						 */
 						
-						if(!ValidateConvertionRate()) {
-							return;
-						}
+						// dREHER 5.0
+						isTasaConvertOk = ValidateConvertionRate();
 					}
 	            	
+					// dREHER 5.0
+					if (isTasaConvertOk)
 					updatePayAllInvoices(false);
 	            	
 					// Activo/Desactivo pestaña de Pagos Adelantados dependiendo
@@ -3174,7 +3185,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					radPayTypeAdv.setEnabled(allow);
 					if (!allow) {
 						radPayTypeStd.setSelected(true);
+						onTipoPagoChange(false);
 					}	
+					
 	            }
 	        } );			
 		} else if (e.getSource() == cboCurrency) {
@@ -3258,6 +3271,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 
 	/**
 	 * Actualización de la organización
+	 * 
 	 * @param AD_Org_ID id de la organización nueva
 	 */
 	protected void updateOrg(Integer AD_Org_ID){
@@ -3267,8 +3281,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	
 	
 	/**
-	 * Actualización de la información de resumen de pagos, saldo, retenciones,
-	 * etc.
+	 * Actualización de la información de resumen de pagos, saldo, retenciones, etc.
 	 */
 	protected void updateSummaryInfo(){
 		BigDecimal sumaMediosPago = m_model.getSumaMediosPago();
@@ -3774,11 +3787,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		if (BPartnerSel.getValue() != null) {
 			value = (Integer) BPartnerSel.getValue();
 			if (getModel().buscarPagos(value) == true) {
-				JOptionPane
-						.showMessageDialog(
-								this,
-								"El Proveedor tiene notas de crédito o pagos anticipados sin imputar",
-								title, 0);
+				JOptionPane.showMessageDialog(this,
+						"La entidad comercial tiene notas de crédito o pagos anticipados sin imputar", title, 0);
 			}
 		}
 	}

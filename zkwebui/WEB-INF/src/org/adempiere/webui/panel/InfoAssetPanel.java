@@ -170,7 +170,7 @@ public class InfoAssetPanel extends InfoPanel implements ValueChangeListener, Ev
 				Msg.translate(Env.getCtx(), "M_Product_ID"), "", false, false, true);
 		fProduct_ID.addValueChangeListener(this);
 		
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -451,4 +451,11 @@ public class InfoAssetPanel extends InfoPanel implements ValueChangeListener, Ev
 		southBody.insertBefore(paging, southBody.getFirstChild());
 		layout.invalidate();
 	}
+	
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
+	}
+
+	
 }

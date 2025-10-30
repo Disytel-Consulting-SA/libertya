@@ -38,6 +38,9 @@ public class EditorBox extends Div {
 	protected Button btn;
 	protected Td btnColumn;
 
+	/** dREHER sep 24 */
+	protected boolean isLink = false;
+
 	public EditorBox() {
 		initComponents();
 	}
@@ -120,6 +123,11 @@ public class EditorBox extends Div {
 	 */
 	public void setEnabled(boolean enabled) {
 		txt.setReadonly(!enabled);
+		
+		// dREHER sep 24, piso definicion si se trata de un link
+		if(isLink)
+			enabled=true;
+		
 		btn.setEnabled(enabled);
 		btn.setVisible(enabled);
 		btnColumn.setVisible(enabled);
@@ -127,6 +135,21 @@ public class EditorBox extends Div {
 			btnColumn.setSclass("editor-button");
 		else
 			btnColumn.setSclass("");
+	}
+
+	/**
+	 * Activa button sin importar si es de solo lectura el campo
+	 * dREHER
+	 */
+	public void setButtonActive() {
+		btn.setEnabled(true);
+		btn.setVisible(true);
+		btnColumn.setVisible(true);
+		btnColumn.setSclass("editor-button");
+	}
+	
+	public void setLink(boolean link) {
+		isLink = link;
 	}
 
 	/**
