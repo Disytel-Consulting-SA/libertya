@@ -31,12 +31,18 @@ public class OnCreditCurrentAccountBalanceData extends
         try {
         	ps = DB.prepareStatement( sql, getBpartner().get_TrxName());
             int i = 1;
+            
+            // dREHER Abril 25 verificar si la query requiere llenar los parametros aca o ya vienen llenos...
+            if(sql.indexOf("?") > -1) {
+
 			// Parámetros de sqlDoc
 			ps.setInt(i++, 1);
 			ps.setInt(i++, -1);
 			ps.setInt(i++, client_Currency_ID);
 			ps.setInt(i++, clientID);
 			ps.setInt(i++, getBpartner().getID());
+            
+            }
             
             rs = ps.executeQuery();
             if( rs.next()) {

@@ -3330,3 +3330,411 @@ $function$
 -- 20250520-13:30
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Cintolo_Exchange_Dif_Settings','umbral_ajuste_aut','numeric'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Cintolo_Exchange_Dif_Settings','c_bankaccount_ajuste_id','integer'));
+
+
+-- ### MERGE 2025-10-31 org.libertya.core.micro.r3019.dev.jacofer_14_cc upgrade_from_4.0
+--20241128-1111 Se ajusta la vista de cuenta corriente para el manejo de multiples creditos en una OP
+CREATE OR REPLACE VIEW libertya.c_alldocumentscc_v AS 
+ SELECT c.c_currency_id,
+        CASE
+            WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+            ELSE COALESCE(ps.dueamt, i.grandtotal)
+        END AS amount,
+        CASE
+            WHEN dt.signo_issotrx = 1 AND dt.doctypekey::text <> 'RTI'::text THEN
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+            ELSE 0::numeric
+        END AS debit,
+        CASE
+            WHEN dt.signo_issotrx = 1 AND dt.doctypekey::text <> 'RTI'::text THEN 0::numeric
+            ELSE
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+        END AS credit,
+    dt.name AS tipo_doc,
+    i.documentno,
+    i.dateinvoiced AS datetrx,
+    i.dateacct,
+    i.c_doctypetarget_id AS c_doctype_id,
+    'C_Invoice'::text AS documenttable,
+    i.c_invoice_id AS document_id,
+    libertya.invoiceopen(i.c_invoice_id, ps.c_invoicepayschedule_id) AS openamt,
+    i.created,
+    i.c_bpartner_id,
+    i.ad_org_id,
+    i.ad_client_id,
+    i.issotrx,
+    ps.c_invoicepayschedule_id,
+    COALESCE(ps.duedate, i.dateacct) AS duedate
+   FROM libertya.c_invoice i
+     JOIN libertya.c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+     JOIN libertya.c_currency c ON i.c_currency_id = c.c_currency_id
+     LEFT JOIN libertya.c_invoicepayschedule ps ON ps.c_invoice_id = i.c_invoice_id
+  WHERE (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTIXX'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND i.processed = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) OR dt.issotrx = 'Y'::bpchar AND dt.isfiscaldocument = 'Y'::bpchar AND i.docstatus = 'VO'::bpchar)
+UNION ALL
+ SELECT DISTINCT ah.c_currency_id,
+    ah.grandtotal - COALESCE(alc.creditamt, 0::numeric) AS amount,
+        CASE
+            WHEN COALESCE(dt.issotrx, i.issotrx) = 'Y'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'CRR'::text AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'VPR'::text THEN 0::numeric
+            ELSE CASE WHEN COALESCE(dt.issotrx, i.issotrx) = 'N'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text = 'VPR'::text 
+			THEN 0::numeric
+			ELSE ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)
+		 END
+        END AS debit,
+        CASE
+            WHEN COALESCE(dt.issotrx, i.issotrx) = 'Y'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'CRR'::text AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'VPR'::text THEN ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)
+            ELSE CASE WHEN COALESCE(dt.issotrx, i.issotrx) = 'N'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text = 'VPR'::text 
+			THEN ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)
+			ELSE 0::numeric
+		 END
+        END AS credit,
+    COALESCE(dt.name, 'Asignación Manual'::character varying) AS tipo_doc,
+    ah.documentno,
+    ah.datetrx,
+    ah.dateacct,
+    ah.c_doctype_id,
+    'C_AllocationHdr'::text AS documenttable,
+    ah.c_allocationhdr_id AS document_id,
+    0 AS openamt,
+    ah.created,
+    ah.c_bpartner_id,
+    ah.ad_org_id,
+    ah.ad_client_id,
+    COALESCE(dt.issotrx, i.issotrx) AS issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_allocationhdr ah
+     LEFT JOIN libertya.c_doctype dt ON ah.c_doctype_id = dt.c_doctype_id
+     JOIN libertya.c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+     LEFT JOIN ( SELECT al2.c_allocationhdr_id,
+            sum(al2.amount) AS creditamt
+           FROM libertya.c_allocationline al2
+             JOIN libertya.c_invoice i2 ON al2.c_invoice_credit_id = i2.c_invoice_id
+             JOIN libertya.c_doctype dt2 ON i2.c_doctypetarget_id = dt2.c_doctype_id AND (dt2.doctypekey::text <> ALL (ARRAY['RTR'::text, 'RCR'::text, 'RTI'::text, 'RCI'::text]))
+          WHERE al2.c_invoice_credit_id IS NOT NULL
+          GROUP BY al2.c_allocationhdr_id) alc ON alc.c_allocationhdr_id = ah.c_allocationhdr_id
+     LEFT JOIN libertya.c_invoice i ON al.c_invoice_id = i.c_invoice_id
+     LEFT JOIN libertya.c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+     LEFT JOIN libertya.c_payment cp ON cp.c_payment_id = al.c_payment_id
+     LEFT JOIN libertya.c_doctype cd ON cd.c_doctype_id = cp.c_doctype_id
+  WHERE (ah.allocationtype::text = ANY (ARRAY['RC'::character varying::text, 'OP'::character varying::text, 'MAN'::character varying::text])) AND (ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)) > 0::numeric AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+UNION ALL
+ SELECT ah.c_currency_id,
+    ah.grandtotal AS amount,
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN COALESCE(sum(alf.montosaldado), 0::numeric)
+            ELSE ah.grandtotal
+        END AS debit,
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN ah.grandtotal
+            ELSE COALESCE(sum(alf.montosaldado), 0::numeric)
+        END AS credit,
+    dt.name::text || ' Adelantado'::text AS tipo_doc,
+    ah.documentno,
+    ah.datetrx,
+    ah.dateacct,
+    ah.c_doctype_id,
+    'C_AllocationHdr'::text AS documenttable,
+    ah.c_allocationhdr_id AS document_id,
+    ah.grandtotal - COALESCE(sum(alf.montosaldado), 0::numeric) AS openamt,
+    ah.created,
+    ah.c_bpartner_id,
+    ah.ad_org_id,
+    ah.ad_client_id,
+    dt.issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_allocationhdr ah
+     JOIN libertya.c_doctype dt ON ah.c_doctype_id = dt.c_doctype_id
+     JOIN libertya.c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+     LEFT JOIN libertya.c_payment p ON al.c_payment_id = p.c_payment_id
+     LEFT JOIN libertya.c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+     LEFT JOIN libertya.c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+     LEFT JOIN ( SELECT li.c_allocation_detail_v_id,
+            li.c_allocationhdr_id,
+            li.ad_client_id,
+            li.ad_org_id,
+            li.isactive,
+            li.created,
+            li.createdby,
+            li.updated,
+            li.updatedby,
+            li.fecha,
+            li.factura,
+            li.c_currency_id,
+            li.montofactura,
+            li.pagonro,
+            li.tipo,
+            li.cash,
+            li.montosaldado,
+            li.payamt,
+            li.c_allocationline_id,
+            li.c_invoice_id,
+            li.paydescription,
+            li.payment_medium_name,
+            li.pay_currency_id,
+            li.c_bankaccount_id,
+            li.numerocomprobante,
+            li.puntodeventa,
+            li.c_letra_comprobante_id,
+            li.doctypekey,
+            li.doctypename,
+            li.paymentrule,
+            li.c_region_delivery_id,
+            li.netamount,
+            li.c_paymentterm_id,
+            li.dateinvoiced,
+            li.c_invoice_credit_id,
+            li.credit_doctypekey,
+            li.credit_doctypename,
+            li.credit_numerocomprobante,
+            li.credit_puntodeventa,
+            li.credit_letra_comprobante_id,
+            li.credit_netamount,
+            li.c_cashline_id,
+            li.cashname,
+            li.c_payment_id,
+            li.accountno,
+            li.checkno,
+            li.a_name,
+            li.a_bank,
+            li.a_cuit,
+            li.duedate,
+            li.dateemissioncheck,
+            li.checkstatus,
+            li.creditcardnumber,
+            li.couponbatchnumber,
+            li.couponnumber,
+            li.m_entidadfinancieraplan_id,
+            li.m_entidadfinanciera_id,
+            li.posnet,
+            li.micr,
+            li.isreconciled,
+            li.creditdate,
+            li.creditdocumentno,
+            lh.c_allocationhdr_id,
+            lh.ad_client_id,
+            lh.ad_org_id,
+            lh.isactive,
+            lh.created,
+            lh.createdby,
+            lh.updated,
+            lh.updatedby,
+            lh.documentno,
+            lh.description,
+            lh.datetrx,
+            lh.dateacct,
+            lh.c_currency_id,
+            lh.approvalamt,
+            lh.ismanual,
+            lh.docstatus,
+            lh.docaction,
+            lh.isapproved,
+            lh.processing,
+            lh.processed,
+            lh.posted,
+            lh.c_bpartner_id,
+            lh.allocationtype,
+            lh.retencion_amt,
+            lh.grandtotal,
+            lh.allocationaction,
+            lh.actiondetail,
+            lh.c_posjournal_id,
+            lh.c_doctype_id,
+            lh.c_banklist_id,
+            lh.datetrx
+           FROM libertya.c_allocation_detail_v li
+             JOIN libertya.c_allocationhdr lh ON li.c_allocationhdr_id = lh.c_allocationhdr_id
+          WHERE lh.processed = 'Y'::bpchar AND (lh.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))) alf(c_allocation_detail_v_id, c_allocationhdr_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, fecha, factura, c_currency_id, montofactura, pagonro, tipo, cash, montosaldado, payamt, c_allocationline_id, c_invoice_id, paydescription, payment_medium_name, pay_currency_id, c_bankaccount_id, numerocomprobante, puntodeventa, c_letra_comprobante_id, doctypekey, doctypename, paymentrule, c_region_delivery_id, netamount, c_paymentterm_id, dateinvoiced, c_invoice_credit_id, credit_doctypekey, credit_doctypename, credit_numerocomprobante, credit_puntodeventa, credit_letra_comprobante_id, credit_netamount, c_cashline_id, cashname, c_payment_id, accountno, checkno, a_name, a_bank, a_cuit, duedate, dateemissioncheck, checkstatus, creditcardnumber, couponbatchnumber, couponnumber, m_entidadfinancieraplan_id, m_entidadfinanciera_id, posnet, micr, isreconciled, creditdate, creditdocumentno, c_allocationhdr_id_1, ad_client_id_1, ad_org_id_1, isactive_1, created_1, createdby_1, updated_1, updatedby_1, documentno, description, datetrx, dateacct, c_currency_id_1, approvalamt, ismanual, docstatus, docaction, isapproved, processing, processed, posted, c_bpartner_id, allocationtype, retencion_amt, grandtotal, allocationaction, actiondetail, c_posjournal_id, c_doctype_id, c_banklist_id, datetrx) ON (alf.c_payment_id = p.c_payment_id OR alf.c_cashline_id = cl.c_cashline_id OR alf.c_invoice_credit_id = ic.c_invoice_id) AND alf.c_allocationline_id <> al.c_allocationline_id
+  WHERE (ah.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+  GROUP BY ah.c_currency_id, ah.grandtotal, ah.documentno, ah.datetrx, ah.c_doctype_id, ah.c_allocationhdr_id, dt.name, dt.issotrx, ah.created, ah.c_bpartner_id, ah.ad_org_id, ah.ad_client_id
+UNION ALL
+ SELECT p.c_currency_id,
+    p.payamt AS amount,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN
+            CASE
+                WHEN dt.doctypekey::text = 'CRR'::text THEN p.payamt
+                ELSE COALESCE(al.montosaldado, 0::numeric)
+            END
+            ELSE
+            CASE
+                WHEN dt.doctypekey::text <> 'VPR'::text THEN p.payamt
+                ELSE COALESCE(al.montosaldado, 0::numeric)
+            END
+        END 
+     ELSE
+	0::numeric
+     END AS debit,
+     CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN
+            CASE
+                WHEN dt.doctypekey::text = 'CRR'::text THEN COALESCE(al.montosaldado, 0::numeric)
+                ELSE p.payamt
+            END
+            ELSE
+            CASE
+                WHEN dt.doctypekey::text = 'VPR'::text THEN p.payamt
+                ELSE COALESCE(al.montosaldado, 0::numeric)
+            END
+        END
+     ELSE
+	0::numeric
+     END AS credit,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN TRIM(dt.name) ELSE CASE WHEN p.IsReceipt='N' THEN 'Pago (Cargo)' ELSE 'Cobro (Cargo)' END END AS tipo_doc,
+    p.documentno,
+    p.datetrx,
+    p.dateacct,
+    p.c_doctype_id,
+    'C_Payment'::text AS documenttable,
+    p.c_payment_id AS document_id,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+	p.payamt - COALESCE(al.montosaldado, 0::numeric)
+    ELSE
+	0::numeric
+    END AS openamt,
+    p.created,
+    p.c_bpartner_id,
+    p.ad_org_id,
+    p.ad_client_id,
+    dt.issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_payment p
+     JOIN libertya.c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+     LEFT JOIN libertya.c_charge ch ON ch.C_Charge_ID=p.C_Charge_ID
+     LEFT JOIN ( SELECT d.c_payment_id,
+            d.isactive,
+            sum(d.montosaldado) AS montosaldado,
+            count(aha.c_allocationhdr_id) AS cant
+           FROM libertya.c_allocation_detail_v d
+             LEFT JOIN libertya.c_allocationhdr aha ON d.c_allocationhdr_id = aha.c_allocationhdr_id AND (aha.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND aha.processed = 'Y'::bpchar AND (aha.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+             LEFT JOIN libertya.c_allocationhdr ah ON d.c_allocationhdr_id = ah.c_allocationhdr_id AND (ah.allocationtype::text <> ALL (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+          GROUP BY d.c_payment_id, d.isactive) al ON al.c_payment_id = p.c_payment_id AND al.isactive = 'Y'::bpchar
+  WHERE p.processed = 'Y'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (al.c_payment_id IS NULL OR dt.doctypekey::text = 'CRR'::text OR dt.doctypekey::text = 'VPR'::text OR al.montosaldado > 0::numeric AND al.montosaldado < p.payamt) AND (al.cant IS NULL OR al.cant = 0 OR dt.doctypekey::text = 'CRR'::text OR dt.doctypekey::text = 'VPR'::text)
+UNION ALL
+ SELECT p.c_currency_id,
+    abs(p.amount) AS amount,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN p.amount > 0::numeric THEN abs(COALESCE(al.montosaldado, 0::numeric)) * 1::numeric
+            ELSE abs(p.amount) * 1::numeric
+        END
+    ELSE
+	0::numeric
+    END AS debit,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN p.amount > 0::numeric THEN abs(p.amount)
+            ELSE abs(COALESCE(al.montosaldado, 0::numeric))
+        END 
+    ELSE
+	0::numeric
+    END AS credit,
+    'Linea de caja'::character varying || CASE WHEN COALESCE(ch.C_Charge_ID,0)=0 THEN '' ELSE ' (Cargo)' END AS tipo_doc,
+    c.name AS documentno,
+    c.statementdate AS datetrx,
+    c.dateacct,
+    NULL::integer AS c_doctype_id,
+    'C_CashLine'::text AS documenttable,
+    p.c_cashline_id AS document_id,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+	 abs(p.amount) - COALESCE(al.montosaldado, 0::numeric)
+    ELSE
+	0::numeric
+    END AS openamt,
+    p.created,
+    p.c_bpartner_id,
+    p.ad_org_id,
+    p.ad_client_id,
+        CASE
+            WHEN p.amount > 0::numeric THEN 'Y'::text
+            ELSE 'N'::text
+        END AS issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_cashline p
+     JOIN libertya.c_cash c ON p.c_cash_id = c.c_cash_id
+     LEFT JOIN libertya.c_charge ch ON ch.C_Charge_ID=p.C_Charge_ID
+     LEFT JOIN ( SELECT d.c_cashline_id,
+            d.isactive,
+            sum(d.montosaldado) AS montosaldado,
+            count(aha.c_allocationhdr_id) AS cant
+           FROM libertya.c_allocation_detail_v d
+             LEFT JOIN libertya.c_allocationhdr aha ON d.c_allocationhdr_id = aha.c_allocationhdr_id AND (aha.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND aha.processed = 'Y'::bpchar AND (aha.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+             LEFT JOIN libertya.c_allocationhdr ah ON d.c_allocationhdr_id = ah.c_allocationhdr_id AND (ah.allocationtype::text <> ALL (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+          GROUP BY d.c_cashline_id, d.isactive) al ON al.c_cashline_id = p.c_cashline_id AND al.isactive = 'Y'::bpchar
+  WHERE p.processed = 'Y'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (al.c_cashline_id IS NULL OR al.montosaldado < abs(p.amount)) AND (al.cant IS NULL OR al.cant = 0)
+UNION ALL
+ SELECT c.c_currency_id,
+        CASE
+            WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+            ELSE COALESCE(ps.dueamt, i.grandtotal)
+        END AS amount,
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+            ELSE 0::numeric
+        END AS debit,
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 0::numeric
+            ELSE
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+        END AS credit,
+    dt.name AS tipo_doc,
+    i.documentno,
+    i.dateinvoiced AS datetrx,
+    i.dateacct,
+    i.c_doctypetarget_id AS c_doctype_id,
+    'C_Invoice'::text AS documenttable,
+    i.c_invoice_id AS document_id,
+    libertya.invoiceopen(i.c_invoice_id, ps.c_invoicepayschedule_id) AS openamt,
+    i.created,
+    i.c_bpartner_id,
+    i.ad_org_id,
+    i.ad_client_id,
+    i.issotrx,
+    ps.c_invoicepayschedule_id,
+    COALESCE(ps.duedate, i.dateacct) AS duedate
+   FROM libertya.c_invoice i
+     JOIN libertya.c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+     JOIN libertya.c_currency c ON i.c_currency_id = c.c_currency_id
+     LEFT JOIN libertya.c_invoicepayschedule ps ON ps.c_invoice_id = i.c_invoice_id
+  WHERE (dt.doctypekey::text = ANY (ARRAY['RTR'::text, 'RCR'::text])) AND i.processed = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) OR dt.issotrx = 'Y'::bpchar AND dt.isfiscaldocument = 'Y'::bpchar AND i.docstatus = 'VO'::bpchar) AND libertya.invoiceopen(i.c_invoice_id, ps.c_invoicepayschedule_id) > 0::numeric AND NOT (i.c_invoice_id IN ( SELECT al.c_invoice_credit_id
+           FROM libertya.c_allocationline al
+             JOIN libertya.c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+          WHERE (ah.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND al.c_invoice_credit_id IS NOT NULL));
+
+ALTER TABLE libertya.c_alldocumentscc_v
+  OWNER TO libertya;
+
+-- ### MERGE 2025-10-31 org.libertya.core.micro.r3019.dev.jacofer_14_cc upgrade_from_4.0
+--20250110-0930 Ajuste para corregir texto de movimientos sin tipo de documento
+UPDATE c_doctype 
+SET name = 'A.Manual/Efectivo/Otro'
+WHERE c_doctype_id = 0;
+
+-- ### MERGE 2025-10-31 org.libertya.core.micro.r3019.dev.jacofer_14_cc upgrade_from_4.0
+-- 20250127-13:15
+ALTER TABLE libertya.t_balancereport ALTER COLUMN credit TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN debit TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN balance TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN duedebt TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN actualbalance TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN chequesencartera TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN generalbalance TYPE numeric(22, 2) USING credit::numeric(22, 2);
+
+
