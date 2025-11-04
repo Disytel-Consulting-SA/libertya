@@ -35,6 +35,7 @@ public class xmlParser {
 	String filePath = "";
 	String desde = "";
 	String hasta = "";
+	List<Ticket> tickets = new ArrayList<Ticket>();
 	
 	StringBuilder sbOut = new StringBuilder();
 	ArrayList<String> notShow = new ArrayList<String>();
@@ -69,8 +70,13 @@ public class xmlParser {
 		this.notShow = notShow;
 	}
 	
+	public List<Ticket> getTickets(){
+		return this.tickets;
+	}
+	
 	public String parsear() {
 		String outFileName = "";
+		int tk = 0;
 		
 		if(filePath.isEmpty()) {
 			log.warning("No se indico archivo a parsear!");
@@ -246,6 +252,25 @@ public class xmlParser {
                     							N2RG(total.Total,12) );
                     					sbOut.append("\r\n" + getSeparator(false) + "\r\n");
 
+                    					// Genero un nuevo item en el vector de tickets leidos
+                    					tickets.add(new Ticket(cierre.CalificadorDocumento,
+                    											cierre.SubTipoDocumento,
+                    											jornada.Fecha,
+                    											cierre.NumeroCompleto,
+                    											total.Total,
+                    											total.Base,
+                    											total.MontoGravado,
+                    											total.MontoNoGravado,
+                    											total.MontoExento,
+                    											total.MontoIVA,
+                    											total.MontoOtrosTributos));
+                    					tk++;
+                    					debug("Ticket adicionado: " + tk);
+                    					debug("Tipo:" + cierre.getTipoDocumento() + 
+                    							" Numero:" + cierre.getNumeroCompleto() +
+                    							" Base:" + total.getBase() +
+                    							" Total:" + total.getTotal());
+
                     					totales[0] = totales[0] + total.Base;
                     					totales[1] = totales[1] + total.MontoNoGravado;
                     					totales[2] = totales[2] + total.MontoGravado;
@@ -313,6 +338,11 @@ public class xmlParser {
         return outFileName;
     }
 
+	// dREHER Abril 25
+	private void debug(String string) {
+		System.out.println("--> xmlParser." + string);
+	}
+
 	private Double String2D(String numberString) {
 		double number = 0.00;
 		if(numberString==null || numberString.isEmpty())
@@ -377,4 +407,124 @@ public class xmlParser {
 		return outFilePath;
 	}
 
+	public class Ticket{
+		private String calificadorDocumento;
+		private String tipoDocumento;
+		private Date fecha;
+		private String numeroCompleto;
+		private Double total;
+		private Double base;
+		private Double montoIVA;
+		private Double montoOtrosImpuestos;
+		private Double montoExento;
+		private Double montoGravado;
+		private Double montoNoGravado;
+		
+		public Ticket(String calificadorDocumento, String tipoDocumento, Date fecha, String numeroCompleto, 
+				double total, double base, double montoGravado, double montoNoGravado, double montoExento, 
+				double montoIVA, double montoOtrosImpuestos) {
+			this.calificadorDocumento = calificadorDocumento;
+			this.tipoDocumento = tipoDocumento;
+			this.fecha = fecha;
+			this.numeroCompleto = numeroCompleto;
+			this.total = total;
+			this.base = base;
+			this.montoGravado = montoGravado;
+			this.montoNoGravado = montoNoGravado;
+			this.montoExento = montoExento;
+			this.montoIVA = montoIVA;
+			this.montoOtrosImpuestos = montoOtrosImpuestos;
+					
+		}
+
+		public String getCalificadorDocumento() {
+			return calificadorDocumento;
+		}
+
+		public void setCalificadorDocumento(String calificadorDocumento) {
+			this.calificadorDocumento = calificadorDocumento;
+		}
+
+		public String getTipoDocumento() {
+			return tipoDocumento;
+		}
+
+		public void setTipoDocumento(String tipoDocumento) {
+			this.tipoDocumento = tipoDocumento;
+		}
+
+		public Date getFecha() {
+			return fecha;
+		}
+
+		public void setFecha(Date fecha) {
+			this.fecha = fecha;
+		}
+
+		public String getNumeroCompleto() {
+			return numeroCompleto;
+		}
+
+		public void setNumeroCompleto(String numeroCompleto) {
+			this.numeroCompleto = numeroCompleto;
+		}
+
+		public Double getTotal() {
+			return total;
+		}
+
+		public void setTotal(Double total) {
+			this.total = total;
+		}
+
+		public Double getBase() {
+			return base;
+		}
+
+		public void setBase(Double base) {
+			this.base = base;
+		}
+
+		public Double getMontoIVA() {
+			return montoIVA;
+		}
+
+		public void setMontoIVA(Double montoIVA) {
+			this.montoIVA = montoIVA;
+		}
+
+		public Double getMontoOtrosImpuestos() {
+			return montoOtrosImpuestos;
+		}
+
+		public void setMontoOtrosImpuestos(Double montoOtrosImpuestos) {
+			this.montoOtrosImpuestos = montoOtrosImpuestos;
+		}
+
+		public Double getMontoExento() {
+			return montoExento;
+		}
+
+		public void setMontoExento(Double montoExento) {
+			this.montoExento = montoExento;
+		}
+
+		public Double getMontoGravado() {
+			return montoGravado;
+		}
+
+		public void setMontoGravado(Double montoGravado) {
+			this.montoGravado = montoGravado;
+		}
+
+		public Double getMontoNoGravado() {
+			return montoNoGravado;
+		}
+
+		public void setMontoNoGravado(Double montoNoGravado) {
+			this.montoNoGravado = montoNoGravado;
+		}
+		
+		
+	}
 }

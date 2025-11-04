@@ -589,6 +589,7 @@ public class MProductPricing implements Serializable{
                      + " INNER JOIN M_ProductPrice pp ON (p.M_Product_ID=pp.M_Product_ID) " 
                      + " INNER JOIN  M_PriceList_Version pv ON (pp.M_PriceList_Version_ID=pv.M_PriceList_Version_ID) " 
                      + " INNER JOIN M_Pricelist bpl ON (pv.M_PriceList_ID=bpl.M_PriceList_ID) " 
+                     + " INNER JOIN M_Pricelist pl ON (bpl.M_PriceList_ID=pl.BasePriceList_ID) " //<== merge facturacion nov-2025 
                      + "WHERE pv.IsActive='Y'" 
                      + " AND p.M_Product_ID=?"        // #1
                      + " AND bpl.M_PriceList_ID=? "    // #2 dREHER se corrije referencia al campo para filtro
@@ -1027,6 +1028,19 @@ public class MProductPricing implements Serializable{
 	public void setApplyBPDiscount(boolean applyBPDiscount) {
 		this.applyBPDiscount = applyBPDiscount;
 	}
+
+	// dREHER 5.0
+	public void setPriceStd(BigDecimal monto) {
+		this.m_PriceStd = monto;
+		
+	}
+	
+	// dREHER 5.0
+	public void setPriceList(BigDecimal monto) {
+		this.m_PriceList = monto;
+
+	}
+	
 }    // MProductPrice
 
 

@@ -805,7 +805,7 @@ public class MDocType extends X_C_DocType {
 		key = (letter != null? key.substring(0, key.length() - 1) : key);
 		// Si la clave resultante tiene más de 10 dígitos, entonces contiene el
 		// CUIT de la organización y hay que sacarsela
-		if(key.length() >= 10){
+		if(key!=null && key.length() >= 10){
 			String orgCUIT = key.substring(key.length()-11, key.length());
 			key = key.substring(0, key.indexOf(orgCUIT));
 		}

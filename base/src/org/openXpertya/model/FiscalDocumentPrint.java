@@ -57,6 +57,7 @@ import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
 import org.openXpertya.util.Utils;
 import org.openXpertya.xml.util.xmlParser;
+import org.openXpertya.xml.util.xmlParser.Ticket;
 
 /**
  * Impresión fiscal de documentos. Esta clase se encarga de mapear documentos
@@ -169,11 +170,25 @@ public class FiscalDocumentPrint {
 	 */
 	private FiscalInitData fiscalInitData = null;
 	
+	/**
+	 * Ocultar descuento de linea
+	 * dREHER
+	 */
+	private static boolean isOcultarDescuentoDeLinea = false;
+	private static BigDecimal totalDescuentoDeLinea = Env.ZERO;
+	private static BigDecimal totalDescuentoDocumento = Env.ZERO;
+	private static BigDecimal totalRecargoDocumento = Env.ZERO;
+	
+	// dREHER Mayo 25
+	private String lastErrorMsg = null;
+	
 	/** Comando para obtener ConsultarAcumuladosComprobante 
 	 * 
 	 * dREHER 
 	 */
 	protected static final int CMD_CONSULTAR_ACUMULADOS_COMPROBANTE = 0x8C; 
+
+	private List<Ticket> tickets;
 
 	public FiscalDocumentPrint() {
 		super();
@@ -226,25 +241,26 @@ public class FiscalDocumentPrint {
 		// Se inicializa el indicador de fin de espera para el casos en que
 		// la impresora se encuentre en estado BUSY.
 		setCancelWaiting(false);
-		log("Se inicializa el indicador de fin de espera.");
+		log("execute.Se inicializa el indicador de fin de espera.");
 		
 		setAskMoment(false);
 		
 		// Get the printer 
 		cFiscal = new MControladorFiscal(ctx, controladoraFiscalID, getTrxName());
-		log("Se carga el controlador fiscal a utilizar. " + cFiscal);
+		log("execute.Se carga el controlador fiscal a utilizar. " + cFiscal);
 		
 		try {
 			// Se informa al manejador que se esta chequeando el status de
 			// la impresora.
+			log("execute.Se informa al manejador que se esta chequeando el status");
 			fireActionStarted(FiscalDocumentPrintListener.AC_CHECK_STATUS);
-			log("Se informa al manejador que se esta chequeando el status");
 			
 			// Se obtiene la impresora fiscal con la que se debe imprimir
 			// el documento segun su tipo de documento.
 			FiscalPrinter fiscalPrinter = cFiscal.getFiscalPrinter();
+			log("execute.Se carga la impresora a utilizar. " + fiscalPrinter);
 			setFiscalPrinter(fiscalPrinter);
-			log("Se carga la impresora a utilizar. " + fiscalPrinter);
+			
 			
 			// Chequeo el estado de la impresora
 			if(!checkPrinterStatus(cFiscal)) {
@@ -256,20 +272,20 @@ public class FiscalDocumentPrint {
 			// la impresora fiscal.
 			fireActionStarted(FiscalDocumentPrintListener.AC_CONNECT_PRINTER);
 			fiscalPrinter.setEventListener(getPrinterEventListener());
-			log("Se informa al manejador que se esta intentando conectar con la impresora fiscal");
+			log("execute.Se informa al manejador que se esta intentando conectar con la impresora fiscal");
 			
 			// Se intenta conectar la impresora.
 			getFiscalPrinter().connect();
-			log("Se conecto con la impresora fiscal");
+			log("execute.Se conecto con la impresora fiscal");
 			
 			// Ejecutar la acción correspondiente
-			log("Va a ejecutar la accion: " + action);
+			log("execute.Va a ejecutar la accion: " + action);
 			doAction(action, args);
-			log("Ejecuto la accion: " + action);
+			log("execute.Ejecuto la accion: " + action);
 			
 			// Se libera la impresora fiscal.
 			setFiscalPrinterStatus(cFiscal, MControladorFiscal.STATUS_IDLE);
-			log("Se libera la impresora fiscal.");
+			log("execute.Se libera la impresora fiscal.");
 			
 		} catch (FiscalPrinterStatusError e) {
 			// Si la impresora retornó un estado de error se marca el controlador
@@ -279,67 +295,87 @@ public class FiscalDocumentPrint {
 			errorTitle = "FiscalPrinterStatusError";
 			errorDesc = e.getDeviceErrorMsg();
 			error = true;
-			log.severe(e.getMessage() + ". " + errorDesc);
+			log(e.getMessage() + ". " + errorDesc);
+			e.printStackTrace();
 
 		} catch (FiscalPrinterIOException e) {
 			// Se asigna el mensaje de error.
 			errorTitle = "FiscalPrinterIOError";
 			errorDesc = e.getMessage();
 			error = true;
-			log.severe(e.getFullMessage());
+			log(e.getFullMessage());
+			e.printStackTrace();
 
 		} catch (DocumentException e) {
 			// Se asigna el mensaje de error.
+			
+			// Se libera la impresora fiscal.
+			setFiscalPrinterStatus(cFiscal, MControladorFiscal.STATUS_IDLE);
+			
 			errorTitle = "DocumentValidationError";
 			errorDesc = e.getMessage();
 			error = true;
-			log.severe(e.getMessage());
+			log(e.getMessage());
+			e.printStackTrace();
 			
 		} catch (IOException e) {
 			// Se asigna el mensaje de error.
 			errorTitle = "UnexpectedIOError";
 			errorDesc = e.getMessage();
 			error = true;
-			log.severe(e.getMessage());
+			log(e.getMessage());
+			e.printStackTrace();
 
 		} catch (Exception e) {
 			// Se asigna el mensaje de error.
+			
+			// Se libera la impresora fiscal.
+			setFiscalPrinterStatus(cFiscal, MControladorFiscal.STATUS_IDLE);
+			
 			errorTitle = "PrintFiscalDocumentError";
 			errorDesc = e.getMessage();
 			error = true;
-			log.severe(e.getMessage());
+			log(e.getMessage());
 			e.printStackTrace();
 
 		} finally {
 			// Guardar Log
-			log("Guarda log.");
+			log("Guarda log. error= " + error);
 			saveFiscalLog(error);
 			// Si hubo error...
 			if(error) {
-				log("Hubo un error.");
+				
+				setLastErrorMsg(errorDesc);
+				log("Guardo ultimo error: " + errorDesc);
+				
+				log("execute.Hubo un error.");
 				if (!ask()) {
 					
-					log("Se asigna el nuevo estado de la impresora.");
+					log("execute.Se asigna el nuevo estado de la impresora.");
 					// Se asigna el nuevo estado de la impresora.
 					setFiscalPrinterStatus(cFiscal, newPrinterStatus);
 					
 					// Se dispara el evento que informa del error ocurrido.
 					fireErrorOcurred(errorTitle, errorDesc);
 					
-					log("Se dispara el evento que informa del error ocurrido. " + errorTitle + "-" + errorDesc);
+					log("execute.Se dispara el evento que informa del error ocurrido. " + errorTitle + "-" + errorDesc);
 					
 					// Se cancela la trasancción.
 					if (manageTrx){
 						getTrx().rollback();
 						getTrx().close();
-						log("Cancela transaccion.");
+						log("execute.Cancela transaccion.");
 					}
 					// Se guarda el mensaje de error.
 					setErrorMsg("@" + errorTitle + "@ - @" + errorDesc + "@");
+					
+					// Verificar si salio con error de cancelacion, en caso afirmativo marcar la factura como corresponde
+					// dREHER Jun 25
+					
 				}
 				else{
 					// Se dispara el evento de pregunta si se imprimió correctamente
-					log("Se dispara el evento de pregunta si se imprimió correctamente.");
+					log("execute.Se dispara el evento de pregunta si se imprimió correctamente.");
 					fireDocumentPrintAsk(errorTitle, errorDesc, newPrinterStatus);
 				}
 			} else {
@@ -348,20 +384,20 @@ public class FiscalDocumentPrint {
 					getTrx().commit();
 					getTrx().close();
 					
-					log("Efectiviza la transaccion.");
+					log("execute.Efectiviza la transaccion.");
 				}
 			}
 			
 			if (!error
 					|| (error && !ask())) {
 				
-				log("Cierra la impresora fiscal.");
+				log("execute.Cierra la impresora fiscal.");
 				closeFiscalPrinter();
 				
 			}
 		}
 		
-		log("Retorna ejecucion de accion: " + !error);
+		log("execute.Retorna ejecucion de accion: " + !error);
 		
 		return !error;
 	}
@@ -471,7 +507,8 @@ public class FiscalDocumentPrint {
 	 * correctamente, <code>false</false> en caso contrario.
 	 * 
 	 * 
-	 * dREHER - Desde TPV se invoca este metodo de impresion...
+	 * dREHER - Desde TPV se invoca este metodo de impresion. 
+	 * Tambien es invocado desde gestion de comprobantes de ventas
 	 */
 	public boolean printDocument(PO document) {
 		
@@ -504,11 +541,15 @@ public class FiscalDocumentPrint {
 		 * dREHER
 		 */
 		// TODO: ver como obtener el Invoice Original como para crear un Document tipo Nota de Credito
+		
+		/* dREHER Mayo 25 - no chequea contra el fiscal en si, sino entre docs imprimible vs MInvoice, se reemplaza por control real contra fiscal
 		if(!checkAmounts(null, null)) {
 			endPrintingWrong("Error",
 					"No coinciden los montos impresos con los montos Libertya", MControladorFiscal.STATUS_ERROR);
 			ok = false;
 		}
+		*/
+		
 		
 		// Se actualizan los datos del documento oxp.
 		log("Se actualizan los datos del documento oxp.: " + !ok);
@@ -550,29 +591,35 @@ public class FiscalDocumentPrint {
 		
 		// Se obtiene el controlador fiscal para chequear el status
 		cFiscal = MControladorFiscal.getOfDocType(docType_ID);
-		log("Controlador Fiscal: " + cFiscal);
+		log("FiscalDocumentPrint. getLastNoPrinted. Controlador Fiscal: " + cFiscal);
 		
 		// Se obtiene la impresora fiscal con la que se debe imprimir
 		// el documento segun su tipo de documento.
 		FiscalPrinter fiscalPrinter = cFiscal.getFiscalPrinter();
+		log("FiscalDocumentPrint. getLastNoPrinted. Se carga la impresora a utilizar. " + fiscalPrinter);
 		setFiscalPrinter(fiscalPrinter);
-		log("Se carga la impresora a utilizar. " + fiscalPrinter);
+		
 		
 		// Chequeo el estado de la impresora
+		log("FiscalDocumentPrint. getLastNoPrinted. Chequea el estado de la impresora fiscal. " + cFiscal);
+		setIgnoreErrorStatus(true);
+		
 		if(!checkPrinterStatus(cFiscal)) {
-			log.warning("Volvio del chequeo de impresora fiscal con ERROR!");
+			log.warning("FiscalDocumentPrint. getLastNoPrinted. Volvio del chequeo de impresora fiscal con ERROR!");
 			return -3;
 		}
 					
 		// Se informa al manejador que se esta intentando conectar con
 		// la impresora fiscal.
+		log("FiscalDocumentPrint. getLastNoPrinted. Se informa al manejador que se esta intentando conectar con la impresora fiscal");
 		fireActionStarted(FiscalDocumentPrintListener.AC_CONNECT_PRINTER);
 		fiscalPrinter.setEventListener(getPrinterEventListener());
 		log("Se informa al manejador que se esta intentando conectar con la impresora fiscal");
 					
 		// Se intenta conectar la impresora.
+		log("FiscalDocumentPrint. getLastNoPrinted. Va a conectar con la impresora fiscal");
 		getFiscalPrinter().connect();
-		log("Se conecto con la impresora fiscal");
+		log("FiscalDocumentPrint. getLastNoPrinted. Se conecto con la impresora fiscal");
 		
 		/**
 		 *  Validar si el ultimo numero impreso de este tipo de documento es mayor a igual al imprimir, en cuyo caso NO deberia volver a imprimir para las
@@ -585,15 +632,26 @@ public class FiscalDocumentPrint {
 			Document docFiscalImprimible = getDocument();
 			
 			if(docFiscalImprimible==null) {
-				log.warning("No se pudo recuperar el documentPrintable, intenta crearlo");
+				log("No se pudo recuperar el documentPrintable, intenta crearlo");
 				docFiscalImprimible = this.createDocument((MInvoice)getOxpDocument(), null);
 			}
 			
 			if(docFiscalImprimible==null) {
-				log.warning("No se pudo recuperar ni crear el documentPrintable!");
+				log("No se pudo recuperar ni crear el documentPrintable!");
 				return -2;
 			}
 
+			// dREHER Feb '25
+			// Si el tipo de documento o letra estan nulos, tomarlos desde la factura origen
+			if(docFiscalImprimible!=null) {
+				if(Util.isEmpty(docFiscalImprimible.getLetter(), true))
+					docFiscalImprimible.setLetter(mInvoice.getLetra());
+
+				// I=Invoice, CN=Credito, DN=Debito
+				if(Util.isEmpty(docFiscalImprimible.getDocumentType(), true)) 
+					docFiscalImprimible.getDocumentType();
+			}
+			
 			try {
 				lastNo = getLastPrintedNumber(docFiscalImprimible);
 			} catch (FiscalPrinterStatusError e) {
@@ -626,6 +684,76 @@ public class FiscalDocumentPrint {
 		return lastNo;
 	}
 	
+	
+	/**
+	 * Setea el estado de la impresora y devuelve el mismo
+	 * @return <code>status</code> 
+	 * 
+	 * Sobrecargo para poder ignorar control actual de impresora
+	 * 
+	 * dREHER - 
+	 * @throws Exception 
+	 */
+	public String getAndSaveStatus(MControladorFiscal fiscal, boolean isIgnoreEstadoActual) throws Exception {
+		
+		String status = MControladorFiscal.STATUS_IDLE;
+		
+		// Se obtiene el controlador fiscal para chequear el status
+		cFiscal = fiscal;
+		log("getAndSaveStatus.Controlador Fiscal: " + cFiscal);
+		
+		// Se obtiene la impresora fiscal con la que se debe imprimir
+		// el documento segun su tipo de documento.
+		log("getAndSaveStatus.Se carga la impresora a utilizar. " + fiscalPrinter);
+		FiscalPrinter fiscalPrinter = cFiscal.getFiscalPrinter();
+		setFiscalPrinter(fiscalPrinter);
+		
+		
+		// Chequeo el estado de la impresora
+		// dREHER
+		if(!isIgnoreEstadoActual) {
+			if(!checkPrinterStatus(cFiscal)) {
+				status = MControladorFiscal.STATUS_ERROR;
+			}
+		}
+					
+		// Se informa al manejador que se esta intentando conectar con
+		// la impresora fiscal.
+		log("getAndSaveStatus.Se informa al manejador que se esta intentando conectar con la impresora fiscal");
+		fireActionStarted(FiscalDocumentPrintListener.AC_CONNECT_PRINTER);
+		fiscalPrinter.setEventListener(getPrinterEventListener());
+		
+					
+		// Se intenta conectar la impresora.
+		try {
+			getFiscalPrinter().connect();
+			log("getAndSaveStatus.Se conecto con la impresora fiscal");
+			System.out.println("FiscalDocumentPrint. Se conecto con la impresora fiscal");
+		}catch(Exception ex) {
+			status = MControladorFiscal.STATUS_ERROR;
+			System.out.println("FiscalDocumentPrint. Error al intentar conectar: " + ex.toString());
+		}
+		
+		// Se libera la impresora fiscal.
+		setFiscalPrinterStatus(cFiscal, status);
+				
+		// Se efectiviza la transacción solo si no ocurrió un error.
+		if (getTrx() != null && isCreateTrx()) {
+			getTrx().commit();
+			getTrx().close();
+		}
+				
+		try {
+			closeFiscalPrinter();
+		}catch(Exception ex) {
+			if(!isIgnoreEstadoActual) status = MControladorFiscal.STATUS_ERROR;
+		}
+		
+		log("getAndSaveStatus. Resultado de la accion. Status fiscal printer: " + status);
+		System.out.println("FiscalDocumentPrint. Resultado de la accion. Status fiscal printer: " + status);
+		return status;
+	}
+	
 	/**
 	 * 
 	 * @param document
@@ -652,6 +780,25 @@ public class FiscalDocumentPrint {
 		MControladorFiscal cFiscal = MControladorFiscal.getOfDocType(docType.getID());
 		log("Controlador Fiscal: " + cFiscal);
 		
+		
+		// dREHER Feb '25
+		// Si el tipo de documento o letra estan nulos, tomarlos desde la factura origen
+		MInvoice mInvoice = (MInvoice)document;
+		
+		if(documentPrintable!=null) {
+			if(Util.isEmpty(documentPrintable.getLetter(), true))
+				documentPrintable.setLetter(mInvoice.getLetra());
+
+			// I=Invoice, CN=Credito, DN=Debito
+			if(Util.isEmpty(documentPrintable.getDocumentType(), true)) 
+				documentPrintable.getDocumentType();
+			
+			// dREHER Ago 25
+			documentPrintable.setC_Invoice_ID(mInvoice.getC_Invoice_ID());
+			debug("printDocument.documentPrintable.getC_Invoice_ID()=" + documentPrintable.getC_Invoice_ID());
+
+		}
+
 		// Ejecutar la acción
 		log("Ejecuta la accion: " + Actions.ACTION_PRINT_DOCUMENT);
 		boolean ok = execute(Actions.ACTION_PRINT_DOCUMENT, cFiscal.getID(),
@@ -710,6 +857,25 @@ public class FiscalDocumentPrint {
 		// Inicializar flag para que siempre se abra el cajón de dinero
 		initAlwaysOpenDrawer();
 		
+		debug("doPrintDocument.document.getC_Invoice_ID()=" + document.getC_Invoice_ID());
+		
+		
+		// dREHER Feb '25
+		// Si el tipo de documento o letra estan nulos, tomarlos desde la factura origen
+		MInvoice mInvoice = (MInvoice)document;
+		if(documentPrintable!=null) {
+			if(Util.isEmpty(documentPrintable.getLetter(), true))
+				documentPrintable.setLetter(mInvoice.getLetra());
+
+			// I=Invoice, CN=Credito, DN=Debito
+			if(Util.isEmpty(documentPrintable.getDocumentType(), true)) 
+				documentPrintable.getDocumentType();
+			
+			// dREHER Ago 25
+			documentPrintable.setC_Invoice_ID(mInvoice.getC_Invoice_ID());
+			debug("doPrintDocument.documentPrintable.getC_Invoice_ID()=" + documentPrintable.getC_Invoice_ID());
+		}
+		
 		// Emisión de una factura.
 		if(getPrinterDocType().equals(MDocType.FISCALDOCUMENT_Invoice)) {
 			printInvoice(documentPrintable);
@@ -728,12 +894,15 @@ public class FiscalDocumentPrint {
 		 * coinciden con los del controlador, caso contrario excepcionar...
 		 * 
 		 * dREHER
-		 */
+		 * 
+		 * Mayo 25 esto pierde sentido ya que se reemplaza por una validacion entre la impresion fiscal y Libertya
+		 
 		if(!checkAmounts(documentPrintable, originalInvoice)) {
 			endPrintingWrong("Error",
 					"No coinciden los montos impresos con los montos Libertya", MControladorFiscal.STATUS_ERROR);
 			return;
 		}
+		 */
 
 		// Se dispara el evento de impresión finalizada.
 		fireDocumentPrintEndedOk();
@@ -778,10 +947,25 @@ public class FiscalDocumentPrint {
 			}
 			
 			fiscalAmount = docFiscalImprimible.getTotal();
+			debug("fiscalAmount antes de validar=" + fiscalAmount);
 			if(fiscalAmount == null)
 				fiscalAmount = Env.ZERO;
 			
-			log.info("Total en el documento fiscal imprimible: " + fiscalAmount);
+			debug("total descuentos de linea=" + getTotalDescuentoDeLinea());
+			
+			// dREHER Descontar el total de descuentos en linea
+			if(isOcultarDescuentoDeLinea()) {
+			
+				// Si corresponde ya viene con el descuento calculado
+				// if(getTotalDescuentoDeLinea().compareTo(Env.ZERO) < 0)
+				//	fiscalAmount = fiscalAmount.subtract(getTotalDescuentoDeLinea());
+
+				// if(getTotalDescuentoDeLinea().compareTo(Env.ZERO) < 0)
+				//	fiscalAmount = fiscalAmount.subtract(getTotalDescuentoDocumento());
+
+			}
+			
+			log.info("Total en el documento fiscal imprimible (solo a nivel documentos Libertya): " + fiscalAmount);
 			
 			if(fiscalAmount.compareTo(Env.ZERO)!=0) {
 				if(getOxpDocument()!=null) {
@@ -791,16 +975,22 @@ public class FiscalDocumentPrint {
 						isOk = false;
 						log.warning("Total Libertya: " + invoice.getGrandTotal());
 					}else
-						log.info("Los totales del comprobante Fiscal y Libertya son iguales!");
+						log.info("Los totales del comprobante Fiscal Imprimible y Libertya son iguales!");
 				}else
 					log.warning("No se puede leer el comprobante a imprimir!");
 			}else
 				log.warning("No se pudo recuperar total del comprobante fiscal!");
+			
 		}
 		
 		return isOk;
 	}
 	
+	// dREHER
+	private static void debug(String string) {
+		System.out.println("==> FiscalDocumentPrint." + string);
+	}
+
 	/**
 	 * TODO: encontrar un metodo mas efectivo para determinar si se trata de un controlador fiscal de 2da generacion
 	 * 
@@ -920,6 +1110,9 @@ public class FiscalDocumentPrint {
 				parser.getNotShow().add("AtributosImpresion");
 				parser.getNotShow().add("Emisor");
 				file = file + "<br>" + parser.parsear();
+				
+				// dREHER guardar el array de objetos tickets
+				setTickets(parser.getTickets());
 				
 			}
 				
@@ -1490,9 +1683,38 @@ public class FiscalDocumentPrint {
 			if(cFiscal.getFiscalPrinter() instanceof HasarFiscalPrinter2G && document != null ) {
 				HasarFiscalPrinter2G h2g = (HasarFiscalPrinter2G)cFiscal.getFiscalPrinter();
 				
-				int nroComprobante = Integer.parseInt(document.getDocumentNo());
+				String documentNo = document.getDocumentNo();
+				if(documentNo.length()>8)
+					documentNo = documentNo.substring(5);
+				
+				int nroComprobante = Integer.parseInt(documentNo);
 				
 				total = h2g.getTotal(document.getDocumentType(), nroComprobante);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return total;
+	}
+	
+	/**
+	 * Permite consultar los totales acumulados hasta aca en el documento fiscal actual (debe estar abierto aun)
+	 *  
+	 * @return paquete de info recibida desde el controlador fiscal
+	 * 
+	 * dREHER
+	 */
+	public BigDecimal getSubTotal() {
+		
+		BigDecimal total = Env.ZERO;
+		
+		try {
+			if(cFiscal.getFiscalPrinter() instanceof HasarFiscalPrinter2G && document != null ) {
+				HasarFiscalPrinter2G h2g = (HasarFiscalPrinter2G)cFiscal.getFiscalPrinter();
+				
+				total = h2g.getSubTotal();
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -1557,9 +1779,42 @@ public class FiscalDocumentPrint {
 	 */
 	protected void setStdFooterObservations(MInvoice invoice, Document document){
 		// Agregar la descripción fiscal del comprobante
+		
 		document.addFooterObservation(Util.isEmpty(
 				invoice.getFiscalDescription(), true) ? "-" : invoice
 				.getFiscalDescription());
+		
+		debug("Footer estandar..." + invoice.getFiscalDescription());
+		
+		/**
+		 * Si corresponde agregar leyendas de impuestos (Facturas B)
+		 * dREHER
+		 */
+		if(document.getLetter().equals(Document.DOC_LETTER_B)) {
+
+			if(Utils.isMostrarImpuestosFCB()) {
+				// dREHER 5.0
+				// String leyImp = Utils.getStringInvoiceTaxes(invoice.getC_Invoice_ID());
+				
+				String leyImp = Utils.getPrefijoMostrarImpuestosFCB();
+				
+				document.addFooterObservation(Util.isEmpty(
+						leyImp) ? "-" : leyImp);
+				
+				leyImp = Utils.getStringTotalInvoiceTaxes(invoice.getC_Invoice_ID(), true);
+				document.addFooterObservation(Util.isEmpty(
+						leyImp) ? "" : leyImp);
+				
+				leyImp = Utils.getStringTotalInvoiceTaxes(invoice.getC_Invoice_ID(), false);
+				document.addFooterObservation(Util.isEmpty(
+						leyImp) ? "" : leyImp);
+				
+				debug("Agrego leyendas de impuestos comprobantes B...");
+				
+			}
+			
+		}
+		
 		// Si tiene relacionado una caja diaria, entonces se agrega el nombre de
 		// la config del tpv y el usuario asociados a la caja		
 		if(!Util.isEmpty(invoice.getC_POSJournal_ID(), true)){
@@ -1570,13 +1825,18 @@ public class FiscalDocumentPrint {
 			
 			document.addFooterObservation("Cajero:" + salesRep.getName()
 					+ "|Caja:" + pos.getName());
+			
+			debug("Agrego footer de cajero...");
+			
 		}
 		// Sino busca el usuario de ventas desde el documento
 		else{
 			// Setear el nombre del responsable de ventas
 			MUser salesRep = MUser.get(ctx, invoice.getSalesRep_ID());
 			document.addFooterObservation("Resp. Ventas: "+ salesRep.getName());
+			debug("Agrego footer de rep de ventas...");
 		}
+		
 		// Agregar las leyendas del pie del ticket del tipo de documento
 		MDocType docType = new MDocType(ctx, invoice.getC_DocTypeTarget_ID(),
 				getTrxName());
@@ -1588,6 +1848,9 @@ public class FiscalDocumentPrint {
 				token = tokens.nextToken();
 				document.addFooterObservation(Util.isEmpty(token, true)?"-":token);
 			}
+			
+			debug("Agregue foo de tipo de documento. " + docType.getFiscalPrintingFooterLegends());
+			
 		}
 		// Agregar la descripción para categorías de iva
 		if (document.getCustomer() != null) {
@@ -1599,12 +1862,19 @@ public class FiscalDocumentPrint {
 					for (String l : lines) {
 						document.addFooterObservation(l);
 					}
+					
+					debug("Agregue foo de categoria de IVA del cliente spliteado...");
+					
 				}
 				else {
 					document.addFooterObservation(document.getCustomer().getCategoriaIVAFiscalDescription());
+					
+					debug("Agregue foo de categoria de IVA del cliente...");
+					
 				}
 			}
 		}
+		
 	}
 
 	/**
@@ -1651,12 +1921,18 @@ public class FiscalDocumentPrint {
 			
 			nfd.addFooterObservation("Cajero:" + salesRep.getName()
 					+ "|Caja:" + pos.getName());
+			
+			debug("foo de cajero NO Fiscal document...");
+			
 		}
 		// Sino busca el usuario de ventas desde el documento
 		else{
 			// Setear el nombre del responsable de ventas
 			MUser salesRep = MUser.get(ctx, invoice.getSalesRep_ID());
 			nfd.addFooterObservation("Resp. Ventas: "+ salesRep.getName());
+			
+			debug("foo de rep de ventas NO Fiscal document...");
+			
 		}
 	}
 	
@@ -1739,6 +2015,9 @@ public class FiscalDocumentPrint {
 		invoice.setChargeAmt(mInvoice.getChargeAmt());
 		
 		// Setear los mensajes a la cola de la impresión
+		List<String> foo = new ArrayList<String>();
+		invoice.setFooterObservations(foo);
+		
 		setStdFooterObservations(mInvoice, invoice);
 		
 		// Verificar si esta factura tiene salida por depósito, en ese caso
@@ -1763,23 +2042,33 @@ public class FiscalDocumentPrint {
 			if(found){
 				invoice.addFooterObservation(Msg.getMsg(mInvoice.getCtx(),
 						"InvoiceWithDeliverDocument"));
+				debug("Agregue foo de retiro por deposito...");
 			}
 			else{
 				invoice.addFooterObservation("-");
+				debug("Agregue foo - NO tiene retiro por deposito");
 			}	
 		}
 		
 		// Reorganizar las leyendas al pie del ticket
 		reorderFooterObservation(invoice);
+		debug("Invoice: " + invoice);
+		for(String footmp: invoice.getFooterObservations()) {
+			debug("Footer: " + footmp);
+		}
 		
 		// TODO: Se asigna el número de remito en caso de existir.
 		
 		// Se agregan las líneas de la factura al documento.
 		loadDocumentLines(mInvoice, invoice);
+		
+		
 		// Agrega los pagos correspondientes de la factura partir de las imputaciones
 		loadInvoicePayments(invoice, mInvoice);
 		
+		
 		// Se asignan los descuentos de la factura
+		invoice.setC_Invoice_ID(mInvoice.getC_Invoice_ID()); // dREHER Ago 25
 		loadDocumentDiscounts(invoice, mInvoice.getDiscounts());
 		
 		// Cargar impuestos automáticos
@@ -1988,7 +2277,7 @@ public class FiscalDocumentPrint {
 	 *            una instancia de esa clase sino se producirá un error en
 	 *            tiempo de ejecución.
 	 */
-	private void printInvoice(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException, Exception {
+	private void printInvoice(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException, DocumentException, Exception {
 		MInvoice mInvoice = (MInvoice)getOxpDocument();
 		// Se valida el documento OXP.
 		validateOxpDocument(mInvoice);
@@ -1997,13 +2286,67 @@ public class FiscalDocumentPrint {
 				: createInvoice(mInvoice);
 		setDocument(invoice);
 		invoice.setAlwaysOpenDrawer(isAlwaysOpenDrawer());
+		
+		// dREHER Feb '25
+		// Si el tipo de documento o letra estan nulos, tomarlos desde la factura origen
+		if(invoice!=null) {
+			if(Util.isEmpty(invoice.getLetter(), true))
+				invoice.setLetter(mInvoice.getLetra());
+
+			// I=Invoice, CN=Credito, DN=Debito
+			if(Util.isEmpty(invoice.getDocumentType(), true)) 
+				invoice.getDocumentType();
+			
+		}
+		
 		// Se manda a imprimir la factura a la impresora fiscal.
+		try {
 		getFiscalPrinter().printDocument(invoice);
+		}catch(FiscalPrinterIOException ex) {
+			if(ex.getMessage().contains("CANCELO TICKET FISCAL"))
+				UpdatearCancelacion(mInvoice);
+			else
+				throw new FiscalPrinterIOException(ex.toString());
+		}
+		
 		// Se actualizan los datos de la factura de oxp.
 		try {
 			saveDocumentData(mInvoice, invoice);
 		}catch(Exception ex) {
-			log.warning("Error al imprimir: " + ex.toString());
+			log.warning("Error al imprimir e intentar guardar datos en el comprobante fiscal: " + ex.toString());
+		}
+	}
+
+	private void UpdatearCancelacion(MInvoice mInvoice) {
+		Trx trx = null; // LOCAL. Solo para hacer rollback o commit
+		String trxName2 = null;
+		try {
+		
+			trxName2 = Trx.createTrxName(this.toString() + mInvoice.getDateInvoiced().toString()
+			+ Thread.currentThread().getId());
+			trx = Trx.get(trxName2, true);
+
+			log.warning("Fuerza marcado de impresion fiscal en una nueva transaccion por cancelacion de ticket!");
+			DB.executeUpdate("UPDATE C_Invoice SET fiscalalreadyprinted='Y', ManageFiscalCancelInvoice='Y' WHERE C_Invoice_ID=" +
+					mInvoice.getC_Invoice_ID(),
+					trxName2);
+
+			debug("Commit de Transaccion. Updatea las marcas fiscalalreadyprinted y ManageFiscalCancelInvoice a Y...");
+			trx.commit();
+			trxName2 = null;
+			
+		}catch(Exception ex) {
+			log.warning("No pudo forzado de marca de impresion fiscal por cancelacion de ticket!");
+			try {
+				trx.rollback();
+			} catch (Exception e2) {}
+		}finally {
+			trxName2 = null;
+			try {
+				trx.close();
+			} catch (Exception e2) {
+				
+			}
 		}
 	}
 
@@ -2025,6 +2368,19 @@ public class FiscalDocumentPrint {
 		DebitNote debitNote = document != null ? (DebitNote) document
 				: createDebitNote(mInvoice);
 		setDocument(debitNote);
+		
+		// dREHER Feb '25
+		// Si el tipo de documento o letra estan nulos, tomarlos desde la factura origen
+		if(debitNote!=null) {
+			if(Util.isEmpty(debitNote.getLetter(), true))
+				debitNote.setLetter(mInvoice.getLetra());
+
+			// I=Invoice, CN=Credito, DN=Debito
+			if(Util.isEmpty(debitNote.getDocumentType(), true)) 
+				debitNote.getDocumentType();
+			
+		}
+		
 		// Se manda a imprimir la nota de débito a la impresora fiscal.
 		getFiscalPrinter().printDocument(debitNote);
 		// Se actualizan los datos de la nota de debito de oxp.
@@ -2053,6 +2409,19 @@ public class FiscalDocumentPrint {
 		CreditNote creditNote = document != null ? (CreditNote) document
 				: createCreditNote(mInvoice, originalInvoice); 
 		setDocument(creditNote);
+		
+		// dREHER Feb '25
+		// Si el tipo de documento o letra estan nulos, tomarlos desde la factura origen
+		if(creditNote!=null) {
+			if(Util.isEmpty(creditNote.getLetter(), true))
+				creditNote.setLetter(mInvoice.getLetra());
+
+			// I=Invoice, CN=Credito, DN=Debito
+			if(Util.isEmpty(creditNote.getDocumentType(), true)) 
+				creditNote.getDocumentType();
+			
+		}
+		
 		// Se manda a imprimir la nota de crédito a la impresora fiscal.
 		getFiscalPrinter().printDocument(creditNote);
 		// Se actualizan los datos de la nota de crédito de oxp.
@@ -2115,6 +2484,25 @@ public class FiscalDocumentPrint {
 			
 			// Descripción fiscal de la categoría de IVA
 			customer.setCategoriaIVAFiscalDescription(getCategoriaIVAFiscalDescription(categoriaIva.getCodigo()));
+			
+			// Si tiene o no ocultar descuento en linea - dREHER
+			boolean isOcultarDesctoLineaFC = false;
+			if(bPartner.get_Value("IsOcultarDesctoLineaFC")!=null) {
+					isOcultarDesctoLineaFC = (Boolean)bPartner.get_Value("IsOcultarDesctoLineaFC");
+			}
+			
+			
+			/**
+			 * Para los clientes que tienen ley EXENTO 16674 forzar ocultar descuento de linea
+			 * dREHER Jul 25
+			 */
+			if(mInvoice.isCategoriaSinImpuestos()) {
+				isOcultarDesctoLineaFC = true;
+				debug("getCustomer. Forzando ocultar descuento de linea por categoria sin impuestos");
+			}
+			
+			customer.setOcultarDescuentoEnLinea(isOcultarDesctoLineaFC);
+			setOcultarDescuentoDeLinea(isOcultarDesctoLineaFC);
 		}
 		
 		return customer;
@@ -2263,6 +2651,13 @@ public class FiscalDocumentPrint {
 				for (MDocumentDiscount mDiscountByTax : mDocumentDiscount
 						.getDiscountsByTax()) {
 					
+					/** 
+					 * Controlar si tiene que Ocultar descuento de linea 
+					 * Se debe ademas contemplar los recargos
+					 * dREHER 
+					 * */
+					if(!isOcultarDescuentoDeLinea()) { // dREHER esto trae problemas, duplica el descuento - Ago 25 || mDiscountByTax.getDiscountAmt().compareTo(Env.ZERO) < 0
+
 					// Crea la línea de descuento para la tasa
 					discountLine = new DiscountLine(
 							mDiscountByTax.getDescription(),
@@ -2278,13 +2673,58 @@ public class FiscalDocumentPrint {
 					}
 					// Agrega el descuento al documento.
 					document.addDocumentDiscount(discountLine);
+						
+						// Si es un recargo, debe guardar en total descuento para poder calcular monto final
+						if(mDiscountByTax.getDiscountAmt().compareTo(Env.ZERO) < 0){
+							debug("Tiene un recargo (no lo oculta): " + mDiscountByTax.getDiscountAmt());
+						}
+						
+						// dREHER Ago 25
+						document.setTotalRecargoFormaPago(Env.ZERO);
+						
+					}else {
+						// TODO: ATENCION!!!! getDiscountAmt() devuelve el TOTAL de la linea con el descuento aplicado
+						
+						setTotalDescuentoDeLinea(getTotalDescuentoDeLinea().add(mDiscountByTax.getDiscountAmt()));
+						debug("Debe ocultar descuento de linea. total descuento de linea=" + getTotalDescuentoDeLinea());
+						
+						
+						// dREHER Ago 25
+						BigDecimal totalAmt = document.getTotal();
+						BigDecimal cargosAmt = document.getChargeAmt();
+						
+						/*
+						TODO: por lo menos con usuarios que tienen ocultar descuento en linea, este total esta mal
+						tomarlo desde C_DocumentDiscount ya que el cargo guarda la suma de todos los descuentos de esta tabla y si existen descuentos va a dar otro
+						resultado, aca tenemos que enviar el total de recargo por forma de pago independientemente del resto de los descuentos
+						*/
+						
+						setTotalRecargoDocumento(cargosAmt);
+						
+						document.setTotalRecargoFormaPago(getTotalDescuentoFormaPago(document));
+						
+						debug("Totales antes de quitar descuento de linea: total=" + totalAmt + " cargos=" + cargosAmt);
+						debug("Total recargo=" + getTotalRecargoDocumento());
+						debug("Total recargo forma de pago=" + document.getTotalRecargoFormaPago());
+						// -----------------------
+						
+					}
 				}
 			}
 		}
 		
 		// Si hay descuentos manuales generales se asigna un descuento general
 		// al documento.
-		if (generalDiscountAmt.compareTo(BigDecimal.ZERO) != 0) {
+		if (generalDiscountAmt.compareTo(BigDecimal.ZERO) != 0 ||
+				document.getTotalRecargoFormaPago().compareTo(Env.ZERO) > 0) { // dREHER Ago 25
+			
+			debug("Descuento general (normal): " + generalDiscountAmt);
+			
+			// dREHER Ago 25
+			// generalDiscountAmt = generalDiscountAmt.add(document.getTotalRecargoFormaPago().abs());
+			
+			// debug("Descuento general (agregado el recargo): " + generalDiscountAmt);
+			
 			document.setGeneralDiscount(
 				new DiscountLine(
 					Msg.translate(Env.getCtx(), "FiscalTicketGeneralDiscount"), 
@@ -2292,8 +2732,48 @@ public class FiscalDocumentPrint {
 					document.isTaxIncluded() // Incluye impuestos
 				)
 			);
+			
+			setTotalDescuentoDocumento(generalDiscountAmt);
+			debug("Tiene descuento general:" + generalDiscountAmt);
 		}
 		
+	}
+
+	/**
+	 * Obtiene el total de descuento por forma de pago desde C_DocumentDiscount
+	 * @param document2
+	 * @return
+	 */
+	private BigDecimal getTotalDescuentoFormaPago(Document document2) {
+		BigDecimal amount = Env.ZERO;
+		String sql = "SELECT SUM(DiscountAmt) " + 
+				" FROM C_DocumentDiscount " +
+				" WHERE C_Invoice_ID = ? " +
+				" AND IsActive='Y' " + // 'F' = Forma de Pago ¿?
+				" AND CumulativeLevel='D' " +
+				" AND DiscountKind='M' " + // 'M' = Manual";
+				" AND C_DocumentDiscount_Parent_ID ISNULL ";
+		
+		debug("getTotalDescuentoFormaPago: " + sql + " - C_Invoice_ID=" + document2.getC_Invoice_ID());
+		
+		amount = DB.getSQLValueBD(getTrxName(), sql, document2.getC_Invoice_ID());
+		if(amount==null) amount = Env.ZERO;
+		
+		return amount;
+	}
+
+	/*
+	 * Este metodo debe buscar la cantidad de la linea del pedido
+	 * dREHER Ago 25
+	 */
+	private BigDecimal getQty(int c_OrderLine_ID) {
+		BigDecimal qty = Env.ZERO;
+		if (c_OrderLine_ID > 0) {
+			qty = DB.getSQLValueBD(getTrxName(), "SELECT QtyOrdered FROM C_OrderLine WHERE C_OrderLine_ID=?", c_OrderLine_ID);
+			if (qty == null)
+				qty = Env.ZERO;
+		}
+		return qty;
 	}
 
 	/**
@@ -2802,6 +3282,12 @@ public class FiscalDocumentPrint {
 			ivaResponsabilities.put(8, Customer.RESPONSABLE_NO_INSCRIPTO_BIENES_DE_USO);
 			ivaResponsabilities.put(9, Customer.RESPONSABLE_INSCRIPTO);
 			ivaResponsabilities.put(10, Customer.RESPONSABLE_INSCRIPTO);
+			ivaResponsabilities.put(11, Customer.RESPONSABLE_INSCRIPTO); // dREHER Abril 25
+			ivaResponsabilities.put(12, Customer.RESPONSABLE_INSCRIPTO); // dREHER Abril 25
+			ivaResponsabilities.put(13, Customer.RESPONSABLE_INSCRIPTO); // dREHER Abril 25
+			ivaResponsabilities.put(14, Customer.RESPONSABLE_INSCRIPTO); // dREHER Abril 25
+			ivaResponsabilities.put(15, Customer.NO_ALCANZADO); // dREHER Abril 25
+			
 			//ivaResponsabilities.put(Customer.MONOTRIBUTISTA_SOCIAL);
 			//ivaResponsabilities.put(Customer.PEQUENO_CONTRIBUYENTE_EVENTUAL);
 			//ivaResponsabilities.put(Customer.PEQUENO_CONTRIBUYENTE_EVENTUAL_SOCIAL);
@@ -2818,6 +3304,7 @@ public class FiscalDocumentPrint {
 	 */
 	protected int traduceIvaResponsibility(Integer ivaResponsibility) {
 		Integer result = getIvaResponsabilities().get(ivaResponsibility);
+		System.out.println("-> traduceIvaResponsability: " + ivaResponsibility + " result: " + result);
 		if(result == null)
 			result = Customer.NO_CATEGORIZADO;
 		return result;
@@ -2894,9 +3381,10 @@ public class FiscalDocumentPrint {
 		int bsyCount = 0;
 		// Si la impresora se encuentra en estado de error se dispara el evento
 		// que informa dicha situación.
+		log("checkPrinterStatus. c_fiscal=" + cFiscal + " status=" + cFiscal.getStatus());
 		if(cFiscal.getStatus().equals(MControladorFiscal.STATUS_ERROR)) {
 			
-			log.warning("C_Controlador_Fiscal.Status=ERR-. El controlador fiscal esta en estado de Error!");
+			log("checkPrinterStatus. C_Controlador_Fiscal.Status=ERR-. El controlador fiscal esta en estado de Error!");
 			
 			fireStatusReported(cFiscal);
 			// Dependiendo de si hay que ignorar o no el estado de error
@@ -2905,7 +3393,7 @@ public class FiscalDocumentPrint {
 			// la BD pero el dispositivo ya no contenga mas este error.
 			if(isIgnoreErrorStatus()){ 
 				
-				log.warning("Se ignora error, se setea la impresora como lista y se continua...");
+				log("checkPrinterStatus. Se ignora error, se setea la impresora como lista y se continua...");
 				
 				// Por ello se setea la impresora como Lista y se intenta
 				// continuar con la impresión.
@@ -2916,17 +3404,23 @@ public class FiscalDocumentPrint {
 				// Si no se pueden ignorar estados de error, entonces 
 				// no es posible continuar con la impresión.
 				if(isThrowExceptionInCancelCheckStatus()){
-					log.warning("La impresora esta con estado ERROR, no se puede continuar impresion!");
+					log("checkPrinterStatus. La impresora esta con estado ERROR, no se puede continuar impresion!");
 					throw new Exception(Msg.translate(ctx,"FiscalPrintCancelError"));
 				}
 				else{
 					setCancelWaiting(true);
-					log.warning("Controlador fiscal. Se cancela la espera...");
+					log("checkPrinterStatus. Controlador fiscal. Se cancela la espera...");
 					return false;
 				}
 			}
 		}			
 
+		if(cFiscal.getStatus().equals(MControladorFiscal.STATUS_BUSY) && isIgnoreErrorStatus()){ 
+
+			log("checkPrinterStatus. BUSY, Se ignora error, se setea la impresora como lista y se continua...");
+
+		}else if(cFiscal.getStatus().equals(MControladorFiscal.STATUS_BUSY) && !isIgnoreErrorStatus()){
+			
 		// Mientras el status sea BUSY, espera 5 segundos y vuelve a chequear.
 		while(cFiscal.getStatus().equals(MControladorFiscal.STATUS_BUSY) && !isCancelWaiting()) {
 			fireStatusReported(cFiscal);
@@ -2934,21 +3428,24 @@ public class FiscalDocumentPrint {
 			bsyCount++;
 			cFiscal.load((String)null);
 			if(bsyCount == MAX_BSY_SLEEP_COUNT) {
-				log.warning("La impresora esta OCUPADA, no se puede continuar impresion!");
+					log("checkPrinterStatus. La impresora esta OCUPADA, no se puede continuar impresion!");
 				throw new IOException(Msg.translate(ctx,"FiscalPrinterBusyTimeoutError"));
 			}
 		}
+
 		// Si fue cancelada la operacion de espera entonces se retorna, indicando
 		// que el estado no es correcto.
 		if(isCancelWaiting()) { 
 			if(isThrowExceptionInCancelCheckStatus()){
-				log.warning("La impresora esta EN ESPERA, no se puede continuar impresion!");
+					log("checkPrinterStatus. La impresora esta EN ESPERA, no se puede continuar impresion!");
 				throw new Exception(Msg.translate(ctx,"FiscalPrintCancelError"));
 			}
 			else{
-				log.warning("Fiscal printer wait canceled");
+					log("checkPrinterStatus. Fiscal printer wait canceled");
 				return false;
 			}
+			}
+
 		}
 			
 		fireStatusReported(cFiscal, MControladorFiscal.STATUS_IDLE);
@@ -2959,14 +3456,22 @@ public class FiscalDocumentPrint {
 		cFiscal.setoperation_date(new Timestamp(System.currentTimeMillis()));
 		// No se usa trx dado que los cambios deben ser visibles 
 		// inmediatamente por otros usuarios.
+		
+		log("Deja la impresora en IDLE y guarda estado....");
+		
 		cFiscal.save(); 
+		
+		log("Guardo IDLE en estado....");
+		
 		return true;
 	}
 	
 	private void setFiscalPrinterStatus(MControladorFiscal cFiscal, String status) {
 		if(cFiscal != null) {
+			log("setFiscalPrinterStatus. status= " + status);
 			cFiscal.setStatus(status);
 			cFiscal.save();
+			log("setFiscalPrinterStatus. guardo status= " + status);
 		}
 	}
 
@@ -3019,6 +3524,11 @@ public class FiscalDocumentPrint {
 			//TODO: verificar.
 			//mInvoice.setDocStatus(MInvoice.DOCSTATUS_InProgress);
 			//mInvoice.save();
+			
+			// dREHER se lo delego a MInvoice
+			// mInvoice.setFiscalAlreadyPrinted(false);
+			// mInvoice.save();
+			
 		}
 	}
 
@@ -3032,7 +3542,13 @@ public class FiscalDocumentPrint {
 			if(lastDocumentNos!=null && lastDocumentNos.trim().length() > 8)
 				lastDocumentNos = lastDocumentNos.substring(lastDocumentNos.trim().length()-8);
 			
-			log.info("lastDocumentNos (impreso): " + lastDocumentNos);
+			debug("lastDocumentNos (impreso): " + lastDocumentNos);
+			
+			if(Util.isEmpty(lastDocumentNos, true)) {
+				debug("updateDocTypeSequence. Se produjo un error al obtener el ultimo numero impreso, no se actualiza la secuencia del tipo de documento.");
+				return;
+			}
+			
 			
 			Integer lastDocumentNo = new Integer(lastDocumentNos);
 			// Se obtiene la secuencia del tipo de documento...
@@ -3399,7 +3915,40 @@ public class FiscalDocumentPrint {
 			
 			unitPrice = mLine.getPriceList();
 			if(unitPrice.compareTo(mLine.getPriceActual()) <= 0) {
-				unitPrice = mLine.getPriceActual().add(mLine.getLineBonusAmt()).add(mLine.getLineDiscountAmt());
+				
+				
+				debug("uniPrice=" + unitPrice + " <= priceActual=" + mLine.getPriceActual()
+						+ ", por lo tanto el precio de lista tiene el descuento incluido");
+				
+				BigDecimal bonus = mLine.getLineBonusAmt();
+				if (bonus == null)
+					bonus = BigDecimal.ZERO;
+				if (bonus.compareTo(Env.ZERO) < 0) {
+					debug("LineBonusAmt negativo, se debe descontar del precio actual pero el monto unitario, aca llego el descuento total: " + bonus);
+					bonus = bonus.divide(mLine.getQtyEntered(), scale, RoundingMode.HALF_DOWN);
+					debug("LineBonusAmt negativo, se debe descontar del precio actual pero el monto unitario, aca llego el descuento por unidad: " + bonus);
+				}
+				
+				unitPrice = mLine.getPriceActual().add(bonus).add(mLine.getLineDiscountAmt());
+				
+				debug("nuevo unitPrice=" + unitPrice + " LineBonusAmt=" + mLine.getLineBonusAmt() + " LineDiscountAmt="
+						+ mLine.getLineDiscountAmt());
+				
+				/** Si tiene que Ocultar descuento de linea - dREHER */
+				if(isOcultarDescuentoDeLinea()) {
+					
+					// TODO: ver si en este caso, el precio unitario YA deberia mostrarse con el descuento
+					// y controlar que NO se imprima el descuento por separado...
+					unitPrice = mLine.getPriceActual();
+					debug("Como tiene descuento de linea y lo debe ocultar, nuevo precio=" + unitPrice);
+				}
+				
+				
+			} else {
+				debug("uniPrice=" + unitPrice + " > priceActual=" + mLine.getPriceActual()
+						+ ", por lo tanto el precio de lista NO tiene el descuento incluido, tiene recargo");
+				debug("nuevo unitPrice=" + unitPrice + " LineBonusAmt=" + mLine.getLineBonusAmt() + " LineDiscountAmt="
+						+ mLine.getLineDiscountAmt());
 			}
 			
 		}
@@ -3617,5 +4166,53 @@ public class FiscalDocumentPrint {
 
 	public void setFiscalInitData(FiscalInitData fiscalInitData) {
 		this.fiscalInitData = fiscalInitData;
+	}
+
+	public static boolean isOcultarDescuentoDeLinea() {
+		return isOcultarDescuentoDeLinea;
+	}
+
+	public void setOcultarDescuentoDeLinea(boolean isOcultarDescuentoDeLinea) {
+		this.isOcultarDescuentoDeLinea = isOcultarDescuentoDeLinea;
+	}
+
+	public static BigDecimal getTotalDescuentoDeLinea() {
+		return totalDescuentoDeLinea;
+	}
+
+	public static void setTotalDescuentoDeLinea(BigDecimal totalDescuentoDeLinea) {
+		FiscalDocumentPrint.totalDescuentoDeLinea = totalDescuentoDeLinea;
+	}
+
+	public static BigDecimal getTotalDescuentoDocumento() {
+		return totalDescuentoDocumento;
+	}
+
+	public static void setTotalDescuentoDocumento(BigDecimal totalDescuentoDocumento) {
+		FiscalDocumentPrint.totalDescuentoDocumento = totalDescuentoDocumento;
+	}
+
+	public List<Ticket> getTickets() {
+		return tickets;
+	}
+
+	public void setTickets(List<Ticket> tickets) {
+		this.tickets = tickets;
+	}
+
+	public String getLastErrorMsg() {
+		return lastErrorMsg;
+	}
+
+	public void setLastErrorMsg(String lastErrorMsg) {
+		this.lastErrorMsg = lastErrorMsg;
+	}
+
+	public static BigDecimal getTotalRecargoDocumento() {
+		return totalRecargoDocumento;
+	}
+
+	public static void setTotalRecargoDocumento(BigDecimal totalRecargoDocumento) {
+		FiscalDocumentPrint.totalRecargoDocumento = totalRecargoDocumento;
 	}
 }

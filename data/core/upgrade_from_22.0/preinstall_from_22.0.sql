@@ -3738,3 +3738,26 @@ ALTER TABLE libertya.t_balancereport ALTER COLUMN chequesencartera TYPE numeric(
 ALTER TABLE libertya.t_balancereport ALTER COLUMN generalbalance TYPE numeric(22, 2) USING credit::numeric(22, 2);
 
 
+-- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
+--20241021-15:10
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'MostrarImpuestosFC_B', 'N');
+--20241022-12:30
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_B', 'Regimen de Transparencia Fiscal al Consumidor (Ley 27.743)');
+
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrintLabelPriceCmd07', 'A550,5,0,2,1,1,N,"@TAX_LEGEND@"');
+
+-- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
+-- 20250129-12:30
+update ad_preference set value='A155,165,0,2,1,1,N,"@NET_PRICE@"' where "attribute" = 'PrintLabelPriceCmd07';
+update ad_preference set value='A560,190,0,1,1,1,N,"@DATE@"' where "attribute" = 'PrintLabelPriceCmd02';
+update ad_preference set value='A570,70,0,4,1,1,N,"@UOM_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd05';
+update ad_preference set value='A155,145,0,3,1,1,N,"@PROD_VALUE@     @PROD_UPC@"' where "attribute" = 'PrintLabelPriceCmd06';
+update ad_preference set value='A200,38,0,5,1,2,N,"@PRICESTD@"' where "attribute" = 'PrintLabelPriceCmd04';
+update ad_preference set value='A155,70,0,5,1,1,N,"@CUR_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd03';
+
+-- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_BLabel', 'PRECIO SIN IMPUESTOS NACIONALES: $');

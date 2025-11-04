@@ -21,9 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -73,6 +71,12 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 	
 	private boolean dragOrderPrice = true;
 	private List<MDocumentDiscount> documentDiscountsToSave = null;
+	
+	// dREHER Jun 25
+	protected Boolean isOcultarDesctoLineaFC = null;
+	
+	// dREHER Jun 25
+	protected boolean isSkipAllInSave = false;
 	
     /**
      * Descripción de Método
@@ -233,6 +237,15 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     private MProductPricing m_productPricing = null;
     
     private MInvoice invoice = null;
+
+    // dREHER 5.0
+	private boolean isCorrespondeDescontarImpuesto = false;
+
+	// dREHER 5.0
+	private BigDecimal taxBPRate;
+	
+	// dREHER 5.0
+	private boolean isFromTPV = false;
 
     /**
      * Descripción de Método
@@ -869,10 +882,15 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             MTax tax = new MTax( getCtx(),getC_Tax_ID(),get_TrxName());
 
             if (getTaxAmt() == null || getTaxAmt().compareTo(BigDecimal.ZERO) == 0 || getInvoice().isSOTrx()) {
+				debug("setTaxAmt 1).isTaxIncluded: " + isTaxIncluded() + " getTaxAmt()=" + getTaxAmt()
+						+ " getLineNetAmt()=" + getLineNetAmt() + " getDocumentDiscountAmt()="
+						+ getDocumentDiscountAmt() + " getPrecision()=" + getPrecision());
             	TaxAmt = tax.calculateTax(getTaxBaseAmtToEvaluateTax(),isTaxIncluded(),getPrecision());
+            	debug("setTaxAmt 2).TaxAmt: " + TaxAmt);
             }
             else{
             	TaxAmt = getTaxAmt();
+            	debug("setTaxAmt 3).getTaxAmt() ya registrado: " + TaxAmt);
             }
         }
 
@@ -1155,6 +1173,62 @@ public class MInvoiceLine extends X_C_InvoiceLine {
             }
         }
         
+// -----------------------------------------------------------------------------------------------------------------------------------------------
+        /**
+         * Si la lista de precios tiene el impuesto incluido y la entidad comercial tiene IVA Ley 16774
+         * debe tomar el precio de lista MENOS los impuestos que ya estan incluidos en el mismo
+         * dREHER 5.0
+         */
+        
+        Validations();
+        
+        if(m_IsSOTrx && isTaxIncluded() && isCorrespondeDescontarImpuesto() && !isFromTPV() && !isSkipAllInSave) {
+        	
+        	debug("Corresponde descontar impuesto al precio...");
+        	BigDecimal includedTaxesDivisors = getTaxRateFromProduct();
+			
+			if(includedTaxesDivisors==null)
+				includedTaxesDivisors = getBPRate();
+			
+			if(includedTaxesDivisors!=null)
+				includedTaxesDivisors = includedTaxesDivisors.divide(Env.ONEHUNDRED, BigDecimal.ROUND_HALF_DOWN);
+			
+			debug("setPrice.Tasa impuesto para obtener el neto= " + includedTaxesDivisors);
+			
+			// debug("decomposePrice.netPrice antes del descuento: " + netPrice);
+			BigDecimal neto= getPriceActual().divide(BigDecimal.ONE.add(includedTaxesDivisors), getPrecision(),
+								BigDecimal.ROUND_HALF_DOWN);
+			debug("setPrice.netPrice luego del descuento: " + neto);
+			
+			setPrice(neto);
+			setPriceList(neto);
+			
+			if(m_productPricing!=null) {
+				m_productPricing.setPriceStd(neto);
+				m_productPricing.setPriceList(neto);
+			}
+			
+			 //
+
+	        if( getQtyEntered().compareTo( getQtyInvoiced()) == 0 ) {
+	            setPriceEntered( getPriceActual());
+	        } else {
+	            setPriceEntered( getPriceActual().multiply( getQtyInvoiced().divide( getQtyEntered(),BigDecimal.ROUND_HALF_DOWN )));    // no precision
+	        }
+
+	        //
+
+	        if( getC_UOM_ID() == 0 && m_productPricing!=null) {
+	            setC_UOM_ID( m_productPricing.getC_UOM_ID());
+	        }
+
+	        //
+
+	        setM_priceSet(true);
+        }
+        
+// -----------------------------------------------------------------------------------------------------------------------------------------------        
+        
         /**
          * Si se detecta que el precio de lista sigue siendo CERO 
          * se toma el precio ingresado y se recalcula
@@ -1163,6 +1237,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
          * dREHER
          */
         
+        if(m_IsSOTrx) { // dREHER Sep 25 Solo validar precios de venta
         if(getPriceList().compareTo(Env.ZERO)==0) {
         	if(getPriceEntered().compareTo(Env.ZERO) > 0) {
         		
@@ -1182,7 +1257,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         		return false;
         	}
         }
-
+        }
         // Set Tax
 
         if( getC_Tax_ID() == 0 ) {
@@ -1231,15 +1306,30 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         
 		// Actualización de precio en base al descuento manual general
         // Esto es importante dejar antes de actualizar el total de la línea
-		if (!isSkipManualGeneralDiscount() && !getInvoice().isTPVInstance()
-				&& !getInvoice().isManageDragOrderDiscountsSurcharges(false)
-				&& !getInvoice().isVoidProcess()) {
-        	updatePriceList();
+        if(!isSkipManualGeneralDiscount()){
+        	// Descuento manual general
+    		BigDecimal generalDiscountManual = DB
+    				.getSQLValueBD(
+    						get_TrxName(),
+    						"SELECT ManualGeneralDiscount FROM c_invoice WHERE c_invoice_id = ?",
+    						getC_Invoice_ID());
+    		
+    		// dREHER controlar valor NULO
+    		if(generalDiscountManual==null)
+    			generalDiscountManual = Env.ZERO;
+    		
+			if (generalDiscountManual.compareTo(BigDecimal.ZERO) != 0) {
+        		int M_PriceList_ID = Env.getContextAsInt( getCtx(),"M_PriceList_ID" );
+                int stdPrecision = MPriceList.getStandardPrecision( getCtx(),M_PriceList_ID );
+        		updateGeneralManualDiscount(generalDiscountManual, stdPrecision);	
+    		}
 	}
         
         // Calculations & Rounding
 
-        if(!getInvoice().isTPVInstance() && !getInvoice().isVoidProcess()){
+        // orig dREHER Jul 25 if(!getInvoice().isTPVInstance() && !getInvoice().isVoidProcess()){
+        
+        if(!getInvoice().isVoidProcess()){
         	setLineNetAmt();
         	setLineNetAmount();
         	// Si la Tarifa tiene impuesto incluido y percepciones incluidas, se actualiza el LineNetAmt y el TaxAmt
@@ -1665,9 +1755,112 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         		no = 0;
         	}
         }else
-        	log.warning("Esta realizando recalculo de descuento global, no guardar comprobante!");           
+        	debug("Esta realizando recalculo de descuento global, no guardar comprobante!");           
         return no == 1;
     }    // updateHeaderTax
+    
+    
+// -------------------------------------------------------------------------------------------------------------------------------------------------------------    
+    /**
+     * Valida datas y setea valores
+     * dREHER 5.0
+     */
+    private void Validations() {
+        if(m_IsSOTrx){
+
+        	if(Util.isEmpty(getC_Invoice_ID(), true)) {
+        		int C_Invoice_ID = Env.getContextAsInt(getCtx(), "@C_Invoice_ID@");
+        		setC_Invoice_ID(C_Invoice_ID);
+        		debug("Tuve que leer C_Invoice_ID desde el entorno ID=" + C_Invoice_ID);
+        	}
+        	
+        	validCategoriaIva(getC_BPartner_ID());
+        	setFromTPV(getInvoice().isTPVInstance());
+        	
+        }
+    }
+    
+    /**
+	 * Validar si la categoria de IVA corresponde descontarla del precio final, ej: EXENTO LEY 16774
+	 * dREHER 5.0
+	 */
+	private void validCategoriaIva(int C_BPartner_ID) {
+		
+		if(C_BPartner_ID <= 0) {
+			C_BPartner_ID = DB.getSQLValue(get_TrxName(), "SELECT C_BPartner_ID " +
+											"FROM C_Invoice " +
+											"WHERE C_Invoice_ID=?", getC_Invoice_ID());
+		}
+		if(C_BPartner_ID <= 0) {
+			setCorrespondeDescontarImpuesto(false);
+			return;
+		}
+		
+		MBPartner bp = new MBPartner(Env.getCtx(), C_BPartner_ID, null);
+		int catIVA = bp.getC_Categoria_Iva_ID();
+		MCategoriaIva ci = new MCategoriaIva(Env.getCtx(), catIVA, null);
+		if(!Util.isEmpty(ci.getC_Tax_ID(), true)) {
+			
+			MTax tax = new MTax(Env.getCtx(), ci.getC_Tax_ID(), null);
+			setBPTaxRate(tax.getRate());
+			
+			setCorrespondeDescontarImpuesto(true);
+			
+		}else {
+			setCorrespondeDescontarImpuesto(false);
+		}
+		
+		debug("MInvoiceLine.validCategoriaIva. Corresponde Descontar Impuesto: " + isCorrespondeDescontarImpuesto());
+		
+	}
+	
+    // dREHER 5.0
+    private int getC_BPartner_ID() {
+		return m_C_BPartner_ID;
+	}
+	
+    // dREHER 5.0
+	public boolean isFromTPV() {
+		return isFromTPV;
+	}
+
+	public void setFromTPV(boolean isFromTPV) {
+		this.isFromTPV = isFromTPV;
+	}
+
+	// dREHER 5.0	
+	private void setBPTaxRate(BigDecimal rate) {
+		taxBPRate = rate;
+	}
+	private BigDecimal getBPRate() {
+		return taxBPRate;
+	}
+
+	// dREHER 5.0
+	private boolean isCorrespondeDescontarImpuesto() {
+		return isCorrespondeDescontarImpuesto ;
+	}
+	private void setCorrespondeDescontarImpuesto(boolean b) {
+		isCorrespondeDescontarImpuesto = b;
+	}
+	
+	/**
+	 * Calcular la tasa desde el articulo, si no tiene tasa, tomar la del cliente
+	 * dREHER
+	 */
+	public BigDecimal getTaxRateFromProduct() {
+		BigDecimal rate = null;
+		String sql = "SELECT t.rate " +
+						"FROM m_product mp " + 
+						"INNER JOIN c_taxcategory ct ON ct.c_taxcategory_id=mp.c_taxcategory_id " +
+						"INNER JOIN c_tax t ON t.c_taxcategory_id=ct.c_taxcategory_id AND t.isactive='Y' " +
+						"WHERE mp.M_Product_ID=? ORDER BY t.isDefault DESC";
+		rate = DB.getSQLValueBD(null, sql, getM_Product_ID());
+		
+		return rate;
+	}
+	
+// ------------------------------------------------------------------------------------------------------------------------------
     
     /** Devuelve la descripcion del producto asociado a la línea */
     public String getProductName()
@@ -2071,6 +2264,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     	
     	// si viene con la opcion de verificar ocultar descuento, SOLO utilizado para las A4
     	// dREHER
+    	/*
     	if(isVerificaMarcaOcultarDescuento) {
 
     		int C_Invoice_ID = getC_Invoice_ID();
@@ -2095,8 +2289,40 @@ public class MInvoiceLine extends X_C_InvoiceLine {
     		}
 
     	}
+    	*/
     	
-    	log.info("getPriceList desde micro componente Facturacion :" + priceList);
+    	// si viene con la opcion de verificar ocultar descuento, SOLO utilizado para las A4
+    	// dREHER
+    	// Jun 25 - sugerencia de Fede
+    	if(isVerificaMarcaOcultarDescuento) {
+
+    		// cache para evitar acceso a BDD
+    		if (isOcultarDesctoLineaFC == null) {
+    			isOcultarDesctoLineaFC = "Y".equalsIgnoreCase(DB.getSQLValueString(get_TrxName(), "SELECT isOcultarDesctoLineaFC "
+    																		+ " FROM C_BPartner "
+    																		+ " WHERE C_BPartner_ID = "
+    																		+ " 	(SELECT C_BPartner_ID "
+    																		+ "		 FROM C_Invoice "
+    																		+ "		 WHERE C_Invoice_ID = ?) ", getC_Invoice_ID()));
+    			
+    			// dREHER Jul 25
+    			// Si no tiene el flag de ocultar descuento, verificar si no es Ley Exento 16774
+    			if (Boolean.FALSE.equals(isOcultarDesctoLineaFC)) {
+    				MInvoice inv = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+    				if(inv.isCategoriaSinImpuestos()) {
+    					isOcultarDesctoLineaFC = true;
+    					debug("getPriceList. Categoria de IVA Exento Ley 16774, se oculta descuento en la línea de factura");
+    				}
+    			}
+    		}
+    		if (Boolean.TRUE.equals(isOcultarDesctoLineaFC)) {
+    			priceList = getPriceEntered();
+    			debug("getPriceList. Debe ocultar descuento en la línea de factura, se iguala el PriceList con el PriceEntered");
+    		}
+    	
+    	}
+    	
+    	debug("getPriceList. Desde micro componente Facturacion priceList final:" + priceList);
     	
     	return priceList;
     }
@@ -2108,7 +2334,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 
     	BigDecimal priceList = getPriceList(true);
     	
-    	log.info("getPriceList desde micro componente Facturacion  (NO verifica ocultar descuento - estandar):" + priceList);
+    	debug("getPriceList desde micro componente Facturacion  (NO verifica ocultar descuento - estandar):" + priceList);
     	
     	return priceList;
     }
@@ -2630,6 +2856,8 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 							|| getTaxAmt().compareTo(taxBaseAmt) >= 0))) {
         		cr.setError(true);
 	        	cr.setResult(tax.getRate());
+				debug("validateTaxAmt 1):" + " TaxBaseAmt=" + taxBaseAmt + ", TaxAmt=" + getTaxAmt() + ", TaxRate="
+						+ tax.getRate());
 	        	return cr;
         	}
         	
@@ -2648,6 +2876,14 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 			}
         }
         return cr;
+    }
+
+	public boolean isSkipAllInSave() {
+		return isSkipAllInSave;
+	}
+
+	public void setSkipAllInSave(boolean isSkipAllInSave) {
+		this.isSkipAllInSave = isSkipAllInSave;
     }
 }    // MInvoiceLine
 

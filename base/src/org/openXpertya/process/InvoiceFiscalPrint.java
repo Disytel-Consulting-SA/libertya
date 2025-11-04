@@ -1,14 +1,28 @@
 package org.openXpertya.process;
 
 import java.util.Properties;
+
+import org.openXpertya.model.FiscalDocumentPrintListener;
 import org.openXpertya.model.MInvoice;
+import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MOrderLine;
+import org.openXpertya.model.MProduct;
+import org.openXpertya.print.fiscal.FiscalPrinterEventListener;
 import org.openXpertya.reflection.CallResult;
+import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.HTMLMsg;
 import org.openXpertya.util.HTMLMsg.HTMLList;
 import org.openXpertya.util.HTMLMsg.HTMLListHeader;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
+/**
+ * Proceso que envia el comprobante a imprimir en impresora fiscal 
+ * (se llama desde gestion de comprobantes de ventas)
+ * 
+ * @author dREHER
+ */
 public class InvoiceFiscalPrint extends SvrProcess {
 
 	/** ID de Factura a anular junto con todas sus relaciones creadas */
@@ -25,6 +39,11 @@ public class InvoiceFiscalPrint extends SvrProcess {
 	
 	/** Contexto para uso externo a SvrProcess (instanciación por constructor) */
 	private Properties localCtx = null;
+	
+	// dREHER Feb '25
+	private final boolean FORZAR_RETIROPORALMACEN_JASPER = false;
+	private FiscalDocumentPrintListener fiscalDocumentPrintListener;
+	private FiscalPrinterEventListener fiscalPrinterEventListener;
 	
 	public InvoiceFiscalPrint() {
 		super();
@@ -85,7 +104,7 @@ public class InvoiceFiscalPrint extends SvrProcess {
 			}
 		}else {
 			if(rNo.isError())
-				return "Se produjo un error al validar el ultimo numero impreso!";
+				return "Error al validar el ultimo numero impreso. Verifique si realizo el cierre Z correspondiente.";
 		}
 		
 		// Si ya imprimio el mismo numero de comprobante o uno superior, NO volver a enviar impresion 
@@ -93,13 +112,52 @@ public class InvoiceFiscalPrint extends SvrProcess {
 		if(lastNo >= invoice.getNumeroComprobante() ) {
 			invoice.setFiscalAlreadyPrinted(true);
 			invoice.save();
-			log.info("El fiscal ya imprimio numeros iguales o posteriores al comprobante actual, solo marca el comprobante!");
+			log.info("El fiscal ya imprimio numeros iguales o posteriores al comprobante actual, solo marca el comprobante! #: " + lastNo);
 		}else {		
 			log.info("Ultimo numero impreso menor al comprobante actual, envia impresion fiscal...");
 			printFiscalInvoice(invoice, true);
+			
+			
+			// dREHER Abr 25
+			if(RequiereImpresionSalidaPorDeposito(invoice)) {
+				log.info("Envia impresion de salida por deposito...");
+				printWareHouseDeliveryTicket(invoice, true);
+			}
 		}
 		
 		return getFinalMsg();
+	}
+
+	/**
+	 * 
+	 * @param invoice2
+	 * @return
+	 * @author dREHER verifica si hay algun articulo del pedido que requiera impresion de salida por deposito
+	 */
+	private boolean RequiereImpresionSalidaPorDeposito(MInvoice mInvoice) {
+		boolean isSalidDepo = false;
+		
+		if(!Util.isEmpty(mInvoice.getC_Order_ID(), true)){
+			MOrder order = new MOrder(mInvoice.getCtx(),
+					mInvoice.getC_Order_ID(), mInvoice.get_TrxName());
+			int total_lines = order.getLines().length;
+			
+			boolean found = false;
+			// Itero por todas las líneas del pedido y verifico si existe alguna
+			// imprimible por retiro por depósito
+			for (int i = 0; i < total_lines
+					&& !(found = order.getLines()[i]
+							.isDeliverDocumentPrintable()); i++);
+			if(found){
+				isSalidDepo = true;
+				debug("Agregue foo de retiro por deposito...");
+			}
+			else{
+				debug("Agregue foo - NO tiene retiro por deposito");
+			}	
+		}
+		
+		return isSalidDepo;
 	}
 
 	/**
@@ -126,6 +184,10 @@ public class InvoiceFiscalPrint extends SvrProcess {
 		if(before!=null)
 			if(!before.isFiscalAlreadyPrinted())
 				throw new Exception("Debe gestionar el comprobante anterior!");
+		
+		// dREHER Mayo 25
+		if(invoice.get_Value("ManageFiscalCancelInvoice")!=null && invoice.get_Value("ManageFiscalCancelInvoice").equals("Y"))
+			throw new Exception("Ticket fiscal CANCELADO, debe gestionar CANCELACION de Ticket Fiscal!");
 		
 	}
 
@@ -154,8 +216,34 @@ public class InvoiceFiscalPrint extends SvrProcess {
 						printResult.getMsg()));
 				log.warning("Dio error al imprimir en controlador fiscal..." + Msg.parseTranslation(getCtx(),
 						printResult.getMsg()));
+				
+				if(printResult.getMsg().contains("CANCELO TICKET FISCAL")) {
+					
+					CallResult rNo = getLastNoPrinted(invoice, true);
+					String slastNo = rNo.getMsg();
+					Integer lastNo = -1;
+					if(!rNo.isError() && rNo.getMsg()!=null && !slastNo.isEmpty()) {
+						try {
+							lastNo = Integer.valueOf(slastNo.replace("#LastNoPrinted=", ""));
+						}catch(Exception ex) {
+							log.warning("No pudo leer el ultimo numero fiscal impreso! Error=" + ex.toString());
+						}
+					}else {
+						if(rNo.isError())
 				return;
 			}
+			
+					debug("Detecto que se cancelo ticket fiscal, marcar gestion de cancelacion fiscal!");
+					if(lastNo >= invoice.getNumeroComprobante())
+						DB.executeUpdate("UPDATE C_Invoice SET ManageFiscalCancelInvoice='Y' WHERE C_Invoice_ID=" + invoice.getC_Invoice_ID(), null);
+				}
+				
+				return;
+			}
+			
+			// dREHER si no dio error al imprimir fiscal, debe guardar la marca de impresion fiscal
+			if(!invoice.save())
+				DB.executeUpdate("UPDATE C_Invoice SET FiscalAlreadyPrinted='Y', ManageFiscalCancelInvoice='N' WHERE C_Invoice_ID=" + invoice.getC_Invoice_ID(), null);
 			
 		}catch(Exception ex) {
 			log.warning("Error al imprimir en controlador fiscal: " + ex);
@@ -171,6 +259,61 @@ public class InvoiceFiscalPrint extends SvrProcess {
 		}
 	}	
 	
+	/**
+	 * Imprime el comprobante para retiro de artículos por almacén en caso de estar
+	 * indicada esta opción en la configuración del TPV.
+	 * @author dREHER 'Feb 25
+	 */
+	protected void printWareHouseDeliveryTicket(MInvoice invoice, boolean makeMsg)  throws Exception{
+
+		CallResult printResult = new CallResult();
+
+		// dREHER en este proceso NO intenta generar el CAE ni la impresion fiscal del comprobante Revertido...
+		invoice.skipFiscalProcess = true;
+
+		try {
+			printResult = invoice.doFiscalWarehouseDeliveryPrint(makeMsg);
+			debug("Volvio de impresion de salida por deposito:" + printResult);
+			if(printResult.isError()) {
+				getMsg().setHeaderMsg(Msg.parseTranslation(getCtx(),
+						printResult.getMsg()));
+				log.warning("Dio error al imprimir en controlador fiscal (salida por deposito)..." + Msg.parseTranslation(getCtx(),
+						printResult.getMsg()));
+				return;
+			}
+			
+		}catch(Exception ex) {
+			log.warning("Error al imprimir en controlador fiscal (salida por deposito):  " + ex);
+		}
+
+		// Si debo armar el mensaje, lo armo para esta factura en particular
+		if(makeMsg){
+			// Armo el mensaje para esta factura
+			HTMLList list = createHTMLList(null, "Salida por deposito");
+			getMsg().createAndAddListElement(null, invoice.getDocumentNo(), list);
+			getMsg().addList(list);
+		}
+	}	
+
+
+	// dREHER Feb 25 verifica si hay productos para retirar por deposito
+	private int getWarehouseCheckoutProductsCount(MOrder order) {
+		int tmp = 0;
+		MOrderLine[] lines = order.getLines();
+		for(MOrderLine line: lines){
+			MProduct prod = line.getProduct();
+			if(prod.getCheckoutPlace().equals(MProduct.CHECKOUTPLACE_Warehouse)) {
+				tmp++;
+			}
+		}
+		return tmp;
+	}
+
+	// dREHER Feb'25
+	private void debug(String string) {
+		System.out.println("-->InvoiceFiscalPrint." + string);
+	}
+
 	/**
 	 * Devuelve el ultimo numero impreso en la fiscal para el tipo de factura parámetro
 	 * 
@@ -282,6 +425,38 @@ public class InvoiceFiscalPrint extends SvrProcess {
 			return super.getCtx();
 		}
 	}
+	
+// dREHER 'Feb 25	-------------------------------------------------------------------------------
+	/**
+	 * @return the fiscalDocumentPrintListener
+	 */
+	public FiscalDocumentPrintListener getFiscalDocumentPrintListener() {
+		return fiscalDocumentPrintListener;
+	}
+
+	/**
+	 * @param fiscalDocumentPrintListener the fiscalDocumentPrintListener to set
+	 */
+	public void setFiscalDocumentPrintListener(
+			FiscalDocumentPrintListener fiscalDocumentPrintListener) {
+		this.fiscalDocumentPrintListener = fiscalDocumentPrintListener;
+	}
+
+	/**
+	 * @return the fiscalPrinterEventListener
+	 */
+	public FiscalPrinterEventListener getFiscalPrinterEventListener() {
+		return fiscalPrinterEventListener;
+	}
+
+	/**
+	 * @param fiscalPrinterEventListener the fiscalPrinterEventListener to set
+	 */
+	public void setFiscalPrinterEventListener(
+			FiscalPrinterEventListener fiscalPrinterEventListener) {
+		this.fiscalPrinterEventListener = fiscalPrinterEventListener;
+	}
+// --------------------------------------------------------------------------------------------------
 
 	/**
 	 * Comienza la ejecución del proceso.

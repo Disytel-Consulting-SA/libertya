@@ -1,12 +1,14 @@
 package org.openXpertya.print.fiscal.hasar;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.jcp.xml.dsig.internal.dom.Utils;
 import org.openXpertya.print.fiscal.FiscalClosingResponseDTO;
@@ -23,6 +25,7 @@ import org.openXpertya.print.fiscal.document.Tax;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterIOException;
 import org.openXpertya.print.fiscal.exception.FiscalPrinterStatusError;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 
@@ -66,6 +69,12 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	 */
 	protected static final int CMD_CONSULTAR_SIGUIENTE_BLOQUE_REPORTE_AUDITORIA = 119; // 0x77;
 	
+	/** Delete de líneas de cabecera o cola de impresión 
+	 * dREHER
+	 */
+	protected static final String SET_HEADER_TRAILER_DEL_2G	  = "";
+	
+
 	
 	/**
 	 * Asociación entre los tipos de pago con los esperados por la impresora
@@ -165,11 +174,17 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	public FiscalPacket cmdSetCustomerData(String name, String customerDocNumber, String ivaResponsibility, String docType, String location) {
 		FiscalPacket cmd = createFiscalPacket(CMD_SET_CUSTOMER_DATA);
 		int i = 1;
-		cmd.setText(i++, name, lengthNoLimit, true);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(name), lengthNoLimit, true);
+
 		cmd.setText(i++, formatDocNumber(docType,customerDocNumber), true);
 		cmd.setText(i++, ivaResponsibility, false);
 		cmd.setText(i++, docType, true);
-		cmd.setText(i++, location, lengthNoLimit, true);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(location), lengthNoLimit, true);
+		
 		// Datos Adicionales 1
 		cmd.setText(i++, "", true);
 		// Datos Adicionales 2
@@ -232,17 +247,29 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	protected FiscalPacket cmdPrintLineItem(String description, BigDecimal quantity, BigDecimal price, BigDecimal ivaPercent, boolean substract, BigDecimal internalTaxes, boolean basePrice, Integer display, int descMaxLength) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_LINE_ITEM);
 		int i = 1;
-		cmd.setText(i++, description, lengthNoLimit, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), lengthNoLimit, false);
+		
 		cmd.setQuantity(i++, quantity, false);
 		cmd.setAmount(i++, price, false, true);
 		
 		// TODO Se suma 1 por omisión de la condición de iva. Valor por defecto gravado.
 		cmd.setString(i++, "7");
 		
+		/*
+			"5" → Exento
+
+			"4" → No gravado
+
+			"7" → Gravado común (el más usual)
+		 */
+		
 		if(ivaPercent == null)
 			cmd.setNumber(i++, BigDecimal.ZERO, 2, 2, false);
 		else
-			cmd.setNumber(i++, ivaPercent, 2, 2, false);
+			cmd.setNumber(i++, ivaPercent.setScale(2, RoundingMode.HALF_UP), 2, 2, false);
+		
 		cmd.setBoolean(i++, substract, "m", "M", false);
 		// TODO Tipo de Impuesto interno
 		cmd.setString(i++, "0");
@@ -274,7 +301,10 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	public FiscalPacket cmdLastItemDiscount(String description, BigDecimal amount, boolean substract, boolean baseAmount, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_LAST_ITEM_DISCOUNT);
 		int i = 1;
-		cmd.setText(i++, description, lengthNoLimit, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), lengthNoLimit, false);
+		
 		cmd.setAmount(i++, amount, false, true);
 		cmd.setNumber(i++, display, true);
 		cmd.setBoolean(i++, baseAmount, "x", "T", false);
@@ -301,7 +331,11 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		// RECARGO DE IVA = R
 		operation = amount.compareTo(BigDecimal.ZERO) <= 0?"B":"R";
 		int i = 1;
-		cmd.setText(i++, description, descMaxLength, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), descMaxLength, false);
+		
+		
 		cmd.setNumber(i++, amount.abs(), 9, 2, false);
 		// Condición de iva: Valor por defecto gravado.
 		cmd.setString(i++, "7");
@@ -331,7 +365,10 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 	public FiscalPacket cmdGeneralDiscount(String description, BigDecimal amount, boolean substract, boolean baseAmount, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_GENERAL_DISCOUNT);
 		int i = 1;
-		cmd.setText(i++, description, lengthNoLimit, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), lengthNoLimit, false);
+		
 		cmd.setNumber(i++, amount.abs(), 9, 2, false);
 		cmd.setInt(i++, display == null?0:display);
 		cmd.setBoolean(i++, baseAmount, "B", "T", false);
@@ -370,7 +407,10 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		FiscalPacket cmd = createFiscalPacket(CMD_TOTAL_TENDER);
 		// TODO Agregar toda la info de este comando, Codigo de Forma de Pago, cuotas, nro de cupon, etc.
 		int i = 1;
-		cmd.setText(i++, description, lengthNoLimit, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), lengthNoLimit, false);
+		
 		cmd.setNumber(i++, amount, 9, 2, false);
 		cmd.setBoolean(i++, cancel, "R", "T");
 		cmd.setNumber(i++, display, true);
@@ -391,7 +431,10 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		FiscalPacket cmd = createFiscalPacket(CMD_TOTAL_TENDER);
 		// TODO Agregar toda la info de este comando, Codigo de Forma de Pago, cuotas, nro de cupon, etc.
 		int i = 1;
-		cmd.setText(i++, description, lengthNoLimit, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), lengthNoLimit, false);
+		
 		cmd.setNumber(i++, amount, 9, 2, false);
 		cmd.setBoolean(i++, cancel, "R", "T");
 		cmd.setNumber(i++, display, true);
@@ -427,8 +470,11 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		cmd.setInt(i++, line);
 		// Atributos
 		cmd.setString(i++, "");
+
 		// Descripción
-		cmd.setText(i++, text, 120, false);
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), 120, false);
+		
 		// Estación
 		cmd.setString(i++, "D");
 		// Zona
@@ -484,7 +530,10 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		int i = 1;
 		// Atributos del texto
 		cmd.setText(i++, "", false);
-		cmd.setText(i++, text, lengthNoLimit, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), lengthNoLimit, false);
+		
 		cmd.setInt(i++, display == null?0:display);
 		return cmd;
 	}
@@ -561,6 +610,28 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		return fid;
 	}
 	
+	/*
+	 * En impresoras 2G cambia el comando para limpieza de zonas
+	 * 
+	 */
+	public FiscalPacket cmdDeleteHeaderTrailerGroup_2G(){
+
+		// Comando 158 decimal = 0x9E hexadecimal = ConfigurarZona
+		final int CMD_CONFIGURE_ZONE = 158;
+
+		FiscalPacket cmd = createFiscalPacket(CMD_CONFIGURE_ZONE);
+		int i = 1;
+
+		cmd.setInt(i++, 0);                          // NumeroLinea = 0 => Borrar toda la zona
+		cmd.setText(i++, "", 8, false);              // Atributos vacíos
+		cmd.setText(i++, "", 40, false);             // Descripción vacía
+		cmd.setText(i++, "D", 1, false);             // EstacionPorDefecto
+		cmd.setText(i++, "t", 1, false);             // IdentificadorZona = Zona2Cola
+
+		return cmd;
+
+	}
+	
 	@Override
 	public int getFooterTrailerMaxLength() {
 		return 120;
@@ -585,11 +656,23 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 			throws FiscalPrinterStatusError, FiscalPrinterIOException {
 		String lastNro = "";
 		
+		
+		System.out.println("HasarFiscalPrinter2G.getLastDocumentNoPrinted. DocumentType=" + documentType + " Letra=" + letra);
+		
 		//////////////////////////////////////////////////////////////
 		// Incia la transmisión de información de Estado de impresora
 		// Comando: @StatusRequest
 		// FiscalPacket response = execute(cmdStatusRequest());
 		int codigoComprobante = -1;
+		
+		// dREHER Feb '25
+		if(Util.isEmpty(documentType, true)) {
+			throw new FiscalPrinterIOException("No se pudo leer el tipo de documento a emitir!");
+		}
+		if(Util.isEmpty(letra, true)) {
+			throw new FiscalPrinterIOException("No se pudo leer la letra de documento a emitir!");
+		}
+		
 		if(documentType.equals(Document.DT_INVOICE)) {
 			if(letra.equals(Document.DOC_LETTER_A))
 				codigoComprobante = 1;
@@ -609,7 +692,54 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 				codigoComprobante = 7;
 		}
 		
-		FiscalPacket response = execute(cmdStatusRequestDocument(codigoComprobante));
+		FiscalPacket comando = null;
+		FiscalPacket response = null; 
+		
+		// dREHER Marzo 25, en algunas impresoras este metodo esta devolviendo null en algun momento, reintentamos en esos casos...
+		final int MAX_INTENTOS = 5;
+		int intentos = 0;
+        while (intentos < MAX_INTENTOS) {
+            try {
+                comando = cmdStatusRequestDocument(codigoComprobante);
+                response = execute(comando);
+                break;
+            } catch (NullPointerException ex) {
+                intentos++;
+                System.out.println("Intento #" + intentos + " - Excepción: " + ex.toString());
+                System.out.println("Paquete enviado: " + comando);
+                System.out.println("Response: " + response);
+                System.out.println("Intento: " + intentos);
+                
+                if (intentos >= MAX_INTENTOS) {
+                    throw new FiscalPrinterIOException("Error tras " + MAX_INTENTOS + " intentos: " + ex.toString());
+                }
+
+                // Esperar 1 segundo antes de reintentar
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt(); // Restaurar el estado interrumpido
+                }
+            } catch (Exception ex) {
+                System.out.println("Dio otra excepción al leer último número impreso: " + ex.toString());
+                System.out.println("Paquete enviado: " + comando);
+                System.out.println("Response: " + response);
+                throw new FiscalPrinterIOException(ex.toString());
+            }
+        }
+		
+		
+		/* Codigo original a Marzo 25
+		try {
+			comando = cmdStatusRequestDocument(codigoComprobante);
+			response = execute(comando);
+		}catch(Exception ex) {
+			System.out.println("Dio excepcion al leer ultimo numero impreso:" + ex.toString());
+			System.out.println("Paquete enviado:" + comando);
+			System.out.println("Response: " + response);
+			throw new FiscalPrinterIOException(ex.toString());
+		}
+		*/
 		
 		int index = 7;
 		
@@ -623,8 +753,7 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 		}
 		 */
 		
-		
-		System.out.println("DocumentType=" + documentType + " Letra=" + letra);
+		System.out.println("getLastDocumentNoPrinted. Response: " + response);
 		
 		lastNro = response.getString(index);
 		
@@ -651,7 +780,15 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
             
             if (item.hasDiscount()) {
 				discount = item.getDiscount();
+				
+				// dREHER Jun 25
+				// Si es iva exento el monto del item debe ser mas el descuento, sino descuenta dos veces
+				// debug("Categoria IVA Fiscal Descripcion: " + document.getCustomer().getCategoriaIVAFiscalDescription());
+				// if(document.getCustomer().getCategoriaIVAFiscalDescription().toLowerCase().equalsIgnoreCase("iva exento")) {
+				//	debug("Como es EXENTO, el total del item debe tener el descuento sumado y luego al final realiza el descuento total...");
                 // monto = monto.add(discount.getAbsAmount());
+				// }
+				
 				// dREHER 2024-01-11 NO pasa en todos los casos, por lo tanto NO se puede generalizar este FIX
             }
             
@@ -660,8 +797,8 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
             debug("Descuento: " + item.getDiscount());
             debug("Monto considerando descuento: " + monto);
             
-        
-			execute(cmdPrintLineItem(
+            // dREHER Jun 25 capturar la respuesta al imprimir una linea
+			FiscalPacket response = execute(cmdPrintLineItem(
 				item.getDescription(), 
 				item.getQuantity(), 
 				monto, 
@@ -671,6 +808,15 @@ public class HasarFiscalPrinter2G extends HasarFiscalPrinter {
 				!item.isPriceIncludeIva(), 
 				null)
 			);
+			
+			// TODO: escenario dificil de probar, pero podria ser una solucion AL MENOS para aquellos tickets mal impresos...
+			try {
+				debug("Respuesta de impresion de linea:" + item + " respuesta: " + response);
+				checkResponseOk(response, document.getDocumentNo() + ":" + item.getDescription(), item.getQuantity(), monto);
+			}catch(Exception ex) {	
+				debug("Dio excepcion al validar la impresion de un item del ticket...");
+			    throw new FiscalPrinterIOException("Error al cargar ítem.");
+			}
 			
 			// Se carga el descuento del ítem si es que posee.
 			// Comando: @LastItemDiscount

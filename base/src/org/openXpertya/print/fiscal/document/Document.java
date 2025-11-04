@@ -81,6 +81,19 @@ public abstract class Document implements Serializable{
 	/** Código QR del comprobante */
 	private String QRCode = null;
 	
+	// dREHER
+	private boolean isRecargo = false;
+	
+	// dREHER
+	private String Leyenda_Impuesto = "";
+	private ArrayList<String> impuestosAgrupados = null;
+	
+	// dREHER Ago 25
+	private BigDecimal totalRecargoFormaPago = BigDecimal.ZERO;
+	
+	// dREHER Ago 25
+	private int C_Invoice_ID = 0;
+	
 	public Document() {
 		super();
 		customer = new Customer();
@@ -91,6 +104,9 @@ public abstract class Document implements Serializable{
 		otherTaxes = new ArrayList<Tax>();
 		setClientOrgInfo(new ClientOrgInfo());
 		setTaxes(new ArrayList<Tax>());
+		
+		// dREHER
+		impuestosAgrupados = new ArrayList<String>();
 	}
 	
 	/**
@@ -189,6 +205,15 @@ public abstract class Document implements Serializable{
 		return getGeneralDiscount() != null;
 	}
 
+	// dREHER
+	public boolean isRecargo() {
+		return isRecargo;
+	}
+	public void setRecargo(boolean isR) {
+		isRecargo = isR;
+	}
+	
+	
 	/**
 	 * @return Returns the letter.
 	 */
@@ -461,5 +486,37 @@ public abstract class Document implements Serializable{
 
 	public void setQRCode(String QRCode) {
 		this.QRCode = QRCode;
+	}
+
+	public String getLeyenda_Impuesto() {
+		return Leyenda_Impuesto;
+	}
+
+	public void setLeyenda_Impuesto(String leyenda_Impuesto) {
+		Leyenda_Impuesto = leyenda_Impuesto;
+	}
+
+	public ArrayList<String> getImpuestosAgrupados() {
+		return impuestosAgrupados;
+	}
+
+	public void setImpuestosAgrupados(ArrayList<String> impuestosAgrupados) {
+		this.impuestosAgrupados = impuestosAgrupados;
+	}
+
+	public BigDecimal getTotalRecargoFormaPago() {
+		return totalRecargoFormaPago;
+	}
+
+	public void setTotalRecargoFormaPago(BigDecimal totalRecargoFormaPago) {
+		this.totalRecargoFormaPago = totalRecargoFormaPago;
+	}
+
+	public int getC_Invoice_ID() {
+		return C_Invoice_ID;
+	}
+
+	public void setC_Invoice_ID(int c_Invoice_ID) {
+		C_Invoice_ID = c_Invoice_ID;
 	}
 }
