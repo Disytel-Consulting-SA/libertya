@@ -62,7 +62,8 @@ import org.openXpertya.util.TimeStatsLogger;
 import org.openXpertya.util.TimeUtil;
 import org.openXpertya.util.Util;
 
-//import wsfecred.afip.gob.ar.FECredService.FECred;
+// import wsfecred.afip.gob.ar.FECredService.FECred;
+// dREHER para evitar dependencia de LYEI
 
 /**
  * Descripción de Clase
@@ -210,6 +211,14 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	
 	private boolean ignoreDraftValidation = false;
 	
+	// dREHER Mayo 25
+	private final String NDIASControl = MPreference.GetCustomPreferenceValue("Dias_ControlFCBorrador", getAD_Client_ID());
+	private boolean isYaDraftControl = false;
+	private boolean isYaExtraNumbersControl = false;
+	
+	// dREHER Jun 25
+	private BigDecimal taxBPRate;
+	
 	/**
 	 * Descripción de Método
 	 * 
@@ -261,6 +270,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 
 		return retValue;
 	} // getOfBPartner
+	
 
 	/**
 	 * Lee preferencia para validar miPyme
@@ -838,8 +848,9 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		String docBaseTypeDebit = creditInvoice.isSOTrx() ? "'" + MDocType.DOCBASETYPE_ARInvoice + "'"
 				: "'" + MDocType.DOCBASETYPE_APInvoice + "'";
 		StringBuffer sql = new StringBuffer();
-		sql.append("SELECT c_invoice_id, open " + "FROM (SELECT i.c_invoice_id, "
-				+ "		currencyconvert(invoiceopen(i.c_invoice_id, 0), i.c_currency_id, ?, ?::date, 0, ?, ?) as open"
+		sql.append("SELECT c_invoice_id, open "
+				+ "FROM (SELECT i.c_invoice_id, "
+				+ "		currencyconvert(invoiceopen(i.c_invoice_id, 0), i.c_currency_id, ?, ?::date, ?, ?, ?) as open" // dREHER Jun 25
 				+ "		FROM c_invoice as i "
 				+ "		INNER JOIN c_doctype as dt on dt.c_doctype_id = i.c_doctypetarget_id "
 				+ "		WHERE c_bpartner_id = ? " + "				AND i.paymentrule = '" + PAYMENTRULE_OnCredit + "' "
@@ -861,6 +872,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		int i = 1;
 		ps.setInt(i++, creditInvoice.getC_Currency_ID());
 		ps.setTimestamp(i++, creditInvoice.getDateInvoiced());
+		ps.setInt(i++, creditInvoice.getC_ConversionType_ID()); // dREHER Jun 25
 		ps.setInt(i++, creditInvoice.getAD_Client_ID());
 		ps.setInt(i++, creditInvoice.getAD_Org_ID());
 		ps.setInt(i++, creditInvoice.getC_BPartner_ID());
@@ -2129,8 +2141,27 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			setDocStatus(DocAction.STATUS_Drafted);
 		}
 		
-		// No Partner Info - set Template
-
+		// dREHER Jun - 25
+		if(isSOTrx() && get_Value("IsCancelaMismaMoneda")!= null && Boolean.TRUE.equals(get_Value("IsCancelaMismaMoneda"))) {
+			
+			if(!convertType().equals("B")) {
+				log.saveError("Error", "Para emitir este comprobante en moneda extranjera, el cual se cancelará en la misma moneda, debe utilizar Tipo de Divisa -BNA Vendedor Divisa-" );
+				return false;
+			}
+			
+			
+			int currencyID = getCurrencyID("B");
+			if(currencyID <= 0) {
+				log.saveError("Error", "Para emitir este comprobante en moneda extranjera, el cual se cancelará en la misma moneda, debe existir tipo de cambio para el día anterior a la fecha de factura con Tipo de Divisa -BNA Vendedor Divisa- cargado en el sistema" );
+				return false;
+			}
+			setC_Currency_ID(currencyID);
+			setFechadeTCparaActualizarPrecios(loadFechadeTCparaActualizarPrecios());
+			debug("Seteo la fecha que encontre como valida= " + getFechadeTCparaActualizarPrecios());
+		}
+		
+		
+		
 		// No Partner Info - set Template
 		int C_BPartner_ID = getC_BPartner_ID();
 		if (C_BPartner_ID == 0) {
@@ -2309,8 +2340,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// Disytel: Si no hay conversion, no permitir seleccionar moneda destino
 		MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
 		int priceListCurrency = priceList.getC_Currency_ID();
-		if ((priceListCurrency != getC_Currency_ID() && MCurrency.currencyConvert(new BigDecimal(1), priceListCurrency,
-				getC_Currency_ID(), getDateInvoiced(), getAD_Org_ID(), getCtx()) == null)
+		if ((priceListCurrency != getC_Currency_ID() && MCurrency
+				.currencyConvert(new BigDecimal(1), priceListCurrency,
+						getC_Currency_ID(), this.getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), // dREHER Jun 25
+						getCtx()) == null)
 				|| !validateOrderCurrencyConvert()) {
 			log.saveError("Error", Msg.getMsg(getCtx(), "NoCurrencyConversion"));
 			return false;
@@ -2514,18 +2547,33 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 					// "No es correcta la letra de comprobante, para el cliente");
 					return false;
 				}
+			}else { // dREHER Jun 25
+				if(!isSOTrx()) { 
+					if(!validarLetraComprobante())
+						return false;
+				}
 			}
 
 			// Punto de Venta y Numero de comprobante - Validacion de rango.
 			// Dado que los rangos que se pueden configurar en los metadatos
 			// de la columna no producen error (solo agregando una nota al log),
 			// se hace dicha validación manualmente aquí.
+			if(isSOTrx()) {
 			if (!(getPuntoDeVenta() > 0 && getPuntoDeVenta() < 10000)) {
 				log.saveError("SaveError", Msg.getMsg(getCtx(),
 						"FieldValueOutOfRange",
 						new Object[] { Msg.translate(getCtx(), "PuntoDeVenta"),
 								1, 9999 }));
 				return false;
+			}
+			}else {
+				if (getPuntoDeVenta() > 99999) {
+					log.saveError("SaveError", Msg.getMsg(getCtx(),
+							"FieldValueOutOfRange",
+							new Object[] { Msg.translate(getCtx(), "PuntoDeVenta"),
+									1, 99999 }));
+					return false;
+				}
 			}
 
 			if (!(getNumeroComprobante() > 0 && getNumeroComprobante() < 1000000000)) {
@@ -2679,7 +2727,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		}
 		
 		// Compras
-		if (!isSkipAuthorizationChain()){
+		if (!isSOTrx() && !isSkipAuthorizationChain()){ // dREHER Mayo 25 SOLO PROVEEDORES COMO MARCABA EL COMENTARIO
 			//Se determina la cadena de autorización para la factura de proveedor
 			setM_AuthorizationChain_ID(DB.getSQLValue(get_TrxName(), 
 					"SELECT audt.M_AuthorizationChain_ID FROM M_AuthorizationChainDocumentType audt "
@@ -2687,7 +2735,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 					+ " WHERE audt.C_DocType_ID = ? "
 					+ ((getAD_Org_ID() != 0)? " AND (audt.AD_Org_ID = " + getAD_Org_ID() + " OR audt.AD_Org_ID = 0) " : "" ) 
 					+ " AND au.isActive = 'Y' "
-					+ " ORDER BY audt.AD_Org_ID desc LIMIT 1 ", 
+					+ " ORDER BY audt.AD_Org_ID desc ", 
 					((getC_DocTypeTarget_ID()!=0)?getC_DocTypeTarget_ID():getC_DocType_ID()), 
 					false));
 			// Se verifica si está repetido el comprobante para compras
@@ -2758,7 +2806,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			
 			if(!isSkipIPNoCaeValidation() && !skipFiscalProcess && !skipCAEAAproaboOrErrors()) {
 				
-				log.warning("BeforeSave de Controles de Correlatividad de Numeracion MInvoice en Componente * ...");
+				debug("BeforeSave de Controles de Correlatividad de Numeracion MInvoice en Componente * ...");
 
 				// TODO: verificar si no corresponde para NC's, anulados o revertidos
 				// Se reporto el CDA 2698 con una NC duplicada (una fiscal y la otra no)
@@ -2790,55 +2838,62 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				}
 			}
 			
+			// dREHER Jun 25
+			// Recalcula total de descuento segun lineas (para corregir ley Boca Juniors)
+			if(isTPVInstance)
+				getTotalDocumentDiscountAmtFromLines(true);
+			
 		}
 		//========== </Merge micro facturacion> ==========
 		
-		//Guardado auxiliar de datos para la impresion del documento.
-		
-		// dREHER las columnas y campos existen como tal en la tabla C_Invoice de Cintolo
-		// por lo tanto habilitamos el cargado de los mismos
-		// TODO: averiguar porque se quitaron de la clase modelo
-		if (!isProcessed()) {
-			MBPartner bpartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
-			MBPartnerLocation location = new MBPartnerLocation(getCtx(), getC_BPartner_Location_ID(), get_TrxName());
-			MLocation loc = location.getLocation(false);
-
-			String fullLocation = location.getLocation(true).toString();
-			setNombreCli(bpartner.getName());
-			setInvoice_Adress(fullLocation);
-			setNroIdentificCliente(bpartner.getTaxID());
-			setDireccion(loc.getAddress1());
-			setLocalidad(loc.getCity());
-			setprovincia(loc.getRegion()!=null?loc.getRegion().getName():""); // dREHER Abril 25
-			setCP(loc.getPostal());
-			setCAT_Iva_ID(bpartner.getC_Categoria_Iva_ID());
-		}
-		
-		
-		// Lautaro Laserna: Copiado de impuestos cuando se genera una NC por el total de una factura
-		if(getC_Invoice_Orig_ID() != 0) {
-			MInvoice orig = new MInvoice(Env.getCtx(), getC_Invoice_Orig_ID(), get_TrxName());
-			// Si el neto es el mismo, asumimos que es por el TOTAL del doc original
-			if((getTotalLinesNet().floatValue() == orig.getTotalLinesNet().floatValue())) {
-				try {
-					// Si es por el TOTAL, copio los impuestos
-					copyAllTaxes(orig);
-					
-					// Acomoda los totales por si difieren del doc original
-					setTotalLines(orig.getTotalLines());
-					setGrandTotal(orig.getGrandTotal());
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			} else {
-				// Si es por el PARCIAL, se chekea en PercepcionStandard.java si acepta devolución parcial, y las recalcula.
-			}
-		}
-		
 		return true;
 	} // beforeSave
-	
+		
+	// dREHER Jun 25, si no se calculo hasta aca, hacerlo ahora...
+	public Timestamp getFechadeTCparaActualizarPrecios() {
+		if(super.getFechadeTCparaActualizarPrecios()==null)
+			setFechadeTCparaActualizarPrecios(loadFechadeTCparaActualizarPrecios());
+		
+		return super.getFechadeTCparaActualizarPrecios();
+	}
+
+	// dREHER Jun 25, calcula fecha para tomar en el calculo de precios de otra moneda cuando debe cancelar en la misma moneda
+	public Timestamp loadFechadeTCparaActualizarPrecios() {
+		return new Timestamp(getFechaConversion().getTime());
+	}
+
+	// dREHER Jun 25
+	// Busca clave de tipo de conversion de moneda
+	private String convertType() {
+		String sql = "SELECT ct.Value FROM C_ConversionType ct " +
+				"WHERE ct.C_ConversionType_ID=? AND ct.IsActive='Y'";
+				
+		String ct = DB.getSQLValueString(get_TrxName(), sql, new Object[] {getC_ConversionType_ID()});
+		if(ct==null) ct = "";
+		
+		return ct;
+	}
+
+	// dREHER Jun 25
+	// Busca moneda cuyo tipo de conversion exista con fecha inmediatamente anterior, salvo sab/dom
+	private int getCurrencyID(String string) {
+		int currencyID = -1;
+		
+		java.sql.Date fechaBusqueda = getFechaConversion();
+
+		String sql = "SELECT cr.C_Currency_ID FROM C_Conversion_Rate cr " +
+		"INNER JOIN C_Currency c ON c.C_Currency_ID=cr.C_Currency_ID " +
+		"INNER JOIN C_ConversionType ct ON ct.C_ConversionType_ID=cr.C_ConversionType_ID " +
+		"WHERE ct.Value=? AND ct.IsActive='Y' AND cr.IsActive='Y' " + 
+		"AND '" + fechaBusqueda + "'::DATE BETWEEN cr.ValidFrom::DATE AND cr.ValidTo::DATE ORDER BY ValidFrom DESC LIMIT 1";
+		
+		debug("sql de validacion moneda:" + sql);
+		
+		currencyID = DB.getSQLValueEx(get_TrxName(), sql, new Object[] {string});
+		
+		return currencyID;
+	}
+
 	/**
 	 * Control si debe ser miPyme y en esta factura se eligio otro tipo de comprobante
 	 * @return
@@ -2890,6 +2945,23 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 
 		}
 		
+		
+		/** dREHER para evitar dependencia de LYEI
+		
+		// FECred fc = new FECred();
+		if(!validarAhora) {
+			if("Y".equals(bp.get_Value("IsMiPyme").toString())) {
+
+				fc.setMiPyme(true);
+				fc.setAmount(Amount);
+				fc.setUpdated(new Timestamp(desde.getTime()));
+				fc.setCUIT(identificador);
+
+			}
+		}
+		// ---------------------------------------------------------------------------- fin verificacion de control previo
+		*/
+		
 		Class<?> clazz;
 		Object fcred;
 		try {
@@ -2916,6 +2988,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			return chk;
 		}
 		// ---------------------------------------------------------------------------- fin verificacion de control previo
+
+		
 		
 		try {
 			
@@ -2965,6 +3039,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 					if(bp.get_Value("MiPymeAmount")!=null &&
 							getGrandTotal().compareTo(((BigDecimal)bp.get_Value("MiPymeAmount"))) >= 0) {
 						if(!docType.isMiPyME()) {
+							/*chk.setMsg("Debe seleccionar tipo de documento MiPyme para el CUIT " + cuit + " desde $ " + fc.getAmount() +
+									" De ser necesario Gestione Factura Electronica!", true);
+							debug("doMiPymeControls. El tipo de documento seleccionado NO es miPyme, error!");
+							*/
 							//chk.setMsg("Debe seleccionar tipo de documento MiPyme para el CUIT " + cuit + " desde $ " + fc.getAmount() +
 							BigDecimal amt = null;
 							try {
@@ -3050,6 +3128,19 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	public CallResult doDraftControls() {
 		CallResult cr = new CallResult();
 		
+		// dREHER Mayo 25 Solo controlar si cambian uno de estos datos
+		if(getC_DocTypeTarget_ID() != this.get_ValueOldAsInt("C_DocTypeTarget_ID") || 
+			getPuntoDeVenta() != this.get_ValueOldAsInt("PuntoDeVenta") ||
+			getNumeroComprobante() != this.get_ValueOldAsInt("NumeroComprobante")
+		){
+			isYaDraftControl = false;
+		}
+		
+		// dREHER Mayo 25 Si ya controlo estos datos, no volver a hacerlo
+		if(isYaDraftControl) {
+			return cr;
+		}
+		
 		// dREHER en una anulacion no controlar esto por procesos que crean comprobantes en borrador y luego de este paso lo completan
 		// eg: Cambiar forma de pago en NC
 		if(getDocStatus().equals(MInvoice.ACTION_Void))
@@ -3058,23 +3149,25 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		
 		
 		int tipoDocID = getC_DocTypeTarget_ID();
-		String sDias = MPreference.GetCustomPreferenceValue("Dias_ControlFCBorrador", getAD_Client_ID());
+		String sDias = NDIASControl; // MPreference.GetCustomPreferenceValue("Dias_ControlFCBorrador", getAD_Client_ID());
 		int dias = 365;
 		
 		if(sDias!=null && !sDias.isEmpty())
 			dias = Integer.valueOf(sDias);
 		
-		log.info("Valido numeracion de comprobantes: TipoID=" + tipoDocID + " PtoVenta=" + getPuntoDeVenta() + " Numero=" + getNumeroComprobante());
+		debug("Valido numeracion de comprobantes: TipoID=" + tipoDocID + " PtoVenta=" + getPuntoDeVenta() + " Numero=" + getNumeroComprobante());
 
 		String sql = "SELECT DocumentNo FROM C_Invoice WHERE " +
 				" C_DocTypeTarget_ID=? AND PuntoDeVenta=? AND DateInvoiced >= AddDays(current_date, -?) AND IsSOTrx='Y' " +
-				" AND IsActive='Y' AND DocStatus='DR' AND C_Invoice_ID <> ?";
+				" AND IsActive='Y' AND DocStatus='DR' AND C_Invoice_ID <> ? LIMIT 1";  // dREHER Mayo 25, limitar a 1 registro
 
 		String documentNo = DB.getSQLValueString(get_TrxName(), sql, new Object[]{tipoDocID, getPuntoDeVenta(), dias, getC_Invoice_ID()} );
 
 		if(!Util.isEmpty(documentNo, true)) {
 			cr.setMsg("Existe un documento anterior en Borrador, por favor complete o elimine antes de generar uno nuevo. # " + documentNo, true);
 		}
+		
+		isYaDraftControl = true;
 		
 		return cr;
 	}
@@ -3262,10 +3355,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 
 		MBPartner vCliente = new MBPartner(getCtx(), this.getC_BPartner_ID(),
 				get_TrxName());
-		boolean value = false;
+		boolean ok = false;
 
 		// dREHER, debug TODO: quitar luego...
-		log.finest("MInvoice.validarLetraComprobante = ***** Dio algun error de compatibilidad entre ambas cat de iva compania="
+		debug("ValidarLetraComprobante = ***** Verifica si existe algun error de compatibilidad entre ambas cat de iva compania="
 				+ vCategoriaIva
 				+ "\n"
 				+ "cliente="
@@ -3277,33 +3370,36 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		//
 		if (vCategoriaIva == 0) {
 			// no existen alguno de los datos a validar, devuelvo verdadero
-			log.saveError("SaveError", Msg.translate(Env.getCtx(), "ClientWithoutIVAError"));
-			value = false;
+			log.saveError("SaveError",
+					Msg.translate(Env.getCtx(), "ClientWithoutIVAError"));
+			ok = false;
 		} else if (vCliente.getC_Categoria_Iva_ID() == 0) {
-			log.saveError("SaveError", Msg.translate(Env.getCtx(), "BPartnerWithoutIVAError"));
-			value = false;
+			log.saveError("SaveError",
+					Msg.translate(Env.getCtx(), "BPartnerWithoutIVAError"));
+			ok = false;
 		} else {
 			// todos los parametros de la busqueda existe, busco a ver si es
 			// correcta la clasificacion del iva
-			StringBuffer sql = new StringBuffer(
-					"SELECT * " + "	FROM C_Letra_Acepta_IVA " + "   WHERE categoria_vendor = ? "
-							+ "         AND categoria_customer = ? " + "         AND c_letra_comprobante_Id = ? ");
+			StringBuffer sql = new StringBuffer("SELECT * "
+					+ "	FROM C_Letra_Acepta_IVA "
+					+ "   WHERE categoria_vendor = ? "
+					+ "         AND categoria_customer = ? "
+					+ "         AND c_letra_comprobante_Id = ? " 
+					+ "         AND IsActive='Y'");
 
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
 			try {
 				pstmt = DB.prepareStatement(sql.toString());
-				pstmt.setInt(1, vCategoriaIva);
-				pstmt.setInt(2, vCliente.getC_Categoria_Iva_ID());
-				pstmt.setInt(3, this.getC_Letra_Comprobante_ID());
+				pstmt.setInt(1, isSOTrx()?vCategoriaIva:vCliente.getC_Categoria_Iva_ID());
+				pstmt.setInt(2, isSOTrx()?vCliente.getC_Categoria_Iva_ID():vCategoriaIva);
+				pstmt.setInt(3, getC_Letra_Comprobante_ID());
 				rs = pstmt.executeQuery();
-
-				value = rs.next();
-
-				if (!value) {
+				if(!rs.next())
 					log.saveError("SaveError", Msg.translate(Env.getCtx(),
 							"InvalidLetraComprobanteError"));
-				}
+				else
+					ok = true;
 
 				rs.close();
 				pstmt.close();
@@ -3314,7 +3410,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				rs=null; pstmt=null;
 			}
 		}
-		return value;
+		return ok;
 	}
 	
 	public Integer updateGrandTotal(String trxName) {
@@ -3523,8 +3619,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		Object res = DB.getSQLObject(this.get_TrxName(), sql,
 				whereParams.toArray());
 
-		log.info("sql Validacion comprobante de ventas: " + sql);
-		log.info("Valido la existencia del comprobante de ventas #:" + getDocumentNo() + " - Tipo:" + getC_DocTypeTarget_ID() + " => " + res);
+		debug("sql Validacion comprobante de ventas: " + sql);
+		debug("Valido la existencia del comprobante de ventas #:" + getDocumentNo() + " - Tipo:" + getC_DocTypeTarget_ID() + " => " + res);
 		
 		// true si existe una factura
 		return res != null;
@@ -4854,7 +4950,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			 * dREHER
 			 */
 			
-			log.warning("CompleteIt Controles de Correlatividad de Numeracion MInvoice en Componente * ...");
+			debug("CompleteIt Controles de Correlatividad de Numeracion MInvoice en Componente * ...");
 			
 			MDocType docType = MDocType.get(getCtx(), this.getC_DocTypeTarget_ID());
 			
@@ -5447,7 +5543,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 							l[i].getPriceActual(), getC_Currency_ID(),
 							pl.getC_Currency_ID(),
 							getFechadeTCparaActualizarPrecios(),
-							getAD_Org_ID(), getCtx());
+							getAD_Org_ID(), getC_ConversionType_ID(), getCtx()); // dREHER Jun 25
 					pp.setPriceList(priceAct);
 					pp.setPriceStd(priceAct);
 					pp.save();
@@ -5521,8 +5617,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			 * dREHER
 			 */
 			
-			log.warning("CompleteIt Asegurar que la secuencia ID " + docType.getDocNoSequence_ID() + " sea mayor al ultimo numero utilizado!");
-			log.info("Es una anulacion ?" + this.isVoidProcess() + "NumeroComprobante=" + getNumeroComprobante() + " DocumentNo=" + getDocumentNo());
+			debug("CompleteIt Asegurar que la secuencia ID " + docType.getDocNoSequence_ID() + " sea mayor al ultimo numero utilizado!");
+			debug("Es una anulacion ?" + this.isVoidProcess() + "NumeroComprobante=" + getNumeroComprobante() + " DocumentNo=" + getDocumentNo());
 			// Validaciones proximo numero secuencia / comprobante impreso
 			CallResult crCheckSeq = doSequenceControls(docType.getDocNoSequence_ID());
 			if(crCheckSeq.isError()) {
@@ -5622,7 +5718,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		if( seqNo <= maxNum || (seqNo-maxNum) > 1) {
 			
 			seq.setCurrentNext(new BigDecimal(maxNum).add(BigDecimal.ONE).add(pv));  //999
-			log.info("Proxima secuencia: " + (new BigDecimal(maxNum).add(BigDecimal.ONE).add(pv)));
+			debug("Proxima secuencia: " + (new BigDecimal(maxNum).add(BigDecimal.ONE).add(pv)));
 			if(!seq.save()) {
 				cr.setMsg("La secuencia quedo desactualizada, actualizar manualmente!", true);
 			}else
@@ -6049,7 +6145,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				null);
 		MOrgInfo counterOrgInfo = MOrgInfo.get(getCtx(), counterAD_Org_ID);
 
-		log.info("Counter BP=" + counterBP.getName());
+		debug("Counter BP=" + counterBP.getName());
 
 		// Document Type
 
@@ -6411,7 +6507,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 							if(iscon.equals("Y") || iscon.equals(true))
 								contingencia = true;
 
-						log.info("Creando reversion desde Contingencia=" + contingencia);
+						debug("Creando reversion desde Contingencia=" + contingencia);
 						if(contingencia) {
 							int tmp = 0;
 							Object ptoVtaCont = pos.get_Value("PtoVtaContingencia");
@@ -6423,7 +6519,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 							if(tmp > 0)
 								ptoVenta = tmp;
 							
-							log.info("PtoVtaCont=" + ptoVtaCont);
+							debug("PtoVtaCont=" + ptoVtaCont);
 						}else {
 							/**
 							 * Si hay una caja diaria activa y estoy en una reversion, tomar el punto de venta desde aqui...
@@ -6447,7 +6543,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				// dREHER finalmente sino pudo obtener el documento reversal, setear variable para que tome la reversion
 				// del DocType que se esta revirtiendo
 				if(reversalDocType==null) {
-					log.warning("No pudo determinar documento de reversion, tomarlo desde la configuracion del documento a revertir!");
+					debug("No pudo determinar documento de reversion, tomarlo desde la configuracion del documento a revertir!");
 					isVerificarReversalType = true;
 				}
 				
@@ -6965,7 +7061,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		 */
 		
 		
-		log.info("MInvoice.doFiscalProcess. invoice=" + invoice.getDocumentNo() + " NroComp=" + nroComp);
+		debug("MInvoice.doFiscalProcess. invoice=" + invoice.getDocumentNo() + " NroComp=" + nroComp);
 		
 		try {
 
@@ -6977,14 +7073,14 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			*/	
 			
 			if (localeARActive && invoice.isSOTrx() && invoice.isElectronicInvoice()) {
-				log.info("Debe generar CAE...");
+				debug("Debe generar CAE...");
 				CallResult callResult = invoice.doCAEGeneration(true, nroComp);
 				if (callResult.isError()) {
 					m_processMsg = "El comprobante emitido no obtuvo el código de autorización correspondiente. Por favor gestionar manualmente. " +
 									callResult.getMsg();
 				}
 			}else
-				log.info("No corresponde generacion de CAE");
+				debug("No corresponde generacion de CAE");
 		}catch(Exception ex) {
 			log.log(Level.SEVERE, "El comprobante emitido no obtuvo el código de autorización correspondiente. Por favor gestionar manualmente");
 			m_processMsg = "El comprobante emitido no obtuvo el código de autorización correspondiente. Por favor gestionar manualmente";
@@ -7007,14 +7103,14 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			 * Ej: se anula FC electronica, en un punto de venta fiscal
 			 */
 			if (localeARActive && invoice.isSOTrx() && invoice.requireFiscalPrint()) {
-				log.info("Debe generar Impresion Fiscal...");
+				debug("Debe generar Impresion Fiscal...");
 				CallResult callResult = invoice.doFiscalPrint();
 				if (callResult.isError()) {
 					m_processMsg = "El comprobante emitido no pudo imprimirse correctamente. Por favor gestionar manualmente. " +  
 							callResult.getMsg();
 				}
 			}else
-				log.info("No corresponde impresion fiscal");
+				debug("No corresponde impresion fiscal");
 		}catch(Exception ex) {
 			log.log(Level.SEVERE, "El comprobante emitido no pudo imprimirse correctamente. Por favor gestionar manualmente");
 			m_processMsg = "El comprobante emitido no pudo imprimirse correctamente. Por favor gestionar manualmente";
@@ -7155,7 +7251,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	private void setDocumentNo() {
 
 		MDocType docType = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
-		log.info("MInvoice.getDocumentNo() DocType=" + docType.getName() + "  PosNumber=" + docType.getPosNumber());
+		debug("MInvoice.getDocumentNo() DocType=" + docType.getName() + "  PosNumber=" + docType.getPosNumber());
 		int posNumber = docType.getPosNumber();
 		String letra = docType.getLetter();
 		int nroComprobante = CalloutInvoiceExt.getNextNroComprobante(docType
@@ -7558,13 +7654,29 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 						.setMsg(!Util.isEmpty(printResult.getMsg()) ? printResult
 								.getMsg() : Msg.getMsg(getCtx(),
 								"PrintFiscalDocumentError"));
+				
+				// dREHER
+				// si volvio con algun tipo de error, asegurar que NO tenga marca de alreadyPrinted
+				setFiscalAlreadyPrinted(false);
+				
+				// dREHER Mayo 25
+				// Si detecto que el mensaje de error contiene CANCELACION de ticket, debo marcar que se debe realizar este tipo de gestion!
+				debug("Ultimo mensaje de error (obtenido desde MInvoice): " + printResult.getMsg());
+				if(printResult.getMsg().contains("CANCELO TICKET FISCAL")) {
+					this.set_Value("ManageFiscalCancelInvoice", "Y");
+					
+					// Si el ticket se cancelo DEBE quedar marcado como impreso fiscal, ya que el numero es utilizado por la impresora
+					setFiscalAlreadyPrinted(true);
+					debug("Seteo marca para asegurar que gestionen ticket fiscal cancelado...");
+				}
+				
 			}else {
 				
 				// dREHER
 				// si volvio de imprimir sin problemas, guardar la marca de impresion...
 				// TODO: verificar que no quede ningun problema sin capturar
 				if(!isFiscalAlreadyPrinted()) {
-					log.warning("Volvio de impresion fiscal sin problemas, pero sin la marca de impresionfiscal, se fuerza...");
+					debug("Volvio de impresion fiscal sin problemas, pero sin la marca de impresion fiscal, se fuerza...");
 					setFiscalAlreadyPrinted(true);
 				}
 				
@@ -7582,6 +7694,58 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			// }
 
 			TimeStatsLogger.endTask(MeasurableTask.PRINT_FISCAL_INVOICE);
+		}else
+			debug("No requiere impresion fiscal!");
+		
+		return printResult;
+	}
+	
+	/**
+	 * Realiza la emisión fiscal de la entrega por deposito mediante el controlador fiscal
+	 * configurado en su tipo de documento
+	 * 
+	 * @param askAllowed
+	 *            flag que determina si está permitido preguntar en caso de
+	 *            error
+	 * @return <code>null</code> si la impresión se realizó correctamente o el
+	 *         mensaje de error si hubo algún error.
+	 * @author dREHER
+	 */
+	public CallResult doFiscalWarehouseDeliveryPrint(boolean askAllowed) {
+		CallResult printResult = new CallResult();
+		// ////////////////////////////////////////////////////////////////
+		// LOCALIZACIÓN ARGENTINA
+		// Para la localización Argentina, si el tipo de documento está
+		// configurado para imprimirse mediante un controlador fiscal,
+		// se manda a emitir el comprobante a la impresora.
+		if (requireFiscalPrint()) {
+			
+			debug("Requiere impresion fiscal de entrega por deposito, comenzar proceso...");
+			
+			// Aquí finaliza el guardado de documentos para TPV dado que a
+			// partir de aquí se emite el comprobante mediante el controlador
+			// fiscal. Si esta factura no está siendo completada por el TPV la
+			// siguiente sentencia no produce ningún efecto.
+			TimeStatsLogger.endTask(MeasurableTask.POS_SAVE_DOCUMENTS);
+
+			TimeStatsLogger.beginTask(MeasurableTask.PRINT_FISCAL_WAREHOUSE_DELIVERY);
+
+			// Impresor de comprobantes.
+			printResult = FiscalPrintManager.printDocumentWarehouseDelivery(getCtx(), this,
+					true, askAllowed, get_TrxName());
+			if (printResult.isError()) {
+				printResult
+						.setMsg(!Util.isEmpty(printResult.getMsg()) ? printResult
+								.getMsg() : Msg.getMsg(getCtx(),
+								"PrintFiscalDocumentError"));
+				
+			}else {
+				
+				debug("Volvio con error de la impresion fiscal de salida por deposito");
+			}
+			
+			TimeStatsLogger.endTask(MeasurableTask.PRINT_FISCAL_WAREHOUSE_DELIVERY);
+			
 		}else
 			debug("No requiere impresion fiscal!");
 		
@@ -7877,32 +8041,60 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		boolean valid = true;
 		if (getC_Order_ID() > 0) {
 			int orderCurrencyID = DB.getSQLValue(get_TrxName(),
-					"SELECT C_Currency_ID FROM C_Order WHERE C_Order_ID = ?", getC_Order_ID());
-			valid = orderCurrencyID == getC_Currency_ID() || MCurrency.currencyConvert(new BigDecimal(1),
-					orderCurrencyID, getC_Currency_ID(), getDateInvoiced(), getAD_Org_ID(), getCtx()) != null;
+					"SELECT C_Currency_ID FROM C_Order WHERE C_Order_ID = ?",
+					getC_Order_ID());
+			valid = orderCurrencyID == getC_Currency_ID()
+					|| MCurrency.currencyConvert(new BigDecimal(1),
+							orderCurrencyID, getC_Currency_ID(),
+							getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), getCtx()) != null; // dREHER Jun 25
 		}
+		
 		return valid;
 	}
 
 	private boolean validateInvoiceCurrencyConvert() {
-		int currecy_Client = Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID");
-		
-		// dREHER Solo validar en caso de que la moneda de la factura difiera a la de la compañia
-		if (!isSOTrx() && getFCProvTasaCambio() && getC_Currency_ID() != currecy_Client) {
-			
-			debug("getC_Currency_ID(): " + getC_Currency_ID() + " currecy_Client: " + currecy_Client);
-			
-			if(get_Value("Cintolo_Exchange_Rate")==null ||
-				((BigDecimal)get_Value("Cintolo_Exchange_Rate")).compareTo(Env.ZERO)==0){
-					return false;
-				}
-		}else {
-			if (getC_Currency_ID() != currecy_Client) {
-				return (MCurrency.currencyConvert(new BigDecimal(1), currecy_Client, getC_Currency_ID(), getDateAcct(),
-						getAD_Org_ID(), getCtx()) != null);
-			}
+		int currecy_Client = Env
+				.getContextAsInt(Env.getCtx(), "$C_Currency_ID");
+		if (getC_Currency_ID() != currecy_Client) {
+			return (MCurrency.currencyConvert(new BigDecimal(1),
+					currecy_Client, getC_Currency_ID(), getFechaConversion(),
+					getAD_Org_ID(), getC_ConversionType_ID(), getCtx()) != null); // dREHER Jun 25
 		}
 		return true;
+	}
+		
+	/*
+	 * Si se cancela en la misma moneda (se factura en otra moneda) 
+	 * debe validar contra el dia anterior, no contra hoy
+	 * @author dREHER
+	 */
+	public java.sql.Date getFechaConversion() {
+		Timestamp fecha = getDateAcct();
+		
+		// Calcular la fecha base: un día antes de la fecha de factura
+	    Calendar cal = Calendar.getInstance();
+	    cal.setTimeInMillis(fecha.getTime());
+		
+		int currecy_Client = Env
+				.getContextAsInt(Env.getCtx(), "$C_Currency_ID");
+		if (getC_Currency_ID() == currecy_Client || (get_Value("IsCancelaMismaMoneda")==null || Boolean.FALSE.equals(get_Value("IsCancelaMismaMoneda")))) {
+			return new java.sql.Date(cal.getTimeInMillis());
+		}
+
+		// dia anterior
+	    cal.add(Calendar.DATE, -1);
+
+	    // Si es sábado, retrocede 1 día más (viernes); si es domingo, retrocede 2 días (viernes)
+	    int dia = cal.get(Calendar.DAY_OF_WEEK);
+	    if (dia == Calendar.SATURDAY) {
+	        cal.add(Calendar.DATE, -1);
+	    } else if (dia == Calendar.SUNDAY) {
+	        cal.add(Calendar.DATE, -2);
+	    }
+
+	    java.sql.Date fechaBusqueda = new java.sql.Date(cal.getTimeInMillis());
+	    
+		return fechaBusqueda;
 	}
 
 	/**
@@ -8894,7 +9086,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// === Lógica adicional para evitar doble notificación a AFIP. ===
 		// Si tiene CAE asignado, no debe generarlo nuevamente
 		
-		log.info("MInvoice.doCAEGeneration. requiere generacion CAE=" + requireCAEGeneration() +
+		debug("MInvoice.doCAEGeneration. requiere generacion CAE=" + requireCAEGeneration() +
 				" - cae=" + getcae() +
 				" - getcaecbte=" + getcaecbte() +
 				" - numero comprobante=" + getNumeroComprobante());
@@ -9375,7 +9567,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			
 			String sql = "SELECT C_Invoice_ID FROM C_Invoice WHERE " +
 					" C_DocTypeTarget_ID=? AND PuntoDeVenta=? AND NumeroComprobante=? AND IsSOTrx=" + (isSoTrx?"'Y'":"'N'") +
-					" AND IsActive='Y' ORDER BY Created DESC ";
+					" AND IsActive='Y' ORDER BY Created DESC LIMIT 1";
 			
 			// TODO: cambiar nivel de log -> finest
 			
@@ -9470,6 +9662,108 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	/**
 	 * Fin metodos de compatibilidad con campos especiales (Custom Cintolo) dREHER
 	 */
+	
+	/**
+	 * Es categoria de IVA que corresponde descontarla del precio final, ej: EXENTO LEY 16774
+	 * dREHER Jun 25
+	 */
+	public boolean isCategoriaSinImpuestos() {
+		int C_BPartner_ID = getC_BPartner_ID();
+		
+		if(C_BPartner_ID <= 0) {
+			C_BPartner_ID = DB.getSQLValue(get_TrxName(), "SELECT C_BPartner_ID " +
+											"FROM C_Invoice " +
+											"WHERE C_Invoice_ID=?", getC_Invoice_ID());
+		}
+		if(C_BPartner_ID <= 0) {
+			return false;
+		}
+		
+		MBPartner bp = new MBPartner(Env.getCtx(), C_BPartner_ID, null);
+		int catIVA = bp.getC_Categoria_Iva_ID();
+		MCategoriaIva ci = new MCategoriaIva(Env.getCtx(), catIVA, null);
+		if(!Util.isEmpty(ci.getC_Tax_ID(), true)) {
+			
+			MTax tax = new MTax(Env.getCtx(), ci.getC_Tax_ID(), null);
+			setBPTaxRate(tax.getRate());
+			debug("MInvoice.isCategoriaBPSinImpuestos. Corresponde Descontar Impuesto: SI");
+			return true;
+			
+		}
+
+		debug("MInvoice.isCategoriaBPSinImpuestos. Corresponde Descontar Impuesto: NO");
+		return false;
+		
+	}
+	
+	public BigDecimal getTaxFromBP() {
+		int C_BPartner_ID = getC_BPartner_ID();
+		
+		if(C_BPartner_ID <= 0) {
+			C_BPartner_ID = DB.getSQLValue(get_TrxName(), "SELECT C_BPartner_ID " +
+											"FROM C_Invoice " +
+											"WHERE C_Invoice_ID=?", getC_Invoice_ID());
+		}
+		if(C_BPartner_ID <= 0) {
+			return null;
+		}
+		
+		MBPartner bp = new MBPartner(Env.getCtx(), C_BPartner_ID, null);
+		int catIVA = bp.getC_Categoria_Iva_ID();
+		MCategoriaIva ci = new MCategoriaIva(Env.getCtx(), catIVA, null);
+		if(!Util.isEmpty(ci.getC_Tax_ID(), true)) {
+			
+			MTax tax = new MTax(Env.getCtx(), ci.getC_Tax_ID(), null);
+			setBPTaxRate(tax.getRate());
+			debug("MInvoice.isCategoriaBPSinImpuestos. Corresponde Descontar Impuesto: SI");
+			return tax.getRate();
+			
+		}
+
+		debug("MInvoice.isCategoriaBPSinImpuestos. Corresponde Descontar Impuesto: NO");
+		return null;
+		
+	}
+	
+	// dREHER Jun 25
+	private void setBPTaxRate(BigDecimal rate) {
+		taxBPRate = rate;
+	}
+	private BigDecimal getBPRate() {
+		return taxBPRate;
+	}
+	
+	/**
+	 * Calcular la tasa desde el articulo, si no tiene tasa, tomar la del cliente
+	 * dREHER
+	 */
+	public BigDecimal getTaxRateFromProduct() {
+		BigDecimal rate = null;
+		String sql = "SELECT t.rate " +
+						"FROM c_invoiceline il " +
+						"INNER JOIN m_product mp ON mp.m_product_id=il.m_product_id " +
+						"INNER JOIN c_taxcategory ct ON ct.c_taxcategory_id=mp.c_taxcategory_id " +
+						"INNER JOIN c_tax t ON t.c_taxcategory_id=ct.c_taxcategory_id AND t.isactive='Y' " +
+						"WHERE il.c_invoice_id=? " +
+						"ORDER BY t.isDefault DESC";
+		rate = DB.getSQLValueBD(get_TrxName(), sql, getC_Invoice_ID());
+		debug("Invoice ID=" + getC_Invoice_ID() + " - taxRate aplicado=" + rate);
+		return rate;
+	}
+	
+	public BigDecimal getTaxForDiscount() {
+		BigDecimal taxD = getTaxRateFromProduct();
+		if(taxD==null)
+			taxD = getTaxFromBP();
+		
+		if(taxD != null)
+			taxD = taxD.divide(Env.ONEHUNDRED, BigDecimal.ROUND_HALF_DOWN);
+		
+		debug("getTaxForDiscount= " + taxD);
+		
+		return taxD;
+		
+	}
 
 } // MInvoice
 

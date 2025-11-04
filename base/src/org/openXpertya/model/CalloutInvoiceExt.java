@@ -193,6 +193,27 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return nro;
 	}
 	
+	// dREHER Jun 25
+	public static String CancelaMismaMoneda(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		
+		if(mField.isChanged()) {
+			int ctID = getConversionType(Boolean.TRUE.equals(mField.getValue())?"B":"S");
+			if(ctID > 0)
+				mTab.setValue("C_ConversionType_ID", ctID);
+		}
+		
+		return "";
+	}
+	
+	
+	// dREHER Jun 25
+	private static int getConversionType(String tipo) {
+		String sql = "SELECT C_ConversionType_ID "
+					+ "FROM c_conversiontype cc "
+					+ "WHERE Value=? AND IsActive='Y'";
+		return DB.getSQLValue(null, sql, tipo);
+	}
+
 	private String docTypeStd( Properties ctx,int WindowNo,MTab mTab,MField mField,Object value ) {
         Integer C_DocType_ID = ( Integer )value;
         

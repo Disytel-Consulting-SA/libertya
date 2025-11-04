@@ -204,6 +204,10 @@ public class MCurrency extends X_C_Currency {
     
     public static BigDecimal currencyConvert(BigDecimal amount, int currencyFrom, int currencyTo, Date date, int adOrg, Properties ctx )
     {
+    	
+    	return currencyConvert(amount, currencyFrom, currencyTo, date, adOrg, -1, ctx );
+    	
+    	/*
     	// Si es la misma moneda entonces ni siquiera abro una conexión
     	if(currencyFrom == currencyTo){
     		return amount;
@@ -215,6 +219,61 @@ public class MCurrency extends X_C_Currency {
     	try
     	{
     		StringBuffer sql = new StringBuffer("SELECT currencyconvert (?, ?, ?, ? ::timestamp, null, ?, ");
+    		if (adOrg > 0)
+    			sql.append( "? )");
+    		else
+    			sql.append( "null )");
+
+    		pstmt = DB.prepareStatement(sql.toString());
+    		pstmt.setBigDecimal(1, amount);
+    		pstmt.setInt(2, currencyFrom);
+    		pstmt.setInt(3, currencyTo);
+    		//pstmt.setDate(4, new  java.sql.Date(date.getTime()) );
+    		// currencyconvert requiere un timestamp como parametro. En ciertos casos 
+    		// estaba funcionando mal con el Date. 
+    		pstmt.setTimestamp(4, new Timestamp(date.getTime()) ); 
+    		pstmt.setInt(5, Env.getAD_Client_ID(ctx) );
+    		
+    		if (adOrg > 0)
+    			pstmt.setInt(6, adOrg );
+    		
+    		rs = pstmt.executeQuery();
+    		if (rs.next())
+    			result = rs.getBigDecimal(1);
+    	}
+    	catch (Exception e ) {
+    		e.printStackTrace();
+    	} finally {
+    		try {
+				if(rs != null)rs.close();
+				if(pstmt != null)pstmt.close();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+    	}
+    	
+		return result;
+		
+		*/
+    }    
+
+    // dREHER Jun 25
+    // sobre cargo para que tome el tipo de conversion
+    public static BigDecimal currencyConvert(BigDecimal amount, int currencyFrom, int currencyTo, Date date, int adOrg, int currencyConvertType, Properties ctx )
+    {
+    	// Si es la misma moneda entonces ni siquiera abro una conexión
+    	if(currencyFrom == currencyTo){
+    		return amount;
+    	}
+    	
+    	BigDecimal result = null;
+    	PreparedStatement pstmt = null;
+    	ResultSet rs = null;
+    	try
+    	{
+    		StringBuffer sql = new StringBuffer("SELECT currencyconvert (?, ?, ?, ? ::timestamp, " + 
+    									(currencyConvertType<=0?"null": String.valueOf(currencyConvertType)) + 
+    									", ?, ");
     		if (adOrg > 0)
     			sql.append( "? )");
     		else

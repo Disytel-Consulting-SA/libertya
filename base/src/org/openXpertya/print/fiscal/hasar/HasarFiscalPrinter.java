@@ -1,7 +1,14 @@
 package org.openXpertya.print.fiscal.hasar;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +112,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	/** ReturnRecharge: Operación Descuento / Recargo */
 	protected static final String DISCOUNT_RECHARGE = "B";
 	
+	/* comando para limpiar una zona en Hasar 2G dREHER */
+	private static final String SET_HEADER_TRAILER_DEL_2G = "";
+	
 	/** Conjunto de caracteres para realizar la conversión a string de los paquetes fiscales */
 	private String encoding = "ISO8859_1";	// ISO 8859-1, Latin alphabet No. 1.
 	/** Año base para validación de fechas */
@@ -139,6 +149,24 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	/** Mapeo entre los tipos de documentos de las clases de documentos y 
 	 * los valores esperados por las impresoras de esta marca. */
 	private Map<String, String> documentTypes;
+	
+	/** 
+	 * Para saber si la impresion termino ok 
+	 * dREHER 
+	 * */
+	public boolean isOkPrinted = true;
+	
+	/**
+	 * Permite obtener el subtotal de un ticket antes de cerrarlo Hasar 2G
+	 * dREHER Abril 25
+	 */
+	
+	protected static final int CMD_CONSULTAR_SUBTOTAL = 152; // 0x98
+	
+	/** Comando para obtener ConsultarAcumuladosComprobante Hasar 2G
+	 * dREHER 
+	 */
+	protected static final int CMD_CONSULTAR_ACUMULADOS_COMPROBANTE = 0x8C; 
 	
 
 	public HasarFiscalPrinter() {
@@ -230,7 +258,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdGeneralDiscount(String description, BigDecimal amount, boolean substract, boolean baseAmount, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_GENERAL_DISCOUNT);
 		int i = 1;
-		cmd.setText(i++, description, 50, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), 50, false);
+		
 		cmd.setNumber(i++, amount, 9, 2, false);
 		cmd.setBoolean(i++, substract, "m", "M", false);
 		cmd.setInt(i++, display == null?0:display);
@@ -282,7 +313,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdLastItemDiscount(String description, BigDecimal amount, boolean substract, boolean baseAmount, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_LAST_ITEM_DISCOUNT);
 		int i = 1;
-		cmd.setText(i++, description, 50, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), 50, false);
+		
 		cmd.setAmount(i++, amount, false, true);
 		cmd.setBoolean(i++, substract, "m", "M", false);
 		cmd.setNumber(i++, display, true);
@@ -333,7 +367,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		int i = 1;
 		cmd.setDate(i++, date);
 		cmd.setText(i++, docNumber, 20, false);
-		cmd.setText(i++, description, 60, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), 60, false);
+		
 		cmd.setNumber(i++, debitAmount, 9, 2, false);
 		cmd.setNumber(i++, creditAmount, 9, 2, false);
 		cmd.setNumber(i++, display, true);
@@ -343,7 +380,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdPrintEmbarkItem(String description, BigDecimal quantity, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_EMBARK_ITEM);
 		int i = 1;
-		cmd.setText(i++, description, 108, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), 108, false);
+		
 		cmd.setQuantity(i++, quantity, false);
 		cmd.setNumber(i++, display, true);
 		return cmd;
@@ -352,7 +392,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdPrintFiscalText(String text, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_FISCAL_TEXT);
 		int i = 1;
-		cmd.setText(i++, text, 50, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), 50, false);
 		cmd.setNumber(i++, display, true);
 		return cmd;
 	}
@@ -367,7 +409,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	protected FiscalPacket cmdPrintLineItem(String description, BigDecimal quantity, BigDecimal price, BigDecimal ivaPercent, boolean substract, BigDecimal internalTaxes, boolean basePrice, Integer display, int descMaxLength) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_LINE_ITEM);
 		int i = 1;
-		cmd.setText(i++, description, descMaxLength, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), descMaxLength, false);
+		
 		cmd.setQuantity(i++, quantity, false);
 		cmd.setAmount(i++, price, false, true);
 		if(ivaPercent == null)
@@ -384,7 +429,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdPrintNonFiscalText(String text, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_NON_FISCAL_TEXT);
 		int i = 1;
-		cmd.setText(i++, text, 120, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), 120, false);
+		
 		cmd.setNumber(i++, display, true);
 		return cmd;
 	}
@@ -392,7 +440,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdPrintQuotationItem(String description, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_PRINT_QUOTATION_ITEM);
 		int i = 1;
-		cmd.setText(i++, description, 120, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), 120, false);
+		
 		cmd.setNumber(i++, display, true);
 		return cmd;
 	}
@@ -423,11 +474,16 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdSetCustomerData(String name, String customerDocNumber, String ivaResponsibility, String docType, String location) {
 		FiscalPacket cmd = createFiscalPacket(CMD_SET_CUSTOMER_DATA);
 		int i = 1;
-		cmd.setText(i++, name, 50, true);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(name), 50, true);
+		
 		cmd.setText(i++, formatDocNumber(docType,customerDocNumber), true);
 		cmd.setText(i++, ivaResponsibility, false);
 		cmd.setText(i++, docType, true);
-		cmd.setText(i++, location, 50, true);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(location), 50, true);
 		return cmd;
 	}
 
@@ -441,7 +497,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		FiscalPacket cmd = createFiscalPacket(CMD_SET_EMBARK_NUMBER);
 		int i = 1;
 		cmd.setNumber(i++, line, false);
-		cmd.setText(i++, text, 20, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), 20, false);
 		return cmd;
 	}
 
@@ -449,7 +507,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		FiscalPacket cmd = createFiscalPacket(CMD_SET_FANTASY_NAME);
 		int i = 1;
 		cmd.setNumber(i++, line, false);
-		cmd.setText(i++, text, 50, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), 50, false);
 		return cmd;
 	}
 
@@ -457,7 +517,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		FiscalPacket cmd = createFiscalPacket(CMD_SET_HEADER_TRAILER);
 		int i = 1;
 		cmd.setNumber(i++, line, false);
-		cmd.setText(i++, text, 120, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(text), 120, false);
 		return cmd;
 	}
 
@@ -490,7 +552,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public FiscalPacket cmdTotalTender(String description, BigDecimal amount, boolean cancel, Integer display) {
 		FiscalPacket cmd = createFiscalPacket(CMD_TOTAL_TENDER);
 		int i = 1;
-		cmd.setText(i++, description, 80, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), 80, false);
+		
 		cmd.setNumber(i++, amount, 9, 2, false);
 		cmd.setBoolean(i++, cancel, "C", "T");
 		cmd.setNumber(i++, display, true);
@@ -517,7 +582,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			String operation, int descMaxLength) {
 		FiscalPacket cmd = createFiscalPacket(CMD_RETURN_RECHARGE);
 		int i = 1;
-		cmd.setText(i++, description, descMaxLength, false);
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(description), descMaxLength, false);
+		
 		cmd.setNumber(i++, amount, 9, 2, false);
 		if(ivaPercent == null){
 			ivaPercent = BigDecimal.ZERO;
@@ -568,6 +636,64 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		
 		// Se indica al manejador de eventos que la impresión ha finalizado.
 		fireOpenDrawerEnded();
+	}
+
+	/**
+	 * Imprime la leyenda de impuestos
+	 * @param leyenda
+	 * @return comando Hasar
+	 * @author dREHER
+	 */
+	public FiscalPacket cmdLeyendaImpuestos(String leyenda) {
+		FiscalPacket cmd = createFiscalPacket();
+		int i = 1;
+		
+		// dREHER evitar este caracter ya que representa la cancelacion del ticket en curso
+		cmd.setText(i++, sanitizeForFiscalPrinter(leyenda), false);
+		return cmd;
+	}
+	
+	/**
+	 * Permite consultar los totales acumulados en un documento fiscal
+	 *  
+	 * @param docType
+	 * @param nroComprobante
+	 * @return paquete de info recibida desde el controlador fiscal
+	 * 
+	 * dREHER
+	 * @throws FiscalPrinterIOException 
+	 * @throws FiscalPrinterStatusError 
+	 */
+	public BigDecimal getTotal(String docType, Integer nroComprobante) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		BigDecimal total = null;
+		
+		FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_ACUMULADOS_COMPROBANTE);
+		int i = 1;
+		cmd.setText(i++, docType, false);
+		cmd.setInt(i++, nroComprobante);
+		
+		FiscalPacket response = execute(cmd);
+		if(response!=null)
+			total = response.getBigDecimal(6); // El total suele venir en la posicion 2
+		
+		return total;
+	}
+
+	public BigDecimal getSubTotal() throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		final int CMD_CONSULTAR_TOTALES = 43; // Consultar subtotales
+
+	    FiscalPacket cmd = createFiscalPacket(CMD_CONSULTAR_TOTALES);
+	    cmd.setText(1, "P", 1, false);   // Subtotal parcial
+	    cmd.setText(2, "", 1, false);    // Segundo parámetro: vacío
+	    
+	    FiscalPacket response = execute(cmd);
+
+	    if (response != null && response.getSize() >= 6) {
+	        // El importe viene en el campo 5 o 6, depende de la estructura
+	        return response.getBigDecimal(5);  // Confirmá si es campo 5 o 6 en tu impresora
+	    }
+
+	    return null;
 	}
 
 	protected FiscalPacket createFiscalPacket() {
@@ -808,6 +934,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se valida la factura.
 		invoice.validate();
 		boolean hasCashPayments = false;
+		
+		// dREHER
+		isOkPrinted = false;
+		
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
@@ -862,13 +992,114 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			loadDocumentDiscounts(invoice);
 			
 			//////////////////////////////////////////////////////////////
-			// Se calcula el subtotal.
-			// Comando: @Subtotal
-			execute(cmdSubtotal(true, null));
+			// Se cargan los impuestos adicionales de la factura
+			BigDecimal impuestos = loadOtherTaxes(invoice);
+			if(impuestos == null) impuestos = Env.ZERO;
+			debug("printDocument. Impuestos= " + impuestos);
 			
 			//////////////////////////////////////////////////////////////
-			// Se cargan los impuestos adicionales de la factura
-			loadOtherTaxes(invoice);
+			// Se calcula el subtotal.
+			// Comando: @Subtotal
+			BigDecimal subtotal = Env.ZERO;
+			BigDecimal subtotalSinImp = Env.ZERO;
+			
+			/**
+			 * El comando de subtotal NO siempre devuelve el valor final del ticket en la misma
+			 * posicion, si se envian descuentos/recargos generales o tienen percepciones (otros impuestos) lo hace en la posicion 4
+			 * caso contrario lo hace en la posicion 5
+			 * 
+			 * dREHER Mayo 25 
+			 */
+
+			FiscalPacket subtotalPack = execute(cmdSubtotal(true, null));
+			try {
+				if(subtotalPack.getSize()>=6) {
+					
+					BigDecimal valor1 = subtotalPack.getBigDecimal(4);
+					BigDecimal valor2 = subtotalPack.getBigDecimal(5);
+					if(valor1==null) valor1 = new BigDecimal(0);
+					if(valor2==null) valor2 = new BigDecimal(0);
+					
+					String dato1 = subtotalPack.getString(1);
+					
+					debug("Valor 1 (pos=4) = " + valor1);
+					debug("Valor 2 (pos=5) = " + valor2);
+					debug("invoice.hasGeneralDiscount()= " + invoice.hasGeneralDiscount());
+					debug("impuestos= " + impuestos);
+					debug("longitud= " + subtotalPack.getSize());
+					debug("valor 1= " + dato1);
+					debug("subtotalPack= " + subtotalPack);
+					
+					if(subtotalPack.getSize()>=12)
+						subtotal = valor2;
+					else
+						subtotal = valor1;
+					
+					subtotalSinImp = subtotal;
+					
+					subtotal = subtotal.add(impuestos);
+					
+					// dREHER Ago 25
+					if (invoice.getTotalRecargoFormaPago()!=null && invoice.getTotalRecargoFormaPago().compareTo(Env.ZERO) > 0) {
+						// Si tiene recargo por forma de pago, se suma al subtotal
+						subtotalSinImp = subtotalSinImp.subtract(invoice.getTotalRecargoFormaPago());
+						debug("printDocument. Se sumo recargo por forma de pago: " + invoice.getTotalRecargoFormaPago());
+					}
+					
+				}
+			}catch(Exception ex) {
+				debug("printDocument. Error al leer subtotal desde Hasar: " + ex.toString());
+				subtotal = new BigDecimal(-1);
+			}
+			
+			if(subtotal==null) subtotal = new BigDecimal(-1);
+			
+			/*
+			if(subtotalSinImp.compareTo(new BigDecimal(-1)) != 0) {
+
+				int tolerancia = getTolerancia();
+				
+				if(subtotalSinImp.setScale(2, RoundingMode.DOWN).compareTo(invoice.getTotal().setScale(2, RoundingMode.DOWN)) != 0) {
+
+					debug("*** Encontro diferencias al comparar totales Fiscal vs totales Libertya: " + " Error Monto Libertya vs Monto Fiscal. Libertya=" + invoice.getTotal().setScale(2, RoundingMode.DOWN) +
+					" Fiscal=" + subtotalSinImp.setScale(2, RoundingMode.DOWN));
+					
+					throw new FiscalPrinterIOException("Error Monto Libertya vs Monto Fiscal. Libertya=" + invoice.getTotal().setScale(2, RoundingMode.DOWN) +
+							" Fiscal=" + subtotalSinImp.setScale(2, RoundingMode.DOWN));
+				}else
+					debug("Los totales coinciden OK!, continua...");
+
+			}
+			*/
+			
+			// dREHER Junio 25 - mejora en la comparacion para tolerar pequeñas diferencias
+			BigDecimal totalLibertya = invoice.getTotal().setScale(2, RoundingMode.DOWN);
+			BigDecimal totalFiscal = subtotalSinImp.setScale(2, RoundingMode.DOWN);
+			BigDecimal diferencia = totalLibertya.subtract(totalFiscal).abs();
+			BigDecimal tolerancia = new BigDecimal("0.25");
+			
+			debug("printDocument. Subtotal Sin Imp. acumulado=" + totalFiscal);
+			debug("printDocument. Subtotal Libertya (neto): " + invoice.getNetAmount());
+			debug("printDocument. Subtotal Libertya : " + totalLibertya);
+
+			if (diferencia.compareTo(tolerancia) > 0 && 
+					(invoice.getTotalRecargoFormaPago().compareTo(Env.ZERO) == 0 || !customer.isOcultarDescuentoEnLinea()) ) { // dREHER Ago 25
+			    debug("*** Encontro diferencias mayores a la tolerancia. Libertya=" + totalLibertya +
+			          " Fiscal=" + totalFiscal + " Diferencia=" + diferencia);
+			    
+			    throw new FiscalPrinterIOException("Error Monto Libertya vs Monto Fiscal. Libertya=" +
+			                                       totalLibertya + " Fiscal=" + totalFiscal);
+			} else {
+			    debug("Los totales coinciden dentro del margen de tolerancia. Diferencia=" + diferencia);
+			}
+
+			
+			// ATENCION ATENCION ATENCION ATENCION
+			if(1>1) {
+				// dREHER Mayo 25, notifica que tuvo que cancelar el ticket fiscal
+				debug("FUERZO!!! Cancelacion de ticket, generar excepcion acorde!");
+				throw new FiscalPrinterIOException("CANCELO TICKET FISCAL");
+			}
 			
 			//////////////////////////////////////////////////////////////
 			// Se ingresan los pagos realizados por el comprador.
@@ -917,13 +1148,29 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 						+ " Retiro de Efectivo por Tarjeta"));
 				footerInitIndex = 12;
 			}			
+			
+			/**
+			 * Imprimir linea de impuestos en facturas B si asi lo requiere
+			 * dREHER
+			
+			 IMPORTANTE: por ahora lo agrego como parte de las observaciones del footer
+			if(invoice.getLetter().equals(Document.DOC_LETTER_B)) {
+				
+				addLeyendaImpuestos(invoice.getLeyenda_Impuesto());
+				
+			}
+			*/
+			
 			addFooterObservations(footerInitIndex, 20, invoice.getFooterObservations(),
-					false, -2);
+					false, -2); // dREHER Abril 25 estaba en false (no limpia la zona previamente)
 			
 			//////////////////////////////////////////////////////////////
 			// Se cierra el comprobante fiscal.
 			// Comando: @CloseFiscalReceipt
 			response = execute(cmdCloseFiscalReceipt(null));
+			
+			// dREHER Probar limpiar aca... Abril 25
+			execute(cmdDeleteHeaderTrailerGroup_2G()); // corresponde a las observaciones
 			
 			setDocumentOpened(false);
 			// Chequeo de impuestos
@@ -941,14 +1188,70 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 			
+			// dREHER
+			isOkPrinted = true;
+			
 		} catch (FiscalPrinterIOException e) {
 			if(!isDocumentPrintAsk()){
 				// Si ocurrió algún error se intenta cancelar el documento
 				// actual y se relanza la excepción.
+				
+				debug("Error al imprimir comprobante: " + e);
+				
 				cancelCurrentDocument();
+				
+				// dREHER Mayo 25, notifica que tuvo que cancelar el ticket fiscal
+				if(e.getMessage()!=null && (e.getMessage().startsWith("Error Monto Libertya vs Monto Fiscal.") || e.getMessage().startsWith("Error al cargar ítem")) ) {
+					debug("Como se produce cancelacion de ticket, generar excepcion acorde!");
+					throw new FiscalPrinterIOException("CANCELO TICKET FISCAL");
 			}
+			}
+			
 			throw e;
 		}
+		
+	}
+	
+	private int getTolerancia() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	private void debug(String string) {
+		System.out.println("==> HasarFicalPrinter." + string);
+	}
+
+	/*
+	 * En impresoras 2G cambia el comando para limpieza de zonas
+	 * 
+	 */
+	public FiscalPacket cmdDeleteHeaderTrailerGroup_2G(){
+
+		// Comando 158 decimal = 0x9E hexadecimal = ConfigurarZona
+		final int CMD_CONFIGURE_ZONE = 158;
+
+		FiscalPacket cmd = createFiscalPacket(CMD_CONFIGURE_ZONE);
+		int i = 1;
+
+		cmd.setInt(i++, 0);                          // NumeroLinea = 0 => Borrar toda la zona
+		cmd.setText(i++, "", 8, false);              // Atributos vacíos
+		cmd.setText(i++, "", 40, false);             // Descripción vacía
+		cmd.setText(i++, "D", 1, false);             // EstacionPorDefecto
+		cmd.setText(i++, "t", 1, false);             // IdentificadorZona = Zona2Cola
+
+		return cmd;
+
+	}
+	
+	/**
+	 * Imprime la leyenda de impuestos en facturas B 
+	 * @param leyenda_Impuesto
+	 * @author dREHER
+	 * @throws FiscalPrinterIOException 
+	 * @throws FiscalPrinterStatusError 
+	 */
+	private void addLeyendaImpuestos(String leyenda_Impuesto) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		execute(cmdLeyendaImpuestos(leyenda_Impuesto));
 	}
 	
 	public void fiscalClose(String closeType) throws FiscalPrinterStatusError, FiscalPrinterIOException {
@@ -957,6 +1260,45 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se indica al manejador de eventos que la impresión ha finalizado.
 		fireFiscalCloseEnded();
 	}
+	
+	// dREHER limpiar caracteres NO aceptados para las cadenas a enviar a la impresora
+	// Esto evita que la impresora detecto un comando de CANCELACION DE IMPRESION por parte del usuario
+	public static String sanitizeForFiscalPrinter(String input) {
+	    if (input == null)
+	        return "";
+
+	    StringBuilder sanitized = new StringBuilder();
+	    for (char c : input.toCharArray()) {
+	        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
+	            c == ' ' || c == '.' || c == ',' || c == '-' || c == ':' || c == ';' || c == '(' || c == ')' ||
+	            c == '*' || c == '[' || c == ']' || c == '/' || c == '\\') {
+	            sanitized.append(c);
+	        } else {
+	            // Remplazos explícitos
+	            switch (c) {
+	                case 'Ñ': sanitized.append('N'); break;
+	                case 'ñ': sanitized.append('n'); break;
+	                case 'á': case 'à': case 'ä': case 'â':
+	                case 'Á': case 'À': case 'Ä': case 'Â': sanitized.append('a'); break;
+	                case 'é': case 'è': case 'ë': case 'ê':
+	                case 'É': case 'È': case 'Ë': case 'Ê': sanitized.append('e'); break;
+	                case 'í': case 'ì': case 'ï': case 'î':
+	                case 'Í': case 'Ì': case 'Ï': case 'Î': sanitized.append('i'); break;
+	                case 'ó': case 'ò': case 'ö': case 'ô':
+	                case 'Ó': case 'Ò': case 'Ö': case 'Ô': sanitized.append('o'); break;
+	                case 'ú': case 'ù': case 'ü': case 'û':
+	                case 'Ú': case 'Ù': case 'Ü': case 'Û': sanitized.append('u'); break;
+	                default:
+	                    sanitized.append(' '); // Reemplazo seguro
+	                    // Opcional: log debug solo si necesario
+	                    // Logger.debug("Carácter eliminado: " + c);
+	            }
+	        }
+	    }
+	    return sanitized.toString();
+	}
+
+
 	
 	/**
 	 * Borra las líneas de la cabecera o cola de impresión que corresponden a
@@ -989,8 +1331,13 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 	public void printDocument(CreditNote creditNote) throws FiscalPrinterStatusError, FiscalPrinterIOException, DocumentException {
 		Customer customer = creditNote.getCustomer();
 		FiscalPacket response;
+		
 		// Se valida la nota de crédito.
 		creditNote.validate();
+		
+		// dREHER
+		isOkPrinted = false;
+		
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
@@ -1045,7 +1392,83 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			
 			//////////////////////////////////////////////////////////////
 			// Se cargan los impuestos adicionales de la factura
-			loadOtherTaxes(creditNote);
+			BigDecimal impuestos = loadOtherTaxes(creditNote);
+			
+			//////////////////////////////////////////////////////////////
+			// Se calcula el subtotal.
+			// Comando: @Subtotal
+			BigDecimal subtotal = Env.ZERO;
+			BigDecimal subtotalSinImp = Env.ZERO;
+
+			/**
+			 * El comando de subtotal NO siempre devuelve el valor final del ticket en la misma
+			 * posicion, si se envian descuentos/recargos generales o tienen percepciones (otros impuestos) lo hace en la posicion 4
+			 * caso contrario lo hace en la posicion 5
+			 * 
+			 * dREHER Mayo 25 
+			 */
+
+			FiscalPacket subtotalPack = execute(cmdSubtotal(true, null));
+			try {
+				if(subtotalPack.getSize()>=6) {
+					
+					BigDecimal valor1 = subtotalPack.getBigDecimal(4);
+					BigDecimal valor2 = subtotalPack.getBigDecimal(5);
+					if(valor1==null) valor1 = new BigDecimal(0);
+					if(valor2==null) valor2 = new BigDecimal(0);
+					
+					String dato1 = subtotalPack.getString(1);
+					
+					debug("Valor 1 (pos=4) = " + valor1);
+					debug("Valor 2 (pos=5) = " + valor2);
+					debug("invoice.hasGeneralDiscount()= " + creditNote.hasGeneralDiscount());
+					debug("impuestos= " + impuestos);
+					debug("longitud= " + subtotalPack.getSize());
+					debug("valor 1= " + dato1);
+					
+					if(subtotalPack.getSize()>=12)
+						subtotal = valor2;
+					else
+						subtotal = valor1;
+					
+					subtotalSinImp = subtotal;
+					
+					subtotal = subtotal.add(impuestos);
+					
+					// dREHER Ago 25
+					if (creditNote.getTotalRecargoFormaPago()!=null && creditNote.getTotalRecargoFormaPago().compareTo(Env.ZERO) > 0) {
+						// Si tiene recargo por forma de pago, se suma al subtotal
+						subtotalSinImp = subtotalSinImp.subtract(creditNote.getTotalRecargoFormaPago());
+						debug("printDocument. Se sumo recargo por forma de pago: " + creditNote.getTotalRecargoFormaPago());
+					}
+				}
+			}catch(Exception ex) {
+				debug("printDocument. Error al leer subtotal desde Hasar: " + ex.toString());
+				subtotal = new BigDecimal(-1);
+			}
+			
+			if(subtotal==null) subtotal = new BigDecimal(-1);
+			
+			// dREHER Junio 25 - mejora en la comparacion para tolerar pequeñas diferencias
+			BigDecimal totalLibertya = creditNote.getTotal().setScale(2, RoundingMode.DOWN);
+			BigDecimal totalFiscal = subtotalSinImp.setScale(2, RoundingMode.DOWN);
+			BigDecimal diferencia = totalLibertya.subtract(totalFiscal).abs();
+			BigDecimal tolerancia = new BigDecimal("0.25");
+			
+			debug("printDocument. Subtotal Sin Imp. acumulado=" + totalFiscal);
+			debug("printDocument. Subtotal Libertya (neto): " + creditNote.getNetAmount());
+			debug("printDocument. Subtotal Libertya : " + totalLibertya);
+
+			if (diferencia.compareTo(tolerancia) > 0 && 
+					(creditNote.getTotalRecargoFormaPago().compareTo(Env.ZERO) == 0 || !customer.isOcultarDescuentoEnLinea()) ) { // dREHER Ago 25
+			    debug("*** Encontro diferencias mayores a la tolerancia. Libertya=" + totalLibertya +
+			          " Fiscal=" + totalFiscal + " Diferencia=" + diferencia);
+			    
+			    throw new FiscalPrinterIOException("Error Monto Libertya vs Monto Fiscal. Libertya=" +
+			                                       totalLibertya + " Fiscal=" + totalFiscal);
+			} else {
+			    debug("Los totales coinciden dentro del margen de tolerancia. Diferencia=" + diferencia);
+			}
 			
 			// Agrego los nuevos datos de la cola de impresión, previo a eliminar lo de la cola
 			addFooterObservations(11, 20, creditNote.getFooterObservations(),
@@ -1055,6 +1478,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se cierra el comprobante no fiscal homologado.
 			// Comando: @CloseDNFH
 			response = execute(cmdCloseDNFH(null));
+			
+			// dREHER Probar limpiar aca... Abril 25
+			execute(cmdDeleteHeaderTrailerGroup_2G()); // corresponde a las observaciones
+			
 			setDocumentOpened(false);
 			setCancelAllowed(false);
 			// Se obtiene el número de la nota de crédito emitida.
@@ -1066,21 +1493,37 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 
+			// dREHER
+			isOkPrinted = true;
+
 		} catch (FiscalPrinterIOException e) {
 			if(!isDocumentPrintAsk()){
 				// Si ocurrió algún error se intenta cancelar el documento
 				// actual y se relanza la excepción.
 				cancelCurrentDocument();
+				
+				// dREHER Mayo 25, notifica que tuvo que cancelar el ticket fiscal
+				if(e.getMessage()!=null && (e.getMessage().startsWith("Error Monto Libertya vs Monto Fiscal.") || e.getMessage().startsWith("Error al cargar ítem")) ) {
+					debug("Como se produce cancelacion de ticket, generar excepcion acorde!");
+					throw new FiscalPrinterIOException("CANCELO TICKET FISCAL");
 			}
+			}
+			
 			throw e;
 		}
+		
 	}
 	
 	public void printDocument(DebitNote debitNote) throws FiscalPrinterStatusError, FiscalPrinterIOException, DocumentException {
 		Customer customer = debitNote.getCustomer();
 		FiscalPacket response;
+		
 		// Se valida la nota de débito.
 		debitNote.validate();
+		
+		// dREHER
+		isOkPrinted = false;
+		
 		try {
 			// Enviar comando de cancelación antes de imprimir si así se
 			// requiere
@@ -1123,7 +1566,85 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			
 			//////////////////////////////////////////////////////////////
 			// Se cargan los impuestos adicionales de la factura
-			loadOtherTaxes(debitNote);
+			BigDecimal impuestos = loadOtherTaxes(debitNote);
+			
+
+			//////////////////////////////////////////////////////////////
+			// Se calcula el subtotal.
+			// Comando: @Subtotal
+			BigDecimal subtotal = Env.ZERO;
+			BigDecimal subtotalSinImp = Env.ZERO;
+
+			/**
+			 * El comando de subtotal NO siempre devuelve el valor final del ticket en la misma
+			 * posicion, si se envian descuentos/recargos generales o tienen percepciones (otros impuestos) lo hace en la posicion 4
+			 * caso contrario lo hace en la posicion 5
+			 * 
+			 * dREHER Mayo 25 
+			 */
+
+			FiscalPacket subtotalPack = execute(cmdSubtotal(true, null));
+			try {
+				if(subtotalPack.getSize()>=6) {
+					
+					BigDecimal valor1 = subtotalPack.getBigDecimal(4);
+					BigDecimal valor2 = subtotalPack.getBigDecimal(5);
+					if(valor1==null) valor1 = new BigDecimal(0);
+					if(valor2==null) valor2 = new BigDecimal(0);
+					
+					String dato1 = subtotalPack.getString(1);
+					
+					debug("Valor 1 (pos=4) = " + valor1);
+					debug("Valor 2 (pos=5) = " + valor2);
+					debug("invoice.hasGeneralDiscount()= " + debitNote.hasGeneralDiscount());
+					debug("impuestos= " + impuestos);
+					debug("longitud= " + subtotalPack.getSize());
+					debug("valor 1= " + dato1);
+					
+					if(subtotalPack.getSize()>=12)
+						subtotal = valor2;
+					else
+						subtotal = valor1;
+					
+					subtotalSinImp = subtotal;
+					
+					subtotal = subtotal.add(impuestos);
+					
+					// dREHER Ago 25
+					if (debitNote.getTotalRecargoFormaPago()!=null && debitNote.getTotalRecargoFormaPago().compareTo(Env.ZERO) > 0) {
+						// Si tiene recargo por forma de pago, se suma al subtotal
+						subtotalSinImp = subtotalSinImp.subtract(debitNote.getTotalRecargoFormaPago());
+						debug("printDocument. Se sumo recargo por forma de pago: " + debitNote.getTotalRecargoFormaPago());
+					}
+				}
+			}catch(Exception ex) {
+				debug("printDocument. Error al leer subtotal desde Hasar: " + ex.toString());
+				subtotal = new BigDecimal(-1);
+			}
+			
+			if(subtotal==null) subtotal = new BigDecimal(-1);
+			
+			// dREHER Junio 25 - mejora en la comparacion para tolerar pequeñas diferencias
+			BigDecimal totalLibertya = debitNote.getTotal().setScale(2, RoundingMode.DOWN);
+			BigDecimal totalFiscal = subtotalSinImp.setScale(2, RoundingMode.DOWN);
+			BigDecimal diferencia = totalLibertya.subtract(totalFiscal).abs();
+			BigDecimal tolerancia = new BigDecimal("0.25");
+			
+			debug("printDocument. Subtotal Sin Imp. acumulado=" + totalFiscal);
+			debug("printDocument. Subtotal Libertya (neto): " + debitNote.getNetAmount());
+			debug("printDocument. Subtotal Libertya : " + totalLibertya);
+
+			if (diferencia.compareTo(tolerancia) > 0 && 
+					(debitNote.getTotalRecargoFormaPago().compareTo(Env.ZERO) == 0 || !customer.isOcultarDescuentoEnLinea()) ) { // dREHER Ago 25
+			    debug("*** Encontro diferencias mayores a la tolerancia. Libertya=" + totalLibertya +
+			          " Fiscal=" + totalFiscal + " Diferencia=" + diferencia);
+			    
+			    throw new FiscalPrinterIOException("Error Monto Libertya vs Monto Fiscal. Libertya=" +
+			                                       totalLibertya + " Fiscal=" + totalFiscal);
+			} else {
+			    debug("Los totales coinciden dentro del margen de tolerancia. Diferencia=" + diferencia);
+			}
+	
 			
 			//////////////////////////////////////////////////////////////
 			// Se cargan las observaciones del pie de la nota de débito 
@@ -1141,6 +1662,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se cierra el comprobante fiscal.
 			// Comando: @CloseFiscalReceipt
 			response = execute(cmdCloseFiscalReceipt(null));
+			
+			// dREHER Probar limpiar aca... Abril 25
+			execute(cmdDeleteHeaderTrailerGroup_2G()); // corresponde a las observaciones
+			
 			setDocumentOpened(false);
 			// Se obtiene el número de comprobante emitido.
 			setLastDocumentNo(response.getString(3));
@@ -1154,20 +1679,35 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 
+			// dREHER
+			isOkPrinted = true;
+
 		} catch (FiscalPrinterIOException e) {
 			if(!isDocumentPrintAsk()){
 				// Si ocurrió algún error se intenta cancelar el documento
 				// actual y se relanza la excepción.
 				cancelCurrentDocument();
+				
+				// dREHER Mayo 25, notifica que tuvo que cancelar el ticket fiscal
+				if(e.getMessage()!=null && (e.getMessage().startsWith("Error Monto Libertya vs Monto Fiscal.") || e.getMessage().startsWith("Error al cargar ítem")) ) {
+					debug("Como se produce cancelacion de ticket, generar excepcion acorde!");
+					throw new FiscalPrinterIOException("CANCELO TICKET FISCAL");
 			}
+			}
+			
 			throw e;
 		}
+		
 	}
+	
 	@Override
 	public void printDocument(NonFiscalDocument nonFiscalDocument)
 			throws FiscalPrinterStatusError, FiscalPrinterIOException,
 			DocumentException {
 
+		// dREHER
+		isOkPrinted = false;
+		
 		// Se valida el documento no fiscal.
 		nonFiscalDocument.validate();
 		try {
@@ -1205,6 +1745,9 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			// Se indica al manejador de eventos que la impresión ha finalizado.
 			firePrintEnded();
 
+			// dREHER
+			isOkPrinted = true;
+
 		} catch (FiscalPrinterIOException e) {
 			if(!isDocumentPrintAsk()){
 				// Si ocurrió algún error se intenta cancelar el documento
@@ -1213,6 +1756,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			}
 			throw e;
 		}
+		
 	}
 
 	/**
@@ -1402,6 +1946,8 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 						.getIdentificationNumber() == null ? " " : customer
 						.getIdentificationNumber());
 			}
+			System.out.println("loadCustomerData -> " + customer.getIvaResponsibility());
+			System.out.println("loadCustomerData -> traduceIvaResponsibility(customer.getIvaResponsibility()): " + traduceIvaResponsibility(customer.getIvaResponsibility()));
 			execute(cmdSetCustomerData(
 					customer.getName(), 
 					customer.getIdentificationNumber(), 
@@ -1421,7 +1967,7 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		// Se cargan los ítems del documento.
 		// Comando: @PrintLineItem
 		for (DocumentLine item : document.getLines()) {
-			execute(cmdPrintLineItem(
+			FiscalPacket response = execute(cmdPrintLineItem(
 				item.getDescription(), 
 				item.getQuantity(), 
 				item.getAbsUnitPrice(), 
@@ -1431,6 +1977,14 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 				!item.isPriceIncludeIva(), 
 				null)
 			);
+			
+			// TODO: escenario dificil de probar, pero podria ser una solucion AL MENOS para aquellos tickets mal impresos...
+			try {
+				checkResponseOk(response, document.getDocumentNo() + ":" + item.getDescription(), item.getQuantity(), item.getAbsUnitPrice());
+			}catch(Exception ex) {	
+				throw new FiscalPrinterIOException("Error al cargar ítem.");
+			}
+						
 			// Se carga el descuento del ítem si es que posee.
 			// Comando: @LastItemDiscount
 			if (item.hasDiscount()) {
@@ -1445,11 +1999,138 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 		}
 	}
 
+	// dREHER Jun 25, funcion que chequea la respuesta de un paquete enviado a la impresora
+	public void checkResponseOk(FiscalPacket response, String descripcion, BigDecimal cantidad, BigDecimal precio) throws FiscalPrinterIOException {
+	    final int MASK_BITS_ERROR = 0x0008 | 0x0010 | 0x0020 | 0x0040 | 0x0200; // bits 3, 4, 5, 6, 9
+	    final int[] ESTADOS_IMPRESORA_NO_CRITICOS = new int[] { 0x0C80, 0x3200, 0x5000, 0x8000, 0xC800, 0x2800, 0x1000, 0x2000, 0x4000, 0x6000, 0x12800 };
+
+	    if (response == null || response.getSize() < 2) {
+	        throw new FiscalPrinterIOException("Respuesta fiscal incompleta o nula");
+	    }
+
+	    String fiscalCode = response.getString(1);
+	    String printerStatus = response.getString(2);
+
+	    boolean fiscalOk = true;
+	    boolean printerOk = true;
+
+	    try {
+	        if (!Util.isEmpty(fiscalCode, true)) {
+	            int estadoFiscal = Integer.parseInt(fiscalCode, 16);
+	            debug("Estado fiscal: " + estadoFiscal);
+	            fiscalOk = (estadoFiscal == 0);
+	        }
+	    } catch (NumberFormatException e) {
+	        debug("No se pudo interpretar estado fiscal: " + fiscalCode);
+	        fiscalOk = true;
+	    }
+
+	    try {
+	        if (!Util.isEmpty(printerStatus, true)) {
+	            int estadoImpresora = Integer.parseInt(printerStatus, 16);
+	            debug("Estado impresora decimal: " + estadoImpresora);
+	            debug("Estado impresora binario: " + Integer.toBinaryString(estadoImpresora));
+	            debug("Bits peligrosos activos: " + (estadoImpresora & MASK_BITS_ERROR));
+
+	            // Si hay bits críticos, y no está en la lista de estados tolerables
+	            boolean tieneBitsPeligrosos = (estadoImpresora & MASK_BITS_ERROR) != 0;
+	            boolean esEstadoTolerable = false;
+
+	            for (int estadoPermitido : ESTADOS_IMPRESORA_NO_CRITICOS) {
+	                if (estadoPermitido == estadoImpresora) {
+	                    esEstadoTolerable = true;
+	                    break;
+	                }
+	            }
+
+	            printerOk = !tieneBitsPeligrosos || esEstadoTolerable;
+	            debug("¿Printer OK?: " + printerOk + " (tolerable=" + esEstadoTolerable + ")");
+	        }
+	    } catch (NumberFormatException e) {
+	        debug("No se pudo interpretar estado impresora: " + printerStatus);
+	        printerOk = true;
+	    }
+
+	    if (!fiscalOk || !printerOk) {
+	        String msg = "Respuesta fiscal con error:\n" +
+	                     "Código Fiscal: " + (Util.isEmpty(fiscalCode, true) ? "[vacío]" : fiscalCode) + "\n" +
+	                     "Estado Impresora: " + (Util.isEmpty(printerStatus, true) ? "[vacío]" : printerStatus);
+
+	        debug("Supuesto error de impresora fiscal: " + msg);
+
+	        guardarLogErrorFiscal(
+	            "Error al imprimir línea de ticket",
+	            "Descripción del ítem: " + descripcion + "\nCantidad: " + cantidad + "\nPrecio: " + precio,
+	            response,
+	            new FiscalPrinterIOException(msg)
+	        );
+	        
+	        // TODO: lanzar excepcion throw new FiscalPrinterIOException(msg)
+	    }
+	    
+	}
+
+
+
+	public static void guardarLogErrorFiscal(String titulo, String descripcion, FiscalPacket packet, Exception ex) {
+        try {
+            // Ruta al directorio HOME del usuario
+            String home = System.getProperty("user.home");
+
+            // Formato de nombre: ErrorFiscalPrint_20250609_1356.log
+            String timestamp = new SimpleDateFormat("yyyyMMdd").format(new Date());
+            String fileName = "ErrorFiscalPrint_" + timestamp + ".log";
+
+            File file = new File(home, fileName);
+            FileWriter fw = new FileWriter(file, true);
+            BufferedWriter writer = new BufferedWriter(fw);
+
+            writer.write("=== ERROR IMPRESORA FISCAL ===\n");
+            writer.write("Fecha: " + new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date()) + "\n");
+            writer.write("Titulo: " + titulo + "\n\n");
+
+            writer.write("Descripción del error:\n");
+            writer.write(descripcion + "\n\n");
+
+            if (packet != null) {
+                writer.write("Contenido de FiscalPacket:\n");
+                for (int i = 0; i < packet.getSize(); i++) {
+                    try {
+                        writer.write("Campo " + i + ": " + packet.getString(i) + "\n");
+                    } catch (Exception e) {
+                        writer.write("Campo " + i + ": <error al leer campo>\n");
+                    }
+                }
+                writer.write("\n");
+            }
+
+            if (ex != null) {
+                writer.write("StackTrace:\n");
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                ex.printStackTrace(pw);
+                writer.write(sw.toString());
+            }
+
+            writer.write("\n=====================================\n");
+            writer.close();
+
+            System.out.println("Log de error fiscal generado: " + file.getAbsolutePath());
+
+        } catch (Exception ioe) {
+            System.err.println("Error al guardar log fiscal: " + ioe.getMessage());
+        }
+    }
+	
 	/**
 	 * Ejecuta los comandos necesarios para cargar todos los descuentos del
 	 * documento sobre la impresora fiscal.
 	 */
 	private void loadDocumentDiscounts(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		
+		// dREHER Ago 25
+		boolean isTomarComoRecargo = false;
+		
 		//////////////////////////////////////////////////////////////
 		// Se aplican las bonificaciones
 		// Comando: @ReturnRecharge
@@ -1463,7 +2144,24 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 				!discount.isAmountIncludeIva(), 
 				null, // Display
 				DISCOUNT_RECHARGE));
+			
+			// dREHER Ago 25 cuando se trata de un cliente que NO tiene marca de "Ocultar descuento en linea" el recargo
+			// por metodo de pago se indica en este comando...
+			
+			debug("Se aplican las bonificaciones: " + discount.getDescription() + " : " + discount.getAmount());
 		}
+		
+		// dREHER Ago 25 ver si corresponde o no los descuentos/recargos generales
+		if(document.getCustomer().isOcultarDescuentoEnLinea()) {
+			if (document.getTotalRecargoFormaPago() != null
+					&& document.getTotalRecargoFormaPago().compareTo(Env.ZERO) > 0) { 
+				debug("Se oculta el descuento general en linea, pero se aplica el recargo por forma de pago: "
+						+ document.getTotalRecargoFormaPago());
+				isTomarComoRecargo = true;
+			}else
+				debug("Se oculta el descuento general en linea, se aplica recargo por forma de pago como valor absoluto (positivo)");
+		}
+		
 		
 		//////////////////////////////////////////////////////////////
 		// Se aplica el descuento general en caso de existir.
@@ -1472,21 +2170,38 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 			DiscountLine generalDiscount = document.getGeneralDiscount();
 			
 			// dREHER
-			System.out.println("HasarFiscalPrint - descuento general. Desc=" + generalDiscount.getDescription() + "\n Amount=" + generalDiscount.getAmount() + "\n AbsAmount=" + generalDiscount.getAbsAmount() + "\n ChargeAmt=" + document.getChargeAmt());
+			debug("- Descuento general. Desc=" + generalDiscount.getDescription() + 
+					"\n Amount=" + generalDiscount.getAmount() + 
+					"\n AbsAmount=" + generalDiscount.getAbsAmount() + 
+					"\n ChargeAmt=" + document.getChargeAmt() + 
+					"\n Incluye IVA=" + generalDiscount.isAmountIncludeIva() +
+					"\n TaxRate=" + generalDiscount.getTaxRate());
+			
+			
+			// dREHER Jun 25
+			// Si es iva exento el monto del item debe ser mas el descuento, sino descuenta dos veces
+			debug("Categoria IVA Fiscal Descripcion: " + document.getCustomer().getCategoriaIVAFiscalDescription());
+			if(document.getCustomer().getCategoriaIVAFiscalDescription().toLowerCase().equalsIgnoreCase("iva exento")) {
+				debug("Como es EXENTO, el descuento NO debe incluir el IVA...");
+				// generalDiscount.getAmount();
+			}
 			
 			/**
 			 * Si el valor del descuento general es negativo (<0) quiere decir que se trata de un recargo, tratarlo como tal...
 			 * 
 			 * dREHER
 			 */
-			if(generalDiscount.getAmount().compareTo(Env.ZERO) < 0)
+			// dREHER Ago 25 si es un recargo, tratarlo como tal pero solo si NO se oculto el descuento en linea
+			if(generalDiscount.getAmount().compareTo(Env.ZERO) < 0 && !isTomarComoRecargo) { 
 				execute(cmdGeneralDiscount(
 						generalDiscount.getDescription(), 
 						generalDiscount.getAmount(),
 						false, 
 						!generalDiscount.isAmountIncludeIva(),
 						null));
-			else {
+				debug("generalDiscount es un RECARGO, se aplica como tal...: " + generalDiscount.getAmount());
+				
+			}else {
 			
 				/**
 				 * Si no llega tasa de impuesto, tomarlo desde los impuestos del documento
@@ -1503,6 +2218,10 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 					
 				}
 				
+				debug("Descuento tax=" + tax);
+				
+				// dREHER Ago 25
+				if(!isTomarComoRecargo) {
 				execute(cmdReturnRecharge(
 						generalDiscount.getDescription(),
 						generalDiscount.getAmount(), 
@@ -1512,24 +2231,110 @@ public abstract class HasarFiscalPrinter extends BasicFiscalPrinter implements H
 						!generalDiscount.isAmountIncludeIva(), // baseAmount 
 						null, // display
 						"Recargo")); // operation
+
+					debug("Se aplica el descuento general (recargo): " + generalDiscount.getDescription() + " : " + generalDiscount.getAmount());
+				}
 			}
 			
 		}
+		
+		// isTomarComoRecargo && hasta el 18/08/2025 controlaba esto, vamos a ver que pasa si no lo controlo
+		if ( 
+				document.getTotalRecargoFormaPago() != null && 
+				document.getTotalRecargoFormaPago().compareTo(Env.ZERO) != 0) {
+			
+			/**
+			 * Los recargos aca llegan en NEGATIVO
+			 */
+			
+			debug("como existe un recargo por forma de pago, se aplica como tal: " + document.getTotalRecargoFormaPago());
+			debug("isTomarComoRecargo=" + isTomarComoRecargo);
+			
+			BigDecimal tax = null;
+			for(Tax t : document.getTaxes()) {
+				tax = t.getRate();
+				if(tax!=null)
+					break;
+			}
+			
+			FiscalPacket fiscal = null;
+			// TODO: solo se podria cambiar el parametro Base Imponible true/false pero lo dejo separado por mas claridad en este caso
+			if (tax != null && tax.compareTo(Env.ZERO) == 0) {
+				fiscal = cmdReturnRecharge(
+						document.getTotalRecargoFormaPago().compareTo(Env.ZERO) < 0 
+								? "Recargo forma de pago"
+								: "Descuento forma de pago", 
+						isTomarComoRecargo?document.getTotalRecargoFormaPago():document.getTotalRecargoFormaPago().abs(), 
+						BigDecimal.ZERO, // ivaPercent, 
+						false, // descontar 
+						BigDecimal.ZERO, // Impuestos internos 
+						true, // Base imponible ? -> x NO es un tributo
+						null, // Display
+						DISCOUNT_RECHARGE);
+				debug("Aplica recargo sin tributo por forma de pago...");
+			}else {
+				fiscal = cmdReturnRecharge(
+						document.getTotalRecargoFormaPago().compareTo(Env.ZERO) < 0 
+								? "Recargo forma de pago"
+								: "Descuento forma de pago", 
+						isTomarComoRecargo?document.getTotalRecargoFormaPago():document.getTotalRecargoFormaPago().abs(), 
+						BigDecimal.ZERO, // ivaPercent, 
+						false, // descontar 
+						BigDecimal.ZERO, // Impuestos internos 
+						false, // Base imponible -> T es un tributo
+						null, // Display
+						DISCOUNT_RECHARGE);
+				debug("Aplica recargo CON tributo por forma de pago...");
+			}
+				
+			
+			// Si el documento tiene recargos por forma de pago, se los aplica.
+			if(fiscal!=null) {
+				debug("Envia el paquete fiscal...");
+				execute(fiscal);
+			}
+			
+			debug("Aplica recargo por forma de pago...");
+		}
+	}
+	
+	/**
+	 * Ejecuta los comandos necesarios para cargar todos los recargos via cargo del
+	 * documento sobre la impresora fiscal.
+	 */
+	private void loadDocumentCharges(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+			
+		
+		execute(cmdGeneralDiscount("Recargo forma de pago", 
+				document.getChargeAmt(), 
+				false, // substract, 
+				false, // baseAmount,
+				null // display
+				));
+		
+		debug("Se aplica el recargo por metodo de pago (recargo): " + document.getChargeAmt());
+		
 	}
 
 	/**
 	 * Ejecuta los comandos necesarios para cargar los impuestos adicionales del
 	 * documento en la impresora fiscal.
+	 * 
+	 * dREHER Abril 25 devuelve el monto de los impuestos
 	 */
-	private void loadOtherTaxes(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+	private BigDecimal loadOtherTaxes(Document document) throws FiscalPrinterStatusError, FiscalPrinterIOException {
+		BigDecimal total = Env.ZERO;
 		// Se cargan los impuestos adicionales del documento.
 		// Comando: @PrintLineItem
 		for (Tax otherTax : document.getOtherTaxes()) {
 			// FIXME por ahora se imprimen solamente las percepciones
 			if(otherTax.isPercepcion()){
-				execute(cmdPerceptions(otherTax));
+				FiscalPacket res = execute(cmdPerceptions(otherTax));
+				total = total.add(otherTax.getAmt());
 			}
 		}
+		
+		return total;
 	}
 
 	@Override
