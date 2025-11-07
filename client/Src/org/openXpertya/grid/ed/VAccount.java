@@ -322,7 +322,8 @@ public final class VAccount extends JComponent implements VEditor,ActionListener
         Integer newValue = ad.getValue();
 
         if( newValue == null ) {
-            return;
+            // return;
+        	// dREHER Feb '25 Si cierra con X no cargar la cuenta, la tabla se encarga de solicitar si es o no obligatoria
         }
 
         // set & redisplay

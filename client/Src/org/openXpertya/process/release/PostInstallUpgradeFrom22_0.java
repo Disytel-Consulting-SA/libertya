@@ -37,6 +37,19 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 	protected final static String BALANCE_BY_BPARTNER_JASPER_REPORT_UID = "JACLBY-AD_JasperReport-20200413133217034-110405";
 	protected final static String BALANCE_BY_BPARTNER_JASPER_REPORT_FILENAME = "CurrentAccountByBPartner.jasper";
 	
+	/** Merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea from 0.0 */
+	protected final static String DIARIO_DEL_MAYOR_UID = "CORE-AD_JasperReport-1000007";
+	protected final static String DIARIO_DEL_MAYOR_FILENAME = "DiarioMayor.jasper";
+	protected final static String LIBRO_DIARIO_UID = "CORE-AD_JasperReport-1000009";
+	protected final static String LIBRO_DIARIO_FILENAME = "LibroDiario.jasper";
+	protected final static String SUMAS_Y_SALDOS_UID = "CORE-AD_JasperReport-1000010";
+	protected final static String SUMAS_Y_SALDOS_FILENAME = "SumasYSaldos.jasper";
+	protected final static String SUMAS_Y_SALDOS_AGRUPADO_UID = "CELBD-AD_JasperReport-20240202175316548-654408";
+	protected final static String SUMAS_Y_SALDOS_AGRUPADO_FILENAME = "SumasYSaldosAgrupado.jasper";
+	/** Merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea from 1.0 */
+	// protected final static String SUMAS_Y_SALDOS_AGRUPADO_UID = "CELBD-AD_JasperReport-20240202175316548-654408";
+	// protected final static String SUMAS_Y_SALDOS_AGRUPADO_FILENAME = "SumasYSaldosAgrupado.jasper";
+	
 	@Override
 	protected String doIt() throws Exception {
 		super.doIt();
@@ -69,6 +82,16 @@ public class PostInstallUpgradeFrom22_0 extends PluginPostInstallProcess {
 		
 		// Entrega por deposito Merge org.libertya.core.micro.r3000.dev.facturacion
 		updateReport(ENTREGA_POR_DEPOSITO_JASPER_REPORT_UID, ENTREGA_POR_DEPOSITO_JASPER_REPORT_FILENAME);
+		
+		// Merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea from 0.0
+		updateReport(DIARIO_DEL_MAYOR_UID, DIARIO_DEL_MAYOR_FILENAME);
+		updateReport(LIBRO_DIARIO_UID, LIBRO_DIARIO_FILENAME);
+		updateReport(SUMAS_Y_SALDOS_UID, SUMAS_Y_SALDOS_FILENAME);
+		updateReport(SUMAS_Y_SALDOS_AGRUPADO_UID, SUMAS_Y_SALDOS_AGRUPADO_FILENAME);
+		// Merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea from 1.0
+		// updateReport(SUMAS_Y_SALDOS_AGRUPADO_UID, SUMAS_Y_SALDOS_AGRUPADO_FILENAME);
+		
+		
 		
 		// Reporte de Cuenta Corriente por Entidad Comercial Merge org.libertya.core.micro.r3019.dev.jacofer_14_cc
 				MJasperReport

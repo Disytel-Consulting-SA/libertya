@@ -37,6 +37,7 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.event.WTableModelEvent;
+import org.openXpertya.apps.search.Info_Column;
 import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MLookupFactory;
@@ -118,6 +119,8 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 			"p.PayAmt",  BigDecimal.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "ConvertedAmount"),
 			"currencyBase(p.PayAmt,p.C_Currency_ID,p.DateTrx, p.AD_Client_ID,p.AD_Org_ID)", BigDecimal.class),
+		// dREHER pendiente del pago
+		new ColumnInfo( Msg.translate( Env.getCtx(),"OpenAmt" ),"paymentAvailable(p.C_Payment_ID)",BigDecimal.class ),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "DiscountAmt"),
 			"p.DiscountAmt",  BigDecimal.class),
 		new ColumnInfo(Msg.translate(Env.getCtx(), "WriteOffAmt"),
@@ -204,7 +207,7 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 				Msg.translate(Env.getCtx(), "C_BPartner_ID"), "", false, false, true);
 		fBPartner_ID.addValueChangeListener(this);
 		
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -461,6 +464,11 @@ public class InfoPaymentPanel extends InfoPanel implements ValueChangeListener, 
 	{
 		southBody.insertBefore(paging, southBody.getFirstChild());
 		layout.invalidate();
+	}
+
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
 	}
 
 }

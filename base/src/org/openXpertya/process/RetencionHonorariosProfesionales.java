@@ -83,9 +83,19 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 		calculatePagosMensualAcumulados();
 		calculateRetencionesMensualAcumuladas();
 		
+		// dREHER Marzo 25
+		BigDecimal RNL = getNetLinesAmtSchemaRetencion();
+		
 		// Se calcula la base imponible. (el monto sujeto a la aplicación de la retención).
 		// BI = PAA + EP - INI
 		baseImponible = getPagosAnteriores().add(getPayNetAmt()).subtract(getImporteNoImponible());
+		
+		debug("baseImponible antes de quitar ganancias de otros esquemas= " + baseImponible);
+		
+		// dREHER Marzo 25
+		baseImponible = baseImponible.subtract(RNL);
+		
+		debug("baseImponible despues de quitar ganancias de otros esquemas= " + baseImponible);
 		
 		// Si la base imponible es menor que cero, entonces no hay retención que aplicar y
 		// se asigna la base imponible a cero.
@@ -121,6 +131,11 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 		setBaseImponible(baseImponible);
 		
 		return importeRetenido;
+	}
+	
+	// dREHER Feb'25
+	protected void debug(String string) {
+		System.out.println("--> RetencionHonorariosProfesionales." + string);
 	}
 	
 	public List<X_M_Retencion_Invoice> save(MAllocationHdr alloc, boolean save) throws Exception {

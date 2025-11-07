@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 import org.openXpertya.util.Env;
-import org.openXpertya.util.Util;
 
 public class PercepcionPadronChubutComRivInscriptos extends PercepcionStandard {
 

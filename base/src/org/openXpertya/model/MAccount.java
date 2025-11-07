@@ -20,6 +20,7 @@
 
 package org.openXpertya.model;
 
+import org.openXpertya.model.X_C_ElementValue;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
@@ -49,6 +50,9 @@ public class MAccount extends X_C_ValidCombination {
 
     /** Account Segment */
     private MElementValue	m_accountEV	= null;
+    
+    /** Custom Account Segment - dREHER */
+    private X_C_ElementValue	m_customAccountEV	= null;
 
     /**
      *      Parent Constructor
@@ -210,12 +214,12 @@ public class MAccount extends X_C_ValidCombination {
         int			count	= 0;
         int			errors	= 0;
         PreparedStatement	pstmt	= null;
-
+        ResultSet	rs	= null;
         try {
 
             pstmt	= DB.prepareStatement(sql, trxName);
 
-            ResultSet	rs	= pstmt.executeQuery();
+            rs	= pstmt.executeQuery();
 
             while (rs.next()) {
 
@@ -224,9 +228,9 @@ public class MAccount extends X_C_ValidCombination {
                 account.setValueDescription();
 
                 if (account.save()) {
-                    count++;
+                	count++;
                 } else {
-                    errors++;
+                	errors++;
                 }
             }
 
@@ -235,19 +239,21 @@ public class MAccount extends X_C_ValidCombination {
             pstmt	= null;
 
         } catch (Exception e) {
-            s_log.log(Level.SEVERE, sql, e);
-        }
+        	s_log.log(Level.SEVERE, sql, e);
+        } finally { // dREHER cierre de conexion controlado
 
-        try {
+        	try {
 
-            if (pstmt != null) {
-                pstmt.close();
-            }
+        		if (pstmt != null) {
+        			pstmt.close();
+        		}
 
-            pstmt	= null;
+        		pstmt	= null;
 
-        } catch (Exception e) {
-            pstmt	= null;
+        	} catch (Exception e) {
+        		pstmt	= null;
+        	}
+
         }
 
         s_log.info(where + " #" + count + ", Errors=" + errors);
@@ -387,9 +393,11 @@ public class MAccount extends X_C_ValidCombination {
         sql.append(" AND IsActive='Y'");
 
         // sql.append(" ORDER BY IsFullyQualified DESC");
+        PreparedStatement	pstmt	= null;
+        ResultSet rs = null;
         try {
 
-            PreparedStatement	pstmt	= DB.prepareStatement(sql.toString(), null);
+            pstmt	= DB.prepareStatement(sql.toString(), null);
 
             // --  Mandatory Accounting fields
             int	index	= 1;
@@ -452,7 +460,7 @@ public class MAccount extends X_C_ValidCombination {
             }
 
             //
-            ResultSet	rs	= pstmt.executeQuery();
+            rs	= pstmt.executeQuery();
 
             if (rs.next()) {
                 existingAccount	= new MAccount(ctx, rs, null);
@@ -463,6 +471,9 @@ public class MAccount extends X_C_ValidCombination {
 
         } catch (SQLException e) {
             s_log.log(Level.SEVERE, info + "\n" + sql, e);
+        } finally {
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         // Existing
@@ -521,6 +532,28 @@ public class MAccount extends X_C_ValidCombination {
         return m_accountEV;
 
     }		// setAccount
+    
+    /**
+     * get Account_ID
+     *
+     * @return
+     * 
+     * dREHER
+     */
+    public X_C_ElementValue getCustomAccount() {
+
+        if (m_customAccountEV == null) {
+
+            if (getAccount_ID() != 0) {
+            	m_customAccountEV	= new X_C_ElementValue(getCtx(), getAccount_ID(), get_TrxName());
+            }
+        }
+
+        return m_customAccountEV;
+
+    }		// setAccount
+	
+	
 
     /**
      *      Get Account Type

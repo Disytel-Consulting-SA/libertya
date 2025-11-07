@@ -3717,7 +3717,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
              * dREHER
              */
             if(isSOTrx()) {
-            	log.info("Se trata de un pedido de cliente, actualizar los totales segun importes de lineas");
+            	debug("Se trata de un pedido de cliente, actualizar los totales segun importes de lineas");
             	if(!updateAmounts()) {
             		m_processMsg = "No se pudo actualizar el total del pedido";
             		return DocAction.STATUS_Invalid;
@@ -3831,6 +3831,10 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         
         return DocAction.STATUS_Completed;
     }    // completeIt
+    
+    private void debug(String s) {
+    	System.out.println("--> MOrder. " + s);
+    }
     
     private Boolean reactiveOrder() {
 		return !Util.isEmpty(getOldGrandTotal(), true) && (!this.getGrandTotal().equals(this.getOldGrandTotal()));
@@ -4803,7 +4807,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		setTotalLines(totalLines);
 		setGrandTotal(grandTotal);
 		
-		log.info("Order updated - TotalLines = " + totalLines + " - GrandTotal = " + grandTotal); 
+		debug("Order updated - TotalLines = " + totalLines + " - GrandTotal = " + grandTotal); 
 		
 		return updateOk;
 	}

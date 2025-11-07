@@ -149,12 +149,14 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
         ArrayList list = new ArrayList();
         String    sql  = "SELECT it.C_Tax_ID, t.Name, t.Rate, it.TaxBaseAmt, it.TaxAmt " + "FROM C_Tax t, C_InvoiceTax it " + "WHERE t.C_Tax_ID=it.C_Tax_ID AND it.C_Invoice_ID=?";
 
+        PreparedStatement pstmt = null;
+		ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,getRecord_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             //
 
@@ -181,6 +183,9 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
             log.log( Level.SEVERE,"loadTaxes",e );
 
             return null;
+        } finally { // dREHER cierre de conexiones controlado
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
         }
 
         // Return Array
@@ -203,12 +208,14 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
         ArrayList<DocLine_Invoice> list = new ArrayList<DocLine_Invoice>();
         String    sql  = "SELECT * FROM C_InvoiceLine WHERE C_Invoice_ID=? ORDER BY Line";
 
+        PreparedStatement pstmt = null;
+		ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,m_trxName );
+            pstmt = DB.prepareStatement( sql,m_trxName );
 
             pstmt.setInt( 1,getRecord_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             // Descuentos de documento por tasa
             m_taxes_discount = new ArrayList<DocTax_Discount>();
@@ -293,6 +300,9 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
             log.log( Level.SEVERE,"loadLines",e );
 
             return null;
+        } finally { // dREHER cierre de conexiones controlado
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
         }
 
         // Convert to Array
@@ -437,6 +447,9 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
         if( p_vo.DocumentType.equals( DOCTYPE_ARInvoice ) || p_vo.DocumentType.equals( DOCTYPE_ARProForma )) {
 
+        	// dREHER Mayo 25
+        	fact.setTasaConversion(p_vo.tasaConversion);
+        	
             // Receivables     DR
 
             fact.createLine( null,getAccount( Doc.ACCTTYPE_C_Receivable,as ),p_vo.C_Currency_ID,getAmount( Doc.AMTTYPE_Gross ),null );
@@ -790,7 +803,10 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
     	}
     	catch (Exception e)	{
     		return null;
-    	}
+    	}finally { // dREHER cierre de conexiones controlado
+        	DB.close(rs, stmt);
+        	rs = null; stmt = null;
+        }
     	
     	return map;
 	}
@@ -799,10 +815,12 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 	public int getIsExtrangeQuery() {
 		String sql = "SELECT IsExchange FROM C_Invoice WHERE C_Invoice_ID=?";
 
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(sql, m_trxName);
+			pstmt = DB.prepareStatement(sql, m_trxName);
 			pstmt.setInt(1, getRecord_ID());
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 			//
 			if (rs.next()) {
 				String isExchange = rs.getString("IsExchange");
@@ -813,7 +831,10 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 			pstmt.close();
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "isExchange", e);
-		}
+		} finally { // dREHER cierre de conexiones controlado
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
+        }
 		return 0;
 	}
 

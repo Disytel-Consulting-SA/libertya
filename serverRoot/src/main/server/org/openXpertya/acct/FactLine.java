@@ -17,20 +17,28 @@
 package org.openXpertya.acct;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.openXpertya.model.X_C_DistributiveBase;
+import org.openXpertya.model.X_C_ElementValue;
 import org.openXpertya.model.MAccount;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MAcctSchemaElement;
 import org.openXpertya.model.MConversionRate;
+import org.openXpertya.model.MCurrency;
+import org.openXpertya.model.MElementValue;
 import org.openXpertya.model.MRevenueRecognitionPlan;
+import org.openXpertya.model.PO;
 import org.openXpertya.model.X_Fact_Acct;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 /**
  * Descripción de Clase
@@ -42,7 +50,15 @@ import org.openXpertya.util.Env;
 
 public final class FactLine extends X_Fact_Acct {
 
-    /**
+    private static final long serialVersionUID = 1L;
+    
+    /** show log console - dREHER */
+	private static boolean isDebug = true;
+	
+	/** permite calcular montos segun una tasa de conversion que puede estar configurada en el documento dREHER Mayo 25 */
+	private BigDecimal tasaConversion = null;
+
+	/**
      * Constructor de la clase ...
      *
      *
@@ -87,6 +103,38 @@ public final class FactLine extends X_Fact_Acct {
     /** Descripción de Campos */
 
     private DocLine m_docLine = null;
+    
+ // dREHER para mostrar salidas en consola / eclipse
+    private void debug(String string) {
+    	
+    	if(isDebug) {
+    		System.out.println("==========> FactLine. " + string);
+    		log.info("==========> FactLine. " + string);
+    	}
+	}
+    
+    /**
+	 * Executed before Delete operation.
+	 * 
+	 * @return true if record can be deleted
+	 */
+	protected boolean beforeDelete() {
+		debug("Antes de eliminar el registro..." + this.getFact_Acct_ID());
+		return true;
+	} // beforeDelete
+
+	/**
+	 * Executed after Delete operation.
+	 * 
+	 * @param success
+	 *            true if record deleted
+	 * @return true if delete is a success
+	 */
+	protected boolean afterDelete(boolean success) {
+		debug("Despues de eliminar el registro..." + this.getFact_Acct_ID() + " success=" + success);
+		debug("Resultado de eliminacion= " + this.m_processMsg);
+		return success;
+	} // afterDelete
 
     /**
      * Descripción de Método
@@ -357,13 +405,15 @@ public final class FactLine extends X_Fact_Acct {
         }
 
         // Project
-
+        // dREHER Mayo 25 Comportamiento estandar de Libertya
         if( m_docLine != null ) {
             setC_Project_ID( m_docLine.getC_Project_ID());
+            debug("Setea el centro de costos que esta guardado en la linea del documento: " + m_docLine.getC_Project_ID());
         }
 
         if( getC_Project_ID() == 0 ) {
             setC_Project_ID( m_docVO.C_Project_ID );
+            debug("Si continua SIN centro de costos, setea el centro de costos del encabezado: " + getC_Project_ID());
         }
 
         // Campaign
@@ -478,13 +528,14 @@ public final class FactLine extends X_Fact_Acct {
 
         int    C_Location_ID = 0;
         String sql           = "SELECT w.C_Location_ID FROM M_Warehouse w, M_Locator l " + "WHERE w.M_Warehouse_ID=l.M_Warehouse_ID AND l.M_Locator_ID=?";
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt = DB.prepareStatement( sql,get_TrxName());
 
             pstmt.setInt( 1,M_Locator_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 C_Location_ID = rs.getInt( 1 );
@@ -496,6 +547,9 @@ public final class FactLine extends X_Fact_Acct {
             log.log( Level.SEVERE,sql,e );
 
             return;
+        } finally { // dREHER cierre de conexion controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         if( C_Location_ID != 0 ) {
@@ -518,13 +572,14 @@ public final class FactLine extends X_Fact_Acct {
 
         int    C_Location_ID = 0;
         String sql           = "SELECT C_Location_ID FROM C_BPartner_Location WHERE C_BPartner_Location_ID=?";
-
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt = DB.prepareStatement( sql,get_TrxName());
 
             pstmt.setInt( 1,C_BPartner_Location_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 C_Location_ID = rs.getInt( 1 );
@@ -536,6 +591,9 @@ public final class FactLine extends X_Fact_Acct {
             log.log( Level.SEVERE,sql,e );
 
             return;
+        } finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         if( C_Location_ID != 0 ) {
@@ -559,12 +617,14 @@ public final class FactLine extends X_Fact_Acct {
         int    C_Location_ID = 0;
         String sql           = "SELECT C_Location_ID FROM AD_OrgInfo WHERE AD_Org_ID=?";
 
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt = DB.prepareStatement( sql,get_TrxName());
 
             pstmt.setInt( 1,AD_Org_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 C_Location_ID = rs.getInt( 1 );
@@ -576,6 +636,9 @@ public final class FactLine extends X_Fact_Acct {
             log.log( Level.SEVERE,sql,e );
 
             return;
+        } finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         if( C_Location_ID != 0 ) {
@@ -721,18 +784,47 @@ public final class FactLine extends X_Fact_Acct {
             }
         }
 
-        setAmtAcctDr( MConversionRate.convert( getCtx(),getAmtSourceDr(),getC_Currency_ID(),m_acctSchema.getC_Currency_ID(),getDateAcct(),C_ConversionType_ID,m_docVO.AD_Client_ID,AD_Org_ID ));
+        /**
+         * Si el documento tiene tasa de conversion, se debe tomar esa, y no la configurada en la moneda
+         * 
+         * dREHER Mayo 25
+         */
+        
+        if(Util.isEmpty(getTasaConversion(), true))
+        	setAmtAcctDr( MConversionRate.convert( getCtx(),getAmtSourceDr(),getC_Currency_ID(),m_acctSchema.getC_Currency_ID(),getDateAcct(),C_ConversionType_ID,m_docVO.AD_Client_ID,AD_Org_ID ));
+        else
+        	setAmtAcctDr(getMontoConvertidoTasaPropia(getAmtSourceDr()));
+        
 
         if( getAmtAcctDr() == null ) {
             return false;
         }
 
-        setAmtAcctCr( MConversionRate.convert( getCtx(),getAmtSourceCr(),getC_Currency_ID(),m_acctSchema.getC_Currency_ID(),getDateAcct(),C_ConversionType_ID,m_docVO.AD_Client_ID,AD_Org_ID ));
+        if(Util.isEmpty(getTasaConversion(), true))
+        	setAmtAcctCr( MConversionRate.convert( getCtx(),getAmtSourceCr(),getC_Currency_ID(),m_acctSchema.getC_Currency_ID(),getDateAcct(),C_ConversionType_ID,m_docVO.AD_Client_ID,AD_Org_ID ));
+        else
+        	setAmtAcctCr(getMontoConvertidoTasaPropia(getAmtSourceCr()));
 
         return true;
     }    // convert
 
     /**
+     * @param amount monto a convertir
+     * @return monto convertido a la moneda del esquema pero con la tasa de conversion definida en el documento
+     * @author dREHER Mayo 25
+     */
+    private BigDecimal getMontoConvertidoTasaPropia(BigDecimal amount) {
+		BigDecimal convertido 	= amount.multiply(getTasaConversion());
+		int	stdPrecision		= MCurrency.getStdPrecision(Env.getCtx(), m_acctSchema.getC_Currency_ID());
+
+        if (convertido.scale() > stdPrecision) {
+            convertido = convertido.setScale(stdPrecision, BigDecimal.ROUND_HALF_UP);
+        }
+        
+		return convertido;
+	}
+
+	/**
      * Descripción de Método
      *
      *
@@ -786,13 +878,15 @@ public final class FactLine extends X_Fact_Acct {
         if( getM_Locator_ID() != 0 ) {
             String sql = "SELECT AD_Org_ID FROM M_Locator WHERE M_Locator_ID=? AND AD_Client_ID=?";
 
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
             try {
-                PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
+                pstmt = DB.prepareStatement( sql,get_TrxName());
 
                 pstmt.setInt( 1,getM_Locator_ID());
                 pstmt.setInt( 2,getAD_Client_ID());
 
-                ResultSet rs = pstmt.executeQuery();
+                rs = pstmt.executeQuery();
 
                 if( rs.next()) {
                     setAD_Org_ID( rs.getInt( 1 ));
@@ -805,6 +899,9 @@ public final class FactLine extends X_Fact_Acct {
                 pstmt.close();
             } catch( SQLException e ) {
                 log.log( Level.SEVERE,sql,e );
+            } finally { // dREHER cierre de conexion controlado
+            	DB.close(rs, pstmt);
+            	rs = null; pstmt = null;
             }
         }    // M_Locator_ID != 0
 
@@ -965,12 +1062,132 @@ public final class FactLine extends X_Fact_Acct {
             if( (m_docVO != null) && m_docVO.DocumentType != null && m_docVO.DocumentType.equals( Doc.DOCTYPE_ARInvoice ) && (m_docLine != null) && (m_docLine.getC_RevenueRecognition_ID() != 0) ) {
                 setAccount_ID( createRevenueRecognition( m_docLine.getC_RevenueRecognition_ID(),m_docLine.getTrxLine_ID(),getAD_Client_ID(),getAD_Org_ID(),0,getAccount_ID(),getM_Product_ID(),getC_BPartner_ID(),getAD_OrgTrx_ID(),getC_LocFrom_ID(),getC_LocTo_ID(),getC_SalesRegion_ID(),getC_Project_ID(),getC_Campaign_ID(),getC_Activity_ID(),getUser1_ID(),getUser2_ID()));
             }
+            
         }
 
         return true;
     }    // beforeSave
-
+    
+    protected boolean afterSave( boolean newRecord, boolean success ) {
+    	
+    	if(newRecord && success && isActive()) {
+    		
+    	}
+     	
+    	return true;
+    	
+    }
+    
     /**
+     * 
+     * A partir de la configuracion de base distributiva de la cuenta
+     * arma todas las lineas proporcionales y elimina la linea original
+     * 
+     * @param ev
+     * @return
+     * dREHER
+     */
+    public boolean DistribuirLinea(MElementValue ev, String trxName) {
+    	
+    	debug("Comienza distribucion de linea...");
+    	
+    	boolean distribuyo = true;
+    	
+    	BigDecimal credito = getAmtAcctCr();
+    	if(credito==null)
+    		credito = Env.ZERO;
+    	
+    	BigDecimal creditoSource = getAmtSourceCr();
+    	if(creditoSource==null)
+    		creditoSource = Env.ZERO;
+    	
+    	BigDecimal debito = getAmtAcctDr();
+    	if(debito==null)
+    		debito = Env.ZERO;
+    	
+    	BigDecimal debitoSource = getAmtSourceDr();
+    	if(debitoSource==null)
+    		debitoSource = Env.ZERO;
+    	
+    	ArrayList<X_C_DistributiveBase> distri = getBaseDistributiva(ev.getC_ElementValue_ID());
+    	for(X_C_DistributiveBase db: distri) {
+    		
+    		// Tomo datos para la distribucion
+    		BigDecimal porcentaje = db.getPercentage();
+    		int C_Project_ID = db.getC_Project_ID();
+    		
+    		// Calculo los importes distribuidos
+    		BigDecimal creditoDistri = credito.multiply(porcentaje).divide(Env.ONEHUNDRED, RoundingMode.HALF_DOWN);
+    		BigDecimal debitoDistri = debito.multiply(porcentaje).divide(Env.ONEHUNDRED, RoundingMode.HALF_DOWN);
+    		
+    		BigDecimal creditoSourceDistri = creditoSource.multiply(porcentaje).divide(Env.ONEHUNDRED, RoundingMode.HALF_DOWN);
+    		BigDecimal debitoSourceDistri = debitoSource.multiply(porcentaje).divide(Env.ONEHUNDRED, RoundingMode.HALF_DOWN);
+    		
+    		// Creo linea distribucion
+    		FactLine to = new FactLine( getCtx(),getAD_Table_ID(),getRecord_ID(),getLine_ID(),trxName);
+    		
+    		// Clono datos desde la linea actual a la linea distribucion
+    		PO.copyValues(this, to, getAD_Client_ID(), getAD_Org_ID());
+    		
+    		to.setClientOrg( this );    // needs to be set explicitly
+            to.setDocumentInfo( m_docVO,m_docLine );
+            to.setAccount( m_acctSchema,m_acct );
+            to.setPostingType( getPostingType());
+           
+    		
+    		// Actualizo montos distribuidos y proyecto
+    		to.setAmtAcctCr(creditoDistri);
+    		to.setAmtAcctDr(debitoDistri);
+    		to.setAmtSourceCr(creditoSourceDistri);
+    		to.setAmtSourceDr(debitoSourceDistri);
+    		to.setC_Project_ID(C_Project_ID);
+    		
+    		// guardo linea de distribucion
+    		boolean isSave = to.save(trxName); 
+    		if(!isSave) {
+    			distribuyo = false;
+    		}
+    		
+    		debug("distribuyo linea..." + to + " guardo=" + isSave);
+    		
+    	}
+		
+    	debug("termina distribucion de linea..." + distribuyo);
+    	
+    	return distribuyo;
+	}
+
+	private ArrayList<X_C_DistributiveBase> getBaseDistributiva(int c_ElementValue_ID) {
+    	ArrayList<X_C_DistributiveBase> distri = new ArrayList<X_C_DistributiveBase>();
+    	
+    	String sql = "SELECT C_DistributiveBase_ID " + 
+    	" FROM C_DistributiveBase " +
+    	" WHERE C_ElementValue_ID=? AND IsActive='Y'";
+    	
+    	PreparedStatement pstmt = null;
+    	ResultSet rs = null;
+    	
+    	try {
+            pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt.setInt( 1, c_ElementValue_ID);
+            rs = pstmt.executeQuery();
+
+            while( rs.next()) {
+            	distri.add(new X_C_DistributiveBase(Env.getCtx(), rs.getInt("C_DistributiveBase_ID"), get_TrxName()));
+            } 
+            rs.close();
+            pstmt.close();
+        } catch( SQLException e ) {
+            log.log( Level.SEVERE,sql,e );
+        } finally { // dREHER cierre de conexion controlado
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
+        }
+    	
+		return distri;
+	}
+
+	/**
      * Descripción de Método
      *
      *
@@ -1020,13 +1237,16 @@ public final class FactLine extends X_Fact_Acct {
         int    new_Account_ID       = 0;
         String sql                  = "SELECT ga.UnearnedRevenue_Acct, vc.Account_ID " + "FROM C_BP_Group_Acct ga, C_BPartner p, C_ValidCombination vc " + "WHERE ga.C_BP_Group_ID=p.C_BP_Group_ID" + " AND ga.UnearnedRevenue_Acct=vc.C_ValidCombination_ID" + " AND ga.C_AcctSchema_ID=? AND p.C_BPartner_ID=?";
 
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt = DB.prepareStatement( sql,get_TrxName());
 
             pstmt.setInt( 1,getC_AcctSchema_ID());
             pstmt.setInt( 2,C_BPartner_ID );
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
                 UnearnedRevenue_Acct = rs.getInt( 1 );
@@ -1037,6 +1257,9 @@ public final class FactLine extends X_Fact_Acct {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,sql,e );
+        } finally { // dREHER cierre de conexion controlada
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
         }
 
         if( new_Account_ID == 0 ) {
@@ -1082,8 +1305,10 @@ public final class FactLine extends X_Fact_Acct {
         boolean success = false;
         String  sql     = "SELECT AmtAcctDr,AmtAcctCr, C_Project_ID, AD_Org_ID " + "FROM Fact_Acct " + "WHERE C_AcctSchema_ID=? AND AD_Table_ID=? AND Record_ID=?" + " AND Line_ID=? AND Account_ID=?";
 
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            PreparedStatement pstmt = DB.prepareStatement( sql,get_TrxName());
+            pstmt = DB.prepareStatement( sql,get_TrxName());
 
             pstmt.setInt( 1,getC_AcctSchema_ID());
             pstmt.setInt( 2,AD_Table_ID );
@@ -1091,7 +1316,7 @@ public final class FactLine extends X_Fact_Acct {
             pstmt.setInt( 4,Line_ID );
             pstmt.setInt( 5,m_acct.getAccount_ID());
 
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             if( rs.next()) {
 
@@ -1128,10 +1353,21 @@ public final class FactLine extends X_Fact_Acct {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,sql,e );
+        } finally { // dREHER cierre de conexion controlada
+        	DB.close(rs, pstmt);
+        	rs = null; pstmt = null;
         }
 
         return success;
     }    // updateReverseLine
+
+	public BigDecimal getTasaConversion() {
+		return tasaConversion;
+	}
+
+	public void setTasaConversion(BigDecimal tasaConversion) {
+		this.tasaConversion = tasaConversion;
+	}
 }    // FactLine
 
 

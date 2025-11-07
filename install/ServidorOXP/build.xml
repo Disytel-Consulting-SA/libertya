@@ -381,6 +381,14 @@
 	<delete file="nuevoOXP/org/openXpertya/model/MAcctSchema.class" failonerror="no" />
 	<delete file="nuevoOXP/org/openXpertya/model/MAcctSchemaElement.class" failonerror="no" />
 	<delete file="nuevoOXP/org/openXpertya/model/MAccount.class" failonerror="no" />
+
+<!--
+Quitar la clase especifica para no generar conflictos en la version web con la contabilidad - dREHER
+22-10-2025 Merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea
+-->
+	<delete file="nuevoOXP/org/openXpertya/model/X_C_ElementValue.class" failonerror="no" />
+
+
 	<jar jarfile="lib2/OXP.jar" index="yes">
 	      	<fileset dir="nuevoOXP"/>
 	      	<manifest>
@@ -664,7 +672,11 @@
 	<war destfile="${basedir}/lib/webui.war" update="true" >
 		<lib dir="${basedir}/lib2">
 			<include name="OXP.jar"/>
+		</lib>
+		<lib dir="${basedir}/lib">
 			<include name="OXPSLib.jar"/>
+			<include name="OXPXLib.jar"/>
+			<include name="JasperReports.jar"/>
 		</lib>
    	</war>
 	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>

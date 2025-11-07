@@ -52,6 +52,8 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
     <pathelement path="../lib/commons-codec-1.9.jar"/>
   	<pathelement path="../lib/commons-io-2.4.jar"/>
   	<pathelement path="../lib/lyws.jar"/>
+	<pathelement path="../lib/jxl.jar"/>
+	<pathelement path="../lib/commons-lang.jar" />
     <fileset dir="../lib/junit5">
         <include name="**/*.jar"/>
     </fileset>

@@ -91,6 +91,22 @@ if (oo != null)
 }
 return false;
 }
+/** Set Cintolo_OnlineAccounting */
+public void setCintolo_OnlineAccounting (boolean Cintolo_OnlineAccounting)
+{
+set_Value ("Cintolo_OnlineAccounting", new Boolean(Cintolo_OnlineAccounting));
+}
+/** Get Cintolo_OnlineAccounting */
+public boolean isCintolo_OnlineAccounting() 
+{
+Object oo = get_Value("Cintolo_OnlineAccounting");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
 /** Set Accounting Schema.
 Rules for accounting */
 public void setC_AcctSchema_ID (int C_AcctSchema_ID)

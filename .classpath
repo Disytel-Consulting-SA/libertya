@@ -371,7 +371,15 @@
 	<classpathentry kind="lib" path="lib/clover/json-20080701.jar"/>
 	<classpathentry kind="lib" path="lib/clover/nv-websocket-client-1.31.jar"/>
 	<classpathentry kind="lib" path="lib/jdom-2.0.6.1.jar"/>
-	<classpathentry kind="lib" path="lib/jxl.jar"/>
-	<classpathentry kind="lib" path="lib/commons-lang.jar"/>
+	<classpathentry kind="lib" path="/home/julian/libertya/git/libertya/lib/jxl.jar"/>
+	<classpathentry kind="lib" path="/home/julian/libertya/git/libertya/lib/commons-lang.jar"/>
+	<classpathentry kind="lib" path="lib/poi-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="lib/poi-excelant-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="lib/poi-scratchpad-3.11-20141221.jar"/>
+	<classpathentry kind="lib" path="lib/xmlbeans-2.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/zxing.jar"/>
+	<classpathentry kind="lib" path="lib/zxing-javase.jar"/>
 	<classpathentry kind="output" path="tools/lib/local"/>
 </classpath>

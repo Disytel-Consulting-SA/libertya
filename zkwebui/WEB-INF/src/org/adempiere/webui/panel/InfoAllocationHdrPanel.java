@@ -127,7 +127,7 @@ public class InfoAllocationHdrPanel extends InfoPanel implements EventListener,V
 		//fBPartner.setWidth("100%");
 		fDocumentNo.setWidth("100%");
 		
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -243,5 +243,11 @@ public class InfoAllocationHdrPanel extends InfoPanel implements EventListener,V
 	    	fBPartner.setValue(evt.getNewValue());
 		}
 	}
+
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
+	}
+
 
 }

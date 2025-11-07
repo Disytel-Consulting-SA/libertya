@@ -600,26 +600,32 @@ public class LaunchInvoice extends SvrProcess {
 		// dREHER
 		// Datos para facturas de exportacion
 		
-		String data = invoice.get_ValueAsString("Cintolo_Incoterm");
+		String data = invoice.getCintolo_Incoterm();
 		jasperwrapper.addParameter("INCOTERM", data);
 		
-		data = invoice.get_ValueAsString("Cintolo_OrigenPro");
+		data = invoice.getCintolo_OrigenPro();
 		jasperwrapper.addParameter("ORIGEN_PROCEDENCIA", data);
 		
-		data = invoice.get_ValueAsString("Cintolo_TipoMercaderia");
+		data = invoice.getCintolo_TipoMercaderia();
 		jasperwrapper.addParameter("TIPO_MERCADERIA", data);
 		
 		// Datos de la entrega
-		if(invoice.get_Value("Cintolo_Delivery_Location")!=null) {
-			int C_Location_ID = (Integer)invoice.get_Value("Cintolo_Delivery_Location");
-			if(C_Location_ID > 0) {
-				MLocation lo = MLocation.get(getCtx(), C_Location_ID, get_TrxName());
-				region = null;
-				if (lo.getC_Region_ID() > 0)
-					region = new MRegion(getCtx(), lo.getC_Region_ID(), get_TrxName());
-				jasperwrapper.addParameter(
-					"DIRECCION_ENTREGA",
-					JasperReportsUtil.coalesce(lo.getAddress1(), "")
+		if(invoice.getCintolo_Delivery_Location() > 0) {
+			int C_BPLocation_ID = invoice.getCintolo_Delivery_Location();
+			if(C_BPLocation_ID > 0) {
+				
+				try {
+					
+					MBPartnerLocation bpLoc = new MBPartnerLocation(Env.getCtx(), C_BPLocation_ID, get_TrxName());
+					int C_Location_ID = bpLoc.getC_Location_ID();
+					
+					MLocation lo = MLocation.get(getCtx(), C_Location_ID, get_TrxName());
+					region = null;
+					if (lo.getC_Region_ID() > 0)
+						region = new MRegion(getCtx(), lo.getC_Region_ID(), get_TrxName());
+					jasperwrapper.addParameter(
+							"DIRECCION_ENTREGA",
+							JasperReportsUtil.coalesce(lo.getAddress1(), "")
 							+ ". "
 							+ JasperReportsUtil.coalesce(lo.getCity(), "")
 							+ ". ("
@@ -627,29 +633,61 @@ public class LaunchInvoice extends SvrProcess {
 							+ "). "
 							+ JasperReportsUtil.coalesce(region == null ? ""
 									: region.getName(), ""));
+
+					// dREHER 5.0
+					int id = DB.getSQLValue(get_TrxName(), "SELECT C_BPartner_Location_ID FROM C_BPartner_Location WHERE C_Location_ID=? AND IsActive='Y'", lo.getC_Location_ID());
+					if(id>0) {
+						MBPartnerLocation el = new MBPartnerLocation(Env.getCtx(), id, get_TrxName());
+						String nameEntrega = el.getName();
+						jasperwrapper.addParameter(
+								"DIRECCION_ENTREGA_NOMBRE", nameEntrega);
+					}
+
+				}catch(Exception ex) {
+					System.out.println("Se produjo un error al cargar el domicilio de entrega!");
+				}
 				
 			}
 			
 		}
 		
 		// Destino final
-		if(invoice.get_Value("Cintolo_Final_Destine")!=null) {
-			int C_Location_ID = (Integer)invoice.get_Value("Cintolo_Final_Destine");
-			if(C_Location_ID > 0) {
-				MLocation lo = MLocation.get(getCtx(), C_Location_ID, get_TrxName());
-				region = null;
-				if (lo.getC_Region_ID() > 0)
-					region = new MRegion(getCtx(), lo.getC_Region_ID(), get_TrxName());
-				jasperwrapper.addParameter(
-						"DIRECCION_DESTINO",
-						JasperReportsUtil.coalesce(lo.getAddress1(), "")
-						+ ". "
-						+ JasperReportsUtil.coalesce(lo.getCity(), "")
-						+ ". ("
-						+ JasperReportsUtil.coalesce(lo.getPostal(), "")
-						+ "). "
-						+ JasperReportsUtil.coalesce(region == null ? ""
-								: region.getName(), ""));
+		if(invoice.getCintolo_Final_Destine()>0) {
+			int C_BPLocation_ID = invoice.getCintolo_Final_Destine();
+			if(C_BPLocation_ID > 0) {
+				
+				try {
+					
+					MBPartnerLocation bpLoc = new MBPartnerLocation(Env.getCtx(), C_BPLocation_ID, get_TrxName());
+					int C_Location_ID = bpLoc.getC_Location_ID();
+					
+					MLocation lo = MLocation.get(getCtx(), C_Location_ID, get_TrxName());
+					region = null;
+					if (lo.getC_Region_ID() > 0)
+						region = new MRegion(getCtx(), lo.getC_Region_ID(), get_TrxName());
+					jasperwrapper.addParameter(
+							"DIRECCION_DESTINO",
+							JasperReportsUtil.coalesce(lo.getAddress1(), "")
+							+ ". "
+							+ JasperReportsUtil.coalesce(lo.getCity(), "")
+							+ ". ("
+							+ JasperReportsUtil.coalesce(lo.getPostal(), "")
+							+ "). "
+							+ JasperReportsUtil.coalesce(region == null ? ""
+									: region.getName(), ""));
+
+					// dREHER 5.0
+					int id = DB.getSQLValue(get_TrxName(), "SELECT C_BPartner_Location_ID FROM C_BPartner_Location WHERE C_Location_ID=? AND IsActive='Y'", lo.getC_Location_ID());
+					if(id>0) {
+						MBPartnerLocation el = new MBPartnerLocation(Env.getCtx(), id, get_TrxName());
+						String nameDestino = el.getName();
+						jasperwrapper.addParameter(
+								"DESTINO_FINAL_NOMBRE", nameDestino);
+					}
+
+				}catch(Exception ex) {
+					System.out.println("Se produjo un error al cargar el domicilio destino final!");
+				}
 
 			}
 

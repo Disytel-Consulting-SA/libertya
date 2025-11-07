@@ -28,10 +28,16 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 	/** Date Acct To			*/
 	private Timestamp	p_DateAcct_To = null;
 	
+	/** C_Project_ID			*/
+	private int 		p_C_Project_ID = 0;
+	
 	/** Digitos por lo que hay que agrupar */
 	private int 		p_groupByDigits = 0;
 	
 	private boolean		groupAccounts = false;
+	
+	/** dREHER agrupa por proyectos */
+	private boolean		p_groupByProjects = false;
 	
 	/**	Properties				*/
 	private Properties p_ctx = null;
@@ -50,7 +56,8 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 	HashMap m_saldos;
 	
 	
-	public SumasYSaldosJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, int grupByDigits)	{
+	public SumasYSaldosJasperDataSource (Properties ctx, Timestamp dateFrom, Timestamp dateTo, int elementFrom_ID, int elementTo_ID, int grupByDigits, 
+			int C_Project_ID, boolean p_groupbyProjects)	{
 		p_ctx = ctx;
 		
 		p_DateAcct_From = dateFrom;
@@ -59,6 +66,10 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		p_1_ElementValue_ID = elementFrom_ID;
 		p_2_ElementValue_ID = elementTo_ID;
 		p_groupByDigits = grupByDigits;
+
+		// dREHER
+		p_C_Project_ID = C_Project_ID;
+		p_groupByProjects = p_groupbyProjects;
 		
 		loadData();
 	}
@@ -74,13 +85,22 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		sql.append("SELECT ");
 		
 		if (groupAccounts)	{
-			sql.append(" substr(ev.name, 0,4) as name ");
+			sql.append((p_groupByProjects?"fa.c_project_id,pr.name as proyecto,":"") + // dREHER 
+					" substr(ev.name, 0,4) as name ");
 		}
 		else {
 			// Solo ponemos el concatenamos el campo value y name para que muestre el codigo de la cuenta tambien.
-			sql.append(" fa.account_id, ev.value || ' ' || ev.name as name");
+			sql.append((p_groupByProjects?"fa.c_project_id,pr.name as proyecto,":"") + // dREHER
+					" fa.account_id, ev.value || ' ' || ev.name as name");
 		}
-		sql.append(" ,sum(fa.amtacctdr)  as debe, sum(fa.amtacctcr) as haber FROM Fact_acct fa, C_ElementValue ev WHERE fa.account_id=ev.c_elementvalue_id ");
+		sql.append(" ,sum(fa.amtacctdr)  as debe, sum(fa.amtacctcr) as haber " +
+		
+		" FROM Fact_acct fa " +
+		" LEFT JOIN C_ElementValue ev ON ev.C_ElementValue_ID=fa.Account_ID " + // dREHER
+		
+		" LEFT JOIN C_Project pr ON pr.C_Project_ID=fa.C_Project_ID " + // dREHER
+
+		" WHERE fa.account_id=ev.c_elementvalue_id ");
         
 		// Añadimos restricciones
 		sql.append( " AND fa.AD_Client_ID=").append(Env.getAD_Client_ID(p_ctx));
@@ -108,25 +128,37 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 			sql.append("AND C_ElementValue_ID = ").append(p_1_ElementValue_ID);
 		}
 		
+		// dREHER
+		if(p_C_Project_ID > 0)
+			sql.append(" AND C_Project_ID= ").append(p_C_Project_ID);
+		
+		
 		if (groupAccounts)	{
-			sql.append(" GROUP BY rollup(substr(ev.name,0,4)) ORDER BY name ");
+			sql.append(" GROUP BY " + (p_groupByProjects?"fa.c_project_id,pr.name,":"") +  
+					" rollup(substr(ev.name,0,4)) " +
+					" ORDER BY " + 
+					(p_groupByProjects?"fa.c_project_id,":"") + " name ");
 		}
 		else {
-			sql.append(" GROUP BY fa.account_id, ev.value, ev.name ORDER BY ev.value");
+			sql.append(" GROUP BY " + (p_groupByProjects?"fa.c_project_id,pr.name,":"") + 
+					" fa.account_id, ev.value, ev.name " +
+					" ORDER BY " + 
+					(p_groupByProjects?"fa.c_project_id,pr.name,":"") +" ev.value");
 		}
 
-		
-		return  sql.toString();
+		// dREHER
+		return  sql.toString().replace("current_date()", "current_date");
 	}
 	
 		
 	
 	private  void loadSaldos()	{
 		m_saldos = new HashMap();
-		
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try	{
-			PreparedStatement pstmt = DB.prepareStatement(getSQLData(true), null, true);
-			ResultSet rs = pstmt.executeQuery();
+			pstmt = DB.prepareStatement(getSQLData(true), null, true);
+			rs = pstmt.executeQuery();
 			while (rs.next())	{
 				BigDecimal saldoAcumulado = rs.getBigDecimal("Debe").subtract(rs.getBigDecimal("Haber"));
 				M_SumasYSaldos line = new M_SumasYSaldos(rs.getString("Name"));
@@ -142,6 +174,10 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		catch (SQLException e)	{
 			log.severe("No se pueden cargar los saldos." + e.toString());
 		}
+		finally{ // dREHER cierre de conexiones controlado
+			DB.close(rs, pstmt);
+			rs=null; pstmt=null;
+		}
 	}
 	
 	
@@ -154,10 +190,12 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		
 		// ArrayList donde guardaremos los datos del informe
 		ArrayList list = new ArrayList();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		
 		try {
-			PreparedStatement pstmt = DB.prepareStatement(getSQLData(false), null, true);
-			ResultSet rs = pstmt.executeQuery();
+			pstmt = DB.prepareStatement(getSQLData(false), null, true);
+			rs = pstmt.executeQuery();
 			
 			BigDecimal saldo = Env.ZERO;
 			while (rs.next())	{
@@ -175,7 +213,10 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		catch (SQLException e)	{
 			throw new RuntimeException("No se puede ejecutar la consulta para crear las lineas del informe.");
 		}
-		
+		finally{ // dREHER cierre de conexiones controlado
+			DB.close(rs, pstmt);
+			rs=null; pstmt=null;
+		}
 		// Guardamos la lista en m_reportLines
 		m_reportLines = new M_SumasYSaldos[list.size()];
 		list.toArray(m_reportLines);
@@ -201,6 +242,9 @@ public class SumasYSaldosJasperDataSource implements JRDataSource {
 		}
 		else if (name.toUpperCase().equals("SALDOINICIAL"))	{
 			return m_reportLines[m_currentRecord].getSaldoInicial();
+		}
+		else if (name.toUpperCase().equals("PROYECTO"))	{
+			return m_reportLines[m_currentRecord].getProyecto();
 		}
 
 		else {
@@ -229,7 +273,7 @@ class M_SumasYSaldos	{
 	private BigDecimal Debe = Env.ZERO;
 	private BigDecimal Haber = Env.ZERO;
 	private BigDecimal SaldoInicial = Env.ZERO;
-	
+	private String Proyecto;
 	
 	/**
 	 * Constructor
@@ -238,12 +282,13 @@ class M_SumasYSaldos	{
 	 * @param debe
 	 * @param haber
 	 */
-	public M_SumasYSaldos(String name, BigDecimal saldoInicial, BigDecimal debe, BigDecimal haber) {
+	public M_SumasYSaldos(String name, BigDecimal saldoInicial, BigDecimal debe, BigDecimal haber, String proyecto) {
 		super();
 		Name = name;
 		SaldoInicial = saldoInicial;
 		Debe = debe;
 		Haber = haber;
+		Proyecto = proyecto;
 	}
 	
 	
@@ -262,6 +307,7 @@ class M_SumasYSaldos	{
 			Name = rs.getString("Name");
 			Debe = rs.getBigDecimal("Debe");
 			Haber = rs.getBigDecimal("Haber");
+			Proyecto = rs.getString("Proyecto");
 		}
 		catch (SQLException e)	{
 			
@@ -303,7 +349,12 @@ class M_SumasYSaldos	{
 	public void setSaldoInicial(BigDecimal saldoInicial) {
 		SaldoInicial = saldoInicial;
 	}
-	
+	public String getProyecto() {
+		return Proyecto;
+	}
+	public void setProyecto(String proyecto) {
+		Proyecto = proyecto;
+	}
 	
 	
 }

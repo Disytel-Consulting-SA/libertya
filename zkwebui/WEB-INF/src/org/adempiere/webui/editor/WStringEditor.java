@@ -18,6 +18,8 @@
 package org.adempiere.webui.editor;
 
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.adempiere.webui.ValuePreference;
 import org.adempiere.webui.component.Combobox;
@@ -34,8 +36,11 @@ import org.openXpertya.model.MRole;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.event.InputEvent;
+import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Menuitem;
 
 /**
@@ -48,7 +53,7 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 {
     private static final String EDITOR_EVENT = "EDITOR";
 
-	private static final String[] LISTENER_EVENTS = {Events.ON_CHANGE, Events.ON_OK};
+	private static final String[] LISTENER_EVENTS = {Events.ON_CHANGE, Events.ON_OK, Events.ON_CHANGING, Events.ON_FOCUS}; 
 
     private String oldValue;
 
@@ -111,6 +116,13 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 
 	private void init(String obscureType)
     {
+		
+		// dREHER - iDempiere
+		setChangeEventWhenEditing (true);
+		
+		// dREHER de entrada NO esta editando
+		isEditing = false;
+		
 		if (mField != null)
 		{
 	        getComponent().setMaxlength(mField.getFieldLength());
@@ -137,8 +149,19 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 	            getComponent().setRows(8);
 	        }
 
-	        if (getComponent() instanceof Textbox)
+	        if (getComponent() instanceof Textbox) {
 	        	((Textbox)getComponent()).setObscureType(obscureType);
+	        	
+	        	/**
+	        	 * Si es link, pasar info al textbox
+	        	 * dREHER
+	        	 */
+	        	
+	        	((Textbox)getComponent()).setM_prefijoLink(prefijoLink);
+	        	((Textbox)getComponent()).setM_islink(isLink);
+	        	
+	        	
+	        }
 
 	        popupMenu = new WEditorPopupMenu(false, false, true);
 	        Menuitem editor = new Menuitem(Msg.getMsg(Env.getCtx(), "Editor"), "images/Editor16.png");
@@ -168,19 +191,163 @@ public class WStringEditor extends WEditor implements ContextMenuListener
 
     public void onEvent(Event event)
     {
+    	
     	if (Events.ON_CHANGE.equals(event.getName()) || Events.ON_OK.equals(event.getName()))
     	{
 	        String newValue = getComponent().getValue();
+	        
 	        if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
 	    	    return;
 	    	}
 	        if (oldValue == null && newValue == null) {
 	        	return;
 	        }
+	        
 	        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, newValue);
 	        super.fireValueChange(changeEvent);
+	        
 	        oldValue = newValue;
+    	}else {
+    		if (Events.ON_FOCUS.equals(event.getName()) && 1==2) {  // dREHER por ahora lo desactivamos ya que no le gusto a los usuarios
+    			
+    			debug("Foco en el campo...");
+    			
+    			// Obtener el ID HTML del componente
+                String componentId = getComponent().getUuid();
+
+                // Mostrar mensaje temporal al usuario mediante JavaScript
+                String jsScript = 
+                    "var comp = document.getElementById('" + componentId + "');" +
+                    "if (comp) {" +
+                    "  var rect = comp.getBoundingClientRect();" + // Obtiene posición del componente
+                    "  var msg = document.createElement('div');" +
+                    "  msg.style.position = 'absolute';" +
+                    "  msg.style.backgroundColor = '#f0f8ff';" + // Fondo azul claro
+                    "  msg.style.border = '1px solid #ccc';" +
+                    "  msg.style.padding = '5px';" +
+                    "  msg.style.color = '#000';" +
+                    "  msg.style.zIndex = '9999';" +
+                    "  msg.style.top = (window.scrollY + rect.top - 40) + 'px';" + // 40px encima del campo
+                    "  msg.style.left = (window.scrollX + rect.left) + 'px';" +
+                    "  msg.innerHTML = 'Al final de la edicion, presione Enter para guardar los cambios';" +
+                    "  document.body.appendChild(msg);" +
+                    "  setTimeout(function() { document.body.removeChild(msg); }, 3000);" + // Desaparece después de 3 segundos
+                    "}";
+                Clients.evalJavaScript(jsScript);
     	}
+    }
+    }
+
+	/**
+	 * Por las capas de clases y manejadores de eventos de Libertya+ZK no se puede 
+	 * trabajar con onChanging, ya que se producen efectos no deseados, esto requeriria
+	 * mucho mas trabajo de analisis e investigacion y seguramente de reescritura de
+	 * bastante codigo
+	 * 
+	 * @param event
+	 * dREHER
+	 */
+    public void onEvent_iDempiere(Event event)
+    {
+    	// iDempiere
+    	boolean isStartEdit = INIT_EDIT_EVENT.equalsIgnoreCase (event.getName());
+    	System.out.println("WStringEditor. onEvent: " + event.getName());
+    	
+    	if (Events.ON_CHANGE.equals(event.getName()) || Events.ON_OK.equals(event.getName()))
+    	{
+	        String newValue = getComponent().getValue();
+	        
+	        if (!isStartEdit && oldValue != null && newValue != null && oldValue.equals(newValue)) {
+	    	    return;
+	    	}
+	        if (!isStartEdit && oldValue == null && newValue == null) {
+	        	return;
+	        }    
+	        
+	        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, newValue);
+	        
+	        changeEvent.setIsInitEdit(isStartEdit);
+	        
+	        super.fireValueChange(changeEvent);
+	        
+	        oldValue = getComponent().getValue(); // IDEMPIERE-963 - check again the value could be changed by callout
+    	}
+    }
+    
+    public void onEventNOFUNCA(Event event) {
+    	
+    	debug("onEvent.isEditing=" + isEditing);
+    	
+        if (Events.ON_CHANGE.equals(event.getName())) {
+        	
+        	debug("onChange...");
+        	
+            // Manejar el evento onChange (valor cambiado)
+            handleValueChange(getComponent().getValue()); 
+            isEditing = false; // Reiniciar el estado de edición
+            
+        } else if (Events.ON_CHANGING.equals(event.getName()) && !isEditing) {
+            InputEvent inputEvent = (InputEvent) event;
+
+            debug("onChanging...");
+            
+            // Detectar que se ha iniciado la edición
+            if (!isEditing) {
+                isEditing = true;
+
+                // Forzar el disparo del evento onChange
+                // Events.postEvent(new Event(Events.ON_CHANGE, getComponent(), inputEvent.getValue()));
+                
+                // Manejar el valor mientras se edita
+                debug("Texto ingresado en onChanging: " + inputEvent.getValue());
+                
+                String newValue = inputEvent.getValue();
+                handleValueChange(newValue);
+                
+            }else
+            	debug("Ya no esta activo onChanging...");
+            
+        } else if (Events.ON_OK.equals(event.getName())) {
+            
+        	// Confirmación con Enter
+            handleValueChange(getComponent().getValue());
+            isEditing = false; // Reiniciar el estado de edición
+        }
+    }
+
+    private void handleValueChange(String newValue) {
+        debug("handeValueChange.Valor cambiado: " + newValue);
+
+        // Habilitar el botón de guardado aquí
+        enableSaveButton(true, newValue);
+
+        // Reiniciar el estado de edición
+        // isEditing = false;
+    }
+
+    private void enableSaveButton(boolean enable, String newValue) {
+        
+        String oldValue = getComponent().getValue();
+        
+        // Habilitar o deshabilitar el botón de guardado
+        debug("Botón de guardado habilitado: " + enable + " - valor anterior: " + oldValue + " - nuevo valor: " + newValue);
+        
+        if (oldValue != null && newValue != null && oldValue.equals(newValue) ) {
+    	    return;
+    	}
+        if (oldValue == null && newValue == null) {
+        	return;
+        }
+        
+        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, newValue);
+        super.fireValueChange(changeEvent);
+        
+        oldValue = newValue;
+        getComponent().setValue(newValue);
+        
+        debug("enableSaveButton. newValue=" + newValue + "  -  component.getValue()=" + getComponent().getValue());
+        
+        // oldValue = getComponent().getValue(); // IDEMPIERE-963 - check again the value could be changed by callout
     }
 
     @Override
@@ -206,6 +373,7 @@ public class WStringEditor extends WEditor implements ContextMenuListener
         {
             getComponent().setValue("");
         }
+        
         oldValue = getComponent().getValue();
     }
 

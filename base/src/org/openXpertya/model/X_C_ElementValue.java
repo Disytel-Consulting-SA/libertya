@@ -56,6 +56,69 @@ public String toString()
 StringBuffer sb = new StringBuffer ("X_C_ElementValue[").append(getID()).append("]");
 return sb.toString();
 }
+/** Set Cintolo_MandatoryCostCenter */
+public void setCintolo_MandatoryCostCenter (boolean Cintolo_MandatoryCostCenter)
+{
+set_Value ("Cintolo_MandatoryCostCenter", new Boolean(Cintolo_MandatoryCostCenter));
+}
+/** Get Cintolo_MandatoryCostCenter */
+public boolean isCintolo_MandatoryCostCenter() 
+{
+Object oo = get_Value("Cintolo_MandatoryCostCenter");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Cintolo_UsesDistributiveBase */
+public void setCintolo_UsesDistributiveBase (boolean Cintolo_UsesDistributiveBase)
+{
+set_Value ("Cintolo_UsesDistributiveBase", new Boolean(Cintolo_UsesDistributiveBase));
+}
+/** Get Cintolo_UsesDistributiveBase */
+public boolean isCintolo_UsesDistributiveBase() 
+{
+Object oo = get_Value("Cintolo_UsesDistributiveBase");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Cintolo_ValidatedDistribution */
+public void setCintolo_ValidatedDistribution (boolean Cintolo_ValidatedDistribution)
+{
+set_Value ("Cintolo_ValidatedDistribution", new Boolean(Cintolo_ValidatedDistribution));
+}
+/** Get Cintolo_ValidatedDistribution */
+public boolean isCintolo_ValidatedDistribution() 
+{
+Object oo = get_Value("Cintolo_ValidatedDistribution");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set Cintolo_ValidateDistribution */
+public void setCintolo_ValidateDistribution (String Cintolo_ValidateDistribution)
+{
+if (Cintolo_ValidateDistribution != null && Cintolo_ValidateDistribution.length() > 1)
+{
+log.warning("Length > 1 - truncated");
+Cintolo_ValidateDistribution = Cintolo_ValidateDistribution.substring(0,1);
+}
+set_Value ("Cintolo_ValidateDistribution", Cintolo_ValidateDistribution);
+}
+/** Get Cintolo_ValidateDistribution */
+public String getCintolo_ValidateDistribution() 
+{
+return (String)get_Value("Cintolo_ValidateDistribution");
+}
 public static final int ACCOUNTSIGN_AD_Reference_ID = MReference.getReferenceID("C_ElementValue Account Sign");
 /** Natural = N */
 public static final String ACCOUNTSIGN_Natural = "N";

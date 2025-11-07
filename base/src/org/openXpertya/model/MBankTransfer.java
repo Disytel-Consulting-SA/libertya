@@ -10,6 +10,7 @@ import org.openXpertya.process.DocumentEngine;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
+import org.openXpertya.util.Util;
 
 
 /**
@@ -166,7 +167,14 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			BigDecimal account_to_amount = getammount_to().multiply(anular?minusOne:BigDecimal.ONE); //Cantidad original, antes de la conversión
 			if(getC_currency_from_ID() != getC_currency_to_ID()) {
 				account_to_amount = MCurrency.currencyConvert(account_to_amount, getC_currency_from_ID(), getC_currency_to_ID(), new Date(), getAD_Org_ID(), getCtx());
+				
+				// dREHER 5.0
+				if(Util.isEmpty(account_to_amount, true)) {
+					m_processMsg = "El importe del pago debe ser mayor a cero, verifique tasa de cambio de monedas a la fecha";
+					return false;
+				}
 			} 
+			
 			pagoDestino.setAmount(getC_currency_to_ID(), account_to_amount);
 			pagoDestino.setDateTrx(getDateTrx());
 			pagoDestino.setDateAcct(getDateTrx());
@@ -217,6 +225,11 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 			e.printStackTrace();
 			log.severe("Error al generar los pagos para la transferencia");
 			return false;
+		}
+		
+		// dREHER 5.0
+		if(getC_currency_from_ID() != getC_currency_to_ID()) {
+			m_processMsg = "Las monedas de las cuentas origen y destino son difrentes, se realizará la conversión....";
 		}
 
 		return true;

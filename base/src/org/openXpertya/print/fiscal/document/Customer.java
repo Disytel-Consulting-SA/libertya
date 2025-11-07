@@ -57,6 +57,9 @@ public class Customer implements Serializable{
 	/** Responsabilidad frente al IVA: No categorizado */
 	public static final int NO_CATEGORIZADO = 0;
 	
+	/** Responsabilidad frente al IVA: No alcanzado dREHER Abril 25 */
+	public static final int NO_ALCANZADO = 4;
+	
 	/** Clave de búsqueda si es que posee */
 	private String value = null;
 	/** Nombre y apellido del cliente */
@@ -85,6 +88,10 @@ public class Customer implements Serializable{
 	 * por preference)
 	 */
 	private String categoriaIVAFiscalDescription = null;
+	
+	/** Si tiene ocultar descuento en linea - dREHER */
+	private boolean isOcultarDescuentoEnLinea = false;
+	
 	
 	public Customer(){
 		super();
@@ -314,5 +321,13 @@ public class Customer implements Serializable{
 
 	public void setCategoriaIVAFiscalDescription(String categoriaIVAFiscalDescription) {
 		this.categoriaIVAFiscalDescription = categoriaIVAFiscalDescription;
+	}
+
+	public boolean isOcultarDescuentoEnLinea() {
+		return isOcultarDescuentoEnLinea;
+	}
+
+	public void setOcultarDescuentoEnLinea(boolean isOcultarDescuentoEnLinea) {
+		this.isOcultarDescuentoEnLinea = isOcultarDescuentoEnLinea;
 	}
 }

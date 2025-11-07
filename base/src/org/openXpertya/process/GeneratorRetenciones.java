@@ -10,11 +10,13 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
+import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetencionSchema;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.Env;
+import org.openXpertya.util.Util;
 
 
 public class GeneratorRetenciones {
@@ -105,6 +107,79 @@ public class GeneratorRetenciones {
 		return lista_retenciones;
 	} 
 	
+	/**
+	 * Este metodo evaluar que esquema de retencion a aplicar en funcion
+	 * de las lineas de las facturas:
+	 * 1- Tiene un esquema de retencion (tomar este)
+	 * 2- Tiene el esquema de retencion con alicuota CERO (no debe calcular NINGUNA retencion)
+	 * 3- Esta vacio el esquema de retencion, aplica el de la entidad comercial
+	 * 
+	 * @author dREHER Feb'25
+	 */
+	public void evaluarRetencionPorLineaFC() {
+		
+		// Carga las retenciones de la entidad comercial
+		debug("Evalua las retenciones segun la entidad comercial...");
+		evaluarRetencion();
+		
+		for(int i = 0; i< m_facturas.size(); i++){
+			MInvoice fc;
+			MDocType dt;
+			if(m_facturasManualAmounts.get(i).compareTo(Env.ZERO)>0){
+				fc = new MInvoice(m_ctx,m_facturas.get(i),getTrxName());
+				dt = MDocType.get(m_ctx, fc.getC_DocTypeTarget_ID());
+				if(dt.isApplyRetention()) {
+					
+					MInvoiceLine[]lines = fc.getLines();
+					
+					debug("Comienza a evaluar las lineas de las facturas pagadas: DocumentNo:" + fc.getDocumentNo());
+					
+					for (MInvoiceLine line: lines){
+						int C_RetencionSchema_ID = 0;
+						if(line.get_Value("C_RetencionSchema_ID")!=null) {
+							C_RetencionSchema_ID = (Integer)line.get_Value("C_RetencionSchema_ID");
+							MRetencionSchema re = new MRetencionSchema(Env.getCtx(), C_RetencionSchema_ID, getTrxName());
+						
+							
+							
+							// buscar clase asociada que realiza el procesamiento de ese esquema de retencion
+							String nameClass = re.getProcessorClass();
+							RetencionProcessor retProcessor = null;
+							try {
+								Class procesador = Class.forName(nameClass);
+								try {
+									retProcessor = ( RetencionProcessor )procesador.newInstance();
+								} catch (InstantiationException e) {
+									e.printStackTrace();
+								} catch (IllegalAccessException e) {
+									e.printStackTrace();
+								}
+							}catch(Exception ex) {
+								debug("Error al leer RetencionProcessor...");
+							}
+							
+							if(retProcessor!=null) {
+								
+								debug("Verificar si ya se agrego el esquema de retencion:" + re.getName());
+								
+								if(!lista_retenciones.contains(retProcessor)) {
+									debug("Una linea tiene un procesador que NO esta agregado aun, lo agrega: " + nameClass);
+									addRetencion(re);
+								}
+							}
+						}
+					}
+					
+				}
+			}
+		}
+		
+	}
+	
+	// dREHER Feb'25
+	private void debug(String string) {
+		System.out.println("--> GeneratorRetenciones." + string);
+	}
 	
 	public void evaluarRetencion() {
 
@@ -116,7 +191,7 @@ public class GeneratorRetenciones {
 		}
 	}
 	
-	private boolean cargarFacturas(RetencionProcessor procesador) throws Exception{
+	private boolean cargarFacturas(RetencionProcessor procesador, MRetencionSchema retSchema) throws Exception{
 		/*
 		 * 	si (pago_anticipado)
 		 * 		procesador.addInvoice(null, importe_a_Pagar) 
@@ -180,16 +255,93 @@ Cuando realices los pagos de las otras facturas, deberás considerar las retenci
 					fc = new MInvoice(m_ctx,m_facturas.get(i),getTrxName());
 					dt = MDocType.get(m_ctx, fc.getC_DocTypeTarget_ID());
 					if(dt.isApplyRetention()) {
-						procesador.addInvoice(fc,m_facturasManualAmounts.get(i));
+						
+						/**
+						 * Se crea nuevo metodo para agregar Factura que considera lo siguiente:
+						 * 
+						 * Tomar el neto de las lineas que contengan este esquema de retencion o bien el neto total si NINGUNA linea lo incluye
+						 * 
+						 * dREHER Feb'25
+						 */
+						BigDecimal netoFC = calculaNetoFC(fc, retSchema);
+						BigDecimal totalLines = calculaTotalLineas(fc, retSchema);
+						
+						debug("cargarFacturas. Esquema:" + retSchema.getName());
+						
+						procesador.addInvoice(fc, m_facturasManualAmounts.get(i), netoFC, totalLines);
 						invoiceLoaded = true;
+						
+						
 					}
 				}
 			}
+			
 		}
 		return isPago_anticipado() || invoiceLoaded;
 	};
 	
 	
+	/**
+	 * Recorre las lineas de la factura, si alguna hace referencia al esquema o bien la entidad comercial
+	 * lo tiene, calcular neto.
+	 * 
+	 * Si ninguna linea lo tiene, el neto es el de la factura, si alguna linea lo tiene, es la suma de los netos de esas unicas lineas
+	 * 
+	 * @param fc
+	 * @param retSchema
+	 * @return
+	 * @author dREHER
+	 */
+	private BigDecimal calculaNetoFC(MInvoice fc, MRetencionSchema retSchema) {
+		BigDecimal neto = fc.getNetAmount();
+		
+		BigDecimal netoLineas = Env.ZERO;
+		for(MInvoiceLine line: fc.getLines()) {
+			if(line.get_Value("C_RetencionSchema_ID")!=null) {
+				int C_RetencionSchema_ID  = (Integer)line.get_Value("C_RetencionSchema_ID");
+				if(C_RetencionSchema_ID == retSchema.getC_RetencionSchema_ID()) {
+					netoLineas = netoLineas.add(line.getLineNetAmount());
+				}
+			}
+		}
+		
+		// Si calculo neto de linea, quiere decir que alguna hizo referencia al esquema de retenciones, caso contrario es el total neto de la factura
+		if(netoLineas.compareTo(Env.ZERO) > 0)
+			neto = netoLineas;
+		
+		return neto;
+	}
+	
+	/**
+	 * Recorre las lineas de la factura, si alguna hace referencia al esquema o bien la entidad comercial
+	 * lo tiene, calcular total linea.
+	 * 
+	 * Si ninguna linea lo tiene, el total es el de la factura, si alguna linea lo tiene, es la suma de los totales de esas unicas lineas
+	 * 
+	 * @param fc
+	 * @param retSchema
+	 * @return
+	 * @author dREHER
+	 */
+	private BigDecimal calculaTotalLineas(MInvoice fc, MRetencionSchema retSchema) {
+		BigDecimal total = fc.getTotalLines();
+		
+		BigDecimal totalLineas = Env.ZERO;
+		for(MInvoiceLine line: fc.getLines()) {
+			if(line.get_Value("C_RetencionSchema_ID")!=null) {
+				int C_RetencionSchema_ID  = (Integer)line.get_Value("C_RetencionSchema_ID");
+				if(C_RetencionSchema_ID == retSchema.getC_RetencionSchema_ID()) {
+					totalLineas = totalLineas.add(line.getLineTotalAmt());
+				}
+			}
+		}
+		
+		// Si calculo total de linea, quiere decir que alguna hizo referencia al esquema de retenciones, caso contrario es el total de lineas de la factura
+		if(totalLineas.compareTo(Env.ZERO) > 0)
+			total = totalLineas;
+		
+		return total;
+	}
 	
 	private void setC_BPartner_ID(int c_BPartner_ID) {
 		this.c_BPartner_ID = c_BPartner_ID;
@@ -292,7 +444,8 @@ Cuando realices los pagos de las otras facturas, deberás considerar las retenci
 			retProcessor.setRetencionSchema(retSchema);
 			retProcessor.setTrxName(getTrxName());
 			//vfechaPago = java.sql.Timestamp.valueOf(Env.getContextAsDate(Env.getCtx(), "#Date").toString());
-			if(cargarFacturas(retProcessor)) {
+			
+			if(cargarFacturas(retProcessor, retSchema)) { // dREHER Feb'25 considerar el esquema que se esta evaluando
 				importeRetencion = retProcessor.getAmount();	
 			}
 			

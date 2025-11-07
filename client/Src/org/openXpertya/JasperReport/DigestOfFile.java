@@ -6,10 +6,11 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.MessageDigest;
 
-import org.apache.util.Base64;	// en realidad estaba el comentado
+//import org.apache.util.Base64;	// en realidad estaba el comentado
+import java.util.Base64;
 // import org.apache.commons.codec.binary.Base64; 
 
-import sun.security.provider.Sun;
+//import sun.security.provider.Sun;
 
 
 /**
@@ -25,7 +26,8 @@ public class DigestOfFile
      */
     public DigestOfFile(String mode) throws Exception
     {
-       digestAgent = MessageDigest.getInstance(mode, "SUN");
+       //digestAgent = MessageDigest.getInstance(mode, "SUN");
+       digestAgent = MessageDigest.getInstance(mode);
     }
     
     /**
@@ -62,9 +64,10 @@ public class DigestOfFile
     synchronized public String digestAsBase64(File file) throws Exception
     {
         byte[] digest = digestAsByteArray(file);
-        Base64 encoder = new Base64();
-        String digestAsBase64 = new String(encoder.encode(digest),"ASCII");
-        return digestAsBase64;
+        return Base64.getEncoder().encodeToString(digest);
+        //Base64 encoder = new Base64();
+        //String digestAsBase64 = new String(encoder.encode(digest),"ASCII");
+        //return digestAsBase64;
     }
     
     /**
@@ -75,9 +78,10 @@ public class DigestOfFile
     public synchronized String digestAsBase64(byte[] input) throws Exception
     {
     	byte[] digest = digestAsByteArray(input);
-    	Base64 encoder = new Base64();
-    	String digestAsBase64 = new String(encoder.encode(digest),"ASCII");
-        return digestAsBase64;
+    	return Base64.getEncoder().encodeToString(digest);
+    	//Base64 encoder = new Base64();
+    	//String digestAsBase64 = new String(encoder.encode(digest),"ASCII");
+        //return digestAsBase64;
     }
     
    
@@ -96,7 +100,7 @@ public class DigestOfFile
     {
         try
         {
-            java.security.Security.addProvider(new Sun());
+            //java.security.Security.addProvider(new Sun());
 
             DigestOfFile md5DigestAgent = new DigestOfFile("MD5");
             
@@ -125,7 +129,7 @@ public class DigestOfFile
     	//compute Hash of exisiting and downloaded
     	String hashFile1;
     	String hashFile2;
-    	java.security.Security.addProvider(new Sun());
+    	//java.security.Security.addProvider(new Sun());
     	try{
     		DigestOfFile md5DigestAgent = new DigestOfFile("MD5");
     		hashFile1 = md5DigestAgent.digestAsBase64(file1);
@@ -144,7 +148,7 @@ public class DigestOfFile
     public static String GetLocalMD5Hash(File file)
     {
     	String hash;
-    	java.security.Security.addProvider(new Sun());
+    	//java.security.Security.addProvider(new Sun());
     	try{
     		DigestOfFile md5DigestAgent = new DigestOfFile("MD5");
     		hash = md5DigestAgent.digestAsBase64(file);
@@ -163,7 +167,7 @@ public class DigestOfFile
     public static String getMD5Hash(byte[] input)
     {
     	String hash;
-    	java.security.Security.addProvider(new Sun());
+    	//java.security.Security.addProvider(new Sun());
     	try{
     		DigestOfFile md5DigestAgent = new DigestOfFile("MD5");
     		hash = md5DigestAgent.digestAsBase64(input);

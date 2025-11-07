@@ -255,7 +255,10 @@ public class Doc_Payment extends Doc implements DocProjectSplitterInterface {
     	}
     	catch (Exception e)	{
     		return null;
-    	}
+    	} finally { // dREHER cierre controlado
+        	DB.close(rs, stmt);
+        	rs=null; stmt=null;
+        }
     	
     	return map;
 	}

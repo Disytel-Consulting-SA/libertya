@@ -22,6 +22,7 @@ import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.util.Clients;
 
 /**
  *
@@ -39,6 +40,14 @@ public class Textbox extends org.zkoss.zul.Textbox implements EventListener
 	private Obscure	m_obscure = null;
 
 	private boolean m_infocus;
+
+	/**
+	 * Si se trata de un link, renderizar como tal y armar href con prefijo en caso de existir
+	 * dREHER sep 24
+	 */
+	private boolean m_islink;
+	
+	private String m_prefijoLink;
 
 
     public Textbox()
@@ -105,6 +114,7 @@ public class Textbox extends org.zkoss.zul.Textbox implements EventListener
 	}
 
 	public void onEvent(Event event) throws Exception {
+		
 		if (Events.ON_FOCUS.equals(event.getName()))
 		{
 			m_infocus = true;
@@ -117,5 +127,25 @@ public class Textbox extends org.zkoss.zul.Textbox implements EventListener
 			if (m_obscure != null)
 				setValue(getValue());
 		}		
+	}
+	
+	// dREHER sep 24 Método para validar si el contenido es una URL
+    private boolean isValidUrl(String url) {
+        return url != null && (url.startsWith("http") || url.startsWith("https") || url.startsWith("www")) && (url.contains(".") || url.contains("://"));
+    }
+
+	public boolean isM_islink() {
+		return m_islink;
+	}
+	public void setM_islink(boolean isLink) {
+		m_islink = isLink;
+	}
+	public String getM_prefijoLink() {
+		if(m_prefijoLink==null)
+			m_prefijoLink="";
+		return m_prefijoLink;
+	}
+	public void setM_prefijoLink(String m_prefijoLink) {
+		this.m_prefijoLink = m_prefijoLink;
 	}
 }

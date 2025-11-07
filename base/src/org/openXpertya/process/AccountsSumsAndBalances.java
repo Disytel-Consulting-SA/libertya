@@ -1,11 +1,47 @@
 package org.openXpertya.process;
 
+import java.sql.Timestamp;
+
 import org.openXpertya.model.MSumsAndBalance;
 import org.openXpertya.model.MTreeNode;
 import org.openXpertya.util.DB;
 
 public class AccountsSumsAndBalances extends AccountsGeneralBalance {
 
+	// dREHER
+	protected boolean isGroupByProject = false;
+
+	/** C_Project_ID			*/
+	protected int 		p_C_Project_ID = 0;
+
+	@Override
+	protected boolean loadParameter(String name, ProcessInfoParameter param) {
+		
+		if( name.equalsIgnoreCase( "DateAcct" )) {
+			p_DateAcct_From = ( Timestamp )param.getParameter();
+			p_DateAcct_To = ( Timestamp )param.getParameter_To();
+			return true;
+		}
+		if(name.equalsIgnoreCase( "ApplyInflationIndex" )){
+			applyInflationIndexes = ((String)param.getParameter()).equals("Y");
+			return true;
+		}
+		if( name.equalsIgnoreCase( "FactAcctTable" )) {
+			p_factAcctTable = (String)param.getParameter();
+			return true;
+		}
+		if( name.equalsIgnoreCase( "C_Project_ID" )) { // dREHER
+			p_C_Project_ID = param.getParameterAsInt();
+			return true;
+		}
+		if(name.equalsIgnoreCase( "isGroupByProject" )){ // dREHER
+			isGroupByProject = ((String)param.getParameter()).equals("Y");
+			return true;
+		}
+		return false;
+	}
+	
+	
 	@Override
 	protected String doIt() throws Exception {
 		
@@ -62,7 +98,10 @@ public class AccountsSumsAndBalances extends AccountsGeneralBalance {
 			line.setCredit(null);
 			line.setCreditBalance(null);
 			line.setDebitBalance(null);
+			line.setC_Project_ID(p_C_Project_ID);
 			line.setFactAcctTable(p_factAcctTable);
+			
+			line.set_CustomColumn("isGroupByProject", isGroupByProject);
 			
 			if (!line.save()) {
 				log.severe("Cannot save X_T_SumsAndBalance line. C_ElementValue_ID=" + line.getC_ElementValue_ID());

@@ -134,11 +134,14 @@ public class Doc_GLJournal extends Doc {
 						+ " AND jl.IsActive='Y' "
 			//			+ " AND jl.IsActive='Y' AND vc.IsFullyQualified='Y' "
 						+ "ORDER BY jl.Line";
+        
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
 		try
 		{
-			PreparedStatement pstmt = DB.prepareStatement(sql);
+			pstmt = DB.prepareStatement(sql);
 			pstmt.setInt(1, getRecord_ID());
-            ResultSet rs = pstmt.executeQuery();
+            rs = pstmt.executeQuery();
 
             //
 			while (rs.next())
@@ -177,6 +180,9 @@ public class Doc_GLJournal extends Doc {
             pstmt.close();
         } catch( SQLException e ) {
             log.log( Level.SEVERE,"loadLines - SQL=" + sql,e );
+        } finally { // dREHER cierre controlado
+        	DB.close(rs, pstmt);
+        	rs=null; pstmt=null;
         }
 
         // Return Array

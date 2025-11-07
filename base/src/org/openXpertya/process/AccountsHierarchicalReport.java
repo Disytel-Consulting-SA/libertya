@@ -31,6 +31,12 @@ public class AccountsHierarchicalReport extends SvrProcess {
 	/** Nivel del nodo incial del Arbol de Cuentas */
 	private int initLevel = 0;
 	
+	/** C_Project_ID			*/
+	protected int 		p_C_Project_ID = 0;
+	
+	// dREHER
+	protected boolean isGroupByProject = false;
+	
 	/** Almacena el siguiente código interno a utilizar para un hijo de un nodo */
 	private Map<Integer,BigInteger> nodeChildCode = new HashMap<Integer,BigInteger>();
 	
@@ -54,6 +60,8 @@ public class AccountsHierarchicalReport extends SvrProcess {
         	} else if (name.equals("C_ElementValue_To_ID"))	{ 
     			BigDecimal tmp = ( BigDecimal )para[ i ].getParameter();
            		p_C_ElementValue_To_ID = tmp == null ? null : tmp.intValue();
+    		} else if(name.equalsIgnoreCase( "isGroupByProject" )){ // dREHER
+    			isGroupByProject = ((String)para[i].getParameter()).equals("Y");
     		}
         	
         	else if (loadParameter(name, para[i])) ; 

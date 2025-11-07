@@ -151,7 +151,7 @@ public class InfoPOSJournalPanel extends InfoPanel  {
     	fDateTrx.setWidth("50%");
     	fUserName.setWidth("50%");
 
-    	Grid grid = GridFactory.newGridLayout();
+    	grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -266,4 +266,8 @@ public class InfoPOSJournalPanel extends InfoPanel  {
 		return true;
 	}	//	hasZoom
 
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
+	}
 }
