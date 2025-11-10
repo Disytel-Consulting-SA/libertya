@@ -213,7 +213,7 @@ public class LoginPanel extends Window implements EventListener
     	
     	div = new Div();
     	div.setSclass(ITheme.LOGIN_BOX_FOOTER_CLASS);
-        ConfirmPanel pnlButtons = new ConfirmPanel(false);
+    	ConfirmPanel pnlButtons = new ConfirmPanel(false,false,false,true,false,false,false);
         pnlButtons.addActionListener(this);
         LayoutUtils.addSclass(ITheme.LOGIN_BOX_FOOTER_PANEL_CLASS, pnlButtons);
         pnlButtons.setWidth(null);
