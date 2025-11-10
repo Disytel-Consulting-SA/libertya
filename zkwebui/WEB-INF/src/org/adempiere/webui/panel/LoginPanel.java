@@ -220,8 +220,10 @@ public class LoginPanel extends Window implements EventListener
         pnlButtons.getButton(ConfirmPanel.A_OK).setSclass(ITheme.LOGIN_BUTTON_CLASS);
         
         // dREHER Oct 25
-        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setLabel("Olvide mi contraseña");
-        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setSclass(ITheme.LOGIN_BUTTON_CLASS);
+        if( pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE) != null ) {
+	        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setLabel("Olvide mi contraseña");
+	        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setSclass(ITheme.LOGIN_BUTTON_CLASS);
+        }
         
         div.appendChild(pnlButtons);
         this.appendChild(div);
