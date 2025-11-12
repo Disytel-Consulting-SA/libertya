@@ -3761,3 +3761,6 @@ update ad_preference set value='A155,70,0,5,1,1,N,"@CUR_SYMBOL@"' where "attribu
 -- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
 INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
 VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_BLabel', 'PRECIO SIN IMPUESTOS NACIONALES: $');
+
+--20251112-0919 Versionado de BBDD para release
+UPDATE ad_system SET version = '12-11-2025' WHERE ad_system_id = 0;
