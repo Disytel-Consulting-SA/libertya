@@ -1173,8 +1173,8 @@ public class PluginXMLUpdater {
 					if (isReferenceColumn(column))
 					{
 						String refKeyColumnName = getKeyColumnName(column.getRefTable());
-						String refRecordIDQuery = getReferenceRecordIDQuery(refKeyColumnName, column);
-						newValue = (refRecordIDQuery);
+						int refRecordID = getReferenceRecordID(refKeyColumnName, column);
+						newValue = (refRecordID == -1 ? MChangeLog.NULL : Integer.toString(refRecordID));
 					}
 				}
 				// Instanciar y persistir en el changelog
