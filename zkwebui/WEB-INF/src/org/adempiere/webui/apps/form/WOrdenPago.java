@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -30,6 +31,7 @@ import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
+import org.adempiere.webui.component.ListCell;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.SimpleTreeModel;
@@ -94,6 +96,7 @@ import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.zkoss.lang.Objects;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -241,6 +244,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		tblFacturas = new Grid();
 		tblFacturas.setHeight("350px");
+		tblFacturas.setWidth("100%"); // dREHER Sep 24
 		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
 		renderer = new GridRenderer(this);
 		tblFacturas.setModel(listModel);
@@ -561,7 +565,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		//tablelayout.setStyle("border: 1px solid red");
 		
 		
-		// Panel de la tabla donde se encuentran Campaña, Proyacto y Moneda
+		// Panel de la tabla donde se encuentran Campaña, Proyecto y Moneda
 		Tablechildren tableCampProy = new Tablechildren(); 
 		tableCampProy.setWidth("50%");
 		tableCampProy.appendChild(agregarCampProy());
@@ -1391,21 +1395,23 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		 */
 		
 		// 1- valido tasa de conversion para la fecha de cada factura
-		if(!getModel().validateConvertionRate()){
+		CallResult rs = getModel().validateConvertionRate(); 
+		if(rs.isError()){
 			
-			showError("No se encontro tasa de conversion para la moneda y fecha<br>" 
-					+ "de alguno de los comprobantes a pagar");
+			showError(rs.getMsg());
 			
 			return false;
 		}
 
 		// 2- valido tasa de conversion para la fecha del recibo/pago
-		if(!getModel().validateConvertionRate(getModel().m_fechaTrx)){
+		rs = getModel().validateConvertionRate(getModel().m_fechaTrx);
+		if(rs.isError()){
 			
-			showError("No se encontro tasa de conversion para la moneda y fecha<br>" 
-					+ "de la transaccion!");
+			//showError("No se encontro tasa de conversion para la moneda y fecha " 
+			//		+ "de la transaccion! " + Env.getDate());
 			
-			return false;
+			// dREHER Feb '25
+			showError(rs.getMsg());
 		}
 		
 		return true;
@@ -2011,6 +2017,14 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		fldDocumentNo.setValue(documentNo);
 	}
 
+	/**
+	 * Este metodo se ejecuta cuando se selecciona una entidad comercial
+	 * y se disparan las validaciones correspondientes, para luego mostrar
+	 * los comprobantes con saldo abierto...
+	 * 
+	 * 
+	 * dREHER
+	 */
 	public void valueChange(ValueChangeEvent e) {
 		// System.out.println("vetoableChange: " + arg0);
 		if (e.getSource() == BPartnerSel) {
@@ -2023,6 +2037,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			// relacionados con el cambio de la entidad comercial
         	customUpdateBPartnerRelatedComponents(true);
         	buscarPagos();
+        	
+        	// dREHER 5.0
+        	boolean isTasaConvertOk = true;
         	
         	// Actualizar interfaz grafica para null value
         	if (BPartnerSel.getNewValueOnChange() == null &&
@@ -2037,12 +2054,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				 * dREHER
 				 */
 				
-				if(!ValidateConvertionRate()) {
-					return;
-				}
+        		// dREHER 5.0
+        		isTasaConvertOk = ValidateConvertionRate();
 
         	}
         	
+        	// dREHER 5.0
+        	if(isTasaConvertOk)
         	updatePayAllInvoices(false);
         	
 			// Activo/Desactivo pestaña de Pagos Adelantados dependiendo
@@ -2175,6 +2193,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	
 	protected BigDecimal numberParse(String nn) throws ParseException {
 		return m_model.numberParse(nn);
+	}
+	
+	// dREHER sep 24
+	protected String dateFormat(Timestamp nn) throws IllegalArgumentException {
+		if (nn != null) {
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			String formattedFechaFacturas = dateFormat.format(nn);
+			return formattedFechaFacturas;
+		}
+		return "";
 	}
 	
 	protected void tableUpdated() {
@@ -2451,12 +2479,20 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				
 				for (Integer key : comp.getSelectedRowKeys()) {
 					MPayment cheque = new MPayment(m_ctx, key, null);
-					BigDecimal checkPendingAmt = cheque.getTotalAmt().subtract(cheque.getAllocatedAmt());
+					
+					// dREHER control valores nulos
+					BigDecimal allAmt = cheque.getAllocatedAmt();
+					if(allAmt==null)
+						allAmt = Env.ZERO;
+					BigDecimal checkPendingAmt = cheque.getTotalAmt().subtract(allAmt);
 					selectedRecords++;
 					selectedAmount = selectedAmount.add(checkPendingAmt); 
 				}
 				
 				BigDecimal toPayAmt = (BigDecimal)comp.getAttribute("toPayAmy");
+				if(toPayAmt==null)
+					toPayAmt = Env.ZERO;
+				
 				BigDecimal pendingAmt = toPayAmt.subtract(selectedAmount);
 				
 				DecimalFormat format = DisplayType.getNumberFormat(DisplayType.Amount);
@@ -2896,6 +2932,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		updateTreeModel();
 		pagosTree.setModel(getMediosPagoTreeModel());
+		
+		// dREHER seleccionar tipo de pago normal
+		radPayTypeStd.setSelected(true);
 	}
     
 	@Override
@@ -3208,22 +3247,36 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			owner.tblFacturas.removeChild(cols);
 			cols = new Columns();
 			int colCount = owner.listModel.getColumnCount();
+			
+			// Setear la fila
+			Object[] _data = (Object[])arg1;
+						
 			for (int i=0; i < colCount; i++) {
 				Column col = new Column();
 				col.setLabel(owner.listModel.getColumnName(i));
 				cols.appendChild(col);
 				col.setVisible(!owner.shouldHideColumn(i));
+				
+				// dREHER sep 24
+				col.setWidth("120px");
+				// System.out.println("columna: " + owner.listModel.getColumnName(i) + " visible= " + (!owner.shouldHideColumn(i)));
+				
+				// dREHER sep 24, alinea los titulos del grid a la derecha
+				if(_data[i] instanceof BigDecimal) {
+					col.setStyle("text-align: right;");
+				}
+				
 			}
 			owner.tblFacturas.appendChild(cols);		
 			
-			// Setear la fila
-			Object[] _data = (Object[])arg1;
+			
 			for (int i = 0; i < colCount; i++) {
 				// Las dos ultimas columnas son para seteo de datos 
 				if (owner.listModel.model.isCellEditable(1, i) && !owner.checkPayAll.isChecked()) {
 					Textbox aTextbox = new Textbox();
 					aTextbox.setValue(_data[i].toString()); 
-					aTextbox.setWidth("60px");
+					aTextbox.setWidth("120px"); // dREHER default 60px
+					aTextbox.setStyle("text-align: right; !important; width: 100%; color:black; padding-right: 5px; margin-right: 5px;");
 					aTextbox.setParent(arg0);
 					// Setear toPay (anteultima columna) hacia toPayCurrency (ultima columna)
 					if (i == colCount - 2) {
@@ -3246,11 +3299,31 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				} 
 				else {
 					Label aLabel = null;
-					if (_data[i] instanceof BigDecimal)
-						aLabel = new Label(owner.numberFormat((BigDecimal)_data[i]));
-					else
+					if (_data[i] instanceof BigDecimal) {
+						
+						//aLabel = new Label(owner.numberFormat((BigDecimal)_data[i]));
+						//aLabel.setStyle("text-align: right; !important; width: 100%;");  // dREHER sep 24
+						
+						Textbox numero = new Textbox();
+						numero.setValue(owner.numberFormat((BigDecimal)_data[i])); 
+						numero.setEnabled(true);
+						numero.setReadonly(true);
+						numero.setWidth("120px"); // dREHER default 60px
+						numero.setStyle("text-align: right; !important; width: 100%; color:black; border:none; padding-right: 5px; margin-right: 5px; background-color: transparent;");
+						numero.setParent(arg0);
+					
+						
+					}else if (_data[i] instanceof Timestamp) {
+						aLabel = new Label(owner.dateFormat((Timestamp)_data[i]));
+					}else {
 						aLabel = new Label(_data[i].toString()); 
+					}
+					
+					// dREHER sep 24
+					// System.out.println("etiqueta: " + aLabel.getValue());
+					if(aLabel != null)
 					aLabel.setParent(arg0);
+					
 				}
 				arg0.setVisible(!owner.shouldHideColumn(i));
 			}

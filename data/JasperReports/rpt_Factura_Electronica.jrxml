@@ -178,8 +178,14 @@
 	<parameter name="VCTO_DATE" isForPrompting="false" class="java.sql.Timestamp"/>
 	<parameter name="CLIENT_LOCATION_DESCRIPTION" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="COD_CBANTE" isForPrompting="false" class="java.lang.Integer"/>
+	<parameter name="DOCTYPENOTES" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="LYECTN_CBU" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="LYECTN_ALIAS" isForPrompting="false" class="java.lang.String"/>
 	<parameter name="FACTURA_ELECTRONICA_QRCODE" isForPrompting="false" class="java.lang.String"/>
-	<parameter name="CURRENCY_RATE" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="TOTAL_USD" isForPrompting="false" class="java.math.BigDecimal"/>
+	<parameter name="PREFIJO_IMPUESTOS" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IVA_LEYENDA" isForPrompting="false" class="java.lang.String"/>
+	<parameter name="IMPUESTOS_LEYENDA" isForPrompting="false" class="java.lang.String"/>
 
 	<field name="ITEM" class="java.lang.String"/>
 	<field name="CODARTICULO" class="java.lang.String"/>
@@ -317,7 +323,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="437"
-						y="59"
+						y="62"
 						width="102"
 						height="17"
 						key="textField-7"
@@ -328,16 +334,17 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					</textElement>
 				<textFieldExpression   class="java.util.Date"><![CDATA[$P{FECHA}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="312"
 						y="21"
 						width="227"
-						height="20"
-						key="textField"/>
+						height="22"
+						key="textField"
+						isPrintWhenDetailOverflows="true"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement textAlignment="Center" verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="12" isBold="true"/>
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TIPOCOMPROBANTE}]]></textFieldExpression>
 				</textField>
@@ -355,7 +362,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="349"
-						y="59"
+						y="62"
 						width="87"
 						height="17"
 						key="staticText-26"/>
@@ -379,10 +386,62 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$V{LETRA}]]></textFieldExpression>
 				</textField>
+				<staticText>
+					<reportElement
+						x="286"
+						y="99"
+						width="26"
+						height="12"
+						key="staticText-27"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[CUIT:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="418"
+						y="86"
+						width="57"
+						height="12"
+						key="staticText-28"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Ing. Brutos:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="418"
+						y="99"
+						width="57"
+						height="12"
+						key="staticText-29"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Fecha Inicio: Actividades:]]></text>
+				</staticText>
+				<staticText>
+					<reportElement
+						x="286"
+						y="86"
+						width="127"
+						height="13"
+						key="staticText-34"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<text><![CDATA[IVA RESPONSABLE INSCRIPTO]]></text>
+				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="312"
-						y="42"
+						y="45"
 						width="227"
 						height="17"
 						key="textField-59"/>
@@ -407,6 +466,16 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Cod "+($P{COD_CBANTE} != null && $P{COD_CBANTE}.intValue() > 9?"":"0")+$P{COD_CBANTE}]]></textFieldExpression>
 				</textField>
+				<line direction="TopDown">
+					<reportElement
+						x="415"
+						y="84"
+						width="0"
+						height="30"
+						forecolor="#A6A6A6"
+						key="line-7"/>
+					<graphicElement stretchType="NoStretch"/>
+				</line>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
@@ -419,6 +488,45 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="12" isBold="true"/>
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TIPOORIGEN}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="312"
+						y="99"
+						width="100"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT_CUIT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="475"
+						y="86"
+						width="62"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{INGBRUTO_CLIENT}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="475"
+						y="99"
+						width="62"
+						height="12"
+						key="textField"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font size="8"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{IIBB_DATE_CLIENT}]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
@@ -437,116 +545,15 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[$P{ORG_LOCATION_DESCRIPTION} != null?$P{ORG_LOCATION_DESCRIPTION}:$P{CLIENT_LOCATION_DESCRIPTION}]]></textFieldExpression>
 				</textField>
-				<staticText>
-					<reportElement
-						x="270"
-						y="99"
-						width="26"
-						height="12"
-						key="staticText-55"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[CUIT:]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="418"
-						y="86"
-						width="62"
-						height="12"
-						key="staticText-56"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[Ing. Brutos:]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="418"
-						y="99"
-						width="62"
-						height="12"
-						key="staticText-57"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[Fecha Inicio: Actividades:]]></text>
-				</staticText>
-				<staticText>
-					<reportElement
-						x="270"
-						y="86"
-						width="141"
-						height="13"
-						key="staticText-58"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
-					</textElement>
-				<text><![CDATA[IVA RESPONSABLE INSCRIPTO]]></text>
-				</staticText>
-				<line direction="TopDown">
-					<reportElement
-						x="415"
-						y="84"
-						width="0"
-						height="30"
-						forecolor="#A6A6A6"
-						key="line-7"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="296"
-						y="99"
-						width="115"
-						height="12"
-						key="textField-81"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" size="8"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CLIENT_CUIT}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="480"
-						y="86"
-						width="57"
-						height="12"
-						key="textField-82"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" size="8"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{INGBRUTO_CLIENT}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="480"
-						y="99"
-						width="57"
-						height="12"
-						key="textField-83"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font size="8"/>
-					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{IIBB_DATE_CLIENT}]]></textFieldExpression>
-				</textField>
 			</band>
 		</pageHeader>
 		<columnHeader>
-			<band height="134"  isSplitAllowed="true" >
+			<band height="119"  isSplitAllowed="true" >
 				<rectangle>
 					<reportElement
 						mode="Opaque"
 						x="0"
-						y="107"
+						y="93"
 						width="538"
 						height="25"
 						backcolor="#D6D6D6"
@@ -556,7 +563,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="4"
-						y="109"
+						y="95"
 						width="238"
 						height="20"
 						key="textField-42"/>
@@ -569,7 +576,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="244"
-						y="109"
+						y="95"
 						width="38"
 						height="20"
 						key="staticText-14"/>
@@ -582,7 +589,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="284"
-						y="109"
+						y="95"
 						width="38"
 						height="20"
 						key="staticText-15"/>
@@ -595,7 +602,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="325"
-						y="109"
+						y="95"
 						width="55"
 						height="20"
 						key="staticText-16"/>
@@ -608,7 +615,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="382"
-						y="109"
+						y="95"
 						width="55"
 						height="20"
 						key="staticText-17"/>
@@ -621,7 +628,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="440"
-						y="109"
+						y="95"
 						width="32"
 						height="20"
 						key="staticText-18"/>
@@ -634,7 +641,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<staticText>
 					<reportElement
 						x="472"
-						y="109"
+						y="95"
 						width="67"
 						height="20"
 						key="staticText-19"/>
@@ -647,7 +654,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="243"
-						y="108"
+						y="94"
 						width="0"
 						height="25"
 						key="line-1"/>
@@ -656,7 +663,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="283"
-						y="108"
+						y="94"
 						width="0"
 						height="25"
 						key="line-2"/>
@@ -665,7 +672,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="324"
-						y="108"
+						y="94"
 						width="0"
 						height="25"
 						key="line-3"/>
@@ -674,7 +681,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="381"
-						y="108"
+						y="94"
 						width="0"
 						height="25"
 						key="line-4"/>
@@ -683,7 +690,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="438"
-						y="108"
+						y="94"
 						width="0"
 						height="25"
 						key="line-5"/>
@@ -692,7 +699,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<line direction="TopDown">
 					<reportElement
 						x="473"
-						y="108"
+						y="94"
 						width="0"
 						height="25"
 						key="line-6"/>
@@ -704,15 +711,15 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 						x="0"
 						y="0"
 						width="538"
-						height="108"
+						height="92"
 						key="rectangle-4"/>
 					<graphicElement stretchType="NoStretch"/>
 				</rectangle>
-				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="67"
+						x="77"
 						y="70"
-						width="267"
+						width="248"
 						height="13"
 						key="textField-63"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -723,9 +730,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="341"
+						x="334"
 						y="70"
-						width="63"
+						width="70"
 						height="13"
 						key="staticText-38"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -751,7 +758,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="70"
-						width="61"
+						width="71"
 						height="13"
 						key="staticText-39"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -764,7 +771,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="5"
-						width="61"
+						width="71"
 						height="13"
 						key="staticText-40"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -777,7 +784,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="31"
-						width="61"
+						width="71"
 						height="13"
 						key="staticText-41"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -790,7 +797,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="44"
-						width="61"
+						width="71"
 						height="13"
 						key="staticText-43"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -801,9 +808,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="341"
+						x="334"
 						y="5"
-						width="63"
+						width="70"
 						height="13"
 						key="staticText-44"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -814,9 +821,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="341"
+						x="334"
 						y="18"
-						width="63"
+						width="70"
 						height="13"
 						key="staticText-45"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -827,9 +834,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="341"
+						x="334"
 						y="31"
-						width="63"
+						width="70"
 						height="13"
 						key="staticText-46"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -840,9 +847,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="341"
+						x="334"
 						y="44"
-						width="63"
+						width="70"
 						height="13"
 						key="staticText-47"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -853,9 +860,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="67"
+						x="77"
 						y="5"
-						width="267"
+						width="248"
 						height="13"
 						key="textField-65"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -866,9 +873,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="67"
+						x="77"
 						y="31"
-						width="267"
+						width="248"
 						height="13"
 						key="textField-66"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -879,9 +886,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="67"
+						x="77"
 						y="44"
-						width="267"
+						width="248"
 						height="13"
 						key="textField-68"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -946,7 +953,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="18"
-						width="61"
+						width="71"
 						height="13"
 						key="staticText-49"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -957,9 +964,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="67"
+						x="77"
 						y="18"
-						width="267"
+						width="248"
 						height="13"
 						key="textField-74"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -970,9 +977,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="67"
+						x="77"
 						y="57"
-						width="267"
+						width="248"
 						height="13"
 						key="textField-77"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -985,7 +992,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<reportElement
 						x="6"
 						y="57"
-						width="61"
+						width="71"
 						height="13"
 						key="staticText-52"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -996,9 +1003,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<staticText>
 					<reportElement
-						x="341"
+						x="334"
 						y="57"
-						width="63"
+						width="70"
 						height="13"
 						key="staticText-54"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
@@ -1133,12 +1140,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 			</band>
 		</pageFooter>
 		<lastPageFooter>
-			<band height="235"  isSplitAllowed="true" >
+			<band height="303"  isSplitAllowed="true" >
 				<rectangle>
 					<reportElement
 						mode="Transparent"
 						x="0"
-						y="14"
+						y="1"
 						width="538"
 						height="104"
 						key="rectangle-3"
@@ -1147,9 +1154,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</rectangle>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="459"
-						y="100"
-						width="76"
+						x="469"
+						y="87"
+						width="66"
 						height="15"
 						key="textField-31"
 						positionType="Float"/>
@@ -1162,7 +1169,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="1"
-						y="87"
+						y="74"
 						width="345"
 						height="28"
 						key="textField-33"
@@ -1176,8 +1183,8 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="352"
-						y="16"
-						width="96"
+						y="5"
+						width="117"
 						height="13"
 						key="textField-48"
 						positionType="Float"/>
@@ -1185,12 +1192,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right" verticalAlignment="Top">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$V{LETRA}.equals("A") ? "Imp. Neto Gravado:" : "Subtotal:"]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$V{LETRA}.equals("A") ? "Importe Neto Gravado: $" : "Subtotal: $"]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="470"
-						y="16"
+						y="5"
 						width="65"
 						height="13"
 						key="textField-49"
@@ -1205,8 +1212,8 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="352"
-						y="32"
+						x="363"
+						y="19"
 						width="62"
 						height="13"
 						key="staticText-20"
@@ -1219,8 +1226,8 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.0" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="415"
-						y="32"
+						x="426"
+						y="19"
 						width="20"
 						height="13"
 						key="textField-50"
@@ -1233,9 +1240,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="436"
-						y="32"
-						width="12"
+						x="447"
+						y="19"
+						width="22"
 						height="13"
 						key="staticText-21"
 						positionType="Float"/>
@@ -1243,12 +1250,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<text><![CDATA[%:]]></text>
+				<text><![CDATA[%: $]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="470"
-						y="32"
+						y="19"
 						width="65"
 						height="13"
 						key="textField-51"
@@ -1263,9 +1270,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="352"
-						y="46"
-						width="96"
+						x="364"
+						y="33"
+						width="105"
 						height="13"
 						key="staticText-22"
 						positionType="Float">
@@ -1275,12 +1282,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Subtotal:]]></text>
+				<text><![CDATA[Subtotal: $]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="470"
-						y="46"
+						y="33"
 						width="65"
 						height="13"
 						key="textField-52"
@@ -1295,9 +1302,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="352"
-						y="60"
-						width="96"
+						x="364"
+						y="47"
+						width="105"
 						height="13"
 						key="staticText-23"
 						positionType="Float">
@@ -1307,13 +1314,13 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<text><![CDATA[IVA 21%:]]></text>
+				<text><![CDATA[IVA 21%: $]]></text>
 				</staticText>
 				<staticText>
 					<reportElement
-						x="352"
-						y="74"
-						width="96"
+						x="364"
+						y="61"
+						width="105"
 						height="13"
 						key="staticText-24"
 						positionType="Float">
@@ -1323,12 +1330,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<text><![CDATA[IVA 10.5%:]]></text>
+				<text><![CDATA[IVA 10.5%: $]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="470"
-						y="60"
+						y="47"
 						width="65"
 						height="13"
 						key="textField-53"
@@ -1344,7 +1351,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="470"
-						y="74"
+						y="61"
 						width="65"
 						height="13"
 						key="textField-54"
@@ -1359,9 +1366,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</textField>
 				<staticText>
 					<reportElement
-						x="347"
-						y="100"
-						width="85"
+						x="360"
+						y="87"
+						width="109"
 						height="15"
 						key="staticText-25"
 						positionType="Float"/>
@@ -1369,98 +1376,13 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right" verticalAlignment="Bottom">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="12" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Importe Total:]]></text>
-				</staticText>
-				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="0"
-						y="118"
-						width="538"
-						height="19"
-						key="textField-55"
-						positionType="Float"
-						isPrintWhenDetailOverflows="true"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="Thin" leftBorderColor="#000000" rightBorder="Thin" rightBorderColor="#000000" bottomBorder="Thin" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
-						<font fontName="Arial" size="8"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{INVOICE_DESCRIPTION}]]></textFieldExpression>
-				</textField>
-				<staticText>
-					<reportElement
-						x="251"
-						y="142"
-						width="136"
-						height="14"
-						key="staticText-35"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<text><![CDATA[CAE Nº:]]></text>
-				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="393"
-						y="142"
-						width="143"
-						height="14"
-						key="textField-61"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" size="10"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CAE}]]></textFieldExpression>
-				</textField>
-				<staticText>
-					<reportElement
-						x="250"
-						y="157"
-						width="137"
-						height="14"
-						key="staticText-36"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<text><![CDATA[Vto. CAE:]]></text>
-				</staticText>
-				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="393"
-						y="157"
-						width="143"
-						height="14"
-						key="textField-62"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement verticalAlignment="Middle">
-						<font fontName="Arial" size="10"/>
-					</textElement>
-				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{VTO_CAE}]]></textFieldExpression>
-				</textField>
-				<staticText>
-					<reportElement
-						x="100"
-						y="156"
-						width="131"
-						height="16"
-						key="staticText-37"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-BoldOblique" size="10" isBold="true" isItalic="true"/>
-					</textElement>
-				<text><![CDATA[Comprobante Autorizado]]></text>
+				<text><![CDATA[Importe Total: $]]></text>
 				</staticText>
 				<image  scaleImage="RetainShape" vAlign="Top" hAlign="Left" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Opaque"
-						x="176"
-						y="182"
+						x="158"
+						y="248"
 						width="360"
 						height="50"
 						forecolor="#000000"
@@ -1475,9 +1397,9 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				</image>
 				<staticText>
 					<reportElement
-						x="352"
-						y="87"
-						width="96"
+						x="364"
+						y="74"
+						width="105"
 						height="13"
 						key="staticText-53"
 						positionType="Float">
@@ -1487,12 +1409,12 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Right">
 						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
 					</textElement>
-				<text><![CDATA[Otros Tributos:]]></text>
+				<text><![CDATA[Otros Tributos: $]]></text>
 				</staticText>
 				<textField isStretchWithOverflow="false" pattern="#,##0.00" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="470"
-						y="87"
+						y="74"
 						width="65"
 						height="13"
 						key="textField-79"
@@ -1508,7 +1430,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 				<subreport  isUsingCache="true">
 					<reportElement
 						x="4"
-						y="18"
+						y="5"
 						width="345"
 						height="64"
 						key="subreport-1"
@@ -1516,12 +1438,164 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<dataSourceExpression><![CDATA[$P{SUBREPORT_PERCEPCIONES_DATASOURCE}]]></dataSourceExpression>
 					<subreportExpression  class="java.io.InputStream"><![CDATA[$P{COMPILED_SUBREPORT_PERCEPCIONES}]]></subreportExpression>
 				</subreport>
+				<staticText>
+					<reportElement
+						x="330"
+						y="205"
+						width="63"
+						height="14"
+						key="staticText-55"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
+					</textElement>
+				<text><![CDATA[CAE Nº: ]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="393"
+						y="205"
+						width="143"
+						height="14"
+						key="textField-81"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CAE}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="330"
+						y="220"
+						width="63"
+						height="14"
+						key="staticText-56"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Vto. CAE: ]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="dd/MM/yyyy" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="393"
+						y="220"
+						width="143"
+						height="14"
+						key="textField-82"
+						positionType="Float"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.sql.Timestamp"><![CDATA[$P{VTO_CAE}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="113"
+						y="205"
+						width="45"
+						height="14"
+						key="staticText-58"
+						positionType="Float">
+							<printWhenExpression><![CDATA[new Boolean($P{LYECTN_CBU} != null && $P{LYECTN_CBU}.trim().length() > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
+					</textElement>
+				<text><![CDATA[CBU: ]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="158"
+						y="205"
+						width="170"
+						height="14"
+						key="textField-83"
+						positionType="Float">
+							<printWhenExpression><![CDATA[new Boolean($P{LYECTN_CBU} != null && $P{LYECTN_CBU}.trim().length() > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{LYECTN_CBU}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement
+						x="113"
+						y="220"
+						width="45"
+						height="14"
+						key="staticText-59"
+						positionType="Float">
+							<printWhenExpression><![CDATA[new Boolean($P{LYECTN_ALIAS} != null && $P{LYECTN_ALIAS}.trim().length() > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
+					</textElement>
+				<text><![CDATA[Alias: ]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="158"
+						y="220"
+						width="170"
+						height="14"
+						key="textField-84"
+						positionType="Float">
+							<printWhenExpression><![CDATA[new Boolean($P{LYECTN_ALIAS} != null && $P{LYECTN_ALIAS}.trim().length() > 0)]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Arial" size="9"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{LYECTN_ALIAS}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="165"
+						width="538"
+						height="19"
+						key="textField-85"
+						positionType="Float"
+						isRemoveLineWhenBlank="true"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{INVOICE_DESCRIPTION}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="184"
+						width="538"
+						height="19"
+						key="textField-86"
+						positionType="Float"
+						isRemoveLineWhenBlank="true"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" topPadding="2" leftBorder="1Point" leftBorderColor="#000000" leftPadding="3" rightBorder="1Point" rightBorderColor="#000000" rightPadding="2" bottomBorder="1Point" bottomBorderColor="#000000" bottomPadding="2"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DOCTYPENOTES}]]></textFieldExpression>
+				</textField>
 				<image  evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="5"
-						y="141"
+						x="17"
+						y="207"
 						width="90"
-						height="90"
+						height="91"
 						key="image-2"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<graphicElement stretchType="NoStretch"/>
@@ -1532,135 +1606,65 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
     )
 )]]></imageExpression>
 				</image>
-				<staticText>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="100"
-						y="172"
-						width="436"
-						height="10"
-						key="staticText-59"
-						positionType="Float"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Oblique" size="8" isBold="false" isItalic="true"/>
+						x="0"
+						y="104"
+						width="538"
+						height="19"
+						key="textField-87"
+						positionType="Float"
+						isRemoveLineWhenBlank="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="1Point" leftBorderColor="#000000" rightBorder="1Point" rightBorderColor="#000000" bottomBorder="1Point" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle">
+						<font fontName="Arial" pdfFontName="Helvetica" size="7" isItalic="false"/>
 					</textElement>
-				<text><![CDATA[Esta Administración Federal no se responsabiliza por los datos ingresados en el detalle de la operación]]></text>
-				</staticText>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TOTAL_USD} != null ? "El monto equivale a USD " + $P{TOTAL_USD} + ".El mismo deberá ser abonado con el tipo de cambio vendedor del Banco de la Nación Argentina a la fecha de hacerse efectivo el pago." : ""]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
-						x="449"
-						y="46"
-						width="20"
-						height="13"
-						key="textField-84">
-							<printWhenExpression><![CDATA[new Boolean($V{LETRA}.equals( "A" ))]]></printWhenExpression>
+						x="0"
+						y="124"
+						width="362"
+						height="12"
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(!$V{LETRA}.equals("A"))]]></printWhenExpression>
 						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true" isUnderline="true"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{PREFIJO_IMPUESTOS}]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="449"
-						y="32"
-						width="20"
-						height="13"
-						key="textField-85">
-							<printWhenExpression><![CDATA[$P{C_USE_PRICELIST}]]></printWhenExpression>
-						</reportElement>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="449"
-						y="16"
-						width="20"
-						height="13"
-						key="textField-86"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="449"
-						y="60"
-						width="20"
-						height="13"
-						key="textField-87">
-							<printWhenExpression><![CDATA[new Boolean($V{LETRA}.equals( "A" ))]]></printWhenExpression>
-						</reportElement>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="449"
-						y="74"
-						width="20"
-						height="13"
-						key="textField-88">
-							<printWhenExpression><![CDATA[new Boolean($V{LETRA}.equals( "A" ))]]></printWhenExpression>
-						</reportElement>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="449"
-						y="87"
-						width="20"
-						height="13"
-						key="textField-89">
-							<printWhenExpression><![CDATA[new Boolean($V{LETRA}.equals( "A" ))]]></printWhenExpression>
-						</reportElement>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="10" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="432"
-						y="100"
-						width="26"
-						height="15"
-						key="textField-90"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement>
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="12" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{CURRENCY_SIMBOL}]]></textFieldExpression>
-				</textField>
-				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="1"
-						y="2"
-						width="538"
-						height="11"
-						key="textField-91"
-						positionType="Float"
-						isPrintWhenDetailOverflows="true"/>
+						y="137"
+						width="361"
+						height="12"
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(!$V{LETRA}.equals("A"))]]></printWhenExpression>
+						</reportElement>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Left" verticalAlignment="Middle">
-						<font fontName="Arial" size="8"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA["Comprobante expresado en " + $P{CURRENCY} + ($P{CURRENCY}.startsWith("ARS") ? "" : ". A los fines contables e impositivos el tipo de cambio es  1 " + $P{CURRENCY_SIMBOL} + " = $ " + $P{CURRENCY_RATE})]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IVA_LEYENDA}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="0"
+						y="150"
+						width="362"
+						height="12"
+						key="textField">
+							<printWhenExpression><![CDATA[new Boolean(!$V{LETRA}.equals("A"))]]></printWhenExpression>
+						</reportElement>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement>
+						<font pdfFontName="Helvetica-Bold" size="8" isBold="true"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{IMPUESTOS_LEYENDA}]]></textFieldExpression>
 				</textField>
 			</band>
 		</lastPageFooter>

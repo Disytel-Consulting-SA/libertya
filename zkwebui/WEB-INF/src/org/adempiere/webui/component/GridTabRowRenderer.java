@@ -353,7 +353,8 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 		int colIndex = -1;
 		int compCount = 0;
 		for (int i = 0; i < columnCount; i++) {
-			if (!gridField[i].isDisplayed() || !gridField[i].isDisplayedInGrid()) { // dREHER
+			if (!gridField[i].isDisplayed() || !gridField[i].isDisplayedInGrid()
+					|| gridField[i].isEncrypted() || gridField[i].isEncryptedColumn() || gridField[i].isEncryptedField()) { // dREHER
 				continue;
 			}
 			colIndex ++;
@@ -450,7 +451,8 @@ public class GridTabRowRenderer implements RowRenderer, RowRendererExt, Renderer
 			org.zkoss.zul.Columns columns = grid.getColumns();
 			int colIndex = -1;
 			for (int i = 0; i < columnCount; i++) {
-				if (!gridField[i].isDisplayed() || !gridField[i].isDisplayedInGrid()) { // dREHER
+				if (!gridField[i].isDisplayed() || !gridField[i].isDisplayedInGrid()
+						|| gridField[i].isEncrypted() || gridField[i].isEncryptedColumn() || gridField[i].isEncryptedField()) { // dREHER
 					continue;
 				}
 				colIndex ++;

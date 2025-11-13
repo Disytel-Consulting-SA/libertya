@@ -64,10 +64,18 @@ public class WebEditorFactory
             return null;
         }
 
+        /**
+         * Ver si se trata de un link, para hacer q el editor funcione como tal
+         * dREHER
+         */
+        boolean isLink = mField.isLink();
+        String prefijoLink = mField.getPrefijoLink();
+
         /** String (clear/password) */
         if (displayType == DisplayType.String
             || displayType == DisplayType.PrinterName 
-            || (tableEditor && (displayType == DisplayType.Text || displayType == DisplayType.TextLong)))
+            || (tableEditor && (displayType == DisplayType.Text || displayType == DisplayType.TextLong))
+            )
         {
             if (mField.isEncryptedField())
             {
@@ -75,8 +83,12 @@ public class WebEditorFactory
             }
             else
             {
+            	// dREHER
+            	if(!mField.isLink()) {
+            		// System.out.println("WebEditorFactory. MField=" + mField + " isLink=" + isLink + " prefijo=" + prefijoLink);
                 editor = new WStringEditor(mField, tableEditor);
             }
+        }
         }
         /** File */
         else if (displayType == DisplayType.FileName)
@@ -102,8 +114,8 @@ public class WebEditorFactory
             	((WYesNoEditor)editor).getComponent().setLabel("");
         }
 
-        /** Text */
-        else if (displayType == DisplayType.Text || displayType == DisplayType.Memo || displayType == DisplayType.TextLong)
+        /** Text dREHER sep 24, sino es Link entonces modo habitual */
+        else if (!mField.isLink() && (displayType == DisplayType.Text || displayType == DisplayType.Memo || displayType == DisplayType.TextLong))
         {
             editor = new WStringEditor(mField);
         }
@@ -133,7 +145,7 @@ public class WebEditorFactory
             editor = new WTableDirEditor(mField);
         }
                    
-        else if (displayType == DisplayType.URL)
+        else if (displayType == DisplayType.URL || mField.isLink()) // dREHER
         {
         	editor = new WUrlEditor(mField);
         }

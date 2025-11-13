@@ -321,7 +321,10 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         // >> END
         boolean isSetTaxAmt = taxAmtFromLines.compareTo(BigDecimal.ZERO) != 0; 
         
-        String sql = "SELECT COALESCE(SUM("+getSqlInvoiceLineCalcForTaxBaseAmt()+"),0.0) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
+        String sql = "SELECT COALESCE(SUM("+getSqlInvoiceLineCalcForTaxBaseAmt()+"),0.0)";
+        sql += ", max(coalesce(LineNetAmt,0)) as linenetamt ";
+        sql += ", max(coalesce(LineNetAmount,0)) AS linenetamount, MAX(coalesce(DocumentDiscountAmt,0)) AS documentDiscountAmt " +
+        " FROM C_InvoiceLine WHERE C_Invoice_ID=? AND C_Tax_ID=?";
         PreparedStatement pstmt = null;
 
         try {
@@ -483,6 +486,20 @@ public class MInvoiceTax extends X_C_InvoiceTax {
         String sql = "select rate from c_tax where c_tax_id = ? ";
         BigDecimal taxRate = DB.getSQLValueBD(get_TrxName(), sql, getC_Tax_ID());
         MInvoice factura = new MInvoice(getCtx(), getC_Invoice_ID() , get_TrxName());
+        
+        // dREHER controla valores nulos
+        if(factura.isSOTrx()) {
+        	if(!Util.isEmpty(taxRate, true)) {
+        		if(Util.isEmpty(getTaxBaseAmt(), true))
+        			return true;
+        		if(Util.isEmpty(getTaxAmt(), true)) {
+        			log.saveError("SaveError",
+        					Msg.getMsg(getCtx(), "TaxAmtInvalid", new Object[] { taxRate, getTaxAmt(), getTaxBaseAmt() }));
+        			return false;
+        		}
+        	}
+        }
+        
         if(factura.isSOTrx()
         		&& !Util.isEmpty(taxRate, true) 
         		&& getTaxBaseAmt().compareTo(BigDecimal.ZERO) > 0

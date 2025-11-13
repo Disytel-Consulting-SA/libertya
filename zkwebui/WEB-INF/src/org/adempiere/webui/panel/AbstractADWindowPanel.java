@@ -70,6 +70,7 @@ import org.openXpertya.model.MTabVO;
 import org.openXpertya.model.MTable;
 import org.openXpertya.model.MWindow;
 import org.openXpertya.model.MWindowVO;
+import org.openXpertya.model.M_Table;
 import org.openXpertya.process.DocAction;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.process.ProcessInfoUtil;
@@ -861,14 +862,36 @@ public abstract class AbstractADWindowPanel extends AbstractUIPart implements To
 
 		if (record_ID == -1)	//	No Key
 		{
-			//aAttachment.setEnabled(false);
 			return;
 		}
 
-		WSocialConversation aConv = new WSocialConversation(curWindowNo, curTab);
+		
+		SessionManager.getAppDesktop().findWindow(curWindowNo);
+		
+		WSocialConversation aConv = new WSocialConversation(curWindowNo, curTab, this);
+		
+		// dREHER mostrar ventana de socialConversation
+		System.out.println("AbstractADWindowPanel. showWindow socialConversation...");
+		
 		AEnv.showWindow(aConv);
-		toolbar.getButton("Conversation").setPressed(curTab.hasConversation());
+		
+		//toolbar.getButton("Conversation").setPressed(curTab.hasConversation());
+		//focusToActivePanel();    	
+    }
+    
+    // dREHER
+    public void refreshButtonSocialConversation() {
+    	// TODO: ver -> curTab.loadAttachments();				//	reload
+    	toolbar.getButton("Conversation").setPressed(hasConversation());
 		focusToActivePanel();    	
+    }
+    
+    public boolean hasConversation() {
+    	int records = DB.getSQLValue(null, 	" SELECT count(1) " +
+    										" FROM C_SocialConversation " +
+			    							" WHERE AD_Table_ID = " + M_Table.getID(curTab.getTableName()) +
+			    							" AND RecordID = " + curTab.getKeyID( curTab.getRecord_ID() ));
+    	return records > 0;
     }
     
     

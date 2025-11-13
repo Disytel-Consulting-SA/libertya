@@ -146,11 +146,17 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		BigDecimal PPA = getPagosAnteriores();
 		BigDecimal PNA = getPayNetAmt();
 		BigDecimal INI = getImporteNoImponible();
+		BigDecimal RNL = getNetLinesAmtSchemaRetencion();
 		
 		baseImponible = PPA.add(PNA).subtract(
 				INI);
 		
-		debug("baseImponible= " + baseImponible + " Pagos anteriores=" + PPA + " Neto Pago=" + PNA + " Importe NO Imponible=" + INI);
+		debug("baseImponible antes de quitar ganancias de otros esquemas= " + baseImponible);
+		
+		// dREHER Marzo 25
+		baseImponible = baseImponible.subtract(RNL);
+		
+		debug("baseImponible luego de restar otros esqueamas de ganancia= " + baseImponible + " Pagos anteriores=" + PPA + " Neto Pago=" + PNA + " Importe NO Imponible=" + INI + " Importe Lineas NO retenible=" + RNL);
 		
 		// Si la base imponible es menor que cero, entonces no hay retención que
 		// aplicar y

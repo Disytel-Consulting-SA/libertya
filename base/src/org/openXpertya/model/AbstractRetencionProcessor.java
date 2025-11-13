@@ -1,6 +1,7 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,6 +54,13 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	private List<MInvoice> m_List_Invoice = new ArrayList<MInvoice>();
 	/** Lista de importes pagados de cada factura */
 	private List<BigDecimal> m_List_Amount = new ArrayList<BigDecimal>();
+	
+	/** 
+	 * Lista de facturas pagadas 
+	 * dREHER Feb'25  
+	 */
+	private List<BigDecimal> m_List_InvoiceNetAmount = new ArrayList<BigDecimal>();
+	private List<BigDecimal> m_List_InvoiceTotalLinesAmt = new ArrayList<BigDecimal>();
 
 	/**
 	 * Indicador de Trx de venta. Los comprobantes de retenciones serán
@@ -124,6 +132,14 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public List<MInvoice> getInvoiceList() {
 		return m_List_Invoice;
 	}
+	
+	/**
+	 * @return Retorna la lista de los netos de las facturas pagadas.
+	 * @author dREHER Feb'25
+	 */
+	public List<BigDecimal> getInvoiceNetAmtList() {
+		return m_List_InvoiceNetAmount;
+	}
 
 	/**
 	 * @return Retorna la lista de importes pagados por factura.
@@ -140,6 +156,14 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		m_List_Invoice = invoices;
 	}
 
+	/**
+	 * Setea la lista de facturas
+	 * @param invoices nueva lista de facturas
+	 */
+	public void setInvoiceNetAmtList(List<BigDecimal> amts) {
+		m_List_InvoiceNetAmount = amts;
+	}
+	
 	/**
 	 * Setea la lista de importes 
 	 * @param amts nueva lista de importes
@@ -185,6 +209,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		this.amount = ammount;
 	}
 
+	// dREHER Feb'25
+	protected void debug(String string) {
+		System.out.println("--> AbstractRetencionProcessor." + string);
+	}
+	
 	/**
 	 * @param dateTrx
 	 *            The dateTrx to set.
@@ -364,6 +393,36 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			addPayAmount(payamt);
 		}
 	} // addInvoice
+	
+	/**
+	 * Agrega la factura con el monto abonado y tambien con el neto que le corresponde para el calculo
+	 * Se le suma el total de las lineas involucradas para poder prorratear el pago de la factura segun cada linea
+	 * @author dREHER Feb'25
+	 */
+	public void addInvoice(MInvoice inv, BigDecimal payamt, BigDecimal netAmount, BigDecimal totalLines) throws Exception {
+		// Existe la factura, el pago se para dicha factura.
+		if (inv != null) {
+			// Se agrega la factura y el pago a las listas.
+			getInvoiceList().add(inv);
+			getAmountList().add(payamt);
+			getInvoiceNetAmtList().add(netAmount);
+			getInvoiceTotalLinesAmt().add(totalLines);
+			
+			debug("--> Agrega el neto de cada factura. Inv:" + inv.getDocumentNo() + " neto:" + netAmount + " total lineas:" + totalLines + " pago:" + payamt);
+			
+			/**
+			TODO: seguir este metodo, ahora ya tenemos tambien el neto de cada factura para cada procesador de retencion
+			ver como utilizarlo para todos los calculos... Guardar compatibilidad, si llega en cero seguir como hasta ahora
+			dREHER Feb'25
+			*/
+			
+			addPayAmount(payamt, inv.getC_Currency_ID());
+			
+		} else {
+			getAmountList().add(payamt);
+			addPayAmount(payamt);
+		}
+	} // addInvoice
 
 	/**
 	 * Suma un importe de pago al importe total del pago actual.
@@ -532,6 +591,23 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		}
 		return amount;
 	}
+	
+	/**
+	 * 
+	 * @return monto total a tomar en cuenta por cada Factura, si las lineas tienen un esquema configurado
+	 * @author dREHER Feb' 25
+	 */
+	public BigDecimal getInvoicesLinesAmount() {
+		List<MInvoice> invoices = getInvoiceList();
+		BigDecimal amount = Env.ZERO;
+		for (int i = 0; i < invoices.size(); i++) {
+			MInvoiceLine[] lines = invoices.get(i).getLines();
+			for (int j = 0; j < lines.length; j++) {
+				amount = amount.add(lines[j].getLineNetAmount());
+			}
+		}
+		return amount;
+	}
 
 	/**
 	 * Obtener el neto del pago de la factura
@@ -543,6 +619,28 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * @return neto del pago
 	 */
 	public BigDecimal getPayNetAmt(MInvoice invoice, BigDecimal amt){
+		
+		// llama a metodo sobrecargada para guardar compatibilidad
+		return getPayNetAmt(invoice, amt, null, null);
+	}
+	
+	/**
+	 * Obtener el neto del pago de la factura
+	 * 
+	 * Sobrecargo el metodo original para recibir el monto del neto de linea
+	 * 
+	 * @param invoice
+	 *            factura
+	 * @param amt
+	 *            importe pago
+	 * @param neto
+	 * 			  neto de la factura
+	 * @param totalLineas
+	 * 			  total de las lineas de las facturas
+	 * @return neto del pago
+	 * @author dREHER Feb'25
+	 */
+	public BigDecimal getPayNetAmt(MInvoice invoice, BigDecimal amt, BigDecimal neto, BigDecimal totalLines){
 		BigDecimal net = invoice.getNetAmount();
 		BigDecimal grandTotal = invoice.getGrandTotal();
 		// Decrementar los impuestos manuales
@@ -559,7 +657,30 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		}
 		amt = amt.subtract(manualTaxesAmt);
 		*/
-		return net.multiply(amt).divide(grandTotal, 2, BigDecimal.ROUND_HALF_EVEN);
+		
+		// dREHER Feb'25
+		if(!Util.isEmpty(neto, true)) {
+			
+			// Como neto, tomo el neto de linea
+			net = neto;
+			
+			// Prorrateo el monto pagado para las lineas en particular
+			BigDecimal factor = totalLines.divide(grandTotal, 10, RoundingMode.HALF_DOWN);
+			amt = amt.multiply(factor);
+			
+			// Como total tomo el total de las lineas
+			grandTotal = totalLines;
+			
+			debug("getPayNetAmt. neto:" + neto + " total lineas:" + totalLines + " total gral.:" + grandTotal);
+			debug("getPayNetAmt. factor:" + factor + " monto:" + amt);
+			
+		}
+		
+		BigDecimal netoPago = net.multiply(amt).divide(grandTotal, 2, BigDecimal.ROUND_HALF_EVEN);
+		
+		debug("Neto del pago prorrateado:" + netoPago);
+		
+		return netoPago;
 	}
 	
 	/**
@@ -586,12 +707,73 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		}
 		else{
 			for (int i = 0; i < invoices.size(); i++) {
-				netTotal = netTotal.add(getPayNetAmt(invoices.get(i),amounts.get(i)));
+				
+				// Neto segun las lineas
+				BigDecimal neto = m_List_InvoiceNetAmount.get(i);
+				
+				// Total segun las lineas
+				BigDecimal totalLines = m_List_InvoiceTotalLinesAmt.get(i);
+				
+				BigDecimal netoLineasEsquemaPredefinido = getNetoLineaConEsquema(invoices.get(i));
+				
+				netTotal = netTotal.add(getPayNetAmt(invoices.get(i),amounts.get(i), neto, totalLines));
+				
+				// TODO: dREHER Feb '25 OJO, ver como calcular en neto en este punto cuando se calcula 
+				// por linea de factura y no por total de comprobante
+				debug("--> OJO ver como calcularlo en el nivel linea. netTotal:" + netTotal);
+				
 			}
 		}
 		return netTotal;
 	}
 	
+	/**
+	 * Obtengo el neto de los montos para cada linea de factura que tiene un esquema de retencion predefinido
+	 * 
+	 * @param invoices
+	 *            facturas
+	 * @return total neto de las lineas de las facturas con esquema de retencion predefinido
+	 * @author dREHER Marzo 25
+	 */
+	public BigDecimal getNetLinesAmtSchemaRetencion() {
+		BigDecimal netTotal = Env.ZERO;
+		Integer invoicesSize = getInvoiceList().size();
+		
+		if(invoicesSize > 0){
+			for (int i = 0; i < getInvoiceList().size(); i++) {
+				
+				BigDecimal netoLineasEsquemaPredefinido = getNetoLineaConEsquema(getInvoiceList().get(i));
+				netTotal = netTotal.add(netoLineasEsquemaPredefinido);
+			}
+		}
+		
+		return netTotal;
+	}
+	
+	/**
+	 * Obtiene la suma de los netos de linea que NO deben considerarse para calcular retenciones generales
+	 * @param mInvoice
+	 * @return suma de los netos de linea
+	 * @author dREHER Marzo 25
+	 */
+	public BigDecimal getNetoLineaConEsquema(MInvoice mInvoice) {
+		BigDecimal netoConEsquema = Env.ZERO;
+		
+		String sql = "SELECT SUM(LineNetAmount) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND COALESCE(C_RetencionSchema_ID,0) <> " +
+				getRetencionSchema().getC_RetencionSchema_ID() + " AND COALESCE(C_RetencionSchema_ID,0) > 0";
+		
+		netoConEsquema = DB.getSQLValueBD(getTrxName(), 
+				sql, mInvoice.getC_Invoice_ID());
+		if(netoConEsquema==null)
+			netoConEsquema = Env.ZERO;
+		
+		debug("getNetoLineaConEsquema. MInvoice=" + mInvoice.getDocumentNo() + " ID=" + mInvoice.getC_Invoice_ID() + 
+				" sql=" + sql + 
+				" Netos= " + netoConEsquema);
+		
+		return netoConEsquema;
+	}
+
 	public BigDecimal getPayNetAmt() {
 		return getPayNetAmt(getInvoiceList(), getAmountList());
 	}
@@ -696,7 +878,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ allocationLineCreditColumn
 				+ " = "
 				+ creditID
-				+ " AND allocationtype <> 'OPA'";
+				+ " AND ah.allocationtype <> 'OPA'";
 		PreparedStatement ps = DB.prepareStatement(sql, getTrxName());
 		ResultSet rs = ps.executeQuery();
 		while (rs.next()) {
@@ -794,20 +976,14 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * @return Clausula IN formateada
 	 * @author dREHER
 	 */
-	public String getIN(ArrayList<Integer> ids) {
+	public static String getIN(ArrayList<Integer> ids) {
 		String s = "(";
 		
 		for(Integer i : ids)
 			s+= (s.length()>1?",":"") + i.toString();
 		
 		s+= ")";
-		debug("Busqueda contemplando multiples CUIT's -> " + s);
 		return s;
-	}
- 
-	// dREHER salida por consola
-	protected void debug(String string) {
-		System.out.println("==> AbstractRetencionProcessor. " + string);
 	}
 
 	/**
@@ -828,9 +1004,8 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		if(getDateTrx()!=null)
 			vFecha = getDateTrx();
 				
-		Timestamp vDesde = (Timestamp) DB.getSQLObject(getTrxName(),
-						"select date_trunc('month',?::timestamp)",
-						new Object[] { vFecha });
+		// dREHER Feb'25
+		Timestamp vDesde = getFechaDesde(vFecha);
 		
 		
 		// dREHER traigo los ID de todos los proveedores con el mismo CUIT
@@ -894,6 +1069,13 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		return total;
 	}
 
+	// dREHER Feb'25
+	protected Timestamp getFechaDesde(Timestamp vFecha) {
+		// Devuelve la fecha desde
+		return (Timestamp) DB.getSQLObject(getTrxName(),
+				"select date_trunc('month',?::timestamp)",
+				new Object[] { vFecha });
+	}
 	
 
 	/**
@@ -946,10 +1128,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "							FROM c_allocationhdr AS ah "
 				+ "							INNER JOIN c_allocationline AS al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
 				+ "							WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id) "
-				+ "			OR EXISTS (SELECT c_payment_id "
+				+ "			OR EXISTS (SELECT al.c_payment_id "
 				+ "						FROM c_allocationhdr as ah "
 				+ "						INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
-				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype = 'OPA')) AND "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND ah.allocationtype = 'OPA')) AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -1044,7 +1226,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				+ "							INNER JOIN c_allocationline as al ON al.c_allocationhdr_id = ah.c_allocationhdr_id "
 				+ "							INNER JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id "
 				+ "							INNER JOIN c_doctype dt ON dt.c_doctype_id = i.c_doctypetarget_id "	
-				+ "							WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
+				+ "							WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND ah.isactive = 'Y' AND ah.docstatus in ('CO','CL') AND al.c_payment_id = p.c_payment_id AND ah.allocationtype <> 'OPA' AND dt.applyretention = 'Y') AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "		                INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -1156,11 +1338,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		sql += "			(NOT EXISTS (SELECT al.c_cashline_id "
 				+ "						FROM c_allocationline AS al "
 				+ "						INNER JOIN c_allocationhdr AS ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + "AND al.c_cashline_id = cl.c_cashline_id AND docstatus IN ('CO','CL') AND ah.isactive = 'Y') "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + "AND al.c_cashline_id = cl.c_cashline_id AND ah.docstatus IN ('CO','CL') AND ah.isactive = 'Y') "
 				+ "			OR EXISTS (SELECT al.c_cashline_id "
 				+ "						FROM c_allocationline as al "
 				+ "						INNER JOIN c_allocationhdr as ah ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
-				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND docstatus IN ('CO','CL') AND ah.isactive = 'Y' AND allocationtype = 'OPA')) AND "
+				+ "						WHERE ah.c_bpartner_id IN " + C_BParner_IDIN + " AND al.c_cashline_id = cl.c_cashline_id AND ah.docstatus IN ('CO','CL') AND ah.isactive = 'Y' AND ah.allocationtype = 'OPA')) AND "
 				+ "			NOT EXISTS(SELECT bpr.C_BPartner_Retencion_ID "
 				+ "						FROM C_BPartner_Retencion bpr "
 				+ "                  	INNER JOIN C_BPartner_Retexenc exc ON bpr.C_BPartner_Retencion_ID = exc.C_BPartner_Retencion_ID "
@@ -1655,5 +1837,13 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	@Override
 	public void setPaymentRule(String paymentRule) {
 		this.paymentRule = paymentRule;
+	}
+
+	public List<BigDecimal> getInvoiceTotalLinesAmt() {
+		return m_List_InvoiceTotalLinesAmt;
+	}
+
+	public void setInvoiceTotalLinesAmt(List<BigDecimal> m_List_InvoiceTotalLinesAmt) {
+		this.m_List_InvoiceTotalLinesAmt = m_List_InvoiceTotalLinesAmt;
 	}
 }

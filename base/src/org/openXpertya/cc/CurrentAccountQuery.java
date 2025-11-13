@@ -167,12 +167,12 @@ public class CurrentAccountQuery {
 		if (!detailReceiptsPayments) {
 			StringBuffer sqlGroupBy = new StringBuffer();
 			sqlGroupBy
-					.append(" SELECT DateTrx, DateAcct, C_DocType_ID, DocumentNo, SUM(Debit) AS Debit, SUM(Credit) AS Credit, Created, C_Currency_ID, SUM(amount) AS Amount, documenttable, document_id, c_invoicepayschedule_id, sum(openamt) as openamt ");
+					.append(" SELECT DateTrx, DateAcct, C_DocType_ID, DocumentNo, SUM(Debit) AS Debit, SUM(Credit) AS Credit, Created, C_Currency_ID, SUM(amount) AS Amount, documenttable, document_id, c_invoicepayschedule_id, sum(openamt) as openamt, tipo_doc ");
 			sqlGroupBy.append(" FROM( ");
 			sqlGroupBy.append(sql);
 			sqlGroupBy.append(" ) AS aux ");
 			sqlGroupBy
-					.append(" GROUP BY DateTrx, DateAcct, C_DocType_ID, DocumentNo, Created, C_Currency_ID, documenttable, document_id, c_invoicepayschedule_id ");
+					.append(" GROUP BY DateTrx, DateAcct, C_DocType_ID, DocumentNo, Created, C_Currency_ID, documenttable, document_id, c_invoicepayschedule_id, tipo_doc ");
 			sqlGroupBy.append(" ORDER BY DateAcct, Created ");
 			sql = sqlGroupBy;
 		}
@@ -241,6 +241,9 @@ public class CurrentAccountQuery {
 	protected String getSecurityValidation() {
 		String secVal = "";
 		if(isAddSecurityValidation()) {
+			// dREHER 5.0
+			String orgAccess = MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())).getOrgWhere(MRole.SQL_RO);
+			if(!Util.isEmpty(orgAccess, true))
 			secVal = " AND d."+ MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())).getOrgWhere(MRole.SQL_RO);
 		}
 		return secVal;

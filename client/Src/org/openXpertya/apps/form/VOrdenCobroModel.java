@@ -46,18 +46,19 @@ import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.MPayment;
 import org.openXpertya.model.MPaymentTerm;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MRefList;
 import org.openXpertya.model.MTax;
 import org.openXpertya.model.POCRGenerator.POCRType;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_C_AllocationHdr;
 import org.openXpertya.model.X_C_Bank;
+import org.openXpertya.model.X_C_Cintolo_Exchange_Dif_Settings;
 import org.openXpertya.process.ProcessInfo;
 import org.openXpertya.rc.Invoice;
 import org.openXpertya.rc.ReciboDeCliente;
 import org.openXpertya.util.ASyncProcess;
 import org.openXpertya.util.CLogger;
-import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
@@ -119,6 +120,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	/** ID de caja para efectivo (cajas diarias) */
 	private Integer cashID;
+	
+	private boolean saldoFechaCobro = true;
 			
 	public VOrdenCobroModel() {
 		super();
@@ -127,6 +130,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		getMsgMap().put("Payment","CustomerPayment");
 		reciboDeCliente = new ReciboDeCliente(getCtx(),getTrxName());
 		setActualizarNrosChequera(false);
+		
+		String fechaCobro = MPreference.GetCustomPreferenceValue("SaldosFactClienteFechaFact", Env.getAD_Client_ID(getCtx()));
+		if(!Util.isEmpty(fechaCobro, true) && fechaCobro.equals("Y")) 
+			saldoFechaCobro = false;
+
 	}
 
 	// --------------------------------- CINTOLO START --------------------------------- 
@@ -138,6 +146,37 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		this.exchangeDifferencePercent = calculateExchangeDifferencePercent();
 		this.exchangeDifferenceLimit = getBPartnerExchangeDifLimit();
 		this.exchangeDifferencePercentLimit = getBPartnerExchangeDifPercentLimit();
+		
+		// dREHER sep 24 si no lo encuentra config en el cliente, lee config general
+		if(exchangeDifferenceLimit==null) {
+			int x = DB.getSQLValue(trxName, "SELECT C_Cintolo_Exchange_Dif_Settings_ID " +
+											" FROM C_Cintolo_Exchange_Dif_Settings " +
+											" WHERE IsActive='Y' " +
+											" ORDER BY Created DESC ");
+			if(x>0) {
+				X_C_Cintolo_Exchange_Dif_Settings dcs = new X_C_Cintolo_Exchange_Dif_Settings(Env.getCtx(), x, trxName);
+				this.exchangeDifferenceLimit = dcs.getAmount_Limit();
+			}
+			
+		}
+		
+		// dREHER sep 24 si no lo encuentra config en el cliente, lee config general
+		if(exchangeDifferencePercentLimit==null) {
+			int x = DB.getSQLValue(trxName, "SELECT C_Cintolo_Exchange_Dif_Settings_ID " +
+					" FROM C_Cintolo_Exchange_Dif_Settings " +
+					" WHERE IsActive='Y' " +
+					" ORDER BY Created DESC ");
+			if(x>0) {
+				X_C_Cintolo_Exchange_Dif_Settings dcs = new X_C_Cintolo_Exchange_Dif_Settings(Env.getCtx(), x, trxName);
+				this.exchangeDifferencePercentLimit = dcs.getPercentage_Limit();
+			}
+
+		}
+		
+		if(exchangeDifferenceLimit==null)
+			exchangeDifferenceLimit=Env.ZERO;
+		if(exchangeDifferencePercentLimit==null)
+			exchangeDifferencePercentLimit=Env.ZERO;
 		
 		// dREHER presetear diferencia de cambio en el generador de asignaciones
 		this.poGenerator.setDiffExchange(exchangeDifference);
@@ -180,11 +219,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				// dREHER
 				// Tomar el saldo abierto y NO el monto total del comprobante, ya que cuando se debe abonar
 				// solo se puede hacer por un monto menor o igual al saldo abierto de la factura a pagar...
-				BigDecimal oldTotalArs = MCurrency.currencyConvert(i.getOpenAmt(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+				
+				// dREHER sep 24
+				// BigDecimal oldTotalArs = MCurrency.currencyConvert(i.getOpenAmt(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+				BigDecimal oldTotalArs = (BigDecimal)((ResultItemFactura) x).getItem(((OpenInvoicesCustomerReceiptsTableModel)m_facturasTableModel).getOpenCurrentAmtFecFactColIdx()); // 10 Monto Pendiente ARS a la fecha factura
 				if(oldTotalArs==null)
 					oldTotalArs = Env.ZERO;
 				
-				BigDecimal currentTotalArs = (BigDecimal)((ResultItemFactura) x).getItem(10); // Monto Pendiente ARS a la fecha
+				BigDecimal currentTotalArs = (BigDecimal)((ResultItemFactura) x).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx()); // 10 Monto Pendiente ARS a la fecha
 				if(currentTotalArs==null)
 					currentTotalArs = Env.ZERO;
 				
@@ -192,7 +234,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 
 				dif = dif.add(exchangeDif);
 
-				debug("Saldos abiertos. A la fecha del comprobante: " + oldTotalArs + 
+				debug("Saldos abiertos. A la fecha del comprobante: " + i.getDocumentNo() + " TotalARS hoy: " + oldTotalArs + 
 						" Al dia de cobro: " + currentTotalArs + 
 						" Diferencia: " + exchangeDif, true);
 				
@@ -246,7 +288,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		// TODO: El limite siempre tiene que ser en PESOS
 		
-		return (limit != null && limit.compareTo(Env.ZERO) > 0) ? limit : Env.ZERO;
+		// return (limit != null && limit.compareTo(Env.ZERO) > 0) ? limit : Env.ZERO;
+		return limit;
 	}
 	
 	@Override
@@ -260,7 +303,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		// TODO: El limite siempre tiene que ser en PESOS
 		
-		return (limit != null && limit.compareTo(Env.ZERO) > 0) ? limit : Env.ZERO;
+		// return (limit != null && limit.compareTo(Env.ZERO) > 0) ? limit : Env.ZERO;
+		return limit;
 	}
 	
 	@Override
@@ -663,43 +707,66 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
  		sql.append("SELECT c_invoice_id, c_invoicepayschedule_id, orgname, documentno");
 		if (isSetDescriptionPreference())
 			sql.append(",COALESCE(description,'')");
-		sql.append(", dateinvoiced, duedate, currencyIso, grandTotal, openTotal, COALESCE(convertedamt,0.00) AS convertedamt, COALESCE(openamt,0.00) AS openamt, isexchange, C_Currency_ID, paymentrule FROM ");
-		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, i.description, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
-		//sql.append("    abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID)) as ConvertedAmt, isexchange, ");
-		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) ");
-		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , '"+ m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) ");
-		sql.append("	ELSE abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, " + C_Currency_ID + " , '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) ");
-		sql.append("	END AS ConvertedAmt, isexchange, ");		
-		//sql.append("    currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, " + C_Currency_ID + " , '"+ m_fechaTrx +"'::date, null, i.AD_Client_ID, i.AD_Org_ID) AS openAmt, i.C_Currency_ID, i.paymentrule ");
-		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) ");
-		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) ");
-		sql.append(" 	ELSE currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) ");
-		sql.append(" 	END AS openAmt, i.C_Currency_ID, i.paymentrule ");
-		sql.append("  FROM c_invoice_v AS i ");
-		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
-		sql.append("  LEFT JOIN c_invoicepayschedule AS ips ON (i.c_invoicepayschedule_id=ips.c_invoicepayschedule_id) ");
-		sql.append("  INNER JOIN C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) ");
-		sql.append("  LEFT JOIN C_Currency cu ON (cu.C_Currency_ID=i.C_Currency_ID) ");
-		sql.append("  WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') ");
+		sql.append(", dateinvoiced, duedate, currencyIso, grandTotal, openTotal, COALESCE(convertedamt,0.00) AS convertedamt, COALESCE(openamt,0.00) AS openamt, isexchange, C_Currency_ID, paymentrule,\n");
+		sql.append("0.00 as descuento,");
+		sql.append("COALESCE(convertedamtfecfact,0.00) AS convertedamtfecfact, COALESCE(openamtfecfact,0.00) AS openamtfecfact, \n");
+		sql.append("MAX(COALESCE(exchangeRate,0)) as exchangeRate \n");
+		sql.append("  FROM \n");
+		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, i.description, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, \n"); // ips.duedate
+		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
+		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , '"+ m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
+		sql.append("	ELSE abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, " + C_Currency_ID + " , '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
+		sql.append(" END AS ConvertedAmt, isexchange, \n");	
+		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
+		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
+		sql.append(" 	ELSE currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
+		sql.append(" END AS openAmt, i.C_Currency_ID, i.paymentrule, \n");
+		
+		// dREHER a fecha factura
+		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
+		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
+		sql.append("	ELSE \n ");
+		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 THEN \n ");
+		sql.append(" 			      ROUND(i.GrandTotal * i.Cintolo_Exchange_Rate, 2) \n ");
+		sql.append("             ELSE abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, " + C_Currency_ID + " , i.dateinvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
+		sql.append("        END \n");
+		sql.append(" END AS ConvertedAmtFecFact,");
+		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
+		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
+		sql.append(" 	ELSE \n ");
+		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 THEN \n "); 
+		sql.append("        	 ROUND(invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) * i.Cintolo_Exchange_Rate,2) \n"  );
+		sql.append("    	     ELSE currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
+		sql.append("        END \n");
+		sql.append(" END AS openAmtFecFact, \n");
+		
+		sql.append( "COALESCE(i.Cintolo_Exchange_Rate,0) AS exchangeRate \n"); // dREHER
+		
+		sql.append("  FROM c_invoice_v AS i \n");
+		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) \n");
+		sql.append("  LEFT JOIN c_invoicepayschedule AS ips ON (i.c_invoicepayschedule_id=ips.c_invoicepayschedule_id) \n");
+		sql.append("  INNER JOIN C_DocType AS dt ON (dt.C_DocType_ID=i.C_DocType_ID) \n");
+		sql.append("  LEFT JOIN C_Currency cu ON (cu.C_Currency_ID=i.C_Currency_ID) \n");
+		sql.append("  WHERE i.IsActive = 'Y' AND i.DocStatus IN ('CO', 'CL') \n");
 		//sql.append("    AND i.IsSOTRx = '" + getIsSOTrx() + "' ");
-		sql.append("    AND GrandTotal <> 0.0 ");
-		sql.append("    AND C_BPartner_ID = " + C_BPartner_ID + " ");
-		sql.append("    AND dt.signo_issotrx = " + getSignoIsSOTrx());
+		sql.append("    AND GrandTotal <> 0.0 \n");
+		sql.append("    AND C_BPartner_ID = " + C_BPartner_ID + " \n");
+		sql.append("    AND dt.signo_issotrx = " + getSignoIsSOTrx() + " \n");
 		
 		if (AD_Org_ID != 0) 
-			sql.append("  AND i.ad_org_id = " + AD_Org_ID + " ");
+			sql.append("  AND i.ad_org_id = " + AD_Org_ID + " " + " \n");
 		
-		sql.append(" AND i.paymentRule = '").append(getPaymentRule()).append("' ");
+		sql.append(" AND i.paymentRule = '").append(getPaymentRule()).append("' " + " \n");
 		
-		sql.append(" AND i.ispaid = 'N' ");
-		sql.append("  ) as openInvoices ");
-		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, description, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule ");
-		sql.append(" HAVING opentotal > 0.0 ");
+		sql.append(" AND i.ispaid = 'N' " + " \n");
+		sql.append("  ) as openInvoices " + " \n");
+		sql.append(" GROUP BY c_invoice_id, c_invoicepayschedule_id, orgname, documentno, description, currencyIso, grandTotal, openTotal, dateinvoiced, duedate, convertedamt, openamt, isexchange, C_Currency_ID, paymentrule, convertedamtfecfact, openamtfecfact " + " \n");
+		sql.append(" HAVING opentotal > 0.0 " + " \n");
 		// Si agrupa no se puede filtrar por fecha de vencimiento, se deben traer todas
 		if (!m_allInvoices && !getBPartner().isGroupInvoices())
-			sql.append("  AND ( duedate IS NULL OR duedate <= ? ) ");
+			sql.append("  AND ( duedate IS NULL OR duedate <= ? ) " + " \n");
 	
-		sql.append(" ORDER BY DueDate");
+		sql.append(" ORDER BY DueDate" + " \n");
 		
 		PreparedStatement ps = null; 
 		ResultSet rs = null;
@@ -708,7 +775,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		boolean isError = false;
 		
 		try {
-			System.out.println(sql.toString());
+			System.out.println("sql Cobro FC= " + sql.toString());
 			ps = DB.prepareStatement(sql.toString(),trxName,true);
 			
 			// dREHER controlar si debe pasarse el parametro fecha a la consulta
@@ -721,10 +788,24 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			while (rs.next()) {
 				
 				ResultItemFactura rif = new ResultItemFactura(rs);
+				
+				// Actualizar el campo total fc a fecha hoy y open fc a fecha hoy
+				// dREHER sep 24
+				updateTotalesFecHoyInfo(rif);
+				
 				// Actualizar el descuento/recargo del esquema de vencimientos
 				updatePaymentTermInfo(rif);
+				
 				// Actualizar el campoIsExchange
 				updateIsExchangeInfo(rif);
+				
+				// Actualizar el campo total fc a fecha fc y open fc a fecha fc
+				// dREHER sep 24
+				updateTotalesFecFactInfo(rif);
+				
+				// dREHER sep 24
+				rif.setExchangeRate(rs.getBigDecimal("exchangeRate"));
+				
 				m_facturas.add(rif);
 			}
 			
@@ -747,6 +828,257 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		m_facturasTableModel.fireChanged(false);
 		
 	}
+	
+	/**
+	 * Subclasificación del tablemodel de ordenes de pago para adaptar nueva
+	 * lógica de descuentos/recargos de esquemas de vencimiento
+	 * 
+	 * @author Equipo de Desarrollo Libertya - Matías Cap
+	 */
+	public class OpenInvoicesCustomerReceiptsTableModel extends OpenInvoicesTableModel {
+		private boolean allowManualAmtEditable = true;
+		public OpenInvoicesCustomerReceiptsTableModel() {
+			super();
+			
+    		columnNames = new Vector<String>();
+
+            columnNames.add( "#$#" + Msg.getElement( Env.getCtx(),"C_Invoice_ID" ));
+            columnNames.add( "#$#" + Msg.getElement( Env.getCtx(),"C_InvoicePaySchedule_ID" ));
+            columnNames.add( "#$#" + Msg.translate( Env.getCtx(),"AD_Org_ID" ));
+            columnNames.add( Util.isEmpty(Msg.getElement( Env.getCtx(),"Document"),true)?"Documento":Msg.getElement( Env.getCtx(),"Documento"));
+            if (isSetDescriptionPreference())
+            	columnNames.add(Msg.translate(Env.getCtx(), "Description"));
+            columnNames.add( Msg.getElement( Env.getCtx(),"Fecha" ));
+            columnNames.add( Msg.translate( Env.getCtx(),"Venc." ));
+            columnNames.add( Msg.translate( Env.getCtx(),"Mon." ));
+            columnNames.add( Msg.translate( Env.getCtx(),"GrandTotal" ));
+            columnNames.add( Msg.translate( Env.getCtx(),"Pend." ));
+            columnNames.add( Msg.translate( Env.getCtx(),"GrandTotal" ).concat(".").concat(mCurency.getISO_Code()));
+            columnNames.add( Msg.translate( Env.getCtx(),"Pend." ).concat("").concat(mCurency.getISO_Code()));
+            
+            columnNames.add("#$#" +  Msg.translate( Env.getCtx(),"IsExchange" ));
+            columnNames.add("#$#" +  Msg.translate( Env.getCtx(),"C_Currency_ID" ));
+            columnNames.add("#$#" +  Msg.translate( Env.getCtx(),"PaymentRule" ));
+            columnNames.add( Msg.translate( Env.getCtx(),"DiscountSurchargeDue" ));
+            
+            // dREHER a fec factura
+            columnNames.add( Msg.translate( Env.getCtx(),"Total F." ).concat("").concat(mCurency.getISO_Code()));
+            columnNames.add( Msg.translate( Env.getCtx(),"Pend.F." ).concat("").concat(mCurency.getISO_Code()));
+            
+            // La columna toPay permite ingresar el monto en la moneda de la factura
+            columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ));
+            // La columna toPayCurrency permite ingresar el monto en la moneda de la Compañia
+            columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ).concat(" ").concat(mCurency.getISO_Code()));
+		}
+
+		public int getOpenAmtColIdx() {
+            if (isSetDescriptionPreference())
+            	return 9;
+            return 8;
+		}
+		
+		public int getIsExchangeColIdx() {
+            if (isSetDescriptionPreference())
+            	return 12;
+            return 11;
+		}
+		
+		public int getCurrencyColIdx() {
+            if (isSetDescriptionPreference())
+            	return 13;
+            return 12;
+		}
+		
+		public int getDescuentoColIdx() {
+            if (isSetDescriptionPreference())
+            	return 15;
+            return 14;
+		}
+		
+		public int getCurrencySimbolColIdx() {
+            if (isSetDescriptionPreference())
+            	return 7;
+            return 6;
+		}
+		
+		public int getDocumentColIdx() {
+           return 3;
+		}
+		
+		public int getDescriptionColIdx() {
+			if (isSetDescriptionPreference())
+            	return 4;
+            return -1;
+		}
+		
+		public int getPaymentRuleColIdx() {
+            if (isSetDescriptionPreference())
+            	return 14;
+            return 13;
+		}
+		
+		public int getOpenCurrentAmtColIdx() {
+            if (isSetDescriptionPreference())
+            	return 11;
+            return 10;
+		}
+		
+		public int getTotalCurrentAmtFecFactColIdx() {
+            if (isSetDescriptionPreference())
+            	return 16;
+            return 15;
+		}
+		
+		public int getOpenCurrentAmtFecFactColIdx() {
+            if (isSetDescriptionPreference())
+            	return 17;
+            return 16;
+		}
+		
+		public int getIdColIdx() {
+			return 0;
+		}
+		
+		public int getInvoicePayScheduleColIdx() {
+			return 1;
+		}
+		
+		public int getDueDateColIdx() {
+            if (isSetDescriptionPreference())
+            	return 6;
+            return 5;
+		}
+		
+		public int getDateInvoicedColIdx() {
+            if (isSetDescriptionPreference())
+            	return 5;
+            return 4;
+		}
+		
+		@Override
+		public boolean isCellEditable(int row, int column) {
+			if (column < getColumnCount() - 2) // dREHER
+				return false;  // super.isCellEditable(row, column);
+			
+			boolean editable = false;
+			// Si es toPay o toPayCurrency se marca la columna como editable
+			if ( ((column == getColumnCount() - 1) || (column == getColumnCount() - 2)) && (isAllowManualAmtEditable()) ){
+				editable = true;
+			}
+			return editable;
+		}
+		
+		@Override
+		public Object getValueAt(int row, int column) {
+			if (column < getDescuentoColIdx()) // getColumnCount() - 4) sep 24 
+				return super.getValueAt(row, column);
+			
+			BigDecimal value = null;
+			// Si es toPayCurrency
+			if(column == getColumnCount()-1){
+				value = ((ResultItemFactura) item.get(row)).getManualAmtClientCurrency();
+			}
+			// Si es toPay
+			else if(column == columnNames.size()-2){
+				value = ((ResultItemFactura) item.get(row)).getManualAmount();
+			}
+			// HACK: Para descuento/recargo de esquema de vencimientos
+			else if(column == getDescuentoColIdx()){
+				value = ((ResultItemFactura) item.get(row)).getPaymentTermDiscount();
+				if(value.compareTo(BigDecimal.ZERO) != 0){
+					value = value.negate();
+				}
+			}
+			// HACK: Para columna is exchange
+			else if(column == getIsExchangeColIdx()){
+				return ((ResultItemFactura) item.get(row)).getIsexchange();
+			}
+			
+			// HACK: columna total ars fecha factura
+			else if(column == getTotalCurrentAmtFecFactColIdx()){
+				value = ((ResultItemFactura) item.get(row)).getTotalCurrentAmtFecFact();
+			}
+			
+			// HACK: columna pend ars fecha factura
+			else if(column == getOpenCurrentAmtFecFactColIdx()){
+				value = ((ResultItemFactura) item.get(row)).getOpenCurrentAmtFecFact();
+			}
+			
+			return value; 
+		}
+		
+		@Override
+		public void setValueAt(Object arg0, int row, int column) {
+			if (column < getDescuentoColIdx()) // getColumnCount() - 4)
+				super.setValueAt(arg0, row, column);
+			
+			// Si es toPayCurrency
+			if(column == getColumnCount()-1){
+				((ResultItemFactura) item.get(row)).setManualAmtClientCurrency((BigDecimal)arg0);				
+			}
+			// Si es toPay
+			else if(column == columnNames.size()-2){
+				((ResultItemFactura) item.get(row)).setManualAmount((BigDecimal)arg0);
+			}
+			// HACK: Para descuento/recargo de esquema de vencimientos
+			else if(column == getDescuentoColIdx()){
+				((ResultItemFactura) item.get(row)).setPaymentTermDiscount((BigDecimal)arg0);
+			}
+			// HACK: Para columna is exchange
+			else if(column == getIsExchangeColIdx()){
+				((ResultItemFactura) item.get(row)).setIsexchange(arg0.toString());
+			}
+			
+			// HACK: columna total ars fecha factura
+			else if(column == getTotalCurrentAmtFecFactColIdx()){
+				((ResultItemFactura) item.get(row)).setTotalCurrentAmtFecFact((BigDecimal)arg0);
+			}
+						
+			// HACK: columna pend ars fecha factura
+			else if(column == getOpenCurrentAmtFecFactColIdx()){
+				((ResultItemFactura) item.get(row)).setOpenCurrentAmtFecFact((BigDecimal)arg0);
+			}
+			
+			fireTableCellUpdated(row, column);
+		}
+		
+		@Override
+		public Class<?> getColumnClass(int columnIndex) {
+
+			// Para columna is exchange
+			if (columnIndex == getIsExchangeColIdx()){
+				return String.class;
+			} else if (columnIndex == getDocumentColIdx()){
+				return String.class;
+			} else if (columnIndex == getDescriptionColIdx()){
+				return String.class;
+			} else if (columnIndex == getDueDateColIdx()){
+				return Date.class;
+			} else if (columnIndex == getDateInvoicedColIdx()){
+				return Timestamp.class;
+			}else if (columnIndex == getDueDateColIdx()){
+				return Timestamp.class;
+			}else if (columnIndex == getPaymentRuleColIdx()){
+				return String.class;
+			}else if (columnIndex == getCurrencySimbolColIdx()){
+				return String.class;
+			}else if (columnIndex == getCurrencyColIdx() || columnIndex == getIdColIdx() || columnIndex == getInvoicePayScheduleColIdx()){
+				return Integer.class;
+			}else{
+				return BigDecimal.class; // Para columnas toPayCurrency, toPay y paymentTermDiscount
+			}
+			
+		}
+
+		public void setAllowManualAmtEditable(boolean allowManualAmtEditable) {
+			this.allowManualAmtEditable = allowManualAmtEditable;
+		}
+
+		public boolean isAllowManualAmtEditable() {
+			return allowManualAmtEditable;
+		}
+	}
+
 	
 	private boolean isSetDescriptionPreference() {
 		String sql = "SELECT COUNT(AD_Preference_ID) FROM ad_preference WHERE attribute = 'DescriptionRC' AND isActive = 'Y'";
@@ -802,8 +1134,29 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	protected void updateIsExchangeInfo(ResultItemFactura rif){
 		// Obtengo el valor del campo isExchange y lo seteo dentro del Result Item
-		rif.setIsexchange((String) rif.getItem(((OpenInvoicesCustomerReceiptsTableModel) m_facturasTableModel).getIsExchange()));
+		rif.setIsexchange((String) rif.getItem(((OpenInvoicesCustomerReceiptsTableModel) m_facturasTableModel).getIsExchangeColIdx()));
 	}
+	
+	// dREHER sep 24 totales a fec hoy 
+	protected void updateTotalesFecHoyInfo(ResultItemFactura rif) {
+
+		BigDecimal totalFC = (BigDecimal)rif.getItem(((OpenInvoicesCustomerReceiptsTableModel) m_facturasTableModel).getOpenAmtColIdx());
+		System.out.println("Pend hoy= " + totalFC);
+		// rif.set
+			
+	}
+	
+	// dREHER sep 24 totales a fec factura 
+	protected void updateTotalesFecFactInfo(ResultItemFactura rif) {
+
+		BigDecimal totalFC = (BigDecimal)rif.getItem(((OpenInvoicesCustomerReceiptsTableModel) m_facturasTableModel).getTotalCurrentAmtFecFactColIdx());
+		rif.setTotalCurrentAmtFecFact(totalFC);
+		
+		totalFC = (BigDecimal)rif.getItem(((OpenInvoicesCustomerReceiptsTableModel) m_facturasTableModel).getOpenCurrentAmtFecFactColIdx());
+		rif.setOpenCurrentAmtFecFact(totalFC);
+		
+	}
+
 	
 	@Override
 	public void updateBPartner(Integer bPartnerID){
@@ -1098,6 +1451,11 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		for (MedioPago pago : credits) {
 			pago.addToGenerator(getPoGenerator());
 		}
+		
+		// dREHER sep 24, aviso al generador si debe incluir/emitir dif de cambio
+		getPoGenerator().setInclude(isCintoloInclude);
+		getPoGenerator().setEmit(isCintoloEmit);
+		
 		// Se crean las líneas de imputación entre las facturas y los pagos
 		getPoGenerator().generateLines();
 	}
@@ -1511,6 +1869,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	public BigDecimal getSaldoMediosPago() {
 		BigDecimal saldo = super.getSaldoMediosPago();
 		saldo = saldo.subtract(getSumaDescuentos());
+
 		return saldo;
 	}
 		
@@ -1529,9 +1888,20 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(suma==null)
 			suma = new BigDecimal(0);
 		
+		// dREHER sep 24
+		if(!isCintoloEmit && !isCintoloInclude)
+			return suma;
+		
 		// CINTOLO: Se recalcula el total en base a si se incluye o no la diferencia de cambio
 		if(!isCintoloEmit || (isCintoloEmit && !isCintoloInclude && !calculateExchangeDifference().equals(Env.ZERO))) {
-			suma = suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO);
+			debug("Antes... Suma= " + suma + " resta= " + exchangeDifference + " final= " + suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO));	
+			// suma = suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO);
+		}
+		
+		// dREHER sep 24
+		if(isCintoloEmit && isCintoloInclude) {
+			debug("Ahora... Emite e incluye. Sumar al total de la FC la dif de cambio... total sin DC: " + suma + " final= " + suma.add(exchangeDifference!=null?exchangeDifference:Env.ZERO));
+			suma = suma.add(exchangeDifference!=null?exchangeDifference:Env.ZERO);
 		}
 		
 		return suma;
@@ -1795,176 +2165,6 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	
 	public void setAssumeGeneralDiscountAdded(boolean value) {
 		reciboDeCliente.setAssumeGeneralDiscountAdded(value);
-	}
-	
-	/**
-	 * Subclasificación del tablemodel de ordenes de pago para adaptar nueva
-	 * lógica de descuentos/recargos de esquemas de vencimiento
-	 * 
-	 * @author Equipo de Desarrollo Libertya - Matías Cap
-	 */
-	public class OpenInvoicesCustomerReceiptsTableModel extends OpenInvoicesTableModel {
-		private boolean allowManualAmtEditable = true;
-		public OpenInvoicesCustomerReceiptsTableModel() {
-			super();
-			
-    		columnNames = new Vector<String>();
-
-            columnNames.add( "#$#" + Msg.getElement( Env.getCtx(),"C_Invoice_ID" ));
-            columnNames.add( "#$#" + Msg.getElement( Env.getCtx(),"C_InvoicePaySchedule_ID" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"AD_Org_ID" ));
-            columnNames.add( Msg.getElement( Env.getCtx(),"DocumentNo" ));
-            if (isSetDescriptionPreference())
-            	columnNames.add(Msg.translate(Env.getCtx(), "Description"));
-            columnNames.add( Msg.getElement( Env.getCtx(),"DateInvoiced" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"DueDate" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"Currency" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"GrandTotal" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"openAmt" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"GrandTotal" ).concat(" ").concat(mCurency.getISO_Code()));
-            columnNames.add( Msg.translate( Env.getCtx(),"openAmt" ).concat(" ").concat(mCurency.getISO_Code()));
-            columnNames.add( Msg.translate( Env.getCtx(),"DiscountSurchargeDue" ));
-            columnNames.add( Msg.translate( Env.getCtx(),"IsExchange" ));
-            // La columna toPay permite ingresar el monto en la moneda de la factura
-            columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ));
-            // La columna toPayCurrency permite ingresar el monto en la moneda de la Compañia
-            columnNames.add( Msg.translate( Env.getCtx(),"ToPay" ).concat(" ").concat(mCurency.getISO_Code()));
-		}
-
-		public int getOpenAmtColIdx() {
-            if (isSetDescriptionPreference())
-            	return 9;
-            return 8;
-		}
-		
-		public int getIsExchange() {
-            if (isSetDescriptionPreference())
-            	return 12;
-            return 11;
-		}
-		
-		public int getCurrencyColIdx() {
-            if (isSetDescriptionPreference())
-            	return 13;
-            return 12;
-		}
-		
-		public int getOpenCurrentAmtColIdx() {
-            if (isSetDescriptionPreference())
-            	return 11;
-            return 10;
-		}
-		
-		public int getIdColIdx() {
-			return 0;
-		}
-		
-		public int getInvoicePayScheduleColIdx() {
-			return 1;
-		}
-		
-		public int getDueDateColIdx() {
-            if (isSetDescriptionPreference())
-            	return 6;
-            return 5;
-		}
-		
-		public int getDateInvoicedColIdx() {
-            if (isSetDescriptionPreference())
-            	return 5;
-            return 4;
-		}
-		
-		@Override
-		public boolean isCellEditable(int row, int column) {
-			if (column < getColumnCount() - 3)
-				return super.isCellEditable(row, column);
-			
-			boolean editable = false;
-			// Si es toPay o toPayCurrency se marca la columna como editable
-			if ( ((column == getColumnCount() - 1) || (column == getColumnCount() - 2)) && (isAllowManualAmtEditable()) ){
-				editable = true;
-			}
-			return editable;
-		}
-		
-		@Override
-		public Object getValueAt(int row, int column) {
-			if (column < getColumnCount() - 4)
-				return super.getValueAt(row, column);
-			
-			BigDecimal value = null;
-			// Si es toPayCurrency
-			if(column == getColumnCount()-1){
-				value = ((ResultItemFactura) item.get(row)).getManualAmtClientCurrency();
-			}
-			// Si es toPay
-			else if(column == columnNames.size()-2){
-				value = ((ResultItemFactura) item.get(row)).getManualAmount();
-			}
-			// HACK: Para descuento/recargo de esquema de vencimientos
-			else if(column == columnNames.size()-4){
-				value = ((ResultItemFactura) item.get(row)).getPaymentTermDiscount();
-				if(value.compareTo(BigDecimal.ZERO) != 0){
-					value = value.negate();
-				}
-			}
-			// HACK: Para columna is exchange
-			else if(column == columnNames.size()-3){
-				return ((ResultItemFactura) item.get(row)).getIsexchange();
-			}
-			
-			return value; 
-		}
-		
-		@Override
-		public void setValueAt(Object arg0, int row, int column) {
-			if (column < getColumnCount() - 4)
-				super.setValueAt(arg0, row, column);
-			// Si es toPayCurrency
-			if(column == getColumnCount()-1){
-				((ResultItemFactura) item.get(row)).setManualAmtClientCurrency((BigDecimal)arg0);				
-			}
-			// Si es toPay
-			else if(column == columnNames.size()-2){
-				((ResultItemFactura) item.get(row)).setManualAmount((BigDecimal)arg0);
-			}
-			// HACK: Para descuento/recargo de esquema de vencimientos
-			else if(column == columnNames.size()-4){
-				((ResultItemFactura) item.get(row)).setPaymentTermDiscount((BigDecimal)arg0);
-			}
-			// HACK: Para columna is exchange
-			else if(column == columnNames.size()-3){
-				((ResultItemFactura) item.get(row)).setIsexchange(arg0.toString());
-			}
-			
-			fireTableCellUpdated(row, column);
-		}
-		
-		@Override
-		public Class<?> getColumnClass(int columnIndex) {
-			if ((columnIndex != getColumnCount() - 4) && (columnIndex != getColumnCount() - 3)){
-				return super.getColumnClass(columnIndex);
-			}
-			else{
-				// Para columna is exchange
-				if (columnIndex == getColumnCount() - 3){
-					return String.class;
-				}
-				// Para columnas toPayCurrency, toPay y paymentTermDiscount
-				else{
-					return BigDecimal.class;
-				}
-			}
-		}
-
-		public void setAllowManualAmtEditable(boolean allowManualAmtEditable) {
-			this.allowManualAmtEditable = allowManualAmtEditable;
-		}
-
-		public boolean isAllowManualAmtEditable() {
-			return allowManualAmtEditable;
-		}
 	}
 
 	protected String getAllocTypes()

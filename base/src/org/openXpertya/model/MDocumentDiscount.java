@@ -1,6 +1,7 @@
 package org.openXpertya.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,6 +12,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Util;
 
@@ -309,7 +311,49 @@ public class MDocumentDiscount extends X_C_DocumentDiscount {
 			setCumulativeLevel(cumulativeLevel);
 		}
 
+		// dREHER Jun 25
+		// Si el cliente tiene una categoria que corresponde quitar IVA, tambien debe quitarse el IVA al descuento
+		MInvoice inv = new MInvoice(Env.getCtx(), getC_Invoice_ID(), get_TrxName());
+		if(inv.isCategoriaSinImpuestos()) {
+			
+			/**
+			 * Si la lista de precios NO tiene impuestos, NO QUITARLO del DESCUENTO
+			 */
+			
+			MPriceList pl = new MPriceList(Env.getCtx(), inv.getM_PriceList_ID(), get_TrxName());
+			if(pl.isTaxIncluded()) {
+
+				debug("El cliente NO tiene Impuestos, quitarlos del total del descuento tambien...");
+				BigDecimal amount = getDiscountAmt();
+				BigDecimal taxD = inv.getTaxForDiscount();
+
+				if(amount.compareTo(Env.ZERO) > 0) {
+
+					if(Util.isEmpty(taxD, true)) {
+						taxD = DB.getSQLValueBD(get_TrxName(), "select t.rate from c_tax t " +
+								"where t.isdefault='Y' and t.isactive='Y' and not wsfecode isnull and ad_client_id=?", Env.getAD_Client_ID(getCtx()));
+						taxD = taxD.divide(Env.ONEHUNDRED, BigDecimal.ROUND_HALF_DOWN);
+					}
+
+					if(taxD!=null)
+						amount = amount.divide(BigDecimal.ONE.add(taxD), inv.getPrecision(),
+								BigDecimal.ROUND_HALF_DOWN);
+					setDiscountAmt(amount);
+					debug("Luego de quitados los Impuestos: " + getDiscountAmt());
+
+				}
+
+			}else
+				debug("La lista de precios de la factura NO incluye IVA, no restar NADA!");
+			
+			debug("Descuento/Recargo. Daria hasta aca: " + getDiscountAmt());
+		}
+
 		return true;
+	}
+
+	private void debug(String string) {
+		System.out.println("-> MDocumentDiscount." + string);
 	}
 
 	/**

@@ -3,12 +3,9 @@ package org.openXpertya.plugin.handlersDocAction;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Vector;
-
 import org.openXpertya.model.X_C_AcctSchema;
-import org.openXpertya.acct.Doc;
-import org.openXpertya.interfaces.Server;
+import org.openXpertya.api.accounting.PostServices;
 import org.openXpertya.model.MAcctSchema;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.PO;
@@ -190,12 +187,14 @@ public abstract class PluginDocActionHandler extends PluginHandler {
 						record.getID() + " trxName=" + record.get_TrxName());
 				
 				//Verifico 
-				Server server = null;
 				boolean isError = false;
 				try {
 
 					System.out.println("Se intenta postear inmediatamente desde el documento...");
-					String post = Doc.postImmediate(as, record.get_Table_ID(), record.getID(), true, record.get_TrxName(), "Posted='N' AND DocStatus<>'CL'");
+
+					//String post = Doc.postImmediate(as, record.get_Table_ID(), record.getID(), true, record.get_TrxName(), "Posted='N' AND DocStatus<>'CL'");
+					String post = PostServices.get().postImmediate(record, true,"Posted='N' AND DocStatus<>'CL'");
+
 					if(post!=null)
 						isError = true;
 					System.out.println("Resultado del posteo:" + post);

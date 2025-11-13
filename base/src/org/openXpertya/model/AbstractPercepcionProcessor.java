@@ -38,5 +38,12 @@ public abstract class AbstractPercepcionProcessor {
 	 * @return la percepción de crédito aplicada en este procesador
 	 */
 	public abstract Percepcion applyCreditPerception();
+	
+	/**
+	 * @param tipoDomicilio
+	 * @return MLocation correspondiente al tipo de domicilio
+	 * @author dREHER Feb '25
+	 */
+	public abstract MLocation getLocation(String tipoDomicilio);
 
 }

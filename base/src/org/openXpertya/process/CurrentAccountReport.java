@@ -309,7 +309,7 @@ public class CurrentAccountReport extends SvrProcess {
 							+ "', '"
 							+ rs.getTimestamp("DateAcct")
 							+ "', "
-							+ rs.getInt("C_DocType_ID") 
+							+ (rs.getString("tipo_doc").equalsIgnoreCase("Imputación Manual") ? 1 : rs.getInt("C_DocType_ID")) 
 							+ ", ");
 	
 					// La linea es de una factura?

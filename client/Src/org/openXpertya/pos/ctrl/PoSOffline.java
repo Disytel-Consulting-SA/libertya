@@ -403,4 +403,10 @@ public class PoSOffline extends PoSConnectionState {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	protected Order loadOrder(int orderId, boolean b) throws InvalidOrderException, PosException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

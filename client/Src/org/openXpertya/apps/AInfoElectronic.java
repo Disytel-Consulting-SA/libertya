@@ -32,7 +32,7 @@ public class AInfoElectronic extends AInfoFiscalPrinter implements ElectronicEve
 	
 	@Override
 	protected ConfirmPanel createConfirmPanel() {
-    	return new ConfirmPanel(true,true,true,true,false,true,false,ConfirmPanel.ALIGN_RIGHT);
+    	return new ConfirmPanel(true,true,true,true,true,true,false,ConfirmPanel.ALIGN_RIGHT);
     }
 	
 	public JButton getCustomizeButton() {

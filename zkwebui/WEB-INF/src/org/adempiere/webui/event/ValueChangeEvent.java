@@ -46,6 +46,10 @@ public class ValueChangeEvent
      */
     private Object   oldValue;
 
+	// IDEMPIERE-1287:indicate case user just start edit field, want update status of toolbar button (like save button) 
+	// but don't want change anything (ever value of edit field)
+    private boolean   isInitEdit = false;  
+
     public ValueChangeEvent(Object source, String propertyName,
             Object oldValue, Object newValue)
     {
@@ -73,5 +77,19 @@ public class ValueChangeEvent
     public Object getSource()
     {
         return source;
+    }
+    
+	/**
+	 * @return indicate this event is by user start edit this field but not yet complete edit
+	 */
+	public boolean isInitEdit() {
+		return isInitEdit;
+	}
+
+	/**
+	 * @param isInitEdit indicate this event is by user start edit this field but not yet complete edit
+	 */
+	public void setIsInitEdit(boolean isInitEdit) {
+		this.isInitEdit = isInitEdit;
     }
 }

@@ -185,6 +185,9 @@ public class GridTabListItemRenderer implements ListitemRenderer, ListitemRender
 	public void stopEditing(boolean updateCellLabel) {
 		for (Entry<MField, WEditor> entry : editors.entrySet()) {
 			if (entry.getValue().getComponent().getParent() != null) {
+				
+				System.out.println("GridTabListItemRendered.stopEditing." + entry.getValue().getComponent());
+				
 				if (updateCellLabel) {
 					Listcell cell = (Listcell) entry.getValue().getComponent().getParent();
 					if (entry.getKey().getDisplayType() == DisplayType.YesNo) {

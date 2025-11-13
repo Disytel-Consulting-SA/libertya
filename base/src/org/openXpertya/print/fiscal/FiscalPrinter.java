@@ -77,6 +77,7 @@ public interface FiscalPrinter {
 	/**
 	 * Impresión de una factura. 
 	 * @param invoice Factura a imprimir.
+	 * @return 
 	 * @throws FiscalPrinterStatusError cuando la impresora fiscal 
 	 * retorna un error en su estado a partir de la ejecución de algún comando.
 	 * @throws FiscalPrinterIOException cuando se produce algún error 

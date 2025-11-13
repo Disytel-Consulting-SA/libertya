@@ -240,7 +240,7 @@ public class MRetencionSchema extends X_C_RetencionSchema {
 	/**
 	 * Retorna el id del producto asociado con el tipo de retención del esquema corriente
 	 */
-	public int getProduct(){
+	public int getProduct() throws Exception{
 		/*
 		 * Consulta para obtener el producto del tipo de retención
 		 * -------------------------------------------------------
@@ -249,9 +249,18 @@ public class MRetencionSchema extends X_C_RetencionSchema {
 		 * WHERE c_retenciontype_id = ?
 		 * -------------------------------------------------------
 		 */
+
+		/**
+		 * Se agrega control para mostrar al usuario un mensaje mas claro
+		 * dREHER Feb '25
+		 */
 		
 		String sql = "SELECT m_product_id FROM c_retenciontype WHERE c_retenciontype_id = ?";
-		return DB.getSQLValue(get_TrxName(), sql, getC_RetencionType_ID());		
+		int prod = DB.getSQLValue(get_TrxName(), sql, getC_RetencionType_ID());
+		if(prod <= 0)
+			throw new Exception( "El esquema de retencion: " + getName() + " Tiene configurado un producto inexistente!" );
+		
+		return prod; 		
 	}
 
 	/**

@@ -35,6 +35,9 @@
 	<pathelement path="../tools/lib/JasperReports/jasperreports-2.0.1.jar" />
 	<pathelement path="../lib/iText-1.5.4.jar" />
   	<pathelement path="../lib/AxisJar.jar" />
+	<pathelement path="../lib/jxl.jar"/>
+	<pathelement path="../lib/commons-lang.jar" />
+	<pathelement path="../lib/commons-codec-1.9.jar"/>
     <fileset dir="../lib/clover">
         <include name="**/*.jar"/>
     </fileset>

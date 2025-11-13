@@ -10,6 +10,7 @@ import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MPOS;
 import org.openXpertya.model.MPOSJournal;
 import org.openXpertya.model.MPOSLetter;
+import org.openXpertya.model.MPriceList;
 import org.openXpertya.model.MRole;
 import org.openXpertya.pos.exceptions.PosException;
 import org.openXpertya.util.CLogger;
@@ -106,10 +107,14 @@ public class PoSConfig {
 	}
 
 	public PoSConfig(MPOS pos) {
-		
-		this.pos = pos;  
-		
 		setCurrencyID(Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID"));
+		
+		// dREHER
+		// OJO con esto, la moneda tomada del entorno hace que no se comporte correctamente con monedas distintas a $ARS
+		MPriceList pl = new MPriceList(Env.getCtx(), pos.getM_PriceList_ID(), null);
+		setCurrencyID(pl.getC_Currency_ID());
+		
+		
 		MCurrency currency = MCurrency.get(pos.getCtx(), getCurrencyID());
 		stdPrecision = currency.getStdPrecision();
 		costingPrecision = currency.getCostingPrecision();

@@ -226,6 +226,12 @@ public class MFieldVO implements Serializable {
     /** Pestaña siempre actualizable? */
     public boolean tabAlwaysUpdateable = false;
     
+    /** isLink */
+    public boolean isLink = false;
+    
+    /** prefijoLink */
+    public String prefijoLink = "";
+    
     /**
      *  protected constructor
      *  @param ctx context
@@ -377,6 +383,12 @@ public class MFieldVO implements Serializable {
 					vo.Included_Tab_ID = rs.getInt(i);
 				else if (columnName.equalsIgnoreCase("ExportRealValue")) 
                     vo.exportRealValue	= "Y".equalsIgnoreCase(rs.getString(i)); 
+				else if (columnName.equalsIgnoreCase("IsLink")) // dREHER sep 24
+					vo.isLink = "Y".equalsIgnoreCase(rs.getString(i));
+				else if (columnName.equalsIgnoreCase("PrefijoLink"))  // dREHER sep 24 
+						vo.prefijoLink = rs.getString(i);				
+					
+				
             }
             // En el caso que la columna IsReadOnly tenga el valor true, se setea el valor de la columna IsAlwaysUpdateable en false
             // Si el campo IsReadOnly es true, no se puede actualizar el valor del campo, independientemente de si es Siempre Actualizable o no.
@@ -698,6 +710,10 @@ public class MFieldVO implements Serializable {
 		//  Process Parameter
 		clone.isRange = isRange;
 		clone.DefaultValue2 = DefaultValue2;
+		
+		// dREHER sep 24
+		clone.isLink = isLink;
+		clone.prefijoLink = prefijoLink;
 
 		return clone;
 	}	//	clone

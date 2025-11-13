@@ -54,6 +54,7 @@ echo "-> OXP_HOME es $OXP_HOME"
 INSTALACION_OXP=${INSTALACION_OXP:-/install}
 INSTALACION_EXPORT=${INSTALACION_EXPORT:-/install}
 export INSTALACION_OXP
+export INSTALACION_EXPORT
 if [ ! -d $INSTALACION_OXP ] ; then
     mkdir -p $INSTALACION_OXP
     echo "-> Creamos el directorio de instalación $INSTALACION_OXP"
@@ -75,7 +76,7 @@ fi
 export CURRENTDIR=`pwd`
 #  Set Version
 export VERSION_OXP=Libertya
-export VERSION_OXP_FILE=V22.0
+export VERSION_OXP_FILE=V25.0
 export CONSULTORA_OXP=SERVICIOS_DIGITALES
 
 #	ClassPath

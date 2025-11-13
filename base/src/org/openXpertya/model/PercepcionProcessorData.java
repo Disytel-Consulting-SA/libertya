@@ -64,6 +64,12 @@ public class PercepcionProcessorData {
 	/** Importe mínimo de percepción */
 	private BigDecimal minimumPercepcionAmt;
 	
+	/** Tipo de domicilio a comparar  dREHER Feb '25 */
+	private String TipoDomicilio;
+	
+	/** Prioriza Domicilio dREHER Feb '25 */
+	private boolean PriorizaDomicilio;
+	
 	public PercepcionProcessorData() {
 	}
 
@@ -193,5 +199,21 @@ public class PercepcionProcessorData {
 
 	public void setMinimumPercepcionAmt(BigDecimal minimumPercepcionAmt) {
 		this.minimumPercepcionAmt = minimumPercepcionAmt;
+	}
+
+	public String getTipoDomicilio() {
+		return TipoDomicilio;
+	}
+
+	public void setTipoDomicilio(String tipoDomicilio) {
+		TipoDomicilio = tipoDomicilio;
+	}
+
+	public boolean isPriorizaDomicilio() {
+		return PriorizaDomicilio;
+	}
+
+	public void setPriorizaDomicilio(boolean priorizaDomicilio) {
+		PriorizaDomicilio = priorizaDomicilio;
 	}
 }

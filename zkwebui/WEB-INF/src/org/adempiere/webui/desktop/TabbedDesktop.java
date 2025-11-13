@@ -13,9 +13,11 @@
  *****************************************************************************/
 package org.adempiere.webui.desktop;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.adempiere.webui.apps.ProcessDialog;
+import org.adempiere.webui.apps.form.WSocialConversation;
 import org.adempiere.webui.component.DesktopTabpanel;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
@@ -252,10 +254,19 @@ public abstract class TabbedDesktop extends AbstractDesktop {
     	if(window instanceof WAttachment) {
     		System.out.println("Se trata de una ventana de adjuntos -> " + ((WAttachment)window).getTitulo());
     		title = ((WAttachment)window).getTitulo();
-    		boolean isOpen = isWindowAttachmentOpen( ((WAttachment)window).getID());
+    		boolean isOpen = isWindowOpen( ((WAttachment)window).getID(), WAttachment.class);
     		if(isOpen) {
     			System.out.println("La ventana de adjunto para este registro ya se encuentra abierta, poner en foco...");
-    			setFocusWindowAttachment(((WAttachment)window).getID());
+    			setFocusWindow(((WAttachment)window).getID(), WAttachment.class);
+    			return;
+    		}
+    	}else if(window instanceof WSocialConversation) { // dREHER sep 24
+    		System.out.println("Se trata de una ventana de conversacion -> " + ((WSocialConversation)window).getTitulo());
+    		title = ((WSocialConversation)window).getTitulo();
+    		boolean isOpen = isWindowOpen( ((WSocialConversation)window).getRecordID(), WSocialConversation.class);
+    		if(isOpen) {
+    			System.out.println("La ventana de conversacion para este registro ya se encuentra abierta, poner en foco...");
+    			setFocusWindow(((WSocialConversation)window).getRecordID(), WSocialConversation.class);
     			return;
     		}
     	}
@@ -344,10 +355,10 @@ public abstract class TabbedDesktop extends AbstractDesktop {
 	/**
 	 *
 	 * @param windowNo
-	 * @return boolean
+	 * @return boolean, clase del objeto
 	 * @author dREHER
 	 */
-	public boolean isWindowAttachmentOpen(int windowNo)
+	public boolean isWindowOpen(int windowNo, Class<?> targetClass)
 	{
 		Tabbox tabbox = windowContainer.getComponent();
 		Tabpanels panels = tabbox.getTabpanels();
@@ -357,9 +368,29 @@ public abstract class TabbedDesktop extends AbstractDesktop {
 			Tabpanel panel = (Tabpanel) child;
 			Component component = panel.getFirstChild();
 			
-			if (component != null && (component instanceof WAttachment))
+			if (component != null && targetClass.isInstance(component))
 			{
-				if (windowNo == ((WAttachment)component).getID())
+				// Obtener el método getRecordID() usando reflexión, ya que el tipo de objeto puede variar
+                Object recordID = null;
+				try {
+					recordID = targetClass.getMethod("getID").invoke(component);
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+                if (recordID != null && windowNo == (int) recordID)
 				{
 					// System.out.println("Adjunto abierto");
 					return true;
@@ -371,12 +402,12 @@ public abstract class TabbedDesktop extends AbstractDesktop {
 	}
 	
 	/**
-	 * Pone en foco el tab correspondiente (por ahora solo para WAttachment)
+	 * Pone en foco el tab correspondiente
 	 * @param windowNo
-	 * @return boolean
+	 * @return boolean, Object class
 	 * @author dREHER
 	 */
-	public boolean setFocusWindowAttachment(int windowNo)
+	public boolean setFocusWindow(int windowNo, Class<?> targetClass)
 	{
 		Tabbox tabbox = windowContainer.getComponent();
 		Tabpanels panels = tabbox.getTabpanels();
@@ -387,9 +418,29 @@ public abstract class TabbedDesktop extends AbstractDesktop {
 			Tabpanel panel = (Tabpanel) child;
 			Component component = panel.getFirstChild();
 			
-			if (component != null && (component instanceof WAttachment))
+			if (component != null && targetClass.isInstance(component))
 			{
-				if (windowNo == ((WAttachment)component).getID())
+				// Obtener el método getRecordID() usando reflexión, ya que el tipo de objeto puede variar
+                Object recordID = null;
+				try {
+					recordID = targetClass.getMethod("getID").invoke(component);
+				} catch (IllegalAccessException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IllegalArgumentException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NoSuchMethodException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (SecurityException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+                if (recordID != null && windowNo == (int) recordID)
 				{
 					panel.getLinkedTab().setFocus(true);
 					panel.setFocus(true);

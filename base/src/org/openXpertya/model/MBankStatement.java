@@ -134,7 +134,10 @@ public class MBankStatement extends X_C_BankStatement implements DocAction {
         //
 
         ArrayList list = new ArrayList();
-        String    sql  = "SELECT * FROM C_BankStatementLine " + "WHERE C_BankStatement_ID=?" + "ORDER BY Line";
+        // dREHER Nov 25, fix para PG16
+        String    sql  = "SELECT * FROM C_BankStatementLine " + 
+        " WHERE C_BankStatement_ID=?" + 
+        " ORDER BY Line";
         PreparedStatement pstmt = null;
 
         try {

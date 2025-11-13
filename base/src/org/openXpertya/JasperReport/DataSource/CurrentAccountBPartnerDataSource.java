@@ -232,7 +232,12 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	}
 	
 	protected void makeInsertAllDocuments(int subIndex) throws Exception {
-		PreparedStatement ps = DB.prepareStatement(getActualCAQ().getQuery(), getTrxName(), true);
+		
+		// dREHER Nov 24
+		String sql = getActualCAQ().getQuery();
+		System.out.println("sql cuenta corriente: " + sql);
+		
+		PreparedStatement ps = DB.prepareStatement(sql, getTrxName(), true);
 		
 		int i = 1;
 		// Parámetros de sqlDoc
@@ -332,7 +337,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	
 	@Override
 	protected String getQuery() {
-		String sql = "select *, bp.value as bpartner_value, bp.name as bpartner_name, CASE WHEN cc.c_doctype_id != 0 THEN dt.name ELSE (CASE WHEN cc.c_cashline_id IS NOT NULL THEN 'Efectivo' ELSE 'Asignación Manual' END) END as tipo "
+		String sql = "select *, bp.value as bpartner_value, bp.name as bpartner_name, CASE WHEN cc.c_doctype_id != 0 THEN dt.name ELSE (CASE WHEN cc.c_cashline_id IS NOT NULL THEN 'Efectivo' ELSE (CASE WHEN cc.numerocomprobante = 'Saldo inicial' THEN '' ELSE 'Asignación Manual' END) END) END as tipo "
 				+ "from t_cuentacorriente cc "
 				+ "join c_bpartner bp on bp.c_bpartner_id = cc.c_bpartner_id "
 				+ "left join c_doctype dt on dt.c_doctype_id = cc.c_doctype_id "

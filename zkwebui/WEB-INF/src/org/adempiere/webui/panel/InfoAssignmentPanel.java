@@ -194,7 +194,7 @@ public class InfoAssignmentPanel extends InfoPanel implements EventListener, Val
 		
 		bNew.addEventListener(Events.ON_CLICK, this);
 		
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -438,6 +438,11 @@ public class InfoAssignmentPanel extends InfoPanel implements EventListener, Val
     {
 		southBody.insertBefore(paging, southBody.getFirstChild());
 		layout.invalidate();
+	}
+	
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
 	}
 
 }

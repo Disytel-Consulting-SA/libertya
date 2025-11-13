@@ -38,6 +38,19 @@ public interface RetencionProcessor {
 	 * @throws Exception en caso de que ocurra un error en el agregado de la factura.
 	 */
 	public void addInvoice(MInvoice inv, BigDecimal payamt) throws Exception;	
+	
+	/**
+	 * Agrega una factura a la lista de facturas pagadas, junto con el importe
+	 * que se está pagando de dicha factura. Si el parámetro factura es <code>null</null>
+	 * entonces el importe indica un monto por pago anticipado.
+	 * @param inv <code>MInvoice</code> que contiene la factura a agregar.
+	 * @param payamt <code>BigDecimal</code> con el importe pagado.
+	 * @param netAmount <code>BigDecimal</code> el importe neto del comprobante para el procesador correspondiente
+	 * @param totalLines <code>BigDecimal</code> el importe total de las lineas del comprobante para el procesador correspondiente
+	 * @throws Exception en caso de que ocurra un error en el agregado de la factura.
+	 * @author dREHER Feb'25
+	 */
+	public void addInvoice(MInvoice inv, BigDecimal payamt, BigDecimal netAmount, BigDecimal totaLines) throws Exception;
 
 
 	/**

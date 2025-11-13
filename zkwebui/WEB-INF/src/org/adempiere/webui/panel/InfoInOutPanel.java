@@ -190,7 +190,7 @@ public class InfoInOutPanel extends InfoPanel implements ValueChangeListener, Ev
 				Msg.translate(Env.getCtx(), "BPartner"), "", false, false, true);
 		fBPartner_ID.addValueChangeListener(this);
 		
-		Grid grid = GridFactory.newGridLayout();
+		grid = GridFactory.newGridLayout();
 		
 		Rows rows = new Rows();
 		grid.appendChild(rows);
@@ -425,5 +425,10 @@ public class InfoInOutPanel extends InfoPanel implements ValueChangeListener, Ev
 	protected void insertPagingComponent() {
 		southBody.insertBefore(paging, southBody.getFirstChild());
 		layout.invalidate();
+	}
+	
+	@Override
+	protected Grid getFilterGrid() {
+		return grid;
 	}
 }

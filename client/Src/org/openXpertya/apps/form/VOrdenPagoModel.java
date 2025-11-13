@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.logging.Level;
 import org.openXpertya.apps.ProcessCtl;
 import org.openXpertya.apps.form.VModelHelper.ResultItem;
 import org.openXpertya.apps.form.VModelHelper.ResultItemTableModel;
+import org.openXpertya.apps.form.VOrdenCobroModel.OpenInvoicesCustomerReceiptsTableModel;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.AllocationGenerator;
@@ -35,6 +37,7 @@ import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
+import org.openXpertya.model.MCintoloExchangeDifSettings;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDiscountSchema;
 import org.openXpertya.model.MDocType;
@@ -101,6 +104,7 @@ public class VOrdenPagoModel {
 	
 	// dREHER por ahora el calculo de saldo abierto en $ARS funciona como siempre...
 	private static final boolean isPorAhoraFuncionaComoSiempre = true;
+
 	
 	// dREHER
 	private static boolean SHOW_DEBUG = false;
@@ -906,6 +910,10 @@ public class VOrdenPagoModel {
 
 	}
 
+	/**
+	 * Modelo de grilla facturas
+	 * dREHER
+	 */
 	public class OpenInvoicesTableModel extends ResultItemTableModel {
 		public OpenInvoicesTableModel() {
 			VModelHelper.GetInstance().super();
@@ -929,6 +937,7 @@ public class VOrdenPagoModel {
 			// La columna toPayCurrency permite ingresar el monto en la moneda
 			// de la Compañia
 			columnNames.add(Msg.translate(Env.getCtx(), "ToPay").concat(" ").concat(mCurency.getISO_Code()));
+			
 		}
 
 		public int getOpenAmtColIdx() {
@@ -1009,12 +1018,26 @@ public class VOrdenPagoModel {
 		// TODO: CINTOLO
 		private BigDecimal manualAmount = new BigDecimal(0); // A Pagar
 		private BigDecimal manualAmtClientCurrency = new BigDecimal(0); // A Pagar ARS
+		
 		private BigDecimal paymentTermDiscount = new BigDecimal(0); // Desc/Rego Esq. Vto
+		
+		private BigDecimal totalCurrentAmtFecFact = new BigDecimal(0); // total ARS a fecha fact
+		private BigDecimal openCurrentAmtFecFact = new BigDecimal(0); // open ARS a fecha fact
 
 		private String isexchange = "N";
 		private boolean toPayWithPaymentTerm = true;
 		
 		private BigDecimal exchangeRate = new BigDecimal(0); // dREHER Tasa de cambio de la factura
+		
+		private Timestamp dateInvoiced = null; // dREHER 5.0
+
+		public Timestamp getDateInvoiced() {
+			return dateInvoiced;
+		}
+
+		public void setDateInvoiced(Timestamp dateInvoiced) {
+			this.dateInvoiced = dateInvoiced;
+		}
 
 		public ResultItemFactura(ResultSet rs) throws Exception {
 			VModelHelper.GetInstance().super(rs);
@@ -1076,17 +1099,44 @@ public class VOrdenPagoModel {
 			
 			return toPay;
 		}		
+		
+		public BigDecimal getToPayAmtFecFactura() {
+			BigDecimal toPay = (BigDecimal) getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
+			if (isToPayWithPaymentTerm()) {
+				toPay = toPay.subtract(getPaymentTermDiscount());
+			}
+			
+			return toPay;
+		}
+
+		public BigDecimal getTotalCurrentAmtFecFact() {
+			return totalCurrentAmtFecFact;
+		}
+
+		public void setTotalCurrentAmtFecFact(BigDecimal totalCurrentAmtFecFact) {
+			this.totalCurrentAmtFecFact = totalCurrentAmtFecFact;
+		}
+
+		public BigDecimal getOpenCurrentAmtFecFact() {
+			return openCurrentAmtFecFact;
+		}
+
+		public void setOpenCurrentAmtFecFact(BigDecimal openCurrentAmtFecFact) {
+			this.openCurrentAmtFecFact = openCurrentAmtFecFact;
+		}
+
 	}
 	
 	// dREHER solo por compatibilidad
-	public boolean validateConvertionRate() {
+	public CallResult validateConvertionRate() {
 		return validateConvertionRate(null);
 	}
 	
 	// Se recorren las facturas y verificando que exista una tasa de cambio
 	// existente.
 	// En caso de no existir la tasa se retorna false
-	public boolean validateConvertionRate(Timestamp fecha) {
+	public CallResult validateConvertionRate(Timestamp fecha) {
+		CallResult rs = new CallResult();
 		
 		if (m_facturas != null) {
 			for (ResultItem x : m_facturas) {
@@ -1098,17 +1148,56 @@ public class VOrdenPagoModel {
 				//		|| ((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int currency_ID_To = (Integer) ((ResultItemFactura) x)
 							.getItem(m_facturasTableModel.getCurrencyColIdx());
-					if (MCurrency.currencyConvert(new BigDecimal(1), C_Currency_ID, currency_ID_To,
-							// new Timestamp(System.currentTimeMillis()), 0,
-							fecha==null?(Timestamp)((ResultItemFactura) x).getItem(m_facturasTableModel.getDueDateColIdx()):fecha, 0, getCtx()) == null) {
+
+					// dREHER 5.0 tomar la fecha de la factura y sino la de vencimiento
+					Timestamp fechaFC = ((ResultItemFactura) x).getDateInvoiced();
+					if(fechaFC==null)
+						fechaFC = new Timestamp( ((Date)((ResultItemFactura) x).getItem(m_facturasTableModel.getDueDateColIdx())).getTime() );
+					
+					// dREHER 5,0 verificar si no tiene cargada tasa de cambio en la propia FC
+					BigDecimal exchangeRate = ((ResultItemFactura) x).getExchangeRate();
+					if(exchangeRate==null)
+						exchangeRate = Env.ZERO;
+
+					// dREHER 5.0 se tienen que dar las dos condiciones para marcar mostrar mensaje de advertencia
+					BigDecimal conversion = MCurrency.currencyConvert(new BigDecimal(1), C_Currency_ID, currency_ID_To,
+							fecha==null?
+									fechaFC
+										:
+									fecha, 
+										0, getCtx());
+					
+					String isoCode = "";
+					if(currency_ID_To > 0) {
+						MCurrency curr = MCurrency.get(getCtx(), currency_ID_To);
+						isoCode = curr.getISO_Code();
+					}
+					
+					
+					if ( Util.isEmpty(conversion, true) && exchangeRate.compareTo(Env.ZERO) == 0) {
+						
+						debug("validateConvertionRate. NO hay Tasa de conversion para Fecha FACT: " + 
+								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fechaFC) + " - ExchangeRate: " + exchangeRate);
+						
 						((ResultItemFactura) x).setManualAmount(BigDecimal.ZERO);
 						((ResultItemFactura) x).setManualAmtClientCurrency(BigDecimal.ZERO);
-						return false;
+						
+						rs.setMsg("NO existe Tasa de conversion para Fecha factura: " + 
+								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fechaFC) + " - Moneda: " + isoCode, true);
+						break;
+						
+					}else {
+						if(conversion == null && fecha!=null ) {
+							rs.setMsg("NO existe Tasa de conversion para Fecha: " + 
+									new java.text.SimpleDateFormat("dd/MM/yyyy").format(fecha) + " - Moneda: " + isoCode, true);
+							break;
+						}
 					}
+						
 				// }
 			}
 		}
-		return true;
+		return rs;
 	}
 
 	//
@@ -1187,6 +1276,9 @@ public class VOrdenPagoModel {
 
 	/** Actualizar números de cheque */
 	private boolean isActualizarNrosChequera = true;
+	
+	/** dREHER permite configurar si el calculo de saldo abierto de facturas de proveedores se calcula con tasa de cambio de fecha factura o la que esta dentro de la factura */
+	private boolean isFacturaProveedorTasaCambioInterna = false;
 
 	public VOrdenPagoModel() {
 		getMsgMap().put("TenderType", "TenderType");
@@ -1195,6 +1287,25 @@ public class VOrdenPagoModel {
 		m_facturasTableModel = getInvoicesTableModel();
 		setPoGenerator(createAllocationGenerator());
 		setRole(MRole.get(getCtx(), Env.getAD_Role_ID(getCtx())));
+		
+		setComportamientoTasaCambio();
+	}
+
+	private void setComportamientoTasaCambio() {
+		if(!isSOTrx()) {
+			String isTasaCambioFacturaProv = MPreference.GetCustomPreferenceValue("TasaCambioEnFCProveedor", Env.getAD_Client_ID(getCtx()));
+			if(Util.isEmpty(isTasaCambioFacturaProv, true)) {
+				isTasaCambioFacturaProv = "N";
+			}
+			
+			if("Y".equals(isTasaCambioFacturaProv))
+				setFacturaProveedorTasaCambioInterna(true);
+			else
+				setFacturaProveedorTasaCambioInterna(false);
+			
+			debug("FC Proveedor utiliza tasa cambio en factura ? " + (isFacturaProveedorTasaCambioInterna?"Si":"No"));
+			
+		}
 	}
 
 	protected POCRGenerator createAllocationGenerator() {
@@ -1318,7 +1429,7 @@ public class VOrdenPagoModel {
 				+ "			WHERE ba55.BankAccountType = 'C' "
 				+ "				AND ba55.C_Currency_ID = @C_Currency_ID@ "
 				+ "				AND ba55.C_BankAccount_ID = C_BankAccountDoc.C_BankAccount_ID) "
-				+ "AND C_BankAccountDoc.PaymentRule = 'S' " + "AND (C_BankAccountDoc.IsUserAssigned = 'N'"
+				+ "AND C_BankAccountDoc.PaymentRule IN ('S','P') " + "AND (C_BankAccountDoc.IsUserAssigned = 'N'" // dREHER 5.0
 				+ "		OR (EXISTS (SELECT C_BankAccountDocUser_ID "
 				+ "					FROM C_BankAccountDocUser bau "
 				+ "					WHERE bau.C_BankAccountDoc_ID = C_BankAccountDoc.C_BankAccountDoc_ID "
@@ -1496,7 +1607,7 @@ public class VOrdenPagoModel {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append(
-				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, COALESCE(openTotal,0) AS openTotal,  sum(COALESCE(convertedamt,0)) as convertedamtsum, sum(COALESCE(openamt,0)) as openAmtSum, sum(COALESCE(openamt,0)) - sum(COALESCE(discount,0)) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule, MAX(COALESCE(exchangeRate,0)) as exchangeRate FROM ");
+				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, COALESCE(openTotal,0) AS openTotal,  sum(COALESCE(convertedamt,0)) as convertedamtsum, sum(COALESCE(openamt,0)) as openAmtSum, sum(COALESCE(openamt,0)) - sum(COALESCE(discount,0)) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule, MAX(COALESCE(exchangeRate,0)) as exchangeRate, MAX(dateInvoiced) AS dateInvoiced FROM ");
 		sql.append(
 				"  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
 		
@@ -1511,8 +1622,10 @@ public class VOrdenPagoModel {
 		 */
 		
 		
-		if(getIsSOTrx().equals("Y") || 
-				isPorAhoraFuncionaComoSiempre) {
+		if( (getIsSOTrx().equals("Y") && 
+				isPorAhoraFuncionaComoSiempre) ||
+			(getIsSOTrx().equals("N") && !isFacturaProveedorTasaCambioInterna())
+		){
 			sql.append(" coalesce(abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
 				+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID)),0) as ConvertedAmt, ");
 		}else {
@@ -1524,9 +1637,12 @@ public class VOrdenPagoModel {
 		}
 		
 		sql.append("isexchange, ");
+		sql.append("dateInvoiced, ");
 		
-		if(getIsSOTrx().equals("Y") || 
-				isPorAhoraFuncionaComoSiempre) {
+		if( (getIsSOTrx().equals("Y") && 
+				isPorAhoraFuncionaComoSiempre) ||
+			(getIsSOTrx().equals("N") && !isFacturaProveedorTasaCambioInterna())
+		) {
 			sql.append(
 				"    coalesce(currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"
 						+ m_fechaTrx
@@ -1594,6 +1710,7 @@ public class VOrdenPagoModel {
 			if (!m_allInvoices)
 				ps.setTimestamp(i++, m_fechaFacturas);
 
+			
 			rs = ps.executeQuery();
 			
 			// int ultimaFactura = -1;
@@ -1604,6 +1721,10 @@ public class VOrdenPagoModel {
 				rif.setExchangeRate(rs.getBigDecimal("exchangeRate"));
 				
 				int facId = ((Integer) rif.getItem(m_facturasTableModel.getIdColIdx()));
+
+				// dREHER 5.0
+				rif.setDateInvoiced(rs.getTimestamp("dateInvoiced"));
+				
 				// if (facId != ultimaFactura) {
 				m_facturas.add(rif);
 				// ultimaFactura = facId;
@@ -2274,6 +2395,16 @@ public class VOrdenPagoModel {
 						throw new Exception(CLogger.retrieveErrorAsString());
 					}
 				}
+				
+				/**
+				 * Si el tipo pago es adelantado, se debe marcar el medio de pago como tal
+				 * dREHER
+				 */
+				if(	hdr.getAllocationType().equals(MAllocationHdr.ALLOCATIONTYPE_AdvancedCustomerReceipt) || 
+					hdr.getAllocationType().equals(MAllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder)) {
+					pay.setIsPrepayment(true);
+				}
+				
 				// Agregar información al payment en creación con el medio de
 				// pago actual
 				addCustomPaymentInfo(pay, mp);
@@ -2443,7 +2574,24 @@ public class VOrdenPagoModel {
 		// dREHER
 		debug("saldoMediosPago=" + saldoMediosPago + " allowExchangeDifference= " + allowExchangeDifference, false);
 		
-		if (saldoMediosPago.abs()
+		/**
+		 * Si se configuro umbral para ajuste automatico de cobro, entonces validar
+		 * y de ser necesario crear el medio de pago del tipo transferencia bancaria para saldar las facturas
+		 * dREHER - Mayo 25
+		 */
+		BigDecimal ajuste = Env.ZERO;
+		if(m_esPagoNormal && isSOTrx()) {
+			if(saldoMediosPago.abs().compareTo(Env.ZERO) > 0) {
+				BigDecimal umbral = getUmbralAjusteAutomatico();
+				debug("Umbral para ajuste automatico: " + umbral + " Saldo: " + saldoMediosPago);
+				if(saldoMediosPago.abs().compareTo(umbral) <= 0) {
+					ajuste = createMedioPago(saldoMediosPago);
+				}
+			}
+		}
+		
+		
+		if ((saldoMediosPago.abs().subtract(ajuste.abs()))
 				.compareTo(allowExchangeDifference) > 0)
 			return PROCERROR_PAYMENTS_AMT_MATCH;
 
@@ -2455,6 +2603,39 @@ public class VOrdenPagoModel {
 			ret = doPostProcesarAdelantado();
 
 		return ret;
+	}
+
+	private BigDecimal createMedioPago(BigDecimal saldoMediosPago) {
+		debug("Crea el medio de pago del tipo transferencia con el monto del saldo a ajustar!");
+		MedioPagoTransferencia pago = new MedioPagoTransferencia(getCtaBanccoAjusteAutomatico(), "Ajuste Aut.", saldoMediosPago, getFechaOP());
+		List<MPOSPaymentMedium> pms = MPOSPaymentMedium.getAvailablePaymentMediums(Env.getCtx(), MPOSPaymentMedium.TENDERTYPE_DirectDeposit, MPOSPaymentMedium.CONTEXT_CustomerReceiptsOnly, true, get_TrxName());
+		MPOSPaymentMedium paymentMedium = null;
+		
+		for(MPOSPaymentMedium pm: pms) {
+			paymentMedium = pm;
+			break;
+		}
+		pago.setPaymentMedium(paymentMedium);
+		// pago.setDiscountSchemaToApply(getCurrentGeneralDiscount());
+		m_mediosPago.add(pago);
+		
+		return pago.getImporte();
+	}
+
+	private BigDecimal getUmbralAjusteAutomatico() {
+		MCintoloExchangeDifSettings eds = new MCintoloExchangeDifSettings(Env.getCtx(), getExcDifSetID(), get_TrxName());
+		return eds.getUmbral_Ajuste_Aut();
+	}
+
+	private int getCtaBanccoAjusteAutomatico() {
+		MCintoloExchangeDifSettings eds = new MCintoloExchangeDifSettings(Env.getCtx(), getExcDifSetID(), get_TrxName());
+		return eds.getC_BankAccount_Ajuste_ID();
+	}
+
+	private int getExcDifSetID() {
+		int tmp = DB.getSQLValue(get_TrxName(), "SELECT C_Cintolo_Exchange_Dif_Settings_ID FROM C_Cintolo_Exchange_Dif_Settings WHERE IsActive='Y'");
+		if(tmp<0)tmp = 0;
+		return tmp;
 	}
 
 	private int doPostProcesarAdelantado() {
@@ -2472,8 +2653,15 @@ public class VOrdenPagoModel {
 			// 2. Crear el generador de OPA y actualizar el encabezado de la
 			// asignación creada
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
-			hdr = getPoGenerator().createAllocationHdr();
 			
+			/**
+			 * Para cobros adelantados se debe ajustar el tipo de asignacion correspondiente
+			 * dREHER
+			 */
+			String tipoAsignacion = MAllocationHdr.ALLOCATIONTYPE_AdvancedPaymentOrder;
+			if(isSOTrx()) tipoAsignacion = MAllocationHdr.ALLOCATIONTYPE_AdvancedCustomerReceipt;
+			
+			hdr = getPoGenerator().createAllocationHdr(tipoAsignacion);
 			hdr.set_TrxName(get_TrxName()); // dREHER
 			
 			updateAllocationHdr(hdr);
@@ -2732,12 +2920,36 @@ public class VOrdenPagoModel {
 		DB.executeUpdate(sql, get_TrxName()); // dREHER
 	}
 
+	/**
+	 * Actualiza la anteultima columna de carga manual de lo que se va a pagar
+	 * @param row
+	 * @param rif
+	 * @param currency_ID_To
+	 * @param useOpenAmtIfZero
+	 * @author dREHER
+	 */
 	public void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To,
 			boolean useOpenAmtIfZero) {
 		BigDecimal manualAmtClientCurrency = rif.getManualAmtClientCurrency();
 		BigDecimal openAmt = ((m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx())) == null)
 				? BigDecimal.ZERO
 				: (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx());
+		
+		// dREHER sep 24 Si es ventas, tomar el saldo abierto a fecha de factura (tasa de cambio)
+		String documentNo = "";
+		if(isSOTrx()) {
+			OpenInvoicesCustomerReceiptsTableModel modelSoTrx = (OpenInvoicesCustomerReceiptsTableModel)m_facturasTableModel;
+			int colOpenAmt = modelSoTrx.getOpenCurrentAmtFecFactColIdx();
+			
+			openAmt = ((m_facturas.get(row).getItem(colOpenAmt)) == null)
+					? BigDecimal.ZERO
+					: (BigDecimal) m_facturas.get(row).getItem(colOpenAmt);
+			
+			int colDoc = modelSoTrx.getDocumentColIdx();
+			documentNo = (String) m_facturas.get(row).getItem(colDoc);
+		}
+		
+		
 		// Sumar o restar algún monto custom
 		if (rif.isToPayWithPaymentTerm()) {
 			openAmt = openAmt.subtract(rif.getPaymentTermDiscount());
@@ -2751,20 +2963,39 @@ public class VOrdenPagoModel {
 
 		if (manualAmtClientCurrency == null || manualAmtClientCurrency.signum() < 0)
 			rif.setManualAmtClientCurrency(BigDecimal.ZERO);
-		else if (manualAmtClientCurrency.compareTo(openAmt) > 0)
+		else if (manualAmtClientCurrency.compareTo(openAmt) > 0)// dREHER si intenta pagar mas que el saldo abierto, tomar maximo el saldo abierto
 			rif.setManualAmtClientCurrency(openAmt);
+		
+		// dREHER Sep 24 en cobros, calcular segun fecha de factura
+		Timestamp fechaACalcular = m_fechaTrx;
+		if(isSOTrx()) {
+			OpenInvoicesCustomerReceiptsTableModel modelSoTrx = (OpenInvoicesCustomerReceiptsTableModel)m_facturasTableModel;
+			int colFec = modelSoTrx.getDateInvoicedColIdx();
+			fechaACalcular = (Timestamp)(m_facturas.get(row).getItem(colFec));
+		}
+			
 		BigDecimal manualAmt = MCurrency.currencyConvert(rif.getManualAmtClientCurrency(), C_Currency_ID,
 				// currency_ID_To, new Timestamp(System.currentTimeMillis()), 0,
-				currency_ID_To, m_fechaTrx, 0, getCtx());
+				currency_ID_To, fechaACalcular, 0, getCtx());
+		
+		// dREHER Sep 24 si tiene tasa de cambio la factura, directamente calcular el monto en moneda fc, tomando esta tasa de conversion
+		if(this.isSOTrx() && rif.getExchangeRate()!=null && rif.getExchangeRate().compareTo(Env.ZERO) > 0){
+			manualAmt = getAmountByInvoiceExchangeRate(rif.getManualAmtClientCurrency().divide(rif.getExchangeRate(), 2, RoundingMode.HALF_DOWN));
+			debug("Actualiza monto ManualAmtClientCurrency: " + rif.getManualAmtClientCurrency() + ". tasa cambio de comprobante=" + rif.getExchangeRate() +
+					" total a Pagar=" + manualAmt + " Comprobante=" + documentNo);
+			
+			// TODO: ver bien aca, con el cliente C00007 no marca la factura para pagar...
+		}
 		
 		/**
 		 * currency_ID_To -> moneda del comprobante
 		 * C_Currency_ID -> moneda de la orden de pago
-		 * Para facturas de compra calcular el total en pesos con la tasa de cambio de la factura
+		 * Para facturas de compra calcular el total en pesos con la tasa de cambio de la factura si la preferencia asi lo indica
 		 * dREHER  
 		 */
 		
-		if(!this.isSOTrx() && !isPorAhoraFuncionaComoSiempre ) {
+		if(!this.isSOTrx() && isFacturaProveedorTasaCambioInterna() 
+				&& rif.getExchangeRate()!=null && rif.getExchangeRate().compareTo(Env.ZERO) > 0) {
 			
 			manualAmt = getAmountByInvoiceExchangeRate(rif.getManualAmtClientCurrency().divide(rif.getExchangeRate(), RoundingMode.HALF_DOWN));
 			debug("Actualiza monto ManualAmtClientCurrency. tasa cambio de comprobante=" + rif.getExchangeRate() +
@@ -2776,7 +3007,7 @@ public class VOrdenPagoModel {
 	}
 
 	// dREHER
-	private void debug(String string) {
+	protected void debug(String string) {
 		System.out.println("==> VOrdenPagoModel. " + string);
 	}
 
@@ -2813,10 +3044,19 @@ public class VOrdenPagoModel {
 			rif.setManualAmount(BigDecimal.ZERO);
 		else if (manualAmt.compareTo(openAmt) > 0)
 			rif.setManualAmount(openAmt);
+		
+		// dREHER Sep 24 en cobros, calcular segun fecha de factura
+		Timestamp fechaACalcular = m_fechaTrx;
+		if(isSOTrx()) {
+			OpenInvoicesCustomerReceiptsTableModel modelSoTrx = (OpenInvoicesCustomerReceiptsTableModel)m_facturasTableModel;
+			int colFec = modelSoTrx.getDateInvoicedColIdx();
+			fechaACalcular = (Timestamp)(m_facturas.get(row).getItem(colFec));
+		}
+		
 		BigDecimal manualAmtClientCurrency = MCurrency.currencyConvert(rif.getManualAmount(), currency_ID_To,
 				C_Currency_ID,
 				// new Timestamp(System.currentTimeMillis()), 0, getCtx());
-				m_fechaTrx, 0, getCtx());
+				fechaACalcular, 0, getCtx());
 		
 		/**
 		 * currency_ID_To -> moneda del comprobante
@@ -2825,9 +3065,13 @@ public class VOrdenPagoModel {
 		 * dREHER  
 		 */
 		
-		if(!this.isSOTrx() && !isPorAhoraFuncionaComoSiempre) {
+		if(!this.isSOTrx() && isFacturaProveedorTasaCambioInterna() 
+				&& rif.getExchangeRate()!=null && rif.getExchangeRate().compareTo(Env.ZERO) > 0) {
 			
-			manualAmtClientCurrency = getAmountByInvoiceExchangeRate(rif.getManualAmount().divide(rif.getExchangeRate(), RoundingMode.HALF_DOWN));
+			// manualAmtClientCurrency = getAmountByInvoiceExchangeRate(rif.getManualAmount().divide(rif.getExchangeRate(), RoundingMode.HALF_DOWN));
+			
+			manualAmtClientCurrency = getAmountByInvoiceExchangeRate(rif.getManualAmount().multiply(rif.getExchangeRate()));			
+			
 			debug("Actualiza monto actualizarPagarCurrencyConPagar. tasa cambio de comprobante=" + rif.getExchangeRate() +
 					" total a Pagar=" + rif.getManualAmount());
 		}
@@ -2840,9 +3084,12 @@ public class VOrdenPagoModel {
 		NumberFormat nf = NumberFormat.getNumberInstance();
 
 		nf.setMinimumFractionDigits(2);
+		nf.setMaximumFractionDigits(2);  // dREHER sep 24
 		nf.setRoundingMode(RoundingMode.HALF_EVEN);
+		
+		// dREHER sep 24
 		if (mCurency != null)
-			nf.setMinimumFractionDigits(mCurency.getStdPrecision());
+			; // nf.setMinimumFractionDigits(mCurency.getStdPrecision());
 
 		return nf;
 	}
@@ -2851,6 +3098,16 @@ public class VOrdenPagoModel {
 		if (nn != null) {
 			NumberFormat nf = getNumberFormat();
 			return nf.format(nn);
+		}
+		return "";
+	}
+	
+	// dREHER sep 24
+	public String dateFormat(Timestamp nn) throws IllegalArgumentException {
+		if (nn != null) {
+			SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+			String formattedFechaFacturas = dateFormat.format(nn);
+			return formattedFechaFacturas;
 		}
 		return "";
 	}
@@ -2881,7 +3138,13 @@ public class VOrdenPagoModel {
 	}
 
 	protected void calculateRetencions() {
-		m_retGen.evaluarRetencion();
+		
+		// dREHER Feb '25 Evaluar lineas de comprobantes tambien para ver si corresponde algun esquema de retencion en particular
+		debug("calculateRetencions. Se evaluan los esquemas de retencion por entidad comercial y tambien por lineas de facturas...");
+		m_retGen.evaluarRetencionPorLineaFC();
+		
+		// dREHER Feb '25 codigo original antes de Feb '25
+		// m_retGen.evaluarRetencion();
 	}
 
 	/**
@@ -3689,6 +3952,10 @@ public class VOrdenPagoModel {
 		for (MedioPago pago : pagos) {
 			pago.addToGenerator(getPoGenerator());
 		}
+		
+		// dREHER configura como debe calcularse los montos de los debitos
+		getPoGenerator().setCalcularMontoSegunTasaCambioFC(isFacturaProveedorTasaCambioInterna());
+		
 		// Se crean las líneas de imputación entre las facturas y los pagos
 		// CINTOLO dREHER flujo de armado de documentos de dif de cambio...
 		getPoGenerator().generateLines();
@@ -3796,14 +4063,30 @@ public class VOrdenPagoModel {
 		for (; i < totalInvoices; i++) {
 			fac = (ResultItemFactura) m_facturas.get(i);
 			amt = payAll ? fac.getToPayAmt() : BigDecimal.ZERO;
-			// Solamente cambio el valor cuando no estamos en el momento de
-			// pagar
-			if (!toPayMoment) {
-				fac.setManualAmtClientCurrency(amt);
-				actualizarPagarConPagarCurrency(i, fac,
-						(Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()), payAll);
-				totalAmt = totalAmt.add(amt);
+			
+			// dREHER sep 24
+			if(!this.isSOTrx()) {
+				// Solamente cambio el valor cuando no estamos en el momento de
+				// pagar
+				if (!toPayMoment) {
+					fac.setManualAmtClientCurrency(amt);
+					actualizarPagarConPagarCurrency(i, fac,
+							(Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()), payAll);
+					totalAmt = totalAmt.add(amt);
+				}
+			}else { // Si es ventas, completar con montos de fecha factura
+
+				if (!toPayMoment) {
+					amt = payAll ? fac.getOpenCurrentAmtFecFact() : BigDecimal.ZERO;
+					fac.setManualAmtClientCurrency(amt);
+					actualizarPagarConPagarCurrency(i, fac,
+							(Integer) m_facturas.get(i).getItem(m_facturasTableModel.getCurrencyColIdx()), payAll);
+
+					totalAmt = totalAmt.add(amt);
+				}
 			}
+			
+			
 		}
 		return totalAmt;
 	}
@@ -4096,7 +4379,7 @@ public class VOrdenPagoModel {
 	// dREHER
 	protected void debug(String string, boolean isReceipt) {
 		if(SHOW_DEBUG)
-			System.out.println(isReceipt?"VOrdenPagoModel":"VOrdenCobroModel" + " ==> " + string);
+			System.out.println((isReceipt?"VOrdenPagoModel":"VOrdenCobroModel") + " ==> " + string);
 	}
 	
 	/**
@@ -4179,4 +4462,12 @@ public class VOrdenPagoModel {
 		poGenerator.setInclude(include);
 	}
 	//--------------------------------------- CINTOLO END --------------------------------------- 
+
+	public boolean isFacturaProveedorTasaCambioInterna() {
+		return isFacturaProveedorTasaCambioInterna;
+	}
+
+	public void setFacturaProveedorTasaCambioInterna(boolean isFacturaProveedorTasaCambioInterna) {
+		this.isFacturaProveedorTasaCambioInterna = isFacturaProveedorTasaCambioInterna;
+	}
 }

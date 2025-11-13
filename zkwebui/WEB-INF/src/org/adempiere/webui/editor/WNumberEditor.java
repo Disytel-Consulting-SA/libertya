@@ -33,6 +33,7 @@ import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.event.InputEvent;
 
 /**
  *
@@ -127,9 +128,11 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 	 */
     public void onEvent(Event event)
     {
-    	if (Events.ON_CHANGE.equalsIgnoreCase(event.getName()) || Events.ON_OK.equalsIgnoreCase(event.getName()))
+    	if (Events.ON_CHANGE.equalsIgnoreCase(event.getName()) || Events.ON_OK.equalsIgnoreCase(event.getName())
+    			 ) 
     	{
 	        BigDecimal newValue = getComponent().getValue();
+	        
 	        if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
 	    	    return;
 	    	}
@@ -139,7 +142,9 @@ public class WNumberEditor extends WEditor implements ContextMenuListener
 	    	// Compatibilidad con Callouts: en caso de almacenar un dato entero, debe retornarse este tipo, y no un BigDecimal
 	        ValueChangeEvent changeEvent = new ValueChangeEvent(this, this.getColumnName(), oldValue, (displayType==DisplayType.Integer && newValue!=null ? newValue.intValue() : newValue));
 	        super.fireValueChange(changeEvent);
+	        
 	        oldValue = newValue;
+	        
     	}
     }
 

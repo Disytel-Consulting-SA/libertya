@@ -224,6 +224,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
         this.setSizable(true);
         this.setStyle("overflow:auto;"); // dREHER Mayo 25
         
+        
         this.setVisible(true);
         AEnv.showWindow(this);
     }
@@ -1346,7 +1347,7 @@ public class FindWindow extends Window implements EventListener,ValueChangeListe
                 String ColumnSQL = field.getColumnSQL(false);
                 if (value.toString().indexOf('%') != -1)
                     m_query.addRestriction(ColumnSQL, MQuery.LIKE, value, ColumnName, wed.getDisplay());
-                else if (isProductCategoryField && value instanceof Integer && 1==2) // dREHER Este filtro parece NO tener ningun sentido
+                else if (isProductCategoryField && value instanceof Integer && 1==2) // dREHER Mayo 25 esta opcion NO siempre funciona y es un hardcoded horrible
                     m_query.addRestriction(getSubCategoryWhereClause(((Integer) value).intValue()));
                 else
                     m_query.addRestriction(ColumnSQL, MQuery.EQUAL, value, ColumnName, wed.getDisplay());

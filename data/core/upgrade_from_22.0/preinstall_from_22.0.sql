@@ -3092,3 +3092,674 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('T_Acct_Balance','c_pr
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','c_project_id','int4'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','isgroupbyproject','character'));
 
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
+-- 20240926-11:15
+ALTER TABLE libertya.ad_column ADD islink bpchar(1) DEFAULT 'N'::bpchar NOT NULL;
+ALTER TABLE libertya.ad_column ADD prefijolink varchar(2000) NULL;
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
+-- 20240926-11:15
+/* libertya.ad_field_v source */
+CREATE OR REPLACE VIEW libertya.ad_field_v
+AS SELECT t.ad_window_id,
+    f.ad_tab_id,
+    f.ad_field_id,
+    tbl.ad_table_id,
+    f.ad_column_id,
+    f.name,
+    f.description,
+    f.help,
+    f.isdisplayed,
+    f.displaylogic,
+    f.displaylength,
+    f.seqno,
+    f.sortno,
+    f.issameline,
+    f.isheading,
+    f.isfieldonly,
+    f.isreadonly,
+    f.isencrypted AS isencryptedfield,
+    f.obscuretype,
+    c.columnname,
+    c.columnsql,
+    c.fieldlength,
+    c.vformat,
+        CASE
+            WHEN f.defaultvalue IS NULL THEN c.defaultvalue
+            ELSE f.defaultvalue
+        END AS defaultvalue,
+    c.iskey,
+    c.isparent,
+    c.ismandatory,
+    c.isidentifier,
+    c.istranslated,
+    c.ad_reference_value_id,
+    c.callout,
+    c.ad_reference_id,
+        CASE
+            WHEN f.ad_val_rule_id IS NULL THEN c.ad_val_rule_id
+            ELSE f.ad_val_rule_id
+        END AS ad_val_rule_id,
+    c.ad_process_id,
+    c.isalwaysupdateable,
+    c.readonlylogic,
+    c.isupdateable,
+    c.isencrypted AS isencryptedcolumn,
+    c.isselectioncolumn,
+    tbl.tablename,
+    c.valuemin,
+    c.valuemax,
+    fg.name AS fieldgroup,
+    vr.code AS validationcode,
+    f.isdisplayedingrid,
+    c.calloutalsoonload,
+    f.exportrealvalue,
+    c.islink,
+    c.prefijolink
+   FROM ad_field f
+     JOIN ad_tab t ON f.ad_tab_id = t.ad_tab_id
+     LEFT JOIN ad_fieldgroup fg ON f.ad_fieldgroup_id = fg.ad_fieldgroup_id
+     LEFT JOIN ad_column c ON f.ad_column_id = c.ad_column_id
+     JOIN ad_table tbl ON c.ad_table_id = tbl.ad_table_id
+     JOIN ad_reference r ON c.ad_reference_id = r.ad_reference_id
+     LEFT JOIN ad_val_rule vr ON COALESCE(f.ad_val_rule_id, c.ad_val_rule_id) = vr.ad_val_rule_id
+  WHERE f.isactive = 'Y'::bpchar AND c.isactive = 'Y'::bpchar;
+  
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
+-- 20240926-12:15  
+/* libertya.ad_field_vt source */
+CREATE OR REPLACE VIEW libertya.ad_field_vt
+AS SELECT trl.ad_language,
+    t.ad_window_id,
+    f.ad_tab_id,
+    f.ad_field_id,
+    tbl.ad_table_id,
+    f.ad_column_id,
+    trl.name,
+    trl.description,
+    trl.help,
+    f.isdisplayed,
+    f.displaylogic,
+    f.displaylength,
+    f.seqno,
+    f.sortno,
+    f.issameline,
+    f.isheading,
+    f.isfieldonly,
+    f.isreadonly,
+    f.isencrypted AS isencryptedfield,
+    f.obscuretype,
+    c.columnname,
+    c.columnsql,
+    c.fieldlength,
+    c.vformat,
+        CASE
+            WHEN f.defaultvalue IS NULL THEN c.defaultvalue
+            ELSE f.defaultvalue
+        END AS defaultvalue,
+    c.iskey,
+    c.isparent,
+    c.ismandatory,
+    c.isidentifier,
+    c.istranslated,
+    c.ad_reference_value_id,
+    c.callout,
+    c.ad_reference_id,
+        CASE
+            WHEN f.ad_val_rule_id IS NULL THEN c.ad_val_rule_id
+            ELSE f.ad_val_rule_id
+        END AS ad_val_rule_id,
+    c.ad_process_id,
+    c.isalwaysupdateable,
+    c.readonlylogic,
+    c.isupdateable,
+    c.isencrypted AS isencryptedcolumn,
+    c.isselectioncolumn,
+    tbl.tablename,
+    c.valuemin,
+    c.valuemax,
+    fgt.name AS fieldgroup,
+    vr.code AS validationcode,
+    f.isdisplayedingrid,
+    c.calloutalsoonload,
+    f.exportrealvalue,
+    c.islink,
+    c.prefijolink
+   FROM ad_field f
+     JOIN ad_field_trl trl ON f.ad_field_id = trl.ad_field_id
+     JOIN ad_tab t ON f.ad_tab_id = t.ad_tab_id
+     LEFT JOIN ad_fieldgroup_trl fgt ON f.ad_fieldgroup_id = fgt.ad_fieldgroup_id AND trl.ad_language::text = fgt.ad_language::text
+     LEFT JOIN ad_column c ON f.ad_column_id = c.ad_column_id
+     JOIN ad_table tbl ON c.ad_table_id = tbl.ad_table_id
+     JOIN ad_reference r ON c.ad_reference_id = r.ad_reference_id
+     LEFT JOIN ad_val_rule vr ON COALESCE(f.ad_val_rule_id, c.ad_val_rule_id) = vr.ad_val_rule_id
+  WHERE f.isactive = 'Y'::bpchar AND c.isactive = 'Y'::bpchar;
+  
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.3
+--20250210 9:10
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion','deliveryrule','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion','tipodomicilio','varchar(1)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_invoiceline','c_retencionschema_id','int4'));
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.4
+--20250218 10:30
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_org_percepcion','ispriorizadomicilio','varchar(1)'));
+
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.6
+--20250306-10:10
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'MostrarImpuestosFC_B', 'Y');
+--20250306-10:10
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_B', 'Regimen de Transparencia Fiscal al Consumidor (Ley 27.743)');
+
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrintLabelPriceCmd07', 'A550,5,0,2,1,1,N,"@TAX_LEGEND@"');
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.6
+--20250306-10:15
+update ad_preference set value='A155,165,0,2,1,1,N,"@NET_PRICE@"' where "attribute" = 'PrintLabelPriceCmd07';
+update ad_preference set value='A560,190,0,1,1,1,N,"@DATE@"' where "attribute" = 'PrintLabelPriceCmd02';
+update ad_preference set value='A570,70,0,4,1,1,N,"@UOM_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd05';
+update ad_preference set value='A155,145,0,3,1,1,N,"@PROD_VALUE@     @PROD_UPC@"' where "attribute" = 'PrintLabelPriceCmd06';
+update ad_preference set value='A200,38,0,5,1,2,N,"@PRICESTD@"' where "attribute" = 'PrintLabelPriceCmd04';
+update ad_preference set value='A155,70,0,5,1,1,N,"@CUR_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd03';
+
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_BLabel', 'PRECIO SIN IMPUESTOS NACIONALES: $');
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.6
+--20250306-10:15
+CREATE OR REPLACE FUNCTION libertya.bompricetaxamts(product_id integer, pricelist_version_id integer, type_return varchar)
+ RETURNS numeric
+ LANGUAGE plpgsql
+AS $function$
+DECLARE
+	v_Price	NUMERIC;
+	v_ProductPrice	NUMERIC;
+	v_taxIncluded CHARACTER;
+	v_TaxRate NUMERIC;
+	v_Tax NUMERIC;
+	v_Net NUMERIC;
+	v_TaxCategory_ID NUMERIC;
+	bom RECORD;
+
+BEGIN
+	--	Try to get price from pricelist directly
+	SELECT	COALESCE(pl.IsTaxIncluded,'N'), p.C_TaxCategory_ID
+	INTO	v_taxIncluded, v_TaxCategory_ID
+	FROM	M_PriceList_Version plv
+	INNER JOIN M_ProductPrice pp ON plv.M_PriceList_Version_ID=pp.M_PriceList_Version_ID
+	INNER JOIN M_PriceList pl ON pl.M_PriceList_ID=plv.M_PriceList_ID
+	INNER JOIN M_Product p ON p.M_Product_ID=pp.M_Product_ID
+	WHERE pp.M_PriceList_Version_ID=PriceList_Version_ID AND pp.M_Product_ID=Product_ID;
+
+	v_Price = bompricelist(product_id, pricelist_version_id);
+	IF v_Price ISNULL THEN
+		v_Price := 0;
+	END IF;
+
+	SELECT t.rate 
+	INTO v_TaxRate
+	FROM C_Tax t 
+	WHERE t.c_taxcategory_id = v_TaxCategory_ID
+	ORDER BY issummary ASC, isdefault DESC, created DESC LIMIT 1;	
+
+	IF v_taxIncluded = 'Y' THEN
+		v_Net := v_Price / (1 + (v_TaxRate/100) );
+		v_Tax := v_Price - v_Net;
+	END IF;
+
+	IF type_return = 'Tax' THEN
+		v_Price := v_Tax;
+	ELSE 
+		v_Price := v_Net;
+	END IF;
+
+	RETURN v_Price;
+	
+END;
+
+$function$
+;
+
+--2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.7
+-- 20250520-13:30
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Cintolo_Exchange_Dif_Settings','umbral_ajuste_aut','numeric'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Cintolo_Exchange_Dif_Settings','c_bankaccount_ajuste_id','integer'));
+
+
+-- ### MERGE 2025-10-31 org.libertya.core.micro.r3019.dev.jacofer_14_cc upgrade_from_4.0
+--20241128-1111 Se ajusta la vista de cuenta corriente para el manejo de multiples creditos en una OP
+CREATE OR REPLACE VIEW libertya.c_alldocumentscc_v AS 
+ SELECT c.c_currency_id,
+        CASE
+            WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+            ELSE COALESCE(ps.dueamt, i.grandtotal)
+        END AS amount,
+        CASE
+            WHEN dt.signo_issotrx = 1 AND dt.doctypekey::text <> 'RTI'::text THEN
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+            ELSE 0::numeric
+        END AS debit,
+        CASE
+            WHEN dt.signo_issotrx = 1 AND dt.doctypekey::text <> 'RTI'::text THEN 0::numeric
+            ELSE
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+        END AS credit,
+    dt.name AS tipo_doc,
+    i.documentno,
+    i.dateinvoiced AS datetrx,
+    i.dateacct,
+    i.c_doctypetarget_id AS c_doctype_id,
+    'C_Invoice'::text AS documenttable,
+    i.c_invoice_id AS document_id,
+    libertya.invoiceopen(i.c_invoice_id, ps.c_invoicepayschedule_id) AS openamt,
+    i.created,
+    i.c_bpartner_id,
+    i.ad_org_id,
+    i.ad_client_id,
+    i.issotrx,
+    ps.c_invoicepayschedule_id,
+    COALESCE(ps.duedate, i.dateacct) AS duedate
+   FROM libertya.c_invoice i
+     JOIN libertya.c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+     JOIN libertya.c_currency c ON i.c_currency_id = c.c_currency_id
+     LEFT JOIN libertya.c_invoicepayschedule ps ON ps.c_invoice_id = i.c_invoice_id
+  WHERE (dt.doctypekey::text <> ALL (ARRAY['RTR'::character varying::text, 'RTIXX'::character varying::text, 'RCR'::character varying::text, 'RCI'::character varying::text])) AND i.processed = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) OR dt.issotrx = 'Y'::bpchar AND dt.isfiscaldocument = 'Y'::bpchar AND i.docstatus = 'VO'::bpchar)
+UNION ALL
+ SELECT DISTINCT ah.c_currency_id,
+    ah.grandtotal - COALESCE(alc.creditamt, 0::numeric) AS amount,
+        CASE
+            WHEN COALESCE(dt.issotrx, i.issotrx) = 'Y'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'CRR'::text AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'VPR'::text THEN 0::numeric
+            ELSE CASE WHEN COALESCE(dt.issotrx, i.issotrx) = 'N'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text = 'VPR'::text 
+			THEN 0::numeric
+			ELSE ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)
+		 END
+        END AS debit,
+        CASE
+            WHEN COALESCE(dt.issotrx, i.issotrx) = 'Y'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'CRR'::text AND COALESCE(cd.doctypekey, ''::character varying)::text <> 'VPR'::text THEN ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)
+            ELSE CASE WHEN COALESCE(dt.issotrx, i.issotrx) = 'N'::bpchar AND COALESCE(cd.doctypekey, ''::character varying)::text = 'VPR'::text 
+			THEN ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)
+			ELSE 0::numeric
+		 END
+        END AS credit,
+    COALESCE(dt.name, 'Asignación Manual'::character varying) AS tipo_doc,
+    ah.documentno,
+    ah.datetrx,
+    ah.dateacct,
+    ah.c_doctype_id,
+    'C_AllocationHdr'::text AS documenttable,
+    ah.c_allocationhdr_id AS document_id,
+    0 AS openamt,
+    ah.created,
+    ah.c_bpartner_id,
+    ah.ad_org_id,
+    ah.ad_client_id,
+    COALESCE(dt.issotrx, i.issotrx) AS issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_allocationhdr ah
+     LEFT JOIN libertya.c_doctype dt ON ah.c_doctype_id = dt.c_doctype_id
+     JOIN libertya.c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+     LEFT JOIN ( SELECT al2.c_allocationhdr_id,
+            sum(al2.amount) AS creditamt
+           FROM libertya.c_allocationline al2
+             JOIN libertya.c_invoice i2 ON al2.c_invoice_credit_id = i2.c_invoice_id
+             JOIN libertya.c_doctype dt2 ON i2.c_doctypetarget_id = dt2.c_doctype_id AND (dt2.doctypekey::text <> ALL (ARRAY['RTR'::text, 'RCR'::text, 'RTI'::text, 'RCI'::text]))
+          WHERE al2.c_invoice_credit_id IS NOT NULL
+          GROUP BY al2.c_allocationhdr_id) alc ON alc.c_allocationhdr_id = ah.c_allocationhdr_id
+     LEFT JOIN libertya.c_invoice i ON al.c_invoice_id = i.c_invoice_id
+     LEFT JOIN libertya.c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+     LEFT JOIN libertya.c_payment cp ON cp.c_payment_id = al.c_payment_id
+     LEFT JOIN libertya.c_doctype cd ON cd.c_doctype_id = cp.c_doctype_id
+  WHERE (ah.allocationtype::text = ANY (ARRAY['RC'::character varying::text, 'OP'::character varying::text, 'MAN'::character varying::text])) AND (ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)) > 0::numeric AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+UNION ALL
+ SELECT ah.c_currency_id,
+    ah.grandtotal AS amount,
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN COALESCE(sum(alf.montosaldado), 0::numeric)
+            ELSE ah.grandtotal
+        END AS debit,
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN ah.grandtotal
+            ELSE COALESCE(sum(alf.montosaldado), 0::numeric)
+        END AS credit,
+    dt.name::text || ' Adelantado'::text AS tipo_doc,
+    ah.documentno,
+    ah.datetrx,
+    ah.dateacct,
+    ah.c_doctype_id,
+    'C_AllocationHdr'::text AS documenttable,
+    ah.c_allocationhdr_id AS document_id,
+    ah.grandtotal - COALESCE(sum(alf.montosaldado), 0::numeric) AS openamt,
+    ah.created,
+    ah.c_bpartner_id,
+    ah.ad_org_id,
+    ah.ad_client_id,
+    dt.issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_allocationhdr ah
+     JOIN libertya.c_doctype dt ON ah.c_doctype_id = dt.c_doctype_id
+     JOIN libertya.c_allocationline al ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+     LEFT JOIN libertya.c_payment p ON al.c_payment_id = p.c_payment_id
+     LEFT JOIN libertya.c_cashline cl ON al.c_cashline_id = cl.c_cashline_id
+     LEFT JOIN libertya.c_invoice ic ON al.c_invoice_credit_id = ic.c_invoice_id
+     LEFT JOIN ( SELECT li.c_allocation_detail_v_id,
+            li.c_allocationhdr_id,
+            li.ad_client_id,
+            li.ad_org_id,
+            li.isactive,
+            li.created,
+            li.createdby,
+            li.updated,
+            li.updatedby,
+            li.fecha,
+            li.factura,
+            li.c_currency_id,
+            li.montofactura,
+            li.pagonro,
+            li.tipo,
+            li.cash,
+            li.montosaldado,
+            li.payamt,
+            li.c_allocationline_id,
+            li.c_invoice_id,
+            li.paydescription,
+            li.payment_medium_name,
+            li.pay_currency_id,
+            li.c_bankaccount_id,
+            li.numerocomprobante,
+            li.puntodeventa,
+            li.c_letra_comprobante_id,
+            li.doctypekey,
+            li.doctypename,
+            li.paymentrule,
+            li.c_region_delivery_id,
+            li.netamount,
+            li.c_paymentterm_id,
+            li.dateinvoiced,
+            li.c_invoice_credit_id,
+            li.credit_doctypekey,
+            li.credit_doctypename,
+            li.credit_numerocomprobante,
+            li.credit_puntodeventa,
+            li.credit_letra_comprobante_id,
+            li.credit_netamount,
+            li.c_cashline_id,
+            li.cashname,
+            li.c_payment_id,
+            li.accountno,
+            li.checkno,
+            li.a_name,
+            li.a_bank,
+            li.a_cuit,
+            li.duedate,
+            li.dateemissioncheck,
+            li.checkstatus,
+            li.creditcardnumber,
+            li.couponbatchnumber,
+            li.couponnumber,
+            li.m_entidadfinancieraplan_id,
+            li.m_entidadfinanciera_id,
+            li.posnet,
+            li.micr,
+            li.isreconciled,
+            li.creditdate,
+            li.creditdocumentno,
+            lh.c_allocationhdr_id,
+            lh.ad_client_id,
+            lh.ad_org_id,
+            lh.isactive,
+            lh.created,
+            lh.createdby,
+            lh.updated,
+            lh.updatedby,
+            lh.documentno,
+            lh.description,
+            lh.datetrx,
+            lh.dateacct,
+            lh.c_currency_id,
+            lh.approvalamt,
+            lh.ismanual,
+            lh.docstatus,
+            lh.docaction,
+            lh.isapproved,
+            lh.processing,
+            lh.processed,
+            lh.posted,
+            lh.c_bpartner_id,
+            lh.allocationtype,
+            lh.retencion_amt,
+            lh.grandtotal,
+            lh.allocationaction,
+            lh.actiondetail,
+            lh.c_posjournal_id,
+            lh.c_doctype_id,
+            lh.c_banklist_id,
+            lh.datetrx
+           FROM libertya.c_allocation_detail_v li
+             JOIN libertya.c_allocationhdr lh ON li.c_allocationhdr_id = lh.c_allocationhdr_id
+          WHERE lh.processed = 'Y'::bpchar AND (lh.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))) alf(c_allocation_detail_v_id, c_allocationhdr_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, fecha, factura, c_currency_id, montofactura, pagonro, tipo, cash, montosaldado, payamt, c_allocationline_id, c_invoice_id, paydescription, payment_medium_name, pay_currency_id, c_bankaccount_id, numerocomprobante, puntodeventa, c_letra_comprobante_id, doctypekey, doctypename, paymentrule, c_region_delivery_id, netamount, c_paymentterm_id, dateinvoiced, c_invoice_credit_id, credit_doctypekey, credit_doctypename, credit_numerocomprobante, credit_puntodeventa, credit_letra_comprobante_id, credit_netamount, c_cashline_id, cashname, c_payment_id, accountno, checkno, a_name, a_bank, a_cuit, duedate, dateemissioncheck, checkstatus, creditcardnumber, couponbatchnumber, couponnumber, m_entidadfinancieraplan_id, m_entidadfinanciera_id, posnet, micr, isreconciled, creditdate, creditdocumentno, c_allocationhdr_id_1, ad_client_id_1, ad_org_id_1, isactive_1, created_1, createdby_1, updated_1, updatedby_1, documentno, description, datetrx, dateacct, c_currency_id_1, approvalamt, ismanual, docstatus, docaction, isapproved, processing, processed, posted, c_bpartner_id, allocationtype, retencion_amt, grandtotal, allocationaction, actiondetail, c_posjournal_id, c_doctype_id, c_banklist_id, datetrx) ON (alf.c_payment_id = p.c_payment_id OR alf.c_cashline_id = cl.c_cashline_id OR alf.c_invoice_credit_id = ic.c_invoice_id) AND alf.c_allocationline_id <> al.c_allocationline_id
+  WHERE (ah.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+  GROUP BY ah.c_currency_id, ah.grandtotal, ah.documentno, ah.datetrx, ah.c_doctype_id, ah.c_allocationhdr_id, dt.name, dt.issotrx, ah.created, ah.c_bpartner_id, ah.ad_org_id, ah.ad_client_id
+UNION ALL
+ SELECT p.c_currency_id,
+    p.payamt AS amount,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN
+            CASE
+                WHEN dt.doctypekey::text = 'CRR'::text THEN p.payamt
+                ELSE COALESCE(al.montosaldado, 0::numeric)
+            END
+            ELSE
+            CASE
+                WHEN dt.doctypekey::text <> 'VPR'::text THEN p.payamt
+                ELSE COALESCE(al.montosaldado, 0::numeric)
+            END
+        END 
+     ELSE
+	0::numeric
+     END AS debit,
+     CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN dt.issotrx = 'Y'::bpchar THEN
+            CASE
+                WHEN dt.doctypekey::text = 'CRR'::text THEN COALESCE(al.montosaldado, 0::numeric)
+                ELSE p.payamt
+            END
+            ELSE
+            CASE
+                WHEN dt.doctypekey::text = 'VPR'::text THEN p.payamt
+                ELSE COALESCE(al.montosaldado, 0::numeric)
+            END
+        END
+     ELSE
+	0::numeric
+     END AS credit,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN TRIM(dt.name) ELSE CASE WHEN p.IsReceipt='N' THEN 'Pago (Cargo)' ELSE 'Cobro (Cargo)' END END AS tipo_doc,
+    p.documentno,
+    p.datetrx,
+    p.dateacct,
+    p.c_doctype_id,
+    'C_Payment'::text AS documenttable,
+    p.c_payment_id AS document_id,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+	p.payamt - COALESCE(al.montosaldado, 0::numeric)
+    ELSE
+	0::numeric
+    END AS openamt,
+    p.created,
+    p.c_bpartner_id,
+    p.ad_org_id,
+    p.ad_client_id,
+    dt.issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_payment p
+     JOIN libertya.c_doctype dt ON p.c_doctype_id = dt.c_doctype_id
+     LEFT JOIN libertya.c_charge ch ON ch.C_Charge_ID=p.C_Charge_ID
+     LEFT JOIN ( SELECT d.c_payment_id,
+            d.isactive,
+            sum(d.montosaldado) AS montosaldado,
+            count(aha.c_allocationhdr_id) AS cant
+           FROM libertya.c_allocation_detail_v d
+             LEFT JOIN libertya.c_allocationhdr aha ON d.c_allocationhdr_id = aha.c_allocationhdr_id AND (aha.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND aha.processed = 'Y'::bpchar AND (aha.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+             LEFT JOIN libertya.c_allocationhdr ah ON d.c_allocationhdr_id = ah.c_allocationhdr_id AND (ah.allocationtype::text <> ALL (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+          GROUP BY d.c_payment_id, d.isactive) al ON al.c_payment_id = p.c_payment_id AND al.isactive = 'Y'::bpchar
+  WHERE p.processed = 'Y'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (al.c_payment_id IS NULL OR dt.doctypekey::text = 'CRR'::text OR dt.doctypekey::text = 'VPR'::text OR al.montosaldado > 0::numeric AND al.montosaldado < p.payamt) AND (al.cant IS NULL OR al.cant = 0 OR dt.doctypekey::text = 'CRR'::text OR dt.doctypekey::text = 'VPR'::text)
+UNION ALL
+ SELECT p.c_currency_id,
+    abs(p.amount) AS amount,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN p.amount > 0::numeric THEN abs(COALESCE(al.montosaldado, 0::numeric)) * 1::numeric
+            ELSE abs(p.amount) * 1::numeric
+        END
+    ELSE
+	0::numeric
+    END AS debit,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+        CASE
+            WHEN p.amount > 0::numeric THEN abs(p.amount)
+            ELSE abs(COALESCE(al.montosaldado, 0::numeric))
+        END 
+    ELSE
+	0::numeric
+    END AS credit,
+    'Linea de caja'::character varying || CASE WHEN COALESCE(ch.C_Charge_ID,0)=0 THEN '' ELSE ' (Cargo)' END AS tipo_doc,
+    c.name AS documentno,
+    c.statementdate AS datetrx,
+    c.dateacct,
+    NULL::integer AS c_doctype_id,
+    'C_CashLine'::text AS documenttable,
+    p.c_cashline_id AS document_id,
+    CASE WHEN COALESCE(ch.C_Charge_ID,0) = 0 THEN
+	 abs(p.amount) - COALESCE(al.montosaldado, 0::numeric)
+    ELSE
+	0::numeric
+    END AS openamt,
+    p.created,
+    p.c_bpartner_id,
+    p.ad_org_id,
+    p.ad_client_id,
+        CASE
+            WHEN p.amount > 0::numeric THEN 'Y'::text
+            ELSE 'N'::text
+        END AS issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM libertya.c_cashline p
+     JOIN libertya.c_cash c ON p.c_cash_id = c.c_cash_id
+     LEFT JOIN libertya.c_charge ch ON ch.C_Charge_ID=p.C_Charge_ID
+     LEFT JOIN ( SELECT d.c_cashline_id,
+            d.isactive,
+            sum(d.montosaldado) AS montosaldado,
+            count(aha.c_allocationhdr_id) AS cant
+           FROM libertya.c_allocation_detail_v d
+             LEFT JOIN libertya.c_allocationhdr aha ON d.c_allocationhdr_id = aha.c_allocationhdr_id AND (aha.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND aha.processed = 'Y'::bpchar AND (aha.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+             LEFT JOIN libertya.c_allocationhdr ah ON d.c_allocationhdr_id = ah.c_allocationhdr_id AND (ah.allocationtype::text <> ALL (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+          GROUP BY d.c_cashline_id, d.isactive) al ON al.c_cashline_id = p.c_cashline_id AND al.isactive = 'Y'::bpchar
+  WHERE p.processed = 'Y'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (al.c_cashline_id IS NULL OR al.montosaldado < abs(p.amount)) AND (al.cant IS NULL OR al.cant = 0)
+UNION ALL
+ SELECT c.c_currency_id,
+        CASE
+            WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+            ELSE COALESCE(ps.dueamt, i.grandtotal)
+        END AS amount,
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+            ELSE 0::numeric
+        END AS debit,
+        CASE
+            WHEN dt.signo_issotrx = 1 THEN 0::numeric
+            ELSE
+            CASE
+                WHEN COALESCE(ps.dueamt, 0::numeric) = 0::numeric THEN i.grandtotal
+                ELSE COALESCE(ps.dueamt, i.grandtotal)
+            END
+        END AS credit,
+    dt.name AS tipo_doc,
+    i.documentno,
+    i.dateinvoiced AS datetrx,
+    i.dateacct,
+    i.c_doctypetarget_id AS c_doctype_id,
+    'C_Invoice'::text AS documenttable,
+    i.c_invoice_id AS document_id,
+    libertya.invoiceopen(i.c_invoice_id, ps.c_invoicepayschedule_id) AS openamt,
+    i.created,
+    i.c_bpartner_id,
+    i.ad_org_id,
+    i.ad_client_id,
+    i.issotrx,
+    ps.c_invoicepayschedule_id,
+    COALESCE(ps.duedate, i.dateacct) AS duedate
+   FROM libertya.c_invoice i
+     JOIN libertya.c_doctype dt ON i.c_doctypetarget_id = dt.c_doctype_id
+     JOIN libertya.c_currency c ON i.c_currency_id = c.c_currency_id
+     LEFT JOIN libertya.c_invoicepayschedule ps ON ps.c_invoice_id = i.c_invoice_id
+  WHERE (dt.doctypekey::text = ANY (ARRAY['RTR'::text, 'RCR'::text])) AND i.processed = 'Y'::bpchar AND ((i.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) OR dt.issotrx = 'Y'::bpchar AND dt.isfiscaldocument = 'Y'::bpchar AND i.docstatus = 'VO'::bpchar) AND libertya.invoiceopen(i.c_invoice_id, ps.c_invoicepayschedule_id) > 0::numeric AND NOT (i.c_invoice_id IN ( SELECT al.c_invoice_credit_id
+           FROM libertya.c_allocationline al
+             JOIN libertya.c_allocationhdr ah ON al.c_allocationhdr_id = ah.c_allocationhdr_id
+          WHERE (ah.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND al.c_invoice_credit_id IS NOT NULL));
+
+ALTER TABLE libertya.c_alldocumentscc_v
+  OWNER TO libertya;
+
+-- ### MERGE 2025-10-31 org.libertya.core.micro.r3019.dev.jacofer_14_cc upgrade_from_4.0
+--20250110-0930 Ajuste para corregir texto de movimientos sin tipo de documento
+UPDATE c_doctype 
+SET name = 'A.Manual/Efectivo/Otro'
+WHERE c_doctype_id = 0;
+
+-- ### MERGE 2025-10-31 org.libertya.core.micro.r3019.dev.jacofer_14_cc upgrade_from_4.0
+-- 20250127-13:15
+ALTER TABLE libertya.t_balancereport ALTER COLUMN credit TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN debit TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN balance TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN duedebt TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN actualbalance TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN chequesencartera TYPE numeric(22, 2) USING credit::numeric(22, 2);
+ALTER TABLE libertya.t_balancereport ALTER COLUMN generalbalance TYPE numeric(22, 2) USING credit::numeric(22, 2);
+
+
+-- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
+--20241021-15:10
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'MostrarImpuestosFC_B', 'N');
+--20241022-12:30
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_B', 'Regimen de Transparencia Fiscal al Consumidor (Ley 27.743)');
+
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrintLabelPriceCmd07', 'A550,5,0,2,1,1,N,"@TAX_LEGEND@"');
+
+-- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
+-- 20250129-12:30
+update ad_preference set value='A155,165,0,2,1,1,N,"@NET_PRICE@"' where "attribute" = 'PrintLabelPriceCmd07';
+update ad_preference set value='A560,190,0,1,1,1,N,"@DATE@"' where "attribute" = 'PrintLabelPriceCmd02';
+update ad_preference set value='A570,70,0,4,1,1,N,"@UOM_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd05';
+update ad_preference set value='A155,145,0,3,1,1,N,"@PROD_VALUE@     @PROD_UPC@"' where "attribute" = 'PrintLabelPriceCmd06';
+update ad_preference set value='A200,38,0,5,1,2,N,"@PRICESTD@"' where "attribute" = 'PrintLabelPriceCmd04';
+update ad_preference set value='A155,70,0,5,1,1,N,"@CUR_SYMBOL@"' where "attribute" = 'PrintLabelPriceCmd03';
+
+-- ### MERGE 2025-11-04 org.libertya.core.micro.r3000.dev.facturacion r7421 upgrade_from_2.0
+INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, isactive, created, createdby, updated, updatedby, ad_window_id, ad_user_id, "attribute", value)
+VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'PrefijoMostrarImpuestosFC_BLabel', 'PRECIO SIN IMPUESTOS NACIONALES: $');
+
+--20251112-0919 Versionado de BBDD para release
+UPDATE ad_system SET version = '12-11-2025' WHERE ad_system_id = 0;

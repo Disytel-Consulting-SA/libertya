@@ -13,6 +13,7 @@ import java.util.Set;
 import org.openXpertya.cc.CurrentAccountManager;
 import org.openXpertya.cc.CurrentAccountManagerFactory;
 import org.openXpertya.model.MAllocationHdr;
+import org.openXpertya.model.MAllocationLine;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInOut;
@@ -20,6 +21,8 @@ import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MOrder;
 import org.openXpertya.model.MOrg;
 import org.openXpertya.model.MPOSJournal;
+import org.openXpertya.model.MPayment;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.PO;
 import org.openXpertya.model.X_AD_ClientInfo;
 import org.openXpertya.reflection.CallResult;
@@ -34,10 +37,10 @@ import org.openXpertya.util.Util;
 public class InvoiceGlobalVoiding extends SvrProcess {
 
 	/** ID de Factura a anular junto con todas sus relaciones creadas */
-	private Integer invoiceID = 0;
+	protected Integer invoiceID = 0;
 	
 	/** Factura a anular */
-	private MInvoice invoice;
+	protected MInvoice invoice;
 	
 	/**
 	 * Débitos y Créditos imputados dentro de los allocation hdrs relacionados
@@ -82,6 +85,15 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	 * relacionados se encuentren con otros débitos
 	 */
 	private boolean controlMoreDebitsInAllocation = true;
+	
+	/**
+	 * Si se hizo un unico pago con tarjeta se guarda el C_Payment_ID correspondiente, caso contrario queda en -1
+	 * dREHER 5.0
+	 */
+	protected int C_PaymentTarjeta_ID = -1;
+	
+	// dREHER 5.0
+	protected boolean isAnularClover = false;
 	
 	public InvoiceGlobalVoiding() {
 		super();
@@ -128,6 +140,16 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 	
 	@Override
 	protected String doIt() throws Exception {
+		
+		String IsAnulaClover = MPreference.GetCustomPreferenceValue("IsAnulacionVentaConClover", Env.getAD_Client_ID(getCtx()));
+		if(Util.isEmpty(IsAnulaClover, true))
+			IsAnulaClover = "N";
+		
+		// dREHER 5.0
+		if(IsAnulaClover.equals("Y"))
+			isAnularClover = true;
+				
+		
 		// Realizar las inicializaciones de las relaciones de la factura
 		log.info("Inicializo documentos a anular...");
 		initialize();
@@ -170,11 +192,28 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		afterVoid();
 		log.info("Termino el resto de las otras operaciones...");
 		
+		// dREHER 5.0 Solo si la preferencia esta en Y
+		if(IsAnulaClover.equals("Y")) {
+			log.info("Gestionar devolucion en Clover si corresponde");
+			voidCloverPayment();
+			log.info("Termino la devolucion en Clover....");
+		}
+		
 		generarCAE();
 		
 		imprimirDoc();
 		
 		return getFinalMsg();
+	}
+
+	
+	/**
+	 * Por ahora queda en InvoiceGlobalVoid del componente THS
+	 * 
+	 * dREHER 5.0
+	 * @throws Exception
+	 */
+	protected void voidCloverPayment() throws Exception{
 	}
 
 	private void generarCAE() {
@@ -277,7 +316,28 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 			// Registro este allocation en el mensaje final
 			getMsg().createAndAddListElement(null,
 					mAllocationHdr.getDocumentNo(), msgList);
+			
+			/**
+			 * En caso de que los payments sean con tarjeta, enviar la anulacion del pago a Clover
+			 * dREHER 5.0
+			 */
+			
+			MAllocationLine[] lines = mAllocationHdr.getLines(false);
+			for(MAllocationLine line: lines) {
+				int C_Payment_ID = line.getC_Payment_ID();
+				if(C_Payment_ID > 0) {
+					MPayment payment = new MPayment(Env.getCtx(), C_Payment_ID, get_TrxName());
+					if(payment.getTenderType().equals(MPayment.TENDERTYPE_CreditCard)) {
+						C_PaymentTarjeta_ID = C_Payment_ID;
+					}else {
+						// TODO: ver que pasa si encuentra otro tipo de medio de pago, NO anular nada ?
+						C_PaymentTarjeta_ID = 0;
 		}
+				}
+			}
+			
+		}
+		
 		getMsg().addList(msgList);
 	}
 
@@ -456,6 +516,7 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 		// Tomar la caja seleccionada del combo si es distinto de cero, sino
 		// verificar la config y sino por defecto la del usuario actual
 		MPOSJournal currentPosJournal = MPOSJournal.getCurrent();
+		
 		// Caja Diaria de Crédito
 		if(Util.isEmpty(getPosJournalCreditID(), true)){
 			String posJournalCreditConfig = Env.getContext(getCtx(),
@@ -464,12 +525,15 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 					|| posJournalCreditConfig
 							.equals(X_AD_ClientInfo.VOIDINGINVOICEPOSJOURNALCONFIG_User)) {
 				setPosJournalCreditID(currentPosJournal != null?currentPosJournal.getID():0);
+				System.out.println("--> Caja Credito configurada en AD_ClientInfo:" + getPosJournalPaymentID());
 			}
 			else if(posJournalCreditConfig
 					.equals(X_AD_ClientInfo.VOIDINGINVOICEPOSJOURNALCONFIG_OriginalDocument)) {
 				setPosJournalCreditID(getInvoice().getC_POSJournal_ID());
+				System.out.println("--> Caja Credito de la factura a Anular:" + getPosJournalPaymentID());
 			}
 		}
+		
 		// Caja Diaria de Cobros/Pagos
 		if(Util.isEmpty(getPosJournalPaymentID(), true)){
 			String posJournalPaymentConfig = Env.getContext(getCtx(),
@@ -478,12 +542,32 @@ public class InvoiceGlobalVoiding extends SvrProcess {
 					|| posJournalPaymentConfig
 							.equals(X_AD_ClientInfo.VOIDINGINVOICEPAYMENTSPOSJOURNALCONFIG_User)) {
 				setPosJournalPaymentID(currentPosJournal != null?currentPosJournal.getID():0);
+				System.out.println("--> Caja pago actual:" + getPosJournalPaymentID());
 			}
 			else if (posJournalPaymentConfig
 					.equals(X_AD_ClientInfo.VOIDINGINVOICEPOSJOURNALCONFIG_OriginalDocument)) {
 				setPosJournalPaymentID(getInvoice().getC_POSJournal_ID());
+				System.out.println("--> Caja pago factura original:" + getPosJournalPaymentID());
 			}
 		}
+		
+		// dREHER 5.0 asegurar una caja para pagos
+		if(isAnularClover) {
+			/**
+			 * ATENCION!!! Si se setea la caja del usuario logueado, el efectivo va a la caja incorrecta
+			 * ya que el mismo DEBE volver a la caja original (la de la factura que se anula)
+			 * 
+			 * Actualmente si queda en CERO, cuando hace la anulacion termina tomando la caja desde la factura anulada y por lo tanto queda OK!
+			 * 
+			 */
+			
+			// if(Util.isEmpty(getPosJournalPaymentID(), true))
+			//	setPosJournalPaymentID(currentPosJournal != null?currentPosJournal.getID():0);
+			// System.out.println("--> Caja con anulacion de Clover pago actual:" + getPosJournalPaymentID());
+		}
+		
+		System.out.println("-->InvoiceGlobalVoiding.PosJournalPaymentID: " + getPosJournalPaymentID());
+		
 	}
 	
 	/**

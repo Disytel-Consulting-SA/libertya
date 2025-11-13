@@ -120,12 +120,15 @@ public class WAttachment extends Window implements EventListener
 	private AbstractADWindowPanel mPanel;
 	private String titulo;
 	private int ID;
+	private String tableName="";
 
-	//se agrego para dar compatibilidad a WSocialCOnversation
-	//sin mTab y mPanel
-	public WAttachment(	int WindowNo, int AD_Attachment_ID,
-			int AD_Table_ID, int Record_ID, String trxName) {
-		this(WindowNo, AD_Attachment_ID, AD_Table_ID, Record_ID, trxName, null, null);
+
+	public String getTableName() {
+		return tableName;
+	}
+
+	public void setTableName(String tableName) {
+		this.tableName = tableName;
 	}
 	
 	public WAttachment(	int WindowNo, int AD_Attachment_ID,
@@ -156,7 +159,7 @@ public class WAttachment extends Window implements EventListener
 		this.mTab = mTab;
 		this.mPanel = mPanel;
 		String title = "Adjunto: " +
-				mTab.getName() + " (" + Record_ID + ")"; 
+				(mTab==null ? " - " : mTab.getName()) + " (" + Record_ID + ")"; 
 		this.setTitulo(title);
 		this.setID(AD_Attachment_ID);
 		
@@ -262,7 +265,7 @@ public class WAttachment extends Window implements EventListener
 		// Component comp = this.getParent();
 
 		// dREHER TODO: ver de que se maximize segun tamaño de la pestaña del explorador (idem ventanas normales)
-		this.setWidth("900px"); // 700px
+		this.setWidth("100%"); // 700px // dREHER Ene 25 -> 900px
 		this.setHeight("700px"); // 600px
 		this.setMaximized(true); // true
 		
@@ -270,9 +273,12 @@ public class WAttachment extends Window implements EventListener
 		this.setClosable(false); // true
 		this.setSizable(false); // true
 		this.setBorder("solid"); // solid
+		
 		this.appendChild(mainPanel);
-		mainPanel.setHeight("100%");
-		mainPanel.setWidth("100%");		
+		
+		// mainPanel.setHeight("100%");
+		// mainPanel.setWidth("100%");
+		mainPanel.setStyle("width: 100%; height: 100%;");
 		
 		North northPanel = new North();
 		northPanel.setCollapsible(false);
@@ -292,6 +298,12 @@ public class WAttachment extends Window implements EventListener
         	toolBar.appendChild(externalUpload);
 			toolBar.appendChild(externalDelete);
         }
+        
+        // dREHER - Ene 25
+        toolBar.appendChild(bDeleteAll);
+        toolBar.appendChild(bRefresh);
+        toolBar.appendChild(bCancel);
+        toolBar.appendChild(bOk);
 		
 		mainPanel.appendChild(northPanel);
 		Div div = new Div();
@@ -326,16 +338,36 @@ public class WAttachment extends Window implements EventListener
 		preview.setHeight("100%");
 		preview.setWidth("100%");
 			
+		/** Codigo Original Se modifica para poder ocupar el maximo espacio disponible y si excede contenido scrollear
 		Center centerPane = new Center();
 		centerPane.setAutoscroll(true);
 		centerPane.setFlex(true);
 		mainPanel.appendChild(centerPane);
 		centerPane.appendChild(previewPanel);
+		*/
 		
+		// dREHER Ene 25
+		Center centerPane = new Center();
+		centerPane.setAutoscroll(false);
+		centerPane.setStyle("overflow-y: auto; overflow-x: hidden; height: 100%;");
+		centerPane.setFlex(true);
+		mainPanel.appendChild(centerPane);
+
+		// Ajustar el panel interno
+		previewPanel.setStyle("width: 100%; height: 75%;");
+		preview.setStyle("width: 100%; height: 75%;");
+
+		// Agregar el contenido al Center
+		centerPane.appendChild(previewPanel);
+		
+		/**
 		South southPane = new South();
 		mainPanel.appendChild(southPane);
 		southPane.appendChild(confirmPanel);
 		southPane.setHeight("30px");
+		
+		* dREHER Ene 25 Se mueven los botones a la barra de botones superior
+		*/
 		
 		bCancel.setImage("/images/Cancel24.png");
 		bCancel.addEventListener(Events.ON_CLICK, this);
@@ -349,10 +381,12 @@ public class WAttachment extends Window implements EventListener
 		bRefresh.setImage("/images/Refresh24W.png");
 		bRefresh.addEventListener(Events.ON_CLICK, this);
 		
+		/**
 		confirmPanel.appendChild(bDeleteAll);
 		confirmPanel.appendChild(bRefresh);
 		confirmPanel.appendChild(bCancel);
 		confirmPanel.appendChild(bOk);
+		*/
 	}
 	
 	/**

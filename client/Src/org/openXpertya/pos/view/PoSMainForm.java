@@ -93,6 +93,7 @@ import org.openXpertya.minigrid.ROCellEditor;
 import org.openXpertya.model.CalloutInvoiceExt;
 import org.openXpertya.model.FiscalDocumentPrint;
 import org.openXpertya.model.MEntidadFinanciera;
+import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MPOSPaymentMedium;
 import org.openXpertya.model.X_C_ExternalServiceAttributes;
 import org.openXpertya.pos.CloverOnlineMode.CloverOnlineMode;
@@ -604,8 +605,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 	 */
 	public PoSMainForm() {
 		super();
-		debug("PosMainForm. org.libertya.core.micro.r3000.dev.trxclover...");
-		this.model = new PoSModel();
+		this.model = getPoSModel();
 		this.model.setProcessListener(this);
 		this.msgRepository = PoSMsgRepository.getInstance();
 		setAuthDialog(new AuthorizationDialog(this));
@@ -693,6 +693,9 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			} else {
 				msg = MSG_NO_POS_CONFIG;
 			}
+			
+			msg = msg + " - " + (getModel().isPOSJournalActivated() ? "(Caja Diaria Abierta)":"(POS Simple)") + "" ;
+			
 			errorMsg(msg);
 			setPosConfigError(true);
 			return;
@@ -4056,11 +4059,34 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cBankAccountCombo = getComponentFactory().createBankAccountCombo();
 			cBankAccountCombo.setPreferredSize(new java.awt.Dimension(S_PAYMENT_FIELD_WIDTH,20));
 			cBankAccountCombo.setMandatory(true);
+
+			// dREHER sep 24 activar listener de cuentas bancarias para que setee la moneda correspondiente
+			cBankAccountCombo.addActionListener(new ActionListener() {
+
+				public void actionPerformed(ActionEvent e) {
+					updateCurrencyMediumPago();
+				}
+				
+			});
+			
 			FocusUtils.addFocusHighlight(cBankAccountCombo);
 		}
 		return cBankAccountCombo;
 	}
 	
+	// dREHER lee la moneda desde el medio de pago y la setea
+	protected void updateCurrencyMediumPago() {
+		if(getCBankAccountCombo().getValue()!=null) {
+			Integer bankAccountID = (Integer)getCBankAccountCombo().getValue();
+			MBankAccount ba = new MBankAccount(Env.getCtx(), bankAccountID, null);
+			int C_Currency_ID = ba.getC_Currency_ID();
+			
+			debug("updateCurrencyMediumPago. Leo la moneda desde la cuenta bancaria= " + C_Currency_ID);
+			
+			getCCurrencyCombo().setValue(C_Currency_ID);
+		}
+	}
+
 	/**
 	 * This method initializes cCheckNumberText	
 	 * 	
@@ -5349,7 +5375,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		
 		ProductList productList;
 		if (noCode)
-			productList = new ProductList();
+			productList = new ProductList(); // dREHER <-- Esto carga la lista de articulos
 		else
 			productList = getModel().searchProduct(code); 
 		
@@ -6385,6 +6411,21 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 				errorMsg(MSG_PAYMENT_AMT_SURPLUS_ERROR);
 				return;
 			}
+			
+			// dREHER sep 24
+			BigDecimal convertedAmt = (BigDecimal)getCConvertedAmountText().getValue();
+			// Se valida que haya una tasa de conversión para la moneda.
+			if(convertedAmt == null) {
+				errorMsg(MSG_NO_CURRENCY_CONVERT_ERROR);
+				return;
+			}
+			
+			// dREHER sep 24 controlar monedas
+			if(currencyId!=paymentMedium.getCurrencyID()) {
+				errorMsg("Las monedas del medio de pago y la cuenta bancaria NO coinciden!");
+				return;
+			}
+			
 			extraValidationsResult = getExtraPOSPaymentAddValidations().validateDirectDepositPayment(this);
 			if(extraValidationsResult.isError()){
 				errorMsg(extraValidationsResult.getMsg());
@@ -6398,13 +6439,20 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			getCTransferDate().setValue(TODAY);
 			getCBankAccountCombo().setValue(null);
 			getCTransferNumberText().setText("");
+			
+			
+			// dREHER sep 24 si la moneda de la transferencia es en $ARS tomar valor real para el pago...
+			if(currencyId==118) amount = realAmount;
+			
 		}
 		
 		payment.setTenderType(tenderType);
 		payment.setCurrencyId(currencyId);
 		payment.setAmount(amount);
 		payment.setRealAmount(realAmount);
-		payment.setRealAmountConverted(getModel().currencyConvert(realAmount, currencyId, getCurrencyBaseID()));
+		int currencyBaseID = getCurrencyBaseID();
+		BigDecimal realAmtConverted = getModel().currencyConvert(realAmount, currencyId, currencyBaseID);
+		payment.setRealAmountConverted(realAmtConverted);
 		payment.setDiscountBaseAmt(getModel().getCurrentPaymentDiscountBaseAmount());
 		payment.setDiscountBaseAmtConverted(getModel().currencyConvert(getModel().getCurrentPaymentDiscountBaseAmount(),
 				currencyId, getCurrencyBaseID()));

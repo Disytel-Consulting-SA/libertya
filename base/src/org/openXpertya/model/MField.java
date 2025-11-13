@@ -152,6 +152,10 @@ public class MField implements Serializable,Evaluatee {
     protected static CLogger log = CLogger.getCLogger( MField.class );
     
     protected boolean changed = false;
+    
+    // dREHER sep 24 campos del tipo link
+    protected boolean m_isLink = false;
+    protected String m_linkPrefix = "";
 
     /**
      * Descripción de Método
@@ -1287,6 +1291,22 @@ public class MField implements Serializable,Evaluatee {
         return m_vo.IsParent;
     }
 
+    /**
+     * isLink ?
+     * dREHER
+     */
+    public boolean isLink() {
+    	return m_vo.isLink;
+    }
+    
+    /**
+     * Prefijo Link
+     * dREHER
+     */
+    public String getPrefijoLink() {
+    	return m_vo.prefijoLink;
+    }
+    
     /**
      * Descripción de Método
      *

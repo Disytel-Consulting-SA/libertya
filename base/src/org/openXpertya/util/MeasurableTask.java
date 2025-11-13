@@ -47,4 +47,9 @@ public interface MeasurableTask {
 	
 	/** Tarea TPV: Guardar y completar documentos, imprimir factura y restablecer interfaz para nuevo pedido */
 	public final String POS_COMPLETE_ORDER = "Guardar y completar documentos, imprimir ticket/factura y restablecer interfaz para nuevo pedido";
+	
+	// Incorporado por merge facturación -> Lo necesita MInvoice //jviejo
+	// dREHER 'Feb 25
+	/** Tarea : Impresion fiscal de salida por deposito */
+	public final String PRINT_FISCAL_WAREHOUSE_DELIVERY = "Imprimir salida por deposito mediante controlador fiscal";
 }

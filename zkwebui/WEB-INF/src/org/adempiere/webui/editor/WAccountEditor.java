@@ -105,7 +105,10 @@ public class WAccountEditor extends WEditor implements ContextMenuListener
 		WAccountDialog ad = new WAccountDialog (mField.getHeader(), m_mAccount, C_AcctSchema_ID);
 		//
 		Integer newValue = ad.getValue();
-		if (newValue == null)
+		
+		// dREHER Feb '25 si llega con valor nulo, retornarlo para que se encarga la tabla destino de reclamar
+		// si es obligatorio o no...
+		if (newValue == null && 1==2)
 			return;
 
 		Object oldValue = m_value;

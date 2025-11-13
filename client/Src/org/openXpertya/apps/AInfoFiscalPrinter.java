@@ -145,6 +145,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
         AEnv.positionCenterScreen(this);
         setResizable(false);
         setModal(true);
+        setSize(600,250); // dREHER
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         getRootPane().getActionMap().remove("disposeDialog");
         infoDetail.setAutoscrolls(true);    
@@ -352,7 +353,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 
         Dimension size = info.getPreferredSize();
 
-        size.width  = 450;
+        size.width  = 550;
         size.height = ( Math.max( paras,message.length() / 60 ) + 1 ) * 30;
         size.height = Math.min( size.height + 40,600 );
         size.height = 70;
@@ -415,7 +416,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
     }    
     
     protected ConfirmPanel createConfirmPanel() {
-    	return new ConfirmPanel(true,true,true,false,false,true,false,ConfirmPanel.ALIGN_RIGHT);
+    	return new ConfirmPanel(true,true,true,true,true,true,false,ConfirmPanel.ALIGN_RIGHT);
     }
     
     public void actionPerformed( ActionEvent e ) {
@@ -470,6 +471,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getVoidButton().setVisible(voidButtonActive);
 		getOkButton().setVisible(okButtonActive);
 		getCancelButton().setVisible(!voidButtonActive);
+		getHistoryButton().setVisible(historyButtonActive);
 	}
 	
 	protected void setBusyStatus() {
@@ -479,6 +481,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getReprintButton().setVisible(false);
 		getVoidButton().setVisible(false);
 		getOkButton().setVisible(false);
+		getHistoryButton().setVisible(false);
 	}
 	
 	protected void setPrintingStatus() {
@@ -487,6 +490,7 @@ public class AInfoFiscalPrinter extends CDialog implements ActionListener, Fisca
 		getVoidButton().setVisible(false);
 		getOkButton().setVisible(false);
 		getCancelButton().setVisible(false);
+		
 	}
 
 	private void setAskStatus(){
