@@ -3092,7 +3092,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('T_Acct_Balance','c_pr
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','c_project_id','int4'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('T_SumsAndBalance','isgroupbyproject','character'));
 
-
 --2025-10-31 merge  org.libertya.core.micro.r3032.dev.cintolo v3.2
 -- 20240926-11:15
 ALTER TABLE libertya.ad_column ADD islink bpchar(1) DEFAULT 'N'::bpchar NOT NULL;
