@@ -334,9 +334,14 @@
   	<!-- Actualizar OXPRootBase.war -->
   	<unjar src="lib/OXPRootBase.war" dest="nuevoOXPRootBase" />
   	
+  	<!-- Incluir Librerias adicionales para independencia del contexto. -->
   	<copy todir="nuevoOXPRootBase/WEB-INF/lib" failonerror="no">
       <fileset dir="lib">
         <include name="OXPRoot.jar"/>
+		<include name="OXP.jar"/>
+		<include name="OXPXLib.jar"/>
+		<include name="OXPSLib.jar"/>
+		<include name="JasperReports.jar"/>      	
       </fileset>
     </copy>
     
