@@ -5,6 +5,10 @@
 <web-app>
 	<display-name>Root openXpertya</display-name>
 	<description>$Id: web.xml,v 2.0 26-03-2006 equipo de Desarrollo de openXpertya $</description>
+	<!-- Listener para arrancar/detener todos los procesadores OXP -->
+    <listener>
+        <listener-class>org.openXpertya.server.ServidorOXPContextListener</listener-class>
+    </listener>
 	<context-param>
 		<param-name>contextP</param-name>
 		<param-value>contextV</param-value>
