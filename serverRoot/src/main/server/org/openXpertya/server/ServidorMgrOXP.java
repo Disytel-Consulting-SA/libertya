@@ -54,7 +54,7 @@ public class ServidorMgrOXP {
             // for faster subsequent calls
 
             m_serverMgr = new ServidorMgrOXP();
-            m_serverMgr.startServers();
+//            m_serverMgr.startServers();
             m_serverMgr.log.info( m_serverMgr.toString());
         }
 

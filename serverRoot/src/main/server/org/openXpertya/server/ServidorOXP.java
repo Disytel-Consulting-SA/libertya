@@ -44,6 +44,17 @@ import org.openXpertya.wf.MWorkflowProcessor;
 
 public abstract class ServidorOXP extends Thread {
 
+    // Flag global de apagado
+    private static volatile boolean shutdownRequested = false;
+
+    public static void requestShutdown() {
+        shutdownRequested = true;
+    }
+
+    public static boolean isShutdownRequested() {
+        return shutdownRequested;
+    }
+	
     /**
      * Descripción de Método
      *
@@ -189,29 +200,32 @@ public abstract class ServidorOXP extends Thread {
      * @return
      */
 
-    public boolean sleep() {
-        if( isInterrupted()) {
-            log.info( getName() + ": interrupted" );
-
+    boolean sleep() {
+        if (isShutdownRequested() || isInterrupted()) {
+            log.info(getName() + ": interrupted / shutdown requested before sleep");
             return false;
         }
 
-        log.fine( getName() + ": sleeping " + TimeUtil.formatElapsed( m_sleepMS ));
+        log.fine(getName() + ": sleeping " + TimeUtil.formatElapsed(m_sleepMS));
         m_sleeping = true;
 
         try {
-            sleep( m_sleepMS );
-        } catch( InterruptedException e ) {
-            log.info( getName() + ": interrupted" );
+            sleep(m_sleepMS);
+        } catch (InterruptedException e) {
+            log.info(getName() + ": interrupted during sleep");
             m_sleeping = false;
+            return false;
+        }
 
+        if (isShutdownRequested()) {
+            log.info(getName() + ": shutdown requested after sleep");
+            m_sleeping = false;
             return false;
         }
 
         m_sleeping = false;
-
         return true;
-    }    // sleep
+    }
 
     /**
      * Descripción de Método
@@ -248,75 +262,63 @@ public abstract class ServidorOXP extends Thread {
 
     public void run() {
         try {
-            log.fine( getName() + ": pre-nap - " + m_initialNap );
-            sleep( m_initialNap * 1000 );
-        } catch( InterruptedException e ) {
-            log.log( Level.SEVERE,getName() + ": pre-nap interrupted",e );
-
+            log.fine(getName() + ": pre-nap - " + m_initialNap);
+            sleep(m_initialNap * 1000);
+        } catch (InterruptedException e) {
+            log.log(Level.SEVERE, getName() + ": pre-nap interrupted", e);
             return;
         }
 
         m_start = System.currentTimeMillis();
 
-        while( true ) {
-            if( m_nextWork == 0 ) {
-                Timestamp dateNextRun = getDateNextRun( true );
-
-                if( dateNextRun != null ) {
+        while (!isShutdownRequested()) {
+            if (m_nextWork == 0) {
+                Timestamp dateNextRun = getDateNextRun(true);
+                if (dateNextRun != null) {
                     m_nextWork = dateNextRun.getTime();
                 }
             }
 
             long now = System.currentTimeMillis();
 
-            if( m_nextWork > now ) {
+            if (m_nextWork > now) {
                 m_sleepMS = m_nextWork - now;
-
-                if( !sleep()) {
+                if (!sleep()) {
                     break;
                 }
             }
 
-            if( isInterrupted()) {
-                log.info( getName() + ": interrupted" );
-
+            if (isShutdownRequested() || isInterrupted()) {
+                log.info(getName() + ": interrupted / shutdown requested");
                 break;
             }
 
-            // ---------------
-
+            // --- trabajo real del processor ---
             p_startWork = System.currentTimeMillis();
             doWork();
             now = System.currentTimeMillis();
-
-            // ---------------
+            // ----------------------------------
 
             p_runCount++;
             m_runLastMS  = now - p_startWork;
             m_runTotalMS += m_runLastMS;
 
-            //
-
             m_sleepMS  = calculateSleep();
             m_nextWork = p_startWork + m_sleepMS;
 
-            //
-
-            p_model.setDateLastRun( new Timestamp( now ));
-            p_model.setDateNextRun( new Timestamp( m_nextWork ));
+            p_model.setDateLastRun(new Timestamp(now));
+            p_model.setDateNextRun(new Timestamp(m_nextWork));
             p_model.save();
 
-            //
+            log.fine(getName() + ": " + getStatistics());
 
-            log.fine( getName() + ": " + getStatistics());
-
-            if( !sleep()) {
+            if (!sleep()) {
                 break;
             }
         }
 
         m_start = 0;
-    }    // run
+    }
 
     /**
      * Descripción de Método
