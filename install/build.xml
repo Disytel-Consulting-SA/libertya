@@ -18,6 +18,7 @@
   <property name="keystore.dir" value="${openxpertya.dir}keystore"/>
   <property name="data.dir" value="${openxpertya.dir}data"/>
   <property name="jboss.dir" value="${openxpertya.dir}jboss"/>
+  <property name="tomcat.dir" value="${openxpertya.dir}tomcat"/>
   <property name="client.dir" value="${openxpertya.dir}client"/>
   <!--property name="instalacion.dir" value="${openxpertya.dir}../install"/-->
   <property name="instalacion.dir" value="${env.INSTALACION_EXPORT}"/>
@@ -212,6 +213,12 @@
 	<copy todir="${build.dir}/ServidorOXP/jboss/server">
 	  <fileset dir="${jboss.dir}/server"/>
 	</copy>
+
+	<!-- Directorio Tomcat		-->
+	<mkdir dir="${build.dir}/ServidorOXP/tomcat"/>
+	<unzip src="${tomcat.dir}/tomcat.zip" dest="${build.dir}/ServidorOXP/tomcat"/>
+	<copy file="${tomcat.dir}/IniciarServidor.sh" 	todir="${build.dir}/ServidorOXP/tomcat/bin" overwrite="yes" failonerror="no"/>
+	<copy file="${tomcat.dir}/DetenerServidor.sh" 	todir="${build.dir}/ServidorOXP/tomcat/bin" overwrite="yes" failonerror="no"/>
 
 	<!-- Comprimir en Zip	-->
 	<zip zipfile="${instalacion.dir}/ServidorOXP_${env.VERSION_OXP_FILE}.zip"

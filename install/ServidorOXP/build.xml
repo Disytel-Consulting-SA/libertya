@@ -690,7 +690,12 @@ Quitar la clase especifica para no generar conflictos en la version web con la c
 	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto.  Directorio default: axis.war -->
 	<copy file="${basedir}/lib/OXP.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
 	<copy file="${basedir}/lib/OXPSLib.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
-		
+	
+  	<!-- Tomcat. OXPRoot.war debe llamarse ROOT.war para que sea la plicacion base -->
+  	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
+  	<copy file="${basedir}/lib/OXPRoot.war" tofile="${basedir}/tomcat/webapps/ROOT.war" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/lib/webui.war" 	todir="${basedir}/tomcat/webapps" overwrite="yes" failonerror="no"/>
+  	
   </target>
 		
 	
