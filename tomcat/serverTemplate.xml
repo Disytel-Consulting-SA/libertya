@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Plantilla de server.xml para Tomcat 9. Los conectores HTTP/HTTPS son filtrados
+  con los valores definidos en LibertyaEnv.properties.
+-->
+<Server port="8005" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+
+  <Service name="Catalina">
+    <Connector port="@PUERTO_WEB_OXP@" protocol="HTTP/1.1"
+               connectionTimeout="20000"
+               redirectPort="@PUERTO_SSL_OXP@"
+               maxParameterCount="1000" />
+
+    <Connector port="@PUERTO_SSL_OXP@" protocol="org.apache.coyote.http11.Http11NioProtocol"
+               maxThreads="150" SSLEnabled="true">
+      <SSLHostConfig>
+        <Certificate certificateKeystoreFile="@KEYSTORE_OXP@"
+                     certificateKeystorePassword="@KEYSTOREPASS_OXP@"
+                     type="RSA" />
+      </SSLHostConfig>
+    </Connector>
+
+    <Engine name="Catalina" defaultHost="localhost">
+      <Realm className="org.apache.catalina.realm.LockOutRealm">
+        <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+               resourceName="UserDatabase" />
+      </Realm>
+
+      <Host name="localhost"  appBase="webapps"
+            unpackWARs="true" autoDeploy="true">
+      </Host>
+    </Engine>
+  </Service>
+</Server>
