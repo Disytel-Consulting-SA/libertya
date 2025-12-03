@@ -210,7 +210,7 @@ public class ConfigurationData {
     public static final String	ARCHIVO_VAR_OXP	= "LibertyaEnv.properties";
 
     /** Descripción de Campo */
-    private static String	APPSTYPE_TOMCAT	= "<tomcatOnly>";
+    private static String	APPSTYPE_TOMCAT	= "tomcat";
 
     /** Descripción de Campo */
     private static String	APPSTYPE_ORACLE	= "<oracleAS>";
@@ -265,7 +265,7 @@ public class ConfigurationData {
     };
 
     /** Descripción de Campo */
-    private Config[]	m_appsConfig	= new Config[] { new ConfigJBoss(this), null, null, null, null };
+    private Config[]	m_appsConfig	= new Config[] { new ConfigJBoss(this), null, null, null, new ConfigTomcat(this) };
 
     /** Descripción de Campo */
     private File	m_OXPHome;

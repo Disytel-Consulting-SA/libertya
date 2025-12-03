@@ -39,11 +39,14 @@
 	<condition property="isWindows">
 	  <os family="windows"/>
 	</condition>
-	<condition property="isAppsJBoss">
-	  <equals arg1="jboss" arg2="${TIPO_APPS_OXP}"/>
-	</condition>
+    <condition property="isAppsJBoss">
+      <equals arg1="jboss" arg2="${TIPO_APPS_OXP}"/>
+    </condition>
+    <condition property="isAppsTomcat">
+      <equals arg1="tomcat" arg2="${TIPO_APPS_OXP}"/>
+    </condition>  	
 
-	<echo message="Windows=${isWindows} JBoss=${isAppsJBoss}"/>
+	<echo message="Windows=${isWindows} JBoss=${isAppsJBoss} Tomcat=${isAppsTomcat}" />
 
   	<!-- Necesario para incluirlo posteriormente en OXPRoot.war  -->
     <copy file="utils/Libertya.sh"
@@ -663,16 +666,25 @@ Quitar la clase especifica para no generar conflictos en la version web con la c
 
 	
   <!-- ==================================================== -->
-  <!-- Deploy J2EE Server                                   -->
+  <!-- Instalacion del Servidor Tomcat                      -->
   <!-- ==================================================== -->
+  <target name="setupTomcat" depends="setupLib" if="isAppsTomcat"
+          description="Setup Tomcat Application Server">
+
+        <mkdir dir="${basedir}/tomcat/conf" />
+        <copy file="${basedir}/tomcat/conf/serverTemplate.xml"
+            tofile="${basedir}/tomcat/conf/server.xml" filtering="yes" overwrite="yes"/>
+
+  </target>
+
+  <!-- ==================================================== -->
+  <!-- Deploy J2EE Server - Common                          -->
+  <!-- ==================================================== -->	
   <target name="setupDeploy" depends="setupEAR, setupJBoss"
-	  description="Deploy Servidor de Aplicaciones Libertya">
+	  description="Deploy Servidor de Aplicaciones Libertya - Common">
+
+  	<echo message="AppsDeployment= ${DEPLOY_APPS_OXP}"/>
   	
-	<echo message="AppsDeployment= ${DEPLOY_APPS_OXP}"/>
-  	
-	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
-	<!-- <copy file="${basedir}/lib/OXPApps.ear" todir="${DEPLOY_APPS_OXP}"/> -->
-	
 	<!-- Incluir OXP.jar especial y OXPSLib.jar en LYWeb (si es que existe) para independencia del contexto. Archivo default: webui.war -->
 	<war destfile="${basedir}/lib/webui.war" update="true" >
 		<lib dir="${basedir}/lib2">
@@ -690,19 +702,37 @@ Quitar la clase especifica para no generar conflictos en la version web con la c
 	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto.  Directorio default: axis.war -->
 	<copy file="${basedir}/lib/OXP.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
 	<copy file="${basedir}/lib/OXPSLib.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
-	
-  	<!-- Tomcat. OXPRoot.war debe llamarse ROOT.war para que sea la plicacion base -->
-  	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
-  	<copy file="${basedir}/lib/OXPRoot.war" tofile="${basedir}/tomcat/webapps/ROOT.war" overwrite="yes" failonerror="no"/>
-  	<copy file="${basedir}/lib/webui.war" 	todir="${basedir}/tomcat/webapps" overwrite="yes" failonerror="no"/>
   	
+  </target>
+	
+	
+  <!-- ==================================================== -->
+  <!-- Deploy J2EE Server - JBoss                           -->
+  <!-- ==================================================== -->
+  <target name="setupDeployJBoss" depends="setupEAR, setupJBoss, setupDeploy" if="isAppsJBoss"
+	  description="Deploy Servidor de Aplicaciones Libertya - JBoss">
+  	
+	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
+	  	
   </target>
 		
 	
   <!-- ==================================================== -->
+  <!-- Deploy J2EE Server - Tomcat                          -->
+  <!-- ==================================================== -->
+  <target name="setupDeployTomcat" depends="setupEAR, setupTomcat, setupDeploy" if="isAppsTomcat"
+	  description="Deploy Servidor de Aplicaciones Libertya - Tomcat">
+
+  	<!-- Tomcat. OXPRoot.war debe llamarse ROOT.war para que sea la plicacion base -->
+  	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
+  	<copy file="${basedir}/lib/OXPRoot.war" tofile="${DEPLOY_APPS_OXP}/ROOT.war" overwrite="yes" failonerror="no"/>
+  	
+  </target>
+	
+  <!-- ==================================================== -->
   <!-- Instalar (instancia tradicional)                     -->
   <!-- ==================================================== -->
-  <target name="setup" depends="setupDeploy" description="Instalar Libertya">
+  <target name="setup" depends="setupDeployJBoss, setupDeployTomcat" description="Instalar Libertya">
   </target>
   
   <!-- ==================================================== -->
