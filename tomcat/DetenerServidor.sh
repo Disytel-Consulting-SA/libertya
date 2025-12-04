@@ -1,4 +1,11 @@
-echo Deteniendo Servidor Libertya - $OXP_HOME \($NOMBRE_BD_OXP\)
-CATALINA_OPTS="-Xms512M -Xmx1024M -DOXP_HOME=$OXP_HOME -Djava.awt.headless=true -Dfile.encoding=UTF-8"
-export CATALINA_OPTS
+#!/bin/bash
+
+echo "Deteniendo Servidor Libertya - $OXP_HOME"
+
+# Cargar entorno común
+PROP_BASE="${OXP_HOME:-/ServidorOXP}"
+. "$PROP_BASE/tomcat/bin/TomcatEnv.sh" || exit 1
+
+export CATALINA_OPTS="$BASE_CATALINA_OPTS"
+
 ./shutdown.sh
