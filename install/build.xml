@@ -220,6 +220,7 @@
   	<copy file="${tomcat.dir}/tomcat.zip" 			tofile="${build.dir}/ServidorOXP/lib/tomcat.jar" overwrite="yes" failonerror="no"/>
 	<copy file="${tomcat.dir}/IniciarServidor.sh" 	todir="${build.dir}/ServidorOXP/tomcat/bin" overwrite="yes" failonerror="no"/>
 	<copy file="${tomcat.dir}/DetenerServidor.sh" 	todir="${build.dir}/ServidorOXP/tomcat/bin" overwrite="yes" failonerror="no"/>
+  	<copy file="${tomcat.dir}/TomcatEnv.sh" 		todir="${build.dir}/ServidorOXP/tomcat/bin" overwrite="yes" failonerror="no"/>
 	<copy file="${tomcat.dir}/serverTemplate.xml" 	todir="${build.dir}/ServidorOXP/tomcat/conf" overwrite="yes" failonerror="no"/>
 
 	<!-- Comprimir en Zip	-->

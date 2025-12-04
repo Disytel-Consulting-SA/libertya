@@ -213,19 +213,10 @@ public class ConfigurationData {
     private static String	APPSTYPE_TOMCAT	= "tomcat";
 
     /** Descripción de Campo */
-    private static String	APPSTYPE_ORACLE	= "<oracleAS>";
-
-    /** Descripción de Campo */
     private static String	APPSTYPE_JBOSS	= "jboss";
 
     /** Descripción de Campo */
-    private static String	APPSTYPE_J2EE	= "<plainJ2EE>";
-
-    /** Descripción de Campo */
-    private static String	APPSTYPE_IBM	= "<ibmWS>";
-
-    /** Descripción de Campo */
-    static String[]	APPSTYPE	= new String[] { APPSTYPE_JBOSS, APPSTYPE_IBM, APPSTYPE_ORACLE, APPSTYPE_J2EE, APPSTYPE_TOMCAT };
+    static String[]	APPSTYPE	= new String[] { APPSTYPE_TOMCAT, APPSTYPE_JBOSS };
 
     /** Descripción de Campo */
     public static final String	ALIAS_WEB_OXP	= "ALIAS_WEB_OXP";
@@ -265,7 +256,7 @@ public class ConfigurationData {
     };
 
     /** Descripción de Campo */
-    private Config[]	m_appsConfig	= new Config[] { new ConfigJBoss(this), null, null, null, new ConfigTomcat(this) };
+    private Config[]	m_appsConfig	= new Config[] { new ConfigTomcat(this), new ConfigJBoss(this) };
 
     /** Descripción de Campo */
     private File	m_OXPHome;

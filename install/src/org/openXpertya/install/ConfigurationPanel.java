@@ -641,7 +641,7 @@ public class ConfigurationPanel extends CPanel implements ActionListener {
         }
 
         // Final Info
-        JOptionPane.showConfirmDialog(this, res.getString("EnvironmentSaved"), res.getString("InstalarServidorOXP"), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
+        // JOptionPane.showConfirmDialog(this, res.getString("EnvironmentSaved"), res.getString("InstalarServidorOXP"), JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
 
         try {
 
