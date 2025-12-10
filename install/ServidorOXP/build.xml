@@ -454,6 +454,7 @@
 	22-10-2025 Merge org.libertya.core.micro.7984dd0.dev.contabilidad_en_linea
 	-->
 	<delete file="nuevoOXP/org/openXpertya/model/X_C_ElementValue.class" failonerror="no" />
+  	<delete file="nuevoOXP/org/openXpertya/model/MElementValue.class" failonerror="no" />
   	
   </target>
 		
@@ -701,6 +702,7 @@
 			<include name="OXP.jar"/>
 		</lib>
 		<lib dir="${basedir}/lib">
+			<include name="OXPRoot.jar"/>
 			<include name="OXPSLib.jar"/>
 			<include name="OXPXLib.jar"/>
 			<include name="JasperReports.jar"/>
