@@ -150,6 +150,10 @@
 	    dir="${build.dir}"
 	    includes="META-INF/**">
       </fileset>
+	    <fileset
+	          dir="${src.resources.dir}"
+	          includes="META-INF/services/**">
+	    </fileset>    	
       <manifest>
 		<attribute name="Specification-Title" value="OXPRoot"/>
 		<attribute name="Specification-Version" value="${env.VERSION_OXP}"/>
