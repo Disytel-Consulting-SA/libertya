@@ -43,7 +43,17 @@
 	   <delete dir="${dist.dir}" />
 	</target>
 
-	<target name="compile" depends="clean" description="Compile Java sources">
+	<target name="copy-dependencies" description="Copy required POI libraries to WEB-INF/lib">
+		<echo message="Copying Apache POI libraries to WEB-INF/lib"/>
+		<copy todir="${WEBINF.dir}/lib" overwrite="false" failonerror="false">
+			<fileset dir="${OXP.dir}">
+				<include name="poi-*.jar"/>
+				<exclude name="*-sources.jar"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="compile" depends="clean,copy-dependencies" description="Compile Java sources">
 	    <mkdir dir="${classes.dir}"/>
 	    <javac source="1.8"
 	    	   target="1.8" 
