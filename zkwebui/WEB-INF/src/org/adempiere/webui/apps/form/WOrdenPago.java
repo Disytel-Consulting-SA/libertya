@@ -3271,31 +3271,63 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			
 			
 			for (int i = 0; i < colCount; i++) {
-				// Las dos ultimas columnas son para seteo de datos 
+				// Las dos ultimas columnas son para seteo de datos
 				if (owner.listModel.model.isCellEditable(1, i) && !owner.checkPayAll.isChecked()) {
 					Textbox aTextbox = new Textbox();
-					aTextbox.setValue(_data[i].toString()); 
+					aTextbox.setValue(_data[i].toString());
 					aTextbox.setWidth("120px"); // dREHER default 60px
 					aTextbox.setStyle("text-align: right; !important; width: 100%; color:black; padding-right: 5px; margin-right: 5px;");
 					aTextbox.setParent(arg0);
-					// Setear toPay (anteultima columna) hacia toPayCurrency (ultima columna)
-					if (i == colCount - 2) {
-						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
-							@Override
-							public void onEvent(Event evt) throws Exception {
-								toPay2toPayCurrency();
+
+					final int colIdx = i;
+
+					// Guardar valor inmediatamente al cambiar (blur/cambio de foco)
+					aTextbox.addEventListener(Events.ON_CHANGE, new EventListener() {
+						@Override
+						public void onEvent(Event evt) throws Exception {
+							Textbox source = (Textbox) evt.getTarget();
+							BigDecimal newValue = BigDecimal.ZERO;
+							try {
+								String valueStr = source.getValue().trim();
+								newValue = valueStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(valueStr);
+							} catch (Exception e) {
+								newValue = BigDecimal.ZERO;
 							}
-						});
-					}
-					// Setea toPayCurrency (ultima columna) hacia toPay (anteultima columna)
-					if (i == colCount - 1) {					
-						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
-							@Override
-							public void onEvent(Event evt) throws Exception {
-								toPayCurrency2toPay();
+							// Obtener el índice de la fila desde el padre del textbox
+							org.zkoss.zul.Row row = (org.zkoss.zul.Row) source.getParent();
+							if (row != null && row.getGrid() != null) {
+								int rowIdx = row.getGrid().getRows().getChildren().indexOf(row);
+								if (rowIdx >= 0) {
+									// Actualizar el valor en el modelo
+									((FacturasModel)owner.tblFacturas.getModel()).model.setValueAt(newValue, rowIdx, colIdx);
+								}
 							}
-						});
-					}
+						}
+					});
+
+					// ENTER: Guardar el valor (mismo comportamiento que ON_CHANGE)
+					aTextbox.addEventListener(Events.ON_OK, new EventListener() {
+						@Override
+						public void onEvent(Event evt) throws Exception {
+							Textbox source = (Textbox) evt.getTarget();
+							BigDecimal newValue = BigDecimal.ZERO;
+							try {
+								String valueStr = source.getValue().trim();
+								newValue = valueStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(valueStr);
+							} catch (Exception e) {
+								newValue = BigDecimal.ZERO;
+							}
+							// Obtener el índice de la fila desde el padre del textbox
+							org.zkoss.zul.Row row = (org.zkoss.zul.Row) source.getParent();
+							if (row != null && row.getGrid() != null) {
+								int rowIdx = row.getGrid().getRows().getChildren().indexOf(row);
+								if (rowIdx >= 0) {
+									// Actualizar el valor en el modelo
+									((FacturasModel)owner.tblFacturas.getModel()).model.setValueAt(newValue, rowIdx, colIdx);
+								}
+							}
+						}
+					});
 				} 
 				else {
 					Label aLabel = null;
@@ -3387,8 +3419,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			}
 			owner.resetModel();
 		}
+
 	}
-	
+
 	/**
 	 * Para que el renderer pueda visualizar o no ciertas columnas (a redefinir por subclases)
 	 */
