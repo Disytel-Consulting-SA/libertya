@@ -158,7 +158,7 @@ public class ImportPadronBsAsFromCopy extends SvrProcess {
          * El nombre de AD_Preference es PathPadronCSV
          */
         protected String getPath(){ 
-	        String preference = MPreference.searchCustomPreferenceValue("PathPadronCSV", ad_Client_ID, Env.getAD_Org_ID(getCtx()),Env.getAD_User_ID(getCtx()), true);
+	        String preference = MPreference.searchCustomPreferenceValue("PathPadronCSV", ad_Client_ID, Env.getAD_Org_ID(getCtx()), null, true);
 	        if(Util.isEmpty(preference, true)){
 	            throw new IllegalArgumentException( "@PathPadronCSVNotFound@" ); 
 	        }
