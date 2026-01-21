@@ -7,6 +7,7 @@ import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MOrg;
+import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
 
 public class LaunchCurrentAccountBPartner extends JasperReportLaunch {
@@ -60,6 +61,12 @@ public class LaunchCurrentAccountBPartner extends JasperReportLaunch {
 	}
 	
 	protected Integer getCurrencyId() {
+		
+		if (getParameterValue("C_Currency_ID") == null) {
+			log.warning("Se tomo moneda default porque no llego el parametro correspondiente C_Currency_ID...");
+			return Env.getC_Currency_ID(getCtx());
+		}
+		
 		return (Integer)getParameterValue("C_Currency_ID");
 	}
 	
