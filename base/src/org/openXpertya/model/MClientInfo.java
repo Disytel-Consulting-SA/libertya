@@ -156,6 +156,19 @@ public class MClientInfo extends X_AD_ClientInfo {
     	
     	return true;
     }
+    
+    /**
+	 * Executed before Delete operation.
+	 * 
+	 * @return true if record can be deleted
+	 * 
+	 * dREHER 21-1-2026 NO permitir eliminar informacion de la compañia
+	 */
+    @Override
+	protected boolean beforeDelete() {
+		log.saveError("Error", Msg.getMsg(getCtx(), "CannotDelete"));
+		return false;
+	} // beforeDelete
 
     //~--- get methods --------------------------------------------------------
 
