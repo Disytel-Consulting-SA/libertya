@@ -175,7 +175,7 @@ pipeline {
                 script {
                     echo "📤 Exportando a servidor de releases (DEV)..."
                     
-                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V22.0.zip"
+                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
                     def destinoPath = "/home/developers/releases/libertya-core/dev"
                     def destinoName = "ServidorOXP25-dev-${env.LIBERTYA_COMMIT}.zip"
                     def metadata = "/tmp/export/*.jar"
@@ -203,7 +203,7 @@ pipeline {
                 script {
                     echo "🚀 Generando release..."
                     
-                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V22.0.zip"
+                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
                     def destinoPath = "/home/developers/releases/libertya-core/master"
                     def destinoName = "ServidorOXP25-release-${env.LIBERTYA_COMMIT}.zip"
                     def metadata = "/tmp/export/*.jar"
