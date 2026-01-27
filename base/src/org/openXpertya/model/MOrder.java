@@ -1436,7 +1436,7 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
         	setNroIdentificCliente(bpartner.getTaxID());
         	setDireccion(loc.getAddress1());
         	setLocalidad(loc.getCity());
-        	setprovincia(loc.getRegion().getName());
+        	setprovincia(loc.getRegion()!=null?loc.getRegion().getName():"--");
         	setCP(loc.getPostal());
         	setCAT_Iva_ID(bpartner.getC_Categoria_Iva_ID());
         }
