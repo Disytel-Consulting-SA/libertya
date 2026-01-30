@@ -5628,7 +5628,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			}
 			
 			// dREHER - si es una Nota de Credito y NO tiene el numero de comprobante original, no permitir COMPLETAR!
-			if (docType.getDocBaseType().equals("ARC") && !this.skipCheckDocSource) {
+			if (docType.getDocBaseType().equals("ARC") 
+					&& !docType.getDocTypeKey().equals("RCR") // dREHER 29-01-2026 esquivar comprobantes de retenciones
+					&& !docType.getDocTypeKey().equals("RTR")
+					&& !this.skipCheckDocSource) {
 				// Si NO tiene una factura o comprobante original
 				if (this.getC_Invoice_Orig_ID() == 0 &&
 						(
