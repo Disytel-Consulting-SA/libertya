@@ -44,10 +44,10 @@
 	</target>
 
 	<target name="copy-dependencies" description="Copy required POI libraries to WEB-INF/lib">
-		<echo message="Copying Apache POI libraries to WEB-INF/lib"/>
-		<copy todir="${WEBINF.dir}/lib" overwrite="false" failonerror="false">
+		<copy todir="${WEBINF.dir}/lib" overwrite="true" failonerror="false">
 			<fileset dir="${OXP.dir}">
 				<include name="poi-*.jar"/>
+				<include name="xmlbeans-*.jar"/>
 				<exclude name="*-sources.jar"/>
 			</fileset>
 		</copy>
