@@ -253,6 +253,11 @@ public class MInventoryLine extends X_M_InventoryLine {
 	 		}
         }
         
+        // dREHER 30-01-2026 Si es un inventario fisico, copiar el tipo de inventario de la cabecera
+        if (MInventory.INVENTORYKIND_PhysicalInventory.equals(getInventory().getInventoryKind())) {
+        	setInventoryType((String)getInventory().get_Value("InventoryType"));
+        }
+        
         // Si el inventario es una Entrada/Salida Simple, se nulean las cantidades de sistema
         // e interna, y se asigna el tipo Cargo a Cuenta seteando el cargo configurado
         // en el inventario encabezado.

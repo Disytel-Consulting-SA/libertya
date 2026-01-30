@@ -281,6 +281,12 @@ public class MInventory extends X_M_Inventory implements DocAction {
 //    		}
     		// ------------------------------------------------------------------------
     	}
+    	
+    	// dREHER 30-01-2026 Validar el tipo de inventario en la cabecera
+    	if(INVENTORYKIND_PhysicalInventory.equals(getInventoryKind()) && get_Value("InventoryType") == null) {
+    		 log.saveError("SaveError",Msg.translate(getCtx(), "InventoryTypeRequired"));
+	            return false;
+    	}
 
         return true;
     }    // beforeSave
@@ -292,6 +298,14 @@ public class MInventory extends X_M_Inventory implements DocAction {
 		if (success && is_ValueChanged("C_Charge_ID")) {
 			for (MInventoryLine line : getLines(true)) {
 				line.setC_Charge_ID(getC_Charge_ID());
+				success = success && line.save();
+			}
+		}
+		
+		// dREHER 30-01-2026 Si se cambia el tipo de inventario en la cabecera, replicar en las lineas
+		if (success && is_ValueChanged("InventoryType")) {
+			for (MInventoryLine line : getLines(true)) {
+				line.setInventoryType( (get_Value("InventoryType")!=null ? (String)get_Value("InventoryType") : null) ) ;
 				success = success && line.save();
 			}
 		}
