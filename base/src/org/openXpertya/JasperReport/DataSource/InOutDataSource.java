@@ -2,11 +2,17 @@ package org.openXpertya.JasperReport.DataSource;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Properties;
 
 import org.openXpertya.model.MInOut;
 import org.openXpertya.model.MInOutLine;
+import org.openXpertya.model.MInvoice;
+import org.openXpertya.model.MOrder;
+import org.openXpertya.model.MOrderLine;
+import org.openXpertya.model.MShipper;
+
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRField;
@@ -92,6 +98,11 @@ public class InOutDataSource implements JRDataSource {
 
 		methodMapper.put("CLEARANCENUMBER", "getClearanceNumber");
 		methodMapper.put("COSTPRICE", "getCostPrice");
+		
+		methodMapper.put("LINE", "getLine");
+		methodMapper.put("REF_ORDERLINE", "getC_OrderLine_ID");
+		methodMapper.put("QTYDELIVERED", "getQtyEntered");
+		
 	}
 	
 	public void loadData() throws RuntimeException {
@@ -109,9 +120,80 @@ public class InOutDataSource implements JRDataSource {
 		{
 			// Invocar al metodo segun el campo correspondiente
 			name = field.getName().toUpperCase();
-		    clazz = Class.forName("org.openXpertya.model.MInOutLine");
-		    method = clazz.getMethod(methodMapper.get(name));
-		    output = (Object) method.invoke(inoutLine);
+			if(name.equals("FECHA_ENTREGA")) {
+				output = inout.getDateReceived()!=null ? inout.getDateReceived() : inout.getMovementDate();
+			} else if (name.equals("DESCUENTO")) {
+				if(inout.getC_Invoice_ID() > 0) {
+					MInvoice invoice = new MInvoice(p_ctx, inout.getC_Invoice_ID(), null);
+					output = invoice.getDiscountsAmt();
+				}else
+					output = new BigDecimal(0);
+			} else if (name.equals("TAX_RATE")) {
+				if(inout.getC_Invoice_ID() > 0) {
+					MInvoice invoice = new MInvoice(p_ctx, inout.getC_Invoice_ID(), null);
+					output = invoice.getTaxRateFromProduct();
+				}else
+					output = new BigDecimal(0);
+			} else if (name.equals("TAX_AMT")) {
+				if(inout.getC_Invoice_ID() > 0) {
+					MInvoice invoice = new MInvoice(p_ctx, inout.getC_Invoice_ID(), null);
+					output = invoice.getTaxesAmt();
+				}else
+					output = new BigDecimal(0);
+			}else if (name.equals("DATE_DELIVERED")) {
+				output = inout.getInOutReceptionDate()!=null ? inout.getInOutReceptionDate() : null;
+			}else if (name.equals("DATE_INVOICED")) {
+				if(inout.getC_Invoice_ID() > 0) {
+					MInvoice invoice = new MInvoice(p_ctx, inout.getC_Invoice_ID(), null);
+					output = invoice.getDateInvoiced();
+				}else
+					output = null;
+			}else if (name.equals("DATE_ORDERED")) {
+				if(inout.getC_Order_ID() > 0) {
+					MOrder order = new MOrder(p_ctx, inout.getC_Order_ID(), null);
+					output = order.getDateOrdered();
+				}else
+					output = null;
+			}else if (name.equals("DATE_PROMISED")) {
+				if(inout.getC_Order_ID() > 0) {
+					MOrder order = new MOrder(p_ctx, inout.getC_Order_ID(), null);
+					output = order.getDatePromised();
+				}else
+					output = null;
+			}else if (name.equals("FREIGHT_AMT")) {
+				if(inout.getC_Order_ID() > 0) {
+					MOrder order = new MOrder(p_ctx, inout.getC_Order_ID(), null);
+					output = order.getFreightAmt();
+				}else
+					output = inout.getFreightAmt(); 
+			}else if (name.equals("SHIPPER")) {
+					int id = inout.getM_Shipper_ID();
+					if(id > 0) {
+						MShipper s = new MShipper(p_ctx, id, null);
+						output = s.getName();
+					}
+			}else if (name.equals("QTYORDERED")) {
+				if(inoutLine.getC_OrderLine_ID() > 0) {
+					MOrderLine orderL = new MOrderLine(p_ctx, inoutLine.getC_OrderLine_ID(), null);
+					output = orderL.getQtyOrdered();
+				}
+			}else if (name.equals("QTYRESERVED")) {
+				if(inoutLine.getC_OrderLine_ID() > 0) {
+					MOrderLine orderL = new MOrderLine(p_ctx, inoutLine.getC_OrderLine_ID(), null);
+					output = orderL.getQtyReserved();
+				}
+			}else if (name.equals("QTYINVOICED")) {
+				if(inoutLine.getC_OrderLine_ID() > 0) {
+					MOrderLine orderL = new MOrderLine(p_ctx, inoutLine.getC_OrderLine_ID(), null);
+					output = orderL.getQtyInvoiced();
+				}
+			}else if (name.equals("X12DE355")) {
+				;// Campo reservado para compatibilidad con informes X12
+			}else {
+				clazz = Class.forName("org.openXpertya.model.MInOutLine");
+				method = clazz.getMethod(methodMapper.get(name));
+				output = (Object) method.invoke(inoutLine);
+			}
 		}
 		catch (ClassNotFoundException e) { 
 			throw new JRException("No se ha podido obtener el valor del campo " + name); 
