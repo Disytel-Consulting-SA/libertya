@@ -27,6 +27,7 @@ import java.util.logging.Level;
 
 import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.model.DiscountCalculator.IDocumentLine;
+import org.openXpertya.process.DocAction;
 import org.openXpertya.reflection.CallResult;
 import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
@@ -1159,6 +1160,21 @@ public class MInvoiceLine extends X_C_InvoiceLine {
 
     protected boolean beforeSave( boolean newRecord ) {
         log.fine( "New=" + newRecord );
+
+		// BUG: API-202 Evitar generar facturas con cantidades de articulos en negativo
+        MInvoice invoice = getInvoice();
+        if (invoice != null && !invoice.isVoidProcess()) {
+            String docStatus = invoice.getDocStatus();
+            boolean validateQty = DocAction.STATUS_Drafted.equals(docStatus)
+                    || DocAction.STATUS_InProgress.equals(docStatus)
+                    || docStatus == null;
+            if (validateQty
+                    && (getQtyEntered().compareTo(Env.ZERO) < 0
+                            || getQtyInvoiced().compareTo(Env.ZERO) < 0)) {
+                log.saveError("Error", "La cantidad no puede ser negativa");
+                return false;
+            }
+        }
 
         // Charge
 
