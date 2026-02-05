@@ -112,7 +112,7 @@ public class BankStatementPayment extends SvrProcess {
 
         MPayment payment = createPayment( ibs.getC_Invoice_ID(),ibs.getC_BPartner_ID(),ibs.getC_Currency_ID(),ibs.getStmtAmt(),ibs.getTrxAmt(),ibs.getC_BankAccount_ID(),(ibs.getStatementLineDate() == null)
                 ?ibs.getStatementDate()
-                :ibs.getStatementLineDate(),ibs.getDateAcct(),ibs.getDescription());
+                :ibs.getStatementLineDate(),ibs.getDateAcct(),ibs.getDescription(), ibs.getAD_Org_ID());
 
         if( payment == null ) {
             throw new ErrorOXPSystem( "Could not create Payment" );
@@ -162,7 +162,8 @@ public class BankStatementPayment extends SvrProcess {
 
         //
 
-        MPayment payment = createPayment( bsl.getC_Invoice_ID(),bsl.getC_BPartner_ID(),bsl.getC_Currency_ID(),bsl.getStmtAmt(),bsl.getTrxAmt(),bs.getC_BankAccount_ID(),bsl.getStatementLineDate(),bsl.getDateAcct(),bsl.getDescription());
+        MPayment payment = createPayment( bsl.getC_Invoice_ID(),bsl.getC_BPartner_ID(),bsl.getC_Currency_ID(),bsl.getStmtAmt(),bsl.getTrxAmt(),bs.getC_BankAccount_ID(),
+        		bsl.getStatementLineDate(),bsl.getDateAcct(),bsl.getDescription(), bsl.getAD_Org_ID());
 
         if( payment == null ) {
             throw new ErrorOXPSystem( "Could not create Payment" );
@@ -202,7 +203,9 @@ public class BankStatementPayment extends SvrProcess {
      * @return
      */
 
-    private MPayment createPayment( int C_Invoice_ID,int C_BPartner_ID,int C_Currency_ID,BigDecimal StmtAmt,BigDecimal TrxAmt,int C_BankAccount_ID,Timestamp DateTrx,Timestamp DateAcct,String Description ) {
+    private MPayment createPayment( int C_Invoice_ID,int C_BPartner_ID,int C_Currency_ID,BigDecimal StmtAmt,BigDecimal TrxAmt,
+    		int C_BankAccount_ID,Timestamp DateTrx,Timestamp DateAcct,String Description,
+    		int AD_Org_ID ) {
 
         // Trx Amount = Payment overwrites Statement Amount if defined
 
@@ -239,12 +242,13 @@ public class BankStatementPayment extends SvrProcess {
             payment.setDateAcct( payment.getDateTrx());
         }
 
+        payment.setDateEmissionCheck(payment.getDateTrx()); // Fecha de Emisión del Cheque igual a la Fecha de la Transacción);
         payment.setDescription( Description );
 
         //
-
+        MInvoice invoice = null;
         if( C_Invoice_ID != 0 ) {
-            MInvoice invoice = new MInvoice( getCtx(),C_Invoice_ID,null );
+            invoice = new MInvoice( getCtx(),C_Invoice_ID,null );
 
             payment.setC_DocType_ID( invoice.isSOTrx());    // Receipt
             payment.setC_Invoice_ID( invoice.getC_Invoice_ID());
@@ -283,6 +287,17 @@ public class BankStatementPayment extends SvrProcess {
             return null;
         }
 
+        // dREHER 2026-02-05 controlar que el Paymente tenga organización!=0, si no se le asigna la del invoice o la del contexto
+		if (AD_Org_ID != 0) {
+			payment.setAD_Org_ID(AD_Org_ID);
+		}else {
+			if (invoice != null) {
+				payment.setAD_Org_ID(invoice.getAD_Org_ID());
+			} else {
+				payment.setAD_Org_ID(Env.getAD_Org_ID(getCtx()));
+			}
+		}
+		
         payment.setIsReconciled(true);
         payment.save();
 
