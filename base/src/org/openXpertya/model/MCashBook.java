@@ -188,8 +188,8 @@ public class MCashBook extends X_C_CashBook {
             }
 
             int count = newRecord
-                    ? DB.getSQLValue( get_TrxName(),sql.toString(),new Object[] {getAD_Client_ID(),getAD_Org_ID(),getName()} )
-                    : DB.getSQLValue( get_TrxName(),sql.toString(),new Object[] {getAD_Client_ID(),getAD_Org_ID(),getName(),getC_CashBook_ID()} );
+                    ? DB.getSQLValueEx( get_TrxName(),sql.toString(),new Object[] {getAD_Client_ID(),getAD_Org_ID(),getName()} )
+                    : DB.getSQLValueEx( get_TrxName(),sql.toString(),new Object[] {getAD_Client_ID(),getAD_Org_ID(),getName(),getC_CashBook_ID()} );
 
             if( count > 0 ) {
                 log.saveError( "DuplicatedRecord","" );

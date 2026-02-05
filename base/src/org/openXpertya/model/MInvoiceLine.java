@@ -1381,7 +1381,7 @@ public class MInvoiceLine extends X_C_InvoiceLine {
         
         // Setear el proveedor del artículo actual y el precio de costo
         if(!Util.isEmpty(getM_Product_ID(), true)){    		
-	        MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+	        // MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
 	        MProductPO po = null;
 	        if(invoice.isSOTrx()){
 	        	// Obtener el proveedor actual del artículo
