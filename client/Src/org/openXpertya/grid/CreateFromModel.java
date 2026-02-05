@@ -215,6 +215,7 @@ public class CreateFromModel {
      		.append("C_Order.IsSOTrx='").append(isSOTrx).append("' AND ")
      		.append("C_Order.DocStatus IN ('CO') AND ")
      		.append("C_Order.C_DocTypeTarget_ID NOT IN (SELECT c_doctype_id FROM c_doctype WHERE notinvoiceable = 'Y') AND ")
+     		.append("C_Order.C_DocTypeTarget_ID NOT IN (SELECT c_doctype_id FROM c_doctype WHERE DocSubTypeSO IN ('ON','OB')) AND ")
      		.append("C_Order.C_Order_ID IN (")
      		.append(   "SELECT ol.C_Order_ID ")
      		.append(   "FROM C_OrderLine ol ")

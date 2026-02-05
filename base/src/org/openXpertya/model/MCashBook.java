@@ -170,6 +170,41 @@ public class MCashBook extends X_C_CashBook {
      *
      *
      * @param newRecord
+     *
+     * @return
+     */
+
+    protected boolean beforeSave( boolean newRecord ) {
+        // Fix API-500 no se deberian permirtir cashbooks identicos o duplicados
+        if( (getName() != null) && (newRecord || is_ValueChanged( "Name" ) || is_ValueChanged( "AD_Org_ID" )) ) {
+            StringBuffer sql = new StringBuffer(
+                    " SELECT COUNT(*) " +
+                    " FROM C_CashBook " +
+                    " WHERE AD_Client_ID = ? " +
+                    "   AND AD_Org_ID = ? " +
+                    "   AND UPPER(TRIM(Name)) = UPPER(TRIM(?)) " );
+            if( !newRecord ) {
+                sql.append( "   AND C_CashBook_ID <> ? " );
+            }
+
+            int count = newRecord
+                    ? DB.getSQLValue( get_TrxName(),sql.toString(),new Object[] {getAD_Client_ID(),getAD_Org_ID(),getName()} )
+                    : DB.getSQLValue( get_TrxName(),sql.toString(),new Object[] {getAD_Client_ID(),getAD_Org_ID(),getName(),getC_CashBook_ID()} );
+
+            if( count > 0 ) {
+                log.saveError( "DuplicatedRecord","" );
+                return false;
+            }
+        }
+
+        return true;
+    }    // beforeSave
+
+    /**
+     * Descripción de Método
+     *
+     *
+     * @param newRecord
      * @param success
      *
      * @return
