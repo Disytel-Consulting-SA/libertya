@@ -1200,6 +1200,9 @@ public class MProduct extends X_M_Product {
     public Map<Integer,MUOMConversion> getUOMConversions() {
     	Map<Integer,MUOMConversion> uoms = new HashMap<Integer,MUOMConversion>();
     	MUOMConversion[] uomConversions = MUOMConversion.getProductConversions(getCtx(), getM_Product_ID(), true);
+    	if (uomConversions == null) {
+    		return uoms;
+    	}
     	for (MUOMConversion uomConversion : uomConversions) {
 			if (uomConversion.getC_UOM_To_ID() != getC_UOM_ID()) {
 				uoms.put(uomConversion.getC_UOM_To_ID(), uomConversion);
