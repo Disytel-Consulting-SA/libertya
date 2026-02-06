@@ -104,6 +104,12 @@ public class MProductFraction extends X_M_Product_Fraction {
 			return false;
 		}
 		
+		// El artículo destino debe tener al menos una conversión de UM
+		if (getProductTo().getUOMConversions().isEmpty()) {
+			log.saveError("SaveError", Msg.translate(getCtx(), "SplitProductNeedConversions"));
+			return false;
+		}
+		
 		// El artículo destino debe ser convertible a al menos una UM a la cual
 		// es convertible el artículo origen.
 		if (!validateTargetProductUOMs()) {
