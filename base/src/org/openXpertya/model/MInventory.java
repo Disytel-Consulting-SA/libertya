@@ -1048,6 +1048,15 @@ public class MInventory extends X_M_Inventory implements DocAction {
 			setDocAction(DOCACTION_None);
 			return false;
 		}
+		
+		// No permitir anular inventarios físicos de tipo "Sobrescribir inventario"
+		Object inventoryType = get_Value("InventoryType");
+		if (INVENTORYKIND_PhysicalInventory.equals(getInventoryKind())
+				&& X_M_InventoryLine.INVENTORYTYPE_OverwriteInventory.equals(inventoryType)) {
+			m_processMsg = "No se puede anular el documento, el tipo de inventario es 'Sobrescribir inventario'. Se debe crear un nuevo registro con los valores correctos";
+			setDocAction(DOCACTION_None);
+			return false;
+		}
 
 		// Anulación de inventario UNICAMENTE si el status es Completado
 		// Se genera un nuevo inventario cuyas líneas contienen los valores multiplicados por -1
