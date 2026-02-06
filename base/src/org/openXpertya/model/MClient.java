@@ -164,6 +164,15 @@ public class MClient extends X_AD_Client {
 
     }		// save
     
+    @Override
+    protected boolean beforeSave(boolean newRecord) {
+        if( !isActive() && (newRecord || is_ValueChanged("IsActive")) ) {
+            log.saveError("Error", "No se permite desactivar una compania.");
+            return false;
+        }
+        return true;
+    } // beforeSave
+    
     /**
 	 * Executed before Delete operation.
 	 * 
