@@ -643,8 +643,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public BigDecimal getPayNetAmt(MInvoice invoice, BigDecimal amt, BigDecimal neto, BigDecimal totalLines){
 		BigDecimal net = invoice.getNetAmount();
 		BigDecimal grandTotal = invoice.getGrandTotal();
+		
 		// Decrementar los impuestos manuales
-		/*
+		
 		BigDecimal manualTaxesAmt = BigDecimal.ZERO;
 		try{
 			List<MInvoiceTax> manualTaxes = MInvoiceTax.getTaxesFromInvoice(invoice, true);
@@ -655,8 +656,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		} catch(Exception e){
 			e.printStackTrace();
 		}
+		
 		amt = amt.subtract(manualTaxesAmt);
-		*/
+		
 		
 		// dREHER Feb'25
 		if(!Util.isEmpty(neto, true)) {
@@ -668,10 +670,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			BigDecimal factor = totalLines.divide(grandTotal, 10, RoundingMode.HALF_DOWN);
 			amt = amt.multiply(factor);
 			
+			debug("getPayNetAmt. neto:" + neto + " total lineas:" + totalLines + " total gral.:" + grandTotal);
+			
 			// Como total tomo el total de las lineas
 			grandTotal = totalLines;
 			
-			debug("getPayNetAmt. neto:" + neto + " total lineas:" + totalLines + " total gral.:" + grandTotal);
 			debug("getPayNetAmt. factor:" + factor + " monto:" + amt);
 			
 		}
@@ -681,6 +684,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		debug("Neto del pago prorrateado:" + netoPago);
 		
 		return netoPago;
+	}
+	
+	public BigDecimal getPayNetAmt(List<MInvoice> invoices,
+			List<BigDecimal> amounts) {
+		return getPayNetAmt(invoices, amounts, false);
 	}
 	
 	/**
@@ -694,7 +702,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * @return total neto de los montos de las facturas
 	 */
 	public BigDecimal getPayNetAmt(List<MInvoice> invoices,
-			List<BigDecimal> amounts) {
+			List<BigDecimal> amounts, boolean isAnterior) {
 		BigDecimal netTotal = Env.ZERO;
 		Integer invoicesSize = invoices.size();
 		Integer amountsSize = amounts.size();
@@ -709,10 +717,15 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			for (int i = 0; i < invoices.size(); i++) {
 				
 				// Neto segun las lineas
-				BigDecimal neto = m_List_InvoiceNetAmount.get(i);
+				BigDecimal neto = invoices.get(i).getNetAmount();
 				
 				// Total segun las lineas
-				BigDecimal totalLines = m_List_InvoiceTotalLinesAmt.get(i);
+				BigDecimal totalLines = invoices.get(i).getTotalLines();
+				
+				if(!isAnterior) {
+					neto = m_List_InvoiceNetAmount.get(i);
+					totalLines = m_List_InvoiceTotalLinesAmt.get(i);
+				}
 				
 				BigDecimal netoLineasEsquemaPredefinido = getNetoLineaConEsquema(invoices.get(i));
 				
@@ -1034,6 +1047,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 
 			pstmt = DB.prepareStatement(sql, null, true);
 			int i = 1;
+			
+			debug("Esquema ID:" + getRetencionSchema().getID());
+			
 			if(filtrarEsquema)
 				pstmt.setInt(i++, getRetencionSchema().getID());
 			
@@ -1273,7 +1289,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			allocatedAmts = getAllocatedInvoicesAmts("c_payment_id", paymentID, false, true);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
-					new ArrayList<BigDecimal>(allocatedAmts.values()));
+					new ArrayList<BigDecimal>(allocatedAmts.values()), true);
 			// Si no está completamente imputado el pago entonces el residual a
 			// imputar del pago se toma total
 			if (rs.getString("isallocated").equals("N")) {
@@ -1488,7 +1504,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			allocatedAmts = getAllocatedInvoicesAmts("c_cashline_id", cashlineID, false, true);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
-					new ArrayList<BigDecimal>(allocatedAmts.values()));
+					new ArrayList<BigDecimal>(allocatedAmts.values()), true);
 			// Si no está completamente imputado el cashline entonces el
 			// residual a
 			// imputar del cashline se toma total
@@ -1669,7 +1685,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 					retencionCreditID, false, true);
 			netTotal = getPayNetAmt(
 					new ArrayList<MInvoice>(allocatedAmts.keySet()),
-					new ArrayList<BigDecimal>(allocatedAmts.values()));
+					new ArrayList<BigDecimal>(allocatedAmts.values()), true);
 			// Si no está completamente imputado el crédito, entonces se toma el
 			// total que falta
 			netTotal = netTotal.add(DB.getSQLValueBD(getTrxName(),
@@ -1762,20 +1778,29 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			Map<Integer, BigDecimal> payments = getSumaPagosAnteriores(
 					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
-			total = total.add(getSumAmts(new ArrayList<BigDecimal>(payments
-					.values())));
+			
+			BigDecimal totPagosAnteriores = getSumAmts(new ArrayList<BigDecimal>(payments.values()));
+			debug("** Total Pagos Anteriores: " + totPagosAnteriores + " desde:" + dateFrom + " hasta: " + dateTo);
+			total = total.add(totPagosAnteriores);
+			
 			// 2) Cashlines
 			Map<Integer, BigDecimal> cashlines = getSumaCashLinesAnteriores(
 					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
-			total = total.add(getSumAmts(new ArrayList<BigDecimal>(cashlines
-					.values())));
+			BigDecimal totCashLinesAnteriores = getSumAmts(new ArrayList<BigDecimal>(cashlines.values()));
+			debug("** Total CashLines Anteriores: " + totCashLinesAnteriores + " desde:" + dateFrom + " hasta: " + dateTo);
+			total = total.add(totCashLinesAnteriores);
+			
 			// 3) Retenciones
 			Map<Integer, BigDecimal> retenciones = getSumaRetencionesPagosAnteriores(
 					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
-			total = total.add(getSumAmts(new ArrayList<BigDecimal>(retenciones
-					.values())));
+			BigDecimal totRetencionesAnteriores = getSumAmts(new ArrayList<BigDecimal>(retenciones.values()));
+			debug("** Total Retenciones Anteriores: " + totRetencionesAnteriores + " desde:" + dateFrom + " hasta: " + dateTo);
+			total = total.add(totRetencionesAnteriores);
+			
+			debug("** Total Pagos Anteriores + CashLines Anteriores + Retenciones Anteriores: " + total);
+			
 		} catch (Exception ex) {
 			log.info("Error al buscar el total del monto pagado en el mes !!!! ");
 			ex.printStackTrace();

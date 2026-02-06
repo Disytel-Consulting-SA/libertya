@@ -2956,7 +2956,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		if(!Util.isEmpty(preferenceDocTypeKey, true)){
 			MDocType dt = MDocType.getDocType(m_ctx, preferenceDocTypeKey, m_trxName);
 			if(dt != null && cboDocumentType.getM_lookup().containsKey(dt.getID())){
-				
 				cboDocumentType.setValue(dt.getID());
 				try{
 					vetoableChange(new PropertyChangeEvent(cboDocumentType, "C_DocType_ID", null, dt.getID()));
@@ -2965,6 +2964,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				}
 			}
 		}
+		
+		if (cboDocumentType.getValue() != null) {
+			try {
+				vetoableChange(new PropertyChangeEvent(cboDocumentType, "C_DocType_ID", null, cboDocumentType.getValue()));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
 	}	
 	
 	protected void clearMediosPago() {
