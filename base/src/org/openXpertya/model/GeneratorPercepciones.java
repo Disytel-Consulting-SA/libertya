@@ -375,12 +375,24 @@ public class GeneratorPercepciones {
 			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().setRelatedDocument(debitDocument);
 			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData()
 					.setVoiding(creditDocument.isVoiding());
-			// Percepción aplicada
-			percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyCreditPerception();
-			// Impuesto
-			if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
-				percepcion.orgPercepcionID = orgPercepcion.getID();
-				percepciones.add(percepcion);
+			// Determina si la EC es Convenio Multilateral para evitar aplicar dos veces
+			// configuraciones alternativas (CM / no CM) sobre la misma jurisdicción.
+			boolean ECesCM = getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType() != null
+					&& getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType()
+							.equals(MBPartner.IIBBTYPE_ConvenioMultilateral);
+			
+			// Si la Entidad Comercial es IIBB del tipo Convenio multilateral y la
+			// Percepcion de la ORG tambien lo es o NO lo es en la Entidad Comercial y
+			// tampoco lo es en la Organizacion.
+			if ((!orgPercepcion.isConvenioMultilateral() && !ECesCM)
+					|| (orgPercepcion.isConvenioMultilateral() && ECesCM)) {
+				// Percepción aplicada
+				percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyCreditPerception();
+				// Impuesto
+				if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
+					percepcion.orgPercepcionID = orgPercepcion.getID();
+					percepciones.add(percepcion);
+				}
 			}
 		}
 		return percepciones;
@@ -417,12 +429,24 @@ public class GeneratorPercepciones {
 			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().setRelatedDocument(creditDocument);
 			getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData()
 					.setVoiding(debitDocument.isVoiding());
-			// Percepción aplicada
-			percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyCreditPerception();
-			// Impuesto
-			if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
-				percepcion.orgPercepcionID = orgPercepcion.getID();
-				percepciones.add(percepcion);
+			// Determina si la EC es Convenio Multilateral para evitar aplicar dos veces
+			// configuraciones alternativas (CM / no CM) sobre la misma jurisdicción.
+			boolean ECesCM = getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType() != null
+					&& getPercepcionProcessors().get(orgPercepcion.getID()).getPercepcionData().getBpartner().getIIBBType()
+							.equals(MBPartner.IIBBTYPE_ConvenioMultilateral);
+			
+			// Si la Entidad Comercial es IIBB del tipo Convenio multilateral y la
+			// Percepcion de la ORG tambien lo es o NO lo es en la Entidad Comercial y
+			// tampoco lo es en la Organizacion.
+			if ((!orgPercepcion.isConvenioMultilateral() && !ECesCM)
+					|| (orgPercepcion.isConvenioMultilateral() && ECesCM)) {
+				// Percepción aplicada
+				percepcion = getPercepcionProcessors().get(orgPercepcion.getID()).applyCreditPerception();
+				// Impuesto
+				if(percepcion != null && percepcion.getTaxAmt().compareTo(BigDecimal.ZERO) > 0){
+					percepcion.orgPercepcionID = orgPercepcion.getID();
+					percepciones.add(percepcion);
+				}
 			}
 		}
 		return percepciones;
