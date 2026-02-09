@@ -967,16 +967,13 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				+ docBaseTypeDebit + "		AND i.docstatus IN ('CO','CL') "
 				+ " AND dt.doctypekey not like 'CDN%' "
 				+ " AND dt.doctypekey NOT IN ('RTR', 'RTI', 'RCR', 'RCI') ");
-		// Si tenemos una factura original en el crédito, entonces tomo esa
+		// Si tenemos una factura original en el crédito, siempre debe
+		// priorizarse esa referencia exacta para evitar traer otro débito del mismo
+		// pedido por fecha.
 		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
-			if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
-				sql.append(" AND (i.c_invoice_id = ? OR c_order_id = ?)");
-				canSearchByDocument = true;
-			} else {
-				sql.append(" AND i.c_invoice_id = ? ");
-				canSearchByDocument = true;
-			}
+			sql.append(" AND i.c_invoice_id = ? ");
+			canSearchByDocument = true;
 		} else if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
 			sql.append(" AND c_order_id = ? ");
 			canSearchByDocument = true;
@@ -996,12 +993,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			ps.setInt(i++, creditInvoice.getC_BPartner_ID());
 			if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
 					&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
-				if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
-					ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
-					ps.setInt(i++, creditInvoice.getC_Order_ID());
-				} else {
-					ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
-				}
+				ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
 			} else if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
 				ps.setInt(i++, creditInvoice.getC_Order_ID());
 			}
