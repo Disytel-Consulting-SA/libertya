@@ -578,6 +578,9 @@ public class MSplitting extends X_M_Splitting implements DocAction {
 		MInventory inventory = new MInventory(warehouse);
 		inventory.setMovementDate(getDateTrx());
 		inventory.setDescription(getInventoryDescription(splittingVoid));
+		// Para el inventario del fraccionamiento se utiliza ChargeAccount "C".
+		// En inventarios físicos, el tipo de las líneas se sincroniza desde cabecera.
+		inventory.set_Value("InventoryType", MInventoryLine.INVENTORYTYPE_ChargeAccount);
 		// Intenta guardar el inventario, si no es posible se lanza una excepción.
 		if (!inventory.save()) {
 			throw new Exception("@InventoryCreateError@: " + CLogger.retrieveErrorAsString());
