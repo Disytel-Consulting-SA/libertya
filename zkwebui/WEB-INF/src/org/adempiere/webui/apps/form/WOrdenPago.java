@@ -1738,41 +1738,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	}
 
 	// -----------------------------------------------------------
-	
-	
-	
-	private int getRowIndexFromOwnParent(Component row) {
-	    if (row == null) return -1;
-	    Component parent = row.getParent();
-	    if (parent == null) return -1;
-
-	    // OJO: ZK viejo devuelve List raw
-	    return parent.getChildren().indexOf(row);
-	}
-	
-	private int getRowIndexInRowsContainer(Component row, Component rowsContainer) {
-	    if (row == null) return -1;
-	    if (rowsContainer == null) return -1;
-
-	    int idx = 0;
-
-	    for (Object o : rowsContainer.getChildren()) {
-	        Component c = (Component) o;
-
-	        boolean isRow =
-	            (c instanceof org.adempiere.webui.component.Row) ||
-	            (c instanceof org.zkoss.zul.Row);
-
-	        if (!isRow) continue;
-
-	        if (c == row) return idx; // identidad
-
-	        idx++;
-	    }
-	    return -1;
-	}
-
-	
 	public void wireEnterToGrid(final Grid grid) {
 		if (grid == null || grid.getRows() == null) return;
 
@@ -1823,65 +1788,6 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		    }
 	}
 	
-	private Row findParentRow(Component c) {
-	    while (c != null) {
-	        if (c instanceof Row) {
-	            return (Row) c;
-	        }
-	        c = c.getParent();
-	    }
-	    return null;
-	}
-	
-	private org.zkoss.zk.ui.Component findParentAnyRow(org.zkoss.zk.ui.Component c) {
-	    while (c != null) {
-	        if (c instanceof org.zkoss.zul.Row || c instanceof org.adempiere.webui.component.Row) {
-	            return c;
-	        }
-	        c = c.getParent();
-	    }
-	    return null;
-	}
-	
-	private int getRowIndexLegacy(Component row, Component rowsContainer) {
-		if (row == null) return -1;
-	    if (rowsContainer == null) return -1;
-
-	    int idx = 0;
-
-	    for (Object o : rowsContainer.getChildren()) {
-	        org.zkoss.zk.ui.Component c = (org.zkoss.zk.ui.Component) o;
-
-	        boolean isRow =
-	            (c instanceof org.adempiere.webui.component.Row) ||
-	            (c instanceof org.zkoss.zul.Row);
-
-	        if (!isRow) {
-	            // si hay Group/Detail/etc los ignoramos
-	            continue;
-	        }
-	        
-	        System.out.println("ROW CLASS=" + row.getClass().getName());
-	        if(row.getParent() != null) { 
-	        	System.out.println("PARENT CLASS=" + row.getParent().getClass().getName());
-	        	System.out.println("PARENT CHILDREN=" + row.getParent().getChildren().size());
-	        }
-            
-            System.out.println("Component CLASS=" + c.getClass().getName());
-            if(c.getParent() != null) { 
-            	System.out.println("Component CLASS=" + c.getParent().getClass().getName());
-            	System.out.println("Component CHILDREN=" + c.getParent().getChildren().size());
-            	
-            	idx = c.getParent().getChildren().indexOf(c);
-            	if (idx < 0) continue;
-            	
-            	return idx;
-            }
-
-	    }
-
-	    return -1;
-	}
 	// -----------------------------------------------------------
 	
 	protected double getTotalCreditsOpenAmt() {
