@@ -4,6 +4,7 @@
 
 package org.adempiere.webui.apps.form;
 
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -96,7 +97,9 @@ import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.zkoss.lang.Objects;
+import org.zkoss.zk.ui.AbstractComponent;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -123,6 +126,7 @@ import org.zkoss.zul.Tree;
 import org.zkoss.zul.Treecell;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.Treerow;
+import org.zkoss.zul.impl.InputElement;
 import org.zkoss.zul.impl.XulElement;
 
 
@@ -1568,6 +1572,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected static final Integer MEDIOPAGO_ACTION_EDIT = 1;
     protected static final Integer MEDIOPAGO_ACTION_DELETE = 2;
     
+    private static final String ATTR_ENTER_WIRED = "enterWired";
+    
 	protected void customInitComponents() {
 		
 		Date d = new Date();
@@ -1617,9 +1623,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				
 				tableUpdated();		
 				resetModel();
+
 			}
 		});
-
+		
+		Events.echoEvent("onWireEnter", tblFacturas, null);
+		
+		tblFacturas.addEventListener("onWireEnter", new EventListener() {
+		    @Override
+		    public void onEvent(Event event) throws Exception {
+		        wireEnterToGrid(tblFacturas);
+		    }
+		});
+		
         cboClient.setReadWrite(false);
         cboClient.setValue(Env.getAD_Client_ID(m_ctx));
         cboOrg.setMandatory(true);
@@ -1720,7 +1736,153 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         addCustomOperationAfterTabsDefinition();
         
 	}
+
+	// -----------------------------------------------------------
 	
+	
+	
+	private int getRowIndexFromOwnParent(Component row) {
+	    if (row == null) return -1;
+	    Component parent = row.getParent();
+	    if (parent == null) return -1;
+
+	    // OJO: ZK viejo devuelve List raw
+	    return parent.getChildren().indexOf(row);
+	}
+	
+	private int getRowIndexInRowsContainer(Component row, Component rowsContainer) {
+	    if (row == null) return -1;
+	    if (rowsContainer == null) return -1;
+
+	    int idx = 0;
+
+	    for (Object o : rowsContainer.getChildren()) {
+	        Component c = (Component) o;
+
+	        boolean isRow =
+	            (c instanceof org.adempiere.webui.component.Row) ||
+	            (c instanceof org.zkoss.zul.Row);
+
+	        if (!isRow) continue;
+
+	        if (c == row) return idx; // identidad
+
+	        idx++;
+	    }
+	    return -1;
+	}
+
+	
+	public void wireEnterToGrid(final Grid grid) {
+		if (grid == null || grid.getRows() == null) return;
+
+	    final EventListener listener = new EventListener() {
+	        @Override
+	        public void onEvent(Event event) throws Exception {
+	            Component target = (Component) event.getTarget();
+
+	            Integer idx = (Integer) ((AbstractComponent) target).getAttribute("rowIndex");
+	            if (idx == null || idx.intValue() < 0) return;
+
+	            event.stopPropagation();
+	            updatePayInvoice(true, idx.intValue(), false);
+	        }
+	    };
+
+	    int idx = 0;
+	    for (Object c : grid.getRows().getChildren()) {
+	        Component rowComp = (Component) c;
+
+	        // Si tenés Group/Detail, filtralos acá si hace falta
+	        wireInputsRecursive(rowComp, idx, listener);
+
+	        idx++;
+	    }
+	}
+
+	private void wireInputsRecursive(Component parent, final int rowIndex, final EventListener listener) {
+		 for (Object obj : parent.getChildren()) {
+		        Component ch = (Component) obj;
+
+		        if (ch instanceof InputElement) {
+		            AbstractComponent ac = (AbstractComponent) ch;
+
+		            // ✅ Esto SIEMPRE: aunque ya esté wired, actualiza índice
+		            ac.setAttribute("rowIndex", Integer.valueOf(rowIndex));
+
+		            // ✅ Esto SOLO una vez: evita duplicados
+		            if (ac.getAttribute("enterWired") == null) {
+		                ac.setAttribute("enterWired", Boolean.TRUE);
+		                ac.addEventListener(Events.ON_OK, listener);
+		            }
+		        }
+
+		        if (ch.getChildren() != null && !ch.getChildren().isEmpty()) {
+		            wireInputsRecursive(ch, rowIndex, listener);
+		        }
+		    }
+	}
+	
+	private Row findParentRow(Component c) {
+	    while (c != null) {
+	        if (c instanceof Row) {
+	            return (Row) c;
+	        }
+	        c = c.getParent();
+	    }
+	    return null;
+	}
+	
+	private org.zkoss.zk.ui.Component findParentAnyRow(org.zkoss.zk.ui.Component c) {
+	    while (c != null) {
+	        if (c instanceof org.zkoss.zul.Row || c instanceof org.adempiere.webui.component.Row) {
+	            return c;
+	        }
+	        c = c.getParent();
+	    }
+	    return null;
+	}
+	
+	private int getRowIndexLegacy(Component row, Component rowsContainer) {
+		if (row == null) return -1;
+	    if (rowsContainer == null) return -1;
+
+	    int idx = 0;
+
+	    for (Object o : rowsContainer.getChildren()) {
+	        org.zkoss.zk.ui.Component c = (org.zkoss.zk.ui.Component) o;
+
+	        boolean isRow =
+	            (c instanceof org.adempiere.webui.component.Row) ||
+	            (c instanceof org.zkoss.zul.Row);
+
+	        if (!isRow) {
+	            // si hay Group/Detail/etc los ignoramos
+	            continue;
+	        }
+	        
+	        System.out.println("ROW CLASS=" + row.getClass().getName());
+	        if(row.getParent() != null) { 
+	        	System.out.println("PARENT CLASS=" + row.getParent().getClass().getName());
+	        	System.out.println("PARENT CHILDREN=" + row.getParent().getChildren().size());
+	        }
+            
+            System.out.println("Component CLASS=" + c.getClass().getName());
+            if(c.getParent() != null) { 
+            	System.out.println("Component CLASS=" + c.getParent().getClass().getName());
+            	System.out.println("Component CHILDREN=" + c.getParent().getChildren().size());
+            	
+            	idx = c.getParent().getChildren().indexOf(c);
+            	if (idx < 0) continue;
+            	
+            	return idx;
+            }
+
+	    }
+
+	    return -1;
+	}
+	// -----------------------------------------------------------
 	
 	protected double getTotalCreditsOpenAmt() {
 		double totalCreditsOpenAmt = 0;
@@ -1982,7 +2144,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
 	@Override
 	public void tableChanged(TableModelEvent arg0) {
-		// System.out.println("tableChanged: " + arg0);
+		System.out.println("WOrdenPago.tableChanged: " + arg0);
 		if ( (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1) || (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 2) ){
 			// Se actualizó el monto manual
 			for (int row = arg0.getFirstRow(); row <= arg0.getLastRow() && row < m_model.m_facturas.size(); row++) {
@@ -2798,6 +2960,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		txtTotalPagar1.setValue(total);
 	}
 	
+	// dREHER 12 Feb 2026 si da ENTER autocompletar el monto a pagar de la factura
+	protected void updatePayInvoice(boolean pay, int row, boolean toPayMoment) {
+		if(getModel().m_facturas==null 
+			|| getModel().m_facturas.isEmpty()
+			|| row < 0
+			|| row >= getModel().m_facturas.size())
+				return;
+		
+		if (row >= getModel().m_facturas.size())
+				return;
+		
+		debug("updatePayInvoice - pay: " + pay + " row: " + row + " toPayMoment: " + toPayMoment);
+
+		getModel().updatePayInvoice(pay, row, toPayMoment);
+		
+		// Actualizar el total a pagar
+		updateTotalAPagar1();
+		tblFacturas.renderAll();
+	}
+	
 	/**
 	 * Actualiza componentes custom de la interfaz gráfica relacionadas con el
 	 * cambio de entidad comercial
@@ -3205,6 +3387,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
 		tblFacturas.setModel(listModel);
 		updateTotalAPagar1();
+		
+		// Re-wire luego del render (ZK viejo: render diferido)
+	    Events.echoEvent("onWireEnter", tblFacturas, null);
 	}
 	
 	protected void createPaymentRuleCombo() throws Exception{
