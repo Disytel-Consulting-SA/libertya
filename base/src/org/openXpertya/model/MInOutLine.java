@@ -703,7 +703,7 @@ public class MInOutLine extends X_M_InOutLine {
 		if(!inout.isSOTrx()) {
 			MProductPO po = MProductPO.get(Env.getCtx(), getM_Product_ID(), inout.getC_BPartner_ID(), get_TrxName());
 			if (po == null) {
-				log.saveError("ProductNotForVendor", "");
+				log.saveError("El artículo no pertenece al proveedor", "");
 				return false;
 			}
 		}
