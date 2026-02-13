@@ -158,10 +158,13 @@ public class PercepcionCABA extends PercepcionStandard {
 			return alicuota;
 		}
 		
-		debug("getPerception. Como no encontro alicuota en el padron, busca por EC/OrgPerc/Tax...");
-		alicuota = getPercepcionData().getAlicuota();
+		// En caso de no encontra alicuota, devolver null para continuar con el siguiente padron segun prioridades
+		// debug("getPerception. Como no encontro alicuota en el padron, busca por EC/OrgPerc/Tax...");
+		// alicuota = getPercepcionData().getAlicuota();
 		
-		return alicuota; 
+		debug("getPerception. Como no encontro alicuota en el padron, busca en siguiente padron por prioridad. Padron tipo:" + padronType);
+		
+		return null; // alicuota; 
 	}
 	
 	// dREHER Feb '25
