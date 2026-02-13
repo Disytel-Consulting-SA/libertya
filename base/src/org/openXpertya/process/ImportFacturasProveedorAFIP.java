@@ -40,6 +40,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 	private static final String DEFAULT_PRODUCT_PREFERENCE_NAME = "Default_Product_Vendors";
 	public static final String DEFAULT_TOLERANCE_PREFERENCE_NAME = "Default_Tolerance_Vendors";
 	private static final String DEFAULT_NOGRAVADOTAX_PREFERENCE_NAME = "Default_NoGravadoTax_Vendors";
+	private static final String DEFAULT_OTROSTRIBUTOSTAX_PREFERENCE_NAME = "Default_OtrosTributosTax_Vendors";
 	
 	/**
 	 * Cantidad de días posteriores a fecha de factura para obtener la fecha de
@@ -52,6 +53,9 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 	private MProduct defaultProduct;
 	private BigDecimal tolerance;
 	private MTax noGravadoTax;
+	
+	// dREHER Oct 25
+	private MTax otrosTributosTax;
 	
 	/** Categoría de IVA de la Compañía */
 	private MCategoriaIva ciClient;
@@ -102,6 +106,14 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 	protected void setNoGravadoTax(MTax noGravadoTax) {
 		this.noGravadoTax = noGravadoTax;
 	}
+	
+	public MTax getOtrosTributosTax() {
+		return otrosTributosTax;
+	}
+
+	public void setOtrosTributosTax(MTax otrosTributosTax) {
+		this.otrosTributosTax = otrosTributosTax;
+	}
 
 	protected MCategoriaIva getCiClient() {
 		return ciClient;
@@ -128,6 +140,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		loadDefaultProduct();
 		loadDefaultTolerance();
 		loadDefaultNoGravadoTax();
+		loadDefaultOtrosTributosTax(); // dREHER Oct 25
 		loadClientCategoriaIVA();
 		loadPriceList();
 	}
@@ -164,6 +177,14 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 	 */
 	protected void loadDefaultNoGravadoTax() throws Exception {
 		setNoGravadoTax((MTax) getPreferenceValue(DEFAULT_NOGRAVADOTAX_PREFERENCE_NAME, MTax.Table_Name, "name"));
+	}
+	
+	/**
+	 * Carga el impuesto otros tributos por defecto
+	 * @throws Exception en caso de error
+	 */
+	protected void loadDefaultOtrosTributosTax() throws Exception {
+		setOtrosTributosTax((MTax) getPreferenceValue(DEFAULT_OTROSTRIBUTOSTAX_PREFERENCE_NAME, MTax.Table_Name, "name"));
 	}
 	
 	/**
@@ -263,30 +284,62 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 				
 		// Crear las líneas si es posible
 		try {
-			createInvoiceLine(vim, vim.getnetogravado(), vim.getiva(), invoice, bp);
-			if(!Util.isEmpty(vim.getimporteopexentas(), true)) {
+
+			// dREHER Oct 25 Crear una linea por cada tasa de IVA que venga en el archivo
+
+			// Neto gravado CERO IVA
+			if(!Util.isEmpty(vim.getnetogravado_0(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_0(), Env.ZERO, invoice, bp);
+
+			// IVA 2.5%
+			if(!Util.isEmpty(vim.getnetogravado_2_5(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_2_5(), vim.getiva_2_5(), invoice, bp);
+
+			// IVA 5%
+			if(!Util.isEmpty(vim.getnetogravado_5(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_5(), vim.getiva_5(), invoice, bp);
+
+			// IVA 10.5%
+			if(!Util.isEmpty(vim.getnetogravado_10_5(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_10_5(), vim.getiva_10_5(), invoice, bp);
+
+			// IVA 21%
+			if(!Util.isEmpty(vim.getnetogravado_21(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_21(), vim.getiva_21(), invoice, bp);
+
+			// IVA 27%
+			if(!Util.isEmpty(vim.getnetogravado_27(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_27(), vim.getiva_27(), invoice, bp);
+
+			// IVA 2.5%
+			if(!Util.isEmpty(vim.getnetogravado_2_5(), true)) 
+				createInvoiceLine(vim, vim.getnetogravado_2_5(), vim.getiva_2_5(), invoice, bp);
+
+			// Operaciones exentas
+			if(!Util.isEmpty(vim.getimporteopexentas(), true)) 
 				createInvoiceLine(vim, vim.getimporteopexentas(), BigDecimal.ZERO, invoice, bp);
-			}
+
+
 		} catch(Exception e) {
 			return e.getMessage();
 		}
-	
+
 		// Crear el impuesto para no gravado
 		try {
-			createInvoiceTax(vim, vim.getnetonogravado(), invoice);
+			if(!Util.isEmpty(vim.getnetonogravado(), true))
+				createInvoiceTax(vim, vim.getnetonogravado(), invoice);
 		} catch(Exception e) {
 			return e.getMessage();
 		}
-		
-		// Otros tributos tiene algun valor?
-		if(vim.getotros_tributos().compareTo(BigDecimal.ZERO) != 0) {			
-			try {
-				createInvoiceTaxOtrosTributos(vim, vim.getnetogravado(), invoice);
-			} catch(Exception e) {
-				return e.getMessage();
-			}
+
+		// Crear el impuesto para otros impuestos
+		try {
+			if(!Util.isEmpty(vim.getotrostributos(), true))
+				createInvoiceOtrosTributosTax(vim, vim.getotrostributos(), invoice);
+		} catch(Exception e) {
+			return e.getMessage();
 		}
-		
+
 		return IMPORT_OK;
 	}
 
@@ -387,6 +440,13 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 	 */
 	protected Integer getNoGravadoTaxID() {
 		return getNoGravadoTax() != null ? getNoGravadoTax().getID() : 0;
+	}
+	
+	/**
+	 * @return el id del impuesto no gravado a asociar en el comprobante
+	 */
+	protected Integer getOtrosTributosTaxID() {
+		return getOtrosTributosTax() != null ? getOtrosTributosTax().getID() : 0;
 	}
 	
 	/**
@@ -606,7 +666,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		if(!invoiceLine.save()) {
 			throw new Exception(CLogger.retrieveErrorAsString());
 		}
-		log.info("Línea creada "+invoiceLine.getLine());
+		log.info("Factura:" + invoice.getDocumentNo() + " - " + "Línea creada "+invoiceLine.getLine());
 		return invoiceLine;
 	}
 	
@@ -686,12 +746,13 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 			if(!it.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
-			log.info("Impuesto de factura creado para la base "+taxBaseAmt);
+			log.info("Factura:" + invoice.getDocumentNo() + " - " + "Imp. No Gravado de factura creado para la base "+taxBaseAmt);
 		}
 		return it;
 	}
 	
 	//el base es el gravado
+	/*
 	protected MInvoiceTax createInvoiceTaxOtrosTributos(X_I_Vendor_Invoice_Import vim, BigDecimal taxBaseAmt, MInvoice invoice) throws Exception {
 		MInvoiceTax it = null;
 		if(!Util.isEmpty(taxBaseAmt, true)) {
@@ -709,7 +770,42 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 			if(!it.save()) {
 				throw new Exception(CLogger.retrieveErrorAsString());
 			}
-			log.info("Impuesto de factura creado para la base "+taxBaseAmt);
+			log.info("Factura:" + invoice.getDocumentNo() + " - " + "Otros Tributos de factura creado  " + vim.getotros_tributos());
+		}
+		return it;
+	}
+	*/
+	
+	/**
+	 * Crea el impuesto de factura (otros tributos)
+	 * 
+	 * @param vim        registro de importación
+	 * @param taxBaseAmt importe base
+	 * @param invoice    factura actual
+	 * @return impuesto de la factura creado, null caso contrario
+	 * @throws Exception en caso de error
+	 */
+	protected MInvoiceTax createInvoiceOtrosTributosTax(X_I_Vendor_Invoice_Import vim, BigDecimal taxAmt, MInvoice invoice) throws Exception {
+		MInvoiceTax it = null;
+		if(!Util.isEmpty(taxAmt, true)) {
+			if(getOtrosTributosTaxID() <= 0) {
+				vim.setI_ErrorMsg((vim.getI_ErrorMsg() != null ? vim.getI_ErrorMsg() : "")
+						+ "No existe impuesto por defecto configurado para registrar el importe no gravado. ");
+				return null;
+			}
+			// Crear el impuesto de la factura
+			it = new MInvoiceTax(getCtx(), 0, get_TrxName());
+			it.setC_Invoice_ID(invoice.getID());
+			it.setC_Tax_ID(getOtrosTributosTaxID());
+			it.setTaxAmt(taxAmt);
+			
+			BigDecimal taxBaseAmt = Env.ZERO;
+			
+			it.setTaxBaseAmt(taxBaseAmt);
+			if(!it.save()) {
+				throw new Exception("Factura:" + invoice.getDocumentNo() + " - " + CLogger.retrieveErrorAsString());
+			}
+			log.info("Factura:" + invoice.getDocumentNo() + " - " + "Otros Tributos de factura creado  " + taxAmt);
 		}
 		return it;
 	}
@@ -758,8 +854,10 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 
 	@Override
 	protected String getDeleteOldImportedAditionalWhereClause() {
-		return " AND EXISTS (select c_invoice_id from c_invoice i where i.c_invoice_id = "
-				+ MVendorImportInvoice.Table_Name + ".c_invoice_id AND i.IsActive = 'Y')"; // dREHER Oct 25: se quita control: AND docstatus NOT IN ('DR','IP')
+		return "";
+		// dREHER 2026-02-03 Suficiente con que tenga la marca de importado.
+		// return " AND EXISTS (select c_invoice_id from c_invoice i where i.c_invoice_id = "
+		//		+ MVendorImportInvoice.Table_Name + ".c_invoice_id AND i.IsActive = 'Y')"; // dREHER Oct 25: se quita control: AND docstatus NOT IN ('DR','IP')
 	}
 	
 	/**
