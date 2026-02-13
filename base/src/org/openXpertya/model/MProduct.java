@@ -795,6 +795,11 @@ public class MProduct extends X_M_Product {
         	if (is_ValueChanged( "M_Product_Category_ID"))
         	{
         		String ismanual = DB.getSQLValueString(get_TrxName(), "SELECT ismanual FROM M_Product_ACCT WHERE M_Product_ID = ?", getM_Product_ID());
+        		
+        		// dREHER 13-Feb-2026 Fix para este campo
+        		if(ismanual==null)
+            		ismanual = "N";
+            	
             	if (ismanual.equalsIgnoreCase("N"))
             	{
             		DB.executeUpdate("DELETE FROM M_Product_Acct WHERE M_Product_ID = " + getM_Product_ID() );
