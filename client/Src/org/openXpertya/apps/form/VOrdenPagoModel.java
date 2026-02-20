@@ -2653,6 +2653,7 @@ public class VOrdenPagoModel {
 			// 2. Crear el generador de OPA y actualizar el encabezado de la
 			// asignación creada
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
+			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
 			
 			/**
 			 * Para cobros adelantados se debe ajustar el tipo de asignacion correspondiente
@@ -2781,6 +2782,8 @@ public class VOrdenPagoModel {
 			
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
+			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
+			
 			hdr = getPoGenerator().createAllocationHdr();
 			
 			hdr.set_TrxName(get_TrxName()); // dREHER
