@@ -333,22 +333,17 @@ public class MConversionRate extends X_C_Conversion_Rate {
             ConvDate	= Env.getDate();
         }
 
-        // Get Rate
-        String	sql	= "(SELECT MultiplyRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
-                          + " AND C_Currency_ID_To=?"			// #2
-                          + " AND C_ConversionType_ID=?"		// #3
-                          + " AND ?::date BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
-                          + " AND AD_Client_ID IN (0,?)"	// #5
-                          + " AND AD_Org_ID IN (0,?) "		// #6
-                          + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)"
-					      + " UNION "		// #6
-                          + "(SELECT DivideRate " + "FROM C_Conversion_Rate " + "WHERE C_Currency_ID=?"		// #1
-					      + " AND C_Currency_ID_To=?"			// #2
-					      + " AND C_ConversionType_ID=?"		// #3
-					      + " AND ?::date BETWEEN ValidFrom AND ValidTo"	// #4      TRUNC (?) ORA-00932: inconsistent datatypes: expected NUMBER got TIMESTAMP
-					      + " AND AD_Client_ID IN (0,?)"	// #5
-					      + " AND AD_Org_ID IN (0,?) "		// #6
-					      + "ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC)";
+        // Get direct rate and fallback to inverse only if direct doesn't exist
+        String	sql	= "SELECT MultiplyRate "
+                        + "FROM C_Conversion_Rate "
+                        + "WHERE C_Currency_ID=?"
+                        + " AND C_Currency_ID_To=?"
+                        + " AND C_ConversionType_ID=?"
+                        + " AND ?::date BETWEEN ValidFrom AND ValidTo"
+                        + " AND AD_Client_ID IN (0,?)"
+                        + " AND AD_Org_ID IN (0,?)"
+                        + " AND IsActive='Y'"
+                        + " ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
         
         BigDecimal		retValue	= null;
         PreparedStatement	pstmt		= null;
@@ -362,12 +357,6 @@ public class MConversionRate extends X_C_Conversion_Rate {
             pstmt.setTimestamp(4, ConvDate);
             pstmt.setInt(5, AD_Client_ID);
             pstmt.setInt(6, AD_Org_ID);
-            pstmt.setInt(7, CurTo_ID);
-            pstmt.setInt(8, CurFrom_ID);
-            pstmt.setInt(9, C_ConversionType_ID);
-            pstmt.setTimestamp(10, ConvDate);
-            pstmt.setInt(11, AD_Client_ID);
-            pstmt.setInt(12, AD_Org_ID);
 
             ResultSet	rs	= pstmt.executeQuery();
 
@@ -378,6 +367,37 @@ public class MConversionRate extends X_C_Conversion_Rate {
             rs.close();
             pstmt.close();
             pstmt	= null;
+
+            if (retValue == null) {
+                sql = "SELECT DivideRate "
+                        + "FROM C_Conversion_Rate "
+                        + "WHERE C_Currency_ID=?"
+                        + " AND C_Currency_ID_To=?"
+                        + " AND C_ConversionType_ID=?"
+                        + " AND ?::date BETWEEN ValidFrom AND ValidTo"
+                        + " AND AD_Client_ID IN (0,?)"
+                        + " AND AD_Org_ID IN (0,?)"
+                        + " AND IsActive='Y'"
+                        + " ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
+
+                pstmt = DB.prepareStatement(sql, null, true);
+                pstmt.setInt(1, CurTo_ID);
+                pstmt.setInt(2, CurFrom_ID);
+                pstmt.setInt(3, C_ConversionType_ID);
+                pstmt.setTimestamp(4, ConvDate);
+                pstmt.setInt(5, AD_Client_ID);
+                pstmt.setInt(6, AD_Org_ID);
+
+                rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    retValue = rs.getBigDecimal(1);
+                }
+
+                rs.close();
+                pstmt.close();
+                pstmt = null;
+            }
 
         } catch (Exception e) {
             s_log.log(Level.SEVERE, "getRate", e);
@@ -461,10 +481,10 @@ public class MConversionRate extends X_C_Conversion_Rate {
     	try
     	{
     		String sql = 
-    				" SELECT 1 FROM C_Conversion_Rate WHERE (C_Currency_ID=? AND C_Currency_ID_To=? OR C_Currency_ID = ? AND C_Currency_ID_To = ?) "    
+    				" SELECT 1 FROM C_Conversion_Rate WHERE ((C_Currency_ID=? AND C_Currency_ID_To=?) OR (C_Currency_ID = ? AND C_Currency_ID_To = ?)) "    
     				+ " AND C_ConversionType_ID=?"
-    				+ " AND ( (TRUNC(ValidFrom) >= ? AND TRUNC(ValidFrom) <= ?)" 
-    				+ " OR (TRUNC(ValidTo) >= ? AND TRUNC(ValidTo) <= ?) )"
+    				+ " AND TRUNC(ValidFrom) <= ?"
+    				+ " AND TRUNC(ValidTo) >= ?"
     				+ " AND AD_Client_ID IN (0,?) AND AD_Org_ID = ? AND ISACTIVE = 'Y' "
     				+ " AND C_Conversion_Rate_ID <> ? "
     				+ " ORDER BY AD_Client_ID DESC, AD_Org_ID DESC, ValidFrom DESC";
@@ -474,13 +494,11 @@ public class MConversionRate extends X_C_Conversion_Rate {
     		pstmt.setInt(3, getC_Currency_ID() );
     		pstmt.setInt(4, getC_Currency_ID_To() );
     		pstmt.setInt(5, getC_ConversionType_ID() );
-    		pstmt.setTimestamp(6, getValidFrom() );
-    		pstmt.setTimestamp(7, getValidTo() );
-    		pstmt.setTimestamp(8, getValidFrom() );
-    		pstmt.setTimestamp(9, getValidTo() );
-    		pstmt.setInt(10, getAD_Client_ID());
-    		pstmt.setInt(11, getAD_Org_ID());
-    		pstmt.setInt(12, getC_Conversion_Rate_ID());
+    		pstmt.setTimestamp(6, getValidTo() );
+    		pstmt.setTimestamp(7, getValidFrom() );
+    		pstmt.setInt(8, getAD_Client_ID());
+    		pstmt.setInt(9, getAD_Org_ID());
+    		pstmt.setInt(10, getC_Conversion_Rate_ID());
     		
     		ResultSet rs = pstmt.executeQuery();
     		if (rs.next())
