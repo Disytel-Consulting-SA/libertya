@@ -181,4 +181,8 @@ public interface RetencionProcessor {
 	/** Payment Rule */
 	public String getPaymentRule();
 	public void setPaymentRule(String paymentRule);
+	
+	// dREHER - Feb'25 - Métodos para obtener y setear el importe neto del comprobante, utilizado para el cálculo de la retención en algunos procesadores
+	public BigDecimal getNetAmountNC();
+	public void setNetAmountNC(BigDecimal netAmount);
 }

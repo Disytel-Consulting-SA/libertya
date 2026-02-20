@@ -92,6 +92,11 @@ public class RetencionIIBBTucuman extends RetencionIIBBForRegion {
 					else {
 						baseImponible = getPayNetAmt();
 					}
+					
+					// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+					baseImponible = baseImponible.subtract(getNetAmountNC());
+					debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+					
 					// Si hay base para calcular respecto al mínimo
 					if(baseImponible.compareTo(getMinimumNetAmt()) > 0) {
 						// Consultar con el padrón de coeficientes
@@ -152,6 +157,11 @@ public class RetencionIIBBTucuman extends RetencionIIBBForRegion {
 					else {
 						baseImponible = getPayNetAmt();
 					}
+					
+					// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+					baseImponible = baseImponible.subtract(getNetAmountNC());
+					debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+					
 					// Si hay base para calcular respecto al mínimo
 					if(baseImponible.compareTo(getMinimumNetAmt()) > 0) {
 						// Consultar con el padrón de coeficientes
@@ -189,6 +199,11 @@ public class RetencionIIBBTucuman extends RetencionIIBBForRegion {
 				BigDecimal porcentajeTucuman = getPorcentajeTucuman(getBPartner().getID());
 				porcentajeTucuman = porcentajeTucuman == null? BigDecimal.ZERO: porcentajeTucuman;
 				baseImponible = getPayNetAmt();
+				
+				// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+				baseImponible = baseImponible.subtract(getNetAmountNC());
+				debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+				
 				if(baseImponible.compareTo(getMinimumNetAmt()) > 0) {
 					baseImponible = baseImponible.multiply(porcentajeTucuman).divide(Env.ONEHUNDRED, 2,
 							BigDecimal.ROUND_HALF_EVEN);
@@ -218,6 +233,11 @@ public class RetencionIIBBTucuman extends RetencionIIBBForRegion {
 	 */
 	private BigDecimal applyPercentAndSave(BigDecimal baseImponible, BigDecimal percentage, BigDecimal compareMinimumAmt) {
 		BigDecimal ir = BigDecimal.ZERO;
+		
+		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+		baseImponible = baseImponible.subtract(getNetAmountNC());
+		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+		
 		compareMinimumAmt = compareMinimumAmt == null?baseImponible:compareMinimumAmt;
 		if(compareMinimumAmt.compareTo(getMinimumNetAmt()) > 0) {
 			if(percentage.compareTo(BigDecimal.ZERO) > 0) {
