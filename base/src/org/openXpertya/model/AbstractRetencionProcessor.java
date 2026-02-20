@@ -76,6 +76,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	
 	/** Forma de Pago de los comprobantes a crear */
 	private String paymentRule;
+	
+	
+	// dREHER 20 Feb 2026 Utilizar para descontar del total facturado antes del calculo de retencion
+	private BigDecimal netAmountNC = Env.ZERO;
+	private BigDecimal totalAmountNC = Env.ZERO;
 
 	public void setRetencionSchema(MRetencionSchema schema) {
 		this.m_Esquema = schema;
@@ -737,6 +742,14 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				
 			}
 		}
+		
+		// dREHER 20 Feb 2026
+		// si existe neto de NC, lo resto del total a considerar para el calculo de retencion, ya que el mismo NO debe computarse como monto imputado
+		
+		debug("Descuento del total el neto de NC. total antes:" + netTotal + " netoNC:" + getNetAmountNC());
+		
+		netTotal = netTotal.subtract(getNetAmountNC());
+		
 		return netTotal;
 	}
 	
@@ -1870,5 +1883,28 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 
 	public void setInvoiceTotalLinesAmt(List<BigDecimal> m_List_InvoiceTotalLinesAmt) {
 		this.m_List_InvoiceTotalLinesAmt = m_List_InvoiceTotalLinesAmt;
+	}
+
+	// dREHER 20 Feb 2026
+	public BigDecimal getNetAmountNC() {
+		if (netAmountNC == null) {
+			netAmountNC = BigDecimal.ZERO;
+		}
+		return netAmountNC;
+	}
+
+	public void setNetAmountNC(BigDecimal netAmountNC) {
+		this.netAmountNC = netAmountNC;
+	}
+
+	public BigDecimal getTotalAmountNC() {
+		if (totalAmountNC == null) {
+			totalAmountNC = BigDecimal.ZERO;
+		}
+		return totalAmountNC;
+	}
+
+	public void setTotalAmountNC(BigDecimal totalAmountNC) {
+		this.totalAmountNC = totalAmountNC;
 	}
 }
