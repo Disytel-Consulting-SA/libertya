@@ -952,6 +952,40 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 */
 	public static MInvoice getDebitFor(MInvoice creditInvoice) {
 		MInvoice invoice = null;
+		// Si el crédito posee comprobante original, priorizar esa referencia exacta.
+		// Evita depender de filtros adicionales que pueden dejar fuera la factura origen
+		// en escenarios manuales.
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
+			String sqlOrig = "SELECT C_Invoice_ID FROM C_Invoice WHERE C_Invoice_ID = ? AND C_BPartner_ID = ?";
+			int origInvoiceID = DB.getSQLValue(creditInvoice.get_TrxName(), sqlOrig,
+					creditInvoice.getC_Invoice_Orig_ID(), creditInvoice.getC_BPartner_ID());
+			if (!Util.isEmpty(origInvoiceID, true)) {
+				return new MInvoice(creditInvoice.getCtx(), origInvoiceID, creditInvoice.get_TrxName());
+			}
+		}
+		if (!Util.isEmpty(creditInvoice.getRef_Invoice_ID(), true)) {
+			String docBaseType = creditInvoice.isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
+					: MDocType.DOCBASETYPE_APInvoice;
+			String sqlRef = "SELECT i.C_Invoice_ID "
+					+ "FROM C_Invoice i "
+					+ "INNER JOIN C_DocType dt ON (dt.C_DocType_ID = i.C_DocTypeTarget_ID) "
+					+ "WHERE i.C_Invoice_ID = ? "
+					+ "AND i.C_BPartner_ID = ? "
+					+ "AND dt.DocBaseType = ?";
+			Object refInvoiceObj = DB.getSQLObject(creditInvoice.get_TrxName(), sqlRef,
+					new Object[] { creditInvoice.getRef_Invoice_ID(), creditInvoice.getC_BPartner_ID(), docBaseType });
+			int refInvoiceID = refInvoiceObj instanceof Number ? ((Number) refInvoiceObj).intValue() : -1;
+			if (refInvoiceID > 0) {
+				return new MInvoice(creditInvoice.getCtx(), refInvoiceID, creditInvoice.get_TrxName());
+			}
+		}
+		// Fallback: en alta manual puede completarse sólo el comprobante origen
+		// (OrigInvPtoVta/OrigInvNro) y no el C_Invoice_Orig_ID.
+		int fiscalOrigInvoiceID = getOriginalInvoiceByFiscalFields(creditInvoice);
+		if (fiscalOrigInvoiceID > 0) {
+			return new MInvoice(creditInvoice.getCtx(), fiscalOrigInvoiceID, creditInvoice.get_TrxName());
+		}
 		// Esta variable booleana permite determinar si es posible buscar un
 		// débito relacionado con este crédito por alguno de los campos de
 		// documentos ya que sino busca cualquier débito de la EC lo cual no es
@@ -1016,6 +1050,29 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			}
 		}
 		return invoice;
+	}
+
+	private static int getOriginalInvoiceByFiscalFields(MInvoice creditInvoice) {
+		if (creditInvoice == null || !creditInvoice.isSOTrx()
+				|| creditInvoice.getOrigInvPtoVta() <= 0
+				|| creditInvoice.getOrigInvNro() <= 0) {
+			return 0;
+		}
+		String sql = "SELECT i.C_Invoice_ID "
+				+ "FROM C_Invoice i "
+				+ "INNER JOIN C_DocType dt ON (dt.C_DocType_ID = i.C_DocTypeTarget_ID) "
+				+ "WHERE i.C_BPartner_ID = ? "
+				+ "AND i.IsSOTrx = 'Y' "
+				+ "AND dt.DocBaseType = ? "
+				+ "AND i.DocStatus IN ('CO','CL') "
+				+ "AND i.PuntoDeVenta = ? "
+				+ "AND i.NumeroComprobante = ? "
+				+ "ORDER BY i.DateInvoiced DESC "
+				+ "LIMIT 1";
+		Object invoiceObj = DB.getSQLObject(creditInvoice.get_TrxName(), sql,
+				new Object[] { creditInvoice.getC_BPartner_ID(), MDocType.DOCBASETYPE_ARInvoice,
+						creditInvoice.getOrigInvPtoVta(), creditInvoice.getOrigInvNro() });
+		return invoiceObj instanceof Number ? ((Number) invoiceObj).intValue() : 0;
 	}
 
 	/**
