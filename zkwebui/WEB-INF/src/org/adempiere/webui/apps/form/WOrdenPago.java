@@ -1745,12 +1745,16 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	        @Override
 	        public void onEvent(Event event) throws Exception {
 	            Component target = (Component) event.getTarget();
+	            int idx = resolveGridRowIndex(grid, target);
+	            if (idx < 0) return;
 
-	            Integer idx = (Integer) ((AbstractComponent) target).getAttribute("rowIndex");
-	            if (idx == null || idx.intValue() < 0) return;
+	            // Si el usuario ingresó un parcial (>0), respetarlo y no autocompletar.
+	            if (enteredAmountFromTarget(target).compareTo(Env.ZERO) > 0) {
+	            	return;
+	            }
 
 	            event.stopPropagation();
-	            updatePayInvoice(true, idx.intValue(), false);
+	            updatePayInvoice(true, idx, false);
 	        }
 	    };
 
@@ -1765,6 +1769,49 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	    }
 	}
 
+	private int resolveGridRowIndex(Grid grid, Component target) {
+		if (target == null)
+			return -1;
+		if (grid == null || grid.getRows() == null)
+			return resolveRowIndexFromAttributes(target);
+
+		Component row = target;
+		while (row != null && row.getParent() != grid.getRows()) {
+			row = row.getParent();
+		}
+		if (row != null) {
+			int idx = grid.getRows().getChildren().indexOf(row);
+			if (idx >= 0)
+				return idx;
+		}
+
+		// Fallback para eventos ON_OK donde el componente ya fue re-renderizado.
+		return resolveRowIndexFromAttributes(target);
+	}
+
+	private int resolveRowIndexFromAttributes(Component target) {
+		Component c = target;
+		while (c != null) {
+			if (c instanceof AbstractComponent) {
+				Object attr = ((AbstractComponent)c).getAttribute("rowIndex");
+				if (attr instanceof Integer && ((Integer)attr).intValue() >= 0) {
+					return ((Integer)attr).intValue();
+				}
+			}
+			c = c.getParent();
+		}
+		return -1;
+	}
+
+	private BigDecimal enteredAmountFromTarget(Component target) {
+		if (!(target instanceof Textbox))
+			return Env.ZERO;
+		String value = ((Textbox)target).getValue();
+		if (value == null)
+			return Env.ZERO;
+		return getModel().numberParseOrZero(value.trim());
+	}
+
 	private void wireInputsRecursive(Component parent, final int rowIndex, final EventListener listener) {
 		 for (Object obj : parent.getChildren()) {
 		        Component ch = (Component) obj;
@@ -1776,8 +1823,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		            ac.setAttribute("rowIndex", Integer.valueOf(rowIndex));
 
 		            // ✅ Esto SOLO una vez: evita duplicados
-		            if (ac.getAttribute("enterWired") == null) {
-		                ac.setAttribute("enterWired", Boolean.TRUE);
+		            if (ac.getAttribute(ATTR_ENTER_WIRED) == null) {
+		            	// Solo aplicar ENTER sobre campos editables.
+		            	if (ch instanceof Textbox && ((Textbox)ch).isReadonly()) {
+		            		continue;
+		            	}
+		                ac.setAttribute(ATTR_ENTER_WIRED, Boolean.TRUE);
 		                ac.addEventListener(Events.ON_OK, listener);
 		            }
 		        }
@@ -2883,7 +2934,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		// Actualizar el total a pagar
 		updateTotalAPagar1();
-		tblFacturas.renderAll();
+		resetModel();
 	}
 	
 	/**
