@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Properties;
 
+import org.openXpertya.model.MAllocationHdr;
 import org.openXpertya.model.MRole;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -131,10 +132,14 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" issotrx, ");
 		sqlDoc.append(" c_invoicepayschedule_id, ");
 		sqlDoc.append(" duedate ");
-		sqlDoc.append(" FROM c_alldocumentscc_v d ");
+		sqlDoc.append(" FROM ( ");
+		sqlDoc.append("SELECT * FROM c_alldocumentscc_v ");
+		sqlDoc.append("UNION ALL ");
+		sqlDoc.append(getSalesTransactionDocumentsQuery());
+		sqlDoc.append(" ) d ");
 		sqlAppend(" WHERE d.AD_Client_ID = ? ", Env.getAD_Client_ID(getCtx()), sqlDoc);
 		if (getbPartnerID() != null)
-		sqlAppend("   AND d.C_Bpartner_ID = ? ", getbPartnerID(), sqlDoc);
+			sqlAppend("   AND d.C_Bpartner_ID = ? ", getbPartnerID(), sqlDoc);
 		if (getOrgID() != null && getOrgID() != 0)
 			sqlAppend("   AND d.AD_Org_ID = ? ", getOrgID(), sqlDoc);
 		if (getDocTypeID() != null)
@@ -150,6 +155,60 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" ) as d ");
 		sqlDoc.append(whereClause);
 		return sqlDoc.toString();
+	}
+
+	/**
+	 * Las asignaciones de TPV (STX) no forman parte de c_alldocumentscc_v en
+	 * algunas bases históricas. Eso deja las facturas cobradas con pendiente en
+	 * cero, pero sin la contrapartida de cobranza en el saldo. Esta subquery las
+	 * recompone para todos los consumidores de CurrentAccountQuery.
+	 */
+	protected String getSalesTransactionDocumentsQuery() {
+		StringBuffer sql = new StringBuffer();
+		sql.append(" SELECT ");
+		sql.append(" ah.c_currency_id, ");
+		sql.append(" stx.allocatedamt AS amount, ");
+		sql.append(" 0::numeric AS debit, ");
+		sql.append(" stx.allocatedamt AS credit, ");
+		sql.append(" COALESCE(dt.name, 'Cobro TPV') AS tipo_doc, ");
+		sql.append(" ah.documentno, ");
+		sql.append(" ah.datetrx, ");
+		sql.append(" ah.dateacct, ");
+		sql.append(" ah.c_doctype_id, ");
+		sql.append(" 'C_AllocationHdr'::text AS documenttable, ");
+		sql.append(" ah.c_allocationhdr_id AS document_id, ");
+		sql.append(" 0::numeric AS openamt, ");
+		sql.append(" ah.created, ");
+		sql.append(" ah.c_bpartner_id, ");
+		sql.append(" ah.ad_org_id, ");
+		sql.append(" ah.ad_client_id, ");
+		sql.append(" 'Y'::bpchar AS issotrx, ");
+		sql.append(" NULL::integer AS c_invoicepayschedule_id, ");
+		sql.append(" NULL::timestamp without time zone AS duedate ");
+		sql.append(" FROM c_allocationhdr ah ");
+		sql.append(" LEFT JOIN c_doctype dt ON ah.c_doctype_id = dt.c_doctype_id ");
+		sql.append(" JOIN ( ");
+		sql.append(" 	SELECT al2.c_allocationhdr_id, ");
+		sql.append(" 		   SUM(al2.amount + al2.discountamt + al2.writeoffamt) AS allocatedamt ");
+		sql.append(" 	  FROM c_allocationline al2 ");
+		sql.append(" 	 WHERE al2.c_invoice_id IS NOT NULL ");
+		sql.append(" 	   AND al2.c_invoice_credit_id IS NULL ");
+		sql.append(" 	   AND (al2.c_payment_id IS NOT NULL OR al2.c_cashline_id IS NOT NULL) ");
+		sql.append(" 	 GROUP BY al2.c_allocationhdr_id ");
+		sql.append(" ) stx ON stx.c_allocationhdr_id = ah.c_allocationhdr_id ");
+		sql.append(" WHERE ah.allocationtype = '");
+		sql.append(MAllocationHdr.ALLOCATIONTYPE_SalesTransaction);
+		sql.append("' ");
+		sql.append("   AND stx.allocatedamt > 0::numeric ");
+		sql.append("   AND ah.processed = 'Y'::bpchar ");
+		sql.append("   AND ah.docstatus IN ('CO', 'CL') ");
+		sql.append("   AND NOT EXISTS ( ");
+		sql.append(" 		SELECT 1 ");
+		sql.append(" 		  FROM c_alldocumentscc_v existing ");
+		sql.append(" 		 WHERE existing.documenttable = 'C_AllocationHdr' ");
+		sql.append(" 		   AND existing.document_id = ah.c_allocationhdr_id ");
+		sql.append("   ) ");
+		return sql.toString();
 	}
 
 	/**
