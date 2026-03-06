@@ -46,3 +46,90 @@ INSERT INTO libertya.ad_preference (ad_preference_id, ad_client_id, ad_org_id, i
 VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, current_timestamp, 100, NULL, NULL, 'Default_OtrosTributosTax_Vendors', '01 Percepcion IVA');
 
 UPDATE libertya.ad_preference SET value='IVA 0%' WHERE attribute='Default_NoGravadoTax_Vendors';
+
+-- 2026-03-06
+-- Fix CC: evita pendientes residuales de 0,01 en invoiceopen cuando el comprobante no es de monto minimo.
+-- Se corrige una condicion imposible (AND/AND) por la condicion correcta (AND/(OR)).
+CREATE OR REPLACE FUNCTION libertya.invoiceopen(
+    p_c_invoice_id integer,
+    p_c_invoicepayschedule_id integer,
+    p_c_currency_id integer,
+    p_c_conversiontype_id integer,
+    p_dateto timestamp without time zone)
+RETURNS numeric AS
+$BODY$
+DECLARE
+    v_Currency_ID        INTEGER := p_c_currency_id;
+    v_GrandTotal         NUMERIC := 0;
+    v_TotalOpenAmt       NUMERIC := 0;
+    v_PaidAmt            NUMERIC := 0;
+    v_Remaining          NUMERIC := 0;
+    v_Precision          NUMERIC := 0;
+    v_Min                NUMERIC := 0.01;
+    s                    RECORD;
+    v_ConversionType_ID  INTEGER := p_c_conversiontype_id;
+    v_Date               timestamp with time zone := ('now'::text)::timestamp(6);
+BEGIN
+    SELECT currencyConvert(GrandTotal, I.c_currency_id, v_Currency_ID, v_Date, v_ConversionType_ID, I.AD_Client_ID, I.AD_Org_ID),
+           (SELECT StdPrecision FROM C_Currency C WHERE C.C_Currency_ID = I.C_Currency_ID)
+      INTO v_TotalOpenAmt, v_Precision
+      FROM C_Invoice I
+     WHERE I.C_Invoice_ID = p_C_Invoice_ID;
+
+    IF NOT FOUND THEN
+        RAISE NOTICE 'Invoice no econtrada - %', p_C_Invoice_ID;
+        RETURN NULL;
+    END IF;
+
+    v_GrandTotal := v_TotalOpenAmt;
+    v_PaidAmt := getAllocatedAmt(p_C_Invoice_ID, v_Currency_ID, v_ConversionType_ID, 1, p_dateto);
+
+    IF (p_C_InvoicePaySchedule_ID > 0) THEN
+        v_Remaining := abs(v_PaidAmt);
+        FOR s IN
+            SELECT ips.C_InvoicePaySchedule_ID,
+                   currencyConvert(ips.DueAmt, i.c_currency_id, v_Currency_ID, v_Date, v_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) as DueAmt
+              FROM C_InvoicePaySchedule ips
+              INNER JOIN C_Invoice i ON (ips.C_Invoice_ID = i.C_Invoice_ID)
+             WHERE ips.C_Invoice_ID = p_C_Invoice_ID
+               AND ips.IsValid = 'Y'
+             ORDER BY ips.DueDate
+        LOOP
+            IF (s.C_InvoicePaySchedule_ID = p_C_InvoicePaySchedule_ID) THEN
+                v_TotalOpenAmt := abs(s.DueAmt) - abs(v_Remaining);
+                IF (v_TotalOpenAmt < 0) THEN
+                    v_TotalOpenAmt := 0;
+                END IF;
+                EXIT;
+            ELSE
+                v_Remaining := abs(v_Remaining) - abs(s.DueAmt);
+                IF (v_Remaining < 0) THEN
+                    v_Remaining := 0;
+                END IF;
+            END IF;
+        END LOOP;
+    ELSE
+        v_TotalOpenAmt := abs(v_TotalOpenAmt) - abs(v_PaidAmt);
+    END IF;
+
+    -- Si el total abierto esta dentro del umbral, solo se fuerza a cero cuando
+    -- el total del comprobante NO es de magnitud minima (abs(grandtotal) > v_Min).
+    IF (v_TotalOpenAmt >= -v_Min AND v_TotalOpenAmt <= v_Min
+        AND (v_GrandTotal < -v_Min OR v_GrandTotal > v_Min)) THEN
+        v_TotalOpenAmt := 0;
+    END IF;
+
+    -- El resultado final debe mantener el signo del comprobante.
+    IF (v_GrandTotal < 0) THEN
+        v_TotalOpenAmt := v_TotalOpenAmt * -1::numeric;
+    END IF;
+
+    v_TotalOpenAmt := ROUND(COALESCE(v_TotalOpenAmt, 0), v_Precision);
+    RETURN v_TotalOpenAmt;
+END;
+$BODY$
+LANGUAGE plpgsql VOLATILE
+COST 100;
+
+ALTER FUNCTION libertya.invoiceopen(integer, integer, integer, integer, timestamp without time zone)
+    OWNER TO libertya;
