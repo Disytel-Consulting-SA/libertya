@@ -62,7 +62,7 @@ public class BatchClosingCreditCard extends SvrProcess {
 		}
 		String sql = "SELECT p.* FROM c_payment p INNER JOIN m_entidadfinancieraplan efp ON (efp.m_entidadfinancieraplan_id = p.m_entidadfinancieraplan_id) WHERE efp.m_entidadfinanciera_id=? AND couponbatchnumber IS NULL";
 		if (getOrganizacion()>0)
-			sql = sql + " p.ad_org_id=?";
+			sql = sql + " AND p.ad_org_id=?";
 		PreparedStatement pstmt = null;
 		pstmt = DB.prepareStatement(sql);
 		ResultSet rs = null;
