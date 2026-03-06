@@ -61,7 +61,7 @@ public class PercepcionIIBBTucuman extends PercepcionIIBBProvincias {
 					if (getPercepcionData().getDocument().getTaxBaseAmt()
 							.compareTo(getPercepcionData().getMinimumNetAmt()) >= 0) {
 						p = getApplyRate(getPercepcionData().getAlicuota(),
-								getPercepcionData().getDocument().getLinesTotalAmt(true),
+								getPercepcionData().getDocument().getTaxBaseAmt(),
 								getPercepcionData().getMinimumNetAmt());
 					}
 				}
