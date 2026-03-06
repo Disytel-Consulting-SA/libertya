@@ -9512,6 +9512,15 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
 				if(!anterior.isProcessed())
 					cr.setMsg("El comprobante anterior # " + nroAnterior + " no se emitió correctamente, por favor gestionar", true);
+				
+				// Control cronológico: la fecha del comprobante actual no puede ser
+				// anterior a la del comprobante inmediatamente anterior de la misma serie.
+				if(!cr.isError()) {
+					CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(anterior, nroAnterior);
+					if(chronologicalResult.isError()) {
+						cr = chronologicalResult;
+					}
+				}
 			}
 		}
 		
@@ -9552,34 +9561,59 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		if(nroAnterior > 0) {
 			
 			int C_InvoiceAnterior_ID = getInvoiceIDAnterior(true);
-			
+		
 			// NO se encuentra numero inmediamente anterior
 			if(C_InvoiceAnterior_ID <= 0 ) {
 				MDocType dt = MDocType.get(getCtx(), this.getDocTypeID());
 				cr.setMsg("No se encuentra comprobante anterior #:" + nroAnterior + ". Por favor ajuste los secuenciadores para el Tipo de Documento:" + dt.getName(), true);
 			}else {
+				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
+				
+				// Control cronológico: mantener la coherencia entre numeración y fecha.
+				// Si el número es mayor, la fecha no puede ser menor al comprobante anterior.
+				CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(anterior, nroAnterior);
+				if(chronologicalResult.isError()) {
+					return chronologicalResult;
+				}
 				
 				// Si es factura electronica, la FC anterior debe tener CAE y VTO
 				if(isElectronicInvoice()) {
-					
-					MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
 					if(anterior.getcae()==null || anterior.getcae().isEmpty() || anterior.getvtocae()==null)
 						cr.setMsg("El comprobante anterior no posee numero de CAE, por favor gestionar!", true);
 					
 				}else {
 					
 					if(requireFiscalPrint()) {
-						
-						MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
 						if(!anterior.isFiscalAlreadyPrinted())
 							cr.setMsg("El comprobante anterior no se encuentra impreso, por favor imprimir!", true);
 						
 					}
 					
 				}
-				
 			}
-			
+		}
+		
+		return cr;
+	}
+	
+	/**
+	 * Valida coherencia cronológica de la numeración para una serie de comprobantes.
+	 * Si existe comprobante inmediato anterior (n-1), el comprobante actual no puede
+	 * tener una fecha de facturación menor a la de ese comprobante.
+	 */
+	private CallResult validateChronologicalOrderWithPreviousInvoice(MInvoice previousInvoice, int previousNumber) {
+		CallResult cr = new CallResult();
+		
+		if(previousInvoice == null || previousInvoice.getID() <= 0
+				|| previousInvoice.getDateInvoiced() == null || getDateInvoiced() == null) {
+			return cr;
+		}
+		
+		if(previousInvoice.getDateInvoiced().after(getDateInvoiced())
+				&& !TimeUtil.isSameDay(previousInvoice.getDateInvoiced(), getDateInvoiced())) {
+			cr.setMsg("La fecha del comprobante actual no puede ser menor a la del comprobante anterior # "
+					+ previousNumber + " (" + previousInvoice.getDocumentNo() + " - "
+					+ Env.getDateFormatted(previousInvoice.getDateInvoiced()) + ").", true);
 		}
 		
 		return cr;
