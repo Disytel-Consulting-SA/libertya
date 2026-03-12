@@ -133,3 +133,7 @@ COST 100;
 
 ALTER FUNCTION libertya.invoiceopen(integer, integer, integer, integer, timestamp without time zone)
     OWNER TO libertya;
+
+-- 20260312 Metadata para "Import Facturas"
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','periodfrom','timestamp without time zone'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','periodto','timestamp without time zone'));
