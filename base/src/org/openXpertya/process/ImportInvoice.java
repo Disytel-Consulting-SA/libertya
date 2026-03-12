@@ -762,6 +762,17 @@ public class ImportInvoice extends SvrProcess {
 					if( imp.getDateAcct() != null ) {
 						invoice.setDateAcct( imp.getDateAcct());
 					}
+					
+					Timestamp periodFrom = getTimestampValue(imp, "periodfrom");
+					if(periodFrom != null) {
+						invoice.set_Value("LYEIPeriodFrom", periodFrom);
+					}
+					
+					Timestamp periodTo = getTimestampValue(imp, "periodto");
+					if(periodTo != null) {
+						invoice.set_Value("LYEIPeriodTo", periodTo);
+					}
+					
 					invoice.setC_Currency_ID(imp.getC_Currency_ID());
 					
 					invoice.setDocStatus(MInvoice.DOCSTATUS_Drafted);
@@ -908,6 +919,20 @@ public class ImportInvoice extends SvrProcess {
 	
     protected String getMsg(String msg) {
     	return Msg.translate(getCtx(), msg);
+    }
+    
+    protected Timestamp getTimestampValue(X_I_Invoice imp, String columnName) {
+    	Object value = imp.get_Value(columnName);
+    	if(value == null) {
+    		return null;
+    	}
+    	if(value instanceof Timestamp) {
+    		return (Timestamp)value;
+    	}
+    	if(value instanceof java.util.Date) {
+    		return new Timestamp(((java.util.Date)value).getTime());
+    	}
+    	return null;
     }
     
     private boolean processInvoice(MInvoice invoice, String docAction) {
