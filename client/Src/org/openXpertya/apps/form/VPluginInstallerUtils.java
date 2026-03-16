@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
@@ -33,6 +35,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Trx;
 import org.openXpertya.util.Util;
 import org.openXpertya.utils.JarHelper;
+import org.openXpertya.utils.JarHelper.PreinstallSQLBlock;
 
 
 
@@ -92,7 +95,7 @@ public class VPluginInstallerUtils  {
 
 		/* Preinstalacion - Sentencias SQL */
 		PluginUtils.appendStatus(" === Ejecutando sentencias de preinstalacion === ");
-		doPreInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_PREINSTALL);
+		doPreInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_PREINSTALL, m_component_props);
 		
 		/* Comprobar secuencia por modificaciones a nivel SQL */
 		PluginUtils.appendStatus(" === Comprobando secuencias de nuevos componentes - preinstalacion === ");
@@ -374,17 +377,59 @@ public class VPluginInstallerUtils  {
 	 * Entrada principal a la ejecución del proceso de PreInstalación
 	 * @throws Exception
 	 */
-	public static void doPreInstall(Properties ctx, String jarURL, String fileURL) throws Exception
+	public static void doPreInstall(Properties ctx, String jarURL, String fileURL, Properties jarProps) throws Exception
 	{
+		// Es un patch de un componentversion el que se esta instalando? 
+		boolean isPatch = ("Y".equalsIgnoreCase((String)jarProps.get(PluginConstants.PROP_PATCH)));
+		// ignorar logica de exclusión de sentencias segun timestamps en preinstall? 
+		boolean ignorePreinstallTimestamps = "Y".equalsIgnoreCase((String) jarProps.get("IGNORE_PREINSTALL_TIMESTAMPS"));
+		Timestamp previousExport = null;
+		if (isPatch) {
+			// Cual es el component_export_date mas reciente que se instaló de este componentversion?
+			previousExport = getPreviousComponentVersionExportDateTime(jarProps);
+		}
+		if (ignorePreinstallTimestamps) {
+		    PluginUtils.appendStatus("IGNORE_PREINSTALL_TIMESTAMPS activo: se ejecutarán todos los bloques SQL de preinstalación");
+		}
+		
 		/* Toma el archivo SQL correspondiente e impacta en la base de datos */
-		ArrayList<String> sqls = JarHelper.readPreinstallSQLSentencesFromJar(jarURL, fileURL);
-		int iter = 1;
-		for (String sql : sqls)
-			if (sql != null && sql.length() > 0) {
-				PluginUtils.appendStatus("[" + (iter++) + "] Sentencias SQL de preinstalación", true, false, false, true);
+		int iter = 0;
+		StringBuffer ignoredBlocks = new StringBuffer();
+		ArrayList<PreinstallSQLBlock> sqlBlocks = JarHelper.readPreinstallSQLSentencesFromJar(jarURL, fileURL);
+		for (PreinstallSQLBlock sqlBlock : sqlBlocks) {
+			iter++;
+			Timestamp sqlTimestamp = sqlBlock.getTimestamp();
+
+			// Si es un patch del componentversion y el timestamp del SQL es menor o igual al último export instalado, entonces ignorar este SQL
+			boolean alreadyApplied = (!ignorePreinstallTimestamps && isPatch && previousExport != null && sqlTimestamp.compareTo(previousExport) <= 0);
+
+			if (alreadyApplied) {
+				ignoredBlocks.append("[").append(iter).append("|").append(sqlTimestamp).append("] ");
+				continue;
+			}
+			String sql = sqlBlock.getSql();
+			if (!sql.trim().isEmpty()) {
+				PluginUtils.appendStatus(" Sentencias SQL de preinstalación [" + iter + "|" + sqlTimestamp + "]", true, false, false, true);
 				PluginXMLUpdater.executeUpdate(replaceOIDSWithFalse(sql), m_trx);
+			}
+		}
+		PluginUtils.appendStatus("");
+		if (ignoredBlocks.length()>0) {
+			PluginUtils.appendStatus(" Sentencias SQL ignoradas anteriores a " + previousExport + ": " + ignoredBlocks.toString());
 		}
 	}
+	
+	/** Determina el mayor component_export_date del componentversion que se esta instalando */
+	protected static Timestamp getPreviousComponentVersionExportDateTime(Properties jarProps) {
+		return DB.getSQLValueTimestamp(null,  " SELECT to_timestamp(max(component_export_date), 'YYYY/MM/DD-HH24:MI:SS.MS') "
+											+ " FROM AD_Plugin "
+											+ " WHERE ad_componentversion_id = ("
+											+ " 	SELECT ad_componentversion_id "
+											+ "		FROM ad_componentversion "
+											+ "		WHERE ad_componentobjectuid = '" + jarProps.get(PluginConstants.PROP_COMPONENTVERSIONUID) + "')", 
+											true);
+	}
+	
 	
 	/** 
 	 * Entrada principal a la ejecución del proceso de Instalación
