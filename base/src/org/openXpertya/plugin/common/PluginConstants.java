@@ -141,6 +141,9 @@ public class PluginConstants {
 	
 	/** Fecha y hora de exportación */
 	public static final String PROP_EXPORT_TIMESTAMP = "EXPORT_TIMESTAMP"; 
+
+	/** Ignorar logica de exclusión de sentencias segun timestamps en preinstall (Y/N) */
+	public static final String PROP_IGNORE_PREINSTALL_TIMESTAMPS = "IGNORE_PREINSTALL_TIMESTAMPS"; 
 	
 	
 	/** ----------------------- CONSTANTES PARA GENERATE MODEL ----------------------- */

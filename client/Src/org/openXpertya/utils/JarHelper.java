@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -139,82 +142,114 @@ public class JarHelper {
 	
 	/**
 	 * Lee el archivo preinstall.sql y separa las sentencias basado en los comentarios de tipo: --YYYYMMDD-HHMM
-	 * De esta manera es más sencillo realizar el seguimiento de los queries que generan problema
+	 * De esta manera es más sencillo realizar el seguimiento de los queries que generan problema.
+	 * Retorna ordenado segun archivo, pero incluyendo timestamp de cada sentencia.
 	 */
-	public static ArrayList<String> readPreinstallSQLSentencesFromJar(String jarURL, String resource) throws Exception
+	public static ArrayList<PreinstallSQLBlock> readPreinstallSQLSentencesFromJar(String jarURL, String resource) throws Exception
 	{
 		final String sqlComment = "--";
-		ArrayList<String> retValue = new ArrayList<String>();
+		ArrayList<PreinstallSQLBlock> retValue = new ArrayList<PreinstallSQLBlock>();
 		
-	    JarFile jarFile = new JarFile(jarURL);
-	    JarEntry entry = jarFile.getJarEntry(resource);
-	       
-	    /* Si no existe el archivo, retornar la lista vacía */
-	    if (entry == null)
-	    	return retValue;
-	       
-	    InputStream input = jarFile.getInputStream(entry);
-	    StringBuilder content = new StringBuilder();
-	    InputStreamReader isr = new InputStreamReader(input);
-	    BufferedReader reader = new BufferedReader(isr);
-
-	    String line;
-	    // iterar por todas las lineas
-	    while ((line = reader.readLine()) != null) {
-	    	// Si la linea contiene informacion, y no es un comentario, incorporarla
-	    	if ( line.length() > 0 ) {
-	    		// Es una linea de separación de sentencias?
-	    		if (isPreinstallSplitComment(line)) {
-	    			// guardar la sentencia previa a la actual
-	    			if (content.toString().length() > 0)
-	    				retValue.add(content.toString());
-	    			// reiniciar para la nueva sentencia
-	    			content = new StringBuilder();
-	    			continue;
-	    		}
-	    		// Si es una linea de comentario tradicional, simplemente omitirla
-	    		line = removeComment(line, sqlComment);
-	    		if (line.length() > 0 && !"".equals(line))
-	    			content.append(line + " ");
-	    	}
-	    }
-		// guardar la sentencia final
-		if (content.toString().length() > 0)
-			retValue.add(content.toString());
-
-		// cierre del archivo
-		jarFile.close();
+		try (JarFile jarFile = new JarFile(jarURL)) {
+		    JarEntry entry = jarFile.getJarEntry(resource);
+		       
+		    /* Si no existe el archivo, retornar la lista vacía */
+		    if (entry == null)
+		    	return retValue;
+		        
+		    try (
+			    InputStream input = jarFile.getInputStream(entry);
+			    InputStreamReader isr = new InputStreamReader(input);
+			    BufferedReader reader = new BufferedReader(isr);
+		    ) {
+			    StringBuilder content = new StringBuilder();
+			    String line;
+			    Timestamp lineTimestamp = null;
+			    Timestamp lastTimestamp = null;
+			    // iterar por todas las lineas
+			    while ((line = reader.readLine()) != null) {
+			    	// Si la linea contiene informacion, y no es un comentario, incorporarla
+			    	if ( line.length() > 0 ) {
+			    		// Es una linea de separación de sentencias?
+			    		lineTimestamp = preinstallSplitCommentTimeStamp(line);
+			    		if (lineTimestamp != null) {
+			    			// guardar la sentencia previa a la actual, si es que existe contenido
+			    			if (content.length() > 0) {
+			    		        if (lastTimestamp == null) {
+			    		            throw new Exception("Se encontraron sentencias SQL antes del timestamp inicial separador de bloques en preinstall.sql");
+			    		        }
+			    				retValue.add(new PreinstallSQLBlock(lastTimestamp, content.toString()));
+			    			}
+			    			// reiniciar para la nueva sentencia
+		    				lastTimestamp = lineTimestamp;
+			    			content = new StringBuilder();
+			    			continue;
+			    		}
+			    		// Si es una linea de comentario tradicional, simplemente omitirla
+			    		line = removeComment(line, sqlComment);
+			    		if (!line.isEmpty())
+			    			content.append(line).append(" ");
+			    	}
+			    }
+			    // Si nunca se recuperó un separador de bloques de sentencias, elevar exception
+				if (lastTimestamp==null) {
+					throw new Exception("No se encuentra timestamp separador de bloques sql inicial en preinstall.sql");
+				}
+				
+				// guardar la sentencia final
+				if (content.toString().length() > 0) {
+					retValue.add(new PreinstallSQLBlock(lastTimestamp, content.toString()));
+				}
+		    }
+		}
 	       
 		return retValue;
 	}
 	
 	/**
-	 * Retorna true si el comentario respeta el formato:    --YYYYMMDD-HHMM (o similar teniendo 
-	 * en cuenta eventuales espacios adicionales) de separación de sentencias; o false caso contrario
+	 * Retorna el time si el comentario respeta el formato:    --YYYYMMDD-HHMM (o similar teniendo 
+	 * en cuenta eventuales espacios adicionales) de separación de sentencias; o -1 caso contrario
 	 */
-	protected static boolean isPreinstallSplitComment(String line) {
+	protected static Timestamp preinstallSplitCommentTimeStamp(String line) {
 		
 		// formato y tamaño a buscar
-		final String dateTimeFormat = "yyyyMMdd-HHmm"; 
+		final String dateTimeFormat = "yyyyMMddHHmm"; 
 		final int dateTimeLength = dateTimeFormat.length();
 	
 		try {
 			
 			// si directamente no inicia como un comentario, omitir
 			if (!line.trim().startsWith("--"))
-				return false;
+				return null;
 			
 			// remover -- y todos los espacios, dejando la fecha/hora toda junta.
-			line = line.substring(2).replaceAll(" ", "");
+			line = line.substring(2).replaceAll("\\s+", "").replace("-", "");
 			
 			// remover texto posterior a la fecha-hora
 			line = line.substring(0, dateTimeLength);
 			
 			// Intentar parsear el comentario
-			new SimpleDateFormat(dateTimeFormat).parse(line);
-			return true;
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+			LocalDateTime ldt = LocalDateTime.parse(line, formatter);
+			return Timestamp.valueOf(ldt);
 		} catch (Exception e) {
-			return false;
+			return null;
 		}
+	}
+	
+	/**
+	 * Bloque SQL que puede contener una o más sentencias a impactar.
+	 */
+	public static class PreinstallSQLBlock {
+	    private final Timestamp timestamp;
+	    private final String sql;
+
+	    public PreinstallSQLBlock(Timestamp timestamp, String sql) {
+	        this.timestamp = timestamp;
+	        this.sql = sql;
+	    }
+
+	    public Timestamp getTimestamp() { return timestamp; }
+	    public String getSql() { return sql; }
 	}
 }
