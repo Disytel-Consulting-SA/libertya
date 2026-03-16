@@ -124,6 +124,12 @@ public class RetencionFacturasMIva extends AbstractRetencionProcessor {
 		// Se calcula la base imponible. (el monto sujeto a la aplicación de la retención).
 		// BI = EP - INI 
 		baseImponible = estePago.subtract(getImporteNoImponible());
+		
+		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+		baseImponible = baseImponible.subtract(getNetAmountNC());
+		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+		
+		
 		// Si la base imponible es menor que cero, entonces no hay retención que aplicar y
 		// se asigna la base imponible a cero.
 		importeDeterminado = calculateImporteDeterminado(baseImponible, estePago);

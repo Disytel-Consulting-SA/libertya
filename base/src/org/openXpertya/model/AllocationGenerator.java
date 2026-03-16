@@ -89,6 +89,9 @@ public class AllocationGenerator {
 	protected BigDecimal diffExchange = null;
 	protected ArrayList<InvoiceExchangeDif> invoiceExchangeDif = null;
 	
+	/** Fecha del recibo/op */
+	public Timestamp fechaOP = null;
+	
 	// dREHER
 	/** Permite calcular el monto de los debitos segun la tasa de cambio especificada en el comprobante y no seguna la tasa de cambio vigente */
 	private boolean isCalcularMontoSegunTasaCambioFC = false;
@@ -620,18 +623,68 @@ public class AllocationGenerator {
 		// Si hay al menos un débito y un crédito entonces la imputación no puede ser parcial
 		// con lo cual los totales de débitos y créditos deben coincidir.
 		if (hasDebits() && hasCredits()) {
+			
+			BigDecimal debitos = getDebitsAmount();
+			BigDecimal creditos = getCreditsAmount();
+			BigDecimal exchangeDiff = Env.ZERO;
+			
+			System.out.println("AllocationGenerator. Valores convertidos= Debitos: " + debitos + " Creditos: " + creditos + " Diff Cambio: " + exchangeDiff);
+			
+			if(exchangeDiff == null)
+				exchangeDiff = new BigDecimal(0);
+			
+			debitos = debitos.subtract(exchangeDiff);
+			
+			int currencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID"); 
+			
+			debitos = getConvertedTo(debitos, currencyID, fechaOP); // dREHER
+			creditos = getConvertedTo(creditos, currencyID, fechaOP); // dREHER
+			
+			// dREHER NO se descuenta de los debitos, ya que SE INCLUYE al momento de pagar 
+			// Total a pagar = Saldos Facturas + Diferencia de Cambio
+			// debitos = debitos.subtract(exchangeDiff);
+			
+			Double tolerancia = Double.parseDouble(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"));
+			
+			if (debitos.compareTo(creditos) != 0) {
+				if ( Math.abs(  (debitos.subtract(creditos)).doubleValue() ) > tolerancia) {
+					
+					System.out.println("AllocationGenerator. Diferencia: " + Math.abs(  (debitos.subtract(creditos)).doubleValue() ) +
+							" Tolerancia: " + tolerancia);
+					
+					throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError",
+							new Object[] { debitos, creditos }));
+				}
+			}
+			
+			
+			
 			// Comparación exacta (sin redondeos)
 			// TODO: Ver si sería posible la tolerancia de algunos centavos de diferencia en
 			// esta comparación.
+			/** Validacion Original
 			if (getDebitsAmount().compareTo(getCreditsAmount() ) != 0) {
 				if ( Math.abs(  (getDebitsAmount().subtract(getCreditsAmount())).doubleValue() ) >  (Double.parseDouble(MPreference.GetCustomPreferenceValue("AllowExchangeDifference"))) )
 					throw new AllocationGeneratorException(getMsg("CreditDebitAmountsMatchError",
 							new Object[] { getDebitsAmount(), getCreditsAmount() }));
 			}
+			*/
 		}
 				
 		// Se invoca el método de validación específicas (destinado a las subclases)
 		customValidate();
+	}
+	
+	// dREHER
+	public BigDecimal getConvertedTo(BigDecimal monto, int currencyFromID, Timestamp fechaTasaCambio){
+		Date fechaCalculaTasaCambio = Env.getContextAsDate(getCtx(), "#Date");
+		if(fechaTasaCambio!=null)
+			fechaCalculaTasaCambio = fechaTasaCambio;
+
+		if(monto==null)
+			return Env.ZERO;
+
+		return MCurrency.currencyConvert(monto, currencyFromID, Env.getContextAsInt( getCtx(), "$C_Currency_ID" ), fechaCalculaTasaCambio, Env.getAD_Org_ID(getCtx()), getCtx());
 	}
 	
 	/**

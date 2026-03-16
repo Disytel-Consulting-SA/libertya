@@ -297,21 +297,6 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 	</variable>
 		<background>
 			<band height="369"  isSplitAllowed="true" >
-				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
-					<reportElement
-						x="72"
-						y="256"
-						width="391"
-						height="96"
-						forecolor="#F97070"
-						key="textField-56"/>
-					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
-					<textElement textAlignment="Center">
-						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="16" isBold="true"/>
-					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DOC_STATUS}.equalsIgnoreCase("Completo") || $P{DOC_STATUS}.equalsIgnoreCase("Cerrado") || ($P{DOC_STATUS}.equalsIgnoreCase("Anulado") && $P{CAE} != null && $P{CAE}.trim().length() > 0) ? "":
-"LA FACTURA SE ENCUENTRA EN ESTADO '" + $P{DOC_STATUS} + "'. NO SE DEBE IMPRIMIR LA FACTURA ESTANDO EN ESTE ESTADO. COMPLETE EL DOCUMENTO ANTES DE IMPRIMIR"]]></textFieldExpression>
-				</textField>
 			</band>
 		</background>
 		<title>
@@ -549,6 +534,21 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 		</pageHeader>
 		<columnHeader>
 			<band height="119"  isSplitAllowed="true" >
+				<textField isStretchWithOverflow="false" isBlankWhenNull="false" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="72"
+						y="-8"
+						width="391"
+						height="96"
+						forecolor="#F97070"
+						key="textField-56"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement textAlignment="Center">
+						<font fontName="Arial" pdfFontName="Helvetica-Bold" size="16" isBold="true"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DOC_STATUS}.equalsIgnoreCase("Completo") || $P{DOC_STATUS}.equalsIgnoreCase("Cerrado") || ($P{DOC_STATUS}.equalsIgnoreCase("Anulado") && $P{CAE} != null && $P{CAE}.trim().length() > 0) ? "":
+"LA FACTURA SE ENCUENTRA EN ESTADO '" + $P{DOC_STATUS} + "'. NO SE DEBE IMPRIMIR LA FACTURA ESTANDO EN ESTE ESTADO. COMPLETE EL DOCUMENTO ANTES DE IMPRIMIR"]]></textFieldExpression>
+				</textField>
 				<rectangle>
 					<reportElement
 						mode="Opaque"

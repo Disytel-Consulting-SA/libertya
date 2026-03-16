@@ -434,7 +434,13 @@ public final class ImpFormatRow {
 		try {
 			ts = new Timestamp(m_dformat.parse(info).getTime());
 		} catch (ParseException pe) {
-			log.log(Level.SEVERE, "ImpFormatRow.parseDate - " + info, pe);
+			System.out.println("No pudo parsear formato " + m_dataFormat + " intenta YYYY-MM-dd: " + info);
+			try {
+				SimpleDateFormat dformat2 = new SimpleDateFormat("YYYY-MM-dd");
+				ts = new Timestamp(dformat2.parse(info).getTime());
+			} catch (ParseException e) {
+				log.log(Level.SEVERE, "ImpFormatRow.parseDate - " + info, pe);	
+			}
 		}
 
 		if (ts == null) {

@@ -698,6 +698,15 @@ public class MInOutLine extends X_M_InOutLine {
 					false, BigDecimal.ZERO, false,
 					get_TrxName()));
         }
+		
+		// dREHER 30-01-2026 Si el producto NO corresponde con el proveedor elegido, NO DEJA AVANZAR
+		if(!inout.isSOTrx()) {
+			MProductPO po = MProductPO.get(Env.getCtx(), getM_Product_ID(), inout.getC_BPartner_ID(), get_TrxName());
+			if (po == null) {
+				log.saveError("El artículo no pertenece al proveedor", "");
+				return false;
+			}
+		}
 
 		return true;
 	} // beforeSave

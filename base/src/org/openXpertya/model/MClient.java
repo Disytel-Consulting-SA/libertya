@@ -31,6 +31,7 @@ import org.openXpertya.util.CLogger;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Language;
+import org.openXpertya.util.Msg;
 
 //~--- Importaciones JDK ------------------------------------------------------
 
@@ -162,6 +163,28 @@ public class MClient extends X_AD_Client {
         return super.save();
 
     }		// save
+    
+    @Override
+    protected boolean beforeSave(boolean newRecord) {
+        if( !isActive() && (newRecord || is_ValueChanged("IsActive")) ) {
+            log.saveError("Error", "No se permite desactivar una compania.");
+            return false;
+        }
+        return true;
+    } // beforeSave
+    
+    /**
+	 * Executed before Delete operation.
+	 * 
+	 * @return true if record can be deleted
+	 * 
+	 * dREHER 21-1-2026 NO permitir eliminar compañia
+	 */
+    @Override
+	protected boolean beforeDelete() {
+		log.saveError("Error", Msg.getMsg(getCtx(), "CannotDelete"));
+		return false;
+	} // beforeDelete
 
     /**
      *      Create Trees and Setup Client Info

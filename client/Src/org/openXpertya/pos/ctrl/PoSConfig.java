@@ -132,6 +132,7 @@ public class PoSConfig {
 		setUserCanAccessInfoProduct(MRole.getDefault(Env.getCtx(), true).isInfoProductAccess());
 		
 		if(pos != null) {
+			setPos(pos);
 			setCashBookID(pos.getC_CashBook_ID());
 			setPriceListID(pos.getM_PriceList_ID());
 			setBPartnerCashTrxID(pos.getC_BPartnerCashTrx_ID());

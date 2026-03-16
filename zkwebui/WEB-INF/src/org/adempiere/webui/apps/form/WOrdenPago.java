@@ -4,6 +4,7 @@
 
 package org.adempiere.webui.apps.form;
 
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -96,7 +97,9 @@ import org.openXpertya.util.UserAuthConstants;
 import org.openXpertya.util.Util;
 import org.openXpertya.util.ValueNamePair;
 import org.zkoss.lang.Objects;
+import org.zkoss.zk.ui.AbstractComponent;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -123,6 +126,7 @@ import org.zkoss.zul.Tree;
 import org.zkoss.zul.Treecell;
 import org.zkoss.zul.Treeitem;
 import org.zkoss.zul.Treerow;
+import org.zkoss.zul.impl.InputElement;
 import org.zkoss.zul.impl.XulElement;
 
 
@@ -1568,6 +1572,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected static final Integer MEDIOPAGO_ACTION_EDIT = 1;
     protected static final Integer MEDIOPAGO_ACTION_DELETE = 2;
     
+    private static final String ATTR_ENTER_WIRED = "enterWired";
+    
 	protected void customInitComponents() {
 		
 		Date d = new Date();
@@ -1617,9 +1623,19 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 				
 				tableUpdated();		
 				resetModel();
+
 			}
 		});
-
+		
+		Events.echoEvent("onWireEnter", tblFacturas, null);
+		
+		tblFacturas.addEventListener("onWireEnter", new EventListener() {
+		    @Override
+		    public void onEvent(Event event) throws Exception {
+		        wireEnterToGrid(tblFacturas);
+		    }
+		});
+		
         cboClient.setReadWrite(false);
         cboClient.setValue(Env.getAD_Client_ID(m_ctx));
         cboOrg.setMandatory(true);
@@ -1720,7 +1736,110 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         addCustomOperationAfterTabsDefinition();
         
 	}
+
+	// -----------------------------------------------------------
+	public void wireEnterToGrid(final Grid grid) {
+		if (grid == null || grid.getRows() == null) return;
+
+	    final EventListener listener = new EventListener() {
+	        @Override
+	        public void onEvent(Event event) throws Exception {
+	            Component target = (Component) event.getTarget();
+	            int idx = resolveGridRowIndex(grid, target);
+	            if (idx < 0) return;
+
+	            // Si el usuario ingresó un parcial (>0), respetarlo y no autocompletar.
+	            if (enteredAmountFromTarget(target).compareTo(Env.ZERO) > 0) {
+	            	return;
+	            }
+
+	            event.stopPropagation();
+	            updatePayInvoice(true, idx, false);
+	        }
+	    };
+
+	    int idx = 0;
+	    for (Object c : grid.getRows().getChildren()) {
+	        Component rowComp = (Component) c;
+
+	        // Si tenés Group/Detail, filtralos acá si hace falta
+	        wireInputsRecursive(rowComp, idx, listener);
+
+	        idx++;
+	    }
+	}
+
+	private int resolveGridRowIndex(Grid grid, Component target) {
+		if (target == null)
+			return -1;
+		if (grid == null || grid.getRows() == null)
+			return resolveRowIndexFromAttributes(target);
+
+		Component row = target;
+		while (row != null && row.getParent() != grid.getRows()) {
+			row = row.getParent();
+		}
+		if (row != null) {
+			int idx = grid.getRows().getChildren().indexOf(row);
+			if (idx >= 0)
+				return idx;
+		}
+
+		// Fallback para eventos ON_OK donde el componente ya fue re-renderizado.
+		return resolveRowIndexFromAttributes(target);
+	}
+
+	private int resolveRowIndexFromAttributes(Component target) {
+		Component c = target;
+		while (c != null) {
+			if (c instanceof AbstractComponent) {
+				Object attr = ((AbstractComponent)c).getAttribute("rowIndex");
+				if (attr instanceof Integer && ((Integer)attr).intValue() >= 0) {
+					return ((Integer)attr).intValue();
+				}
+			}
+			c = c.getParent();
+		}
+		return -1;
+	}
+
+	private BigDecimal enteredAmountFromTarget(Component target) {
+		if (!(target instanceof Textbox))
+			return Env.ZERO;
+		String value = ((Textbox)target).getValue();
+		if (value == null)
+			return Env.ZERO;
+		return getModel().numberParseOrZero(value.trim());
+	}
+
+	private void wireInputsRecursive(Component parent, final int rowIndex, final EventListener listener) {
+		 for (Object obj : parent.getChildren()) {
+		        Component ch = (Component) obj;
+
+		        if (ch instanceof InputElement) {
+		            AbstractComponent ac = (AbstractComponent) ch;
+
+		            // ✅ Esto SIEMPRE: aunque ya esté wired, actualiza índice
+		            ac.setAttribute("rowIndex", Integer.valueOf(rowIndex));
+
+		            // ✅ Esto SOLO una vez: evita duplicados
+		            if (ac.getAttribute(ATTR_ENTER_WIRED) == null) {
+		            	// Solo aplicar ENTER sobre campos editables.
+		            	if (ch instanceof Textbox && ((Textbox)ch).isReadonly()) {
+		            		continue;
+		            	}
+		                ac.setAttribute(ATTR_ENTER_WIRED, Boolean.TRUE);
+		                ac.addEventListener(Events.ON_OK, listener);
+		            }
+		        }
+
+		        if (ch.getChildren() != null && !ch.getChildren().isEmpty()) {
+		            wireInputsRecursive(ch, rowIndex, listener);
+		        }
+		    }
+	}
 	
+	// -----------------------------------------------------------
 	
 	protected double getTotalCreditsOpenAmt() {
 		double totalCreditsOpenAmt = 0;
@@ -1982,7 +2101,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 
 	@Override
 	public void tableChanged(TableModelEvent arg0) {
-		// System.out.println("tableChanged: " + arg0);
+		System.out.println("WOrdenPago.tableChanged: " + arg0);
 		if ( (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 1) || (arg0.getColumn() == m_model.m_facturasTableModel.getColumnCount() - 2) ){
 			// Se actualizó el monto manual
 			for (int row = arg0.getFirstRow(); row <= arg0.getLastRow() && row < m_model.m_facturas.size(); row++) {
@@ -2798,6 +2917,26 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		txtTotalPagar1.setValue(total);
 	}
 	
+	// dREHER 12 Feb 2026 si da ENTER autocompletar el monto a pagar de la factura
+	protected void updatePayInvoice(boolean pay, int row, boolean toPayMoment) {
+		if(getModel().m_facturas==null 
+			|| getModel().m_facturas.isEmpty()
+			|| row < 0
+			|| row >= getModel().m_facturas.size())
+				return;
+		
+		if (row >= getModel().m_facturas.size())
+				return;
+		
+		debug("updatePayInvoice - pay: " + pay + " row: " + row + " toPayMoment: " + toPayMoment);
+
+		getModel().updatePayInvoice(pay, row, toPayMoment);
+		
+		// Actualizar el total a pagar
+		updateTotalAPagar1();
+		resetModel();
+	}
+	
 	/**
 	 * Actualiza componentes custom de la interfaz gráfica relacionadas con el
 	 * cambio de entidad comercial
@@ -3205,6 +3344,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
 		tblFacturas.setModel(listModel);
 		updateTotalAPagar1();
+		
+		// Re-wire luego del render (ZK viejo: render diferido)
+	    Events.echoEvent("onWireEnter", tblFacturas, null);
 	}
 	
 	protected void createPaymentRuleCombo() throws Exception{
@@ -3271,31 +3413,63 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			
 			
 			for (int i = 0; i < colCount; i++) {
-				// Las dos ultimas columnas son para seteo de datos 
+				// Las dos ultimas columnas son para seteo de datos
 				if (owner.listModel.model.isCellEditable(1, i) && !owner.checkPayAll.isChecked()) {
 					Textbox aTextbox = new Textbox();
-					aTextbox.setValue(_data[i].toString()); 
+					aTextbox.setValue(_data[i].toString());
 					aTextbox.setWidth("120px"); // dREHER default 60px
 					aTextbox.setStyle("text-align: right; !important; width: 100%; color:black; padding-right: 5px; margin-right: 5px;");
 					aTextbox.setParent(arg0);
-					// Setear toPay (anteultima columna) hacia toPayCurrency (ultima columna)
-					if (i == colCount - 2) {
-						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
-							@Override
-							public void onEvent(Event evt) throws Exception {
-								toPay2toPayCurrency();
+
+					final int colIdx = i;
+
+					// Guardar valor inmediatamente al cambiar (blur/cambio de foco)
+					aTextbox.addEventListener(Events.ON_CHANGE, new EventListener() {
+						@Override
+						public void onEvent(Event evt) throws Exception {
+							Textbox source = (Textbox) evt.getTarget();
+							BigDecimal newValue = BigDecimal.ZERO;
+							try {
+								String valueStr = source.getValue().trim();
+								newValue = valueStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(valueStr);
+							} catch (Exception e) {
+								newValue = BigDecimal.ZERO;
 							}
-						});
-					}
-					// Setea toPayCurrency (ultima columna) hacia toPay (anteultima columna)
-					if (i == colCount - 1) {					
-						aTextbox.addEventListener(Events.ON_OK, new EventListener() {
-							@Override
-							public void onEvent(Event evt) throws Exception {
-								toPayCurrency2toPay();
+							// Obtener el índice de la fila desde el padre del textbox
+							org.zkoss.zul.Row row = (org.zkoss.zul.Row) source.getParent();
+							if (row != null && row.getGrid() != null) {
+								int rowIdx = row.getGrid().getRows().getChildren().indexOf(row);
+								if (rowIdx >= 0) {
+									// Actualizar el valor en el modelo
+									((FacturasModel)owner.tblFacturas.getModel()).model.setValueAt(newValue, rowIdx, colIdx);
+								}
 							}
-						});
-					}
+						}
+					});
+
+					// ENTER: Guardar el valor (mismo comportamiento que ON_CHANGE)
+					aTextbox.addEventListener(Events.ON_OK, new EventListener() {
+						@Override
+						public void onEvent(Event evt) throws Exception {
+							Textbox source = (Textbox) evt.getTarget();
+							BigDecimal newValue = BigDecimal.ZERO;
+							try {
+								String valueStr = source.getValue().trim();
+								newValue = valueStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(valueStr);
+							} catch (Exception e) {
+								newValue = BigDecimal.ZERO;
+							}
+							// Obtener el índice de la fila desde el padre del textbox
+							org.zkoss.zul.Row row = (org.zkoss.zul.Row) source.getParent();
+							if (row != null && row.getGrid() != null) {
+								int rowIdx = row.getGrid().getRows().getChildren().indexOf(row);
+								if (rowIdx >= 0) {
+									// Actualizar el valor en el modelo
+									((FacturasModel)owner.tblFacturas.getModel()).model.setValueAt(newValue, rowIdx, colIdx);
+								}
+							}
+						}
+					});
 				} 
 				else {
 					Label aLabel = null;
@@ -3387,8 +3561,9 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			}
 			owner.resetModel();
 		}
+
 	}
-	
+
 	/**
 	 * Para que el renderer pueda visualizar o no ciertas columnas (a redefinir por subclases)
 	 */

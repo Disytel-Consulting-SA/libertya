@@ -98,8 +98,7 @@ public class PercepcionIIBBProvincias extends PercepcionStandard {
 				if(documentTax.getTaxID() == getPercepcionData().getTax().getID()) {
 					// Encontramos que se aplicó esta percepción, entonces verificar por config si
 					// se debe aplicar
-					if(((getPercepcionData().isVoiding() && getPercepcionData().isAllowTotalReturn())
-							|| (!getPercepcionData().isVoiding() && getPercepcionData().isAllowPartialReturn()))
+					if(isCreditReturnAllowed()
 							&& ((!getPercepcionData().isConvenioMultilateral() 
 									&& Util.isEmpty(getPercepcionData().getBpartner().getIsConvenioMultilateral(), true))
 								|| (getPercepcionData().isConvenioMultilateral() 

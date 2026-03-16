@@ -2,6 +2,7 @@ package org.openXpertya.model;
 
 import java.math.BigDecimal;
 
+import org.openXpertya.model.DiscountCalculator.IDocument;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -163,8 +164,7 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 				if(documentTax.getTaxID() == getPercepcionData().getTax().getID()) {
 					// Encontramos que se aplicó esta percepción, entonces verificar por config si
 					// se debe aplicar
-					if((getPercepcionData().isVoiding() && getPercepcionData().isAllowTotalReturn())
-							|| (!getPercepcionData().isVoiding() && getPercepcionData().isAllowPartialReturn())) {
+					if(isCreditReturnAllowed()) {
 						p = getApplyRate(documentTax.getTaxRate());
 					}					
 					break;
@@ -172,6 +172,38 @@ public class PercepcionStandard extends AbstractPercepcionProcessor {
 			}
 		}
 		return p;
+	}
+
+	protected boolean isCreditReturnAllowed() {
+		if(getPercepcionData().isVoiding()) {
+			return getPercepcionData().isAllowTotalReturn();
+		}
+		if(getPercepcionData().isAllowPartialReturn()) {
+			return true;
+		}
+		return getPercepcionData().isAllowTotalReturn() && isManualTotalReturn();
+	}
+
+	protected boolean isManualTotalReturn() {
+		IDocument document = getPercepcionData().getDocument();
+		IDocument relatedDocument = getPercepcionData().getRelatedDocument();
+		if(document == null || relatedDocument == null) {
+			return false;
+		}
+		BigDecimal documentTaxBaseAmt = document.getLinesNetAmt() == null ? BigDecimal.ZERO
+				: document.getLinesNetAmt().abs();
+		BigDecimal relatedTaxBaseAmt = relatedDocument.getLinesNetAmt() == null ? BigDecimal.ZERO
+				: relatedDocument.getLinesNetAmt().abs();
+		if(documentTaxBaseAmt.compareTo(BigDecimal.ZERO) == 0) {
+			documentTaxBaseAmt = document.getTaxBaseAmt() == null ? BigDecimal.ZERO
+					: document.getTaxBaseAmt().abs();
+		}
+		if(relatedTaxBaseAmt.compareTo(BigDecimal.ZERO) == 0) {
+			relatedTaxBaseAmt = relatedDocument.getTaxBaseAmt() == null ? BigDecimal.ZERO
+					: relatedDocument.getTaxBaseAmt().abs();
+		}
+		BigDecimal tolerance = BigDecimal.ONE.movePointLeft(Math.max(2, getPercepcionData().getScale()));
+		return documentTaxBaseAmt.add(tolerance).compareTo(relatedTaxBaseAmt) >= 0;
 	}
 	
 	// dREHER

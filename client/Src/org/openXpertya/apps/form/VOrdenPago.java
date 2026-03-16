@@ -1534,8 +1534,26 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				break;
 	    	case 3: // Crédito
 	    		ArrayList<VOrdenPagoModel.MedioPagoCredito> mps = saveCreditMedioPago();
-	    		for (VOrdenPagoModel.MedioPago unMP : mps)
+
+	    		// dREHER 20 Feb 2026
+	    		BigDecimal totalCredito = BigDecimal.ZERO;
+	    		for (VOrdenPagoModel.MedioPago unMP : mps) {
 	    			savePMFinalize(unMP);
+	    			totalCredito = totalCredito.add(unMP.getImporte());
+	    		}
+	    		
+	    		debug("Asigno al modelo el total de los medios de pago de crédito: " + totalCredito);
+	    		m_model.setNetAmountNC(totalCredito);
+	    		
+	    		debug("Recalculo retenciones luego de asignar el total de los medios de pago de crédito al modelo");
+	    		m_model.m_retenciones.clear();
+	    		m_model.calculateRetencions();
+	    		m_model.m_retenciones = m_model.getRetenciones();
+	    		
+	    		// Debo refrescar la lista de retenciones del panel de retenciones para que se muestren las retenciones calculadas luego de asignar el total de los medios de pago de crédito al modelo
+	    		m_nodoRetenciones.removeAllChildren();
+	    		updateTreeModel();
+	    		
 	    		break;
 	    	case 4:
 				// Adelantado
@@ -2956,7 +2974,6 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		if(!Util.isEmpty(preferenceDocTypeKey, true)){
 			MDocType dt = MDocType.getDocType(m_ctx, preferenceDocTypeKey, m_trxName);
 			if(dt != null && cboDocumentType.getM_lookup().containsKey(dt.getID())){
-				
 				cboDocumentType.setValue(dt.getID());
 				try{
 					vetoableChange(new PropertyChangeEvent(cboDocumentType, "C_DocType_ID", null, dt.getID()));
@@ -2965,6 +2982,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				}
 			}
 		}
+		
+		if (cboDocumentType.getValue() != null) {
+			try {
+				vetoableChange(new PropertyChangeEvent(cboDocumentType, "C_DocType_ID", null, cboDocumentType.getValue()));
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
 	}	
 	
 	protected void clearMediosPago() {

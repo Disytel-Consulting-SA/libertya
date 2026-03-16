@@ -42,6 +42,10 @@ public class GeneratorRetenciones {
 	private Integer projectID = 0;
 	private Integer campaignID = 0;
 	private String paymentRule;
+	
+	// dREHER 20 Feb 2026
+	private BigDecimal netAmountNC = Env.ZERO;
+	
 	/* Listado de retenciones */
 	
 	Vector<RetencionProcessor> lista_retenciones = new Vector<RetencionProcessor>();
@@ -106,6 +110,14 @@ public class GeneratorRetenciones {
 	public Vector<RetencionProcessor> getRetenciones(){	
 		return lista_retenciones;
 	} 
+	
+	// dREHER Feb'25 este metodo se utiliza para el caso de las notas de credito, donde no se pasan facturas pero si el monto neto a considerar para la retencion
+	public void evaluarRetencionPorLineaFC(BigDecimal netAmountNC) {
+		this.netAmountNC = netAmountNC;
+		evaluarRetencionPorLineaFC();
+		
+	}
+	
 	
 	/**
 	 * Este metodo evaluar que esquema de retencion a aplicar en funcion
@@ -445,9 +457,14 @@ Cuando realices los pagos de las otras facturas, deberás considerar las retenci
 			retProcessor.setTrxName(getTrxName());
 			//vfechaPago = java.sql.Timestamp.valueOf(Env.getContextAsDate(Env.getCtx(), "#Date").toString());
 			
+			// dREHER Feb'25 se agrega al procesador el monto neto a considerar para la retencion, que puede ser el de la factura o el de las lineas segun corresponda
+			retProcessor.setNetAmountNC(getNetAmountNC());
+			
 			if(cargarFacturas(retProcessor, retSchema)) { // dREHER Feb'25 considerar el esquema que se esta evaluando
 				importeRetencion = retProcessor.getAmount();	
 			}
+			
+			
 			
 			if(retSchema.isSufferedRetencion() || importeRetencion.compareTo(Env.ZERO)> 0){
 				lista_retenciones.add(retProcessor);
@@ -492,5 +509,13 @@ Cuando realices los pagos de las otras facturas, deberás considerar las retenci
 	}
 	public void setPaymentRule(String paymentRule) {
 		this.paymentRule = paymentRule;
+	}
+
+	public BigDecimal getNetAmountNC() {
+		return netAmountNC;
+	}
+
+	public void setNetAmountNC(BigDecimal netAmountNC) {
+		this.netAmountNC = netAmountNC;
 	}
 }

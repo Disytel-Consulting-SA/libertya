@@ -281,6 +281,12 @@ public class MInventory extends X_M_Inventory implements DocAction {
 //    		}
     		// ------------------------------------------------------------------------
     	}
+    	
+    	// dREHER 30-01-2026 Validar el tipo de inventario en la cabecera
+    	if(INVENTORYKIND_PhysicalInventory.equals(getInventoryKind()) && get_Value("InventoryType") == null) {
+    		 log.saveError("SaveError",Msg.translate(getCtx(), "InventoryTypeRequired"));
+	            return false;
+    	}
 
         return true;
     }    // beforeSave
@@ -292,6 +298,14 @@ public class MInventory extends X_M_Inventory implements DocAction {
 		if (success && is_ValueChanged("C_Charge_ID")) {
 			for (MInventoryLine line : getLines(true)) {
 				line.setC_Charge_ID(getC_Charge_ID());
+				success = success && line.save();
+			}
+		}
+		
+		// dREHER 30-01-2026 Si se cambia el tipo de inventario en la cabecera, replicar en las lineas
+		if (success && is_ValueChanged("InventoryType")) {
+			for (MInventoryLine line : getLines(true)) {
+				line.setInventoryType( (get_Value("InventoryType")!=null ? (String)get_Value("InventoryType") : null) ) ;
 				success = success && line.save();
 			}
 		}
@@ -1031,6 +1045,15 @@ public class MInventory extends X_M_Inventory implements DocAction {
 				|| DOCSTATUS_Drafted.equals(getDocStatus())
 				|| DOCSTATUS_Voided.equals(getDocStatus())) {
 			m_processMsg = Msg.getMsg(getCtx(), "InvalidAction") + ", Document status: " + getDocStatus();
+			setDocAction(DOCACTION_None);
+			return false;
+		}
+		
+		// No permitir anular inventarios físicos de tipo "Sobrescribir inventario"
+		Object inventoryType = get_Value("InventoryType");
+		if (INVENTORYKIND_PhysicalInventory.equals(getInventoryKind())
+				&& X_M_InventoryLine.INVENTORYTYPE_OverwriteInventory.equals(inventoryType)) {
+			m_processMsg = "No se puede anular el documento, el tipo de inventario es 'Sobrescribir inventario'. Se debe crear un nuevo registro con los valores correctos";
 			setDocAction(DOCACTION_None);
 			return false;
 		}

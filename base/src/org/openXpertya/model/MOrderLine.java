@@ -734,15 +734,13 @@ public class MOrderLine extends X_C_OrderLine {
         if( (getC_Charge_ID() != 0) && (getM_Product_ID() != 0) ) {
             setM_Product_ID( 0 );
         }
-
-        // No Product
-
+        
         if( getM_Product_ID() == 0 ) {
-            setM_AttributeSetInstance_ID( 0 );
+        	log.saveError("FillMandatory", Msg.translate(getCtx(), "M_Product_ID"));
+        	return false;
+        }
 
-            // Product
-
-        } else    // Set/check Product Price
+        // Set/check Product Price
         {        	
         	if(isUpdatePriceInSave()){
 	        	// Validación de precios positivos.

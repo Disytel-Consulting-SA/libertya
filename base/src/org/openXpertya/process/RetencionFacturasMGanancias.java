@@ -128,6 +128,10 @@ public class RetencionFacturasMGanancias extends AbstractRetencionProcessor {
 		// se asigna la base imponible a cero.
 		baseImponible = (baseImponible.compareTo(Env.ZERO) < 0 ? Env.ZERO : estePago);
 		
+		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+		baseImponible = baseImponible.subtract(getNetAmountNC());
+		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+		
 		// Se calcula el importe determinado.
 		// ID = BI * T / 100
 		importeDeterminado = baseImponible.multiply(getPorcentajeRetencion()).divide(Env.ONEHUNDRED, 2, BigDecimal.ROUND_HALF_EVEN);

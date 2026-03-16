@@ -157,6 +157,12 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		
 		baseImponible = baseImponible.subtract(descuentoNeto);
 		
+		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+		baseImponible = baseImponible.subtract(getNetAmountNC());
+		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
+		
+		
+		
 		BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencionDefault());
 		
 		/*
@@ -366,6 +372,7 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 			//throw new Exception(Msg.getMsg(Env.getCtx(), "ErrorCreatingCreditDebit", new Object[]{getMsg((recaudador_fac.isSOTrx()?"Purchase":"Sales")), iso_code}));
 		}
 		credito_prov.setM_PriceList_ID(priceListID);
+		credito_prov.skipCheckDocSource = true; // dREHER 29-01-2026 - Salteo la validación de fuente del documento para poder crear la NC de retención. 
 		
 		if(!credito_prov.save())		   
 			throw new Exception("@VendorRetencionDocSaveError@: "+CLogger.retrieveErrorAsString());

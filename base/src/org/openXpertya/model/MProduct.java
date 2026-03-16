@@ -651,6 +651,10 @@ public class MProduct extends X_M_Product {
      */
 
     protected boolean beforeSave( boolean newRecord ) {
+        if( getM_Product_Category_ID() <= 0 ) {
+            log.saveError( "FillMandatory",Msg.translate( getCtx(),"M_Product_Category_ID" ));
+            return false;
+        }
 
         // Check Storage
 
@@ -791,6 +795,11 @@ public class MProduct extends X_M_Product {
         	if (is_ValueChanged( "M_Product_Category_ID"))
         	{
         		String ismanual = DB.getSQLValueString(get_TrxName(), "SELECT ismanual FROM M_Product_ACCT WHERE M_Product_ID = ?", getM_Product_ID());
+        		
+        		// dREHER 13-Feb-2026 Fix para este campo
+        		if(ismanual==null)
+            		ismanual = "N";
+            	
             	if (ismanual.equalsIgnoreCase("N"))
             	{
             		DB.executeUpdate("DELETE FROM M_Product_Acct WHERE M_Product_ID = " + getM_Product_ID() );
@@ -1196,6 +1205,9 @@ public class MProduct extends X_M_Product {
     public Map<Integer,MUOMConversion> getUOMConversions() {
     	Map<Integer,MUOMConversion> uoms = new HashMap<Integer,MUOMConversion>();
     	MUOMConversion[] uomConversions = MUOMConversion.getProductConversions(getCtx(), getM_Product_ID(), true);
+    	if (uomConversions == null) {
+    		return uoms;
+    	}
     	for (MUOMConversion uomConversion : uomConversions) {
 			if (uomConversion.getC_UOM_To_ID() != getC_UOM_ID()) {
 				uoms.put(uomConversion.getC_UOM_To_ID(), uomConversion);

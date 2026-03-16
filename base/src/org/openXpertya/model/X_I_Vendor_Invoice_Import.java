@@ -7,7 +7,7 @@ import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por I_Vendor_Invoice_Import
  *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2024-10-11 14:38:31.173 */
+ *  @version  - 2025-10-29 15:19:09.138 */
 public class X_I_Vendor_Invoice_Import extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
@@ -146,6 +146,66 @@ BigDecimal bd = (BigDecimal)get_Value("iva");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set iva_10_5 */
+public void setiva_10_5 (BigDecimal iva_10_5)
+{
+set_Value ("iva_10_5", iva_10_5);
+}
+/** Get iva_10_5 */
+public BigDecimal getiva_10_5() 
+{
+BigDecimal bd = (BigDecimal)get_Value("iva_10_5");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set iva_21 */
+public void setiva_21 (BigDecimal iva_21)
+{
+set_Value ("iva_21", iva_21);
+}
+/** Get iva_21 */
+public BigDecimal getiva_21() 
+{
+BigDecimal bd = (BigDecimal)get_Value("iva_21");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set iva_2_5 */
+public void setiva_2_5 (BigDecimal iva_2_5)
+{
+set_Value ("iva_2_5", iva_2_5);
+}
+/** Get iva_2_5 */
+public BigDecimal getiva_2_5() 
+{
+BigDecimal bd = (BigDecimal)get_Value("iva_2_5");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set iva_27 */
+public void setiva_27 (BigDecimal iva_27)
+{
+set_Value ("iva_27", iva_27);
+}
+/** Get iva_27 */
+public BigDecimal getiva_27() 
+{
+BigDecimal bd = (BigDecimal)get_Value("iva_27");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set iva_5 */
+public void setiva_5 (BigDecimal iva_5)
+{
+set_Value ("iva_5", iva_5);
+}
+/** Get iva_5 */
+public BigDecimal getiva_5() 
+{
+BigDecimal bd = (BigDecimal)get_Value("iva_5");
+if (bd == null) return Env.ZERO;
+return bd;
+}
 /** Set I_Vendor_Invoice_Import_ID */
 public void setI_Vendor_Invoice_Import_ID (int I_Vendor_Invoice_Import_ID)
 {
@@ -182,6 +242,90 @@ set_Value ("netogravado", netogravado);
 public BigDecimal getnetogravado() 
 {
 BigDecimal bd = (BigDecimal)get_Value("netogravado");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravado_0 */
+public void setnetogravado_0 (BigDecimal netogravado_0)
+{
+set_Value ("netogravado_0", netogravado_0);
+}
+/** Get netogravado_0 */
+public BigDecimal getnetogravado_0() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravado_0");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravado_10_5 */
+public void setnetogravado_10_5 (BigDecimal netogravado_10_5)
+{
+set_Value ("netogravado_10_5", netogravado_10_5);
+}
+/** Get netogravado_10_5 */
+public BigDecimal getnetogravado_10_5() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravado_10_5");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravado_21 */
+public void setnetogravado_21 (BigDecimal netogravado_21)
+{
+set_Value ("netogravado_21", netogravado_21);
+}
+/** Get netogravado_21 */
+public BigDecimal getnetogravado_21() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravado_21");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravado_2_5 */
+public void setnetogravado_2_5 (BigDecimal netogravado_2_5)
+{
+set_Value ("netogravado_2_5", netogravado_2_5);
+}
+/** Get netogravado_2_5 */
+public BigDecimal getnetogravado_2_5() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravado_2_5");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravado_27 */
+public void setnetogravado_27 (BigDecimal netogravado_27)
+{
+set_Value ("netogravado_27", netogravado_27);
+}
+/** Get netogravado_27 */
+public BigDecimal getnetogravado_27() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravado_27");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravado_5 */
+public void setnetogravado_5 (BigDecimal netogravado_5)
+{
+set_Value ("netogravado_5", netogravado_5);
+}
+/** Get netogravado_5 */
+public BigDecimal getnetogravado_5() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravado_5");
+if (bd == null) return Env.ZERO;
+return bd;
+}
+/** Set netogravadototal */
+public void setnetogravadototal (BigDecimal netogravadototal)
+{
+set_Value ("netogravadototal", netogravadototal);
+}
+/** Get netogravadototal */
+public BigDecimal getnetogravadototal() 
+{
+BigDecimal bd = (BigDecimal)get_Value("netogravadototal");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -236,15 +380,30 @@ public String getnumeroidentificacion()
 {
 return (String)get_Value("numeroidentificacion");
 }
-/** Set otros_tributos */
-public void setotros_tributos (BigDecimal otros_tributos)
+/** Set numeroidentificacionrecep */
+public void setnumeroidentificacionrecep (String numeroidentificacionrecep)
 {
-set_Value ("otros_tributos", otros_tributos);
+if (numeroidentificacionrecep != null && numeroidentificacionrecep.length() > 20)
+{
+log.warning("Length > 20 - truncated");
+numeroidentificacionrecep = numeroidentificacionrecep.substring(0,20);
 }
-/** Get otros_tributos */
-public BigDecimal getotros_tributos() 
+set_Value ("numeroidentificacionrecep", numeroidentificacionrecep);
+}
+/** Get numeroidentificacionrecep */
+public String getnumeroidentificacionrecep() 
 {
-BigDecimal bd = (BigDecimal)get_Value("otros_tributos");
+return (String)get_Value("numeroidentificacionrecep");
+}
+/** Set otrostributos */
+public void setotrostributos (BigDecimal otrostributos)
+{
+set_Value ("otrostributos", otrostributos);
+}
+/** Get otrostributos */
+public BigDecimal getotrostributos() 
+{
+BigDecimal bd = (BigDecimal)get_Value("otrostributos");
 if (bd == null) return Env.ZERO;
 return bd;
 }
@@ -424,6 +583,21 @@ set_Value ("tipoidentificacion", tipoidentificacion);
 public String gettipoidentificacion() 
 {
 return (String)get_Value("tipoidentificacion");
+}
+/** Set tipoidentificacionrecep */
+public void settipoidentificacionrecep (String tipoidentificacionrecep)
+{
+if (tipoidentificacionrecep != null && tipoidentificacionrecep.length() > 2)
+{
+log.warning("Length > 2 - truncated");
+tipoidentificacionrecep = tipoidentificacionrecep.substring(0,2);
+}
+set_Value ("tipoidentificacionrecep", tipoidentificacionrecep);
+}
+/** Get tipoidentificacionrecep */
+public String gettipoidentificacionrecep() 
+{
+return (String)get_Value("tipoidentificacionrecep");
 }
 /** Set total */
 public void settotal (BigDecimal total)

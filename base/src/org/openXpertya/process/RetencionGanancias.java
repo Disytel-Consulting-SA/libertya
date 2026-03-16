@@ -148,8 +148,23 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		BigDecimal INI = getImporteNoImponible();
 		BigDecimal RNL = getNetLinesAmtSchemaRetencion();
 		
+		
+		BigDecimal RA = getRetencionesAnteriores();
+		if(RA==null)
+			RA = Env.ZERO;
+		
+		debug("Pagos anteriores acumulados= " + PPA);
+		debug("Pago actual neto= " + PNA);
+		debug("Importe No Imponible= " + INI);
+		debug("Retenciones anteriores acumuladas= " + RA);
+		debug("Importe Lineas NO retenible= " + RNL);
+		
 		baseImponible = PPA.add(PNA).subtract(
 				INI);
+		
+		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
+		baseImponible = baseImponible.subtract(getNetAmountNC());
+		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
 		
 		debug("baseImponible antes de quitar ganancias de otros esquemas= " + baseImponible);
 		
@@ -157,6 +172,7 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		baseImponible = baseImponible.subtract(RNL);
 		
 		debug("baseImponible luego de restar otros esqueamas de ganancia= " + baseImponible + " Pagos anteriores=" + PPA + " Neto Pago=" + PNA + " Importe NO Imponible=" + INI + " Importe Lineas NO retenible=" + RNL);
+		
 		
 		// Si la base imponible es menor que cero, entonces no hay retención que
 		// aplicar y
@@ -441,6 +457,8 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		BigDecimal total = getTotalPagosAnteriores(getBPartner(),
 				getAD_Client_ID(), vDesde, vFecha, getRetencionSchema());
 
+		debug("*** Pagos acumulados en el mes= " + total + " Fecha Desde=" + vDesde + " Fecha Hasta=" + vFecha);
+		
 		setPagosAnteriores(total);
 		return total;
 	}

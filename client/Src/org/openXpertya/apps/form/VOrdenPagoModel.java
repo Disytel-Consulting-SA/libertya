@@ -108,6 +108,9 @@ public class VOrdenPagoModel {
 	
 	// dREHER
 	private static boolean SHOW_DEBUG = false;
+	
+	// dREHER 20 Feb 2026 permite asignar el monto neto de las NC cargadas como medios de pago en la OP
+	private BigDecimal netAmountNC = BigDecimal.ZERO;
 
 	protected static CLogger log = CLogger.getCLogger(VOrdenPagoModel.class);
 
@@ -2653,6 +2656,7 @@ public class VOrdenPagoModel {
 			// 2. Crear el generador de OPA y actualizar el encabezado de la
 			// asignación creada
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
+			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
 			
 			/**
 			 * Para cobros adelantados se debe ajustar el tipo de asignacion correspondiente
@@ -2781,6 +2785,8 @@ public class VOrdenPagoModel {
 			
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
+			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
+			
 			hdr = getPoGenerator().createAllocationHdr();
 			
 			hdr.set_TrxName(get_TrxName()); // dREHER
@@ -3141,7 +3147,10 @@ public class VOrdenPagoModel {
 		
 		// dREHER Feb '25 Evaluar lineas de comprobantes tambien para ver si corresponde algun esquema de retencion en particular
 		debug("calculateRetencions. Se evaluan los esquemas de retencion por entidad comercial y tambien por lineas de facturas...");
-		m_retGen.evaluarRetencionPorLineaFC();
+		
+		// dREHER Feb 26, le envio el monto neto de los medios de pago del tipo NC que se enviaron a generar, para que el sistema pueda evaluar retenciones por linea de factura, tomando este monto neto como referencia para la evaluación de los esquemas de retención que se puedan aplicar por linea de factura.
+		debug("calculateRetencions. monto neto de las NC a considerar para la evaluación de retenciones por linea de factura: " + getNetAmountNC());
+		m_retGen.evaluarRetencionPorLineaFC(getNetAmountNC());
 		
 		// dREHER Feb '25 codigo original antes de Feb '25
 		// m_retGen.evaluarRetencion();
@@ -4469,5 +4478,13 @@ public class VOrdenPagoModel {
 
 	public void setFacturaProveedorTasaCambioInterna(boolean isFacturaProveedorTasaCambioInterna) {
 		this.isFacturaProveedorTasaCambioInterna = isFacturaProveedorTasaCambioInterna;
+	}
+
+	public BigDecimal getNetAmountNC() {
+		return netAmountNC;
+	}
+
+	public void setNetAmountNC(BigDecimal netAmountNC) {
+		this.netAmountNC = netAmountNC;
 	}
 }

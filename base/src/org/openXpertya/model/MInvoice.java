@@ -952,6 +952,40 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 */
 	public static MInvoice getDebitFor(MInvoice creditInvoice) {
 		MInvoice invoice = null;
+		// Si el crédito posee comprobante original, priorizar esa referencia exacta.
+		// Evita depender de filtros adicionales que pueden dejar fuera la factura origen
+		// en escenarios manuales.
+		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
+			String sqlOrig = "SELECT C_Invoice_ID FROM C_Invoice WHERE C_Invoice_ID = ? AND C_BPartner_ID = ?";
+			int origInvoiceID = DB.getSQLValue(creditInvoice.get_TrxName(), sqlOrig,
+					creditInvoice.getC_Invoice_Orig_ID(), creditInvoice.getC_BPartner_ID());
+			if (!Util.isEmpty(origInvoiceID, true)) {
+				return new MInvoice(creditInvoice.getCtx(), origInvoiceID, creditInvoice.get_TrxName());
+			}
+		}
+		if (!Util.isEmpty(creditInvoice.getRef_Invoice_ID(), true)) {
+			String docBaseType = creditInvoice.isSOTrx() ? MDocType.DOCBASETYPE_ARInvoice
+					: MDocType.DOCBASETYPE_APInvoice;
+			String sqlRef = "SELECT i.C_Invoice_ID "
+					+ "FROM C_Invoice i "
+					+ "INNER JOIN C_DocType dt ON (dt.C_DocType_ID = i.C_DocTypeTarget_ID) "
+					+ "WHERE i.C_Invoice_ID = ? "
+					+ "AND i.C_BPartner_ID = ? "
+					+ "AND dt.DocBaseType = ?";
+			Object refInvoiceObj = DB.getSQLObject(creditInvoice.get_TrxName(), sqlRef,
+					new Object[] { creditInvoice.getRef_Invoice_ID(), creditInvoice.getC_BPartner_ID(), docBaseType });
+			int refInvoiceID = refInvoiceObj instanceof Number ? ((Number) refInvoiceObj).intValue() : -1;
+			if (refInvoiceID > 0) {
+				return new MInvoice(creditInvoice.getCtx(), refInvoiceID, creditInvoice.get_TrxName());
+			}
+		}
+		// Fallback: en alta manual puede completarse sólo el comprobante origen
+		// (OrigInvPtoVta/OrigInvNro) y no el C_Invoice_Orig_ID.
+		int fiscalOrigInvoiceID = getOriginalInvoiceByFiscalFields(creditInvoice);
+		if (fiscalOrigInvoiceID > 0) {
+			return new MInvoice(creditInvoice.getCtx(), fiscalOrigInvoiceID, creditInvoice.get_TrxName());
+		}
 		// Esta variable booleana permite determinar si es posible buscar un
 		// débito relacionado con este crédito por alguno de los campos de
 		// documentos ya que sino busca cualquier débito de la EC lo cual no es
@@ -967,16 +1001,13 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				+ docBaseTypeDebit + "		AND i.docstatus IN ('CO','CL') "
 				+ " AND dt.doctypekey not like 'CDN%' "
 				+ " AND dt.doctypekey NOT IN ('RTR', 'RTI', 'RCR', 'RCI') ");
-		// Si tenemos una factura original en el crédito, entonces tomo esa
+		// Si tenemos una factura original en el crédito, siempre debe
+		// priorizarse esa referencia exacta para evitar traer otro débito del mismo
+		// pedido por fecha.
 		if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
 				&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
-			if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
-				sql.append(" AND (i.c_invoice_id = ? OR c_order_id = ?)");
-				canSearchByDocument = true;
-			} else {
-				sql.append(" AND i.c_invoice_id = ? ");
-				canSearchByDocument = true;
-			}
+			sql.append(" AND i.c_invoice_id = ? ");
+			canSearchByDocument = true;
 		} else if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
 			sql.append(" AND c_order_id = ? ");
 			canSearchByDocument = true;
@@ -996,12 +1027,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			ps.setInt(i++, creditInvoice.getC_BPartner_ID());
 			if (CalloutInvoiceExt.ComprobantesFiscalesActivos()
 					&& !Util.isEmpty(creditInvoice.getC_Invoice_Orig_ID(), true)) {
-				if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
-					ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
-					ps.setInt(i++, creditInvoice.getC_Order_ID());
-				} else {
-					ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
-				}
+				ps.setInt(i++, creditInvoice.getC_Invoice_Orig_ID());
 			} else if (!Util.isEmpty(creditInvoice.getC_Order_ID(), true)) {
 				ps.setInt(i++, creditInvoice.getC_Order_ID());
 			}
@@ -1024,6 +1050,29 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			}
 		}
 		return invoice;
+	}
+
+	private static int getOriginalInvoiceByFiscalFields(MInvoice creditInvoice) {
+		if (creditInvoice == null || !creditInvoice.isSOTrx()
+				|| creditInvoice.getOrigInvPtoVta() <= 0
+				|| creditInvoice.getOrigInvNro() <= 0) {
+			return 0;
+		}
+		String sql = "SELECT i.C_Invoice_ID "
+				+ "FROM C_Invoice i "
+				+ "INNER JOIN C_DocType dt ON (dt.C_DocType_ID = i.C_DocTypeTarget_ID) "
+				+ "WHERE i.C_BPartner_ID = ? "
+				+ "AND i.IsSOTrx = 'Y' "
+				+ "AND dt.DocBaseType = ? "
+				+ "AND i.DocStatus IN ('CO','CL') "
+				+ "AND i.PuntoDeVenta = ? "
+				+ "AND i.NumeroComprobante = ? "
+				+ "ORDER BY i.DateInvoiced DESC "
+				+ "LIMIT 1";
+		Object invoiceObj = DB.getSQLObject(creditInvoice.get_TrxName(), sql,
+				new Object[] { creditInvoice.getC_BPartner_ID(), MDocType.DOCBASETYPE_ARInvoice,
+						creditInvoice.getOrigInvPtoVta(), creditInvoice.getOrigInvNro() });
+		return invoiceObj instanceof Number ? ((Number) invoiceObj).intValue() : 0;
 	}
 
 	/**
@@ -5628,7 +5677,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			}
 			
 			// dREHER - si es una Nota de Credito y NO tiene el numero de comprobante original, no permitir COMPLETAR!
-			if (docType.getDocBaseType().equals("ARC") && !this.skipCheckDocSource) {
+			if (docType.getDocBaseType().equals("ARC") 
+					&& !docType.getDocTypeKey().equals("RCR") // dREHER 29-01-2026 esquivar comprobantes de retenciones
+					&& !docType.getDocTypeKey().equals("RTR")
+					&& !this.skipCheckDocSource) {
 				// Si NO tiene una factura o comprobante original
 				if (this.getC_Invoice_Orig_ID() == 0 &&
 						(
@@ -9460,6 +9512,15 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
 				if(!anterior.isProcessed())
 					cr.setMsg("El comprobante anterior # " + nroAnterior + " no se emitió correctamente, por favor gestionar", true);
+				
+				// Control cronológico: la fecha del comprobante actual no puede ser
+				// anterior a la del comprobante inmediatamente anterior de la misma serie.
+				if(!cr.isError()) {
+					CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(anterior, nroAnterior);
+					if(chronologicalResult.isError()) {
+						cr = chronologicalResult;
+					}
+				}
 			}
 		}
 		
@@ -9500,34 +9561,59 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		if(nroAnterior > 0) {
 			
 			int C_InvoiceAnterior_ID = getInvoiceIDAnterior(true);
-			
+		
 			// NO se encuentra numero inmediamente anterior
 			if(C_InvoiceAnterior_ID <= 0 ) {
 				MDocType dt = MDocType.get(getCtx(), this.getDocTypeID());
 				cr.setMsg("No se encuentra comprobante anterior #:" + nroAnterior + ". Por favor ajuste los secuenciadores para el Tipo de Documento:" + dt.getName(), true);
 			}else {
+				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
+				
+				// Control cronológico: mantener la coherencia entre numeración y fecha.
+				// Si el número es mayor, la fecha no puede ser menor al comprobante anterior.
+				CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(anterior, nroAnterior);
+				if(chronologicalResult.isError()) {
+					return chronologicalResult;
+				}
 				
 				// Si es factura electronica, la FC anterior debe tener CAE y VTO
 				if(isElectronicInvoice()) {
-					
-					MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
 					if(anterior.getcae()==null || anterior.getcae().isEmpty() || anterior.getvtocae()==null)
 						cr.setMsg("El comprobante anterior no posee numero de CAE, por favor gestionar!", true);
 					
 				}else {
 					
 					if(requireFiscalPrint()) {
-						
-						MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
 						if(!anterior.isFiscalAlreadyPrinted())
 							cr.setMsg("El comprobante anterior no se encuentra impreso, por favor imprimir!", true);
 						
 					}
 					
 				}
-				
 			}
-			
+		}
+		
+		return cr;
+	}
+	
+	/**
+	 * Valida coherencia cronológica de la numeración para una serie de comprobantes.
+	 * Si existe comprobante inmediato anterior (n-1), el comprobante actual no puede
+	 * tener una fecha de facturación menor a la de ese comprobante.
+	 */
+	private CallResult validateChronologicalOrderWithPreviousInvoice(MInvoice previousInvoice, int previousNumber) {
+		CallResult cr = new CallResult();
+		
+		if(previousInvoice == null || previousInvoice.getID() <= 0
+				|| previousInvoice.getDateInvoiced() == null || getDateInvoiced() == null) {
+			return cr;
+		}
+		
+		if(previousInvoice.getDateInvoiced().after(getDateInvoiced())
+				&& !TimeUtil.isSameDay(previousInvoice.getDateInvoiced(), getDateInvoiced())) {
+			cr.setMsg("La fecha del comprobante actual no puede ser menor a la del comprobante anterior # "
+					+ previousNumber + " (" + previousInvoice.getDocumentNo() + " - "
+					+ Env.getDateFormatted(previousInvoice.getDateInvoiced()) + ").", true);
 		}
 		
 		return cr;
