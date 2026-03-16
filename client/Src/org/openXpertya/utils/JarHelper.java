@@ -192,7 +192,7 @@ public class JarHelper {
 			    	}
 			    }
 			    // Si nunca se recuperó un separador de bloques de sentencias, elevar exception
-				if (lastTimestamp==null) {
+				if (lastTimestamp==null && content.length() > 0 ) {
 					throw new Exception("No se encuentra timestamp separador de bloques sql inicial en preinstall.sql");
 				}
 				
