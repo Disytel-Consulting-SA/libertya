@@ -202,6 +202,46 @@ public class WSearchEditor extends WEditor implements ContextMenuListener, Value
             if (lookup != null)
             {
 			    String text = lookup.getDisplay(value);
+			    if (text == null || text.trim().length() == 0)
+			    {
+			    	try
+			    	{
+			    		lookup.getDirect(value, false, true);
+			    		text = lookup.getDisplay(value);
+			    	}
+			    	catch (Exception e)
+			    	{
+			    		log.log(Level.FINE, "No fue posible refrescar display del lookup para value=" + value, e);
+			    	}
+			    }
+			    
+			    // Fallback para evitar campo visual vacio cuando el ID ya esta seteado
+			    // (caso detectado en M_Product_ID al volver desde InfoProduct).
+			    if ((text == null || text.trim().length() == 0)
+			    		&& ("M_Product_ID".equals(getColumnName()) || "M_Product.M_Product_ID".equalsIgnoreCase(lookup.getColumnName())))
+			    {
+			    	try
+			    	{
+			    		int productID = Integer.parseInt(String.valueOf(value));
+			    		if (productID > 0)
+			    		{
+			    			text = DB.getSQLValueString(
+			    					null,
+			    					"SELECT COALESCE(Value,'') || CASE WHEN COALESCE(Name,'') = '' THEN '' ELSE '_' || Name END "
+			    					+ "FROM M_Product WHERE M_Product_ID=?",
+			    					productID);
+			    		}
+			    	}
+			    	catch (Exception e)
+			    	{
+			    		log.log(Level.FINE, "No fue posible obtener fallback de display para M_Product_ID=" + value, e);
+			    	}
+			    }
+			    
+			    if (text == null)
+			    {
+			    	text = "";
+			    }
 	
 	            if (text.startsWith("_"))
 	            {

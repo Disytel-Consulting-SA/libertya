@@ -227,7 +227,7 @@ public class ImportInvoice extends SvrProcess {
 		// ----------------------------------------------------------------------------------
 		sql = new StringBuffer();
 		sql.append("UPDATE i_invoice i SET C_Currency_ID = ").append(Env.getContextAsInt(getCtx(), "$C_Currency_ID"));
-		sql.append("WHERE C_Currency_ID IS NULL AND I_IsImported<>'Y' ").append(clientCheck);		
+		sql.append(" WHERE C_Currency_ID IS NULL AND I_IsImported<>'Y' ").append(clientCheck);		
 		no = DB.executeUpdate( sql.toString());
 		log.log(Level.FINE,"doIt - Set Default Currency = " + no);
 
@@ -945,7 +945,9 @@ public class ImportInvoice extends SvrProcess {
 				msgInvoiceProcessError = Msg.translate(getCtx(), "InvoiceProcessError");
 			}
 			DB.executeUpdate(
-				"UPDATE I_Invoice SET I_ErrorMsg = I_ErrorMsg || '" + msgInvoiceProcessError + ": " + processMsg +"' WHERE C_Invoice_ID = "+ invoice.getC_Invoice_ID() + " " + clientCheck);
+				"UPDATE I_Invoice SET I_ErrorMsg = I_ErrorMsg || "
+				+ DB.TO_STRING(msgInvoiceProcessError + ": " + processMsg)
+				+ " WHERE C_Invoice_ID = " + invoice.getC_Invoice_ID() + " " + clientCheck);
 			processed = false;
 		}
 		// Si no se pudo procesar porque se encontró un error, entonces se

@@ -389,11 +389,14 @@ public class CalloutInvoice extends CalloutEngine {
         	M_AttributeSetInstance_ID = new Integer(0);
         
         // Disytel: Conversion entre el precio de la tarifa y la moneda destino de la cabecera
-        Integer invoiceID = Integer.parseInt(Env.getContext(ctx, WindowNo, 0, "C_Invoice_ID"));
+        int invoiceID = getInvoiceID(ctx, WindowNo, mTab);
+        
         MInvoice invoice = new MInvoice(ctx, invoiceID, null);
+        boolean manageDragOrderDiscountsSurcharges = invoiceID > 0
+        		&& invoice.isManageDragOrderDiscountsSurcharges(false);
         
 		MProductPricing pp = new MProductPricing(M_Product_ID.intValue(), C_BPartner_ID, Qty, IsSOTrx,
-				M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscountsSurcharges(false));
+				M_AttributeSetInstance_ID, !manageDragOrderDiscountsSurcharges);
 
         int M_PriceList_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_ID" );
 
@@ -407,8 +410,11 @@ public class CalloutInvoice extends CalloutEngine {
 
         pp.setPriceDate( date );
         
-        int priceListCurrency = (new MPriceList(ctx, invoice.getM_PriceList_ID(), null)).getC_Currency_ID();
-        int targetCurrency = invoice.getC_Currency_ID();
+        int sourcePriceListID = invoiceID > 0 ? invoice.getM_PriceList_ID() : Env.getContextAsInt(ctx, WindowNo, "M_PriceList_ID");
+        int priceListCurrency = sourcePriceListID > 0 ? (new MPriceList(ctx, sourcePriceListID, null)).getC_Currency_ID() : 0;
+        int targetCurrency = invoiceID > 0 ? invoice.getC_Currency_ID() : Env.getContextAsInt(ctx, WindowNo, "C_Currency_ID");
+        Timestamp invoiceDate = invoiceID > 0 ? invoice.getDateInvoiced() : Env.getContextAsDate(ctx, WindowNo, "DateInvoiced");
+        int invoiceOrgID = invoiceID > 0 ? invoice.getAD_Org_ID() : Env.getAD_Org_ID(ctx);
          
         if (mField.getColumnName().equals("M_Product_ID")) {
 	        if (priceListCurrency == targetCurrency)
@@ -419,14 +425,14 @@ public class CalloutInvoice extends CalloutEngine {
 	            mTab.setValue( "PriceEntered",pp.getPriceStd());
 	            mTab.setValue( "C_Currency_ID",pp.getC_Currency_ID());
 	        }
-	        else
-	        {
-	            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-	            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-	            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-	            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoice.getDateInvoiced(), invoice.getAD_Org_ID(), ctx) );
-	            mTab.setValue( "C_Currency_ID", targetCurrency);        	
-	        }
+		        else
+		        {
+		            mTab.setValue( "PriceList", MCurrency.currencyConvert(pp.getPriceList(), priceListCurrency, targetCurrency, invoiceDate, invoiceOrgID, ctx) );
+		            mTab.setValue( "PriceLimit", MCurrency.currencyConvert(pp.getPriceLimit(), priceListCurrency, targetCurrency, invoiceDate, invoiceOrgID, ctx) );
+		            mTab.setValue( "PriceActual", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoiceDate, invoiceOrgID, ctx) );
+		            mTab.setValue( "PriceEntered", MCurrency.currencyConvert(pp.getPriceStd(), priceListCurrency, targetCurrency, invoiceDate, invoiceOrgID, ctx) );
+		            mTab.setValue( "C_Currency_ID", targetCurrency);        	
+		        }
 	        
 	        // mTab.setValue("Discount", pp.getDiscount());
 	
@@ -681,8 +687,10 @@ public class CalloutInvoice extends CalloutEngine {
 
         // Qty changed - recalc price
 
-        Integer invoiceID = (Integer)mTab.getValue("C_Invoice_ID");
+        int invoiceID = getInvoiceID(ctx, WindowNo, mTab);
         MInvoice invoice = new MInvoice(ctx, invoiceID, null);
+        boolean manageDragOrderDiscountsSurcharges = invoiceID > 0
+        		&& invoice.isManageDragOrderDiscountsSurcharges(false);
         
         if(( mField.getColumnName().equals( "QtyInvoiced" ) || mField.getColumnName().equals( "QtyEntered" ) || mField.getColumnName().equals( "M_Product_ID" )) &&!"N".equals( Env.getContext( ctx,WindowNo,"DiscountSchema" ))) {
             int C_BPartner_ID = Env.getContextAsInt( ctx,WindowNo,"C_BPartner_ID" );
@@ -695,7 +703,7 @@ public class CalloutInvoice extends CalloutEngine {
                 QtyInvoiced = QtyEntered;
             }
 
-            if(!invoice.isManageDragOrderDiscountsSurcharges(false)){
+            if(!manageDragOrderDiscountsSurcharges){
 	            boolean IsSOTrx = Env.getContext( ctx,WindowNo,"IsSOTrx" ).equals( "Y" );
 	            
 	            Integer M_AttributeSetInstance_ID = (Integer)mTab.getValue("M_AttributeSetInstance_ID");
@@ -703,7 +711,7 @@ public class CalloutInvoice extends CalloutEngine {
 	            	M_AttributeSetInstance_ID = new Integer(0);
 	            
 				MProductPricing pp = new MProductPricing(M_Product_ID, C_BPartner_ID, QtyInvoiced, IsSOTrx,
-						M_AttributeSetInstance_ID, !invoice.isManageDragOrderDiscountsSurcharges(false));
+						M_AttributeSetInstance_ID, !manageDragOrderDiscountsSurcharges);
 	
 	            pp.setM_PriceList_ID( M_PriceList_ID );
 	
@@ -1043,13 +1051,15 @@ public class CalloutInvoice extends CalloutEngine {
 	 * @param invoiceID
 	 */
     protected void doProductManualGeneralDiscount(Properties ctx, int WindowNo, MTab mTab, int invoiceID) {
+    	if (invoiceID <= 0)
+    		return;
     	// Descuento de la cabecera
 		BigDecimal generalDiscountManual = DB
 				.getSQLValueBD(
 						null,
 						"SELECT ManualGeneralDiscount FROM c_invoice WHERE c_invoice_id = ?",
 						invoiceID);
-		if(generalDiscountManual.compareTo(BigDecimal.ZERO) != 0){
+		if(generalDiscountManual != null && generalDiscountManual.compareTo(BigDecimal.ZERO) != 0){
 			int M_PriceList_ID = Env.getContextAsInt( ctx,WindowNo,"M_PriceList_ID" );
 	        int StdPrecision = MPriceList.getStandardPrecision( ctx,M_PriceList_ID );
 	        BigDecimal priceList = (BigDecimal)mTab.getValue("PriceList");
@@ -1076,6 +1086,25 @@ public class CalloutInvoice extends CalloutEngine {
 			mTab.setValue( "PriceActual", realPrice);
 			mTab.setValue( "ManualGeneralDiscountAmt", lineDiscountAmt);
 		}
+    }
+    
+    protected int getInvoiceID(Properties ctx, int WindowNo, MTab mTab) {
+    	int invoiceID = 0;
+    	Object invoiceIDObj = mTab.getValue("C_Invoice_ID");
+    	if (invoiceIDObj instanceof Integer)
+    		invoiceID = ((Integer)invoiceIDObj).intValue();
+    	else if (invoiceIDObj != null && invoiceIDObj.toString().trim().length() > 0) {
+    		try {
+    			invoiceID = Integer.parseInt(invoiceIDObj.toString());
+    		} catch (Exception e) {
+    			invoiceID = 0;
+    		}
+    	}
+    	if (invoiceID <= 0)
+    		invoiceID = Env.getContextAsInt(ctx, WindowNo, 0, "C_Invoice_ID");
+    	if (invoiceID <= 0)
+    		invoiceID = Env.getContextAsInt(ctx, WindowNo, "C_Invoice_ID");
+    	return invoiceID;
     }
 
     public BigDecimal getUnityAmtNet(BigDecimal amt, BigDecimal qty, int WindowNo, MTab tab, Properties ctx){

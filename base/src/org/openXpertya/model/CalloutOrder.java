@@ -1170,8 +1170,16 @@ public class CalloutOrder extends CalloutEngine {
         //
 
         // Disytel: Conversion entre el precio de la tarifa y la moneda destino de la cabecera
-        String orderID = Env.getContext(ctx, WindowNo, 0, "C_Order_ID");
-        MOrder order = new MOrder(ctx, Integer.parseInt(orderID), null);
+        int orderID = 0;
+        Object orderIDObj = mTab.getValue("C_Order_ID");
+        if (orderIDObj instanceof Integer)
+        	orderID = ((Integer)orderIDObj).intValue();
+        if (orderID <= 0)
+        	orderID = Env.getContextAsInt(ctx, WindowNo, 0, "C_Order_ID");
+        if (orderID <= 0)
+        	orderID = Env.getContextAsInt(ctx, WindowNo, "C_Order_ID");
+        
+        MOrder order = new MOrder(ctx, orderID, null);
         
         int priceListCurrency = (new MPriceList(ctx, order.getM_PriceList_ID(), null)).getC_Currency_ID();
         int targetCurrency = order.getC_Currency_ID();
