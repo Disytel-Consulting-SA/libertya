@@ -187,12 +187,12 @@ public class PluginXMLUpdater {
 	
 	/** Cuando se emula el install, se omiten prefijos a fin de que las sentencias SQL queden "limpias" en la terminal */
 	protected boolean includePrefix() {
-		return !emulateInstall();
+		return !isEmulateInstall();
 	}
 	
 	/** ¿Estamos simplemente emulando la instalacion para validar ejecucion o ver SQL generado? */
-	protected boolean emulateInstall() {
-		return "Y".equals(Env.getContext(Env.getCtx(), "#EmulateInstall"));
+	protected boolean isEmulateInstall() {
+		return PluginUtils.isEmulateInstall();
 	}
 	
 	/* En esta clase actualmente se deben procesar todos los registros.
@@ -216,7 +216,10 @@ public class PluginXMLUpdater {
 	protected void appendStatus(String sentence)
 	{
 		PluginUtils.appendStatus((includePrefix() ? " SQL: " : "") + sentence, false, false, true, true);
+		if (isEmulateInstall())
+			PluginUtils.appendEmulation(sentence, PluginConstants.STAGE_XMLINSTALL);
 	}
+	
 	
 	/**
 	 * En caso de ser necesario, ejecutar acciones adicionales luego del
@@ -526,7 +529,7 @@ public class PluginXMLUpdater {
 	 */
 	protected void appendKeyColumnValue(StringBuffer columnNames, StringBuffer columnValues, String tableName, String valueID)
 	{
-		if (emulateInstall()) {
+		if (isEmulateInstall()) {
 			// Para la emulacion necesitamos que el SQL generado no contenga valores de IDs hardcodeados
 			String secuencia= MSequence.getSequenceName(tableName);
 			String keyColumnValueSQL = "(select nextval('" + secuencia + "'))";
@@ -602,7 +605,7 @@ public class PluginXMLUpdater {
 		{
 			/* Determinar columna ID y registro al cual referenciar */
 			String refKeyColumnName = getKeyColumnName(column.getRefTable());
-			if (emulateInstall()) {
+			if (isEmulateInstall()) {
 				String refRecordIDQuery = getReferenceRecordIDQuery(refKeyColumnName, column);
 				query.append( refRecordIDQuery ).append( "," );
 				return; 
