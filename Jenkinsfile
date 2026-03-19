@@ -27,6 +27,29 @@ pipeline {
         DB_USER = 'libertya'
         DB_PASS = 'libertya'
         DB_PORT = '5434'
+
+        // Deploy DEV (testing)
+        DEPLOY_ENABLED_DEV = 'false'
+        REMOTE_OXP_HOME = '/ServidorOXP'
+        REMOTE_SERVICE_NAME = 'libertyad'
+        REMOTE_APP_USER = 'libertya'
+        REMOTE_APP_GROUP = 'libertya'
+
+        // Instancias DEV (activar/desactivar por instancia)
+        DEV_DEPLOY_ENABLE_QA2 = 'false'
+        DEV_DEPLOY_HOST_CREDENTIAL_QA2 = 'deploy-qa2-host'
+        DEV_DEPLOY_PORT_CREDENTIAL_QA2 = 'deploy-qa2-port'
+        DEV_DEPLOY_CREDENTIAL_QA2 = 'deploy-qa2-ssh'
+
+        DEV_DEPLOY_ENABLE_QA = 'false'
+        DEV_DEPLOY_HOST_CREDENTIAL_QA = 'deploy-qa-host'
+        DEV_DEPLOY_PORT_CREDENTIAL_QA = 'deploy-qa-port'
+        DEV_DEPLOY_CREDENTIAL_QA = 'deploy-qa-ssh'
+
+        DEV_DEPLOY_ENABLE_QA3 = 'false'
+        DEV_DEPLOY_HOST_CREDENTIAL_QA3 = 'deploy-qa3-host'
+        DEV_DEPLOY_PORT_CREDENTIAL_QA3 = 'deploy-qa3-port'
+        DEV_DEPLOY_CREDENTIAL_QA3 = 'deploy-qa3-ssh'
     }
 
     stages {
@@ -167,6 +190,46 @@ pipeline {
             }
         }
 
+        stage('Inyectar BUILD_INFO.properties') {
+            steps {
+                script {
+                    def artifact = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
+                    def builtAt = sh(
+                        script: "date -u +%Y-%m-%dT%H:%M:%SZ",
+                        returnStdout: true
+                    ).trim()
+
+                    if (!fileExists(artifact)) {
+                        error "No se encontró el artefacto para inyectar BUILD_INFO: ${artifact}"
+                    }
+
+                    def buildInfoContent = [
+                        "branch=${env.BRANCH_NAME}",
+                        "commit=${env.LIBERTYA_COMMIT}",
+                        "jenkins_build=${env.BUILD_NUMBER}",
+                        "built_at=${builtAt}"
+                    ].join('\n') + '\n'
+
+                    def buildInfoFile = "${WORKDIR}/BUILD_INFO.properties"
+                    def tempZipDir = "${WORKDIR}/.build_info_zip_${env.BUILD_NUMBER}"
+
+                    writeFile(file: buildInfoFile, text: buildInfoContent)
+
+                    sh """
+                        set -euo pipefail
+                        rm -rf "${tempZipDir}"
+                        mkdir -p "${tempZipDir}/ServidorOXP"
+                        cp "${buildInfoFile}" "${tempZipDir}/ServidorOXP/BUILD_INFO.properties"
+                        cd "${tempZipDir}"
+                        zip -q -u "${artifact}" "ServidorOXP/BUILD_INFO.properties"
+                        rm -rf "${tempZipDir}"
+                    """
+
+                    echo "✅ BUILD_INFO.properties inyectado en ${artifact}"
+                }
+            }
+        }
+
         stage('Exportar a servidor de releases - DEV') {
             when {
                 branch 'dev'
@@ -190,6 +253,103 @@ pipeline {
                             scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${archivo} ${USER}@${SERVER_IP}:${destinoPath}/${destinoName}
                             scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${metadata} ${USER}@${SERVER_IP}:${destinoPath}
                         """
+                    }
+                }
+            }
+        }
+
+        stage('Deploy a instancias de testing - DEV') {
+            when {
+                branch 'dev'
+            }
+            steps {
+                script {
+                    if (env.DEPLOY_ENABLED_DEV != 'true') {
+                        echo "⏭ Deploy DEV deshabilitado (DEPLOY_ENABLED_DEV=${env.DEPLOY_ENABLED_DEV})."
+                        return
+                    }
+
+                    def artifact = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
+                    def deployScript = "${WORKDIR}/libertya/scripts/deploy_remote.sh"
+                    def remoteOxpHome = env.REMOTE_OXP_HOME
+                    def remoteServiceName = env.REMOTE_SERVICE_NAME
+                    def remoteAppUser = env.REMOTE_APP_USER
+                    def remoteAppGroup = env.REMOTE_APP_GROUP
+                    def targetConfigs = [
+                        [
+                            name: 'qa2',
+                            enabled: env.DEV_DEPLOY_ENABLE_QA2,
+                            hostCredential: env.DEV_DEPLOY_HOST_CREDENTIAL_QA2,
+                            portCredential: env.DEV_DEPLOY_PORT_CREDENTIAL_QA2,
+                            credential: env.DEV_DEPLOY_CREDENTIAL_QA2
+                        ],
+                        [
+                            name: 'qa',
+                            enabled: env.DEV_DEPLOY_ENABLE_QA,
+                            hostCredential: env.DEV_DEPLOY_HOST_CREDENTIAL_QA,
+                            portCredential: env.DEV_DEPLOY_PORT_CREDENTIAL_QA,
+                            credential: env.DEV_DEPLOY_CREDENTIAL_QA
+                        ],
+                        [
+                            name: 'qa3',
+                            enabled: env.DEV_DEPLOY_ENABLE_QA3,
+                            hostCredential: env.DEV_DEPLOY_HOST_CREDENTIAL_QA3,
+                            portCredential: env.DEV_DEPLOY_PORT_CREDENTIAL_QA3,
+                            credential: env.DEV_DEPLOY_CREDENTIAL_QA3
+                        ]
+                    ]
+
+                    if (!fileExists(artifact)) {
+                        error "No se encontró el artefacto a desplegar: ${artifact}"
+                    }
+                    if (!fileExists(deployScript)) {
+                        error "No se encontró script de deploy: ${deployScript}"
+                    }
+
+                    def enabledTargets = targetConfigs.findAll { it.enabled == 'true' }
+                    if (enabledTargets.isEmpty()) {
+                        echo "⏭ No hay instancias DEV habilitadas para deploy."
+                        return
+                    }
+
+                    enabledTargets.each { target ->
+                        if (!target.credential?.trim()) {
+                            error "La instancia '${target.name}' está habilitada pero no tiene credential configurada."
+                        }
+                        if (!target.hostCredential?.trim()) {
+                            error "La instancia '${target.name}' está habilitada pero no tiene credencial de host configurada."
+                        }
+                        if (!target.portCredential?.trim()) {
+                            error "La instancia '${target.name}' está habilitada pero no tiene credencial de puerto SSH configurada."
+                        }
+
+                        withCredentials([
+                            string(credentialsId: target.hostCredential, variable: 'TARGET_HOST'),
+                            string(credentialsId: target.portCredential, variable: 'TARGET_PORT'),
+                            sshUserPrivateKey(
+                                credentialsId: target.credential,
+                                keyFileVariable: 'DEPLOY_KEYFILE',
+                                usernameVariable: 'DEPLOY_USER'
+                            )
+                        ]) {
+                            if (!env.TARGET_HOST?.trim()) {
+                                error "La credencial de host para '${target.name}' está vacía."
+                            }
+                            if (!env.TARGET_PORT?.trim()) {
+                                error "La credencial de puerto para '${target.name}' está vacía."
+                            }
+
+                            def remoteZip = "/tmp/ServidorOXP25-dev-${target.name}-${env.BUILD_NUMBER}-${env.LIBERTYA_COMMIT}.zip"
+                            echo "🚚 Desplegando ${artifact} en ${target.name}"
+
+                            sh """
+                                set +x
+                                set -euo pipefail
+                                scp -i "${DEPLOY_KEYFILE}" -o StrictHostKeyChecking=no -P "${TARGET_PORT}" "${artifact}" "${DEPLOY_USER}@${TARGET_HOST}:${remoteZip}"
+                                ssh -i "${DEPLOY_KEYFILE}" -o StrictHostKeyChecking=no -p "${TARGET_PORT}" "${DEPLOY_USER}@${TARGET_HOST}" \\
+                                  "OXP_HOME='${remoteOxpHome}' SERVICE_NAME='${remoteServiceName}' APP_USER='${remoteAppUser}' APP_GROUP='${remoteAppGroup}' bash -s -- '${remoteZip}'" < "${deployScript}"
+                            """
+                        }
                     }
                 }
             }
