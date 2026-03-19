@@ -216,7 +216,7 @@ pipeline {
                     writeFile(file: buildInfoFile, text: buildInfoContent)
 
                     sh """
-                        set -euo pipefail
+                        set -eu
                         rm -rf "${tempZipDir}"
                         mkdir -p "${tempZipDir}/ServidorOXP"
                         cp "${buildInfoFile}" "${tempZipDir}/ServidorOXP/BUILD_INFO.properties"
@@ -344,7 +344,7 @@ pipeline {
 
                             sh """
                                 set +x
-                                set -euo pipefail
+                                set -eu
                                 scp -i "${DEPLOY_KEYFILE}" -o StrictHostKeyChecking=no -P "${TARGET_PORT}" "${artifact}" "${DEPLOY_USER}@${TARGET_HOST}:${remoteZip}"
                                 ssh -i "${DEPLOY_KEYFILE}" -o StrictHostKeyChecking=no -p "${TARGET_PORT}" "${DEPLOY_USER}@${TARGET_HOST}" \\
                                   "OXP_HOME='${remoteOxpHome}' SERVICE_NAME='${remoteServiceName}' APP_USER='${remoteAppUser}' APP_GROUP='${remoteAppGroup}' bash -s -- '${remoteZip}'" < "${deployScript}"
