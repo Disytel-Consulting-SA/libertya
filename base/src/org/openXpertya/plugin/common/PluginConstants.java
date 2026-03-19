@@ -192,7 +192,16 @@ public class PluginConstants {
 	
 	/** AD_ComponentObject_ID registrado localmente durante la instalación */
 	public static final String INSTALLED_COMPONENTVERSION_ID = "COMPONENTVERSIONID";
-	
 
+	/** ----------------------- ESTPAS DE EJECUCION ----------------------- */
+	
+	/** Stage registracion del componente */
+	public static final String STAGE_REGISTER_COMPONENT = "REGISTER";
+	
+	/** Stage preinstall - sentencias SQL */
+	public static final String STAGE_PREINSTALL = "PREINSTALL";
+	
+	/** Stage install/postinstall - procesamiento XML */
+	public static final String STAGE_XMLINSTALL = "XMLINSTALL";
 
 }

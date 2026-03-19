@@ -85,7 +85,7 @@ public class VPluginInstallerUtils  {
 		postInstallErrorsLength = 0;
 		
 		/** La emulacion no impacta en base de datos y permite visualizar los queries correspondientes */
-		if (emulateInstall()) {
+		if (isEmulateInstall()) {
 			PluginUtils.appendStatus(" === EMULANDO INSTALACION === ");
 		}
 		
@@ -95,6 +95,9 @@ public class VPluginInstallerUtils  {
 
 		/* Preinstalacion - Sentencias SQL */
 		PluginUtils.appendStatus(" === Ejecutando sentencias de preinstalacion === ");
+		if (isEmulateInstall()) {
+			PluginUtils.appendEmulation("-- Sentencias SQL de Preinstalacion", PluginConstants.STAGE_PREINSTALL);
+		}
 		doPreInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_PREINSTALL, m_component_props);
 		
 		/* Comprobar secuencia por modificaciones a nivel SQL */
@@ -103,6 +106,9 @@ public class VPluginInstallerUtils  {
 		
 		/* Instalacion - Carga de metadatos */
 		PluginUtils.appendStatus(" === Insertando metadatos de instalación === ");
+		if (isEmulateInstall()) {
+			PluginUtils.appendEmulation("-- Sentencias XML de Instalacion", PluginConstants.STAGE_XMLINSTALL);
+		}
 		doInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_INSTALL);
 		// Almacenar la longitud del log de errores luego de la instalacion
 		if (PluginUtils.getErrorStatus() != null && PluginUtils.getErrorStatus().length()>0)
@@ -118,6 +124,9 @@ public class VPluginInstallerUtils  {
 		
 		/* PostInstalacion - Invocar proceso genérico o ad-hoc */
 		PluginUtils.appendStatus(" === Disparando proceso de postinstalación === ");
+		if (isEmulateInstall()) {
+			PluginUtils.appendEmulation("-- Sentencias XML de PostInstalacion", PluginConstants.STAGE_XMLINSTALL);
+		}
 		return doPostInstall(m_ctx, jarURL, PluginConstants.URL_INSIDE_JAR + PluginConstants.FILENAME_POSTINSTALL, m_component_props, owner, consoleOwner);
 	}
 	
@@ -170,27 +179,29 @@ public class VPluginInstallerUtils  {
 		PluginUtils.stopInstalation();
 	
 		/* Queries de registracion de componente */
-		if (emulateInstall()) {
+		if (isEmulateInstall()) {
 			PluginUtils.appendStatus(" === Queries de registracion === ");
 			PluginUtils.appendStatus(registerComponentVersionAndPluginSQL.toString());
+			PluginUtils.appendEmulation("-- Registracion de componente, version, plugin", PluginConstants.STAGE_REGISTER_COMPONENT);
+			PluginUtils.appendEmulation(registerComponentVersionAndPluginSQL.toString(),  PluginConstants.STAGE_REGISTER_COMPONENT);
 		}
 		
 		/* Informar todo OK */
-		PluginUtils.appendStatus(" === " + (emulateInstall()?"Emulacion":"Instalacion") + " finalizada " + (errors?"con errores":"") + " === ");
+		PluginUtils.appendStatus(" === " + (isEmulateInstall()?"Emulacion":"Instalacion") + " finalizada " + (errors?"con errores":"") + " === ");
 		writeInstallLog(m_component_props);
 	}
 
 	/** Finalizar la transaccion.  Si se está emulando entonces retrotraer todos los cambios */
 	protected static void finalizeTrx() {
-		if (emulateInstall())
+		if (isEmulateInstall())
 			Trx.getTrx(m_trx).rollback();
 		else
 			Trx.getTrx(m_trx).commit();
 	}
 	
 	/** ¿Estamos simplemente emulando la instalacion para validar ejecucion o ver SQL generado? */
-	protected static boolean emulateInstall() {
-		return "Y".equals(Env.getContext(Env.getCtx(), "#EmulateInstall"));
+	protected static boolean isEmulateInstall() {
+		return PluginUtils.isEmulateInstall();
 	}
 
 	
@@ -308,7 +319,7 @@ public class VPluginInstallerUtils  {
 		}
 		
 		/* En la emulacion del install se generan los SQL de registracion para poder usarlos en una instalacion ad-hoc */
-		if (emulateInstall()) {
+		if (isEmulateInstall()) {
 			registerComponentVersionAndPluginSQL = new StringBuffer();
 			registerComponentVersionAndPluginSQL.append(generateSQLFor(component, idResolveForComponent())).append("\n");
 			registerComponentVersionAndPluginSQL.append(generateSQLFor(componentVersion, idResolveForComponentVersion())).append("\n");
@@ -361,7 +372,7 @@ public class VPluginInstallerUtils  {
 		
 		
 		/* En la emulacion del install se generan los SQL de registracion para poder usarlos en una instalacion ad-hoc */
-		if (emulateInstall()) {
+		if (isEmulateInstall()) {
 			registerComponentVersionAndPluginSQL.append(generateSQLFor(plugin, idResolveForPlugin())).append("\n");
 			registerComponentVersionAndPluginSQL.append(generateSQLFor(pluginDetail, null)).append("\n");
 		}
@@ -411,6 +422,9 @@ public class VPluginInstallerUtils  {
 			if (!sql.trim().isEmpty()) {
 				PluginUtils.appendStatus(" Sentencias SQL de preinstalación [" + iter + "|" + sqlTimestamp + "]", true, false, false, true);
 				PluginXMLUpdater.executeUpdate(replaceOIDSWithFalse(sql), m_trx);
+				if (isEmulateInstall()) {
+					PluginUtils.appendEmulation(replaceOIDSWithFalse(sql).replace(";", ";"+System.lineSeparator()), PluginConstants.STAGE_PREINSTALL);
+				}
 			}
 		}
 		PluginUtils.appendStatus("");
@@ -624,13 +638,14 @@ public class VPluginInstallerUtils  {
 	{
 		try {
 			String prefix = (String)props.get(PluginConstants.PROP_PREFIX);
-			String fileName = "Component_" + prefix + "_install_" + Env.getDateTime("yyyyMMdd_HHmmss") + ".log";
+			String fileName = "Component_" + prefix + (isEmulateInstall() ? "_emulate_" : "_install_") + Env.getDateTime("yyyyMMdd_HHmmss") + ".log";
 			PluginUtils.writeInstallLog(OpenXpertya.getOXPHome(), fileName);
 		} catch (Exception e) {
 			System.out.println("Error en escritura de log: " + e);
 		}
 	}
 	
+
 	/**
 	 * A partir de Postgres 12, el uso de OIDS ya no es soportado, por lo tanto cualquier sentencia
 	 * SQL que contenga OIDS=TRUE deberá modificarse a OIDS=FALSE, dado que en caso de no modificarse,
