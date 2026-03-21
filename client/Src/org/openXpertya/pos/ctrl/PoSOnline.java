@@ -1315,13 +1315,13 @@ public class PoSOnline extends PoSConnectionState {
 		BigDecimal diff = totalPagar.subtract(sumaPagos);
 
 		// Hay una diferencia menor o igual al redondeo estándar ? 
-		if (diff.compareTo(redondeo) <= 0){
+		if (diff.abs().compareTo(redondeo) <= 0){
 			BigDecimal cashChangeAmt = order.getTotalChangeCashAmt();
 			if(cashChangeAmt.compareTo(BigDecimal.ZERO) != 0){
 				diff = diff.add(cashChangeAmt);
 			}
 			faltantePorRedondeo = diff;
-			sumaPagos.add(diff);
+			sumaPagos = sumaPagos.add(diff);
 		}
 		else if (diff.compareTo(redondeo) > 0){
 			throw new InsufficientBalanceException();
@@ -2727,10 +2727,22 @@ public class PoSOnline extends PoSConnectionState {
 			faltantePorRedondeo = null;
 		}
 		
-		// Si el monto de la línea del allocation es distinto al total del payment, entonces va a writeoff
+		// Ajuste de centavos entre el importe esperado del pago y lo asignado
+		// en la línea de allocation (incluyendo cambio).
+		int allocScale = MCurrency.getStdPrecision(getCtx(), allocHdr.getC_Currency_ID(), getTrxName());
+		BigDecimal allocDiff = p.getConvertedAmount()
+				.subtract(allocLineAmt.add(changeAmt))
+				.setScale(allocScale, BigDecimal.ROUND_HALF_UP);
+		// En multimoneda se conserva el comportamiento previo.
 		if (!isReturn && p.getCurrencyId() != allocHdr.getC_Currency_ID()
-				&& (allocLineAmt.add(changeAmt)).compareTo(p.getConvertedAmount()) != 0) {
-			writeOffAmt = writeOffAmt.add(p.getConvertedAmount().subtract((allocLineAmt.add(changeAmt))));
+				&& allocDiff.compareTo(BigDecimal.ZERO) != 0) {
+			writeOffAmt = writeOffAmt.add(allocDiff);
+		}
+		// En misma moneda, absorbe solo diferencias pequeñas (<= redondeo moneda).
+		else if (!isReturn && p.getCurrencyId() == allocHdr.getC_Currency_ID()
+				&& allocDiff.compareTo(BigDecimal.ZERO) != 0
+				&& allocDiff.abs().compareTo(getRedondeo()) <= 0) {
+			writeOffAmt = writeOffAmt.add(allocDiff);
 		}
 		
 		MAllocationLine allocLine = new MAllocationLine(allocHdr, allocLineAmt, BigDecimal.ZERO, writeOffAmt, BigDecimal.ZERO);
