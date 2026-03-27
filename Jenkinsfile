@@ -29,7 +29,7 @@ pipeline {
         DB_PORT = '5434'
 
         // Deploy DEV (testing)
-        DEPLOY_ENABLED_DEV = 'false'
+        DEPLOY_ENABLED_DEV = 'true'
         REMOTE_OXP_HOME = '/ServidorOXP'
         REMOTE_SERVICE_NAME = 'libertyad'
         REMOTE_APP_USER = 'libertya'
@@ -41,7 +41,7 @@ pipeline {
         DEV_DEPLOY_PORT_CREDENTIAL_QA2 = 'deploy-qa2-port'
         DEV_DEPLOY_CREDENTIAL_QA2 = 'deploy-qa2-ssh'
 
-        DEV_DEPLOY_ENABLE_QA = 'false'
+        DEV_DEPLOY_ENABLE_QA = 'true'
         DEV_DEPLOY_HOST_CREDENTIAL_QA = 'deploy-qa-host'
         DEV_DEPLOY_PORT_CREDENTIAL_QA = 'deploy-qa-port'
         DEV_DEPLOY_CREDENTIAL_QA = 'deploy-qa-ssh'
