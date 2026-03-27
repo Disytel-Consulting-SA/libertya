@@ -1,4 +1,4 @@
--- 20260123 Fix correspondiente al micro de facturacion (metadata faltante)
+-- 20260123-0000 Fix correspondiente al micro de facturacion (metadata faltante)
 update libertya.ad_system set dummy = (SELECT libertya.addcolumnifnotexists('C_POSJournal','iscontingencia','character(1)'));
 
 -- Fix A-400 Inventario fisico y anulación – Comportamiento incorrecto del inventario físico al utilizar el tipo “Sobrescribir”
@@ -6,7 +6,7 @@ ALTER TABLE IF EXISTS libertya.m_inventory ADD inventorytype bpchar(1) DEFAULT '
 ALTER TABLE IF EXISTS libertya.m_inventory ALTER COLUMN inventorytype SET STORAGE EXTENDED;
 
 
--- 2026-02-13
+-- 20260213-0000
 create or replace
 function libertya.getfechaconversion(p_timestamp timestamp without time zone,
 p_cancelamismamoneda character)
@@ -47,7 +47,7 @@ VALUES(nextval('seq_ad_preference'), 1010016, 0, 'Y', current_timestamp, 100, cu
 
 UPDATE libertya.ad_preference SET value='IVA 0%' WHERE attribute='Default_NoGravadoTax_Vendors';
 
--- 2026-03-06
+-- 20260306-0000
 -- Fix CC: evita pendientes residuales de 0,01 en invoiceopen cuando el comprobante no es de monto minimo.
 -- Se corrige una condicion imposible (AND/AND) por la condicion correcta (AND/(OR)).
 CREATE OR REPLACE FUNCTION libertya.invoiceopen(
@@ -134,6 +134,11 @@ COST 100;
 ALTER FUNCTION libertya.invoiceopen(integer, integer, integer, integer, timestamp without time zone)
     OWNER TO libertya;
 
--- 20260312 Metadata para "Import Facturas"
+-- 20260312-0000 Metadata para "Import Facturas"
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','periodfrom','timestamp without time zone'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','periodto','timestamp without time zone'));
+
+-- 20260327-1006 Nuevas columnas para soporte de registracion en changelog de adjuntos
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_attachment','ad_componentobjectuid','varchar(100) null'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('ad_attachment','ad_componentversion_id','int4 null'));
+

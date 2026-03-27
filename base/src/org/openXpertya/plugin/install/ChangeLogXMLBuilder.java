@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
@@ -246,22 +247,10 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 					// Textos del nodo, old y new values
 					oldValueTextNode = createTextNode(String.valueOf(element.getOldValue()));
 				    newValueTextNode = createTextNode(String.valueOf(element.getNewValue()));
-					if(element.getBinaryValue() != null){
+					if(element.getBinaryValue() != null){          
 						setAttribute("algorithm", "base64", columnNode);
-					    System.out.println(element.getBinaryValue());
-					    Base64Encoder encoder = new Base64Encoder(element.toString());
 					    oldValueTextNode = createTextNode("null");
-					    newValueTextNode = createTextNode(encoder.processString());
-	//				    Base64Decoder decoder = new Base64Decoder(result);
-	//				    String resultDecode = decoder.processString();
-	//				    Base64Encoder encoder2 = new Base64Encoder(resultDecode);
-	//				    String result2 = encoder2.processString();
-	//				    System.out.println(result2);
-	//				    byte[] binaryBytes = binary.getBytes("UTF8");
-	//				    System.out.println(binaryBytes);
-	//				    
-	//				    String binaryNew = new String(binaryBytes,"UTF8");
-	//				    System.out.println(binaryNew);
+					    newValueTextNode = createTextNode(Base64.encodeBase64String(element.getBinaryValue()));
 					}
 					// Agrego los nodos texto a los nodos new y old
 					addNode(oldValueTextNode, oldValue);

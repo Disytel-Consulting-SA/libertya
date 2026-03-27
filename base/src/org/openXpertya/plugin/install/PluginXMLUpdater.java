@@ -11,6 +11,7 @@ import java.util.Vector;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.codec.binary.Base64;
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.M_Column;
@@ -503,8 +504,10 @@ public class PluginXMLUpdater {
 				return;
 			
 			/* Incorporar comillas a la sentencia SQL o no según sea necesario */
-			if (requiresQuotes)
-				appendQuotedValue(columnValues, column.getNewValue());
+			if (requiresQuotes) {
+				boolean isBinary = (DisplayType.Binary==Integer.parseInt(column.getType()));
+				appendQuotedValue(columnValues, column.getNewValue(), isBinary);
+			}
 			else
 			{
 				/* Si es la columna clave, buscar el siguiente ID de la tabla, ya que no utiliza el ID del XML original */
@@ -565,7 +568,7 @@ public class PluginXMLUpdater {
 			
 			/* Incorporar comillas a la sentencia SQL o no según sea necesario */	
 			if (requiresQuotes)
-				appendQuotedValue(sql, column.getNewValue());
+				appendQuotedValue(sql, column.getNewValue(), (DisplayType.Binary==Integer.parseInt(column.getType())));
 			else 
 				appendNotQuotedValue(sql, column);
 		}
@@ -583,11 +586,14 @@ public class PluginXMLUpdater {
 	 * @param value
 	 * @throws Exception
 	 */
-	protected void appendQuotedValue(StringBuffer sql, String value) throws Exception
+	protected void appendQuotedValue(StringBuffer sql, String value, boolean isBinary) throws Exception
 	{
 		value = value.replaceAll("'", "''");
 		value = value.replaceAll("\\\"", "\\\\\"");
-		sql.append( "'" + value + "'," );
+		if (isBinary)
+			sql.append( "decode('" + value + "', 'base64')," );
+		else
+			sql.append( "'" + value + "'," );
 	}
 	
 	
