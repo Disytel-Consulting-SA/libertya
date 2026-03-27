@@ -1,13 +1,14 @@
-/** Modelo Generado - NO CAMBIAR MANUALMENTE - Copyright (C) 2006 FUNDESLE */
+/** Modelo Generado - NO CAMBIAR MANUALMENTE - Disytel */
 package org.openXpertya.model;
-import java.util.*;
+import java.util.logging.Level;
+ import java.util.*;
 import java.sql.*;
 import java.math.*;
 import org.openXpertya.util.*;
 /** Modelo Generado por AD_Attachment
- *  @author Comunidad de Desarrollo openXpertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
- *  @version  - 2008-01-03 10:26:22.125 */
-public class X_AD_Attachment extends PO
+ *  @author Comunidad de Desarrollo Libertya*         *Basado en Codigo Original Modificado, Revisado y Optimizado de:*         * Jorg Janke 
+ *  @version  - 2026-03-27 10:29:27.939 */
+public class X_AD_Attachment extends org.openXpertya.model.PO
 {
 /** Constructor estándar */
 public X_AD_Attachment (Properties ctx, int AD_Attachment_ID, String trxName)
@@ -27,13 +28,13 @@ public X_AD_Attachment (Properties ctx, ResultSet rs, String trxName)
 {
 super (ctx, rs, trxName);
 }
-/** AD_Table_ID=254 */
-public static final int Table_ID=254;
+/** AD_Table_ID */
+public static final int Table_ID = M_Table.getTableID("AD_Attachment");
 
 /** TableName=AD_Attachment */
 public static final String Table_Name="AD_Attachment";
 
-protected static KeyNamePair Model = new KeyNamePair(254,"AD_Attachment");
+protected static KeyNamePair Model = new KeyNamePair(Table_ID,"AD_Attachment");
 protected static BigDecimal AccessLevel = new BigDecimal(6);
 
 /** Load Meta Data */
@@ -58,6 +59,35 @@ Attachment for the document */
 public int getAD_Attachment_ID() 
 {
 Integer ii = (Integer)get_Value("AD_Attachment_ID");
+if (ii == null) return 0;
+return ii.intValue();
+}
+/** Set AD_ComponentObjectUID */
+public void setAD_ComponentObjectUID (String AD_ComponentObjectUID)
+{
+if (AD_ComponentObjectUID != null && AD_ComponentObjectUID.length() > 100)
+{
+log.warning("Length > 100 - truncated");
+AD_ComponentObjectUID = AD_ComponentObjectUID.substring(0,100);
+}
+set_Value ("AD_ComponentObjectUID", AD_ComponentObjectUID);
+}
+/** Get AD_ComponentObjectUID */
+public String getAD_ComponentObjectUID() 
+{
+return (String)get_Value("AD_ComponentObjectUID");
+}
+/** Set Component Version Identifier */
+public void setAD_ComponentVersion_ID (int AD_ComponentVersion_ID)
+{
+if (AD_ComponentVersion_ID <= 0) set_Value ("AD_ComponentVersion_ID", null);
+ else 
+set_Value ("AD_ComponentVersion_ID", new Integer(AD_ComponentVersion_ID));
+}
+/** Get Component Version Identifier */
+public int getAD_ComponentVersion_ID() 
+{
+Integer ii = (Integer)get_Value("AD_ComponentVersion_ID");
 if (ii == null) return 0;
 return ii.intValue();
 }
@@ -108,7 +138,7 @@ public void setTextMsg (String TextMsg)
 if (TextMsg != null && TextMsg.length() > 2000)
 {
 log.warning("Length > 2000 - truncated");
-TextMsg = TextMsg.substring(0,1999);
+TextMsg = TextMsg.substring(0,2000);
 }
 set_Value ("TextMsg", TextMsg);
 }
@@ -126,7 +156,7 @@ if (Title == null) throw new IllegalArgumentException ("Title is mandatory");
 if (Title.length() > 60)
 {
 log.warning("Length > 60 - truncated");
-Title = Title.substring(0,59);
+Title = Title.substring(0,60);
 }
 set_Value ("Title", Title);
 }

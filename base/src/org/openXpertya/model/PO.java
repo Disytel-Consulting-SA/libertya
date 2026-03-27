@@ -4305,7 +4305,8 @@ public abstract class PO implements Serializable, Comparator, Evaluatee {
 					// componentes en una instalación del mismo en otra BD
 //					&& !infoColumn.ColumnName.equalsIgnoreCase("IsChangeLog")
 					// Columna de datos binarios
-					&& infoColumn.DisplayType != DisplayType.Binary
+// Se comenta a fin de generar bitacora de binarios							
+//					&& infoColumn.DisplayType != DisplayType.Binary
 					&& !infoColumn.ColumnName
 							.equalsIgnoreCase("CurrentDevelopment")
 					&& !infoColumn.ColumnName
