@@ -332,23 +332,40 @@ pipeline {
                                 usernameVariable: 'DEPLOY_USER'
                             )
                         ]) {
-                            if (!env.TARGET_HOST?.trim()) {
-                                error "La credencial de host para '${target.name}' está vacía."
-                            }
-                            if (!env.TARGET_PORT?.trim()) {
-                                error "La credencial de puerto para '${target.name}' está vacía."
-                            }
-
                             def remoteZip = "/tmp/ServidorOXP25-dev-${target.name}-${env.BUILD_NUMBER}-${env.LIBERTYA_COMMIT}.zip"
                             echo "🚚 Desplegando ${artifact} en ${target.name}"
 
-                            sh """
-                                set +x
-                                set -eu
-                                scp -i "${DEPLOY_KEYFILE}" -o StrictHostKeyChecking=no -P "${TARGET_PORT}" "${artifact}" "${DEPLOY_USER}@${TARGET_HOST}:${remoteZip}"
-                                ssh -i "${DEPLOY_KEYFILE}" -o StrictHostKeyChecking=no -p "${TARGET_PORT}" "${DEPLOY_USER}@${TARGET_HOST}" \\
-                                  "OXP_HOME='${remoteOxpHome}' SERVICE_NAME='${remoteServiceName}' APP_USER='${remoteAppUser}' APP_GROUP='${remoteAppGroup}' bash -s -- '${remoteZip}'" < "${deployScript}"
-                            """
+                            withEnv([
+                                "DEPLOY_ARTIFACT=${artifact}",
+                                "DEPLOY_SCRIPT=${deployScript}",
+                                "DEPLOY_REMOTE_ZIP=${remoteZip}",
+                                "DEPLOY_REMOTE_OXP_HOME=${remoteOxpHome}",
+                                "DEPLOY_REMOTE_SERVICE_NAME=${remoteServiceName}",
+                                "DEPLOY_REMOTE_APP_USER=${remoteAppUser}",
+                                "DEPLOY_REMOTE_APP_GROUP=${remoteAppGroup}",
+                                "DEPLOY_TARGET_NAME=${target.name}"
+                            ]) {
+                                sh '''
+                                    set -eu
+
+                                    if [ -z "${TARGET_HOST:-}" ]; then
+                                        echo "La credencial de host para '${DEPLOY_TARGET_NAME}' está vacía."
+                                        exit 1
+                                    fi
+                                    if [ -z "${TARGET_PORT:-}" ]; then
+                                        echo "La credencial de puerto para '${DEPLOY_TARGET_NAME}' está vacía."
+                                        exit 1
+                                    fi
+                                    if [ -z "${DEPLOY_USER:-}" ]; then
+                                        echo "La credencial SSH para '${DEPLOY_TARGET_NAME}' no expuso usuario."
+                                        exit 1
+                                    fi
+
+                                    scp -i $DEPLOY_KEYFILE -o StrictHostKeyChecking=no -P $TARGET_PORT $DEPLOY_ARTIFACT $DEPLOY_USER@$TARGET_HOST:$DEPLOY_REMOTE_ZIP
+                                    ssh -i $DEPLOY_KEYFILE -o StrictHostKeyChecking=no -p $TARGET_PORT $DEPLOY_USER@$TARGET_HOST \
+                                        "OXP_HOME='$DEPLOY_REMOTE_OXP_HOME' SERVICE_NAME='$DEPLOY_REMOTE_SERVICE_NAME' APP_USER='$DEPLOY_REMOTE_APP_USER' APP_GROUP='$DEPLOY_REMOTE_APP_GROUP' bash -s -- '$DEPLOY_REMOTE_ZIP'" < $DEPLOY_SCRIPT
+                                '''
+                            }
                         }
                     }
                 }
