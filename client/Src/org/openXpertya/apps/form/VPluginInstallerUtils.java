@@ -455,7 +455,7 @@ public class VPluginInstallerUtils  {
 		String xml = JarHelper.readFromJar(jarURL, fileURL, "", null);
 		if (xml != null && xml.length() > 0)
 		{
-			PluginXMLUpdater uploaderMetaData = new PluginXMLUpdater(xml, m_trx, false);
+			PluginXMLUpdater uploaderMetaData = new PluginXMLUpdater(xml, m_trx, false, jarURL);
 			uploaderMetaData.processChangeLog();
 		}
 	}

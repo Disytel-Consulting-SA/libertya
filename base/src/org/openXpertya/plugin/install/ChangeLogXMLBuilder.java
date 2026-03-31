@@ -1,5 +1,7 @@
 package org.openXpertya.plugin.install;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -11,6 +13,7 @@ import org.openXpertya.model.MComponent;
 import org.openXpertya.model.MComponentVersion;
 import org.openXpertya.model.M_Column;
 import org.openXpertya.model.PO;
+import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.util.DB;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.Util;
@@ -248,10 +251,23 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 					oldValueTextNode = createTextNode(String.valueOf(element.getOldValue()));
 				    newValueTextNode = createTextNode(String.valueOf(element.getNewValue()));
 					if(element.getBinaryValue() != null){          
-						setAttribute("algorithm", "base64", columnNode);
+						setAttribute("algorithm", "file", columnNode);
+						writeBinaryDataFile(group.getAd_componentObjectUID() + "_" + element.getColumnName(), element.getBinaryValue());
 					    oldValueTextNode = createTextNode("null");
-					    newValueTextNode = createTextNode(Base64.encodeBase64String(element.getBinaryValue()));
-					}
+					    newValueTextNode = createTextNode(group.getAd_componentObjectUID() + "_" + element.getColumnName());	    
+					}		    
+				    // Estamos exportando una entrada de ad_attachment, registrando la columna record_id que referencia a otra tabla?
+				    if ("ad_attachment".equalsIgnoreCase(group.tableName) && "record_id".equalsIgnoreCase(element.getColumnName())) {
+				    	String refTable = getReferencedTableNameFromAttachment(group);
+				    	if (refTable!=null) {
+				    		String refUID = DB.getSQLValueString(null, "SELECT AD_ComponentObjectUID FROM " + refTable + " WHERE " + refTable + "_id = " + element.getNewValue());
+				    		if (refUID!=null) {
+				    			// Almacenar la referencia al adjunto
+				    			setAttribute("refUID", refUID, newValue);
+				    			setAttribute("refTable", refTable, columnNode);
+				    		}
+				    	}
+				    }
 					// Agrego los nodos texto a los nodos new y old
 					addNode(oldValueTextNode, oldValue);
 					addNode(newValueTextNode, newValue);
@@ -289,6 +305,48 @@ public abstract class ChangeLogXMLBuilder extends PluginXMLBuilder {
 			if(elementSize > 0){
 				ChangeLogElement lastElement = lastGroup.getElements().get(elementSize - 1); 
 				lastChangelogID = lastElement.getAD_Changelog_ID();
+			}
+		}
+	}
+	
+	protected String getReferencedTableNameFromAttachment(ChangeLogGroup group) {
+		try {
+			for (ChangeLogElement element : group.getElements()) {
+				if (element.getColumnName().equalsIgnoreCase("ad_table_id")) {
+					String tableID = element.getNewValue().toString();
+					return DB.getSQLValueString(null, "SELECT tablename FROM AD_Table WHERE AD_Table_ID = ?", Integer.parseInt(tableID));
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Guarda el contenido binario de una entrada de changelog en el subdirectorio
+	 * "binarios", usando el UID del registro como nombre de archivo.
+	 * 
+	 * @param uid identificador universal del registro
+	 * @param data contenido binario a persistir
+	 * @throws Exception en caso de errores de lectura/escritura
+	 */
+	protected void writeBinaryDataFile(String uid, byte[] data) throws Exception {
+		if (Util.isEmpty(uid) || data == null) {
+			return;
+		}
+		File binaryDir = new File(getPath(), PluginConstants.POSTINSTALL_BINARIES_DIR);
+		if (!binaryDir.exists()) {
+			binaryDir.mkdirs();
+		}
+		File outputFile = new File(binaryDir, uid);
+		FileOutputStream output = null;
+		try {
+			output = new FileOutputStream(outputFile);
+			output.write(data);
+		} finally {
+			if (output != null) {
+				output.close();
 			}
 		}
 	}
