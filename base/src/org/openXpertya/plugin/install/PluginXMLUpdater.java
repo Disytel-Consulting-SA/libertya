@@ -1249,7 +1249,7 @@ public class PluginXMLUpdater {
 				/* DisplayType: usamos siempre String dado que asi esta en el XML. */
 				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName(), m_trxName), M_Column.getColumnID(m_trxName, column.getName(), changeGroup.getTableName()), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), column.getOldValue(), newValue, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID, changeGroup.getChangeLogGroupUID(), column.getChangeLogUID());
 				// Incluir el contenido binario si corresponde 
-				if (DisplayType.Binary==Integer.parseInt(column.getType())) {
+				if (DisplayType.Binary==Integer.parseInt(column.getType()) && "file".equalsIgnoreCase(column.getAlgorithm())) {
 					aChangeLog.setBinaryValue(retrieveBinaryValueFromFile(column));
 				}
 				if (!aChangeLog.insertDirect())
