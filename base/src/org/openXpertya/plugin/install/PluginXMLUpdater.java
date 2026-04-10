@@ -614,7 +614,7 @@ public class PluginXMLUpdater {
 			if ("file".equalsIgnoreCase(column.getAlgorithm()))
 				sql.append(retriveBase64ValueFromFile(column)); 
 			else
-				sql.append( "decode('" + value + "', 'base64')," );
+				sql.append( "decode('" + value + "', 'base64')" );
 			sql.append(",");
 		}
 		else
