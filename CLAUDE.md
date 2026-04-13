@@ -74,6 +74,10 @@ Libertya is a **3-tier client–server ERP**:
 - `dev` → auto-deployed to QA environment via Jenkins after successful build.
 - `master` → production deployments (manual trigger or separate pipeline stage).
 
+### Mandatory Git workflow
+
+- It is mandatory to use the `openproject-git-pr-conventions` skill for all branch, commit, and pull request workflows.
+
 The `data/core/upgrade_from_22.0/devinfo.properties` file is updated by CI to stamp build metadata (branch, commit hash) into the deployed instance.
 
 ## Available skills
@@ -85,5 +89,6 @@ Skills are located in `.agents/skills/` and symlinked into `.claude/skills/`. Us
 | `find-skills` | Buscar e instalar nuevas skills del ecosistema |
 | `conventional-commit` | Al crear commits: genera mensajes con formato Conventional Commits (feat/fix/chore/etc.) |
 | `requesting-code-review` | Antes de mergear ramas: solicita una revisión estructurada del código |
+| `openproject-git-pr-conventions` | Para ramas/commits/PRs con OpenProject: base `dev`, naming `feature/op-<wp>` o `fix/op-<wp>`, PR a `dev` con `OP#<wp>` obligatorio |
 | `postgresql-database-engineering` | Al trabajar con queries, índices, esquemas o performance en PostgreSQL |
 | `database-migrations-sql-migrations` | Al crear scripts SQL de migración en `data/` para nuevas versiones |

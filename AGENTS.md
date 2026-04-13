@@ -74,6 +74,10 @@ Libertya implementa una arquitectura ERP **3-tier client-server**.
 - `dev` -> despliegue automatico a QA via Jenkins al pasar build.
 - `master` -> despliegues productivos (manual trigger o stage aparte).
 
+### Flujo Git obligatorio
+
+- Es obligatorio usar la skill `openproject-git-pr-conventions` para todo flujo de ramas, commits y pull requests.
+
 `data/core/upgrade_from_22.0/devinfo.properties` se actualiza en CI para inyectar metadata de build (branch, commit hash) en la instancia desplegada.
 
 ## Uso de subagentes (Codex)
@@ -100,6 +104,7 @@ Las skills estan en `.agents/skills/` (ademas pueden estar symlinkeadas en otras
 | `find-skills` | Buscar e instalar nuevas skills del ecosistema |
 | `conventional-commit` | Al crear commits: generar mensajes con formato Conventional Commits (`feat`/`fix`/`chore`, etc.) |
 | `requesting-code-review` | Antes de mergear ramas: pedir una revision estructurada del codigo |
+| `openproject-git-pr-conventions` | Al crear ramas/commits/PRs con OpenProject: fuerza `dev` como base, naming `feature/op-<wp>` o `fix/op-<wp>`, y PR a `dev` con `OP#<wp>` obligatorio |
 | `postgresql-database-engineering` | Trabajo con queries, indices, esquemas o performance en PostgreSQL |
 | `database-migrations-sql-migrations` | Crear scripts SQL de migracion en `data/` para nuevas versiones |
 
