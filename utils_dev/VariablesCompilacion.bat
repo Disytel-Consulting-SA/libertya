@@ -31,7 +31,8 @@
 @Rem	Instalaci�n Autom�tica - Directorio base resultante
 @SET OXP_HOME=%ROOT_OXP%ServidorOXP
 @Rem	Instalaci�n Autom�tica - Compartido para instaladores finales
-@SET INSTALACION_OXP=C:\Install
+@SET INSTALACION_OXP=L:\LBY_Compilation\Install
+@SET INSTALACION_EXPORT=L:\LBY_Compilation\Export
 @IF NOT EXIST %INSTALACION_OXP% Mkdir %INSTALACION_OXP%
 
 

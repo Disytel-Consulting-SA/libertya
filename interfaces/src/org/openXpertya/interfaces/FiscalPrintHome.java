@@ -25,7 +25,7 @@ import org.openXpertya.util.CLogger;
 
 /**
  * Home interface for openXpertya/FiscalPrint. Lookup using {1}
- * @author XDOCLET 1.1.2 * @xdoclet-generated at 16-ago-2024 13:04:36
+ * @author XDOCLET 1.1.2 * @xdoclet-generated at 31 mar. 2026 22:50:30
  */
 public interface FiscalPrintHome
    extends javax.ejb.EJBHome

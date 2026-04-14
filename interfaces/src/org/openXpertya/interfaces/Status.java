@@ -17,7 +17,7 @@ import org.openXpertya.util.CLogger;
 /**
  * Remote interface for openXpertya/Status.
  * @version XDOCLET 1.1.2
- * @author XDOCLET 1.1.2 * @xdoclet-generated at 16-ago-2024 13:04:36
+ * @author XDOCLET 1.1.2 * @xdoclet-generated at 31 mar. 2026 22:50:30
  */
 public interface Status
    extends javax.ejb.EJBObject

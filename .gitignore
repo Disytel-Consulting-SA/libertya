@@ -3,3 +3,10 @@
 .idea/
 .classpath
 docs/
+
+# Salidas generadas por utils_dev/Compilar.bat y builds Ant
+**/compilacion/
+/zkwebui/WEB-INF/classes/
+/zkwebui/dist/
+/install/lib/
+/interfaces/classes/

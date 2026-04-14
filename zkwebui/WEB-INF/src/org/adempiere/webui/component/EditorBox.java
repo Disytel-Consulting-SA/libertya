@@ -60,9 +60,19 @@ public class EditorBox extends Div {
 		btn.setImage(imageSrc);
 	}
 
+	protected void addBtnColumnSclass(String cls) {
+		String sclass = btnColumn.getSclass();
+		if (sclass == null || sclass.length() == 0) {
+			btnColumn.setSclass(cls);
+		} else if ((" " + sclass + " ").indexOf(" " + cls + " ") < 0) {
+			btnColumn.setSclass(sclass + " " + cls);
+		}
+	}
+
 	private void initComponents() {
 		Table grid = new Table();
 		appendChild(grid);
+		setSclass("lookup-editor-box");
 		this.setWidth("100%");
 		grid.setStyle("border: none; padding: 0px; margin: 0px;");
 		grid.setDynamicProperty("width", "100%");
@@ -85,9 +95,11 @@ public class EditorBox extends Div {
 		tr.appendChild(btnColumn);
 		btnColumn.setStyle("border: none; padding: 0px; margin: 0px;");
 		btnColumn.setSclass("editor-button");
+		addBtnColumnSclass("lookup-editor-cell");
 		btn = new Button();
 		btn.setTabindex(-1);
 		LayoutUtils.addSclass("editor-button", btn);
+		LayoutUtils.addSclass("lookup-editor-button", btn);
 		btnColumn.appendChild(btn);
 
 		String style = AEnv.isFirefox2() ? "display: inline"
@@ -135,6 +147,8 @@ public class EditorBox extends Div {
 			btnColumn.setSclass("editor-button");
 		else
 			btnColumn.setSclass("");
+		if (enabled)
+			addBtnColumnSclass("lookup-editor-cell");
 	}
 
 	/**
@@ -146,6 +160,7 @@ public class EditorBox extends Div {
 		btn.setVisible(true);
 		btnColumn.setVisible(true);
 		btnColumn.setSclass("editor-button");
+		addBtnColumnSclass("lookup-editor-cell");
 	}
 	
 	public void setLink(boolean link) {
