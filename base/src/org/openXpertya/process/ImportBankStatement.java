@@ -305,7 +305,7 @@ public class ImportBankStatement extends SvrProcess {
 
         sql = new StringBuffer( "UPDATE I_BankStatement " 
         		+ "SET StmtAmt=haber-debe " 
-        		+ "WHERE StmtAmt IS NULL OR StmtAmt = 0" 
+        		+ "WHERE (StmtAmt IS NULL OR StmtAmt = 0) " 
         		+ "AND I_IsImported<>'Y'" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
 
@@ -317,7 +317,7 @@ public class ImportBankStatement extends SvrProcess {
 
         sql = new StringBuffer( "UPDATE I_BankStatement " 
         		+ "SET TrxAmt=StmtAmt - InterestAmt - ChargeAmt " 
-        		+ "WHERE TrxAmt IS NULL OR TrxAmt = 0 " + "AND I_IsImported<>'Y'" ).append( clientCheck );
+        		+ "WHERE (TrxAmt IS NULL OR TrxAmt = 0) " + "AND I_IsImported<>'Y'" ).append( clientCheck );
         no = DB.executeUpdate( sql.toString());
 
         if( no != 0 ) {

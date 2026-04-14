@@ -10,7 +10,9 @@ public class PluginInstallerEmulator extends PluginInstaller {
 			System.exit(1);
 		}
 		Env.setContext(Env.getCtx(), "#EmulateInstall", "Y");
-		PluginInstaller.main(new String[] {args[0], "N", "N"});
+		
+		// Se puede indicar Y Y dado que nunca se efectivizarán los cambios, y esto permite llegar hasta los queries de registracion.
+		PluginInstaller.main(new String[] {args[0], "Y", "Y"});	
 	}
 
 }

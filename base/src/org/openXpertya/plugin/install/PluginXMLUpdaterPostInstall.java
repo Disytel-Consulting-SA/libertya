@@ -37,7 +37,7 @@ public class PluginXMLUpdaterPostInstall extends PluginXMLUpdater {
 		if (m_parameters.get(column.getName()) != null )
 		{
 			/*  Determinar como se va a incorporar al SQL */
-			Boolean requiresQuotes = requiresQuotes(column);
+			Boolean requiresQuotes = requiresQuotes(column, tableName);
 			
 			if (requiresQuotes)
 				query.append( quotes + aParam + quotes + "," );

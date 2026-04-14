@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.openXpertya.OpenXpertya;
 import org.openXpertya.util.CLogger;
@@ -24,7 +25,10 @@ public class PluginUtils {
 	private static String instalationTrxName = null;
 	
 	/* Detalle del log de instalacion */
-	private static StringBuffer installStatus = null; 
+	private static StringBuffer installStatus = null;
+	
+	/* Detalle del log de emulacion de instalacion */
+	private static HashMap<String, StringBuffer> emulationStatus = new HashMap<String, StringBuffer>(); 
 	
 	/* Detalle de errores */
 	private static StringBuffer errorStatus = null;
@@ -77,7 +81,7 @@ public class PluginUtils {
 		appendStatus(statusLine, true, false, true, true);
 	}
 	
-	
+		
 	/**
 	 * Almacena una nueva linea en el log de instalacion 
 	 */
@@ -89,12 +93,23 @@ public class PluginUtils {
 			if (newLine) 
 				System.out.println();
 		}
-		
 		if (installStatus!=null) {
 			installStatus.append(statusLine + (newLine?"\n":""));
-		}
+		}	
 		if (notifyListener) {
 			fireStatusChanged(statusLine, isError, newLine);
+		}
+	}
+	
+	/**
+	 * Almacena linea de emulacion de instalacion
+	 */
+	public static void appendEmulation(String statusLine, String emulationStage) {	
+		if (emulationStage!=null) {
+			if (emulationStatus.get(emulationStage)==null) {
+				emulationStatus.put(emulationStage, new StringBuffer());
+			}
+			emulationStatus.get(emulationStage).append(statusLine).append(System.lineSeparator());	
 		}
 	}
 	
@@ -114,6 +129,7 @@ public class PluginUtils {
 	public static void resetStatus()
 	{
 		installStatus = new StringBuffer();
+		emulationStatus = new HashMap<String, StringBuffer>();
 		errorStatus = new StringBuffer();
 	}
 	
@@ -123,6 +139,27 @@ public class PluginUtils {
 	public static String getInstallStatus()
 	{
 		return installStatus==null?"":installStatus.toString();
+	}
+	
+	/**
+	 * @return el log de emulacion
+	 */
+	public static String getEmulationStatusContent()
+	{
+		if (emulationStatus==null)
+			return "";
+		StringBuffer retValue = new StringBuffer();
+		
+		if (emulationStatus.get(PluginConstants.STAGE_REGISTER_COMPONENT)!=null)
+			retValue.append(emulationStatus.get(PluginConstants.STAGE_REGISTER_COMPONENT));
+		
+		if (emulationStatus.get(PluginConstants.STAGE_PREINSTALL)!=null)
+			retValue.append(emulationStatus.get(PluginConstants.STAGE_PREINSTALL));
+		
+		if (emulationStatus.get(PluginConstants.STAGE_XMLINSTALL)!=null)
+			retValue.append(emulationStatus.get(PluginConstants.STAGE_XMLINSTALL));
+		
+		return retValue.toString();
 	}
 	
 	/**
@@ -163,7 +200,7 @@ public class PluginUtils {
 		try 
 		{
 			BufferedWriter out = new BufferedWriter(new FileWriter(path + File.separator + fileName));
-			out.write(PluginUtils.getInstallStatus());
+			out.write(isEmulateInstall() ? PluginUtils.getEmulationStatusContent() : PluginUtils.getInstallStatus());
 			out.close();
 		}
 		catch (IOException e)
@@ -171,5 +208,10 @@ public class PluginUtils {
 			System.out.println("Exception generando el archivo de log:" + e.getMessage());
 		}
 
+	}
+	
+	/** ¿Estamos simplemente emulando la instalacion para validar ejecucion o ver SQL generado? */
+	public static boolean isEmulateInstall() {
+		return "Y".equals(Env.getContext(Env.getCtx(), "#EmulateInstall"));
 	}
 }

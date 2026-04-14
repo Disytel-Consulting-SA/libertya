@@ -40,7 +40,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Vector;
 import java.util.logging.Level;
 
@@ -55,7 +54,6 @@ import org.adempiere.webui.component.ListItem;
 import org.adempiere.webui.component.ListModelTable;
 import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.ListboxFactory;
-import org.adempiere.webui.component.NumberBox;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Tab;
@@ -65,7 +63,6 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.WListbox;
-import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.session.SessionManager;
 import org.openXpertya.apps.search.InfoProduct;
 import org.openXpertya.apps.search.InfoProductAttribute;
@@ -73,8 +70,6 @@ import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MDocType;
-import org.openXpertya.model.MLookup;
-import org.openXpertya.model.MLookupFactory;
 import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MQuery;
 import org.openXpertya.model.MRole;
@@ -83,7 +78,6 @@ import org.openXpertya.pos.view.PoSInfoProductAttribute;
 import org.openXpertya.process.ComponentActivation;
 import org.openXpertya.util.CLogMgt;
 import org.openXpertya.util.DB;
-import org.openXpertya.util.DisplayType;
 import org.openXpertya.util.Env;
 import org.openXpertya.util.KeyNamePair;
 import org.openXpertya.util.Msg;
@@ -151,21 +145,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 	private Textbox fieldUnique = new Textbox();
 	
 	
-	// dREHER Cintolo
-	private Label lblMedida1 = new Label();
-	private NumberBox fieldMedida1 = new NumberBox(false);
-	private Label lblMedida2 = new Label();
-	private NumberBox fieldMedida2 = new NumberBox(false);
-	private Label lblEspesor = new Label();
-	private WSearchEditor pickEspesor;
-	private Label lblNorma = new Label();
-	private WSearchEditor pickNorma;
-	private Label lblCalidad = new Label();
-	private WSearchEditor pickCalidad;
-	
-	private Label lblTipoComprobante = new Label();
-	private Listbox pickTipoComprobante = new Listbox();
-	
 	private North northParameter = new North();
 	private North northPaging;
 	private Center centerPanel = new Center();
@@ -199,10 +178,7 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		+ " LEFT OUTER JOIN M_Product_PO ppo ON (p.M_Product_ID=ppo.M_Product_ID)"
 		+ " LEFT OUTER JOIN M_Product_Upc_Instance pui ON (p.M_Product_ID=pui.M_Product_ID AND pui.IsActive='Y')"
 		+ " LEFT OUTER JOIN M_ProductUpc pu ON (p.M_Product_ID=pu.M_Product_ID AND pu.IsActive='Y') "
-		+ " LEFT OUTER JOIN C_BPartner bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)"
-		+ " LEFT OUTER JOIN M_Product_Espesor es ON (es.M_Product_Espesor_ID=p.M_Product_Espesor_ID)" // dREHER Tablas Cintolo
-		+ " LEFT OUTER JOIN M_Product_Norma no ON (no.M_Product_Norma_ID=p.M_Product_Norma_ID)"
-		+ " LEFT OUTER JOIN M_Product_Calidad ca ON (ca.M_Product_Calidad_ID=p.M_Product_Calidad_ID)";
+		+ " LEFT OUTER JOIN C_BPartner bp ON (ppo.C_BPartner_ID=bp.C_BPartner_ID)";
 	
 		
 	/**  Array of Column Info    */
@@ -336,21 +312,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		lblWarehouse.setValue(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Warehouse")));
 		lblVendor = new Label();
 		lblVendor.setValue(Msg.translate(Env.getCtx(), "Vendor"));
-
-		// dREHER Filtros Cintolo -------------------------------------------------
-		lblMedida1 = new Label();
-		lblMedida1.setValue(Msg.translate(Env.getCtx(), "Medida 1"));
-		lblMedida2 = new Label();
-		lblMedida2.setValue(Msg.translate(Env.getCtx(), "Medida 2"));
-		lblEspesor = new Label();
-		lblEspesor.setValue(Msg.translate(Env.getCtx(), "Espesor"));
-		lblNorma = new Label();
-		lblNorma.setValue(Msg.translate(Env.getCtx(), "Norma"));
-		lblCalidad = new Label();
-		lblCalidad.setValue(Msg.translate(Env.getCtx(), "Calidad"));
-		lblTipoComprobante = new Label();
-		lblTipoComprobante.setValue(Msg.translate(Env.getCtx(), "Tipo de Comprobante"));
-		// ------------------------------------------------------------------------
 		
 		m_InfoPAttributeButton.setImage("/images/PAttribute16.png");
 		m_InfoPAttributeButton.setTooltiptext(Msg.getMsg(Env.getCtx(), "PAttribute"));
@@ -405,66 +366,8 @@ public class InfoProductPanel extends InfoPanel implements EventListener
         labelUnique.setText( Msg.getMsg( Env.getCtx(),"UniqueField" ));
         labelUnique.setTooltip(Msg.getMsg(Env.getCtx(), "UniqueFieldDescription"));
 		
-        
-        // dREHER - Filtros Cintolo
-
-        MLookup lookup = MLookupFactory.get(Env.getCtx(), p_WindowNo,
-                0, getColumnID("M_Product_Espesor_ID"), DisplayType.Search);
-        pickEspesor = new WSearchEditor(lookup, Msg.translate(
-                Env.getCtx(), "M_Product_Espesor_ID"), "", false, false, true);
-        // pickEspesor.addValueChangeListener(this);
-
-        lookup = MLookupFactory.get(Env.getCtx(), p_WindowNo,
-                0, getColumnID("M_Product_Norma_ID"), DisplayType.Search);
-        pickNorma = new WSearchEditor(lookup, Msg.translate(
-                Env.getCtx(), "M_Product_Norma_ID"), "", false, false, true);
-        
-        lookup = MLookupFactory.get(Env.getCtx(), p_WindowNo,
-                0, getColumnID("M_Product_Calidad_ID"), DisplayType.Search);
-        pickCalidad = new WSearchEditor(lookup, Msg.translate(
-                Env.getCtx(), "M_Product_Calidad_ID"), "", false, false, true);
-        
-        
-        pickTipoComprobante = new Listbox();
-        pickTipoComprobante.setRows(0);
-        pickTipoComprobante.setMultiple(false);
-        pickTipoComprobante.setMold("select");
-        pickTipoComprobante.setWidth("100%");
-        pickTipoComprobante.addEventListener(Events.ON_SELECT, this);
-        
-        /*
-		pickEspesor = new Listbox();
-		pickEspesor.setRows(0);
-		pickEspesor.setMultiple(false);
-		pickEspesor.setMold("select");
-		pickEspesor.setWidth("100%");
-		pickEspesor.addEventListener(Events.ON_SELECT, this);
-        
-		pickNorma = new Listbox();
-		pickNorma.setRows(0);
-		pickNorma.setMultiple(false);
-		pickNorma.setMold("select");
-		pickNorma.setWidth("100%");
-		pickNorma.addEventListener(Events.ON_SELECT, this);
-		
-		pickCalidad = new Listbox();
-		pickCalidad.setRows(0);
-		pickCalidad.setMultiple(false);
-		pickCalidad.setMold("select");
-		pickCalidad.setWidth("100%");
-		pickCalidad.addEventListener(Events.ON_SELECT, this);
-		*/
-		
-		
-		// fin filtros Cintolo
-		
         contentPanel.setVflex(true);
 	}	//	initComponents
-
-	// dREHER busca el ID de la columna
-	private int getColumnID(String string) {
-		return DB.getSQLValue(null, "SELECT AD_Column_ID FROM AD_Column WHERE Name=?", string);
-	}
 	
 	@Override
 	protected Grid getFilterGrid() {
@@ -508,33 +411,9 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		row.appendChild(lblAS.rightAlign());
 		row.appendChild(pickAS);
 		
-		// dREHER Filtro Cintolo
-		// Medida 1, Medida 2, Espesor
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(lblMedida1.rightAlign());
-		row.appendChild(fieldMedida1);
-		row.appendChild(lblMedida2.rightAlign());
-		row.appendChild(fieldMedida2);
-		
-		
-		// Norma Calidad
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(lblEspesor.rightAlign());
-		row.appendChild(pickEspesor.getComponent());
-		row.appendChild(lblNorma.rightAlign());
-		row.appendChild(pickNorma.getComponent());
-		row.appendChild(lblCalidad.rightAlign());
-		row.appendChild(pickCalidad.getComponent());
-		
 		// Disyel: Merge desde r2570LP
 		row = new Row();
 		rows.appendChild(row);
-
-		// dREHER Filtro de tipo de comprobante
-		row.appendChild(lblTipoComprobante.rightAlign());
-		row.appendChild(pickTipoComprobante);
 		
 		row.appendChild(labelUnique.rightAlign());
 		row.appendChild(fieldUnique);
@@ -991,48 +870,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
 				pickAS.addItem(kn);
 			}
-			
-			// dREHER filtros Cintolo ----------------------------------------------------------
-			// Reemplazados por busquedas
-			// Norma
-			/*
-			SQL = MRole.getDefault().addAccessSQL (
-				"SELECT M_Product_Norma_ID, Value || ' - ' || Name FROM M_Product_Norma WHERE IsActive='Y'",
-						"M_Product_Norma", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO)
-					+ " ORDER BY Value";
-			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
-					pickNorma.addItem(kn);
-			}
-			
-			// Calidad
-			SQL = MRole.getDefault().addAccessSQL (
-					"SELECT M_Product_Calidad_ID, Value || ' - ' || Name FROM M_Product_Calidad WHERE IsActive='Y'",
-							"M_Product_Calidad", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO)
-						+ " ORDER BY Value";
-			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
-					pickCalidad.addItem(kn);
-			}
-			
-			// Espesor
-			SQL = MRole.getDefault().addAccessSQL (
-					"SELECT M_Product_Espesor_ID, Value || ' - ' || Name FROM M_Product_Espesor WHERE IsActive='Y'",
-							"M_Product_Espesor", MRole.SQL_NOTQUALIFIED, MRole.SQL_RO)
-						+ " ORDER BY Value";
-			for (KeyNamePair kn : DB.getKeyNamePairs(SQL, true)) {
-					pickEspesor.addItem(kn);
-			}
-			*/
-			
-			pickTipoComprobante.appendItem("Pedido/O.Despacho", 1);
-			pickTipoComprobante.appendItem("Presupuesto/Pedido/O.Despacho", 2);
-			pickTipoComprobante.appendItem("Presupuesto", 3);
-			pickTipoComprobante.appendItem("Pedido", 4);
-			pickTipoComprobante.appendItem("Orden de Despacho", 5);
-			pickTipoComprobante.appendItem("Remito", 6);
-			pickTipoComprobante.appendItem("Factura", 7);
-			pickTipoComprobante.appendItem("Pedido a Proveedor", 8);
-			
-			// ---------------------------------------------------------------------------------
 		}
 		catch (SQLException e)
 		{
@@ -1240,35 +1077,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			}
 		}
 
-		// dREHER Filtros Cintolo -------------------------------------------------------------------------
-		
-		//  => Medida 1
-		BigDecimal tmp = fieldMedida1.getValue();
-		if (tmp!=null)
-			where.append(" AND p.Cintolo_Measure_One = ?");
-
-		//  => Medida 2
-		tmp = fieldMedida2.getValue();
-		if (tmp!=null)
-			where.append(" AND p.Cintolo_Measure_Two = ?");
-		
-		//  => Espesor
-		if (getEspesor_ID() > 0) {
-			where.append(" AND p.M_Product_Espesor_ID=?");
-		}
-		
-		//  => Norma
-		if (getNorma_ID() > 0) {
-			where.append(" AND p.M_Product_Norma_ID=?");
-		}
-
-		//  => Calidad
-		if (getCalidad_ID() > 0) {
-			where.append(" AND p.M_Product_Calidad_ID=?");
-		}
-		
-		// ------------------------------------------------------------------------------------------------
-
 		// Disytel: Merge desde r253GC
 		// => Unique
 
@@ -1458,33 +1266,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			pstmt.setString(index++, vendor);
 			log.fine("Vendor: " + vendor);
 		}
-		
-		// dREHER Filtros Cintolo ---------------------------------------------------------------------
-		BigDecimal tmp = fieldMedida1.getValue();
-		if(tmp!=null)
-			pstmt.setBigDecimal(index++, tmp);
-		
-		tmp = fieldMedida2.getValue();
-		if(tmp!=null)
-			pstmt.setBigDecimal(index++, tmp);
-		
-		int M_ID = getEspesor_ID();
-		if (M_ID > 0) {
-			pstmt.setInt(index++, M_ID);
-		}
-		
-		M_ID = getNorma_ID();
-		if (M_ID > 0) {
-			pstmt.setInt(index++, M_ID);
-		}
-
-		M_ID = getCalidad_ID();
-		if (M_ID > 0) {
-			pstmt.setInt(index++, M_ID);
-		}
-
-		
-		// --------------------------------------------------------------------------------------------
 	}   //  setParameters
 
 	// dREHER Mar 25
@@ -1678,14 +1459,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Value"), "p.Value", String.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Name"), "p.Name", String.class));
 			
-			// dREHER - Columnas Cintolo ----------------------------------------------------------------------------------------------
-			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Medida 1"), "p.Cintolo_Measure_One", BigDecimal.class));
-			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Medida 2"), "p.Cintolo_Measure_Two", BigDecimal.class));
-			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Espesor"), "es.Name", String.class));
-			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Norma"), "no.Name", String.class));
-			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "Calidad"), "ca.Name", String.class));
-			// ------------------------------------------------------------------------------------------------------------------------
-			
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "QtyAvailable"), "bomQtyAvailable(p.M_Product_ID,?,0) AS QtyAvailable", Double.class, true, true, null));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "PriceList"), "bomPriceList(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceList",  BigDecimal.class));
 			list.add(new ColumnInfo(Msg.translate(Env.getCtx(), "PriceStd"), "bomPriceStd(p.M_Product_ID, pr.M_PriceList_Version_ID) AS PriceStd", BigDecimal.class));
@@ -1801,15 +1574,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 			if (m_M_AttributeSetInstance_ID != -1)
 				dispose(true);
 			return;
-			
-		}else if(e.getTarget() == pickTipoComprobante && row != -1) { // dREHER
-			
-			ListItem warehouse = pickWarehouse.getSelectedItem();
-			int M_Warehouse_ID = 0;
-			if(warehouse.getValue() != null)
-				M_Warehouse_ID = ((Integer)warehouse.getValue()).intValue();
-			initAtpTab (M_Warehouse_ID);
-			return;
 		}
 		
 		//
@@ -1849,11 +1613,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 	private void initAtpTab (int  m_M_Warehouse_ID)
 	{
 		int pickTC = 1;
-		int index = pickTipoComprobante.getSelectedIndex();
-		if(index > 0) {
-			ListItem li = pickTipoComprobante.getSelectedItem();
-			pickTC = (Integer)li.getValue();
-		}
 		
 		//	Header
 		Vector<String> columnNames = new Vector<String>();
@@ -2140,49 +1899,6 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 		return M_Product_Category_ID;
 	}
     //
-    
-    // dREHER Espesor
-    public int getEspesor_ID()
-    {
-		int M_ID = 0;
-		/*
-		ListItem pick = (ListItem)pickEspesor.getSelectedItem();
-		if (pick!=null)
-			M_ID = Integer.parseInt(pick.getValue().toString());
-		*/
-		if(pickEspesor.getValue()!=null)
-			M_ID = (Integer)pickEspesor.getValue();
-		return M_ID;
-	}
-    
-    // dREHER Norma
-    public int getNorma_ID()
-    {
-		int M_ID = 0;
-		/*
-		ListItem pick = (ListItem)pickNorma.getSelectedItem();
-		if (pick!=null)
-			M_ID = Integer.parseInt(pick.getValue().toString());
-		*/
-		if(pickNorma.getValue()!=null)
-			M_ID = (Integer)pickNorma.getValue();
-		
-		return M_ID;
-	}
-    
-    // dREHER Calidad
-    public int getCalidad_ID()
-    {
-		int M_ID = 0;
-		/*
-		ListItem pick = (ListItem)pickCalidad.getSelectedItem();
-		if (pick!=null)
-			M_ID = Integer.parseInt(pick.getValue().toString());
-		 */
-		if(pickCalidad.getValue()!=null)
-			M_ID = (Integer)pickCalidad.getValue();
-		return M_ID;
-	}    
     
     public int getM_AttributeSet_ID()
     {

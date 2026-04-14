@@ -11,6 +11,7 @@ import java.util.Vector;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.commons.codec.binary.Base64;
 import org.openXpertya.model.MChangeLog;
 import org.openXpertya.model.MSequence;
 import org.openXpertya.model.M_Column;
@@ -20,6 +21,7 @@ import org.openXpertya.model.X_AD_Ref_Table;
 import org.openXpertya.model.X_AD_Table;
 import org.openXpertya.plugin.common.PluginConstants;
 import org.openXpertya.plugin.common.PluginUtils;
+import org.openXpertya.process.PluginPostInstallProcess;
 import org.openXpertya.replication.ReplicationCache;
 import org.openXpertya.util.CPreparedStatement;
 import org.openXpertya.util.DB;
@@ -86,6 +88,9 @@ public class PluginXMLUpdater {
 	/** Valor a propagar hacia persistInChangelog */
 	int keyColumnValue = -1;
 
+	/** Ubicación del jar a instalar para lectura de recursos adicionales (ej: binarios) */
+	protected String jarFileURL = null;
+	
 	/** Getter: devuelve el documento entero a procesar */
 	public XMLUpdateDocument getUpdateDocument() {
 		return updateDocument;
@@ -99,9 +104,24 @@ public class PluginXMLUpdater {
 	 */
 	public PluginXMLUpdater(String xml, String trxName, boolean stopOnError) throws Exception
 	{
+		this(xml, trxName, stopOnError, null);
+	}
+
+	/**
+	 * Constructor con soporte para carga de binarios asociados dentro de un jar.
+	 * 
+	 * @param xml contenido del changelog XML
+	 * @param trxName transacción
+	 * @param stopOnError si debe detener la instalación ante error
+	 * @param jarFileURL ruta al jar que contiene el changelog y sus binarios
+	 * @throws Exception en caso de error de parseo o inicialización
+	 */
+	public PluginXMLUpdater(String xml, String trxName, boolean stopOnError, String jarFileURL) throws Exception
+	{
 		// Guardar transaccion
 		m_trxName = trxName;
 		this.stopOnError = stopOnError;
+		this.jarFileURL = jarFileURL;
 
 		// Parsear el documento
 		DocumentBuilder builder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -187,12 +207,12 @@ public class PluginXMLUpdater {
 	
 	/** Cuando se emula el install, se omiten prefijos a fin de que las sentencias SQL queden "limpias" en la terminal */
 	protected boolean includePrefix() {
-		return !emulateInstall();
+		return !isEmulateInstall();
 	}
 	
 	/** ¿Estamos simplemente emulando la instalacion para validar ejecucion o ver SQL generado? */
-	protected boolean emulateInstall() {
-		return "Y".equals(Env.getContext(Env.getCtx(), "#EmulateInstall"));
+	protected boolean isEmulateInstall() {
+		return PluginUtils.isEmulateInstall();
 	}
 	
 	/* En esta clase actualmente se deben procesar todos los registros.
@@ -216,7 +236,10 @@ public class PluginXMLUpdater {
 	protected void appendStatus(String sentence)
 	{
 		PluginUtils.appendStatus((includePrefix() ? " SQL: " : "") + sentence, false, false, true, true);
+		if (isEmulateInstall())
+			PluginUtils.appendEmulation(sentence, PluginConstants.STAGE_XMLINSTALL);
 	}
+	
 	
 	/**
 	 * En caso de ser necesario, ejecutar acciones adicionales luego del
@@ -490,7 +513,7 @@ public class PluginXMLUpdater {
 		try
 		{
 			/* Si no puedo determinar si requiere comillas, será necesario ignorar esta columna */
-			Boolean requiresQuotes = requiresQuotes(column);
+			Boolean requiresQuotes = requiresQuotes(column, tableName);
 			
 			/* Incorporar nueva columna a insertar */
 			columnNames.append( column.getName() + "," );
@@ -500,8 +523,10 @@ public class PluginXMLUpdater {
 				return;
 			
 			/* Incorporar comillas a la sentencia SQL o no según sea necesario */
-			if (requiresQuotes)
-				appendQuotedValue(columnValues, column.getNewValue());
+			if (requiresQuotes) {
+				boolean isBinary = (DisplayType.Binary==Integer.parseInt(column.getType()));
+				appendQuotedValue(columnValues, column, changeGroup, isBinary);
+			}
 			else
 			{
 				/* Si es la columna clave, buscar el siguiente ID de la tabla, ya que no utiliza el ID del XML original */
@@ -526,7 +551,7 @@ public class PluginXMLUpdater {
 	 */
 	protected void appendKeyColumnValue(StringBuffer columnNames, StringBuffer columnValues, String tableName, String valueID)
 	{
-		if (emulateInstall()) {
+		if (isEmulateInstall()) {
 			// Para la emulacion necesitamos que el SQL generado no contenga valores de IDs hardcodeados
 			String secuencia= MSequence.getSequenceName(tableName);
 			String keyColumnValueSQL = "(select nextval('" + secuencia + "'))";
@@ -551,7 +576,7 @@ public class PluginXMLUpdater {
 		try
 		{
 			/* Si no puedo determinar si requiere comillas, será necesario ignorar esta columna */
-			Boolean requiresQuotes = requiresQuotes(column);
+			Boolean requiresQuotes = requiresQuotes(column, tableName);
 					
 			/* Incorporar nueva columna a modificar */
 			sql.append( column.getName() + "=" );
@@ -562,7 +587,7 @@ public class PluginXMLUpdater {
 			
 			/* Incorporar comillas a la sentencia SQL o no según sea necesario */	
 			if (requiresQuotes)
-				appendQuotedValue(sql, column.getNewValue());
+				appendQuotedValue(sql, column, changeGroup, (DisplayType.Binary==Integer.parseInt(column.getType())));
 			else 
 				appendNotQuotedValue(sql, column);
 		}
@@ -580,12 +605,48 @@ public class PluginXMLUpdater {
 	 * @param value
 	 * @throws Exception
 	 */
-	protected void appendQuotedValue(StringBuffer sql, String value) throws Exception
+	protected void appendQuotedValue(StringBuffer sql, Column column, ChangeGroup changeGroup, boolean isBinary) throws Exception
 	{
+		String value = column.getNewValue();
 		value = value.replaceAll("'", "''");
 		value = value.replaceAll("\\\"", "\\\\\"");
-		sql.append( "'" + value + "'," );
+		if (isBinary) {
+			if ("file".equalsIgnoreCase(column.getAlgorithm()))
+				sql.append(retriveBase64ValueFromFile(column)); 
+			else
+				sql.append( "decode('" + value + "', 'base64')" );
+			sql.append(",");
+		}
+		else
+			sql.append( "'" + value + "'," );
 	}
+	
+	
+	/**
+	 * Resuelve el contenido binario en base64 leyendo el archivo correspondiente
+	 * desde el directorio binarios del jar instalado.
+	 */
+	protected String retriveBase64ValueFromFile(Column column) throws Exception {
+		byte[] binaryData = retrieveBinaryValueFromFile(column);
+		return "decode('" + Base64.encodeBase64String(binaryData) + "', 'base64')";
+	}
+	
+	/**
+	 * Resuelve el contenido binario a persistir leyendo el archivo correspondiente
+	 * desde el directorio binarios del jar instalado.
+	 */
+	protected byte[] retrieveBinaryValueFromFile(Column column) throws Exception {
+		String fileUID = column.getNewValue();
+		if (fileUID == null || fileUID.trim().length() == 0)
+			throw new Exception("No se pudo determinar UID para contenido binario. Columna: " + column.getName());
+		if (jarFileURL == null || jarFileURL.trim().length() == 0)
+			throw new Exception("No se indicó archivo jar para recuperar binarios. UID: " + fileUID);
+		byte[] binaryData = PluginPostInstallProcess.readBinaryFromJar(jarFileURL, PluginConstants.POSTINSTALL_BINARIES_DIR + "/" + fileUID);
+		if (binaryData == null || binaryData.length == 0)
+			throw new Exception("No se encontró contenido binario para UID " + fileUID + " en " + jarFileURL);
+		return binaryData;
+	}
+	
 	
 	
 	/**
@@ -602,7 +663,7 @@ public class PluginXMLUpdater {
 		{
 			/* Determinar columna ID y registro al cual referenciar */
 			String refKeyColumnName = getKeyColumnName(column.getRefTable());
-			if (emulateInstall()) {
+			if (isEmulateInstall()) {
 				String refRecordIDQuery = getReferenceRecordIDQuery(refKeyColumnName, column);
 				query.append( refRecordIDQuery ).append( "," );
 				return; 
@@ -824,8 +885,13 @@ public class PluginXMLUpdater {
 		ReplicationCache.mappedUIDs.put(oldUID, newUID);
 	}
 	
-	protected Boolean requiresQuotes(Column column) throws Exception
+	protected Boolean requiresQuotes(Column column, String tableName) throws Exception
 	{
+		// La columna record_id de ad_attachment es siempre una referencia a un registro de otra tabla
+		if ("ad_attachment".equalsIgnoreCase(tableName) && "record_id".equalsIgnoreCase(column.getName())) {
+			return false;
+		}
+		// Retornar resto de casos
 		Boolean requiresQuotes = DisplayType.requiresQuotes(Integer.parseInt(column.getType()));
 		if (requiresQuotes == null)
 			raiseException(WARNING_DISPLAY_TYPE_UNKNOWN + ": " + column.getType());
@@ -1177,10 +1243,15 @@ public class PluginXMLUpdater {
 						newValue = (refRecordID == -1 ? MChangeLog.NULL : Integer.toString(refRecordID));
 					}
 				}
+
 				// Instanciar y persistir en el changelog
 				MChangeLog aChangeLog = null;
 				/* DisplayType: usamos siempre String dado que asi esta en el XML. */
 				aChangeLog = new MChangeLog(Env.getCtx(), 0, m_trxName, 666, M_Table.getID(changeGroup.getTableName(), m_trxName), M_Column.getColumnID(m_trxName, column.getName(), changeGroup.getTableName()), recordID, Env.getAD_Client_ID(Env.getCtx()), Env.getAD_Org_ID(Env.getCtx()), column.getOldValue(), newValue, changeGroup.getUid(), componentVersion, changeGroup.getOperation(), DisplayType.String, changelogGroupID, changeGroup.getChangeLogGroupUID(), column.getChangeLogUID());
+				// Incluir el contenido binario si corresponde 
+				if (DisplayType.Binary==Integer.parseInt(column.getType()) && "file".equalsIgnoreCase(column.getAlgorithm())) {
+					aChangeLog.setBinaryValue(retrieveBinaryValueFromFile(column));
+				}
 				if (!aChangeLog.insertDirect())
 					throw new Exception(" Error al guardar el changelog: UID:" + changeGroup.getTableName() + " - OP:" + changeGroup.getOperation() + " - NewValue:" + column.getNewValue());
 			}

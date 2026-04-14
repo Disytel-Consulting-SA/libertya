@@ -490,6 +490,9 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		invoice.setcae(vim.getcae());
 		invoice.setvtocae(getVtoCAE(vim.getFecha()));
 		
+		// Fix para cuando la lista de precios asociada requiere setear esta fecha
+		invoice.setFechadeTCparaActualizarPrecios(vim.getFecha());
+		
 		/*Se toma la pricelist en base a la EC principalmente sino toma de la Org*/
 		MPriceList pl = getPriceListFromBPOrOrg(bp, orgID);
 		if (pl == null) {
