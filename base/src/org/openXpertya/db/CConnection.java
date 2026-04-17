@@ -34,12 +34,18 @@ import org.openXpertya.util.Ini;
 //~--- Importaciones JDK ------------------------------------------------------
 
 import java.io.Serializable;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 import java.util.logging.Level;
 
 import javax.naming.CommunicationException;
@@ -61,6 +67,9 @@ import javax.sql.DataSource;
  */
 public class CConnection implements Serializable {
 
+    /** REST endpoint for connection bootstrap */
+    private static final String APPS_REST_BOOTSTRAP_PATH = "/api/connectionInfo";
+	
     /** Connection */
     private static CConnection	s_cc	= null;
 
@@ -1199,7 +1208,7 @@ public class CConnection implements Serializable {
         getInitialContext(false);
 
         if (m_iContext == null) {
-            return m_okApps;
+        	return setAppsServerInfoREST();
         }
 
         // Prevent error trace
@@ -1235,10 +1244,122 @@ public class CConnection implements Serializable {
 
         CLogMgtLog4J.enable(true);
 
+        if (!m_okApps) {
+            return setAppsServerInfoREST();
+        }
+
+        
         return m_okApps;
 
     }		// setAppsServerInfo
 
+    
+    /**
+     *  Try to read server connection info using a lightweight REST endpoint.
+     *  Endpoint returns the same CConnection#toStringLong payload.
+     *  @return true if info could be loaded from REST endpoint
+     */
+    private boolean setAppsServerInfoREST() {
+
+        LinkedHashSet urls = getAppsServerRestUrls();
+        Exception lastException = null;
+
+        for (java.util.Iterator it = urls.iterator(); it.hasNext();) {
+
+            String restUrl = (String)it.next();
+            HttpURLConnection http = null;
+
+            try {
+
+                URL url = new URL(restUrl);
+                http = (HttpURLConnection)url.openConnection();
+                http.setConnectTimeout(5000);
+                http.setReadTimeout(5000);
+                http.setRequestMethod("GET");
+                http.setRequestProperty("Accept", "text/plain");
+
+                int responseCode = http.getResponseCode();
+
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    throw new Exception("HTTP " + responseCode + " - " + restUrl);
+                }
+
+                BufferedReader input = new BufferedReader(new InputStreamReader(http.getInputStream(), "UTF-8"));
+                StringBuffer payload = new StringBuffer();
+                String line = null;
+
+                while ((line = input.readLine()) != null) {
+                    payload.append(line);
+                }
+
+                input.close();
+
+                String attributes = payload.toString();
+
+                if ((attributes == null) || (attributes.length() == 0) || (attributes.indexOf("CConnection[") != 0)) {
+                    throw new Exception("Invalid REST payload from " + restUrl);
+                }
+
+                setAttributes(attributes);
+                m_okApps = true;
+                m_appsException = null;
+                log.config("AppsServer REST bootstrap OK - " + restUrl);
+
+                return true;
+
+            } catch (Exception ex) {
+                lastException = ex;
+                log.warning("AppsServer REST bootstrap failed - " + restUrl + " - " + ex.toString());
+            } finally {
+
+                if (http != null) {
+                    http.disconnect();
+                }
+            }
+        }
+
+        m_okApps = false;
+        m_appsException = lastException;
+
+        return false;
+    }
+
+    /**
+     * Build candidate REST URLs to support host-only and URL-based configs.
+     * @return candidate URLs
+     */
+    private LinkedHashSet getAppsServerRestUrls() {
+
+        LinkedHashSet urls = new LinkedHashSet();
+        String host = getAppsHost();
+
+        if ((host != null) && (host.indexOf("://") != -1)) {
+            urls.add(buildRestUrl(host));
+            return urls;
+        }
+
+        urls.add(buildRestUrl("http://" + host + ":" + getAppsPort()));
+        urls.add(buildRestUrl("http://" + host + ":8080"));
+        urls.add(buildRestUrl("http://" + host + ":80"));
+
+        return urls;
+    }
+
+    /**
+     * Normalize base URL and append REST bootstrap path.
+     * @param baseUrl base URL
+     * @return complete endpoint URL
+     */
+    private String buildRestUrl(String baseUrl) {
+
+        if (baseUrl.endsWith("/")) {
+            return baseUrl.substring(0, baseUrl.length() - 1) + APPS_REST_BOOTSTRAP_PATH;
+        }
+
+        return baseUrl + APPS_REST_BOOTSTRAP_PATH;
+    }
+
+    
     /**
      *  Set Attributes from String (pases toStringLong())
      *  @param attributes attributes
