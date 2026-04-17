@@ -725,7 +725,8 @@
 	  description="Deploy Servidor de Aplicaciones Libertya - JBoss">
   	
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
-	  	
+	<copy file="${basedir}/utils/IniciarServidorJBoss.sh" tofile="${basedir}/utils/IniciarServidor.sh" overwrite="yes" failonerror="no"/>
+	<copy file="${basedir}/utils/DetenerServidorJBoss.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>	  	
   </target>
 		
 	
@@ -738,7 +739,8 @@
   	<!-- Tomcat. OXPRoot.war debe llamarse ROOT.war para que sea la plicacion base -->
   	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
   	<copy file="${basedir}/lib/OXPRoot.war" tofile="${DEPLOY_APPS_OXP}/ROOT.war" overwrite="yes" failonerror="no"/>
-  	
+	<copy file="${basedir}/utils/IniciarServidorTomcat.sh" tofile="${basedir}/utils/IniciarServidor.sh" overwrite="yes" failonerror="no"/>	  	  	
+	<copy file="${basedir}/utils/DetenerServidorTomcat.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>  	
   </target>
 	
   <!-- ==================================================== -->
