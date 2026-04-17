@@ -69,6 +69,18 @@ public class CConnection implements Serializable {
 
     /** REST endpoint for connection bootstrap */
     private static final String APPS_REST_BOOTSTRAP_PATH = "/api/connectionInfo";
+    /** System property for RMI timeout (ms) */
+    private static final String RMI_TIMEOUT_PROPERTY = "ly.rmi.timeout.ms";
+    /** Default RMI timeout (ms) */
+    private static final int DEFAULT_RMI_TIMEOUT_MS = 2000;
+    /** System property for REST connect timeout (ms) */
+    private static final String REST_CONNECT_TIMEOUT_PROPERTY = "ly.rest.connect.timeout.ms";
+    /** System property for REST read timeout (ms) */
+    private static final String REST_READ_TIMEOUT_PROPERTY = "ly.rest.read.timeout.ms";
+    /** Default REST connect timeout (ms) */
+    private static final int DEFAULT_REST_CONNECT_TIMEOUT_MS = 2000;
+    /** Default REST read timeout (ms) */
+    private static final int DEFAULT_REST_READ_TIMEOUT_MS = 3000;
 	
     /** Connection */
     private static CConnection	s_cc	= null;
@@ -895,16 +907,92 @@ public class CConnection implements Serializable {
 
         env.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
 
-        // HTTP - default timeout 0
-        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_TIMEOUT, "5000");	// timeout in ms
-        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_SO_TIMEOUT, "5000");
+        String rmiTimeout = String.valueOf(getRmiTimeoutMillis());
 
-        // JNP - default timeout 5 sec
-        env.put(org.jnp.interfaces.NamingContext.JNP_DISCOVERY_TIMEOUT, "5000");
+        // HTTP/RMI timeout
+        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_TIMEOUT, rmiTimeout);	// timeout in ms
+        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_SO_TIMEOUT, rmiTimeout);
 
+        // JNP discovery timeout
+        env.put(org.jnp.interfaces.NamingContext.JNP_DISCOVERY_TIMEOUT, rmiTimeout);
+        
         return env;
     }		// getInitialEnvironment
 
+    
+    /**
+     * Return RMI timeout in milliseconds, configurable via system property.
+     * Property: -Dly.rmi.timeout.ms=NNNN
+     * @return timeout in milliseconds
+     */
+    private static int getRmiTimeoutMillis() {
+
+        String timeout = System.getProperty(RMI_TIMEOUT_PROPERTY);
+
+        if ((timeout == null) || (timeout.trim().length() == 0)) {
+            return DEFAULT_RMI_TIMEOUT_MS;
+        }
+
+        try {
+            int parsed = Integer.parseInt(timeout.trim());
+
+            if (parsed <= 0) {
+                return DEFAULT_RMI_TIMEOUT_MS;
+            }
+
+            return parsed;
+        } catch (Exception e) {
+            return DEFAULT_RMI_TIMEOUT_MS;
+        }
+    }
+    
+    /**
+     * Return REST connect timeout in milliseconds, configurable via system property.
+     * Property: -Dly.rest.connect.timeout.ms=NNNN
+     * @return timeout in milliseconds
+     */
+    public static int getRestConnectTimeoutMillis() {
+
+        return getTimeoutFromProperty(REST_CONNECT_TIMEOUT_PROPERTY, DEFAULT_REST_CONNECT_TIMEOUT_MS);
+    }
+
+    /**
+     * Return REST read timeout in milliseconds, configurable via system property.
+     * Property: -Dly.rest.read.timeout.ms=NNNN
+     * @return timeout in milliseconds
+     */
+    public static int getRestReadTimeoutMillis() {
+
+        return getTimeoutFromProperty(REST_READ_TIMEOUT_PROPERTY, DEFAULT_REST_READ_TIMEOUT_MS);
+    }
+
+    /**
+     * Parse timeout from system property with safe fallback.
+     * @param propertyName property name
+     * @param defaultValue default timeout in ms
+     * @return parsed timeout or default
+     */
+    private static int getTimeoutFromProperty(String propertyName, int defaultValue) {
+
+        String timeout = System.getProperty(propertyName);
+
+        if ((timeout == null) || (timeout.trim().length() == 0)) {
+            return defaultValue;
+        }
+
+        try {
+            int parsed = Integer.parseInt(timeout.trim());
+
+            if (parsed <= 0) {
+                return defaultValue;
+            }
+
+            return parsed;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+    
     /**
      *  Get Name
      *  @return connection name
@@ -1273,8 +1361,8 @@ public class CConnection implements Serializable {
 
                 URL url = new URL(restUrl);
                 http = (HttpURLConnection)url.openConnection();
-                http.setConnectTimeout(5000);
-                http.setReadTimeout(5000);
+                http.setConnectTimeout(getRestConnectTimeoutMillis());
+                http.setReadTimeout(getRestReadTimeoutMillis());
                 http.setRequestMethod("GET");
                 http.setRequestProperty("Accept", "text/plain");
 
