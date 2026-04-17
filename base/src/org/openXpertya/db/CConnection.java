@@ -941,7 +941,7 @@ public class CConnection implements Serializable {
                 }
 
             } catch (Exception ex) {
-                log.log(Level.SEVERE, "", ex);
+            	log.info("RMI lookup unavailable in getServer - using fallback path. " + ex.getMessage());
             }
         }
 

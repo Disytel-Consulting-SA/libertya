@@ -23,13 +23,19 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.InvalidClassException;
 import java.io.NotSerializableException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.rmi.RemoteException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.LinkedHashSet;
 import java.util.logging.Level;
 
 import javax.swing.ImageIcon;
@@ -62,6 +68,9 @@ import org.openXpertya.utils.LYCloseWindowAdapter;
 
 public final class AEnv {
 
+    /** REST endpoint for accounting posting fallback */
+    private static final String POST_IMMEDIATE_REST_PATH = "/api/postImmediate";
+	
     /**
      * Descripción de Método
      *
@@ -1146,25 +1155,34 @@ public final class AEnv {
                     result = new Boolean( server.postImmediate( Env.getCtx(),AD_Client_ID,AD_Table_ID,Record_ID,force ));
                     log.config( "from Server: " + result );
                 } else {
-                    ADialog.error( WindowNo,null,"NoAppsServer",msg );
-
-                    return false;
+                	log.config( "server instance is null - trying REST fallback for postImmediate" );
                 }
             } catch( RemoteException e ) {
-                log.log( Level.SEVERE,"(RE)",e );
+            	log.warning( "postImmediate RMI failed (RemoteException): " + e.getMessage() + " - trying REST fallback" );
                 msg      = e.getMessage();
                 result   = null;
                 s_server = null;
             } catch( Exception e ) {
-                log.log( Level.SEVERE,"ex",e );
+            	log.warning( "postImmediate RMI failed: " + e.getMessage() + " - trying REST fallback" );
                 msg      = e.getMessage();
                 result   = null;
                 s_server = null;
             }
         } else {
-            ADialog.error( WindowNo,null,"NoAppsServer",msg );
+        	log.config( "server RMI inactive - trying REST fallback for postImmediate" );
+        }
+        
+        if( result == null ) {
 
-            return false;
+            String[] restError = new String[1];
+            result = postImmediateREST( AD_Client_ID,AD_Table_ID,Record_ID,force,restError );
+
+            if( result != null ) {
+                log.config( "from REST fallback: " + result );
+            } else if( (msg == null) || (msg.length() == 0) ) {
+                msg = restError[0];
+            }
+
         }
 
         if( result == null ) {
@@ -1176,6 +1194,123 @@ public final class AEnv {
         return result.booleanValue();
     }    // postImmediate
 
+    /**
+     * Try to post accounting on server using lightweight REST endpoint.
+     * @param AD_Client_ID client id
+     * @param AD_Table_ID table id
+     * @param Record_ID record id
+     * @param force force re-post
+     * @param errorOut optional error output
+     * @return Boolean result or null if REST call failed
+     */
+    private static Boolean postImmediateREST( int AD_Client_ID,int AD_Table_ID,int Record_ID,boolean force,String[] errorOut ) {
+
+        LinkedHashSet urls = getPostImmediateRestUrls();
+
+        for( java.util.Iterator it = urls.iterator();it.hasNext(); ) {
+
+            String urlString = ( String )it.next();
+            HttpURLConnection http = null;
+
+            try {
+                String query = "?AD_Client_ID=" + URLEncoder.encode( String.valueOf( AD_Client_ID ),"UTF-8" )
+                               + "&AD_Table_ID=" + URLEncoder.encode( String.valueOf( AD_Table_ID ),"UTF-8" )
+                               + "&Record_ID=" + URLEncoder.encode( String.valueOf( Record_ID ),"UTF-8" )
+                               + "&force=" + URLEncoder.encode( String.valueOf( force ),"UTF-8" );
+                URL url = new URL( urlString + query );
+
+                http = ( HttpURLConnection )url.openConnection();
+                http.setConnectTimeout( 5000 );
+                http.setReadTimeout( 15000 );
+                http.setRequestMethod( "POST" );
+                http.setRequestProperty( "Accept","text/plain" );
+                http.setDoOutput( false );
+
+                int responseCode = http.getResponseCode();
+
+                if( responseCode != HttpURLConnection.HTTP_OK ) {
+                    throw new Exception( "HTTP " + responseCode );
+                }
+
+                BufferedReader input = new BufferedReader( new InputStreamReader( http.getInputStream(),"UTF-8" ));
+                StringBuffer payload = new StringBuffer();
+                String line = null;
+
+                while(( line = input.readLine()) != null ) {
+                    payload.append( line );
+                }
+
+                input.close();
+
+                String response = payload.toString().trim();
+
+                if( "true".equalsIgnoreCase( response )) {
+                    return Boolean.TRUE;
+                }
+
+                if( "false".equalsIgnoreCase( response )) {
+                    return Boolean.FALSE;
+                }
+
+                if( errorOut != null ) {
+                    errorOut[0] = response;
+                }
+
+            } catch( Exception e ) {
+
+                if( errorOut != null ) {
+                    errorOut[0] = e.getMessage();
+                }
+
+                log.config( "postImmediateREST failed [" + urlString + "]: " + e.getMessage() );
+            } finally {
+
+                if( http != null ) {
+                    http.disconnect();
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Candidate URLs for postImmediate REST endpoint.
+     * @return URLs
+     */
+    private static LinkedHashSet getPostImmediateRestUrls() {
+
+        LinkedHashSet urls = new LinkedHashSet();
+        String host = CConnection.get().getAppsHost();
+
+        if( (host != null) && (host.indexOf( "://" ) != -1) ) {
+            urls.add( appendPath( host,POST_IMMEDIATE_REST_PATH ));
+
+            return urls;
+        }
+
+        urls.add( appendPath( "http://" + host + ":" + CConnection.get().getAppsPort(),POST_IMMEDIATE_REST_PATH ));
+        urls.add( appendPath( "http://" + host + ":8080",POST_IMMEDIATE_REST_PATH ));
+        urls.add( appendPath( "http://" + host + ":80",POST_IMMEDIATE_REST_PATH ));
+
+        return urls;
+    }
+
+    /**
+     * Append path to base URL.
+     * @param baseUrl base URL
+     * @param path path
+     * @return complete URL
+     */
+    private static String appendPath( String baseUrl,String path ) {
+
+        if( baseUrl.endsWith( "/" )) {
+            return baseUrl.substring( 0,baseUrl.length() - 1 ) + path;
+        }
+
+        return baseUrl + path;
+    }
+    
     /**
      * Descripción de Método
      *
