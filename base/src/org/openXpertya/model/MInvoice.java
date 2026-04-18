@@ -2253,6 +2253,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				setC_Currency_ID(Env.getContextAsInt(getCtx(), "#C_Currency_ID"));
 			}
 		}
+			
+		// Moneda extranjera: tomar cotización del día como default de la factura.
+		// Si no existe, obligar carga manual y evitar default 1.
+		if(!defaultInvoiceExchangeRate()) {
+			return false;
+		}
 
 		// Sales Rep
 
@@ -2941,6 +2947,79 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		currencyID = DB.getSQLValueEx(get_TrxName(), sql, new Object[] {string});
 		
 		return currencyID;
+	}
+	
+	/**
+	 * Para facturas en moneda distinta a la contable:
+	 * - Si existe cotización del día, la toma por defecto en Cintolo_Exchange_Rate.
+	 * - Si no existe, fuerza carga manual y evita persistir el default 1.
+	 */
+	private boolean defaultInvoiceExchangeRate() {
+		int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		if (accountingCurrencyID <= 0
+				|| getC_Currency_ID() <= 0
+				|| getC_Currency_ID() == accountingCurrencyID) {
+			return true;
+		}
+		
+		BigDecimal currentRate = getInvoiceExchangeRate();
+		BigDecimal systemRate = MConversionRate.getRate(
+				getC_Currency_ID(),
+				accountingCurrencyID,
+				getExchangeRateLookupDate(),
+				getC_ConversionType_ID(),
+				getAD_Client_ID(),
+				getAD_Org_ID());
+		
+		if(systemRate != null && systemRate.compareTo(Env.ZERO) > 0) {
+			if(currentRate == null
+					|| currentRate.compareTo(Env.ZERO) <= 0
+					|| currentRate.compareTo(Env.ONE) == 0
+					|| !is_ValueChanged("Cintolo_Exchange_Rate")) {
+				set_ValueNoCheck("Cintolo_Exchange_Rate", systemRate);
+			}
+			return true;
+		}
+		
+		// Sin cotización del día: no dejar valor por defecto 1 en moneda extranjera.
+		if(!is_ValueChanged("Cintolo_Exchange_Rate")) {
+			set_ValueNoCheck("Cintolo_Exchange_Rate", null);
+			currentRate = null;
+		}
+		
+		if(currentRate == null
+				|| currentRate.compareTo(Env.ZERO) <= 0
+				|| currentRate.compareTo(Env.ONE) == 0) {
+			log.saveError("Error", "No existe tasa de cambio para la fecha seleccionada. Debe completar manualmente la Tasa de Cambio de la factura.");
+			return false;
+		}
+		
+		return true;
+	}
+	
+	private BigDecimal getInvoiceExchangeRate() {
+		Object exchangeRate = get_Value("Cintolo_Exchange_Rate");
+		if(exchangeRate == null) {
+			return null;
+		}
+		if(exchangeRate instanceof BigDecimal) {
+			return (BigDecimal)exchangeRate;
+		}
+		try {
+			return new BigDecimal(exchangeRate.toString());
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	private Timestamp getExchangeRateLookupDate() {
+		if(getDateAcct() != null) {
+			return new Timestamp(getFechaConversion().getTime());
+		}
+		if(getDateInvoiced() != null) {
+			return getDateInvoiced();
+		}
+		return Env.getDate();
 	}
 
 	/**
@@ -5312,18 +5391,18 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// dREHER en el caso de facturas de proveedor y que se calcula todo en base a la
 		// tasa de cambio de la factura, se ajusta calculo del total convertido
 		BigDecimal invAmt = Env.ZERO;
-		;
 		if (!isSOTrx() && getFCProvTasaCambio()) {
-
-			if (getC_Currency_ID() != 118 && (get_Value("Cintolo_Exchange_Rate") == null
-					|| ((BigDecimal) get_Value("Cintolo_Exchange_Rate")).compareTo(Env.ZERO) == 0)) {
-
-				invAmt = getGrandTotal(true).multiply((BigDecimal) get_Value("Cintolo_Exchange_Rate"));
-
-			}
-			if (getC_Currency_ID() == 118)
+			int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+			BigDecimal invoiceExchangeRate = getInvoiceExchangeRate();
+			
+			if (getC_Currency_ID() == accountingCurrencyID) {
 				invAmt = getGrandTotal(true);
-
+			} else if (invoiceExchangeRate != null && invoiceExchangeRate.compareTo(Env.ZERO) > 0) {
+				invAmt = getGrandTotal(true).multiply(invoiceExchangeRate);
+			} else {
+				invAmt = MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
+						getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
+			}
 		} else {
 			invAmt = MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
 					getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
