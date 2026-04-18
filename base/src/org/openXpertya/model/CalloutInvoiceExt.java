@@ -205,6 +205,108 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return "";
 	}
 	
+	/**
+	 * Actualiza la tasa de cambio de la factura según moneda/fecha seleccionada.
+	 * Si no existe cotización para ese día en moneda extranjera, advierte para carga manual
+	 * y evita que quede el valor por defecto 1.
+	 */
+	private String updateInvoiceExchangeRate(Properties ctx, int WindowNo, MTab mTab) {
+		if (isCalloutActive()) {
+			return "";
+		}
+		
+		setCalloutActive(true);
+		try {
+			int accountingCurrencyID = Env.getContextAsInt(ctx, "$C_Currency_ID");
+			if (accountingCurrencyID <= 0) {
+				return "";
+			}
+			Integer invoiceCurrencyID = getIntValue(mTab.getValue("C_Currency_ID"));
+			if (invoiceCurrencyID == null || invoiceCurrencyID <= 0) {
+				return "";
+			}
+			
+			// Si está en moneda contable, no aplica tasa manual de diferencia de cambio.
+			if (accountingCurrencyID > 0 && invoiceCurrencyID.intValue() == accountingCurrencyID) {
+				mTab.setValue("Cintolo_Exchange_Rate", null);
+				mTab.clearCurrentRecordWarning();
+				return "";
+			}
+			
+			Timestamp conversionDate = (Timestamp) mTab.getValue("DateAcct");
+			if (conversionDate == null) {
+				conversionDate = (Timestamp) mTab.getValue("DateInvoiced");
+			}
+			if (conversionDate == null) {
+				conversionDate = Env.getDate();
+			}
+			
+			Integer conversionTypeID = getIntValue(mTab.getValue("C_ConversionType_ID"));
+			if (conversionTypeID == null) {
+				conversionTypeID = 0;
+			}
+			
+			Integer orgID = getIntValue(mTab.getValue("AD_Org_ID"));
+			if (orgID == null || orgID <= 0) {
+				orgID = Env.getAD_Org_ID(ctx);
+			}
+			
+			BigDecimal conversionRate = MConversionRate.getRate(
+					invoiceCurrencyID,
+					accountingCurrencyID,
+					conversionDate,
+					conversionTypeID,
+					Env.getAD_Client_ID(ctx),
+					orgID);
+			
+			if (conversionRate != null && conversionRate.compareTo(Env.ZERO) > 0) {
+				// Siempre aplica la cotización vigente para evitar arrastre de valores anteriores.
+				mTab.setValue("Cintolo_Exchange_Rate", conversionRate);
+				mTab.clearCurrentRecordWarning();
+			} else {
+				// Si no hay cotización vigente, limpiar valor para exigir carga manual explícita.
+				mTab.setValue("Cintolo_Exchange_Rate", null);
+				mTab.setCurrentRecordWarning("No existe tasa de cambio para la fecha seleccionada. Debe completar manualmente la Tasa de Cambio de la factura.");
+			}
+			return "";
+		} finally {
+			setCalloutActive(false);
+		}
+	}
+	
+	private Integer getIntValue(Object value) {
+		if (value == null) {
+			return null;
+		}
+		if (value instanceof Integer) {
+			return (Integer)value;
+		}
+		if (value instanceof BigDecimal) {
+			return ((BigDecimal)value).intValue();
+		}
+		try {
+			return Integer.valueOf(value.toString());
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	public String C_Currency_ID(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+	}
+	
+	public String DateInvoiced(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+	}
+	
+	public String DateAcct(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+	}
+	
+	public String C_ConversionType_ID(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+	}
+	
 	
 	// dREHER Jun 25
 	private static int getConversionType(String tipo) {
@@ -410,7 +512,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 
 		}
 
-		return "";
+		return updateInvoiceExchangeRate(ctx, WindowNo, tab);
 	}
 	
 	@Override
@@ -446,7 +548,8 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				
 			}
 		}
-		return ret;
+		String exchangeRateResult = updateInvoiceExchangeRate(ctx, WindowNo, tab);
+		return Util.isEmpty(ret, true) ? exchangeRateResult : ret;
 	}
 	
 	public String calloutCUIT(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
@@ -865,7 +968,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 						.intValue(), pto);
 		}
 
-		return "";
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
     }    // bPartner
     
 	/**
