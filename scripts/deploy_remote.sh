@@ -29,6 +29,87 @@ die() {
     exit 1
 }
 
+read_env_property() {
+    local key="$1"
+    local default_value="${2:-}"
+    local env_file="${OXP_HOME}/LibertyaEnv.properties"
+    local raw_value=""
+
+    if [[ ! -f "${env_file}" ]]; then
+        printf '%s' "${default_value}"
+        return
+    fi
+
+    raw_value="$(grep -m1 "^${key}=" "${env_file}" | cut -d'=' -f2- || true)"
+    if [[ -z "${raw_value}" ]]; then
+        printf '%s' "${default_value}"
+        return
+    fi
+
+    # Compatibilidad mínima con propiedades Java escapadas.
+    raw_value="${raw_value//\\:/:}"
+    raw_value="${raw_value//\\\\/\\}"
+    printf '%s' "${raw_value}"
+}
+
+restore_or_create_keystore() {
+    local keystore_file
+    local keystore_pass
+    local keystore_alias
+    local java_home_from_env
+    local keytool_cmd
+    local host_name
+
+    if [[ -d "${BACKUP_DIR}/keystore" ]]; then
+        log "Restaurando keystore"
+        sudo mkdir -p "${OXP_HOME}/keystore"
+        sudo cp -a "${BACKUP_DIR}/keystore/." "${OXP_HOME}/keystore/"
+    fi
+
+    keystore_file="$(read_env_property "KEYSTORE_OXP" "${OXP_HOME}/keystore/myKeystore")"
+    keystore_pass="$(read_env_property "KEYSTOREPASS_OXP" "libertya")"
+    keystore_alias="$(read_env_property "CODIGOALIASKEYSTORE_OXP" "libertya")"
+    java_home_from_env="$(read_env_property "JAVA_HOME" "")"
+
+    if [[ -z "${keystore_pass}" ]]; then
+        keystore_pass="libertya"
+    fi
+    if [[ -z "${keystore_alias}" ]]; then
+        keystore_alias="libertya"
+    fi
+
+    if [[ "${keystore_file}" != /* ]]; then
+        log "KEYSTORE_OXP inválido (${keystore_file}), usando ${OXP_HOME}/keystore/myKeystore"
+        keystore_file="${OXP_HOME}/keystore/myKeystore"
+    fi
+
+    if sudo test -f "${keystore_file}"; then
+        return
+    fi
+
+    log "Keystore no encontrado en ${keystore_file}, generando uno nuevo"
+    sudo mkdir -p "$(dirname "${keystore_file}")"
+
+    keytool_cmd="keytool"
+    if [[ -n "${java_home_from_env}" && -x "${java_home_from_env}/bin/keytool" ]]; then
+        keytool_cmd="${java_home_from_env}/bin/keytool"
+    elif ! command -v keytool >/dev/null 2>&1; then
+        die "No se encontró keytool para generar ${keystore_file}"
+    fi
+
+    host_name="$(hostname -f 2>/dev/null || hostname)"
+    sudo "${keytool_cmd}" \
+        -genkeypair \
+        -keyalg RSA \
+        -alias "${keystore_alias}" \
+        -dname "CN=${host_name}, OU=Libertya, O=Libertya, L=Buenos Aires, ST=Buenos Aires, C=AR" \
+        -keypass "${keystore_pass}" \
+        -storepass "${keystore_pass}" \
+        -validity 3650 \
+        -keystore "${keystore_file}" \
+        >/dev/null
+}
+
 validate_oxp_home() {
     local p="$1"
 
@@ -165,12 +246,21 @@ if [[ -d "${BACKUP_DIR}/lib/plugins" ]]; then
     find "${BACKUP_DIR}/lib/plugins" -maxdepth 1 -type f -name '*.jar' -exec sudo cp -f {} "${OXP_HOME}/lib/plugins/" \;
 fi
 
+restore_or_create_keystore
+
 log "Aplicando permisos iniciales"
 sudo chown -R "${APP_USER}:${APP_GROUP}" "${OXP_HOME}"
 sudo find "${OXP_HOME}" -type f -name '*.sh' -exec chmod +x {} \;
 
 log "Ejecutando ConfigurarAuto.sh"
-sudo bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
+JAVA_HOME_RUNTIME="$(read_env_property "JAVA_HOME" "")"
+if [[ -n "${JAVA_HOME_RUNTIME}" && -x "${JAVA_HOME_RUNTIME}/bin/java" ]]; then
+    log "Usando JAVA_HOME=${JAVA_HOME_RUNTIME} para ConfigurarAuto.sh"
+    sudo env "JAVA_HOME=${JAVA_HOME_RUNTIME}" "PATH=${JAVA_HOME_RUNTIME}/bin:${PATH}" \
+        bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
+else
+    sudo bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
+fi
 
 log "Aplicando permisos finales"
 sudo chown -R "${APP_USER}:${APP_GROUP}" "${OXP_HOME}"
