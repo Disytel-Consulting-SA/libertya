@@ -262,6 +262,11 @@ else
     sudo bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
 fi
 
+log "Corrigiendo ownership post-configuración"
+sudo chown -R libertya:libertya "${OXP_HOME}"
+log "Asegurando permisos de ejecución en IniciarServidor.sh"
+sudo chmod +x "${OXP_HOME}/utils/IniciarServidor.sh"
+
 log "Aplicando permisos finales"
 sudo chown -R "${APP_USER}:${APP_GROUP}" "${OXP_HOME}"
 
