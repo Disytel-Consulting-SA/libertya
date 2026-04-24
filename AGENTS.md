@@ -15,6 +15,12 @@ El build usa **Apache Ant** invocado por scripts de shell. Se requiere Java 11 (
 cd utils_dev && ./Compilar.sh
 ```
 
+⚠️ **Regla operativa para agentes (obligatoria):**
+- Nunca intentar compilar el proyecto desde el agente.
+- Nunca ejecutar `Compilar.sh` (ni el de `utils_dev/` ni los de cada modulo).
+- Nunca ejecutar `ant` para build en este repositorio.
+- La compilacion la realiza exclusivamente el usuario de forma manual.
+
 `Compilar.sh` sourcea `VariablesCompilacion.sh` (define `JAVA_HOME`, `OXP_HOME`, `JJ_PASSWORD`, rutas de keystore, classpath con JARs de Ant) y ejecuta `ant clean && ant complete`.
 
 **Variables de entorno clave** (se pueden overridear antes de compilar):

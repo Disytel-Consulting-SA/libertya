@@ -1553,6 +1553,11 @@ public class VOrdenPagoModel {
 	public void setPagoNormal(boolean pagoNormal, BigDecimal montoAnticipado) {
 		m_esPagoNormal = pagoNormal;
 		m_montoPagoAnticipado = montoAnticipado;
+		// En OP adelantada no corresponde mantener retenciones previamente calculadas.
+		if (!shouldManageRetentionsInCurrentPayment()) {
+			m_retenciones.clear();
+			retencionIncludedInMedioPago = false;
+		}
 	}
 
 	/**
@@ -1984,7 +1989,10 @@ public class VOrdenPagoModel {
 		// Actualización de información adicional del modelo
 		updateAditionalInfo();
 		// Calcula las retenciones a aplicarle a la entidad comercial
-		if (!isSOTrx() || m_retenciones == null || m_retenciones.size() == 0) {
+		if (!shouldManageRetentionsInCurrentPayment()) {
+			m_retenciones.clear();
+			retencionIncludedInMedioPago = false;
+		} else if (!isSOTrx() || m_retenciones == null || m_retenciones.size() == 0) {
 			/*
 			 * m_retGen = new GeneratorRetenciones(C_BPartner_ID,
 			 * facturasProcesar, manualAmounts, total, isSOTrx());
@@ -2675,14 +2683,20 @@ public class VOrdenPagoModel {
 				saveOk = false;
 				errorNo = PROCERROR_PAYMENTS_GENERATION;
 			} else {
-				// 4. Guardar Retenciones
-				m_retGen.setTrxName(get_TrxName()); // dREHER
-				m_retGen.setProjectID(getProjectID());
-				m_retGen.setCampaignID(getCampaignID());
-				m_retGen.save(hdr);
+				if (shouldManageRetentionsInCurrentPayment()) {
+					// 4. Guardar Retenciones
+					m_retGen.setTrxName(get_TrxName()); // dREHER
+					m_retGen.setProjectID(getProjectID());
+					m_retGen.setCampaignID(getCampaignID());
+					m_retGen.save(hdr);
 
-				// 5. Agregar retenciones como medio de pago
-				agregarRetencionesComoMediosPagos(pagos, hdr);
+					// 5. Agregar retenciones como medio de pago
+					agregarRetencionesComoMediosPagos(pagos, hdr);
+				} else {
+					// En OP adelantada no se deben aplicar retenciones.
+					m_retenciones.clear();
+					retencionIncludedInMedioPago = false;
+				}
 				// Agrego los medios de pagos al generador
 				for (MedioPago pago : pagos) {
 					pago.addToGenerator(getPoGenerator());
@@ -3198,6 +3212,14 @@ public class VOrdenPagoModel {
 
 	public boolean isNormalPayment() {
 		return m_esPagoNormal;
+	}
+	
+	/**
+	 * Define si el flujo actual debe administrar retenciones.
+	 * En OP adelantada no se calculan ni se generan.
+	 */
+	protected boolean shouldManageRetentionsInCurrentPayment() {
+		return m_esPagoNormal || isSOTrx();
 	}
 
 	public Properties getCtx() {
