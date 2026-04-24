@@ -743,12 +743,12 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			}
 		}
 		
-		// dREHER 20 Feb 2026
-		// si existe neto de NC, lo resto del total a considerar para el calculo de retencion, ya que el mismo NO debe computarse como monto imputado
-		
-		debug("Descuento del total el neto de NC. total antes:" + netTotal + " netoNC:" + getNetAmountNC());
-		
-		netTotal = netTotal.subtract(getNetAmountNC());
+		// El neto de NC sólo corresponde al pago actual.
+		// No debe afectar el cálculo de pagos anteriores.
+		if (!isAnterior) {
+			debug("Descuento del total el neto de NC. total antes:" + netTotal + " netoNC:" + getNetAmountNC());
+			netTotal = netTotal.subtract(getNetAmountNC());
+		}
 		
 		return netTotal;
 	}
