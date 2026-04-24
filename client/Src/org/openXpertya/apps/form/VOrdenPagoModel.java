@@ -3641,11 +3641,13 @@ public class VOrdenPagoModel {
 
 	public void addMedioPago(MedioPago mp) {
 		m_mediosPago.add(mp);
+		recalculateNetAmountNCFromCredits();
 		updateAddingMedioPago(mp);
 	}
 
 	public void removeMedioPago(MedioPago mp) {
 		m_mediosPago.remove(mp);
+		recalculateNetAmountNCFromCredits();
 		updateRemovingMedioPago(mp);
 	}
 
@@ -4046,6 +4048,7 @@ public class VOrdenPagoModel {
 		m_mediosPago = new Vector<MedioPago>();
 		m_retGen = null;
 		m_retenciones = new Vector<RetencionProcessor>();
+		netAmountNC = BigDecimal.ZERO;
 		mpayments = new HashMap<Integer, MPayment>();
 		mCashLines = new HashMap<Integer, MCashLine>();
 		aditionalWorkResults = new HashMap<PO, Object>();
@@ -4502,7 +4505,20 @@ public class VOrdenPagoModel {
 		this.isFacturaProveedorTasaCambioInterna = isFacturaProveedorTasaCambioInterna;
 	}
 
+	public void recalculateNetAmountNCFromCredits() {
+		BigDecimal total = BigDecimal.ZERO;
+		for (MedioPago medioPago : m_mediosPago) {
+			if (MedioPago.TIPOMEDIOPAGO_CREDITO.equals(medioPago.getTipoMP())) {
+				total = total.add(medioPago.getImporte());
+			}
+		}
+		setNetAmountNC(total);
+	}
+
 	public BigDecimal getNetAmountNC() {
+		if (netAmountNC == null) {
+			netAmountNC = BigDecimal.ZERO;
+		}
 		return netAmountNC;
 	}
 

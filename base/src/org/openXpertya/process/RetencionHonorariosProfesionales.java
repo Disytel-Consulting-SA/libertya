@@ -96,10 +96,6 @@ public class RetencionHonorariosProfesionales extends AbstractRetencionProcessor
 		baseImponible = baseImponible.subtract(RNL);
 		
 		
-		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
-		baseImponible = baseImponible.subtract(getNetAmountNC());
-		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
-		
 		debug("baseImponible despues de quitar ganancias de otros esquemas= " + baseImponible);
 		
 		// Si la base imponible es menor que cero, entonces no hay retención que aplicar y

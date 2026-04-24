@@ -157,12 +157,6 @@ public class RetencionIIBB extends AbstractRetencionProcessor {
 		
 		baseImponible = baseImponible.subtract(descuentoNeto);
 		
-		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
-		baseImponible = baseImponible.subtract(getNetAmountNC());
-		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
-		
-		
-		
 		BigDecimal porcentajeRetencion = getPorcentajePadron(getPadrones(), getPorcentajeRetencionDefault());
 		
 		/*
