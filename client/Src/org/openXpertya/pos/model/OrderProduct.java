@@ -255,7 +255,7 @@ public class OrderProduct {
 		BigDecimal otherTaxedAmount = amount;
 
 		if (!getProduct().isPerceptionIncludedInPrice()){
-			otherTaxedAmount = amount.add(amount.multiply(getOrder().getSumOtherTaxesRateMultipliers()));
+			otherTaxedAmount = amount.add(amount.multiply(getOtherTaxesRateMultipliers()));
 		}
 		
 		return scaleAmount(otherTaxedAmount);
@@ -390,7 +390,7 @@ public class OrderProduct {
 					BigDecimal.ROUND_HALF_UP);
 		}
 		if(getProduct().isPerceptionIncludedInPrice()){
-			otherTaxPrice = netPrice.multiply(getOrder().getSumOtherTaxesRateMultipliers()).setScale(basePrice.scale(),
+			otherTaxPrice = netPrice.multiply(getOtherTaxesRateMultipliers()).setScale(basePrice.scale(),
 					BigDecimal.ROUND_HALF_UP);
 		}
 		
@@ -419,13 +419,21 @@ public class OrderProduct {
 		// Sumo las alícuotas de otros impuestos como percepciones incluídas
 		BigDecimal taxesToNet = BigDecimal.ZERO;
 		if(getProduct().isPerceptionIncludedInPrice()){
-			taxesToNet = taxesToNet.add(getOrder().getSumOtherTaxesRateMultipliers());
+			taxesToNet = taxesToNet.add(getOtherTaxesRateMultipliers());
 		}
 		// Sumo el impuesto si es que está incluído
 		if(getProduct().isTaxIncludedInPrice()){
 			taxesToNet = taxesToNet.add(getTax().getTaxRateMultiplier());
 		}
 		return taxesToNet;
+	}
+
+	/**
+	 * Suma de alícuotas de otros impuestos del pedido.
+	 * Si la línea aún no fue asociada a un pedido, retorna cero.
+	 */
+	private BigDecimal getOtherTaxesRateMultipliers() {
+		return getOrder() != null ? getOrder().getSumOtherTaxesRateMultipliers() : BigDecimal.ZERO;
 	}
 	
 	/**
