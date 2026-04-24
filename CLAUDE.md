@@ -15,6 +15,12 @@ The build uses **Apache Ant** invoked via shell scripts. Java 11 (OpenJDK) is re
 cd utils_dev && ./Compilar.sh
 ```
 
+⚠️ **Mandatory operational rule for agents:**
+- Never try to compile this project from the agent.
+- Never run `Compilar.sh` (neither `utils_dev/Compilar.sh` nor module-level `Compilar.sh` scripts).
+- Never run `ant` for build tasks in this repository.
+- Compilation is performed manually by the user only.
+
 This sources `VariablesCompilacion.sh` (sets `JAVA_HOME`, `OXP_HOME`, `JJ_PASSWORD`, keystore paths, classpath with Ant JARs) then runs `ant clean && ant complete`.
 
 **Key environment variables** (override before building if needed):
