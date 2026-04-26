@@ -1,0 +1,35 @@
+[Unit]
+Description=Libertya Application Server (JBoss)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=libertya
+Group=libertya
+WorkingDirectory=/ServidorOXP/utils
+Environment=OXP_HOME=/ServidorOXP
+EnvironmentFile=-/etc/sysconfig/libertyad
+EnvironmentFile=-/etc/default/libertyad
+
+# Inicia en foreground para que systemd controle el proceso real.
+ExecStart=/bin/bash -lc 'exec ./IniciarServidor.sh'
+
+# Intenta shutdown limpio por script.
+ExecStop=/bin/bash -lc './DetenerServidor.sh -S'
+
+# Fallback por si quedan procesos huérfanos.
+ExecStopPost=/bin/bash -lc 'pids=$(pgrep -f -- "${OXP_HOME}/jboss" || true); if [ -n "${pids}" ]; then kill -TERM ${pids} || true; sleep 5; kill -KILL ${pids} || true; fi'
+
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=180
+KillMode=mixed
+SuccessExitStatus=143
+UMask=0027
+StandardOutput=journal
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target

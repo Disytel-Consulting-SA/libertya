@@ -14,6 +14,9 @@ APP_GROUP="${APP_GROUP:-libertya}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-3}"
 SERVICE_PID_FILE="${SERVICE_PID_FILE:-/var/run/libertya/libertya.pid}"
 SERVICE_WAIT_TIMEOUT_SECONDS="${SERVICE_WAIT_TIMEOUT_SECONDS:-180}"
+SERVICE_PROCESS_MATCH="${SERVICE_PROCESS_MATCH:-${OXP_HOME}/jboss}"
+WAIT_FOR_PORT_ON_STOP="${WAIT_FOR_PORT_ON_STOP:-false}"
+WAIT_FOR_PORT_ON_START="${WAIT_FOR_PORT_ON_START:-false}"
 
 BASE_DIR="$(dirname "${OXP_HOME}")"
 APP_DIR="$(basename "${OXP_HOME}")"
@@ -179,19 +182,32 @@ start_service() {
     fi
 }
 
+is_truthy() {
+    local value="${1:-}"
+    case "${value,,}" in
+        1|true|yes|y|on)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 detect_wait_port() {
-    local jnp_port
     local web_port
+    local jnp_port
+
+    # Para readiness priorizamos web; JNP queda como fallback.
+    web_port="$(read_env_property "PUERTO_WEB_OXP" "")"
+    if [[ "${web_port}" =~ ^[0-9]+$ ]]; then
+        printf '%s' "${web_port}"
+        return
+    fi
 
     jnp_port="$(read_env_property "PUERTO_JNP_OXP" "")"
     if [[ "${jnp_port}" =~ ^[0-9]+$ ]]; then
         printf '%s' "${jnp_port}"
-        return
-    fi
-
-    web_port="$(read_env_property "PUERTO_WEB_OXP" "")"
-    if [[ "${web_port}" =~ ^[0-9]+$ ]]; then
-        printf '%s' "${web_port}"
         return
     fi
 
@@ -210,6 +226,71 @@ is_pid_running() {
     fi
 
     kill -0 "${pid}" >/dev/null 2>&1
+}
+
+is_service_process_running() {
+    list_service_pids >/dev/null
+}
+
+list_service_pids() {
+    if command -v pgrep >/dev/null 2>&1; then
+        pgrep -f -- "${SERVICE_PROCESS_MATCH}" || true
+        return
+    fi
+
+    ps -eo pid,args \
+        | grep -F -- "${SERVICE_PROCESS_MATCH}" \
+        | grep -Fv -- "grep" \
+        | awk '{print $1}' || true
+}
+
+kill_service_processes() {
+    local signal="$1"
+    local pids
+    local pid
+
+    pids="$(list_service_pids)"
+    if [[ -z "${pids}" ]]; then
+        return 0
+    fi
+
+    log "Enviando señal ${signal} a procesos huérfanos: $(echo "${pids}" | tr '\n' ' ')"
+    while IFS= read -r pid; do
+        [[ -n "${pid}" ]] || continue
+        sudo kill "-${signal}" "${pid}" >/dev/null 2>&1 || true
+    done <<< "${pids}"
+}
+
+try_graceful_stop_from_utils() {
+    local stop_script="${OXP_HOME}/utils/DetenerServidor.sh"
+    if [[ ! -x "${stop_script}" ]]; then
+        return 0
+    fi
+
+    log "Intentando detener con ${stop_script}"
+    sudo -u "${APP_USER}" env "OXP_HOME=${OXP_HOME}" \
+        bash -c "cd '${OXP_HOME}/utils' && ./DetenerServidor.sh -S" >/dev/null 2>&1 || true
+}
+
+force_stop_orphan_processes() {
+    local wait_port="${1:-}"
+
+    if wait_for_service_stop "${wait_port}" 15; then
+        return 0
+    fi
+
+    try_graceful_stop_from_utils
+    if wait_for_service_stop "${wait_port}" 30; then
+        return 0
+    fi
+
+    kill_service_processes TERM
+    if wait_for_service_stop "${wait_port}" 20; then
+        return 0
+    fi
+
+    kill_service_processes KILL
+    wait_for_service_stop "${wait_port}" 10
 }
 
 cleanup_stale_pid_file() {
@@ -232,15 +313,23 @@ is_port_listening() {
 
 wait_for_service_stop() {
     local wait_port="${1:-}"
+    local timeout_seconds="${2:-${SERVICE_WAIT_TIMEOUT_SECONDS}}"
     local waited=0
     local pid_stopped=0
+    local process_stopped=0
     local port_stopped=1
 
-    while (( waited < SERVICE_WAIT_TIMEOUT_SECONDS )); do
+    while (( waited < timeout_seconds )); do
         if is_pid_running; then
             pid_stopped=0
         else
             pid_stopped=1
+        fi
+
+        if is_service_process_running; then
+            process_stopped=0
+        else
+            process_stopped=1
         fi
 
         port_stopped=1
@@ -248,7 +337,7 @@ wait_for_service_stop() {
             port_stopped=0
         fi
 
-        if (( pid_stopped == 1 && port_stopped == 1 )); then
+        if (( pid_stopped == 1 && process_stopped == 1 && port_stopped == 1 )); then
             return 0
         fi
 
@@ -261,15 +350,23 @@ wait_for_service_stop() {
 
 wait_for_service_start() {
     local wait_port="${1:-}"
+    local timeout_seconds="${2:-${SERVICE_WAIT_TIMEOUT_SECONDS}}"
     local waited=0
     local pid_started=0
+    local process_started=0
     local port_started=1
 
-    while (( waited < SERVICE_WAIT_TIMEOUT_SECONDS )); do
+    while (( waited < timeout_seconds )); do
         if is_pid_running; then
             pid_started=1
         else
             pid_started=0
+        fi
+
+        if is_service_process_running; then
+            process_started=1
+        else
+            process_started=0
         fi
 
         port_started=1
@@ -281,7 +378,7 @@ wait_for_service_start() {
             fi
         fi
 
-        if (( pid_started == 1 && port_started == 1 )); then
+        if (( (pid_started == 1 || process_started == 1) && port_started == 1 )); then
             return 0
         fi
 
@@ -341,13 +438,19 @@ else
 fi
 
 log "Deteniendo servicio ${SERVICE_NAME}"
-WAIT_PORT="$(detect_wait_port)"
-if [[ -n "${WAIT_PORT}" ]]; then
-    log "Esperando liberación de puerto ${WAIT_PORT}"
+WAIT_PORT=""
+if is_truthy "${WAIT_FOR_PORT_ON_STOP}"; then
+    WAIT_PORT="$(detect_wait_port)"
+    if [[ -n "${WAIT_PORT}" ]]; then
+        log "Esperando liberación de puerto ${WAIT_PORT}"
+    fi
 fi
 stop_service
 if ! wait_for_service_stop "${WAIT_PORT}"; then
-    die "Timeout esperando que ${SERVICE_NAME} se detenga por completo"
+    log "Stop normal no detuvo todos los procesos de ${SERVICE_NAME}; intentando limpieza forzada"
+    if ! force_stop_orphan_processes "${WAIT_PORT}"; then
+        die "Timeout esperando que ${SERVICE_NAME} se detenga por completo"
+    fi
 fi
 cleanup_stale_pid_file
 
@@ -392,9 +495,12 @@ log "Aplicando permisos finales"
 sudo chown -R "${APP_USER}:${APP_GROUP}" "${OXP_HOME}"
 
 log "Iniciando servicio ${SERVICE_NAME}"
-WAIT_PORT="$(detect_wait_port)"
-if [[ -n "${WAIT_PORT}" ]]; then
-    log "Esperando apertura de puerto ${WAIT_PORT}"
+WAIT_PORT=""
+if is_truthy "${WAIT_FOR_PORT_ON_START}"; then
+    WAIT_PORT="$(detect_wait_port)"
+    if [[ -n "${WAIT_PORT}" ]]; then
+        log "Esperando apertura de puerto ${WAIT_PORT}"
+    fi
 fi
 start_service
 if ! wait_for_service_start "${WAIT_PORT}"; then
