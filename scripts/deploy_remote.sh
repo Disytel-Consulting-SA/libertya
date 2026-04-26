@@ -229,7 +229,9 @@ is_pid_running() {
 }
 
 is_service_process_running() {
-    list_service_pids >/dev/null
+    local pids
+    pids="$(list_service_pids)"
+    [[ -n "${pids}" ]]
 }
 
 list_service_pids() {
