@@ -12,6 +12,8 @@ SERVICE_NAME="${SERVICE_NAME:-libertyad}"
 APP_USER="${APP_USER:-libertya}"
 APP_GROUP="${APP_GROUP:-libertya}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-3}"
+SERVICE_PID_FILE="${SERVICE_PID_FILE:-/var/run/libertya/libertya.pid}"
+SERVICE_WAIT_TIMEOUT_SECONDS="${SERVICE_WAIT_TIMEOUT_SECONDS:-180}"
 
 BASE_DIR="$(dirname "${OXP_HOME}")"
 APP_DIR="$(basename "${OXP_HOME}")"
@@ -177,6 +179,119 @@ start_service() {
     fi
 }
 
+detect_wait_port() {
+    local jnp_port
+    local web_port
+
+    jnp_port="$(read_env_property "PUERTO_JNP_OXP" "")"
+    if [[ "${jnp_port}" =~ ^[0-9]+$ ]]; then
+        printf '%s' "${jnp_port}"
+        return
+    fi
+
+    web_port="$(read_env_property "PUERTO_WEB_OXP" "")"
+    if [[ "${web_port}" =~ ^[0-9]+$ ]]; then
+        printf '%s' "${web_port}"
+        return
+    fi
+
+    printf ''
+}
+
+is_pid_running() {
+    local pid
+    if [[ ! -f "${SERVICE_PID_FILE}" ]]; then
+        return 1
+    fi
+
+    pid="$(cat "${SERVICE_PID_FILE}" 2>/dev/null || true)"
+    if [[ ! "${pid}" =~ ^[0-9]+$ ]]; then
+        return 1
+    fi
+
+    kill -0 "${pid}" >/dev/null 2>&1
+}
+
+cleanup_stale_pid_file() {
+    if [[ -f "${SERVICE_PID_FILE}" ]] && ! is_pid_running; then
+        log "Eliminando PID stale: ${SERVICE_PID_FILE}"
+        sudo rm -f "${SERVICE_PID_FILE}"
+    fi
+}
+
+is_port_listening() {
+    local port="$1"
+
+    if command -v ss >/dev/null 2>&1; then
+        ss -ltn "sport = :${port}" 2>/dev/null | tail -n +2 | grep -q .
+        return
+    fi
+
+    netstat -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "[:.]${port}$"
+}
+
+wait_for_service_stop() {
+    local wait_port="${1:-}"
+    local waited=0
+    local pid_stopped=0
+    local port_stopped=1
+
+    while (( waited < SERVICE_WAIT_TIMEOUT_SECONDS )); do
+        if is_pid_running; then
+            pid_stopped=0
+        else
+            pid_stopped=1
+        fi
+
+        port_stopped=1
+        if [[ -n "${wait_port}" ]] && is_port_listening "${wait_port}"; then
+            port_stopped=0
+        fi
+
+        if (( pid_stopped == 1 && port_stopped == 1 )); then
+            return 0
+        fi
+
+        sleep 1
+        waited=$((waited + 1))
+    done
+
+    return 1
+}
+
+wait_for_service_start() {
+    local wait_port="${1:-}"
+    local waited=0
+    local pid_started=0
+    local port_started=1
+
+    while (( waited < SERVICE_WAIT_TIMEOUT_SECONDS )); do
+        if is_pid_running; then
+            pid_started=1
+        else
+            pid_started=0
+        fi
+
+        port_started=1
+        if [[ -n "${wait_port}" ]]; then
+            if is_port_listening "${wait_port}"; then
+                port_started=1
+            else
+                port_started=0
+            fi
+        fi
+
+        if (( pid_started == 1 && port_started == 1 )); then
+            return 0
+        fi
+
+        sleep 1
+        waited=$((waited + 1))
+    done
+
+    return 1
+}
+
 rollback() {
     set +e
 
@@ -226,7 +341,15 @@ else
 fi
 
 log "Deteniendo servicio ${SERVICE_NAME}"
+WAIT_PORT="$(detect_wait_port)"
+if [[ -n "${WAIT_PORT}" ]]; then
+    log "Esperando liberación de puerto ${WAIT_PORT}"
+fi
 stop_service
+if ! wait_for_service_stop "${WAIT_PORT}"; then
+    die "Timeout esperando que ${SERVICE_NAME} se detenga por completo"
+fi
+cleanup_stale_pid_file
 
 log "Creando backup: ${BACKUP_DIR}"
 sudo mv "${OXP_HOME}" "${BACKUP_DIR}"
@@ -256,14 +379,12 @@ log "Ejecutando ConfigurarAuto.sh"
 JAVA_HOME_RUNTIME="$(read_env_property "JAVA_HOME" "")"
 if [[ -n "${JAVA_HOME_RUNTIME}" && -x "${JAVA_HOME_RUNTIME}/bin/java" ]]; then
     log "Usando JAVA_HOME=${JAVA_HOME_RUNTIME} para ConfigurarAuto.sh"
-    sudo env "JAVA_HOME=${JAVA_HOME_RUNTIME}" "PATH=${JAVA_HOME_RUNTIME}/bin:${PATH}" \
+    sudo -u "${APP_USER}" env "OXP_HOME=${OXP_HOME}" "JAVA_HOME=${JAVA_HOME_RUNTIME}" "PATH=${JAVA_HOME_RUNTIME}/bin:${PATH}" \
         bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
 else
-    sudo bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
+    sudo -u "${APP_USER}" env "OXP_HOME=${OXP_HOME}" bash -c "cd '${OXP_HOME}' && ./ConfigurarAuto.sh"
 fi
 
-log "Corrigiendo ownership post-configuración"
-sudo chown -R libertya:libertya "${OXP_HOME}"
 log "Asegurando permisos de ejecución en IniciarServidor.sh"
 sudo chmod +x "${OXP_HOME}/utils/IniciarServidor.sh"
 
@@ -271,7 +392,22 @@ log "Aplicando permisos finales"
 sudo chown -R "${APP_USER}:${APP_GROUP}" "${OXP_HOME}"
 
 log "Iniciando servicio ${SERVICE_NAME}"
+WAIT_PORT="$(detect_wait_port)"
+if [[ -n "${WAIT_PORT}" ]]; then
+    log "Esperando apertura de puerto ${WAIT_PORT}"
+fi
 start_service
+if ! wait_for_service_start "${WAIT_PORT}"; then
+    log "Fallo al iniciar ${SERVICE_NAME}. Últimos logs relevantes:"
+    if command -v systemctl >/dev/null 2>&1; then
+        sudo systemctl --no-pager --full status "${SERVICE_NAME}" || true
+    fi
+    if [[ -f "${OXP_HOME}/jboss/server/openXpertya/log/server.log" ]]; then
+        sudo tail -n 120 "${OXP_HOME}/jboss/server/openXpertya/log/server.log" || true
+    fi
+    die "Servicio ${SERVICE_NAME} no quedó operativo tras el start"
+fi
+cleanup_stale_pid_file
 
 DEPLOY_STARTED=0
 cleanup_old_backups "${BACKUP_RETENTION_DAYS}"
