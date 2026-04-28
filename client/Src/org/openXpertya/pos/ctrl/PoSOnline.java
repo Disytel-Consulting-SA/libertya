@@ -1104,6 +1104,9 @@ public class PoSOnline extends PoSConnectionState {
 	private void adjustPayments(Order order) {
 		
 		BigDecimal change = order.getTotalChangeCashAmt();
+		// Si la factura quedó con un centavo de diferencia respecto del total
+		// TPV, ajustar el vuelto para mantener alineados factura y cobranza.
+		change = adjustCashChangeFromInvoiceDiff(order, change);
 		
 		for (int i = cashPayments.size()-1; i >= 0 && change.compareTo(BigDecimal.ZERO) > 0; i--) {
 			CashPayment p = cashPayments.get(i);
@@ -1137,6 +1140,28 @@ public class PoSOnline extends PoSConnectionState {
 			}
 		}
 		
+	}
+
+	/**
+	 * Ajusta el vuelto en efectivo cuando la factura difiere por centavos del
+	 * total TPV, de forma que el neto cobrado quede alineado con la factura.
+	 */
+	private BigDecimal adjustCashChangeFromInvoiceDiff(Order order, BigDecimal cashChange) {
+		BigDecimal adjustedChange = cashChange;
+		if (invoice == null || cashChange == null) {
+			return adjustedChange;
+		}
+		BigDecimal invoiceOrderDiff = invoice.getGrandTotal().subtract(order.getTotalAmount());
+		if (invoiceOrderDiff.abs().compareTo(getRedondeo()) <= 0) {
+			BigDecimal candidateChange = cashChange.subtract(invoiceOrderDiff);
+			if (candidateChange.compareTo(BigDecimal.ZERO) >= 0) {
+				adjustedChange = candidateChange;
+				debug("Ajuste vuelto TPV por diferencia Factura/TPV. diff="
+						+ invoiceOrderDiff + ", vueltoOriginal=" + cashChange
+						+ ", vueltoAjustado=" + adjustedChange);
+			}
+		}
+		return adjustedChange;
 	}
 	
 	public boolean balanceValidate(Order order) {
