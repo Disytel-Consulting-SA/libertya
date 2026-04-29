@@ -1729,10 +1729,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	}
 
 	/**
-	 * Obtener el total neto de pagos anteriores. Los pagos anteriores engloban
-	 * payments anticipados e imputados parcial o completamente, cashlines
-	 * anticipados e imputados parcial o completamente y retenciones aplicadas
-	 * con anterioridad
+	 * Obtener el total neto de pagos anteriores. Para cálculo de retenciones se
+	 * consideran únicamente payments/cashlines imputados (asignaciones
+	 * definitivas), excluyendo pagos adelantados (OPA), y retenciones aplicadas
+	 * con anterioridad.
 	 * 
 	 * @param bpartner
 	 *            entidad comercial
@@ -1758,29 +1758,12 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		BigDecimal total = BigDecimal.ZERO;
 
 		// 1) Payments
-		// Para los pagos adelantados se toma el total porque no se puede
-		// obtener
-		// el neto. Los pagos adelantados son los que no se encuentran en ningún
-		// allocation o en algún allocation de tipo OPA. TODO: se debería crear
-		// un campo en el pago registrando el neto de ese pago.
-		// Para los pagos imputados en algún allocation se debe ponderar la
-		// factura con el pago para obtener el neto del pago. Si el pago
-		// isAllocated = Y, se determina el neto a partir de todos los amts de
-		// los allocations ya que determinan los montos imputados. Encontrar
-		// todas las facturas y ponderar el neto. Si el pago isAllocated = 'N' y
-		// estamos en esta instancia significa que el pago está imputado en
-		// algún allocation que no es OPA. Puede ser que se repitan un pago en
-		// un allocation OPA y en otro allocation, por lo que para no interferir
-		// se guarda en una map con clave c_payment y valor amount, donde amount
-		// puede ser: 1) el valor total del pago para pagos adelantados
-		// solamente; 2) El paymentAvailable del pago que se tomará como pago
-		// adelantado. 3) Los netos de los pagos asignados a las facturas.
+		// Para base imponible de retención solo se toman pagos imputados en
+		// asignaciones definitivas (allocationtype <> 'OPA').
 
 		// 2) CashLines
-		// Ídem payments. Pero el campo isAllocated por lo visto no se utiliza
-		// como en C_Payment, por lo tanto si queda resto del pago va al total,
-		// no se calcula el neto, para esto TODO se debería crear un campo para
-		// registrar el neto de cashline.
+		// Ídem payments, solo cashlines imputados en asignaciones definitivas
+		// (allocationtype <> 'OPA').
 
 		// 3) Retenciones
 		// Se tomará el total de las retenciones anteriores ya que las
@@ -1788,7 +1771,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 
 		try {
 			// 1) Payments
-			Map<Integer, BigDecimal> payments = getSumaPagosAnteriores(
+			Map<Integer, BigDecimal> payments = getSumaPagosImputadosAnteriores(
 					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
 			
@@ -1797,7 +1780,7 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			total = total.add(totPagosAnteriores);
 			
 			// 2) Cashlines
-			Map<Integer, BigDecimal> cashlines = getSumaCashLinesAnteriores(
+			Map<Integer, BigDecimal> cashlines = getSumaCashLinesImputadosAnteriores(
 					getBPartner(), clientID, dateFrom, dateTo,
 					getRetencionSchema());
 			BigDecimal totCashLinesAnteriores = getSumAmts(new ArrayList<BigDecimal>(cashlines.values()));
