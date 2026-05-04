@@ -103,6 +103,7 @@ Este Fichero sirve para compilar el subproyecto base independiente del proyecto 
         <include name="**/*.afm"/>
         <include name="**/*.html"/>
         <include name="**/*.properties"/>
+        <include name="**/VERSION"/>
         <exclude name="**/package.html"/>
       </fileset>
     </copy>

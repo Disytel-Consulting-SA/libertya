@@ -2107,8 +2107,21 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// el valor elegido con el que tiene asociada la secuencia del tipo de
 		// documento.
 
+		Integer letraComprobanteID = (Integer) hm.get("C_Letra_Comprobante_ID");
 		if (getC_Letra_Comprobante_ID() != 0
-				&& (Integer) hm.get("C_Letra_Comprobante_ID") != getC_Letra_Comprobante_ID()) {
+				&& (letraComprobanteID == null || letraComprobanteID.intValue() != getC_Letra_Comprobante_ID())) {
+			String letraDocNo = "";
+			if (!Util.isEmpty(getDocumentNo(), true) && getDocumentNo().length() > 0) {
+				letraDocNo = getDocumentNo().substring(0, 1);
+			}
+			log.warning("completarPuntoLetraNumeroDoc mismatch: "
+					+ "C_Invoice_ID=" + getC_Invoice_ID()
+					+ ", AD_Client_ID=" + getAD_Client_ID()
+					+ ", C_DocTypeTarget_ID=" + getC_DocTypeTarget_ID()
+					+ ", DocumentNo=" + getDocumentNo()
+					+ ", letraDocNo=" + letraDocNo
+					+ ", C_Letra_Comprobante_ID(invoice)=" + getC_Letra_Comprobante_ID()
+					+ ", C_Letra_Comprobante_ID(parsed)=" + letraComprobanteID);
 			log.saveError("SaveError", Msg.translate(Env.getCtx(), "DiferentDocTypeLetraComprobanteError"));
 			return false;
 		}
@@ -9321,6 +9334,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		if(status && DOCACTION_Complete.equals(processAction)) {
 			MDocType dt = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 			if(!Util.isEmpty(dt.getDocNoSequence_Unique_ID(), true)) {
+				// En facturas de venta con validaciones AR, el DocumentNo debe conservar
+				// el formato fiscal (Letra + Punto de Venta + Número de comprobante).
+				// Reemplazarlo por una secuencia única rompe validaciones posteriores.
+				if (isSOTrx() && LocaleARUtils.doDocumentLARValidations(dt)) {
+					return newStatus;
+				}
 				String newDocNo = DB.getUniqueDocumentNo(dt.getID(), get_TrxName());
 				if(Util.isEmpty(newDocNo, true)) {
 					setProcessMsg(Msg.getMsg(getCtx(), "UniqueDocumentNoError"));

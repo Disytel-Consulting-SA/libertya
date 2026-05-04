@@ -380,8 +380,8 @@ public final class ALogin extends JDialog implements ActionListener,ChangeListen
         //
 
         titleLabel.setHorizontalAlignment( SwingConstants.CENTER );
-        versionLabel.setText( OpenXpertya.MAIN_VERSION );
-        versionLabel.setToolTipText( OpenXpertya.getImplementationVersion());
+        versionLabel.setText( OpenXpertya.getDisplayVersionLabel());
+        versionLabel.setToolTipText( OpenXpertya.getBuildVersionLabel());
         hostLabel.setHorizontalAlignment( SwingConstants.RIGHT );
         hostLabel.setText( "Host" );
         connectionPanel.add( hostLabel,new GridBagConstraints( 0,2,1,1,0.0,0.0,GridBagConstraints.EAST,GridBagConstraints.NONE,new Insets( 5,12,5,5 ),0,0 ));

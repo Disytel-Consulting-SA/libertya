@@ -205,6 +205,7 @@ pipeline {
 
                     def buildInfoContent = [
                         "branch=${env.BRANCH_NAME}",
+                        "channel=${env.BRANCH_NAME == 'dev' ? 'dev' : 'release'}",
                         "commit=${env.LIBERTYA_COMMIT}",
                         "jenkins_build=${env.BUILD_NUMBER}",
                         "built_at=${builtAt}"
