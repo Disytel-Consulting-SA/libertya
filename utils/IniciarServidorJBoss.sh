@@ -18,4 +18,4 @@ JAVA_OPTS="-server $OPCIONES_JAVA_OXP -Djava.awt.headless=true"
 
 export JAVA_OPTS
 
-$JBOSS_HOME/bin/run.sh -c openXpertya
+exec $JBOSS_HOME/bin/run.sh -c openXpertya
