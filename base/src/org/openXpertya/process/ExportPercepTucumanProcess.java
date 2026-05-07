@@ -24,6 +24,7 @@ public class ExportPercepTucumanProcess extends SvrProcess {
 	private Timestamp date_from;
 	private Timestamp date_to;
 	private int ad_org_id;
+	private File targetDir;
 
 	/** Archivo a exportar */
 	private File exportFile;
@@ -57,11 +58,7 @@ public class ExportPercepTucumanProcess extends SvrProcess {
 
 	@Override
 	protected String doIt() throws Exception {
-		// Control del directorio de destino
-		File targetDir = new File(directorio);
-		if (!targetDir.exists())
-			// targetDir.mkdir();
-			System.out.println("Directorio inexistente.");
+		validateTargetDir();
 
 		createFile("DATOS");
 		createFile("RETPER");
@@ -70,14 +67,32 @@ public class ExportPercepTucumanProcess extends SvrProcess {
 		return "Exportación Finalizada";
 	}
 	
-	private void createFile(String name) {
-		String fullFileName = directorio + name + ".txt";
+	private void validateTargetDir() throws Exception {
+		if (directorio == null || directorio.trim().length() == 0) {
+			throw new Exception("Debe indicar un directorio de destino.");
+		}
+		targetDir = new File(directorio.trim());
+		if (!targetDir.exists()) {
+			throw new Exception("El directorio de destino no existe: " + targetDir.getPath());
+		}
+		if (!targetDir.isDirectory()) {
+			throw new Exception("La ruta indicada no es un directorio: " + targetDir.getPath());
+		}
+		if (!targetDir.canWrite()) {
+			throw new Exception("No posee permisos de escritura en el directorio: " + targetDir.getPath());
+		}
+	}
+	
+	private void createFile(String name) throws Exception {
+		String fullFileName = new File(targetDir, name + ".txt").getPath();
 		String sql = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
+		boolean shouldCloseWriter = false;
 
 		try {
 			this.createDocument(fullFileName);
+			shouldCloseWriter = true;
 			if (name.equalsIgnoreCase("DATOS")) {
 				sql = getSqlDATOS();
 				pstmt = DB.prepareStatement(sql);
@@ -95,11 +110,16 @@ public class ExportPercepTucumanProcess extends SvrProcess {
 				putRsInFileNCFACT(rs);
 			}
 			this.saveDocument();
+			shouldCloseWriter = false;
 		} catch (Exception e) {
 			log.saveError("Exportación Percep Tucumán - " + name, e);
-			e.printStackTrace();
+			throw new Exception("No se pudo generar el archivo " + name + ".txt en " + targetDir.getPath()
+					+ ". Detalle: " + e.getLocalizedMessage(), e);
 		} finally {
 			try {
+				if (shouldCloseWriter && getFileWriter() != null) {
+					getFileWriter().close();
+				}
 				if (pstmt != null) {
 					pstmt.close();
 				}
@@ -108,7 +128,6 @@ public class ExportPercepTucumanProcess extends SvrProcess {
 				}
 			} catch (Exception e2) {
 				log.saveError("Exportación Percep Tucumán - " + name, e2);
-				e2.printStackTrace();
 			}
 		}
 	}
