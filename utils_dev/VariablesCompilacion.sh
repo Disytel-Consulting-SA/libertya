@@ -76,7 +76,7 @@ fi
 export CURRENTDIR=`pwd`
 #  Set Version
 export VERSION_OXP=Libertya
-export VERSION_OXP_FILE=V25.0
+export VERSION_OXP_FILE=V26.05
 export CONSULTORA_OXP=SERVICIOS_DIGITALES
 
 #	ClassPath
