@@ -162,10 +162,6 @@ public class RetencionGanancias extends AbstractRetencionProcessor {
 		baseImponible = PPA.add(PNA).subtract(
 				INI);
 		
-		// dREHER Feb 26 descuento las NC que se cargaron en la OP 
-		baseImponible = baseImponible.subtract(getNetAmountNC());
-		debug("baseImponible despues de quitar monto neto de NC= " + baseImponible);
-		
 		debug("baseImponible antes de quitar ganancias de otros esquemas= " + baseImponible);
 		
 		// dREHER Marzo 25

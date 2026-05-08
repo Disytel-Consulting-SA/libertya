@@ -22,8 +22,15 @@ package org.openXpertya;
 
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Enumeration;
+import java.util.Properties;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -60,13 +67,27 @@ public final class OpenXpertya {
     static public final String	ID	= "$Id: OpenXpertya.java,v 2.2 $";
 
     /** Descripción de Campo */
-    static public final String	MAIN_VERSION	= "Versi\u00f3n 25.0";
+    static private final String	RELEASE_VERSION_FALLBACK	= "25.0";
+    static private final String	RELEASE_VERSION_FILENAME	= "VERSION";
+    static private final String	BUILD_INFO_FILENAME	= "BUILD_INFO.properties";
+    static private final String	BUILD_INFO_FILE_PROPERTY	= "BUILD_INFO_FILE";
+    static private final String	BUILD_INFO_KEY_BRANCH	= "branch";
+    static private final String	BUILD_INFO_KEY_COMMIT	= "commit";
+    static private final String	BUILD_INFO_KEY_CHANNEL	= "channel";
+    static private final String	BUILD_CHANNEL_DEV	= "dev";
+    static private final String	BUILD_CHANNEL_RELEASE	= "release";
+    static private final String	VERSION_PREFIX_ES	= "Versi\u00f3n ";
+    static private final String	VERSION_PREFIX_EN	= "Version ";
+    static private final String	RELEASE_VERSION	= loadReleaseVersion();
 
     /** Descripción de Campo */
-    static public final String	DATE_VERSION	= "12-11-2025";
+    static public final String	MAIN_VERSION	= VERSION_PREFIX_ES + RELEASE_VERSION;
 
     /** Descripción de Campo */
-    static public final String	DB_VERSION	= "12-11-2025";
+    static public final String	DATE_VERSION	= "08-05-2026";
+
+    /** Descripción de Campo */
+    static public final String	DB_VERSION	= "08-05-2026";
 
     /** Descripción de Campo */
     static public final String	NAME	= "Libertya \u00AE";
@@ -97,7 +118,7 @@ public final class OpenXpertya {
     static public final String	OXP_R	= "Libertya\u00AE";
 
     /** Descripción de Campo */
-    static public final String	COPYRIGHT	= "\u00A9 2025 DISYTEL";
+    static public final String	COPYRIGHT	= "\u00A9 2026 DISYTEL";
 
     /** Descripción de Campo */
     static private String	s_ImplementationVersion	= null;
@@ -121,6 +142,9 @@ public final class OpenXpertya {
     static private ImageIcon	s_imageIconLogo;
 
     /** Descripción de Campo */
+    static private Properties	s_buildInfo;
+
+    /** Descripción de Campo */
     private static CLogger	log	= null;
 
     /**
@@ -134,6 +158,70 @@ public final class OpenXpertya {
     }		// getName
 
     /**
+     * Version de release visible
+     * @return version release
+     */
+    public static String getReleaseVersion() {
+        return RELEASE_VERSION;
+    }
+
+    /**
+     * Version de visualizacion (considerando canal/commit de build)
+     * @return version visible
+     */
+    public static String getDisplayVersion() {
+        String releaseVersion = getReleaseVersion();
+        Properties buildInfo = getBuildInfo();
+        String branch = getBuildInfoValue(buildInfo, BUILD_INFO_KEY_BRANCH);
+        String commit = getBuildInfoValue(buildInfo, BUILD_INFO_KEY_COMMIT);
+        String channel = getBuildInfoValue(buildInfo, BUILD_INFO_KEY_CHANNEL);
+
+        boolean devBuild = false;
+        if (BUILD_CHANNEL_DEV.equalsIgnoreCase(channel)) {
+            devBuild = true;
+        } else if (BUILD_CHANNEL_RELEASE.equalsIgnoreCase(channel)) {
+            devBuild = false;
+        } else {
+            devBuild = BUILD_CHANNEL_DEV.equalsIgnoreCase(branch);
+        }
+
+        if (!devBuild) {
+            return releaseVersion;
+        }
+        if (Util.isEmpty(commit, true)) {
+            return releaseVersion + "-dev";
+        }
+        return releaseVersion + "-dev-" + commit;
+    }
+
+    /**
+     * Etiqueta de version a mostrar
+     * @return etiqueta de version
+     */
+    public static String getDisplayVersionLabel() {
+        return VERSION_PREFIX_ES + getDisplayVersion();
+    }
+
+    /**
+     * Version de build para mostrar en UI
+     * @return version de build legible
+     */
+    public static String getBuildVersionLabel() {
+        String buildVersion = getImplementationVersion();
+        if (buildVersion == null) {
+            return "";
+        }
+        buildVersion = buildVersion.trim();
+        if (buildVersion.startsWith(VERSION_PREFIX_ES)) {
+            return buildVersion.substring(VERSION_PREFIX_ES.length()).trim();
+        }
+        if (buildVersion.startsWith(VERSION_PREFIX_EN)) {
+            return buildVersion.substring(VERSION_PREFIX_EN.length()).trim();
+        }
+        return buildVersion;
+    }
+
+    /**
      * Descripción de Método
      *
      *
@@ -142,6 +230,226 @@ public final class OpenXpertya {
     public static String getVersion() {
         return MAIN_VERSION + " - " + DATE_VERSION;
     }		// getVersion
+
+    /**
+     * Carga version release desde archivo VERSION
+     * @return version release
+     */
+    private static String loadReleaseVersion() {
+        String fileVersion = readVersionFromFile(new File(getOXPHome(), RELEASE_VERSION_FILENAME));
+        if (!Util.isEmpty(fileVersion, true)) {
+            return fileVersion;
+        }
+        InputStream is = null;
+        try {
+            is = OpenXpertya.class.getResourceAsStream(RELEASE_VERSION_FILENAME);
+            String resourceVersion = readVersionFromStream(is);
+            if (!Util.isEmpty(resourceVersion, true)) {
+                return resourceVersion;
+            }
+        } catch (Exception e) {
+        	// Usar fallback
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {}
+            }
+        }
+        return RELEASE_VERSION_FALLBACK;
+    }
+
+    /**
+     * Lee archivo VERSION externo
+     * @param file archivo version
+     * @return version o null
+     */
+    private static String readVersionFromFile(File file) {
+        if (file == null || !file.exists() || !file.isFile()) {
+            return null;
+        }
+        InputStream is = null;
+        try {
+            is = new FileInputStream(file);
+            return readVersionFromStream(is);
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {}
+            }
+        }
+    }
+
+    /**
+     * Lee primera linea significativa de stream de version
+     * @param is stream
+     * @return version o null
+     * @throws IOException
+     */
+    private static String readVersionFromStream(InputStream is) throws IOException {
+        if (is == null) {
+            return null;
+        }
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.length() == 0 || line.startsWith("#")) {
+                    continue;
+                }
+                return line;
+            }
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {}
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene build-info cacheado (archivo editable en OXP_HOME)
+     * @return propiedades de build
+     */
+    private static synchronized Properties getBuildInfo() {
+        if (s_buildInfo != null) {
+            return s_buildInfo;
+        }
+        s_buildInfo = new Properties();
+        File buildInfo = getBuildInfoFile();
+        if (buildInfo == null) {
+            return s_buildInfo;
+        }
+        FileInputStream fis = null;
+        InputStreamReader isr = null;
+        try {
+            fis = new FileInputStream(buildInfo);
+            isr = new InputStreamReader(fis, "UTF-8");
+            Properties rawBuildInfo = new Properties();
+            rawBuildInfo.load(isr);
+            s_buildInfo = normalizeBuildInfo(rawBuildInfo);
+        } catch (Exception e) {
+        	// No bloquear startup/login por metadatos de build
+        } finally {
+        	if (isr != null) {
+        		try {
+        			isr.close();
+        		} catch (IOException e) {}
+        	}
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {}
+            }
+        }
+        return s_buildInfo;
+    }
+
+    /**
+     * Obtiene valor de propiedad de build-info sin espacios
+     * @param buildInfo propiedades
+     * @param key clave
+     * @return valor o vacio
+     */
+    private static String getBuildInfoValue(Properties buildInfo, String key) {
+        if (buildInfo == null || key == null) {
+            return "";
+        }
+        String value = buildInfo.getProperty(key);
+        return value == null ? "" : value.trim();
+    }
+
+    /**
+     * Determina la ubicacion de BUILD_INFO.properties para distintos entornos
+     * @return archivo si existe, null en caso contrario
+     */
+    private static File getBuildInfoFile() {
+    	String configuredPath = System.getProperty(BUILD_INFO_FILE_PROPERTY);
+    	if (!Util.isEmpty(configuredPath, true)) {
+    		File configuredFile = new File(configuredPath.trim());
+    		if (isReadableFile(configuredFile)) {
+    			return configuredFile;
+    		}
+    	}
+    	File buildInfo = new File(getOXPHome(), BUILD_INFO_FILENAME);
+    	if (isReadableFile(buildInfo)) {
+    		return buildInfo;
+    	}
+    	String oxpHome = Ini.findOXPHome();
+    	if (!Util.isEmpty(oxpHome, true)) {
+    		buildInfo = new File(oxpHome, BUILD_INFO_FILENAME);
+    		if (isReadableFile(buildInfo)) {
+    			return buildInfo;
+    		}
+    	}
+    	String userDir = System.getProperty("user.dir");
+    	if (!Util.isEmpty(userDir, true)) {
+    		buildInfo = new File(userDir, BUILD_INFO_FILENAME);
+    		if (isReadableFile(buildInfo)) {
+    			return buildInfo;
+    		}
+    	}
+    	buildInfo = new File(BUILD_INFO_FILENAME);
+    	if (isReadableFile(buildInfo)) {
+    		return buildInfo;
+    	}
+    	return null;
+    }
+
+    /**
+     * Indica si un archivo existe y es legible
+     * @param file archivo
+     * @return true si el archivo puede leerse
+     */
+    private static boolean isReadableFile(File file) {
+    	return file != null && file.exists() && file.isFile() && file.canRead();
+    }
+
+    /**
+     * Normaliza build-info para evitar problemas de encoding/BOM
+     * @param rawBuildInfo build-info crudo
+     * @return build-info normalizado
+     */
+    private static Properties normalizeBuildInfo(Properties rawBuildInfo) {
+    	Properties normalized = new Properties();
+    	if (rawBuildInfo == null) {
+    		return normalized;
+    	}
+    	Enumeration keys = rawBuildInfo.propertyNames();
+    	while (keys.hasMoreElements()) {
+    		String rawKey = String.valueOf(keys.nextElement());
+    		String key = sanitizeBuildInfoToken(rawKey);
+    		if (Util.isEmpty(key, true)) {
+    			continue;
+    		}
+    		String value = sanitizeBuildInfoToken(rawBuildInfo.getProperty(rawKey));
+    		normalized.setProperty(key, value);
+    	}
+    	return normalized;
+    }
+
+    /**
+     * Quita espacios y BOM de una propiedad
+     * @param token valor crudo
+     * @return valor normalizado
+     */
+    private static String sanitizeBuildInfoToken(String token) {
+    	if (token == null) {
+    		return "";
+    	}
+    	String normalized = token.trim();
+    	while (normalized.startsWith("\uFEFF")) {
+    		normalized = normalized.substring(1).trim();
+    	}
+    	return normalized;
+    }
 
     /**
      * Descripción de Método

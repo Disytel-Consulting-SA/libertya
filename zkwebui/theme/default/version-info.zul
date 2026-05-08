@@ -6,12 +6,12 @@ Copyright (C) 2009 Idalica Corporation
 <zk>
 <zscript>
 	import org.openXpertya.OpenXpertya;
-	var mainVersion = OpenXpertya.MAIN_VERSION;
+	var mainVersion = OpenXpertya.getDisplayVersionLabel();
 	var dateVersion = OpenXpertya.DATE_VERSION;
 	var dbVersion = OpenXpertya.DB_VERSION;
 	var dbInfo = OpenXpertya.getDatabaseInfo();
 	var vendor = OpenXpertya.getImplementationVendor();
-	var vendorVersion = OpenXpertya.getImplementationVersion();
+	var vendorVersion = OpenXpertya.getBuildVersionLabel();
 	var jvm = OpenXpertya.getJavaInfo();
 	var os = OpenXpertya.getOSInfo();
 </zscript>
@@ -31,7 +31,7 @@ Copyright (C) 2009 Idalica Corporation
 </style>
 
 <div class="versionInfoBox" id="infobox" align=center>
-	Libertya ${mainVersion} - Binaries: ${dateVersion} - DB: ${dbVersion} - Build: ${vendorVersion} - DB: ${dbInfo} - Host: ${desktop.execution.localName} - JVM: ${jvm}   
+	Libertya ${mainVersion} | DB ${dbVersion} | Build ${vendorVersion} | ${dbInfo}
 <!-- 
 	<table border="0" align="center">
 		<tr>

@@ -34,12 +34,18 @@ import org.openXpertya.util.Ini;
 //~--- Importaciones JDK ------------------------------------------------------
 
 import java.io.Serializable;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 
 import java.util.Hashtable;
+import java.util.LinkedHashSet;
 import java.util.logging.Level;
 
 import javax.naming.CommunicationException;
@@ -61,6 +67,21 @@ import javax.sql.DataSource;
  */
 public class CConnection implements Serializable {
 
+    /** REST endpoint for connection bootstrap */
+    private static final String APPS_REST_BOOTSTRAP_PATH = "/api/connectionInfo";
+    /** System property for RMI timeout (ms) */
+    private static final String RMI_TIMEOUT_PROPERTY = "ly.rmi.timeout.ms";
+    /** Default RMI timeout (ms) */
+    private static final int DEFAULT_RMI_TIMEOUT_MS = 2000;
+    /** System property for REST connect timeout (ms) */
+    private static final String REST_CONNECT_TIMEOUT_PROPERTY = "ly.rest.connect.timeout.ms";
+    /** System property for REST read timeout (ms) */
+    private static final String REST_READ_TIMEOUT_PROPERTY = "ly.rest.read.timeout.ms";
+    /** Default REST connect timeout (ms) */
+    private static final int DEFAULT_REST_CONNECT_TIMEOUT_MS = 2000;
+    /** Default REST read timeout (ms) */
+    private static final int DEFAULT_REST_READ_TIMEOUT_MS = 3000;
+	
     /** Connection */
     private static CConnection	s_cc	= null;
 
@@ -886,16 +907,92 @@ public class CConnection implements Serializable {
 
         env.put(Context.URL_PKG_PREFIXES, "org.jboss.naming:org.jnp.interfaces");
 
-        // HTTP - default timeout 0
-        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_TIMEOUT, "5000");	// timeout in ms
-        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_SO_TIMEOUT, "5000");
+        String rmiTimeout = String.valueOf(getRmiTimeoutMillis());
 
-        // JNP - default timeout 5 sec
-        env.put(org.jnp.interfaces.NamingContext.JNP_DISCOVERY_TIMEOUT, "5000");
+        // HTTP/RMI timeout
+        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_TIMEOUT, rmiTimeout);	// timeout in ms
+        env.put(org.jnp.interfaces.TimedSocketFactory.JNP_SO_TIMEOUT, rmiTimeout);
 
+        // JNP discovery timeout
+        env.put(org.jnp.interfaces.NamingContext.JNP_DISCOVERY_TIMEOUT, rmiTimeout);
+        
         return env;
     }		// getInitialEnvironment
 
+    
+    /**
+     * Return RMI timeout in milliseconds, configurable via system property.
+     * Property: -Dly.rmi.timeout.ms=NNNN
+     * @return timeout in milliseconds
+     */
+    private static int getRmiTimeoutMillis() {
+
+        String timeout = System.getProperty(RMI_TIMEOUT_PROPERTY);
+
+        if ((timeout == null) || (timeout.trim().length() == 0)) {
+            return DEFAULT_RMI_TIMEOUT_MS;
+        }
+
+        try {
+            int parsed = Integer.parseInt(timeout.trim());
+
+            if (parsed <= 0) {
+                return DEFAULT_RMI_TIMEOUT_MS;
+            }
+
+            return parsed;
+        } catch (Exception e) {
+            return DEFAULT_RMI_TIMEOUT_MS;
+        }
+    }
+    
+    /**
+     * Return REST connect timeout in milliseconds, configurable via system property.
+     * Property: -Dly.rest.connect.timeout.ms=NNNN
+     * @return timeout in milliseconds
+     */
+    public static int getRestConnectTimeoutMillis() {
+
+        return getTimeoutFromProperty(REST_CONNECT_TIMEOUT_PROPERTY, DEFAULT_REST_CONNECT_TIMEOUT_MS);
+    }
+
+    /**
+     * Return REST read timeout in milliseconds, configurable via system property.
+     * Property: -Dly.rest.read.timeout.ms=NNNN
+     * @return timeout in milliseconds
+     */
+    public static int getRestReadTimeoutMillis() {
+
+        return getTimeoutFromProperty(REST_READ_TIMEOUT_PROPERTY, DEFAULT_REST_READ_TIMEOUT_MS);
+    }
+
+    /**
+     * Parse timeout from system property with safe fallback.
+     * @param propertyName property name
+     * @param defaultValue default timeout in ms
+     * @return parsed timeout or default
+     */
+    private static int getTimeoutFromProperty(String propertyName, int defaultValue) {
+
+        String timeout = System.getProperty(propertyName);
+
+        if ((timeout == null) || (timeout.trim().length() == 0)) {
+            return defaultValue;
+        }
+
+        try {
+            int parsed = Integer.parseInt(timeout.trim());
+
+            if (parsed <= 0) {
+                return defaultValue;
+            }
+
+            return parsed;
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+    
     /**
      *  Get Name
      *  @return connection name
@@ -932,7 +1029,7 @@ public class CConnection implements Serializable {
                 }
 
             } catch (Exception ex) {
-                log.log(Level.SEVERE, "", ex);
+            	log.info("RMI lookup unavailable in getServer - using fallback path. " + ex.getMessage());
             }
         }
 
@@ -1199,7 +1296,7 @@ public class CConnection implements Serializable {
         getInitialContext(false);
 
         if (m_iContext == null) {
-            return m_okApps;
+        	return setAppsServerInfoREST();
         }
 
         // Prevent error trace
@@ -1235,10 +1332,122 @@ public class CConnection implements Serializable {
 
         CLogMgtLog4J.enable(true);
 
+        if (!m_okApps) {
+            return setAppsServerInfoREST();
+        }
+
+        
         return m_okApps;
 
     }		// setAppsServerInfo
 
+    
+    /**
+     *  Try to read server connection info using a lightweight REST endpoint.
+     *  Endpoint returns the same CConnection#toStringLong payload.
+     *  @return true if info could be loaded from REST endpoint
+     */
+    private boolean setAppsServerInfoREST() {
+
+        LinkedHashSet urls = getAppsServerRestUrls();
+        Exception lastException = null;
+
+        for (java.util.Iterator it = urls.iterator(); it.hasNext();) {
+
+            String restUrl = (String)it.next();
+            HttpURLConnection http = null;
+
+            try {
+
+                URL url = new URL(restUrl);
+                http = (HttpURLConnection)url.openConnection();
+                http.setConnectTimeout(getRestConnectTimeoutMillis());
+                http.setReadTimeout(getRestReadTimeoutMillis());
+                http.setRequestMethod("GET");
+                http.setRequestProperty("Accept", "text/plain");
+
+                int responseCode = http.getResponseCode();
+
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    throw new Exception("HTTP " + responseCode + " - " + restUrl);
+                }
+
+                BufferedReader input = new BufferedReader(new InputStreamReader(http.getInputStream(), "UTF-8"));
+                StringBuffer payload = new StringBuffer();
+                String line = null;
+
+                while ((line = input.readLine()) != null) {
+                    payload.append(line);
+                }
+
+                input.close();
+
+                String attributes = payload.toString();
+
+                if ((attributes == null) || (attributes.length() == 0) || (attributes.indexOf("CConnection[") != 0)) {
+                    throw new Exception("Invalid REST payload from " + restUrl);
+                }
+
+                setAttributes(attributes);
+                m_okApps = true;
+                m_appsException = null;
+                log.config("AppsServer REST bootstrap OK - " + restUrl);
+
+                return true;
+
+            } catch (Exception ex) {
+                lastException = ex;
+                log.warning("AppsServer REST bootstrap failed - " + restUrl + " - " + ex.toString());
+            } finally {
+
+                if (http != null) {
+                    http.disconnect();
+                }
+            }
+        }
+
+        m_okApps = false;
+        m_appsException = lastException;
+
+        return false;
+    }
+
+    /**
+     * Build candidate REST URLs to support host-only and URL-based configs.
+     * @return candidate URLs
+     */
+    private LinkedHashSet getAppsServerRestUrls() {
+
+        LinkedHashSet urls = new LinkedHashSet();
+        String host = getAppsHost();
+
+        if ((host != null) && (host.indexOf("://") != -1)) {
+            urls.add(buildRestUrl(host));
+            return urls;
+        }
+
+        urls.add(buildRestUrl("http://" + host + ":" + getAppsPort()));
+        urls.add(buildRestUrl("http://" + host + ":8080"));
+        urls.add(buildRestUrl("http://" + host + ":80"));
+
+        return urls;
+    }
+
+    /**
+     * Normalize base URL and append REST bootstrap path.
+     * @param baseUrl base URL
+     * @return complete endpoint URL
+     */
+    private String buildRestUrl(String baseUrl) {
+
+        if (baseUrl.endsWith("/")) {
+            return baseUrl.substring(0, baseUrl.length() - 1) + APPS_REST_BOOTSTRAP_PATH;
+        }
+
+        return baseUrl + APPS_REST_BOOTSTRAP_PATH;
+    }
+
+    
     /**
      *  Set Attributes from String (pases toStringLong())
      *  @param attributes attributes

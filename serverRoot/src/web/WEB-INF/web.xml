@@ -39,6 +39,18 @@
 		<servlet-class>org.openXpertya.web.StatusInfo</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>ConnectionInfoRest</servlet-name>
+		<display-name>ConnectionInfoRest</display-name>
+		<description>Endpoint REST para bootstrap de conexion del cliente Swing</description>
+		<servlet-class>org.openXpertya.web.ConnectionInfoRest</servlet-class>
+	</servlet>	
+	<servlet>
+		<servlet-name>PostImmediateRest</servlet-name>
+		<display-name>PostImmediateRest</display-name>
+		<description>Endpoint REST para aplicar contabilidad desde Swing sin RMI</description>
+		<servlet-class>org.openXpertya.web.PostImmediateRest</servlet-class>
+	</servlet>	
+	<servlet>
 		<servlet-name>MonitorOXP</servlet-name>
 		<display-name>MonitorOXP</display-name>
 		<description>Monitor del Servidor openXpertya</description>
@@ -53,6 +65,14 @@
 		<servlet-name>StatusInfo</servlet-name>
 		<url-pattern>/statusInfo</url-pattern>
 	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>ConnectionInfoRest</servlet-name>
+		<url-pattern>/api/connectionInfo</url-pattern>
+	</servlet-mapping>	
+	<servlet-mapping>
+		<servlet-name>PostImmediateRest</servlet-name>
+		<url-pattern>/api/postImmediate</url-pattern>
+	</servlet-mapping>	
 	<servlet-mapping>
 		<servlet-name>MonitorOXP</servlet-name>
 		<url-pattern>/MonitorOXP/*</url-pattern>

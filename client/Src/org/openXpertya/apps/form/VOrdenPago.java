@@ -1542,8 +1542,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	    			totalCredito = totalCredito.add(unMP.getImporte());
 	    		}
 	    		
-	    		debug("Asigno al modelo el total de los medios de pago de crédito: " + totalCredito);
-	    		m_model.setNetAmountNC(totalCredito);
+	    		debug("Total de créditos agregados en esta operación: " + totalCredito);
+	    		m_model.recalculateNetAmountNCFromCredits();
+	    		debug("Asigno al modelo el neto de NC considerando todos los créditos actuales: " + m_model.getNetAmountNC());
 	    		
 	    		debug("Recalculo retenciones luego de asignar el total de los medios de pago de crédito al modelo");
 	    		m_model.m_retenciones.clear();

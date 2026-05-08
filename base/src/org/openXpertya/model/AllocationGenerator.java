@@ -1949,6 +1949,8 @@ public class AllocationGenerator {
 		 * Oct - 24
 		 * dREHER
 		 */
+		MCintoloExchangeDifSettings exchangeDifSettings = getActiveExchangeDifSettings();
+		
 		MInvoice inv = null;
 		int invoiceID = 0;
 		if(getBPartner().isCintolo_Acumulate_Exchange_Dif()) {
@@ -1966,10 +1968,10 @@ public class AllocationGenerator {
 			if(invoiceID < 0) invoiceID = 0;
 		}
 		
-		if(invoiceID > 0) 
+		if(invoiceID > 0)
 			inv = new MInvoice(getCtx(), invoiceID, getTrxName());
 		else // Se crea la cabecera de la invoice
-			inv = createCreditDebitInvoiceForExchangeDif(isCredit, isFiscal, isForCurrentAccount);
+			inv = createCreditDebitInvoiceForExchangeDif(isCredit, isFiscal, isForCurrentAccount, exchangeDifSettings);
 		
 		// Si estoy creando una nueva factura, configurar todos los campos correspondientes
 		if(invoiceID == 0) {
@@ -1978,7 +1980,11 @@ public class AllocationGenerator {
 			inv.setFechadeTCparaActualizarPrecios(Env.getDate(getCtx())); // dREHER sep 24
 			inv.setApplyPercepcion(false);
 
-			int priceListID = DB.getSQLValue(trxName, "SELECT " + (isCredit? " Credit_PriceList " : " Debit_PriceList ") +" FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			int priceListID = isCredit? exchangeDifSettings.getCredit_PriceList() : exchangeDifSettings.getDebit_PriceList();
+			if(priceListID <= 0) {
+				throw new Exception("La configuración activa de diferencia de cambio no tiene tarifa "
+						+ (isCredit? "de crédito" : "de débito") + " válida");
+			}
 			inv.setM_PriceList_ID(priceListID);
 			inv.setC_Currency_ID(PESOS_ARG);
 
@@ -2009,13 +2015,8 @@ public class AllocationGenerator {
 		}
 		
 		// Se crea la invoiceLine 		
-		int productID = DB.getSQLValue(trxName, "SELECT M_Product_ID FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
-		MProduct product = new MProduct(getCtx(), productID, getTrxName());
-		
-		List<MTax> taxes = MTax.getOfTaxCategory(getCtx(), product.getC_TaxCategory_ID(), getTrxName());
-		if (taxes==null || taxes.size()==0)
-			throw new Exception("No existe un impuesto para la categoria de impuesto definido en el artículo " + product.getValue());
-		MTax tax = taxes.get(0); 
+		MProduct product = getExchangeDifProduct(exchangeDifSettings);
+		MTax tax = getExchangeDifTax(product);
 		
 		
 		/**
@@ -2310,7 +2311,8 @@ public class AllocationGenerator {
 	 * @return factura creada
 	 * @throws Exception en caso de error
 	 */
-	protected MInvoice createCreditDebitInvoiceForExchangeDif(boolean isCredit, boolean isFiscal, boolean isForCurrentAccount) throws Exception{
+	protected MInvoice createCreditDebitInvoiceForExchangeDif(boolean isCredit, boolean isFiscal, boolean isForCurrentAccount,
+			MCintoloExchangeDifSettings exchangeDifSettings) throws Exception{
 		
 		MInvoice invoice = new MInvoice(getCtx(), 0, getTrxName());
 		MBPartner bPartner = getBPartner();
@@ -2332,8 +2334,13 @@ public class AllocationGenerator {
 			ptoVenta = (bPartner.get_Value("Cintolo_Point_Of_Sale")!=null? (Integer)bPartner.get_Value("Cintolo_Point_Of_Sale")
 					:0);
 			
-			if(ptoVenta <= 0)
-				ptoVenta = DB.getSQLValue(trxName, " SELECT point_of_sale FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			if(ptoVenta <= 0) {
+				ptoVenta = exchangeDifSettings.getPoint_Of_Sale();
+			}
+			
+			if(ptoVenta <= 0) {
+				throw new Exception("La configuración activa de diferencia de cambio no tiene punto de venta válido");
+			}
 			
 			invoice = setDocType(invoice, isCredit, ptoVenta);
 			if(LOCALE_AR_ACTIVE){
@@ -2341,7 +2348,10 @@ public class AllocationGenerator {
 			}
 			
 		} else {
-			int docTypeID = DB.getSQLValue(trxName, "SELECT C_DocType_ID FROM C_Cintolo_Exchange_Dif_Settings ORDER BY created DESC LIMIT 1");
+			int docTypeID = exchangeDifSettings.getC_DocType_ID();
+			if(docTypeID <= 0) {
+				throw new Exception("La configuración activa de diferencia de cambio no tiene tipo de comprobante válido");
+			}
 			invoice.setC_DocTypeTarget_ID(docTypeID);				
 		}
 		
@@ -2476,7 +2486,107 @@ public class AllocationGenerator {
 		if (!pl.isTaxIncluded())
 			throw new Exception("La tarifa configurada " + pl.getName() + " para diferencia de cambio debe tener activado el check impuestos incluidos en el precio.");
 		
-		return priceList; 
+		return priceList;
+	}
+
+	/**
+	 * Obtiene la configuración activa para diferencias de cambio.
+	 */
+	protected MCintoloExchangeDifSettings getActiveExchangeDifSettings() throws Exception {
+		int adClientID = Env.getAD_Client_ID(getCtx());
+		int settingsID = DB.getSQLValue(getTrxName(),
+				"SELECT C_Cintolo_Exchange_Dif_Settings_ID "
+				+ "FROM C_Cintolo_Exchange_Dif_Settings "
+				+ "WHERE IsActive='Y' AND AD_Client_ID = ? "
+				+ "ORDER BY Created DESC "
+				+ "LIMIT 1",
+				adClientID);
+		
+		// Fallback global (cliente 0) activo
+		if(settingsID <= 0) {
+			settingsID = DB.getSQLValue(getTrxName(),
+					"SELECT C_Cintolo_Exchange_Dif_Settings_ID "
+					+ "FROM C_Cintolo_Exchange_Dif_Settings "
+					+ "WHERE IsActive='Y' AND AD_Client_ID = 0 "
+					+ "ORDER BY Created DESC "
+					+ "LIMIT 1");
+		}
+		
+		// Compatibilidad: tomar cualquier registro activo
+		if(settingsID <= 0) {
+			settingsID = DB.getSQLValue(getTrxName(),
+					"SELECT C_Cintolo_Exchange_Dif_Settings_ID "
+					+ "FROM C_Cintolo_Exchange_Dif_Settings "
+					+ "WHERE IsActive='Y' "
+					+ "ORDER BY Created DESC "
+					+ "LIMIT 1");
+		}
+		
+		// Compatibilidad legacy: si no hay ninguna activa, tomar la última configuración cargada
+		if(settingsID <= 0) {
+			settingsID = DB.getSQLValue(getTrxName(),
+					"SELECT C_Cintolo_Exchange_Dif_Settings_ID "
+					+ "FROM C_Cintolo_Exchange_Dif_Settings "
+					+ "ORDER BY Created DESC "
+					+ "LIMIT 1");
+		}
+		
+		if(settingsID <= 0) {
+			throw new Exception("No existe una configuración activa de diferencia de cambio (C_Cintolo_Exchange_Dif_Settings)");
+		}
+		
+		MCintoloExchangeDifSettings settings = new MCintoloExchangeDifSettings(getCtx(), settingsID, getTrxName());
+		if(settings.getID() <= 0) {
+			throw new Exception("No se pudo cargar la configuración activa de diferencia de cambio. ID=" + settingsID);
+		}
+		
+		return settings;
+	}
+	
+	/**
+	 * Retorna el producto configurado para diferencias de cambio.
+	 */
+	protected MProduct getExchangeDifProduct(MCintoloExchangeDifSettings settings) throws Exception {
+		int productID = settings.getM_Product_ID();
+		if(productID <= 0) {
+			throw new Exception("La configuración activa de diferencia de cambio no tiene producto configurado (M_Product_ID)");
+		}
+		
+		MProduct product = new MProduct(getCtx(), productID, getTrxName());
+		if(product.getID() <= 0) {
+			throw new Exception("No existe el producto configurado para diferencia de cambio. M_Product_ID=" + productID);
+		}
+		
+		return product;
+	}
+	
+	/**
+	 * Retorna el impuesto activo asociado a la categoría del producto de diferencia de cambio.
+	 */
+	protected MTax getExchangeDifTax(MProduct product) throws Exception {
+		int taxCategoryID = product.getC_TaxCategory_ID();
+		if(taxCategoryID <= 0) {
+			throw new Exception("El producto de diferencia de cambio no tiene categoría de impuesto. M_Product_ID="
+					+ product.getID() + ", Value=" + product.getValue());
+		}
+		
+		List<MTax> taxes = MTax.getOfTaxCategory(getCtx(), taxCategoryID, getTrxName());
+		MTax tax = null;
+		if(taxes != null) {
+			for (MTax aTax : taxes) {
+				if(aTax != null && aTax.getID() > 0 && aTax.isActive()) {
+					tax = aTax;
+					break;
+				}
+			}
+		}
+		
+		if(tax == null) {
+			throw new Exception("No existe un impuesto activo para la categoría de impuesto del artículo "
+					+ product.getValue() + " (M_Product_ID=" + product.getID() + ", C_TaxCategory_ID=" + taxCategoryID + ")");
+		}
+		
+		return tax;
 	}
 	
 	/**

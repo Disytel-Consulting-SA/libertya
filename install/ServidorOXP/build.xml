@@ -135,7 +135,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -203,7 +203,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Librerias_Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXPXLib ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -297,7 +297,7 @@
       <manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -311,7 +311,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="OXPRoot"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -325,7 +325,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="WEBUI"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -360,7 +360,7 @@
 			<manifest>
 	  			<attribute name="Specification-Title" value="OXPRootWar"/>
 				<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-				<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+				<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 				<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 				<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 				<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -378,7 +378,7 @@
 	      	<manifest>
 		<attribute name="Specification-Title" value="Cliente_Libertya"/>
 		<attribute name="Specification-Version" value="${VERSION_PRINCIPAL_OXP}"/>
-		<attribute name="Specification-Vendor" value="(C) 2023 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="OXP ${VERSION_PRINCIPAL_OXP}"/>
 		<attribute name="Implementation-Version" value="${VERSION_PRINCIPAL_OXP} ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-Vendor" value="${env.CONSULTORA_OXP}"/>
@@ -584,7 +584,7 @@
 	  <manifest>
 		<attribute name="Specification-Title" value="Libertya"/>
 		<attribute name="Specification-Version" value="V25.0"/>
-		<attribute name="Specification-Vendor" value="(C) 2025 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="libertya"/>
 		<attribute name="Implementation-Version" value="V25.0 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
@@ -604,7 +604,7 @@
 	  <manifest>
 		<attribute name="Specification-Title" value="ServidorAplicacionesLibertya"/>
 		<attribute name="Specification-Version" value="V25.0"/>
-		<attribute name="Specification-Vendor" value="(C) 2025 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="ServidorAplicacionesLibertya"/>
 		<attribute name="Implementation-Version" value="V25.0 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
@@ -624,7 +624,7 @@
 	  <manifest>
 		<attribute name="Specification-Title" value="TiendaWebLibertya"/>
 		<attribute name="Specification-Version" value="V25.0"/>
-		<attribute name="Specification-Vendor" value="(C) 2025 DISYTEL."/>
+		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="TiendaWebLibertya"/>
 		<attribute name="Implementation-Version" value="V25.0 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
@@ -725,7 +725,8 @@
 	  description="Deploy Servidor de Aplicaciones Libertya - JBoss">
   	
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
-	  	
+	<copy file="${basedir}/utils/IniciarServidorJBoss.sh" tofile="${basedir}/utils/IniciarServidor.sh" overwrite="yes" failonerror="no"/>
+	<copy file="${basedir}/utils/DetenerServidorJBoss.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>	  	
   </target>
 		
 	
@@ -738,7 +739,8 @@
   	<!-- Tomcat. OXPRoot.war debe llamarse ROOT.war para que sea la plicacion base -->
   	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
   	<copy file="${basedir}/lib/OXPRoot.war" tofile="${DEPLOY_APPS_OXP}/ROOT.war" overwrite="yes" failonerror="no"/>
-  	
+	<copy file="${basedir}/utils/IniciarServidorTomcat.sh" tofile="${basedir}/utils/IniciarServidor.sh" overwrite="yes" failonerror="no"/>	  	  	
+	<copy file="${basedir}/utils/DetenerServidorTomcat.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>  	
   </target>
 	
   <!-- ==================================================== -->

@@ -142,3 +142,5 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','periodto'
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_attachment','ad_componentobjectuid','varchar(100) null'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_attachment','ad_componentversion_id','int4 null'));
 
+--20260508-1453 Versionado de BBDD para release
+UPDATE ad_system SET version = '08-05-2026' WHERE ad_system_id = 0;

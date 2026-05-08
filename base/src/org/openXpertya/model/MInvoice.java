@@ -2107,8 +2107,21 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// el valor elegido con el que tiene asociada la secuencia del tipo de
 		// documento.
 
+		Integer letraComprobanteID = (Integer) hm.get("C_Letra_Comprobante_ID");
 		if (getC_Letra_Comprobante_ID() != 0
-				&& (Integer) hm.get("C_Letra_Comprobante_ID") != getC_Letra_Comprobante_ID()) {
+				&& (letraComprobanteID == null || letraComprobanteID.intValue() != getC_Letra_Comprobante_ID())) {
+			String letraDocNo = "";
+			if (!Util.isEmpty(getDocumentNo(), true) && getDocumentNo().length() > 0) {
+				letraDocNo = getDocumentNo().substring(0, 1);
+			}
+			log.warning("completarPuntoLetraNumeroDoc mismatch: "
+					+ "C_Invoice_ID=" + getC_Invoice_ID()
+					+ ", AD_Client_ID=" + getAD_Client_ID()
+					+ ", C_DocTypeTarget_ID=" + getC_DocTypeTarget_ID()
+					+ ", DocumentNo=" + getDocumentNo()
+					+ ", letraDocNo=" + letraDocNo
+					+ ", C_Letra_Comprobante_ID(invoice)=" + getC_Letra_Comprobante_ID()
+					+ ", C_Letra_Comprobante_ID(parsed)=" + letraComprobanteID);
 			log.saveError("SaveError", Msg.translate(Env.getCtx(), "DiferentDocTypeLetraComprobanteError"));
 			return false;
 		}
@@ -2252,6 +2265,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			} else {
 				setC_Currency_ID(Env.getContextAsInt(getCtx(), "#C_Currency_ID"));
 			}
+		}
+			
+		// Moneda extranjera: tomar cotización del día como default de la factura.
+		// Si no existe, obligar carga manual y evitar default 1.
+		if(!defaultInvoiceExchangeRate()) {
+			return false;
 		}
 
 		// Sales Rep
@@ -2941,6 +2960,79 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		currencyID = DB.getSQLValueEx(get_TrxName(), sql, new Object[] {string});
 		
 		return currencyID;
+	}
+	
+	/**
+	 * Para facturas en moneda distinta a la contable:
+	 * - Si existe cotización del día, la toma por defecto en Cintolo_Exchange_Rate.
+	 * - Si no existe, fuerza carga manual y evita persistir el default 1.
+	 */
+	private boolean defaultInvoiceExchangeRate() {
+		int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		if (accountingCurrencyID <= 0
+				|| getC_Currency_ID() <= 0
+				|| getC_Currency_ID() == accountingCurrencyID) {
+			return true;
+		}
+		
+		BigDecimal currentRate = getInvoiceExchangeRate();
+		BigDecimal systemRate = MConversionRate.getRate(
+				getC_Currency_ID(),
+				accountingCurrencyID,
+				getExchangeRateLookupDate(),
+				getC_ConversionType_ID(),
+				getAD_Client_ID(),
+				getAD_Org_ID());
+		
+		if(systemRate != null && systemRate.compareTo(Env.ZERO) > 0) {
+			if(currentRate == null
+					|| currentRate.compareTo(Env.ZERO) <= 0
+					|| currentRate.compareTo(Env.ONE) == 0
+					|| !is_ValueChanged("Cintolo_Exchange_Rate")) {
+				set_ValueNoCheck("Cintolo_Exchange_Rate", systemRate);
+			}
+			return true;
+		}
+		
+		// Sin cotización del día: no dejar valor por defecto 1 en moneda extranjera.
+		if(!is_ValueChanged("Cintolo_Exchange_Rate")) {
+			set_ValueNoCheck("Cintolo_Exchange_Rate", null);
+			currentRate = null;
+		}
+		
+		if(currentRate == null
+				|| currentRate.compareTo(Env.ZERO) <= 0
+				|| currentRate.compareTo(Env.ONE) == 0) {
+			log.saveError("Error", "No existe tasa de cambio para la fecha seleccionada. Debe completar manualmente la Tasa de Cambio de la factura.");
+			return false;
+		}
+		
+		return true;
+	}
+	
+	private BigDecimal getInvoiceExchangeRate() {
+		Object exchangeRate = get_Value("Cintolo_Exchange_Rate");
+		if(exchangeRate == null) {
+			return null;
+		}
+		if(exchangeRate instanceof BigDecimal) {
+			return (BigDecimal)exchangeRate;
+		}
+		try {
+			return new BigDecimal(exchangeRate.toString());
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	private Timestamp getExchangeRateLookupDate() {
+		if(getDateAcct() != null) {
+			return new Timestamp(getFechaConversion().getTime());
+		}
+		if(getDateInvoiced() != null) {
+			return getDateInvoiced();
+		}
+		return Env.getDate();
 	}
 
 	/**
@@ -5312,18 +5404,18 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// dREHER en el caso de facturas de proveedor y que se calcula todo en base a la
 		// tasa de cambio de la factura, se ajusta calculo del total convertido
 		BigDecimal invAmt = Env.ZERO;
-		;
 		if (!isSOTrx() && getFCProvTasaCambio()) {
-
-			if (getC_Currency_ID() != 118 && (get_Value("Cintolo_Exchange_Rate") == null
-					|| ((BigDecimal) get_Value("Cintolo_Exchange_Rate")).compareTo(Env.ZERO) == 0)) {
-
-				invAmt = getGrandTotal(true).multiply((BigDecimal) get_Value("Cintolo_Exchange_Rate"));
-
-			}
-			if (getC_Currency_ID() == 118)
+			int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+			BigDecimal invoiceExchangeRate = getInvoiceExchangeRate();
+			
+			if (getC_Currency_ID() == accountingCurrencyID) {
 				invAmt = getGrandTotal(true);
-
+			} else if (invoiceExchangeRate != null && invoiceExchangeRate.compareTo(Env.ZERO) > 0) {
+				invAmt = getGrandTotal(true).multiply(invoiceExchangeRate);
+			} else {
+				invAmt = MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
+						getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
+			}
 		} else {
 			invAmt = MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
 					getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
@@ -9242,6 +9334,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		if(status && DOCACTION_Complete.equals(processAction)) {
 			MDocType dt = MDocType.get(getCtx(), getC_DocTypeTarget_ID());
 			if(!Util.isEmpty(dt.getDocNoSequence_Unique_ID(), true)) {
+				// En facturas de venta con validaciones AR, el DocumentNo debe conservar
+				// el formato fiscal (Letra + Punto de Venta + Número de comprobante).
+				// Reemplazarlo por una secuencia única rompe validaciones posteriores.
+				if (isSOTrx() && LocaleARUtils.doDocumentLARValidations(dt)) {
+					return newStatus;
+				}
 				String newDocNo = DB.getUniqueDocumentNo(dt.getID(), get_TrxName());
 				if(Util.isEmpty(newDocNo, true)) {
 					setProcessMsg(Msg.getMsg(getCtx(), "UniqueDocumentNoError"));
