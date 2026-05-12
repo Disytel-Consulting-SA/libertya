@@ -12,6 +12,11 @@ pipeline {
         OXP_HOME = "${WORKDIR}/ServidorOXP"
         INSTALACION_EXPORT = "${WORKDIR}/install_export"
         ROOT_OXP = "${WORKDIR}"
+        LIBERTYA_VERSION = ''
+        VERSION_OXP_FILE = ''
+        ARTIFACT_NAME = ''
+        ARTIFACT_PATH = ''
+        SERVER_PACKAGE_PREFIX = ''
         
         // Configuración dinámica según rama
         IS_DEV = "${env.BRANCH_NAME == 'dev'}"
@@ -64,9 +69,22 @@ pipeline {
                             script: "git rev-parse --short=8 HEAD",
                             returnStdout: true
                         ).trim()
+                        env.LIBERTYA_VERSION = sh(
+                            script: "tr -d '[:space:]' < base/src/org/openXpertya/VERSION",
+                            returnStdout: true
+                        ).trim()
+                        if (!(env.LIBERTYA_VERSION ==~ /^[0-9]+\\.[0-9]+$/)) {
+                            error "Formato de versión inválido en base/src/org/openXpertya/VERSION: '${env.LIBERTYA_VERSION}'"
+                        }
+                        env.VERSION_OXP_FILE = "V${env.LIBERTYA_VERSION}"
+                        env.ARTIFACT_NAME = "ServidorOXP_${env.VERSION_OXP_FILE}.zip"
+                        env.ARTIFACT_PATH = "${env.WORKDIR}/install_export/${env.ARTIFACT_NAME}"
+                        env.SERVER_PACKAGE_PREFIX = "ServidorOXP${env.LIBERTYA_VERSION}"
                         
                         echo "📦 Compilando Libertya desde rama: ${env.BRANCH_NAME}"
                         echo "📌 Commit: ${env.LIBERTYA_COMMIT}"
+                        echo "🏷️ Versión detectada: ${env.LIBERTYA_VERSION}"
+                        echo "📦 Artefacto esperado: ${env.ARTIFACT_PATH}"
                     }
 
                     sh '''
@@ -76,6 +94,15 @@ pipeline {
                         INSTALL_DIR="${WORKDIR}/install"
                         mkdir -p ${INSTALL_DIR}
                         chmod -R u+w ${INSTALL_DIR}
+
+                        mkdir -p ${INSTALACION_EXPORT}
+                        chmod -R u+w ${INSTALACION_EXPORT}
+                        echo "==> Limpiando artefactos previos de install_export..."
+                        rm -f ${INSTALACION_EXPORT}/ServidorOXP_*.zip
+                        rm -f ${INSTALACION_EXPORT}/ServidorOXP_*.zip.MD5
+                        rm -f ${INSTALACION_EXPORT}/ServidorOXP_*.tar
+                        rm -f ${INSTALACION_EXPORT}/ServidorOXP_*.tar.gz
+                        rm -f ${INSTALACION_EXPORT}/ServidorOXP_*.tar.gz.MD5
 
                         echo "==> Habilitando permisos de ejecución..."
                         find . -type f -name "*.sh" -exec chmod +x {} \\;
@@ -193,7 +220,7 @@ pipeline {
         stage('Inyectar BUILD_INFO.properties') {
             steps {
                 script {
-                    def artifact = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
+                    def artifact = env.ARTIFACT_PATH
                     def builtAt = sh(
                         script: "date -u +%Y-%m-%dT%H:%M:%SZ",
                         returnStdout: true
@@ -239,9 +266,9 @@ pipeline {
                 script {
                     echo "📤 Exportando a servidor de releases (DEV)..."
                     
-                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
+                    def archivo = env.ARTIFACT_PATH
                     def destinoPath = "/home/developers/releases/libertya-core/dev"
-                    def destinoName = "ServidorOXP25-dev-${env.LIBERTYA_COMMIT}.zip"
+                    def destinoName = "${env.SERVER_PACKAGE_PREFIX}-dev-${env.LIBERTYA_COMMIT}.zip"
                     def metadata = "/tmp/export/*.jar"
 
                     withCredentials([
@@ -270,7 +297,7 @@ pipeline {
                         return
                     }
 
-                    def artifact = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
+                    def artifact = env.ARTIFACT_PATH
                     def deployScript = "${WORKDIR}/libertya/scripts/deploy_remote.sh"
                     def remoteOxpHome = env.REMOTE_OXP_HOME
                     def remoteServiceName = env.REMOTE_SERVICE_NAME
@@ -333,7 +360,7 @@ pipeline {
                                 usernameVariable: 'DEPLOY_USER'
                             )
                         ]) {
-                            def remoteZip = "/tmp/ServidorOXP25-dev-${target.name}-${env.BUILD_NUMBER}-${env.LIBERTYA_COMMIT}.zip"
+                            def remoteZip = "/tmp/${env.SERVER_PACKAGE_PREFIX}-dev-${target.name}-${env.BUILD_NUMBER}-${env.LIBERTYA_COMMIT}.zip"
                             echo "🚚 Desplegando ${artifact} en ${target.name}"
 
                             withEnv([
@@ -381,9 +408,9 @@ pipeline {
                 script {
                     echo "🚀 Generando release..."
                     
-                    def archivo = "${WORKDIR}/install_export/ServidorOXP_V25.0.zip"
+                    def archivo = env.ARTIFACT_PATH
                     def destinoPath = "/home/developers/releases/libertya-core/master"
-                    def destinoName = "ServidorOXP25-release-${env.LIBERTYA_COMMIT}.zip"
+                    def destinoName = "${env.SERVER_PACKAGE_PREFIX}-release-${env.LIBERTYA_COMMIT}.zip"
                     def metadata = "/tmp/export/*.jar"
 
                     withCredentials([
@@ -398,7 +425,7 @@ pipeline {
                             
                             echo '==> Creando symlink a latest...'
                             ssh -i $KEYFILE -o StrictHostKeyChecking=no -p $SERVER_PORT ${USER}@${SERVER_IP} \
-                                "cd ${destinoPath} && ln -sf ${destinoName} ServidorOXP25-latest.zip"
+                                "cd ${destinoPath} && ln -sf ${destinoName} ${env.SERVER_PACKAGE_PREFIX}-latest.zip"
                         """
                     }
                 }

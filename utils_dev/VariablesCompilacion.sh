@@ -76,7 +76,7 @@ fi
 export CURRENTDIR=`pwd`
 #  Set Version
 export VERSION_OXP=Libertya
-export VERSION_OXP_FILE=V26.05
+export VERSION_OXP_FILE=${VERSION_OXP_FILE:-V26.05}
 export CONSULTORA_OXP=SERVICIOS_DIGITALES
 
 #	ClassPath
@@ -131,5 +131,4 @@ fi
 # Set ENV_OXP for all other scripts.
 export ENV_OXP=Y
 echo "Finalizando, configuramos ENV_OXP a $ENV_OXP para otros guiones"
-
 

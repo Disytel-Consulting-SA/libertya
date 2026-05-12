@@ -67,7 +67,7 @@ public final class OpenXpertya {
     static public final String	ID	= "$Id: OpenXpertya.java,v 2.2 $";
 
     /** Descripción de Campo */
-    static private final String	RELEASE_VERSION_FALLBACK	= "25.0";
+    static private final String	RELEASE_VERSION_FALLBACK	= "26.05";
     static private final String	RELEASE_VERSION_FILENAME	= "VERSION";
     static private final String	BUILD_INFO_FILENAME	= "BUILD_INFO.properties";
     static private final String	BUILD_INFO_FILE_PROPERTY	= "BUILD_INFO_FILE";
