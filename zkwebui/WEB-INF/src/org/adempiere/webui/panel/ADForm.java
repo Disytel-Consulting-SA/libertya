@@ -282,6 +282,38 @@ public abstract class ADForm extends Window implements EventListener
 		return IFormController.class.isAssignableFrom(clazz) || Component.class.isAssignableFrom(clazz);
 	}
 
+	private static boolean isLoadableZkFormClass(String className) {
+		if (className == null || className.trim().length() == 0)
+			return false;
+		try {
+			Class<?> clazz = ADForm.class.getClassLoader().loadClass(className);
+			return isZkFormClass(clazz);
+		} catch (ClassNotFoundException e) {
+			return false;
+		} catch (LinkageError e) {
+			return false;
+		}
+	}
+
+	public static String getWebFormClassName(String richClassName) {
+		if (richClassName == null || richClassName.trim().length() == 0)
+			return null;
+
+		String webClassName = ADClassNameMap.get(richClassName);
+		if (isLoadableZkFormClass(webClassName))
+			return webClassName;
+
+		return translateFormClassName(richClassName);
+	}
+
+	public static boolean isWebFormAvailable(int adFormID) {
+		if (adFormID <= 0)
+			return false;
+
+		MForm mform = new MForm(Env.getCtx(), adFormID, null);
+		return mform.getID() != 0 && getWebFormClassName(mform.getClassname()) != null;
+	}
+
 	/**
 	 * Create a new form corresponding to the specified identifier
 	 *
@@ -306,19 +338,13 @@ public abstract class ADForm extends Window implements EventListener
 
     		logger.info("AD_Form_ID=" + adFormID + " - Class=" + richClassName);
 
-    		//static lookup
-    		webClassName = ADClassNameMap.get(richClassName);
-    		//fallback to dynamic translation
-    		if (webClassName == null || webClassName.trim().length() == 0)
-    		{
-    			webClassName = translateFormClassName(richClassName);
-    		}
-    		
-    		if (webClassName == null)
-    		{
-    			throw new ApplicationException("Web UI form not implemented for the swing form " +
- 					   richClassName);
-    		}
+            webClassName = getWebFormClassName(richClassName);
+
+            if (webClassName == null)
+            {
+                throw new ApplicationException("Web UI form not implemented for the swing form " +
+                        richClassName);
+            }
 
     		try
     		{

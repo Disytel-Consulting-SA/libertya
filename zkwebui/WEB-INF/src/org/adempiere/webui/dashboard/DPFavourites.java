@@ -16,7 +16,9 @@ package org.adempiere.webui.dashboard;
 import java.util.Enumeration;
 
 import org.adempiere.webui.component.ToolBarButton;
+import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.session.SessionManager;
+import org.openXpertya.model.MMenu;
 import org.openXpertya.model.MTree;
 import org.openXpertya.model.MTreeNode;
 import org.openXpertya.util.DB;
@@ -109,7 +111,7 @@ public class DPFavourites extends DashboardPanel implements EventListener {
 			while (en.hasMoreElements())
 			{
 				MTreeNode nd = (MTreeNode)en.nextElement();
-				if (nd.isOnBar()) {
+				if (nd.isOnBar() && isWebMenuNodeAvailable(nd)) {
 					String label = nd.toString().trim();
 					ToolBarButton btnFavItem = new ToolBarButton(String.valueOf(nd.getNode_ID()));
 					btnFavItem.setLabel(label);
@@ -261,5 +263,13 @@ public class DPFavourites extends DashboardPanel implements EventListener {
 		if (mt.isWorkFlow())
 			return "images/mWorkFlow.png";
 		return "images/mWindow.png";
+	}
+
+	private boolean isWebMenuNodeAvailable(MTreeNode node) {
+		if (!node.isForm())
+			return true;
+
+		MMenu menu = new MMenu(Env.getCtx(), node.getNode_ID(), null);
+		return ADForm.isWebFormAvailable(menu.getAD_Form_ID());
 	}
 }
