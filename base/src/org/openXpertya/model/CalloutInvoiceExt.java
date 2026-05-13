@@ -846,14 +846,14 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				// Se setea el codigo de iva del bPartner en el contexto
 				int codigoIva =  MCategoriaIva.getCodigo(categoriaIva, trxName);
 				Env.setContext(ctx, WindowNo, "CodigoCategoriaIVA", codigoIva);
-				
+				 
 				// Si el codigo de iva es CONSUMIDOR FINAL, se limpian los campos
 				// de nombre de cliente, dirección e identificación.
-				if(codigoIva == MCategoriaIva.CONSUMIDOR_FINAL) {
-					mTab.setValue("NombreCli", null);
-					mTab.setValue("Invoice_Adress", null);
-					mTab.setValue("NroIdentificCliente", null);
-				}
+				// if(codigoIva == MCategoriaIva.CONSUMIDOR_FINAL) {
+				// 	mTab.setValue("NombreCli", null);
+				// 	mTab.setValue("Invoice_Adress", null);
+				// 	mTab.setValue("NroIdentificCliente", null);
+				// }
 
 			}
 			rs.close();
