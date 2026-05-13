@@ -142,5 +142,18 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('i_invoice','periodto'
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_attachment','ad_componentobjectuid','varchar(100) null'));
 update ad_system set dummy = (SELECT addcolumnifnotexists('ad_attachment','ad_componentversion_id','int4 null'));
 
+-- 20260501-1322 Ajustes de traducciones Proyecto -> Centro de Costos
+UPDATE ad_field_trl
+SET
+    name = regexp_replace(name, '(?i)proyecto', 'Centro de costos', 'g'),
+    description = regexp_replace(description, '(?i)proyecto', 'Centro de costos', 'g'),
+    help = regexp_replace(help, '(?i)proyecto', 'Centro de costos', 'g')
+WHERE ad_language ILIKE 'es_%'
+AND (
+    name ~* 'proyecto'
+    OR description ~* 'proyecto'
+    OR help ~* 'proyecto'
+);
+
 --20260508-1453 Versionado de BBDD para release
 UPDATE ad_system SET version = '08-05-2026' WHERE ad_system_id = 0;
