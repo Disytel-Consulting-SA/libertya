@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 ZIP_PATH="${1:-}"
 if [[ -z "${ZIP_PATH}" ]]; then
-    echo "Uso: deploy_remote.sh /tmp/ServidorOXP_V25.0.zip"
+    echo "Uso: deploy_remote.sh /tmp/ServidorOXP_V<version>.zip"
     exit 1
 fi
 

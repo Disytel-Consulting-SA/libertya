@@ -27,6 +27,7 @@ import org.adempiere.webui.event.MenuListener;
 import org.adempiere.webui.exception.ApplicationException;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.TreeUtils;
+import org.openXpertya.model.MMenu;
 import org.openXpertya.model.MTree;
 import org.openXpertya.model.MTreeNode;
 import org.openXpertya.util.DB;
@@ -149,23 +150,32 @@ public class MenuPanel extends Panel implements EventListener
         while(nodeEnum.hasMoreElements())
         {
             MTreeNode mChildNode = (MTreeNode)nodeEnum.nextElement();
-            Treeitem treeitem = new Treeitem();
-            treeChildren.appendChild(treeitem);
-            treeitem.setLabel(mChildNode.getName());
-            treeitem.setTooltiptext(mChildNode.getDescription());
            
             if(mChildNode.getChildCount() != 0)
             {
-                treeitem.setOpen(false);
                 Treechildren treeItemChildren = new Treechildren();
                 generateMenu(treeItemChildren, mChildNode);
-                if(treeItemChildren.getChildren().size() != 0)
-                    treeitem.appendChild(treeItemChildren);
+                if(treeItemChildren.getChildren().size() == 0)
+                    continue;
+
+                Treeitem treeitem = new Treeitem();
+                treeChildren.appendChild(treeitem);
+                treeitem.setLabel(mChildNode.getName());
+                treeitem.setTooltiptext(mChildNode.getDescription());
+                treeitem.setOpen(false);
+                treeitem.appendChild(treeItemChildren);
                 
                 treeitem.getTreerow().addEventListener(Events.ON_CLICK, this);
             }
             else
             {
+                if (!isWebMenuNodeAvailable(mChildNode))
+                    continue;
+
+                Treeitem treeitem = new Treeitem();
+                treeChildren.appendChild(treeitem);
+                treeitem.setLabel(mChildNode.getName());
+                treeitem.setTooltiptext(mChildNode.getDescription());
                 treeitem.setValue(String.valueOf(mChildNode.getNode_ID()));
                 
                 if (mChildNode.isReport())
@@ -182,6 +192,15 @@ public class MenuPanel extends Panel implements EventListener
                 treeitem.getTreerow().addEventListener(Events.ON_CLICK, this);
             }
         }
+    }
+
+    private boolean isWebMenuNodeAvailable(MTreeNode mNode)
+    {
+        if (!mNode.isForm())
+            return true;
+
+        MMenu menu = new MMenu(ctx, mNode.getNode_ID(), null);
+        return ADForm.isWebFormAvailable(menu.getAD_Form_ID());
     }
     
     public void addMenuListener(MenuListener menuListener)

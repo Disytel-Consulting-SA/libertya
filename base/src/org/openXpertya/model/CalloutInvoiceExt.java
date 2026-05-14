@@ -847,13 +847,30 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				int codigoIva =  MCategoriaIva.getCodigo(categoriaIva, trxName);
 				Env.setContext(ctx, WindowNo, "CodigoCategoriaIVA", codigoIva);
 				
+				// Autocompletado de datos de cliente para facturas de venta.
+				// Se toma la localización facturable seleccionada en este callout.
+				if (IsSOTrx) {
+					String nombreCli = ec.getName();
+					String invoiceAddress = null;
+					if (locID > 0) {
+						MBPartnerLocation bpLocation = new MBPartnerLocation(ctx, locID, trxName);
+						if (bpLocation.getID() > 0 && bpLocation.getLocation(true) != null) {
+							invoiceAddress = bpLocation.getLocation(true).toString();
+						}
+					}
+					
+					mTab.setValue("NombreCli", Util.isEmpty(nombreCli, true) ? null : nombreCli);
+					mTab.setValue("Invoice_Adress", Util.isEmpty(invoiceAddress, true) ? null : invoiceAddress);
+					mTab.setValue("NroIdentificCliente", Util.isEmpty(taxId, true) ? null : taxId);
+				}
+				 
 				// Si el codigo de iva es CONSUMIDOR FINAL, se limpian los campos
 				// de nombre de cliente, dirección e identificación.
-				if(codigoIva == MCategoriaIva.CONSUMIDOR_FINAL) {
-					mTab.setValue("NombreCli", null);
-					mTab.setValue("Invoice_Adress", null);
-					mTab.setValue("NroIdentificCliente", null);
-				}
+				// if(codigoIva == MCategoriaIva.CONSUMIDOR_FINAL) {
+				// 	mTab.setValue("NombreCli", null);
+				// 	mTab.setValue("Invoice_Adress", null);
+				// 	mTab.setValue("NroIdentificCliente", null);
+				// }
 
 			}
 			rs.close();
