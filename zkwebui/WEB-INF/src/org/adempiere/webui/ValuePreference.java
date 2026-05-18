@@ -115,7 +115,7 @@ public class ValuePreference extends Window implements EventListener
 		ValuePreference vp = new ValuePreference (WindowNo,
 			AD_Client_ID, AD_Org_ID, AD_User_ID, AD_Window_ID,
 			Attribute, DisplayAttribute, Value, DisplayValue,
-			displayType, AD_Reference_ID);
+			displayType, AD_Reference_ID, (mField.isEncrypted() || mField.isEncryptedColumn() || mField.isEncryptedField()));
 		return vp;
 	}   //  create
 
@@ -176,7 +176,7 @@ public class ValuePreference extends Window implements EventListener
 	public ValuePreference (int WindowNo,
 		int AD_Client_ID, int AD_Org_ID, int AD_User_ID, int AD_Window_ID,
 		String Attribute, String DisplayAttribute, String Value, String DisplayValue,
-		int displayType, int AD_Reference_ID)
+		int displayType, int AD_Reference_ID, boolean isEncripted)
 	{
 		super();
 		this.setTitle(Msg.getMsg(Env.getCtx(), NAME) + " " + DisplayAttribute);
@@ -197,6 +197,7 @@ public class ValuePreference extends Window implements EventListener
 		m_Value = Value;
 		m_DisplayValue = DisplayValue;
 		m_DisplayType = displayType;
+		m_Encripted = isEncripted;
 		//
 		m_role = MRole.getDefault();
 		try
@@ -225,6 +226,7 @@ public class ValuePreference extends Window implements EventListener
 	private String          m_DisplayValue;
 	private int             m_DisplayType;
 	private MRole			m_role;
+	private boolean			m_Encripted;
 
 	//  Display
 	private Panel setPanel = new Panel();
@@ -265,6 +267,11 @@ public class ValuePreference extends Window implements EventListener
 		setPanel.appendChild(setLayout);
 		fAttribute.setReadonly(true);
 		fValue.setReadonly(true);
+		
+		// dREHER 18 May 2026 no mostrar datos
+		if (m_Encripted) {
+			fValue.setType("password");
+		}
 		
 		Vbox box = new Vbox();
 		box.setWidth("100%");
@@ -337,6 +344,13 @@ public class ValuePreference extends Window implements EventListener
 		lAttributeValue.setValue(m_Attribute);
 		fValue.setText(m_DisplayValue);
 		lValueValue.setValue(m_Value);
+		
+		// dREHER 18 May 2026
+        if(m_Encripted) {
+        	lValueValue.setValue("******");
+        	fValue.setText("******");
+        }
+		
 		if (CLogMgt.isLevelFine())
 		{
 			lAttributeValue.setVisible(false);
