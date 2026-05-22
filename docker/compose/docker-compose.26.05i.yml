@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: disytel/libertya-db:26.05
+    image: disytel/libertya-db-i:26.05
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -19,17 +19,12 @@ services:
       retries: 12
 
   app:
-    image: disytel/libertya:26.05
+    image: disytel/libertya-i:26.05
     depends_on:
       db:
         condition: service_healthy
     environment:
       OXP_HOME: /ServidorOXP
-      # Conexión a base de datos
-      # El contenedor app se conecta a db por la red interna de Docker (puerto 5432).
-      # El cliente Java/Swing corre fuera de Docker y accede a Postgres por localhost:5439
-      # (el puerto mapeado en "ports" del servicio db).
-      # SERVIDOR_BD_OXP y PUERTO_BD_OXP deben usar los valores del host, no los internos.
       SERVIDOR_BD_OXP: localhost
       PUERTO_BD_OXP: "5439"
       DB_INTERNAL_HOST: db
@@ -38,19 +33,12 @@ services:
       USUARIO_BD_OXP: libertya
       PASSWD_BD_OXP: libertya
       SYSTEM_BD_OXP: libertya
-      # Servidor de aplicaciones
-      # SERVIDOR_APPS_OXP debe ser el hostname accesible desde el cliente Java.
-      # En un deploy local con docker compose, "localhost" funciona si se usan
-      # los ports mapeados abajo. En un servidor remoto, cambiar por la IP/hostname público.
       SERVIDOR_APPS_OXP: localhost
       PUERTO_WEB_OXP: "8080"
       PUERTO_SSL_OXP: "8443"
       PUERTO_JNP_OXP: "1099"
-      # Keystore
       KEYSTOREPASS_OXP: libertya
-      # JVM
       OPCIONES_JAVA_OXP: "-Xms512M -Xmx1024M -XX:MaxPermSize=512M -Dfile.encoding=UTF-8"
-      # Esperar que postgres acepte conexiones
       WAIT_FOR_DB: "true"
       WAIT_FOR_DB_TIMEOUT: "60"
     ports:

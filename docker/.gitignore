@@ -1,4 +1,5 @@
 # Artefactos de build — no se versionan, se generan localmente antes de hacer docker build
 app/*.zip
+app/plugins/*.jar
 db/*.sql
 db/*.dump

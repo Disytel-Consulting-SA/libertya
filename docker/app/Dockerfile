@@ -28,6 +28,11 @@ RUN unzip -q /tmp/libertya.zip -d / \
     && rm /tmp/libertya.zip \
     && find ${OXP_HOME} -name "*.sh" -exec chmod +x {} \;
 
+# Copiar plugins extras al directorio de plugins de la app.
+# La carpeta plugins/ del contexto de build puede estar vacía (flavour Internacional)
+# o contener JARs adicionales (ej. LYEI para LOC_AR).
+COPY plugins/ ${OXP_HOME}/lib/plugins/
+
 # Copiar entrypoint
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
