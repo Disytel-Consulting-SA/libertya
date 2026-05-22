@@ -11,13 +11,13 @@ set -e
 # Variables de entorno soportadas (con sus defaults para docker-compose):
 #   OXP_HOME              /ServidorOXP
 #   JAVA_HOME             (autodetectado)
-#   SERVIDOR_BD_OXP       db
-#   PUERTO_BD_OXP         5432
+#   SERVIDOR_BD_OXP       db        (nombre del servicio db en la red interna Docker)
+#   PUERTO_BD_OXP         5432      (puerto interno Docker de PostgreSQL)
 #   NOMBRE_BD_OXP         libertya
 #   USUARIO_BD_OXP        libertya
 #   PASSWD_BD_OXP         libertya
-#   SYSTEM_BD_OXP         libertya   (contraseña superusuario postgres, usada internamente)
-#   SERVIDOR_APPS_OXP     localhost
+#   SYSTEM_BD_OXP         libertya  (contraseña superusuario postgres, usada internamente)
+#   SERVIDOR_APPS_OXP     localhost (hostname accesible desde el cliente Java/Swing externo)
 #   PUERTO_WEB_OXP        8080
 #   PUERTO_SSL_OXP        8443
 #   PUERTO_JNP_OXP        1099
@@ -25,10 +25,8 @@ set -e
 #   OPCIONES_JAVA_OXP     -Xms512M -Xmx1024M -Dfile.encoding=UTF-8
 #   SERVIDOR_MAIL_OXP     localhost
 #   ADMIN_MAIL_OXP        admin@localhost
-#   WAIT_FOR_DB           true   (espera que postgres acepte conexiones antes de arrancar)
-#   WAIT_FOR_DB_TIMEOUT   60     (segundos máximos de espera)
-#   DB_INTERNAL_HOST      db     (host interno Docker para el wait; por defecto igual a SERVIDOR_BD_OXP)
-#   DB_INTERNAL_PORT      5432   (puerto interno Docker para el wait; por defecto igual a PUERTO_BD_OXP)
+#   WAIT_FOR_DB           true      (espera que postgres acepte conexiones antes de arrancar)
+#   WAIT_FOR_DB_TIMEOUT   60        (segundos máximos de espera)
 # ==============================================================================
 
 OXP_HOME="${OXP_HOME:-/ServidorOXP}"
@@ -60,12 +58,6 @@ PASSWORD_MAIL_OXP="${PASSWORD_MAIL_OXP:-}"
 
 WAIT_FOR_DB="${WAIT_FOR_DB:-true}"
 WAIT_FOR_DB_TIMEOUT="${WAIT_FOR_DB_TIMEOUT:-60}"
-# Host/puerto internos de Docker para el healthcheck del wait.
-# Cuando SERVIDOR_BD_OXP apunta al host externo (ej. localhost) para que el cliente
-# Java/Swing pueda conectar, estos valores permiten que el wait use el nombre
-# interno del contenedor (ej. "db") en lugar del externo.
-DB_INTERNAL_HOST="${DB_INTERNAL_HOST:-${SERVIDOR_BD_OXP}}"
-DB_INTERNAL_PORT="${DB_INTERNAL_PORT:-${PUERTO_BD_OXP}}"
 
 URL_BD_OXP="jdbc:postgresql://${SERVIDOR_BD_OXP}:${PUERTO_BD_OXP}/${NOMBRE_BD_OXP}"
 
@@ -73,11 +65,11 @@ URL_BD_OXP="jdbc:postgresql://${SERVIDOR_BD_OXP}:${PUERTO_BD_OXP}/${NOMBRE_BD_OX
 # 1. Esperar que la base de datos esté disponible
 # ------------------------------------------------------------------------------
 if [ "${WAIT_FOR_DB}" = "true" ]; then
-    echo "[entrypoint] Esperando que PostgreSQL esté disponible en ${DB_INTERNAL_HOST}:${DB_INTERNAL_PORT}..."
+    echo "[entrypoint] Esperando que PostgreSQL esté disponible en ${SERVIDOR_BD_OXP}:${PUERTO_BD_OXP}..."
     waited=0
-    until nc -z "${DB_INTERNAL_HOST}" "${DB_INTERNAL_PORT}" 2>/dev/null; do
+    until nc -z "${SERVIDOR_BD_OXP}" "${PUERTO_BD_OXP}" 2>/dev/null; do
         if [ "${waited}" -ge "${WAIT_FOR_DB_TIMEOUT}" ]; then
-            echo "[entrypoint] ERROR: Timeout esperando PostgreSQL en ${DB_INTERNAL_HOST}:${DB_INTERNAL_PORT} (${WAIT_FOR_DB_TIMEOUT}s)"
+            echo "[entrypoint] ERROR: Timeout esperando PostgreSQL en ${SERVIDOR_BD_OXP}:${PUERTO_BD_OXP} (${WAIT_FOR_DB_TIMEOUT}s)"
             exit 1
         fi
         sleep 2

@@ -25,14 +25,14 @@ services:
         condition: service_healthy
     environment:
       OXP_HOME: /ServidorOXP
-      SERVIDOR_BD_OXP: localhost
-      PUERTO_BD_OXP: "5439"
-      DB_INTERNAL_HOST: db
-      DB_INTERNAL_PORT: "5432"
+      SERVIDOR_BD_OXP: db
+      PUERTO_BD_OXP: "5432"
       NOMBRE_BD_OXP: libertya
       USUARIO_BD_OXP: libertya
       PASSWD_BD_OXP: libertya
       SYSTEM_BD_OXP: libertya
+      # SERVIDOR_APPS_OXP: hostname/IP accesible desde el cliente Java/Swing externo.
+      # En local usar "localhost"; en servidor remoto poner la IP/hostname público.
       SERVIDOR_APPS_OXP: localhost
       PUERTO_WEB_OXP: "8080"
       PUERTO_SSL_OXP: "8443"

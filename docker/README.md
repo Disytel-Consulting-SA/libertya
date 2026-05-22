@@ -170,29 +170,29 @@ environment:
 
 ---
 
-## Nota sobre puertos internos vs externos
+## Nota sobre la conexión de red
 
-El cliente Java/Swing corre **fuera** de Docker y se conecta usando los puertos
-mapeados en el host. Por eso `SERVIDOR_BD_OXP` y `SERVIDOR_APPS_OXP` deben apuntar
-al host (o IP del servidor), no al nombre interno del contenedor.
+El cliente Java/Swing corre **fuera** de Docker y se conecta al servidor via RMI/JNP
+(`localhost:1099`). **El cliente no habla directamente con PostgreSQL** — es el servidor
+JBoss (dentro del contenedor `app`) quien se conecta a la BD usando la red interna Docker.
 
-Las variables `DB_INTERNAL_HOST` y `DB_INTERNAL_PORT` existen para que el entrypoint
-pueda esperar la disponibilidad de la BD usando la red interna de Docker,
-independientemente de lo que diga `SERVIDOR_BD_OXP`:
+Por eso `SERVIDOR_BD_OXP` siempre debe apuntar al nombre interno del servicio `db` (`db:5432`),
+y solo `SERVIDOR_APPS_OXP` necesita el hostname/IP accesible desde el cliente externo:
 
 ```
 Cliente Java/Swing (fuera de Docker)
-       │  localhost:1099 (JNP)
-       │  localhost:5439 (PostgreSQL)
+       │  localhost:1099 (JNP/RMI)
        ▼
  ┌─────────────────────────────────┐
  │  Host                           │
- │  puerto 5439 ──► db:5432        │
  │  puerto 1099 ──► app:1099       │
+ │  puerto 8080 ──► app:8080       │
  │                                 │
- │  contenedor app                 │
- │    wait usa db:5432 (interno)   │
- │    LibertyaEnv usa localhost    │
+ │  contenedor app (JBoss)         │
+ │    BD: db:5432 (red interna)    │
+ │         │                       │
+ │         ▼                       │
+ │  contenedor db (PostgreSQL)     │
  └─────────────────────────────────┘
 ```
 
@@ -202,15 +202,13 @@ Cliente Java/Swing (fuera de Docker)
 
 | Variable | Default | Descripción |
 |---|---|---|
-| `SERVIDOR_BD_OXP` | `localhost` | Host de PostgreSQL visto desde el cliente externo |
-| `PUERTO_BD_OXP` | `5439` | Puerto de PostgreSQL visto desde el cliente externo |
+| `SERVIDOR_BD_OXP` | `db` | Nombre del servicio db en la red interna Docker |
+| `PUERTO_BD_OXP` | `5432` | Puerto interno Docker de PostgreSQL |
 | `NOMBRE_BD_OXP` | `libertya` | Nombre de la base de datos |
 | `USUARIO_BD_OXP` | `libertya` | Usuario de BD |
 | `PASSWD_BD_OXP` | `libertya` | Contraseña de BD |
 | `SYSTEM_BD_OXP` | `libertya` | Contraseña del superusuario postgres (uso interno) |
-| `DB_INTERNAL_HOST` | `db` | Host interno Docker para el wait de disponibilidad |
-| `DB_INTERNAL_PORT` | `5432` | Puerto interno Docker para el wait de disponibilidad |
-| `SERVIDOR_APPS_OXP` | `localhost` | Hostname del servidor de apps (usado por RMI) |
+| `SERVIDOR_APPS_OXP` | `localhost` | Hostname/IP accesible desde el cliente Java/Swing externo |
 | `PUERTO_WEB_OXP` | `8080` | Puerto HTTP |
 | `PUERTO_SSL_OXP` | `8443` | Puerto HTTPS |
 | `PUERTO_JNP_OXP` | `1099` | Puerto JNP/RMI |
