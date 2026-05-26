@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     tools {
         jdk 'java-11-openjdk-amd64'
     }
@@ -40,21 +44,11 @@ pipeline {
         REMOTE_APP_USER = 'libertya'
         REMOTE_APP_GROUP = 'libertya'
 
-        // Instancias DEV (activar/desactivar por instancia)
-        DEV_DEPLOY_ENABLE_QA2 = 'false'
-        DEV_DEPLOY_HOST_CREDENTIAL_QA2 = 'deploy-qa2-host'
-        DEV_DEPLOY_PORT_CREDENTIAL_QA2 = 'deploy-qa2-port'
-        DEV_DEPLOY_CREDENTIAL_QA2 = 'deploy-qa2-ssh'
-
+        // Instancia DEV habilitada
         DEV_DEPLOY_ENABLE_QA = 'true'
         DEV_DEPLOY_HOST_CREDENTIAL_QA = 'deploy-qa-host'
         DEV_DEPLOY_PORT_CREDENTIAL_QA = 'deploy-qa-port'
         DEV_DEPLOY_CREDENTIAL_QA = 'deploy-qa-ssh'
-
-        DEV_DEPLOY_ENABLE_QA3 = 'false'
-        DEV_DEPLOY_HOST_CREDENTIAL_QA3 = 'deploy-qa3-host'
-        DEV_DEPLOY_PORT_CREDENTIAL_QA3 = 'deploy-qa3-port'
-        DEV_DEPLOY_CREDENTIAL_QA3 = 'deploy-qa3-ssh'
     }
 
     stages {
@@ -62,20 +56,21 @@ pipeline {
         stage('Clonar y Compilar Libertya') {
             steps {
                 dir('libertya'){
-                    git branch: "${env.BRANCH_NAME}", url: 'https://github.com/Disytel-Consulting-SA/libertya.git'
+                    checkout scm
 
                     script {
                         env.LIBERTYA_COMMIT = sh(
                             script: "git rev-parse --short=8 HEAD",
                             returnStdout: true
                         ).trim()
-                        env.LIBERTYA_VERSION = sh(
+                        def libertyaVersion = sh(
                             script: "tr -d '[:space:]' < base/src/org/openXpertya/VERSION",
                             returnStdout: true
                         ).trim()
-                        if (!(env.LIBERTYA_VERSION ==~ /^[0-9]+\\.[0-9]+$/)) {
-                            error "Formato de versión inválido en base/src/org/openXpertya/VERSION: '${env.LIBERTYA_VERSION}'"
+                        if (!(libertyaVersion ==~ /^[0-9]+\.[0-9]+$/)) {
+                            error "Formato de versión inválido en base/src/org/openXpertya/VERSION: '${libertyaVersion}'"
                         }
+                        env.LIBERTYA_VERSION = libertyaVersion
                         env.VERSION_OXP_FILE = "V${env.LIBERTYA_VERSION}"
                         env.ARTIFACT_NAME = "ServidorOXP_${env.VERSION_OXP_FILE}.zip"
                         env.ARTIFACT_PATH = "${env.WORKDIR}/install_export/${env.ARTIFACT_NAME}"
@@ -303,30 +298,6 @@ pipeline {
                     def remoteServiceName = env.REMOTE_SERVICE_NAME
                     def remoteAppUser = env.REMOTE_APP_USER
                     def remoteAppGroup = env.REMOTE_APP_GROUP
-                    def targetConfigs = [
-                        [
-                            name: 'qa2',
-                            enabled: env.DEV_DEPLOY_ENABLE_QA2,
-                            hostCredential: env.DEV_DEPLOY_HOST_CREDENTIAL_QA2,
-                            portCredential: env.DEV_DEPLOY_PORT_CREDENTIAL_QA2,
-                            credential: env.DEV_DEPLOY_CREDENTIAL_QA2
-                        ],
-                        [
-                            name: 'qa',
-                            enabled: env.DEV_DEPLOY_ENABLE_QA,
-                            hostCredential: env.DEV_DEPLOY_HOST_CREDENTIAL_QA,
-                            portCredential: env.DEV_DEPLOY_PORT_CREDENTIAL_QA,
-                            credential: env.DEV_DEPLOY_CREDENTIAL_QA
-                        ],
-                        [
-                            name: 'qa3',
-                            enabled: env.DEV_DEPLOY_ENABLE_QA3,
-                            hostCredential: env.DEV_DEPLOY_HOST_CREDENTIAL_QA3,
-                            portCredential: env.DEV_DEPLOY_PORT_CREDENTIAL_QA3,
-                            credential: env.DEV_DEPLOY_CREDENTIAL_QA3
-                        ]
-                    ]
-
                     if (!fileExists(artifact)) {
                         error "No se encontró el artefacto a desplegar: ${artifact}"
                     }
@@ -334,66 +305,64 @@ pipeline {
                         error "No se encontró script de deploy: ${deployScript}"
                     }
 
-                    def enabledTargets = targetConfigs.findAll { it.enabled == 'true' }
-                    if (enabledTargets.isEmpty()) {
-                        echo "⏭ No hay instancias DEV habilitadas para deploy."
+                    if (env.DEV_DEPLOY_ENABLE_QA != 'true') {
+                        echo "⏭ Deploy DEV para QA deshabilitado (DEV_DEPLOY_ENABLE_QA=${env.DEV_DEPLOY_ENABLE_QA})."
                         return
                     }
 
-                    enabledTargets.each { target ->
-                        if (!target.credential?.trim()) {
-                            error "La instancia '${target.name}' está habilitada pero no tiene credential configurada."
-                        }
-                        if (!target.hostCredential?.trim()) {
-                            error "La instancia '${target.name}' está habilitada pero no tiene credencial de host configurada."
-                        }
-                        if (!target.portCredential?.trim()) {
-                            error "La instancia '${target.name}' está habilitada pero no tiene credencial de puerto SSH configurada."
-                        }
+                    if (!env.DEV_DEPLOY_CREDENTIAL_QA?.trim()) {
+                        error "La instancia 'qa' está habilitada pero no tiene credential configurada."
+                    }
+                    if (!env.DEV_DEPLOY_HOST_CREDENTIAL_QA?.trim()) {
+                        error "La instancia 'qa' está habilitada pero no tiene credencial de host configurada."
+                    }
+                    if (!env.DEV_DEPLOY_PORT_CREDENTIAL_QA?.trim()) {
+                        error "La instancia 'qa' está habilitada pero no tiene credencial de puerto SSH configurada."
+                    }
 
-                        withCredentials([
-                            string(credentialsId: target.hostCredential, variable: 'TARGET_HOST'),
-                            string(credentialsId: target.portCredential, variable: 'TARGET_PORT'),
-                            sshUserPrivateKey(
-                                credentialsId: target.credential,
-                                keyFileVariable: 'DEPLOY_KEYFILE',
-                                usernameVariable: 'DEPLOY_USER'
-                            )
+                    withCredentials([
+                        string(credentialsId: env.DEV_DEPLOY_HOST_CREDENTIAL_QA, variable: 'TARGET_HOST'),
+                        string(credentialsId: env.DEV_DEPLOY_PORT_CREDENTIAL_QA, variable: 'TARGET_PORT'),
+                        sshUserPrivateKey(
+                            credentialsId: env.DEV_DEPLOY_CREDENTIAL_QA,
+                            keyFileVariable: 'DEPLOY_KEYFILE',
+                            usernameVariable: 'DEPLOY_USER'
+                        )
+                    ]) {
+                        def targetName = 'qa'
+                        def remoteZip = "/tmp/${env.SERVER_PACKAGE_PREFIX}-dev-${targetName}-${env.BUILD_NUMBER}-${env.LIBERTYA_COMMIT}.zip"
+                        echo "🚚 Desplegando ${artifact} en ${targetName}"
+
+                        withEnv([
+                            "DEPLOY_ARTIFACT=${artifact}",
+                            "DEPLOY_SCRIPT=${deployScript}",
+                            "DEPLOY_REMOTE_ZIP=${remoteZip}",
+                            "DEPLOY_REMOTE_OXP_HOME=${remoteOxpHome}",
+                            "DEPLOY_REMOTE_SERVICE_NAME=${remoteServiceName}",
+                            "DEPLOY_REMOTE_APP_USER=${remoteAppUser}",
+                            "DEPLOY_REMOTE_APP_GROUP=${remoteAppGroup}",
+                            "DEPLOY_TARGET_NAME=${targetName}"
                         ]) {
-                            def remoteZip = "/tmp/${env.SERVER_PACKAGE_PREFIX}-dev-${target.name}-${env.BUILD_NUMBER}-${env.LIBERTYA_COMMIT}.zip"
-                            echo "🚚 Desplegando ${artifact} en ${target.name}"
+                            sh '''
+                                set -eu
 
-                            withEnv([
-                                "DEPLOY_ARTIFACT=${artifact}",
-                                "DEPLOY_SCRIPT=${deployScript}",
-                                "DEPLOY_REMOTE_ZIP=${remoteZip}",
-                                "DEPLOY_REMOTE_OXP_HOME=${remoteOxpHome}",
-                                "DEPLOY_REMOTE_SERVICE_NAME=${remoteServiceName}",
-                                "DEPLOY_REMOTE_APP_USER=${remoteAppUser}",
-                                "DEPLOY_REMOTE_APP_GROUP=${remoteAppGroup}",
-                                "DEPLOY_TARGET_NAME=${target.name}"
-                            ]) {
-                                sh '''
-                                    set -eu
+                                if [ -z "${TARGET_HOST:-}" ]; then
+                                    echo "La credencial de host para '${DEPLOY_TARGET_NAME}' está vacía."
+                                    exit 1
+                                fi
+                                if [ -z "${TARGET_PORT:-}" ]; then
+                                    echo "La credencial de puerto para '${DEPLOY_TARGET_NAME}' está vacía."
+                                    exit 1
+                                fi
+                                if [ -z "${DEPLOY_USER:-}" ]; then
+                                    echo "La credencial SSH para '${DEPLOY_TARGET_NAME}' no expuso usuario."
+                                    exit 1
+                                fi
 
-                                    if [ -z "${TARGET_HOST:-}" ]; then
-                                        echo "La credencial de host para '${DEPLOY_TARGET_NAME}' está vacía."
-                                        exit 1
-                                    fi
-                                    if [ -z "${TARGET_PORT:-}" ]; then
-                                        echo "La credencial de puerto para '${DEPLOY_TARGET_NAME}' está vacía."
-                                        exit 1
-                                    fi
-                                    if [ -z "${DEPLOY_USER:-}" ]; then
-                                        echo "La credencial SSH para '${DEPLOY_TARGET_NAME}' no expuso usuario."
-                                        exit 1
-                                    fi
-
-                                    scp -i $DEPLOY_KEYFILE -o StrictHostKeyChecking=no -P $TARGET_PORT $DEPLOY_ARTIFACT $DEPLOY_USER@$TARGET_HOST:$DEPLOY_REMOTE_ZIP
-                                    ssh -i $DEPLOY_KEYFILE -o StrictHostKeyChecking=no -p $TARGET_PORT $DEPLOY_USER@$TARGET_HOST \
-                                        "OXP_HOME='$DEPLOY_REMOTE_OXP_HOME' SERVICE_NAME='$DEPLOY_REMOTE_SERVICE_NAME' APP_USER='$DEPLOY_REMOTE_APP_USER' APP_GROUP='$DEPLOY_REMOTE_APP_GROUP' bash -s -- '$DEPLOY_REMOTE_ZIP'" < $DEPLOY_SCRIPT
-                                '''
-                            }
+                                scp -i $DEPLOY_KEYFILE -o StrictHostKeyChecking=no -P $TARGET_PORT $DEPLOY_ARTIFACT $DEPLOY_USER@$TARGET_HOST:$DEPLOY_REMOTE_ZIP
+                                ssh -i $DEPLOY_KEYFILE -o StrictHostKeyChecking=no -p $TARGET_PORT $DEPLOY_USER@$TARGET_HOST \
+                                    "OXP_HOME='$DEPLOY_REMOTE_OXP_HOME' SERVICE_NAME='$DEPLOY_REMOTE_SERVICE_NAME' APP_USER='$DEPLOY_REMOTE_APP_USER' APP_GROUP='$DEPLOY_REMOTE_APP_GROUP' bash -s -- '$DEPLOY_REMOTE_ZIP'" < $DEPLOY_SCRIPT
+                            '''
                         }
                     }
                 }
@@ -438,7 +407,11 @@ pipeline {
             script {
                 // Configurar reportes
                 sh "mkdir -p ${REPORTS_DIR}"
-                sh "cp -r ${WORKDIR}/lyrestapi/build/reports/tests/test/* ${REPORTS_DIR}"
+                sh """
+                    if [ -d "${WORKDIR}/lyrestapi/build/reports/tests/test" ]; then
+                        cp -r ${WORKDIR}/lyrestapi/build/reports/tests/test/. ${REPORTS_DIR}
+                    fi
+                """
                 sh "chmod -R o+r ${REPORTS_DIR}"
                 sh "find ${REPORTS_DIR} -type d -exec chmod o+x {} \\;"
 
