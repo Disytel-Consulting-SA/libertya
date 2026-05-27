@@ -31,4 +31,4 @@ RUN dos2unix /docker-libertya/libertya_release.sql
 COPY init-libertya-db.sh /docker-entrypoint-initdb.d/00-init-libertya-db.sh
 RUN chmod +x /docker-entrypoint-initdb.d/00-init-libertya-db.sh
 
-EXPOSE 5432
+# El puerto lo define PGPORT en el compose (por defecto 5432 de postgres:16-bookworm)
