@@ -16,11 +16,6 @@ pipeline {
         OXP_HOME = "${WORKDIR}/ServidorOXP"
         INSTALACION_EXPORT = "${WORKDIR}/install_export"
         ROOT_OXP = "${WORKDIR}"
-        LIBERTYA_VERSION = ''
-        VERSION_OXP_FILE = ''
-        ARTIFACT_NAME = ''
-        ARTIFACT_PATH = ''
-        SERVER_PACKAGE_PREFIX = ''
         
         // Configuración dinámica según rama
         IS_DEV = "${env.BRANCH_NAME == 'dev'}"
@@ -36,6 +31,9 @@ pipeline {
         DB_USER = 'libertya'
         DB_PASS = 'libertya'
         DB_PORT = '5434'
+
+        // Exportación de metadata temporalmente deshabilitada
+        EXPORT_METADATA_ENABLED = 'false'
 
         // Deploy DEV (testing)
         DEPLOY_ENABLED_DEV = 'true'
@@ -188,6 +186,11 @@ pipeline {
         }
 
         stage('Exportar metadata') {
+            when {
+                expression {
+                    env.EXPORT_METADATA_ENABLED == 'true'
+                }
+            }
             steps {
                 script {
                     // Usar devinfo según la rama
@@ -216,6 +219,9 @@ pipeline {
             steps {
                 script {
                     def artifact = env.ARTIFACT_PATH
+                    if (!artifact?.trim()) {
+                        error "ARTIFACT_PATH no fue inicializado. Revisar la detección de versión y nombre de artefacto."
+                    }
                     def builtAt = sh(
                         script: "date -u +%Y-%m-%dT%H:%M:%SZ",
                         returnStdout: true
@@ -262,6 +268,9 @@ pipeline {
                     echo "📤 Exportando a servidor de releases (DEV)..."
                     
                     def archivo = env.ARTIFACT_PATH
+                    if (!archivo?.trim()) {
+                        error "ARTIFACT_PATH no fue inicializado. No se puede exportar a releases."
+                    }
                     def destinoPath = "/home/developers/releases/libertya-core/dev"
                     def destinoName = "${env.SERVER_PACKAGE_PREFIX}-dev-${env.LIBERTYA_COMMIT}.zip"
                     def metadata = "/tmp/export/*.jar"
@@ -274,7 +283,11 @@ pipeline {
                         sh """
                             echo '==> Copiando archivos al servidor de releases (dev)...'
                             scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${archivo} ${USER}@${SERVER_IP}:${destinoPath}/${destinoName}
-                            scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${metadata} ${USER}@${SERVER_IP}:${destinoPath}
+                            if ls ${metadata} >/dev/null 2>&1; then
+                                scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${metadata} ${USER}@${SERVER_IP}:${destinoPath}
+                            else
+                                echo '==> No hay metadata exportada para copiar.'
+                            fi
                         """
                     }
                 }
@@ -293,6 +306,9 @@ pipeline {
                     }
 
                     def artifact = env.ARTIFACT_PATH
+                    if (!artifact?.trim()) {
+                        error "ARTIFACT_PATH no fue inicializado. No se puede desplegar."
+                    }
                     def deployScript = "${WORKDIR}/libertya/scripts/deploy_remote.sh"
                     def remoteOxpHome = env.REMOTE_OXP_HOME
                     def remoteServiceName = env.REMOTE_SERVICE_NAME
@@ -378,6 +394,9 @@ pipeline {
                     echo "🚀 Generando release..."
                     
                     def archivo = env.ARTIFACT_PATH
+                    if (!archivo?.trim()) {
+                        error "ARTIFACT_PATH no fue inicializado. No se puede generar release."
+                    }
                     def destinoPath = "/home/developers/releases/libertya-core/master"
                     def destinoName = "${env.SERVER_PACKAGE_PREFIX}-release-${env.LIBERTYA_COMMIT}.zip"
                     def metadata = "/tmp/export/*.jar"
@@ -390,7 +409,11 @@ pipeline {
                         sh """
                             echo '==> Copiando release a servidor...'
                             scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${archivo} ${USER}@${SERVER_IP}:${destinoPath}/${destinoName}
-                            scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${metadata} ${USER}@${SERVER_IP}:${destinoPath}
+                            if ls ${metadata} >/dev/null 2>&1; then
+                                scp -i $KEYFILE -o StrictHostKeyChecking=no -P $SERVER_PORT ${metadata} ${USER}@${SERVER_IP}:${destinoPath}
+                            else
+                                echo '==> No hay metadata exportada para copiar.'
+                            fi
                             
                             echo '==> Creando symlink a latest...'
                             ssh -i $KEYFILE -o StrictHostKeyChecking=no -p $SERVER_PORT ${USER}@${SERVER_IP} \
