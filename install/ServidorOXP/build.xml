@@ -726,7 +726,9 @@
   	
 	<copy file="${basedir}/lib/OXPRoot.ear" todir="${DEPLOY_APPS_OXP}"/>
 	<copy file="${basedir}/utils/IniciarServidorJBoss.sh" tofile="${basedir}/utils/IniciarServidor.sh" overwrite="yes" failonerror="no"/>
-	<copy file="${basedir}/utils/DetenerServidorJBoss.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>	  	
+	<copy file="${basedir}/utils/DetenerServidorJBoss.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/utils/IniciarServidorJBoss.bat" tofile="${basedir}/utils/IniciarServidor.bat" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/utils/DetenerServidorJBoss.bat" tofile="${basedir}/utils/DetenerServidor.bat" overwrite="yes" failonerror="no"/>
   </target>
 		
 	
@@ -740,7 +742,9 @@
   	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
   	<copy file="${basedir}/lib/OXPRoot.war" tofile="${DEPLOY_APPS_OXP}/ROOT.war" overwrite="yes" failonerror="no"/>
 	<copy file="${basedir}/utils/IniciarServidorTomcat.sh" tofile="${basedir}/utils/IniciarServidor.sh" overwrite="yes" failonerror="no"/>	  	  	
-	<copy file="${basedir}/utils/DetenerServidorTomcat.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>  	
+	<copy file="${basedir}/utils/DetenerServidorTomcat.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/utils/IniciarServidorTomcat.bat" tofile="${basedir}/utils/IniciarServidor.bat" overwrite="yes" failonerror="no"/>	  	  	
+  	<copy file="${basedir}/utils/DetenerServidorTomcat.bat" tofile="${basedir}/utils/DetenerServidor.bat" overwrite="yes" failonerror="no"/>
   </target>
 	
   <!-- ==================================================== -->
