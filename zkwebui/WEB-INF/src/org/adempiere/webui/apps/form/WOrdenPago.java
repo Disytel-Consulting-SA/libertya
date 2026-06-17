@@ -192,6 +192,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         buttonGroup2 = new Radiogroup();
         
         jPanel1 = GridFactory.newGridLayout();
+        jPanel1.setSclass("payment-top-fields-grid");
 
         MLookup lookupClient = MLookupFactory.get (Env.getCtx(), m_WindowNo, 0, "AD_Client_ID", "AD_Client", DisplayType.TableDir);
         cboClient = new WTableDirEditor("AD_Client_ID", true, false, true, lookupClient);
@@ -249,6 +250,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		tblFacturas = new Grid();
 		tblFacturas.setHeight("350px");
 		tblFacturas.setWidth("100%"); // dREHER Sep 24
+		tblFacturas.setSclass("payment-invoice-grid");
 		listModel = new FacturasModel(VModelHelper.HideColumnsTableModelFactory(m_model.m_facturasTableModel), m_WindowNo);
 		renderer = new GridRenderer(this);
 		tblFacturas.setModel(listModel);
@@ -386,6 +388,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         
         
         cmdEliminar.setLabel("ELIMINAR");
+        cmdEliminar.setSclass("payment-command-button payment-command-button-muted");
         cmdEliminar.addEventListener("onClick", new EventListener() {
             public void onEvent(Event evt) throws Exception {
             	cmdEliminarActionPerformed(evt);
@@ -393,6 +396,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         });
 
         cmdEditar.setLabel("EDITAR");
+        cmdEditar.setSclass("payment-command-button payment-command-button-muted");
         cmdEditar.addEventListener("onClick", new EventListener() {
             public void onEvent(Event evt) throws Exception {
             	cmdEditarActionPerformed(evt);
@@ -416,6 +420,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         txtMedioPago2.getLabel().setText("MEDIO DE PAGO");
 
         cmdGrabar.setLabel("GRABAR");
+        cmdGrabar.setSclass("payment-command-button payment-command-button-primary");
         cmdGrabar.addEventListener("onClick", new EventListener() {
             public void onEvent(Event evt) throws Exception {
             	cmdSavePMActionPerformed(evt);
@@ -423,6 +428,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         });
 
         cmdProcess.setLabel("SIGUIENTE/PROCESAR");
+        cmdProcess.setSclass("payment-command-button payment-command-button-primary payment-command-button-large");
         cmdProcess.addActionListener(new EventListener() {
 			
 			@Override
@@ -485,6 +491,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	layout.appendChild(south);
     	Div divButton = new Div();
     	divButton.setAlign("end");
+    	divButton.setSclass("payment-process-bar");
     	divButton.appendChild(cmdProcess);
     	south.appendChild(divButton);
 
@@ -562,27 +569,33 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected void createPaymentTab(){
     	
     	Div contenedor = new Div();
+		contenedor.setSclass("payment-rule-tab-content");
+		contenedor.setHeight("100%");
+		contenedor.setStyle("overflow-y:auto;overflow-x:hidden;");
 		
 		Tablelayout tablelayout = new Tablelayout();
 		tablelayout.setWidth("100%");
 		tablelayout.setColumns(2);
+		tablelayout.setSclass("payment-rule-layout");
 		//tablelayout.setStyle("border: 1px solid red");
 		
 		
 		// Panel de la tabla donde se encuentran Campaña, Proyecto y Moneda
 		Tablechildren tableCampProy = new Tablechildren(); 
 		tableCampProy.setWidth("50%");
+		tableCampProy.setSclass("payment-rule-layout-main");
 		tableCampProy.appendChild(agregarCampProy());
 		
 		// Panel de la tabla donde se encuentra el Árbol
 		Tablechildren tableTree = new Tablechildren();
 		tableTree.setWidth("50%");
-		tableTree.setHeight("200px");
 		tableTree.setRowspan(2);
+		tableTree.setSclass("payment-rule-layout-summary");
 		tableTree.appendChild(agregarTree());
 		
 		// Panel de la tabla donde se encuentran los Tabs
 		Tablechildren tableTabs = new Tablechildren(); 
+		tableTabs.setSclass("payment-rule-layout-tabs");
 		tableTabs.appendChild(agregarTabs());
 		
 		/****/
@@ -591,6 +604,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		Panelchildren panelchildren4 = new Panelchildren();
 		
 		Tablechildren table4 = new Tablechildren(); 
+		table4.setSclass("payment-rule-layout-footer");
 		
 		// ---
 		Grid gridpanel = GridFactory.newGridLayout();
@@ -3191,11 +3205,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		
 		Panel panel = new Panel();
 		Panelchildren panelchildren = new Panelchildren();
+		panel.setSclass("payment-summary-panel");
 
 		pagosTree = new Tree();
 		pagosTree.setRows(15);
 		pagosTree.setModel(getMediosPagoTreeModel());
 		pagosTree.setTreeitemRenderer(m_arbolModel);
+		pagosTree.setSclass("payment-summary-tree");
 		
 		panelchildren.appendChild(pagosTree);
 		panelchildren.appendChild(cmdEliminar);
@@ -3269,7 +3285,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 	
 	    mpTabbox = new Tabbox();
 	    mpTabbox.setMold("accordion");;
-	    mpTabbox.setHeight("100%");
+	    mpTabbox.setSclass("payment-mediums-accordion");
 	    mpTabbox.appendChild(mpTabs);
 	    mpTabbox.appendChild(mpTabpanels);
 	    mpTabbox.addEventListener("onSelect", this);

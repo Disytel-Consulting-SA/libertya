@@ -77,6 +77,7 @@ public class NumberBox extends Div
     {
     	Table grid = new Table();
 		appendChild(grid);
+		setSclass("number-editor-box");
 		grid.setStyle("border: none; padding: 0px; margin: 0px;");
 		grid.setDynamicProperty("border", "0");
 		grid.setDynamicProperty("cellpadding", "0");
@@ -98,11 +99,12 @@ public class NumberBox extends Div
 		Td btnColumn = new Td();
 		tr.appendChild(btnColumn);
 		btnColumn.setStyle("border: none; padding: 0px; margin: 0px;");
-		btnColumn.setSclass("editor-button");
+		btnColumn.setSclass("editor-button number-editor-cell");
 		btn = new Button();
         btn.setImage("/images/Calculator10.png");
 		btn.setTabindex(-1);
 		LayoutUtils.addSclass("editor-button", btn);
+		LayoutUtils.addSclass("number-editor-button", btn);
 		btnColumn.appendChild(btn);
         
         popup = getCalculatorPopup();

@@ -12,6 +12,8 @@
  *****************************************************************************/
 package org.adempiere.webui.component;
 
+import org.adempiere.webui.LayoutUtils;
+
 /**
  * 
  * @author Low Heng Sin
@@ -27,11 +29,35 @@ public class Locationbox extends EditorBox
 	public Locationbox()
     {
          super();
+         initLocationClasses();
     }
 
      public Locationbox(String text)
      {
          super();
+         initLocationClasses();
          setText(text);
+     }
+
+     private void initLocationClasses()
+     {
+         LayoutUtils.addSclass("location-editor-box", this);
+         LayoutUtils.addSclass("location-editor-button", btn);
+         addBtnColumnSclass("location-editor-cell");
+     }
+
+     @Override
+     public void setEnabled(boolean enabled)
+     {
+         super.setEnabled(enabled);
+         if (enabled)
+             addBtnColumnSclass("location-editor-cell");
+     }
+
+     @Override
+     public void setButtonActive()
+     {
+         super.setButtonActive();
+         addBtnColumnSclass("location-editor-cell");
      }
 }

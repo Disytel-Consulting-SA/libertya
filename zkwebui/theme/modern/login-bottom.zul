@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?component name="vendorLogo" inline="true" macroURI="vendor-logo.zul"?>
+<?component name="loginInfo" macroURI="login-info.zul"?>
+<?component name="versionInfo" inline="true" macroURI="version-info.zul"?>
+<?component name="loginLinks" inline="true" macroURI="login-links.zul"?>
+<div>
+	<vendorLogo/>
+	<versionInfo/>
+	<loginLinks/>
+</div>

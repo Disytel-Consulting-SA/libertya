@@ -66,6 +66,7 @@ public class UserPanel extends Vbox  implements EventListener
 
     private void init()
     {
+    	this.setSclass("app-userpanel");
     	this.setStyle("text-align:right");
 
     	// Elaine 2008/11/07 - fix the layout problem in IE7
@@ -84,6 +85,7 @@ public class UserPanel extends Vbox  implements EventListener
     	preference.addEventListener(Events.ON_CLICK, this);
     	preference.setStyle("text-align:right");
     	LayoutUtils.addSclass("desktop-header-font", preference);
+    	LayoutUtils.addSclass("app-header-action", preference);
     	preference.setParent(hbox);
 
     	Separator sep = new Separator("vertical");
@@ -94,6 +96,7 @@ public class UserPanel extends Vbox  implements EventListener
     	role.addEventListener(Events.ON_CLICK, this);
     	role.setStyle("text-align:right");
     	LayoutUtils.addSclass("desktop-header-font", role);
+    	LayoutUtils.addSclass("app-header-action", role);
     	role.setParent(hbox);
 
     	sep = new Separator("vertical");
@@ -104,6 +107,7 @@ public class UserPanel extends Vbox  implements EventListener
     	logout.addEventListener(Events.ON_CLICK, this);
     	logout.setStyle("text-align:right");
     	LayoutUtils.addSclass("desktop-header-font", logout);
+    	LayoutUtils.addSclass("app-header-action", logout);
     	logout.setParent(hbox);
 
     	this.appendChild(hbox);
