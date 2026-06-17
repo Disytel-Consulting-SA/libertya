@@ -97,6 +97,7 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
 
     private void init()
     {
+        this.setSclass("app-statusbar");
         statusDB = new Label("  ");
         statusLine = new Label();
 
@@ -108,6 +109,7 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
         else
         	hbox.setWidths("50%,50%");
         west = new Div();
+        west.setSclass("app-statusbar-main");
         west.setStyle("text-align: left; ");
         west.appendChild(statusLine);
         Vbox vbox = new Vbox();
@@ -117,6 +119,7 @@ public class StatusBarPanel extends Panel implements EventListener, IStatusBar
         hbox.appendChild(vbox);
 
         east = new Div();
+        east.setSclass("app-statusbar-meta");
         east.setWidth("100%");
         east.setStyle("text-align: right; ");
         if (!embedded)

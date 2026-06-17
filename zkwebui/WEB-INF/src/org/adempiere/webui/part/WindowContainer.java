@@ -106,6 +106,7 @@ public class WindowContainer extends AbstractUIPart implements EventListener // 
     	}
     	
         tabbox = new Tabbox();
+        tabbox.setSclass("desktop-tabbox window-container");
         
         Tabpanels tabpanels = new Tabpanels();
         Tabs tabs = new Tabs();

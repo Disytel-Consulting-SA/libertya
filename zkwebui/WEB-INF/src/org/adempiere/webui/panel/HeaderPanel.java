@@ -54,15 +54,18 @@ public class HeaderPanel extends Panel implements EventListener
     private void init()
     {
     	LayoutUtils.addSclass("desktop-header", this);
+    	LayoutUtils.addSclass("app-header", this);
 
     	UserPanel userPanel = new UserPanel();
 
     	image.setSrc(ThemeManager.getSmallLogo());
     	image.addEventListener(Events.ON_CLICK, this);
+    	image.setSclass("app-header-logo");
     	image.setStyle("cursor: pointer;");
 
     	Borderlayout layout = new Borderlayout();
     	LayoutUtils.addSclass("desktop-header", layout);
+    	LayoutUtils.addSclass("app-header-layout", layout);
     	layout.setParent(this);
     	West west = new West();
     	west.setParent(layout);
@@ -76,6 +79,7 @@ public class HeaderPanel extends Panel implements EventListener
     	image.setParent(vb);
 
     	LayoutUtils.addSclass("desktop-header-left", west);
+    	LayoutUtils.addSclass("app-header-brand", west);
     	//the following doesn't work when declare as part of the header-left style
     	west.setStyle("background-color: transparent; border: none;");
 
@@ -88,6 +92,7 @@ public class HeaderPanel extends Panel implements EventListener
     	userPanel.setStyle("position: absolute");
     	center.setFlex(true);
     	LayoutUtils.addSclass("desktop-header-right", center);
+    	LayoutUtils.addSclass("app-header-user", center);
     	//the following doesn't work when declare as part of the header-right style
     	center.setStyle("background-color: transparent; border: none;");
     }

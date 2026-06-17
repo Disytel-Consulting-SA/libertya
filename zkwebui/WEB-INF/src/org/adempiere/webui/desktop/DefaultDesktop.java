@@ -32,6 +32,7 @@ import org.adempiere.webui.dashboard.DPActivities;
 import org.adempiere.webui.dashboard.DashboardPanel;
 import org.adempiere.webui.dashboard.DashboardRunnable;
 import org.adempiere.webui.event.MenuListener;
+import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.panel.HeaderPanel;
 import org.adempiere.webui.panel.SidePanel;
 import org.adempiere.webui.session.SessionManager;
@@ -113,6 +114,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
         pnlSide.getMenuPanel().addMenuListener(this);
 
         layout = new Borderlayout();
+        LayoutUtils.addSclass("app-shell", layout);
         if (parent != null)
         {
         	layout.setParent(parent);
@@ -128,15 +130,17 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
         North n = new North();
         layout.appendChild(n);
         n.setCollapsible(false);
+        n.setSclass("app-shell-header-region");
         pnlHead.setParent(n);
 
         West w = new West();
         layout.appendChild(w);
-        w.setWidth("300px");
+        w.setWidth("330px");
         w.setCollapsible(true);
         w.setSplittable(true);
         w.setTitle("Menu");
         w.setFlex(true);
+        w.setSclass("app-shell-menu-region");
         w.addEventListener(Events.ON_OPEN, new EventListener() {			
 			@Override
 			public void onEvent(Event event) throws Exception {
@@ -154,6 +158,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
         windowArea = new Center();
         windowArea.setParent(layout);
         windowArea.setFlex(true);
+        windowArea.setSclass("app-shell-main-region");
 
         windowContainer.createPart(windowArea);
 
@@ -170,6 +175,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
         Portallayout portalLayout = new Portallayout();
         portalLayout.setWidth("100%");
         portalLayout.setHeight("100%");
+        portalLayout.setSclass("app-dashboard");
         portalLayout.setStyle("position: absolute; overflow: auto");
         homeTab.appendChild(portalLayout);
 
@@ -213,6 +219,7 @@ public class DefaultDesktop extends TabbedDesktop implements MenuListener, Seria
 	        	}
 
 	        	Panel panel = new Panel();
+	        	panel.setSclass("app-dashboard-card");
 	        	panel.setStyle("margin-bottom:10px");
 	        	panel.setTitle(rs.getString("Name"));
 

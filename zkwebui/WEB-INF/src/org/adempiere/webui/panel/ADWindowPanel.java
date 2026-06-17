@@ -111,11 +111,11 @@ public class ADWindowPanel extends AbstractADWindowPanel
 	        North n = new North();
 	        n.setParent(layout);
 	        n.setCollapsible(false);
-	        n.setHeight("30px");
+	        n.setHeight("72px");
 // Prueba preliminar	        
 //	        n.setHeight(compactMode ? "60px" : "30px");
 //	        toolbar.setHeight(compactMode ? "60px" : "30px");
-	        toolbar.setHeight("30px");
+	        toolbar.setHeight("72px");
 	        toolbar.setParent(n);
 	        toolbar.setWindowNo(getWindowNo());
         }

@@ -88,6 +88,7 @@ public class MenuPanel extends Panel implements EventListener
     {
     	this.setWidth("100%");
     	this.setHeight("100%");
+    	this.setSclass("app-menu");
     	
         menuTree = new Tree();
         menuTree.setMultiple(false);
@@ -96,12 +97,14 @@ public class MenuPanel extends Panel implements EventListener
         menuTree.setVflex(true);
         menuTree.setFixedLayout(false);
         menuTree.setPageSize(-1); // Due to bug in the new paging functionality
+        menuTree.setSclass("app-menu-tree");
         
         menuTree.setStyle("border: none");
         
         pnlSearch = new TreeSearchPanel(menuTree);
         
         Toolbar toolbar = new Toolbar();
+        toolbar.setSclass("app-menu-toolbar app-menu-searchbar");
         toolbar.appendChild(pnlSearch);
         this.appendChild(toolbar);
         
@@ -111,7 +114,9 @@ public class MenuPanel extends Panel implements EventListener
         
         // Elaine 2009/02/27 - expand tree
         toolbar = new Toolbar();
+        toolbar.setSclass("app-menu-toolbar app-menu-footer");
         chkExpand = new Checkbox();
+        chkExpand.setSclass("app-menu-expand-toggle");
         chkExpand.setText(Msg.getMsg(Env.getCtx(), "ExpandTree"));
         chkExpand.addEventListener(Events.ON_CHECK, this);
         toolbar.appendChild(chkExpand);

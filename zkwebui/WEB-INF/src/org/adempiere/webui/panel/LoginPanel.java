@@ -31,6 +31,7 @@ import java.util.logging.Level;
 
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Label;
@@ -117,6 +118,7 @@ public class LoginPanel extends Window implements EventListener
         initComponents();
         init();
         this.setId("loginPanel");
+        this.setSclass("login-shell-panel");
 
         AuFocus auf = new AuFocus(txtUserId);
         Clients.response(auf);
@@ -138,6 +140,7 @@ public class LoginPanel extends Window implements EventListener
     	table.setDynamicProperty("cellpadding", "0");
     	table.setDynamicProperty("cellspacing", "5");
     	table.setSclass(ITheme.LOGIN_BOX_BODY_CLASS);
+    	table.setDynamicProperty("class", "login-form-grid");
 
     	this.appendChild(table);
 
@@ -204,28 +207,42 @@ public class LoginPanel extends Window implements EventListener
     	// dREHER Oct 25 mostrar un label de mensajes
     	tr = new Tr();
     	tr.setId("mensajeLogin");
+    	tr.setDynamicProperty("class", "login-feedback-row");
     	table.appendChild(tr);
     	td = new Td();
     	td.setDynamicProperty("colspan", "2");
     	tr.appendChild(td);
     	td.setSclass(ITheme.LOGIN_LABEL_CLASS);
+    	td.setDynamicProperty("class", "login-feedback-cell");
     	td.appendChild(msg);
     	
     	div = new Div();
     	div.setSclass(ITheme.LOGIN_BOX_FOOTER_CLASS);
-    	ConfirmPanel pnlButtons = new ConfirmPanel(false,false,false,true,false,false,false);
-        pnlButtons.addActionListener(this);
-        LayoutUtils.addSclass(ITheme.LOGIN_BOX_FOOTER_PANEL_CLASS, pnlButtons);
-        pnlButtons.setWidth(null);
-        pnlButtons.getButton(ConfirmPanel.A_OK).setSclass(ITheme.LOGIN_BUTTON_CLASS);
-        
-        // dREHER Oct 25
-        if( pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE) != null ) {
-	        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setLabel("Olvide mi contraseña");
-	        pnlButtons.getButton(ConfirmPanel.A_CUSTOMIZE).setSclass(ITheme.LOGIN_BUTTON_CLASS);
-        }
-        
-        div.appendChild(pnlButtons);
+    	Div footerActions = new Div();
+    	footerActions.setSclass(ITheme.LOGIN_BOX_FOOTER_PANEL_CLASS);
+
+    	Button btnForgotPassword = new Button();
+    	btnForgotPassword.setId(ConfirmPanel.A_CUSTOMIZE);
+    	btnForgotPassword.setLabel("Olvidé mi contraseña");
+    	btnForgotPassword.setWidth("200px");
+    	btnForgotPassword.setHeight("48px");
+    	btnForgotPassword.setSclass(ITheme.LOGIN_BUTTON_CLASS);
+    	LayoutUtils.addSclass("login-btn-secondary", btnForgotPassword);
+    	btnForgotPassword.addActionListener(this);
+    	footerActions.appendChild(btnForgotPassword);
+
+    	Button btnLogin = new Button();
+    	btnLogin.setId(ConfirmPanel.A_OK);
+    	btnLogin.setLabel("Ingresar");
+    	btnLogin.setImage("images/Ok24.png");
+    	btnLogin.setWidth("200px");
+    	btnLogin.setHeight("48px");
+    	btnLogin.setSclass(ITheme.LOGIN_BUTTON_CLASS);
+    	LayoutUtils.addSclass("login-btn-primary", btnLogin);
+    	btnLogin.addActionListener(this);
+    	footerActions.appendChild(btnLogin);
+
+        div.appendChild(footerActions);
         this.appendChild(div);
         
         this.addEventListener(TokenEvent.ON_USER_TOKEN, new EventListener() {
@@ -331,6 +348,7 @@ public class LoginPanel extends Window implements EventListener
         msg = new Label();
         msg.setId("lblMsgLoginId");
         msg.setValue("");
+        msg.setSclass("login-feedback-text");
    }
 
     public void onEvent(Event event)

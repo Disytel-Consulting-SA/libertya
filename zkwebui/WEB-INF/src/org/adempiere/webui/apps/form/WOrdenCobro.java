@@ -636,7 +636,6 @@ public class WOrdenCobro extends WOrdenPago {
 	protected Tabpanel  createCashTab() {
 
 		Tabpanel tabpanel = new Tabpanel();
-    	tabpanel.setHeight("150px");
 
 		efectivoLibroCaja.getLabel().setText("LIBRO DE CAJA");
 		txtEfectivoImporte.getLabel().setText("IMPORTE");
@@ -681,8 +680,6 @@ public class WOrdenCobro extends WOrdenPago {
 		cboTransferReceiptMedium.addEventListener("onChange", getPaymentMediumItemListener());
 		tenderTypeIndexsCombos.put(TAB_INDEX_TRANSFERENCIA, cboTransferReceiptMedium);
 
-    	tabpanel.setHeight("150px");
-		
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
 		
@@ -741,8 +738,6 @@ public class WOrdenCobro extends WOrdenPago {
 		if (cboCheckReceiptMedium.getSelectedIndex() > 0 && cboCheckReceiptMedium.getSelectedItem().getValue() != null)
 			updateBank((MPOSPaymentMedium) cboCheckReceiptMedium.getSelectedItem().getValue());
 
-    	tabpanel.setHeight("200px"); // dREHER Original 150px
-    	
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
 		
@@ -796,7 +791,6 @@ public class WOrdenCobro extends WOrdenPago {
 		tenderTypeIndexsCombos.put(TAB_INDEX_CREDITO, cboCreditReceiptMedium);
 
 		Tabpanel tabpanel = new Tabpanel();
-    	tabpanel.setHeight("150px");
 		
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
@@ -822,7 +816,6 @@ public class WOrdenCobro extends WOrdenPago {
 
 	private Tabpanel  createRetencionTab() {
 		panelRetenc = new Tabpanel();
-		panelRetenc.setHeight("150px");
 		retencFecha = new WDateEditor(); 
 		retencFecha.getLabel().setText("FECHA");
 		txtRetencImporte = new WStringEditor();
@@ -929,8 +922,6 @@ public class WOrdenCobro extends WOrdenPago {
 		});
 		
 		txtCreditCardAmt.setValue(getModel().numberFormat(getModel().getSaldoMediosPago()));
-		panelCreditCard.setHeight("150px");
-		
     	Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
 		
@@ -1021,7 +1012,6 @@ public class WOrdenCobro extends WOrdenPago {
 		
         Grid gridpanel = GridFactory.newGridLayout();
 		gridpanel.setWidth("100%");
-		panelPagoAdelantado.setHeight("150px"); 
 		
 		Rows rows = gridpanel.newRows();
 		Row row = rows.newRow();
@@ -2391,6 +2381,13 @@ public class WOrdenCobro extends WOrdenPago {
 		
 		// Demas inicializaciones
 		super.initComponents();
+		jPanel1.setSclass("receipt-top-fields-grid");
+		txtPOS.getComponent().setSclass("receipt-pos-field");
+		txtPOS.getComponent().setWidth("140px");
+		txtOrgCharge.getComponent().setSclass("receipt-orgcharge-field");
+		txtOrgCharge.getComponent().setWidth("160px");
+		txtTotalPagar1.getComponent().setSclass("receipt-amount-field");
+		txtTotalPagar1.getComponent().setWidth("160px");
 	}
 	
 	

@@ -86,6 +86,7 @@ public class WRecordInfo extends Window implements EventListener
 	{
 		super ();
 		this.setTitle(title);
+		this.setSclass("record-info-window");
 		this.setAttribute("modal", Boolean.TRUE);
 		this.setWidth("500px");
 		this.setHeight("400px");
@@ -139,8 +140,10 @@ public class WRecordInfo extends Window implements EventListener
 	{
 
 		Div div = new Div();
+		div.setSclass("record-info-content");
 		div.setStyle("width: 100%; height: 100%");
 		Pre pre = new Pre();
+		pre.setSclass("record-info-pre");
 		Text text = new Text(m_info.toString());
 		text.setParent(pre);
 		pre.setParent(div);
@@ -161,6 +164,7 @@ public class WRecordInfo extends Window implements EventListener
 			north.appendChild(div);
 						
 			center.appendChild(table);
+			table.setSclass("record-info-table");
 			table.setWidth("100%");
 			table.setVflex(true);
 		}
@@ -172,6 +176,9 @@ public class WRecordInfo extends Window implements EventListener
 		South south = new South();
 		south.setParent(layout);
 		south.appendChild(confirmPanel);
+		confirmPanel.setSclass("record-info-actions");
+		confirmPanel.getButton(ConfirmPanel.A_OK).setSclass("record-info-button");
+		confirmPanel.getButton(ConfirmPanel.A_OK).setLabel("Aceptar");
 		
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
 	}	//	jbInit
