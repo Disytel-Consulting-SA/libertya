@@ -1,0 +1,24 @@
+{
+  "name": "libertya",
+  "version": "1.0.0",
+  "description": "Libertya es un software de Gestión Integral Administrativa, sin costos de licencias de uso totalmente libre, diseñado para su rápida implementación y puesta en marcha en cualquier tipo de empresa",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Disytel-Consulting-SA/libertya.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Disytel-Consulting-SA/libertya/issues"
+  },
+  "homepage": "https://github.com/Disytel-Consulting-SA/libertya#readme"
+}
