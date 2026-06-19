@@ -1248,6 +1248,9 @@ public class Order  {
 
 	public void setOrganization(Organization organization) {
 		this.organization = organization;
+		if(organization != null && getDiscountCalculator() != null){
+			getDiscountCalculator().setDiscountConfig(organization.getId());
+		}
 	}
 
 	public Integer getCreditPOSPaymentMediumID() {

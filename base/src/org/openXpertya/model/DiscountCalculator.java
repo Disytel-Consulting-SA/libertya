@@ -2580,9 +2580,22 @@ public class DiscountCalculator {
 			result.setMsg(Msg.getMsg(getCtx(), "PromotionalCodeAlreadyLoaded"), true);
 			return result;
 		}
+		// La configuración de descuentos es necesaria para determinar la cantidad
+		// máxima de cupones promocionales permitidos.
+		if(!hasDiscountConfig()){
+			result.setMsg(Msg.parseTranslation(getCtx(), "@NotFound@: @M_DiscountConfig_ID@"), true);
+			return result;
+		}
 		// Verificar en la config de descuentos cuantos se pueden aplicar maximo
 		if(getDiscountConfig().getMaxPromotionalCoupons() <= getPromotionalCodes().size()){
 			result.setMsg(Msg.getMsg(getCtx(), "PromotionalCodeSurpassMaxConfig"), true);
+			return result;
+		}
+		// La aplicación de promociones debe formar parte de la configuración de
+		// descuentos a nivel de línea.
+		if(!getDiscountConfig().getLineDiscountsList().contains(MDiscountConfig.DISCOUNT_Promotion)){
+			result.setMsg(Msg.getMsg(getCtx(), "InvalidLevelDiscountConfig",
+					new Object[] { Msg.translate(getCtx(), "Line") }), true);
 			return result;
 		}
 		// Verificar si el código existe y no fue usado, si es así, controlar
