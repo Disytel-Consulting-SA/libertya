@@ -21,6 +21,7 @@ import org.compiere.swing.CButton;
 import org.compiere.swing.CPanel;
 import org.compiere.swing.CScrollPane;
 import org.compiere.swing.CTextField;
+import org.openXpertya.apps.ADialog;
 import org.openXpertya.minigrid.MiniTable;
 import org.openXpertya.pos.model.Promotion;
 import org.openXpertya.pos.view.table.PromotionTableModel;
@@ -242,9 +243,7 @@ public class PromotionsDialog extends JDialog {
 			cOKButton.setPreferredSize(new java.awt.Dimension(BUTTON_WIDTH,26));
 			cOKButton.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					// Actualiza descuentos y sale de la ventana
-					getPoS().getModel().getOrder().updateDiscounts();
-					exit();
+					confirm();
 				}
 			});
 			
@@ -294,21 +293,22 @@ public class PromotionsDialog extends JDialog {
 	 * validaciones
 	 * 
 	 * @param code código promocional
+	 * @return true si el código se agregó, false si no superó las validaciones
 	 */
-	protected void addPromotionalCode(String code){
+	protected boolean addPromotionalCode(String code){
 		if(Util.isEmpty(code, true))
-			return;
+			return false;
 
 		// Validar que no exista un medio de cobro ya cargado
 		if(getPoS().getModel().getOrder().getPayments().size() > 0){
 			errorMsg(MSG_ALREADY_EXISTS_PAYMENT_MEDIUM);
-			return;
+			return false;
 		}
 		// Validar que exista una promo vigente para ese código
 		CallResult result = getPoS().getModel().isPromotionalCodeValid(code);
 		if(result.isError()){
 			errorMsg(result.getMsg());
-			return;
+			return false;
 		}
 		// Agregar el código promocional y reaplicar los descuentos/recargos
 		getPoS().getModel().addPromotionalCode(code);
@@ -318,9 +318,18 @@ public class PromotionsDialog extends JDialog {
 		
 		// Resetear el campo de código y refrescar la tabla
 		getCPromotionalCode().setValue(null);
-		((PromotionTableModel) getCPromotionsTable().getModel()).setPromotions(getPoS().getModel().getPromotions());
-		getPromotionsTableUtil().refreshTable();
-		// Salir de la ventana??
+		refreshPromotionsTable();
+		return true;
+	}
+
+	private void confirm(){
+		String code = (String)getCPromotionalCode().getValue();
+		if(!Util.isEmpty(code, true) && !addPromotionalCode(code)){
+			return;
+		}
+		// Actualiza descuentos y sale de la ventana
+		getPoS().getModel().getOrder().updateDiscounts();
+		exit();
 	}
 	
 	protected void removePromotionalCode(Object selectedPromotion){
@@ -333,9 +342,7 @@ public class PromotionsDialog extends JDialog {
 				getPoS().getModel().removePromotionalCode(promo.getCode());
 				// Refrescar la tabla del pedido
 				getPoS().refreshOrderProductsTable();
-				((PromotionTableModel) getCPromotionsTable().getModel())
-						.setPromotions(getPoS().getModel().getPromotions());
-				getPromotionsTableUtil().refreshTable();
+				refreshPromotionsTable();
 			}
 		}
 		else{
@@ -343,6 +350,13 @@ public class PromotionsDialog extends JDialog {
 			// código promocional
 			errorMsg(MSG_DELETE_NOT_ALLOWED);
 		}
+	}
+
+	private void refreshPromotionsTable(){
+		PromotionTableModel tableModel = (PromotionTableModel)getCPromotionsTable().getModel();
+		tableModel.setPromotions(getPoS().getModel().getPromotions());
+		tableModel.fireTableDataChanged();
+		getPromotionsTableUtil().refreshTable();
 	}
 	
 	private void setActionEnabled(String action, KeyStroke ks, boolean enabled) {
@@ -388,7 +402,7 @@ public class PromotionsDialog extends JDialog {
 	}
 	
 	private void errorMsg(String msg, String subMsg) {
-		getPoS().errorMsg(msg,subMsg);
+		ADialog.error(getPoS().getWindowNo(), this, msg, subMsg);
 		
 	}
 	
