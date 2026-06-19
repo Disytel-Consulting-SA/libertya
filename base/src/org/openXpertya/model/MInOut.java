@@ -1395,18 +1395,23 @@ public class MInOut extends X_M_InOut implements DocAction {
         
 		//Guardado auxiliar de datos para la impresion del documento.
 		if(!isProcessed()) {
-		       	MBPartner aBPartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
-		       	MBPartnerLocation location = new MBPartnerLocation(getCtx(),	getC_BPartner_Location_ID(), get_TrxName());
-		       	MLocation loc = location.getLocation(false);
-		       	
-		       	String fullLocation = location.getLocation(true).toString();
-		       	setNombreCli(aBPartner.getName());
-		       	setNroIdentificCliente(aBPartner.getTaxID());
-		       	setDireccion(loc.getAddress1());
-		       	setLocalidad(loc.getCity());
-		       	setprovincia(loc.getRegion().getName());
-		       	setCP(loc.getPostal());
-		       	setCAT_Iva_ID(aBPartner.getC_Categoria_Iva_ID());
+			MBPartner aBPartner = new MBPartner(getCtx(), getC_BPartner_ID(), get_TrxName());
+			MBPartnerLocation location = new MBPartnerLocation(getCtx(), getC_BPartner_Location_ID(), get_TrxName());
+			MLocation loc = location.getLocation(false);
+			MRegion region = loc.getRegion();
+			if (loc.getCountry().isHasRegion() && region == null) {
+				log.saveError("FillMandatory", Msg.translate(getCtx(), "C_Region_ID"));
+				return false;
+			}
+
+			String fullLocation = location.getLocation(true).toString();
+			setNombreCli(aBPartner.getName());
+			setNroIdentificCliente(aBPartner.getTaxID());
+			setDireccion(loc.getAddress1());
+			setLocalidad(loc.getCity());
+			setprovincia(region != null ? region.getName() : loc.getRegionName());
+			setCP(loc.getPostal());
+			setCAT_Iva_ID(aBPartner.getC_Categoria_Iva_ID());
 		}
 		
         return true;
