@@ -17,19 +17,19 @@ import org.openXpertya.util.Util;
  * Las consultas obtienen el detalle de todos los documentos de la EC, aplicando
  * ademas los filtros de Tipo de Documento y Organización asignados como
  * parámetro del reporte. Realiza la conversión de montos a la moneda del
- * Contexto dado que los pagos pueden estar expresados en otra moneda. NO aplica
+ * contexto respetando la fecha y tasa persistida de cada documento. NO aplica
  * el filtro de fechas para que sea reutilizable la consulta.
  * <ul>
  * <li>El saldo de las Invoices se calcula haciendo: La sumatoria de lo
  * facturado (amount + writeoffamt + discountamt de C_AllocationLine) + La
- * sumatoria de lo pendiente por las Facturas (invoiceOpen) convertido a tasa
- * actual.</li>
+ * sumatoria de lo pendiente por las Facturas (invoiceOpen) convertido a la
+ * tasa de la factura.</li>
  * <li>El saldo de los Payments se calcula haciendo: La sumatoria de lo cobrado
  * (amount de C_AllocationLine) + La sumatoria de lo pendiente por las pagos
- * (paymentavailable) convertido a tasa actual.</li>
+ * (paymentavailable) convertido a la fecha del pago.</li>
  * <li>El saldo de las CashLine se calcula haciendo: La sumatoria de lo cobrado
  * (amount de C_AllocationLine) + La sumatoria de lo pendiente por las pagos
- * (cashlineavailable) convertido a tasa actual.</li>
+ * (cashlineavailable) convertido a la fecha de la línea de caja.</li>
  * </ul>
  */
 
@@ -113,30 +113,38 @@ public class CurrentAccountQuery {
 		StringBuffer sqlDoc = new StringBuffer();
 		sqlDoc.append(" select * ");
 		sqlDoc.append(" from (select ");
-		sqlDoc.append(" c_currency_id, ");
-		sqlDoc.append(" amount, ");
-		sqlDoc.append(getCurrencyID() != null ? " currencyconvert(debit, c_currency_id, " + getCurrencyID() + ", '" + Env.getDateFormatted(dateTo) + "', NULL, " + Env.getAD_Client_ID(getCtx()) + ", " + getOrgID() + ") AS debit, " : " debit, ");
-		sqlDoc.append(getCurrencyID() != null ? " currencyconvert(credit, c_currency_id, " + getCurrencyID() + ", '" + Env.getDateFormatted(dateTo) + "', NULL, " + Env.getAD_Client_ID(getCtx()) + ", " + getOrgID() + ") AS credit, " : " credit, ");
-		sqlDoc.append(" tipo_doc, ");
-		sqlDoc.append(" documentno, ");
-		sqlDoc.append(" datetrx, ");
-		sqlDoc.append(" dateacct, ");
-		sqlDoc.append(" c_doctype_id, ");
-		sqlDoc.append(" documenttable, ");
-		sqlDoc.append(" document_id, ");
-		sqlDoc.append(getCurrencyID() != null ? " currencyconvert(openamt, c_currency_id, " + getCurrencyID() + ", '" + Env.getDateFormatted(dateTo) + "', NULL, " + Env.getAD_Client_ID(getCtx()) + ", " + getOrgID() + ") AS openamt, " : " openamt, ");
-		sqlDoc.append(" created, ");
-		sqlDoc.append(" c_bpartner_id, ");
-		sqlDoc.append(" ad_org_id, ");
-		sqlDoc.append(" ad_client_id, ");
-		sqlDoc.append(" issotrx, ");
-		sqlDoc.append(" c_invoicepayschedule_id, ");
-		sqlDoc.append(" duedate ");
+		sqlDoc.append(" d.c_currency_id, ");
+		sqlDoc.append(" d.amount, ");
+		sqlDoc.append(getConvertedAmountExpression(getNativeDebitExpression()) + " AS debit, ");
+		sqlDoc.append(getConvertedAmountExpression(getNativeCreditExpression()) + " AS credit, ");
+		sqlDoc.append(" d.tipo_doc, ");
+		sqlDoc.append(" d.documentno, ");
+		sqlDoc.append(" d.datetrx, ");
+		sqlDoc.append(" d.dateacct, ");
+		sqlDoc.append(" d.c_doctype_id, ");
+		sqlDoc.append(" d.documenttable, ");
+		sqlDoc.append(" d.document_id, ");
+		sqlDoc.append(getConvertedAmountExpression(getNativeOpenAmountExpression()) + " AS openamt, ");
+		sqlDoc.append(" d.created, ");
+		sqlDoc.append(" d.c_bpartner_id, ");
+		sqlDoc.append(" d.ad_org_id, ");
+		sqlDoc.append(" d.ad_client_id, ");
+		sqlDoc.append(" d.issotrx, ");
+		sqlDoc.append(" d.c_invoicepayschedule_id, ");
+		sqlDoc.append(" d.duedate ");
 		sqlDoc.append(" FROM ( ");
 		sqlDoc.append("SELECT * FROM c_alldocumentscc_v ");
 		sqlDoc.append("UNION ALL ");
 		sqlDoc.append(getSalesTransactionDocumentsQuery());
 		sqlDoc.append(" ) d ");
+		sqlDoc.append(" LEFT JOIN c_invoice source_invoice ON source_invoice.c_invoice_id = d.document_id ");
+		sqlDoc.append(" AND d.documenttable = 'C_Invoice' ");
+		sqlDoc.append(" LEFT JOIN c_payment source_payment ON source_payment.c_payment_id = d.document_id ");
+		sqlDoc.append(" AND d.documenttable = 'C_Payment' ");
+		sqlDoc.append(" LEFT JOIN c_doctype source_payment_doctype ON source_payment_doctype.c_doctype_id = source_payment.c_doctype_id ");
+		sqlDoc.append(" LEFT JOIN c_cashline source_cashline ON source_cashline.c_cashline_id = d.document_id ");
+		sqlDoc.append(" AND d.documenttable = 'C_CashLine' ");
+		sqlDoc.append(getDocumentAvailableJoin());
 		sqlAppend(" WHERE d.AD_Client_ID = ? ", Env.getAD_Client_ID(getCtx()), sqlDoc);
 		if (getbPartnerID() != null)
 			sqlAppend("   AND d.C_Bpartner_ID = ? ", getbPartnerID(), sqlDoc);
@@ -155,6 +163,90 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" ) as d ");
 		sqlDoc.append(whereClause);
 		return sqlDoc.toString();
+	}
+
+	/**
+	 * Los importes de pagos y líneas de caja de c_alldocumentscc_v pueden venir
+	 * expresados en la moneda de la factura aunque la fila declare la moneda del
+	 * medio de pago. Se reconstruye el imputado en la moneda nativa del documento.
+	 */
+	protected String getNativeDebitExpression() {
+		return getNativeAmountExpression("debit", getFullDebitCondition());
+	}
+
+	protected String getNativeCreditExpression() {
+		return getNativeAmountExpression("credit", getFullCreditCondition());
+	}
+
+	protected String getNativeAmountExpression(String columnName, String fullAmountCondition) {
+		String allocatedAmt = getNativeAllocatedAmountExpression();
+		return "CASE WHEN " + getBalanceDocumentCondition() + " "
+				+ "THEN CASE WHEN " + fullAmountCondition + " THEN ABS(d.amount)"
+				+ " ELSE " + allocatedAmt + " END ELSE d." + columnName + " END";
+	}
+
+	protected String getFullDebitCondition() {
+		return "((d.documenttable = 'C_Payment' AND "
+				+ "((d.issotrx = 'Y' AND source_payment_doctype.doctypekey = 'CRR') "
+				+ "OR (d.issotrx = 'N' AND source_payment_doctype.doctypekey <> 'VPR'))) "
+				+ "OR (d.documenttable = 'C_CashLine' AND d.issotrx = 'N'))";
+	}
+
+	protected String getFullCreditCondition() {
+		return "((d.documenttable = 'C_Payment' AND "
+				+ "((d.issotrx = 'Y' AND source_payment_doctype.doctypekey <> 'CRR') "
+				+ "OR (d.issotrx = 'N' AND source_payment_doctype.doctypekey = 'VPR'))) "
+				+ "OR (d.documenttable = 'C_CashLine' AND d.issotrx = 'Y'))";
+	}
+
+	protected String getNativeOpenAmountExpression() {
+		return "CASE "
+				+ "WHEN " + getBalanceDocumentCondition() + " THEN ABS(document_available.openamt) "
+				+ "ELSE d.openamt END";
+	}
+
+	protected String getNativeAllocatedAmountExpression() {
+		return "CASE WHEN " + getBalanceDocumentCondition() + " "
+				+ "THEN ABS(d.amount) - ABS(document_available.openamt) ELSE 0::numeric END";
+	}
+
+	protected String getDocumentAvailableJoin() {
+		return " LEFT JOIN LATERAL (SELECT CASE "
+				+ "WHEN d.documenttable = 'C_Payment' AND COALESCE(source_payment.c_charge_id, 0) = 0 THEN COALESCE(paymentavailable(d.document_id, " + getDateToInlineQuery() + "), 0::numeric) "
+				+ "WHEN d.documenttable = 'C_CashLine' AND COALESCE(source_cashline.c_charge_id, 0) = 0 THEN COALESCE(cashlineavailable(d.document_id, " + getDateToInlineQuery() + "), 0::numeric) "
+				+ "ELSE 0::numeric END AS openamt) document_available "
+				+ "ON " + getBalanceDocumentCondition() + " ";
+	}
+
+	protected String getBalanceDocumentCondition() {
+		return "((d.documenttable = 'C_Payment' AND COALESCE(source_payment.c_charge_id, 0) = 0) "
+				+ "OR (d.documenttable = 'C_CashLine' AND COALESCE(source_cashline.c_charge_id, 0) = 0))";
+	}
+
+	/**
+	 * Para facturas se prioriza la tasa guardada en el comprobante al convertir a
+	 * moneda contable. Para el resto se utiliza la fecha propia del documento.
+	 */
+	protected String getConvertedAmountExpression(String amountExpression) {
+		if (getCurrencyID() == null) {
+			return amountExpression;
+		}
+
+		int accountingCurrencyID = Env.getC_Currency_ID(getCtx());
+		String standardConversion = "currencyconvert(" + amountExpression + ", d.c_currency_id, "
+				+ getCurrencyID() + ", CASE WHEN d.documenttable = 'C_Invoice' THEN source_invoice.dateinvoiced ELSE d.dateacct END, "
+				+ "CASE WHEN d.documenttable = 'C_Invoice' THEN COALESCE(source_invoice.c_conversiontype_id, 0) ELSE NULL END, "
+				+ "d.ad_client_id, d.ad_org_id)";
+
+		if (getCurrencyID().intValue() != accountingCurrencyID) {
+			return standardConversion;
+		}
+
+		return "CASE WHEN d.documenttable = 'C_Invoice' "
+				+ "AND d.c_currency_id <> " + getCurrencyID() + " "
+				+ "AND COALESCE(source_invoice.cintolo_exchange_rate, 0) > 0 "
+				+ "THEN currencyround((" + amountExpression + ") * source_invoice.cintolo_exchange_rate, "
+				+ getCurrencyID() + ", NULL) ELSE " + standardConversion + " END";
 	}
 
 	/**
@@ -380,8 +472,10 @@ public class CurrentAccountQuery {
 		this.condition = condition;
 	}
 	
-	public String getDateToInlineQuery(){
-		return " ('"+ ((getDateTo() != null) ? getDateTo() + "'" : "now'::text") + ")::timestamp(6) without time zone ";
+	public String getDateToInlineQuery() {
+		return getDateTo() != null
+				? "'" + Env.getDateFormatted(getDateTo()) + "'::timestamp without time zone"
+				: "now()::timestamp without time zone";
 	}
 	
 	protected String getInvoiceOrgIDAllocatedQueryCondition(){

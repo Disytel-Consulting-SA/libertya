@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.openXpertya.util.Env;
+
 import net.sf.jasperreports.engine.JRException;
 
 /*
@@ -39,6 +41,7 @@ public class DocumentsDataSource extends OPDataSource {
 	}
 
 	protected String getDataSQL() {
+		int accountingCurrencyID = Env.getC_Currency_ID(Env.getCtx());
 		String sql = ""
 				+ "SELECT "
 				+ "	 CASE "
@@ -48,7 +51,12 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "	 cu.iso_code as Currency, "
 				+ "	 i.grandtotal AS GrandTotalAmt, "
 				// +"	 SUM(al.amount + al.discountamt + al.writeoffamt) AS AllocatedAmt, "
-				+ "	 SUM(currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, ah.datetrx::timestamp with time zone, NULL::integer, ah.ad_client_id, ah.ad_org_id)) AS AllocatedAmt, "
+				+ "	 SUM(CASE "
+				+ "		 WHEN ah.c_currency_id = i.c_currency_id THEN al.amount + al.discountamt + al.writeoffamt "
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
+				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateinvoiced::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
+				+ "	 END) AS AllocatedAmt, "
 				+ "	 invoiceopen(i.C_Invoice_ID,0) AS OpenAmt "
 				+ "FROM c_allocationhdr ah "
 				+ "  JOIN c_allocationline al ON ah.c_allocationhdr_id = al.c_allocationhdr_id "
