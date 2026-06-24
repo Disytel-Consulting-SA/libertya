@@ -2302,7 +2302,8 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
             return;
         }
 
-        String SQL = "SELECT AD_Attachment_ID, Record_ID FROM AD_Attachment " + "WHERE AD_Table_ID=?";
+        // Si existen duplicados para un mismo registro, el recorrido ascendente deja el AD_Attachment_ID mayor para cada record_id
+        String SQL = "SELECT AD_Attachment_ID, Record_ID FROM AD_Attachment " + "WHERE AD_Table_ID=? ORDER BY Record_ID, AD_Attachment_ID";
 
         // dREHER asegurar el cierre de conexiones
         PreparedStatement pstmt = null;
