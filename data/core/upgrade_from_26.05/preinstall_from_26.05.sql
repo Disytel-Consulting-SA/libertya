@@ -85,3 +85,42 @@ update ad_attachment set ad_componentobjectuid = 'CORE-AD_Attachment-20260624-68
 update ad_attachment set ad_componentobjectuid = 'CORE-AD_Attachment-20260624-69' where ad_table_id = 284 and record_id = (select ad_process_id from ad_process where ad_componentobjectuid = 'INFODESCAR-AD_Process-20201027165059682-999619');
 -- UIDs para attachments -> ad_process_para
 update ad_attachment set ad_componentobjectuid = 'CORE-AD_Attachment-20260624-70' where ad_table_id = 285 and record_id = (select ad_process_para_id from ad_process_para where ad_componentobjectuid = 'CORE-AD_Process_Para-1010812');
+
+
+-- 20260624-1153 Ajustes de traducciones Centro de Costos en ventana principal de Proyecto
+UPDATE ad_window_trl wt
+SET
+    name = 'Centro de costos',
+    description = 'Mantener Centros de costos',
+    help = 'La ventana de centros de costos es usada para definir los centros de costos que serán monitoreados por medio de documentos de la aplicación.'
+FROM ad_window w
+WHERE w.ad_window_id = wt.ad_window_id
+  AND w.ad_componentobjectuid = 'CORE-AD_Window-130'
+  AND wt.ad_language ILIKE 'es_%';
+
+UPDATE ad_menu_trl mt
+SET
+    name = 'Centro de costos',
+    description = 'Mantener Centros de costos'
+FROM ad_menu m
+WHERE m.ad_menu_id = mt.ad_menu_id
+  AND m.ad_componentobjectuid = 'CORE-AD_Menu-116'
+  AND mt.ad_language ILIKE 'es_%';
+
+UPDATE ad_tab_trl tt
+SET
+    name = 'Centro de costos',
+    description = 'Definir Centro de costos',
+    help = 'La pestaña de centros de costos es usada para definir el valor, nombre y descripción de cada centro de costos. También define y hace seguimiento a los montos asignados, comprometidos y usados.'
+FROM ad_tab t
+WHERE t.ad_tab_id = tt.ad_tab_id
+  AND t.ad_componentobjectuid = 'CORE-AD_Tab-157'
+  AND tt.ad_language ILIKE 'es_%';
+
+UPDATE ad_table_trl tt
+SET
+    name = 'Centro de costos'
+FROM ad_table t
+WHERE t.ad_table_id = tt.ad_table_id
+  AND t.ad_componentobjectuid = 'CORE-AD_Table-203'
+  AND tt.ad_language ILIKE 'es_%';
