@@ -53,6 +53,9 @@ public class MClientInfo extends X_AD_ClientInfo {
     /** Logger */
     private static CLogger	s_log	= CLogger.getCLogger(MClientInfo.class);
 
+    /** Permite repetir servicios en documentos */
+    private static final String COLUMNNAME_ALLOW_DUPLICATE_SERVICE = "AllowDuplicateService";
+
     /** Account Schema */
     private MAcctSchema	m_acctSchema	= null;
 
@@ -136,6 +139,27 @@ public class MClientInfo extends X_AD_ClientInfo {
         return saveUpdate();
 
     }		// save
+
+    /**
+     * @return true si la compania permite repetir articulos de tipo servicio en
+     *         pedidos a proveedor.
+     */
+    public boolean isAllowDuplicateService() {
+        int index = get_ColumnIndexIgnoreCase(COLUMNNAME_ALLOW_DUPLICATE_SERVICE);
+        if(index < 0) {
+            return false;
+        }
+
+        Object value = get_Value(index);
+        if(value != null) {
+            if(value instanceof Boolean) {
+                return ((Boolean)value).booleanValue();
+            }
+            return "Y".equals(value);
+        }
+
+        return false;
+    }
     
     @Override
     protected boolean afterSave(boolean newRecord, boolean success) {

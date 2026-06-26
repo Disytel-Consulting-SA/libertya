@@ -758,6 +758,7 @@ public class MOrderLine extends X_C_OrderLine {
 	        	String whereClause = "c_order_id = ? AND m_product_id = ?";
 	        	whereClause += newRecord?"":" AND c_orderline_id <> "+getC_OrderLine_ID();
 				if (MDocType.DOCTYPE_PurchaseOrder.equals(orderDocType.getDocTypeKey())
+						&& !isDuplicateServiceInPurchaseOrderAllowed()
 						&& PO.existRecordFor(getCtx(), get_TableName(),
 								whereClause, new Object[] { getC_Order_ID(), getM_Product_ID() },
 								get_TrxName())) {
@@ -984,6 +985,27 @@ public class MOrderLine extends X_C_OrderLine {
         
         return true;
     }    // beforeSave
+
+    /**
+     * @return true si la compania permite repetir este servicio en pedidos a
+     *         proveedor.
+     */
+    private boolean isDuplicateServiceInPurchaseOrderAllowed() {
+        if(!isServiceProduct()) {
+            return false;
+        }
+
+        MClientInfo clientInfo = MClientInfo.get(getCtx(), getAD_Client_ID(), get_TrxName());
+        return clientInfo != null && clientInfo.isAllowDuplicateService();
+    }
+
+    /**
+     * @return true si el producto de la linea es de tipo servicio.
+     */
+    private boolean isServiceProduct() {
+        MProduct product = getProduct();
+        return product != null && MProduct.PRODUCTTYPE_Service.equals(product.getProductType());
+    }
 
     
     /**

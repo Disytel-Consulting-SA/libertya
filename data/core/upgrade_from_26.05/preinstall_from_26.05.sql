@@ -124,3 +124,7 @@ FROM ad_table t
 WHERE t.ad_table_id = tt.ad_table_id
   AND t.ad_componentobjectuid = 'CORE-AD_Table-203'
   AND tt.ad_language ILIKE 'es_%';
+
+-- 20260626-1208 Configuracion para permitir servicios repetidos en pedidos a proveedor
+update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','AllowDuplicateService','character(1) NOT NULL DEFAULT ''N''::bpchar'));
+UPDATE AD_ClientInfo SET AllowDuplicateService = 'N' WHERE AllowDuplicateService IS NULL;
