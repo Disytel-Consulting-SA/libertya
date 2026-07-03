@@ -185,6 +185,7 @@ public class MJacoferRoadMap extends LP_M_Jacofer_RoadMap implements DocAction, 
 		// Eliminar las líneas que no están incluídas
 		deleteNotIncludedInOuts();
 		setProcessed(true);
+		setDocAction(DOCACTION_Close);
 		return DOCSTATUS_Completed;
 	}
 
@@ -196,13 +197,15 @@ public class MJacoferRoadMap extends LP_M_Jacofer_RoadMap implements DocAction, 
 
 	@Override
 	public boolean voidIt() {
-		// TODO Auto-generated method stub
+		setProcessed(true);
+		setDocAction(DOCACTION_None);
 		return true;
 	}
 
 	@Override
 	public boolean closeIt() {
-		// TODO Auto-generated method stub
+		setProcessed(true);
+		setDocAction(DOCACTION_None);
 		return true;
 	}
 
@@ -221,6 +224,7 @@ public class MJacoferRoadMap extends LP_M_Jacofer_RoadMap implements DocAction, 
 	@Override
 	public boolean reActivateIt() {
 		setProcessed(false);
+		setDocAction(DOCACTION_Complete);
 		return true;
 	}
 
