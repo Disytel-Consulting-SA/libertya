@@ -290,6 +290,7 @@
       </fileset>
     </move>
 
+  	<copy file="../BUILD_INFO.properties" todir="nuevoOXP" failonerror="no"/>
   	
 	<!-- Generar el OXP.jar definitivo con plugins incluidos -->	
     <jar jarfile="lib/OXP.jar" index="yes">
