@@ -128,3 +128,8 @@ WHERE t.ad_table_id = tt.ad_table_id
 -- 20260626-1208 Configuracion para permitir servicios repetidos en pedidos a proveedor
 update ad_system set dummy = (SELECT addcolumnifnotexists('AD_ClientInfo','AllowDuplicateService','character(1) NOT NULL DEFAULT ''N''::bpchar'));
 UPDATE AD_ClientInfo SET AllowDuplicateService = 'N' WHERE AllowDuplicateService IS NULL;
+
+--20260724-0922 Cambiar ad_client.modelvalidationclasses del tipo de varchar(255) a text para evitar limitaciones en la longitud de las clases definidas.  No definir un limite de 255 en metadatos.
+--Estas ampliaciones tambien se realizaron a nivel CORE, pero se incluyen aqui en caso de estar usando una version previa de CORE.
+ALTER TABLE ad_client ALTER COLUMN modelvalidationclasses TYPE text;
+update ad_column set fieldlength = -1 where ad_componentobjectuid = 'CORE-AD_Column-13058';
