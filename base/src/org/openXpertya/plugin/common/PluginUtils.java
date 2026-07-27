@@ -149,6 +149,9 @@ public class PluginUtils {
 		if (emulationStatus==null)
 			return "";
 		StringBuffer retValue = new StringBuffer();
+
+		if (emulationStatus.get(PluginConstants.STAGE_INIT)!=null)
+			retValue.append(emulationStatus.get(PluginConstants.STAGE_INIT));
 		
 		if (emulationStatus.get(PluginConstants.STAGE_REGISTER_COMPONENT)!=null)
 			retValue.append(emulationStatus.get(PluginConstants.STAGE_REGISTER_COMPONENT));
@@ -158,6 +161,9 @@ public class PluginUtils {
 		
 		if (emulationStatus.get(PluginConstants.STAGE_XMLINSTALL)!=null)
 			retValue.append(emulationStatus.get(PluginConstants.STAGE_XMLINSTALL));
+		
+		if (emulationStatus.get(PluginConstants.STAGE_FINALIZE)!=null)
+			retValue.append(emulationStatus.get(PluginConstants.STAGE_FINALIZE));
 		
 		return retValue.toString();
 	}

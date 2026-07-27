@@ -195,6 +195,9 @@ public class PluginConstants {
 
 	/** ----------------------- ESTPAS DE EJECUCION ----------------------- */
 	
+	/** Stage preliminares */
+	public static final String STAGE_INIT = "INIT";
+	
 	/** Stage registracion del componente */
 	public static final String STAGE_REGISTER_COMPONENT = "REGISTER";
 	
@@ -204,4 +207,7 @@ public class PluginConstants {
 	/** Stage install/postinstall - procesamiento XML */
 	public static final String STAGE_XMLINSTALL = "XMLINSTALL";
 
+	/** Stage finalizacion */
+	public static final String STAGE_FINALIZE = "FINALIZE";
+	
 }
