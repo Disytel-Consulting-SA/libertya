@@ -222,12 +222,20 @@ public class DPActivities extends DashboardPanel implements EventListener {
         Component comp = event.getTarget();
         String eventName = event.getName();
 
+        if (eventName.equals(WSocialConversation.ON_READ_STATUS_CHANGED)) {
+            updateConversations();
+            return;
+        }
+        
         // Conversaciones?
         if (event.getTarget().equals(btnConversation)) {
-        	WSocialConversation conv = new WSocialConversation();
-        	btnConversation.setLabel(Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations());
-        	AEnv.showWindow(conv);  
-        	return;
+            WSocialConversation conv = new WSocialConversation();
+            conv.addEventListener(
+                WSocialConversation.ON_READ_STATUS_CHANGED,
+                this
+            );
+            AEnv.showWindow(conv);
+            return;
         }
         
         // Gestion tradicional
@@ -249,5 +257,16 @@ public class DPActivities extends DashboardPanel implements EventListener {
             	if(menuId > 0) SessionManager.getAppDesktop().onMenuSelected(menuId);
             }
         }
+	}
+	
+	/**
+	 * Actualiza el contador de conversaciones no leidas.
+	 */
+	private void updateConversations() {
+	    btnConversation.setLabel(
+	        Msg.translate(Env.getCtx(), "Conversations")
+	            + ": "
+	            + getConversations()
+	    );
 	}
 }

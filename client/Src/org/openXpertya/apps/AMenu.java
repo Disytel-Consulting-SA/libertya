@@ -83,6 +83,9 @@ import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Splash;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 /**
  * Descripción de Clase
  *
@@ -123,6 +126,13 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         wfPanel    = new WFPanel( this );
         treePanel  = new VTreePanel( m_WindowNo,true,false );    // !editable & hasBar
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+                updateConversations();
+            }
+        });
+        
         try {
             jbInit();
             createMenu();
@@ -700,6 +710,19 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         updateInfo();
     }    // actionPerformed
 
+    
+    
+    /**
+     * Actualiza el contador de conversaciones no leidas.
+     */
+    private void updateConversations() {
+        bConversations.setText(
+            Msg.translate(Env.getCtx(), "Conversations")
+                + ": "
+                + getConversations()
+        );
+    }
+    
     /**
      * Descripción de Método
      *
@@ -869,7 +892,7 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         bTasks.setText( Msg.translate( m_ctx,"R_Request_ID" ) + ": " + requests );
         
-        bConversations.setText( Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations() );
+        updateConversations();
 
         // Memo
 

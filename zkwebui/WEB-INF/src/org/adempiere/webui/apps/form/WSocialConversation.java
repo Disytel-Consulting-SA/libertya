@@ -41,6 +41,7 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zul.AbstractListModel;
@@ -116,6 +117,8 @@ public class WSocialConversation extends Window  implements EventListener  {
 	// dREHER
 	private AbstractADWindowPanel mPanel;
 	private String titulo;
+	
+	public static final String ON_READ_STATUS_CHANGED = "onConversationReadStatusChanged";
 	
     public int getRecordID() {
 		return recordID;
@@ -617,12 +620,17 @@ public class WSocialConversation extends Window  implements EventListener  {
 	}
 	
 	protected void markAsRead(boolean asRead) {
-		try {
-			SocialConversationModel.markAsReadNotRead(currentConversation, Env.getAD_User_ID(Env.getCtx()), asRead);
-			toggleComponents(false);
-		} catch (Exception e) {
-			FDialog.error(m_WindowNo, this, e.getMessage());
-		}	
+	    try {
+	        SocialConversationModel.markAsReadNotRead(
+	            currentConversation,
+	            Env.getAD_User_ID(Env.getCtx()),
+	            asRead
+	        );
+	        toggleComponents(false);
+	        Events.postEvent(ON_READ_STATUS_CHANGED, this, null);
+	    } catch (Exception e) {
+	        FDialog.error(m_WindowNo, this, e.getMessage());
+	    }
 	}
 
 	protected void newParticipant() {
