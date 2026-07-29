@@ -24,6 +24,7 @@ setIsNoGravado (false);
 setIsPercepcion (false);
 setIsSummary (false);
 setIsTaxExempt (false);
+setIsNoAplicaRetencion (false);
 setName (null);
 setRate (Env.ZERO);
 setRequiresTaxCertificate (false);
@@ -308,6 +309,22 @@ Business partner is exempt from tax */
 public boolean isTaxExempt() 
 {
 Object oo = get_Value("IsTaxExempt");
+if (oo != null) 
+{
+ if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();
+ return "Y".equals(oo);
+}
+return false;
+}
+/** Set No aplica retenciones */
+public void setIsNoAplicaRetencion (boolean IsNoAplicaRetencion)
+{
+set_Value ("IsNoAplicaRetencion", new Boolean(IsNoAplicaRetencion));
+}
+/** Get No aplica retenciones */
+public boolean isNoAplicaRetencion() 
+{
+Object oo = get_Value("IsNoAplicaRetencion");
 if (oo != null) 
 {
  if (oo instanceof Boolean) return ((Boolean)oo).booleanValue();

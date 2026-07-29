@@ -602,13 +602,23 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * @return monto total a tomar en cuenta por cada Factura, si las lineas tienen un esquema configurado
 	 * @author dREHER Feb' 25
 	 */
+	protected boolean isInvoiceLineApplicableForRetention(MInvoiceLine line) {
+		if(line == null || line.getC_Tax_ID() <= 0) {
+			return true;
+		}
+		MTax tax = MTax.get(line.getCtx(), line.getC_Tax_ID(), line.get_TrxName());
+		return !tax.isNoAplicaRetencion();
+	}
+
 	public BigDecimal getInvoicesLinesAmount() {
 		List<MInvoice> invoices = getInvoiceList();
 		BigDecimal amount = Env.ZERO;
 		for (int i = 0; i < invoices.size(); i++) {
 			MInvoiceLine[] lines = invoices.get(i).getLines();
 			for (int j = 0; j < lines.length; j++) {
-				amount = amount.add(lines[j].getLineNetAmount());
+				if(isInvoiceLineApplicableForRetention(lines[j])) {
+					amount = amount.add(lines[j].getLineNetAmount());
+				}
 			}
 		}
 		return amount;
@@ -785,8 +795,11 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	public BigDecimal getNetoLineaConEsquema(MInvoice mInvoice) {
 		BigDecimal netoConEsquema = Env.ZERO;
 		
-		String sql = "SELECT SUM(LineNetAmount) FROM C_InvoiceLine WHERE C_Invoice_ID=? AND COALESCE(C_RetencionSchema_ID,0) <> " +
-				getRetencionSchema().getC_RetencionSchema_ID() + " AND COALESCE(C_RetencionSchema_ID,0) > 0";
+		String sql = "SELECT SUM(l.LineNetAmount) FROM C_InvoiceLine l " +
+			"LEFT JOIN C_Tax t ON l.C_Tax_ID = t.C_Tax_ID " +
+			"WHERE l.C_Invoice_ID=? AND COALESCE(l.C_RetencionSchema_ID,0) <> " +
+			getRetencionSchema().getC_RetencionSchema_ID() + " AND COALESCE(l.C_RetencionSchema_ID,0) > 0 " +
+			"AND COALESCE(t.IsNoAplicaRetencion,'N') <> 'Y'";
 		
 		netoConEsquema = DB.getSQLValueBD(getTrxName(), 
 				sql, mInvoice.getC_Invoice_ID());
