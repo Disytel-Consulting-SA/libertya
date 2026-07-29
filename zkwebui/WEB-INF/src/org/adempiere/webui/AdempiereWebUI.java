@@ -24,7 +24,9 @@ import java.util.Properties;
 import javax.servlet.http.HttpSession;
 
 import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.apps.form.WSocialConversation;
 import org.adempiere.webui.component.DrillCommand;
+import org.adempiere.webui.component.Messagebox;
 import org.adempiere.webui.component.TokenCommand;
 import org.adempiere.webui.component.ZoomCommand;
 import org.adempiere.webui.desktop.DefaultDesktop;
@@ -37,8 +39,10 @@ import org.adempiere.webui.util.BrowserToken;
 import org.adempiere.webui.util.UserPreference;
 import org.adempiere.webui.window.FDialog;
 import org.adempiere.webui.window.WUserDataChange;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSession;
+import org.openXpertya.model.MSocialConversation;
 import org.openXpertya.model.MSysConfig;
 import org.openXpertya.model.MSystem;
 import org.openXpertya.model.MUser;
@@ -101,12 +105,17 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 
 	public static final String ZK_DESKTOP_SESSION_KEY = "zk.desktop";
 	
+	private static final String ON_UNREAD_CONVERSATIONS = "onUnreadConversations";
+
+		private static final String UNREAD_CONVERSATIONS_SHOWN = "unread.conversations.shown";
+	
 	// dREHER
 	private Keylistener keyListener;
 
     public AdempiereWebUI()
     {
     	this.addEventListener(Events.ON_CLIENT_INFO, this);
+    	this.addEventListener(ON_UNREAD_CONVERSATIONS, this);
     	this.setVisible(false);
 
     	userPreference = new UserPreference();
@@ -300,6 +309,19 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 			}
 		}
 		
+		// Conversaciones pendientes de lectura? La condición verifica: 
+		// 	Que la sesión continúe autenticada, Que todavía no se haya programado el aviso para esta sesión, 
+		//  Que el contador actual de conversaciones no leídas sea mayor que cero.
+		//  Que la preferencia así lo habilite
+		if (SessionManager.isUserLoggedIn(ctx) 
+			&& currSess.getAttribute(UNREAD_CONVERSATIONS_SHOWN) == null
+		    && MSocialConversation.getNotReadConversationsCountForUser(Env.getAD_User_ID(ctx)) > 0
+		    && MSocialConversation.shouldNotifyUnreadConversationsOnLogin() ) {
+
+		    currSess.setAttribute(UNREAD_CONVERSATIONS_SHOWN, Boolean.TRUE);
+		    Events.echoEvent(ON_UNREAD_CONVERSATIONS, this, null);
+		}
+		
     }
     
     /**
@@ -368,6 +390,10 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
     }
 
 	public void onEvent(Event event) {
+		if (ON_UNREAD_CONVERSATIONS.equals(event.getName())) {
+		    showUnreadConversationsDialog();
+		    return;
+		}
 		if (event instanceof ClientInfoEvent) {
 			ClientInfoEvent c = (ClientInfoEvent)event;
 			clientInfo = new ClientInfo();
@@ -380,9 +406,25 @@ public class AdempiereWebUI extends Window implements EventListener, IWebClient
 			if (appDesktop != null)
 				appDesktop.setClientInfo(clientInfo);
 		}
-
 	}
 
+	private void showUnreadConversationsDialog() {
+	    try {
+	        int response = Messagebox.showDialog(
+	            "Tiene conversaciones sin leer, desea visualizarlas?",
+	            Msg.translate(Env.getCtx(), "Conversations"),
+	            Messagebox.OK | Messagebox.NO,
+	            Messagebox.QUESTION
+	        );
+
+	        if (response == Messagebox.OK) {
+	            AEnv.showWindow(new WSocialConversation());
+	        }
+	    } catch (InterruptedException e) {
+	        Thread.currentThread().interrupt();
+	    }
+	}
+	
 	/**
 	 * @param userId
 	 * @return UserPreference
