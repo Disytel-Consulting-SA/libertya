@@ -48,8 +48,10 @@ import javax.swing.FocusManager;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -67,6 +69,7 @@ import org.openXpertya.apps.wf.WFPanel;
 import org.openXpertya.db.CConnection;
 import org.openXpertya.grid.tree.VTreePanel;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSession;
 import org.openXpertya.model.MSocialConversation;
@@ -177,6 +180,13 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         splash.dispose();
         splash = null;
+        
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                showPendingConversations();
+            }
+        });
+        
     }    // AMenu
 
     /** Descripción de Campos */
@@ -223,6 +233,37 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
     
     private WindowManager windowManager = new WindowManager();
+    
+  
+    /**
+     * Informa al usuario cuando tiene conversaciones sin leer al iniciar la aplicacion.
+     */
+    private void showPendingConversations() {
+ 
+        if (getConversations() <= 0 || !MSocialConversation.shouldNotifyUnreadConversationsOnLogin()) {
+            return;
+        }
+
+        Object[] options = {
+            Msg.getMsg(m_ctx, "OK"),
+            Msg.getMsg(m_ctx, "No")
+        };
+
+        int response = JOptionPane.showOptionDialog(
+            this,
+            "Tiene conversaciones sin leer, desea visualizarlas?",
+            Msg.translate(m_ctx, "Conversations"),
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        if (response == 0) {
+            gotoConversations();
+        }
+    }
     
     /**
      * Descripción de Método

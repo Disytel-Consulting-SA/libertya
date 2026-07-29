@@ -40,6 +40,12 @@ public class MSocialConversation extends X_C_SocialConversation {
 	/** Value de preferencia activo = N para la politica de seguridad de conversaciones */
 	public static String CONVERSATION_SECURITY_POLICY_PREFERENCE_VALUE_DISABLED = "D";
 	
+	// Solo evitar la notificacion si la preferencia existe y es N.  Por defecto notificar (incluso si la preferencia no existe).
+	public static boolean shouldNotifyUnreadConversationsOnLogin() {
+		String pref = MPreference.GetCustomPreferenceValue("CONVERSATIONS_NOTIFY_PENDINGS_ON_LOGIN");
+		return !(pref!=null && "N".equalsIgnoreCase(pref));
+	}	
+	
 	/**
 	 * Retorna true si la política de seguridad para conversaciones se encuentra activada, 
 	 * limitando el acceso a las conversaciones según los permisos de visualización de registros
@@ -397,5 +403,7 @@ public class MSocialConversation extends X_C_SocialConversation {
 			attachID = 0;
 		return attachID;
 	}
+	
+	
 	
 }
