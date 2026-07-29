@@ -133,3 +133,6 @@ UPDATE AD_ClientInfo SET AllowDuplicateService = 'N' WHERE AllowDuplicateService
 --Estas ampliaciones tambien se realizaron a nivel CORE, pero se incluyen aqui en caso de estar usando una version previa de CORE.
 ALTER TABLE ad_client ALTER COLUMN modelvalidationclasses TYPE text;
 update ad_column set fieldlength = -1 where ad_componentobjectuid = 'CORE-AD_Column-13058';
+
+--20260729-1130 Agregar columna en configuracion de impuestos NO aplica retenciones
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_Tax','IsNoAplicaRetencion','character(1) NOT NULL DEFAULT ''N''::bpchar'));
