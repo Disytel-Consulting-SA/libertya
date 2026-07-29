@@ -61,6 +61,14 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 */
 	private List<BigDecimal> m_List_InvoiceNetAmount = new ArrayList<BigDecimal>();
 	private List<BigDecimal> m_List_InvoiceTotalLinesAmt = new ArrayList<BigDecimal>();
+	/**
+	 * Neto y total de lineas (ya filtrados por IsNoAplicaRetencion) indexados por C_Invoice_ID.
+	 * Se consultan por ID en lugar de por posición en la lista ya que algunos procesadores
+	 * (ej. RetencionIIBBForRegion/RetencionCABA) reemplazan la lista de facturas por un
+	 * subconjunto filtrado por región, desalineando los índices respecto de las listas de arriba.
+	 */
+	private Map<Integer, BigDecimal> m_InvoiceNetAmountByID = new HashMap<Integer, BigDecimal>();
+	private Map<Integer, BigDecimal> m_InvoiceTotalLinesAmtByID = new HashMap<Integer, BigDecimal>();
 
 	/**
 	 * Indicador de Trx de venta. Los comprobantes de retenciones serán
@@ -380,6 +388,10 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 		// Limpia la lista de facturas pagadas junto con la de importes.
 		getInvoiceList().clear();
 		getAmountList().clear();
+		getInvoiceNetAmtList().clear();
+		getInvoiceTotalLinesAmt().clear();
+		m_InvoiceNetAmountByID.clear();
+		m_InvoiceTotalLinesAmtByID.clear();
 		setAmmount(null);
 		setPayTotalAmount(Env.ZERO);
 		recalculateAmount = true;
@@ -412,7 +424,9 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 			getAmountList().add(payamt);
 			getInvoiceNetAmtList().add(netAmount);
 			getInvoiceTotalLinesAmt().add(totalLines);
-			
+			m_InvoiceNetAmountByID.put(inv.getC_Invoice_ID(), netAmount);
+			m_InvoiceTotalLinesAmtByID.put(inv.getC_Invoice_ID(), totalLines);
+
 			debug("--> Agrega el neto de cada factura. Inv:" + inv.getDocumentNo() + " neto:" + netAmount + " total lineas:" + totalLines + " pago:" + payamt);
 			
 			/**
@@ -634,9 +648,15 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 	 * @return neto del pago
 	 */
 	public BigDecimal getPayNetAmt(MInvoice invoice, BigDecimal amt){
-		
+
+		// Recupera el neto y total de lineas ya filtrados por IsNoAplicaRetencion
+		// almacenados para esta factura (si fue agregada via addInvoice de 4 args),
+		// buscando por ID en lugar de por posición en la lista.
+		BigDecimal neto = invoice != null ? m_InvoiceNetAmountByID.get(invoice.getC_Invoice_ID()) : null;
+		BigDecimal totalLines = invoice != null ? m_InvoiceTotalLinesAmtByID.get(invoice.getC_Invoice_ID()) : null;
+
 		// llama a metodo sobrecargada para guardar compatibilidad
-		return getPayNetAmt(invoice, amt, null, null);
+		return getPayNetAmt(invoice, amt, neto, totalLines);
 	}
 	
 	/**
@@ -738,8 +758,16 @@ public abstract class AbstractRetencionProcessor implements RetencionProcessor {
 				BigDecimal totalLines = invoices.get(i).getTotalLines();
 				
 				if(!isAnterior) {
-					neto = m_List_InvoiceNetAmount.get(i);
-					totalLines = m_List_InvoiceTotalLinesAmt.get(i);
+					// Se busca por C_Invoice_ID en lugar de por posición, ya que algunos
+					// procesadores (ej. RetencionIIBBForRegion/RetencionCABA) reemplazan
+					// la lista de facturas por un subconjunto filtrado por región, lo que
+					// desalinea el índice "i" respecto del orden en que se agregaron las facturas.
+					BigDecimal storedNeto = m_InvoiceNetAmountByID.get(invoices.get(i).getC_Invoice_ID());
+					BigDecimal storedTotalLines = m_InvoiceTotalLinesAmtByID.get(invoices.get(i).getC_Invoice_ID());
+					if(storedNeto != null)
+						neto = storedNeto;
+					if(storedTotalLines != null)
+						totalLines = storedTotalLines;
 				}
 				
 				BigDecimal netoLineasEsquemaPredefinido = getNetoLineaConEsquema(invoices.get(i));
