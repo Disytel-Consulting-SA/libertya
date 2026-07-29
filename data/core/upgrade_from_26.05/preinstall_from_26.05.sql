@@ -138,4 +138,4 @@ update ad_column set fieldlength = -1 where ad_componentobjectuid = 'CORE-AD_Col
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_Tax','IsNoAplicaRetencion','character(1) NOT NULL DEFAULT ''N''::bpchar'));
 
 --20260729-1530 Agregar columna en esquema de retenciones en las lineas de facturas
-update ad_system set dummy = (SELECT addcolumnifnotexists('C_InvoiceLine','C_RetencionSchema_ID','numeric(10,0)'));
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_InvoiceLine','C_RetencionSchema_ID','integer'));
