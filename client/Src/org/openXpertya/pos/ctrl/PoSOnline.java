@@ -4972,7 +4972,7 @@ public class PoSOnline extends PoSConnectionState {
 			}
 		}
 		catch (Exception e){
-			e.printStackTrace();
+			log.log(Level.SEVERE, "getOtherTaxes - error al calcular percepciones", e);
 		}
 		
 		return otherTaxes;
