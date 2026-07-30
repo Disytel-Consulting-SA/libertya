@@ -100,6 +100,9 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     protected CButton    buttonGoToRecord = new CButton();
     protected CButton    buttonNewConversation = new CButton();
     protected CButton    buttonFindConversation = new CButton();
+    protected CButton 	 buttonListConversations = new CButton();
+
+
     
     protected ConversationTableModel listModel;
     
@@ -159,6 +162,7 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 		buttonGoToRecord.setText(Msg.translate(Env.getCtx(), "RelatedDocument"));
 		buttonNewConversation.setText(Msg.translate(Env.getCtx(), "StartAnotherConversation"));
 		buttonFindConversation.setText(Msg.translate(Env.getCtx(), "FindConversations"));
+		buttonListConversations.setText("Listar conversaciones");
 	}
 	
 	protected void loadConversation() {
@@ -285,6 +289,11 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 					attach();
 				}
 			});	   
+	    	buttonListConversations.addActionListener(new ActionListener() {
+	    	    public void actionPerformed(ActionEvent e) {
+	    	        listConversations();
+	    	    }
+	    	});
 	    	cboNewParcitipant.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) { 
 					newParticipant();
@@ -313,13 +322,14 @@ public class VSocialConversation extends CPanel  implements FormPanel {
     	m_frame.getContentPane().setLayout(layout);
 
        	// Navigate panel 
-    	GridLayout navigateLayout = new GridLayout(0,5);
+    	GridLayout navigateLayout = new GridLayout(0,6);
     	JPanel navigatePanel = new JPanel();
     	navigatePanel.setLayout(navigateLayout);
     	navigatePanel.add(buttonGoToRecord);
     	navigatePanel.add(buttonPrevious);
     	navigatePanel.add(buttonNext);
     	navigatePanel.add(buttonFindConversation);
+    	navigatePanel.add(buttonListConversations);
     	navigatePanel.add(buttonNewConversation);
     	
     	// Asunto header
@@ -647,6 +657,22 @@ public class VSocialConversation extends CPanel  implements FormPanel {
 	        // Recuperar las conversaciones	        
 	        conversations = MSocialConversation.getConversationsForSearch(find.getQuery().getWhereClause().trim().length() > 0 ? find.getQuery().getWhereClause() : "1=1");
 			conversationPos = 0;
+			loadConversation();
+			loadValues();
+			tableModel.reload(currentConversation);
+		} catch (Exception e) {
+			ADialog.error(m_WindowNo, this, e.getMessage());
+		}
+	}
+	
+	protected void listConversations() {
+		VSocialConversationList dialog = new VSocialConversationList(Env.getFrame(this));
+		Integer conversationID = dialog.selectConversation();
+		if (conversationID == null)
+			return;
+		try {
+			conversations = dialog.getConversationIDs();
+			conversationPos = conversations.indexOf(conversationID);
 			loadConversation();
 			loadValues();
 			tableModel.reload(currentConversation);
