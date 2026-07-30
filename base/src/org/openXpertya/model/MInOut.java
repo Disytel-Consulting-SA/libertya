@@ -2530,6 +2530,11 @@ public class MInOut extends X_M_InOut implements DocAction {
 //                if( sLine.getM_AttributeSetInstance_ID() == 0 ) {
                     MInOutLineMA mas[] = MInOutLineMA.get( getCtx(),sLine.getM_InOutLine_ID(),get_TrxName());
 
+                    // Cupo restante para clampear QtyPOMA cuando el DocType permite
+                    // recibir/entregar mas de lo pedido (ver mismo clamp en el fallback
+                    // sin ASI, mas abajo, para QtyPO contra ol_qtyReserved)
+                    BigDecimal qtyReservedRemaining = ol_ok ? ol_qtyReserved : null;
+
                     for( int j = 0;j < mas.length;j++ ) {
                         MInOutLineMA ma    = mas[ j ];
                         BigDecimal   QtyMA = ma.getMovementQty();
@@ -2578,7 +2583,18 @@ public class MInOut extends X_M_InOut implements DocAction {
     					
     					QtySOMA = isReturn && !Env.isAllowDeliveryReturn(getCtx())?BigDecimal.ZERO:QtySOMA;
     					QtyPOMA = isReturn && !Env.isAllowDeliveryReturn(getCtx())?BigDecimal.ZERO:QtyPOMA;
-    					
+
+    					// Si el DocType permite recibir mas de lo pedido, no descontar de
+    					// M_Storage.QtyOrdered mas de lo que efectivamente quedaba reservado
+    					// (mismo criterio que el fallback sin ASI, mas abajo)
+    					if( qtyReservedRemaining != null && docType.isInOut_Allow_Greater_QtyOrdered()
+    							&& QtyPOMA.abs().compareTo( qtyReservedRemaining.abs()) > 0 ) {
+    						QtyPOMA = qtyReservedRemaining.abs().multiply( new BigDecimal( QtyPOMA.signum()));
+    					}
+    					if( qtyReservedRemaining != null ) {
+    						qtyReservedRemaining = qtyReservedRemaining.subtract( QtyPOMA );
+    					}
+
     					// QtySOMA = docType.isReserveStockManagment()?QtySOMA:BigDecimal.ZERO;
     					
 						// Las cantidades reservadas se actualizan en el almacén del

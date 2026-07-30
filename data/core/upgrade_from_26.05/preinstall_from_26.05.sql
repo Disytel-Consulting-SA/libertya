@@ -139,3 +139,6 @@ update ad_system set dummy = (SELECT addcolumnifnotexists('C_Tax','IsNoAplicaRet
 
 --20260729-1530 Agregar columna en esquema de retenciones en las lineas de facturas
 update ad_system set dummy = (SELECT addcolumnifnotexists('C_InvoiceLine','C_RetencionSchema_ID','integer'));
+
+--20260730-1200 Backfill de C_DocType.InOut_Allow_Greater_QtyOrdered: el merge "Pasaje de micro IOREEXOR a JACLBY" en preinstall_from_21.0.sql quedo con un comentario de bloque mal formado (sin -HHMM) y el bloque completo se salteo en bases cuyo AD_Plugin.component_export_date ya habia superado esa fecha, dejando la columna faltante
+update ad_system set dummy = (SELECT addcolumnifnotexists('c_doctype','inout_allow_greater_qtyordered','character(1) NOT NULL DEFAULT ''N''::bpchar'));
