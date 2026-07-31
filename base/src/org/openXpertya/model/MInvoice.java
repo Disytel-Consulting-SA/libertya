@@ -3232,7 +3232,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 */
 	public CallResult doJumpNumberControls(boolean isNC) {
 		CallResult cr = new CallResult();
-		
+
+		// dREHER (portado desde libertya-core-teh): solo controlar si es electronica o requiere impresion fiscal
+		if(!isFiscalInvoiceElectronicaImpresionFiscal())
+			return cr;
+
 		// Verifico que exista el numero anterior, para el mismo tipo de documento, salvo que sea la primer factura de este tipo...
 		int nroAnterior = getNumeroComprobante() - 1;
 		if(isNC && getDocumentNo().length()>=13) {
@@ -3268,7 +3272,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 */
 	public CallResult doDraftControls() {
 		CallResult cr = new CallResult();
-		
+
+		// dREHER (portado desde libertya-core-teh): solo controlar si es electronica o requiere impresion fiscal
+		if(!isFiscalInvoiceElectronicaImpresionFiscal())
+			return cr;
+
 		// dREHER Mayo 25 Solo controlar si cambian uno de estos datos
 		if(getC_DocTypeTarget_ID() != this.get_ValueOldAsInt("C_DocTypeTarget_ID") || 
 			getPuntoDeVenta() != this.get_ValueOldAsInt("PuntoDeVenta") ||
@@ -7731,6 +7739,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 						|| isThermalFiscalPrint(getC_DocTypeTarget_ID()));
 	}
 
+	// dREHER 30 Jun 2026 Requiere impresion fiscal o termica si o si.... (portado desde libertya-core-teh)
+	public boolean requireFiscalPrint_v2() {
+		return CalloutInvoiceExt.ComprobantesFiscalesActivos()
+				&& isFiscalPrint(getC_DocTypeTarget_ID());
+	}
+
 	/**
 	 * @return true en caso que el tipo de documento para esta factura sea
 	 *         electrónico, o false en caso contrario
@@ -7748,6 +7762,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 */
 	public boolean isFiscalInvoice() {
 		return (isElectronicInvoice() || requireFiscalPrint());
+	}
+
+	// dREHER (portado desde libertya-core-teh)
+	public boolean isFiscalInvoiceElectronicaImpresionFiscal() {
+		return (isElectronicInvoice() || requireFiscalPrint_v2());
 	}
 
 	/**
@@ -9188,6 +9207,22 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		return isThermalPrint;
 	}
 
+	// dREHER (portado desde libertya-core-teh)
+	public boolean isFiscalPrint(int docTypeID) {
+		boolean isThermalPrint = false;
+		if(!Util.isEmpty(docTypeID, true)) {
+			MDocType dt = MDocType.get(getCtx(), docTypeID);
+			if(!Util.isEmpty(dt.getC_Controlador_Fiscal_ID(), true)) {
+				MControladorFiscal cf = new MControladorFiscal(getCtx(), dt.getC_Controlador_Fiscal_ID(),
+						get_TrxName());
+				isThermalPrint = MControladorFiscal.CONTROLADORFISCALTYPE_Thermal.equals(cf.getControladorFiscalType());
+				if(!isThermalPrint)
+					isThermalPrint = MControladorFiscal.CONTROLADORFISCALTYPE_Fiscal.equals(cf.getControladorFiscalType());
+			}
+		}
+		return isThermalPrint;
+	}
+
 	/**
 	 * @return true si este comprobante requiere generación de CAE, false caso
 	 *         contrario
@@ -9591,8 +9626,23 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	public CallResult doExtraNumberControls() {
 		CallResult cr = new CallResult();
 		int tipoDocID = getC_DocTypeTarget_ID();
-		
-		
+
+		// dREHER (portado desde libertya-core-teh): solo controlar si es electronica o requiere impresion fiscal
+		if(!isFiscalInvoiceElectronicaImpresionFiscal())
+			return cr;
+
+		// dREHER (portado desde libertya-core-teh): solo controlar si cambian uno de estos datos
+		if(tipoDocID != this.get_ValueOldAsInt("C_DocTypeTarget_ID") ||
+			getPuntoDeVenta() != this.get_ValueOldAsInt("PuntoDeVenta") ||
+			getNumeroComprobante() != this.get_ValueOldAsInt("NumeroComprobante")
+		){
+			isYaExtraNumbersControl = false;
+		}
+
+		// dREHER (portado desde libertya-core-teh): si ya controlo no volver a hacerlo
+		if(isYaExtraNumbersControl)
+			return cr;
+
 		log.info("Valido numeracion de comprobantes: TipoID=" + tipoDocID + " PtoVenta=" + getPuntoDeVenta() + " Numero=" + getNumeroComprobante());
 		
 		// Verifico que exista el numero anterior, para el mismo tipo de documento, salvo que sea la primer factura de este tipo...
@@ -9606,15 +9656,37 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				MDocType dt = MDocType.get(getCtx(), tipoDocID);
 				cr.setMsg("No se encuentra comprobante anterior # " + nroAnterior + ". Por favor ajuste los secuenciadores para el Tipo de Documento: " + dt.getName(), true);
 			}else {
-				
-				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
-				if(!anterior.isProcessed())
+
+				// dREHER (portado desde libertya-core-teh): query liviana en vez de instanciar un MInvoice completo
+				String processed = null;
+				Timestamp prevDateInvoiced = null;
+				String prevDocumentNo = null;
+
+				String sqlAnterior = "SELECT Processed, DateInvoiced, DocumentNo FROM C_Invoice WHERE C_Invoice_ID=?";
+				PreparedStatement pstmtAnterior = null;
+				ResultSet rsAnterior = null;
+				try {
+					pstmtAnterior = DB.prepareStatement(sqlAnterior, get_TrxName());
+					pstmtAnterior.setInt(1, C_InvoiceAnterior_ID);
+					rsAnterior = pstmtAnterior.executeQuery();
+					if(rsAnterior.next()) {
+						processed = rsAnterior.getString("Processed");
+						prevDateInvoiced = rsAnterior.getTimestamp("DateInvoiced");
+						prevDocumentNo = rsAnterior.getString("DocumentNo");
+					}
+				} catch (SQLException e) {
+					log.log(Level.SEVERE, sqlAnterior, e);
+				} finally {
+					DB.close(rsAnterior, pstmtAnterior);
+				}
+
+				if(processed==null || !processed.equals("Y"))
 					cr.setMsg("El comprobante anterior # " + nroAnterior + " no se emitió correctamente, por favor gestionar", true);
-				
+
 				// Control cronológico: la fecha del comprobante actual no puede ser
 				// anterior a la del comprobante inmediatamente anterior de la misma serie.
 				if(!cr.isError()) {
-					CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(anterior, nroAnterior);
+					CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(prevDateInvoiced, prevDocumentNo, nroAnterior);
 					if(chronologicalResult.isError()) {
 						cr = chronologicalResult;
 					}
@@ -9639,12 +9711,15 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			}
 		}
 		*/
-		
+
+		// dREHER (portado desde libertya-core-teh)
+		isYaExtraNumbersControl = true;
+
 		return cr;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * Controles extras para asegurar la secuencialidad de numeros de comprobantes de ventas
 	 * al momento de completar el documento.
 	 * Ademas se controla si los documentos anteriores se gestionaron correctamente (CAE/Impresion fiscal)
@@ -9653,7 +9728,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 */
 	public CallResult doExtraCompleteNumberControls() {
 		CallResult cr = new CallResult();
-		
+
+		// dREHER (portado desde libertya-core-teh): solo controlar si es electronica o requiere impresion fiscal
+		if(!isFiscalInvoiceElectronicaImpresionFiscal())
+			return cr;
+
 		// Verifico que exista el numero anterior, para el mismo tipo de documento, salvo que sea la primer factura de este tipo...
 		int nroAnterior = getNumeroComprobante() - 1;
 		if(nroAnterior > 0) {
@@ -9665,28 +9744,54 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				MDocType dt = MDocType.get(getCtx(), this.getDocTypeID());
 				cr.setMsg("No se encuentra comprobante anterior #:" + nroAnterior + ". Por favor ajuste los secuenciadores para el Tipo de Documento:" + dt.getName(), true);
 			}else {
-				MInvoice anterior = MInvoice.get(getCtx(), C_InvoiceAnterior_ID, get_TrxName());
-				
+
+				// dREHER (portado desde libertya-core-teh): query liviana en vez de instanciar un MInvoice completo
+				Timestamp prevDateInvoiced = null;
+				String prevDocumentNo = null;
+				String prevCae = null;
+				Timestamp prevVtoCae = null;
+				String prevFiscalAlreadyPrinted = null;
+
+				String sqlAnterior = "SELECT DateInvoiced, DocumentNo, CAE, vtocae, FiscalAlreadyPrinted FROM C_Invoice WHERE C_Invoice_ID=?";
+				PreparedStatement pstmtAnterior = null;
+				ResultSet rsAnterior = null;
+				try {
+					pstmtAnterior = DB.prepareStatement(sqlAnterior, get_TrxName());
+					pstmtAnterior.setInt(1, C_InvoiceAnterior_ID);
+					rsAnterior = pstmtAnterior.executeQuery();
+					if(rsAnterior.next()) {
+						prevDateInvoiced = rsAnterior.getTimestamp("DateInvoiced");
+						prevDocumentNo = rsAnterior.getString("DocumentNo");
+						prevCae = rsAnterior.getString("CAE");
+						prevVtoCae = rsAnterior.getTimestamp("vtocae");
+						prevFiscalAlreadyPrinted = rsAnterior.getString("FiscalAlreadyPrinted");
+					}
+				} catch (SQLException e) {
+					log.log(Level.SEVERE, sqlAnterior, e);
+				} finally {
+					DB.close(rsAnterior, pstmtAnterior);
+				}
+
 				// Control cronológico: mantener la coherencia entre numeración y fecha.
 				// Si el número es mayor, la fecha no puede ser menor al comprobante anterior.
-				CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(anterior, nroAnterior);
+				CallResult chronologicalResult = validateChronologicalOrderWithPreviousInvoice(prevDateInvoiced, prevDocumentNo, nroAnterior);
 				if(chronologicalResult.isError()) {
 					return chronologicalResult;
 				}
-				
+
 				// Si es factura electronica, la FC anterior debe tener CAE y VTO
 				if(isElectronicInvoice()) {
-					if(anterior.getcae()==null || anterior.getcae().isEmpty() || anterior.getvtocae()==null)
+					if(prevCae==null || prevCae.isEmpty() || prevVtoCae==null)
 						cr.setMsg("El comprobante anterior no posee numero de CAE, por favor gestionar!", true);
-					
+
 				}else {
-					
+
 					if(requireFiscalPrint()) {
-						if(!anterior.isFiscalAlreadyPrinted())
+						if(!"Y".equals(prevFiscalAlreadyPrinted))
 							cr.setMsg("El comprobante anterior no se encuentra impreso, por favor imprimir!", true);
-						
+
 					}
-					
+
 				}
 			}
 		}
@@ -9698,22 +9803,24 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	 * Valida coherencia cronológica de la numeración para una serie de comprobantes.
 	 * Si existe comprobante inmediato anterior (n-1), el comprobante actual no puede
 	 * tener una fecha de facturación menor a la de ese comprobante.
+	 *
+	 * dREHER (portado desde libertya-core-teh): recibe los datos del comprobante anterior
+	 * ya resueltos por query liviana, en vez de un MInvoice completo.
 	 */
-	private CallResult validateChronologicalOrderWithPreviousInvoice(MInvoice previousInvoice, int previousNumber) {
+	private CallResult validateChronologicalOrderWithPreviousInvoice(Timestamp previousDateInvoiced, String previousDocumentNo, int previousNumber) {
 		CallResult cr = new CallResult();
-		
-		if(previousInvoice == null || previousInvoice.getID() <= 0
-				|| previousInvoice.getDateInvoiced() == null || getDateInvoiced() == null) {
+
+		if(previousDateInvoiced == null || getDateInvoiced() == null) {
 			return cr;
 		}
-		
-		if(previousInvoice.getDateInvoiced().after(getDateInvoiced())
-				&& !TimeUtil.isSameDay(previousInvoice.getDateInvoiced(), getDateInvoiced())) {
+
+		if(previousDateInvoiced.after(getDateInvoiced())
+				&& !TimeUtil.isSameDay(previousDateInvoiced, getDateInvoiced())) {
 			cr.setMsg("La fecha del comprobante actual no puede ser menor a la del comprobante anterior # "
-					+ previousNumber + " (" + previousInvoice.getDocumentNo() + " - "
-					+ Env.getDateFormatted(previousInvoice.getDateInvoiced()) + ").", true);
+					+ previousNumber + " (" + previousDocumentNo + " - "
+					+ Env.getDateFormatted(previousDateInvoiced) + ").", true);
 		}
-		
+
 		return cr;
 	}
 	
@@ -9749,10 +9856,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		int nroAnterior = getNumeroComprobante() - 1;
 		if(nroAnterior > 0) {
 			
+			// dREHER Ago 25 - contemplar los comprobantes fiscales cancelados (portado desde libertya-core-teh)
 			String sql = "SELECT C_Invoice_ID FROM C_Invoice WHERE " +
 					" C_DocTypeTarget_ID=? AND PuntoDeVenta=? AND NumeroComprobante=? AND IsSOTrx=" + (isSoTrx?"'Y'":"'N'") +
-					" AND IsActive='Y' ORDER BY Created DESC LIMIT 1";
-			
+					" AND (IsActive='Y' OR (IsActive='N' AND GrandTotal=0 AND DocStatus='IN')) ORDER BY Created DESC LIMIT 1";
+
 			// TODO: cambiar nivel de log -> finest
 			
 			log.warning("Busca comprobante inmediatamente anterior. " +
