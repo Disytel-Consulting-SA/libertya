@@ -576,4 +576,42 @@ $BODY$
   COST 100;
 ALTER FUNCTION update_padron_from_i_padron_caba_regimen_simplificado(integer, integer, integer, character, integer, integer)
   OWNER TO libertya;
-  
+
+--20260804-1610 Remover preferencias personales WebUI exportadas por error en core 26.05
+DELETE FROM ad_preference p
+WHERE p.ad_componentobjectuid IN (
+	'CORE-AD_Preference-20260518095035923-386798',
+	'CORE-AD_Preference-20260518095035969-868815',
+	'CORE-AD_Preference-20260518095036000-679065',
+	'CORE-AD_Preference-20260518095036039-003161',
+	'CORE-AD_Preference-20260518095036072-336964',
+	'CORE-AD_Preference-20260518095036101-046814',
+	'CORE-AD_Preference-20260518095036134-560011',
+	'CORE-AD_Preference-20260518095036161-854751',
+	'CORE-AD_Preference-20260518095036183-118156',
+	'CORE-AD_Preference-20260518095036206-446841',
+	'CORE-AD_Preference-20260518095036228-678755'
+)
+AND p.ad_user_id IS NOT NULL
+AND p.ad_window_id IS NULL
+AND p.attribute IN (
+	'Language',
+	'Role',
+	'Client',
+	'Organization',
+	'Warehouse',
+	'AutoCommit',
+	'AutoNew',
+	'WindowTabPlacement',
+	'WindowTabCollapsible',
+	'MenuCollapsed',
+	'CompactMode'
+)
+AND EXISTS (
+	SELECT 1
+	FROM ad_preference p2
+	WHERE p2.ad_preference_id <> p.ad_preference_id
+		AND p2.ad_user_id = p.ad_user_id
+		AND p2.attribute = p.attribute
+		AND p2.ad_window_id IS NULL
+);
