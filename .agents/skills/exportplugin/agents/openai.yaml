@@ -1,0 +1,4 @@
+interface:
+  display_name: "ExportPlugin"
+  short_description: "Exportar componentes Libertya"
+  default_prompt: "Use $exportplugin para exportar un jar de componente Libertya."
