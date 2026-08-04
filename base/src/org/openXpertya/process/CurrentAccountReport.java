@@ -301,7 +301,8 @@ public class CurrentAccountReport extends SvrProcess {
 							+ ", "
 							+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
 							+ ", '"
-							+ rs.getString("DocumentNo")
+							// dREHER Ago 26 - se escapa la comilla simple del DocumentNo para no romper la sintaxis del INSERT
+							+ String.valueOf(rs.getString("DocumentNo")).replace("'", "''")
 							+ "', "
 							+ p_C_BPartnerID
 							+ ", '"
@@ -358,7 +359,10 @@ public class CurrentAccountReport extends SvrProcess {
 			
 			if (usql.length() > 0)
 				// Se insertan todas las líneas en la tabla.
-				DB.executeUpdate(usql.toString(), get_TrxName());
+				// dREHER Ago 26 - se omite la conversion Oracle->Postgres para este INSERT masivo (mismo problema
+				// detectado en BalanceReport.java: Convert.convertIt() corta la sentencia si el DocumentNo u otro
+				// texto libre contiene el patron " / ", tirando una excepcion con todo el SQL crudo en pantalla)
+				DB.executeUpdate(usql.toString(), false, get_TrxName(), true);
 
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Fill T_CuentaCorriente error", e);
@@ -491,7 +495,8 @@ public class CurrentAccountReport extends SvrProcess {
 					+ ", "
 					+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
 					+ ", '"
-					+ rs.getString("DocumentNo")
+					// dREHER Ago 26 - se escapa la comilla simple del DocumentNo para no romper la sintaxis del INSERT
+					+ String.valueOf(rs.getString("DocumentNo")).replace("'", "''")
 					+ "', "
 					+ p_C_BPartnerID
 					+ ", '"
@@ -577,7 +582,8 @@ public class CurrentAccountReport extends SvrProcess {
 					+ ", "
 					+ acumBalance.multiply(new BigDecimal((p_AccountType.equals("C") ? 1 : -1)))
 					+ ", '"
-					+ rs.getString("DocumentNo")
+					// dREHER Ago 26 - se escapa la comilla simple del DocumentNo para no romper la sintaxis del INSERT
+					+ String.valueOf(rs.getString("DocumentNo")).replace("'", "''")
 					+ "', "
 					+ p_C_BPartnerID
 					+ ", '"

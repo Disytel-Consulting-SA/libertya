@@ -268,7 +268,8 @@ public class BalanceReport extends SvrProcess {
 											.append(p_AD_Org_ID == null?"0":p_AD_Org_ID).append(",")
 											.append(subindice).append(",")
 											.append(rs.getInt("C_BPartner_ID")).append(", '")
-											.append(rs.getString("SO_DESCRIPTION")).append("', ")
+											// dREHER Ago 26 - se escapa la comilla simple del texto libre para no romper la sintaxis del INSERT
+											.append(rs.getString("SO_DESCRIPTION").replace("'", "''")).append("', ")
 											.append(rs.getBigDecimal("Credit")).append(",")
 											.append(rs.getBigDecimal("Debit")).append(",")
 											.append(balance).append(", ");
@@ -315,7 +316,11 @@ public class BalanceReport extends SvrProcess {
 		
 		// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
 		if (subindice > 0){
-			int no = DB.executeUpdate(usql.toString(), get_TrxName());
+			// dREHER Ago 26 - se omite la conversion Oracle->Postgres para este INSERT masivo:
+			// Convert.convertIt() corta la sentencia si algun campo de texto libre (ej. SO_Description)
+			// contiene el patron " / " (lo interpreta como terminador de bloque PL/SQL), rompiendo
+			// el proceso con una excepcion que vuelca todo el SQL crudo en pantalla.
+			int no = DB.executeUpdate(usql.toString(), false, get_TrxName(), true);
 			if(no == 0){
 				throw new Exception("Error insertando datos en la tabla temporal");
 			}
