@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 
 import org.openXpertya.JasperReport.DataSource.CurrentAccountBPartnerDataSource;
 import org.openXpertya.JasperReport.DataSource.OXPJasperDataSource;
+import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MBPartner;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MOrg;
@@ -21,6 +22,7 @@ public class LaunchCurrentAccountBPartner extends JasperReportLaunch {
 		addReportParameter("DATEFROM", getDateFrom());
 		addReportParameter("DATETO", getDateTo());
 		addReportParameter("ACCOUNTTYPE", getAccountType());
+		addReportParameter("TASA_CAMBIO", isDocumentConvertRate() ? "Fecha del documento" : "Fecha de corte");
 		if(!Util.isEmpty(getBPartnerID(), true)) {
 			MBPartner bp = new MBPartner(getCtx(), getBPartnerID(), get_TrxName());
 			addReportParameter("C_BPARTNER_ID", getBPartnerID());
@@ -69,11 +71,19 @@ public class LaunchCurrentAccountBPartner extends JasperReportLaunch {
 		
 		return (Integer)getParameterValue("C_Currency_ID");
 	}
+
+	protected boolean isDocumentConvertRate() {
+		Object value = getParameterValue(CurrentAccountQuery.PARAM_CONVERSION_RATE_DATE);
+		if (value == null) {
+			value = getParameterValue(CurrentAccountQuery.PARAM_IS_DOCUMENT_CONVERT_RATE);
+		}
+		return CurrentAccountQuery.getDocumentConvertRate(value, true);
+	}
 	
 	@Override
 	protected OXPJasperDataSource createReportDataSource() {
 		return new CurrentAccountBPartnerDataSource(getCtx(), getAD_PInstance_ID(), getDateFrom(), getDateTo(),
-				getAccountType(), getBPartnerID(), get_TrxName(), getOrgId(), getCurrencyId());
+				getAccountType(), getBPartnerID(), get_TrxName(), getOrgId(), getCurrencyId(), isDocumentConvertRate());
 	}
 
 }

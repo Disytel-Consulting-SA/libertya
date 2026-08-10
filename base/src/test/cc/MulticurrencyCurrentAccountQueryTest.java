@@ -37,6 +37,32 @@ class MulticurrencyCurrentAccountQueryTest {
 	}
 
 	@Test
+	void cutoffRateModeUsesReportDateAndSkipsPersistedInvoiceRate() {
+		Properties ctx = new Properties();
+		Env.setContext(ctx, "$C_Currency_ID", 118);
+		CurrentAccountQuery query = new CurrentAccountQuery(ctx, null, null, false, null,
+				REPORT_DATE, "A", 100, "C");
+		query.setCurrencyID(118);
+		query.setDocumentConvertRate(false);
+
+		String sql = query.getAllDocumentsQuery();
+
+		assertFalse(sql.contains("source_invoice.cintolo_exchange_rate"));
+		assertFalse(sql.contains("source_invoice.dateinvoiced"));
+		assertTrue(sql.contains(", '2026-06-15'::timestamp without time zone, CASE WHEN d.documenttable = 'C_Invoice'"));
+		assertTrue(sql.contains("paymentavailable(d.document_id, '2026-06-15'::timestamp without time zone)"));
+		assertTrue(sql.contains("cashlineavailable(d.document_id, '2026-06-15'::timestamp without time zone)"));
+	}
+
+	@Test
+	void conversionRateModeAcceptsCompatibilityParameterValues() {
+		assertTrue(CurrentAccountQuery.getDocumentConvertRate("Y", false));
+		assertTrue(CurrentAccountQuery.getDocumentConvertRate(CurrentAccountQuery.CONVERSION_RATE_DATE_DOCUMENT, false));
+		assertFalse(CurrentAccountQuery.getDocumentConvertRate("N", true));
+		assertFalse(CurrentAccountQuery.getDocumentConvertRate(CurrentAccountQuery.CONVERSION_RATE_DATE_CUTOFF, true));
+	}
+
+	@Test
 	void receiptUsesPersistedInvoiceRateBeforeConversionTableFallback() {
 		String sql = new ExposedDocumentsDataSource().getExposedDataSQL();
 

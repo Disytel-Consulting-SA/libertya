@@ -17,8 +17,9 @@ import org.openXpertya.util.Util;
  * Las consultas obtienen el detalle de todos los documentos de la EC, aplicando
  * ademas los filtros de Tipo de Documento y Organización asignados como
  * parámetro del reporte. Realiza la conversión de montos a la moneda del
- * contexto respetando la fecha y tasa persistida de cada documento. NO aplica
- * el filtro de fechas para que sea reutilizable la consulta.
+ * contexto usando fecha/tasa del documento o fecha de corte según
+ * {@link #isDocumentConvertRate()}. NO aplica el filtro de fechas para que sea
+ * reutilizable la consulta.
  * <ul>
  * <li>El saldo de las Invoices se calcula haciendo: La sumatoria de lo
  * facturado (amount + writeoffamt + discountamt de C_AllocationLine) + La
@@ -34,6 +35,11 @@ import org.openXpertya.util.Util;
  */
 
 public class CurrentAccountQuery {
+
+	public static final String PARAM_IS_DOCUMENT_CONVERT_RATE = "IsDocumentConvertRate";
+	public static final String PARAM_CONVERSION_RATE_DATE = "ConversionRateDate";
+	public static final String CONVERSION_RATE_DATE_CUTOFF = "C";
+	public static final String CONVERSION_RATE_DATE_DOCUMENT = "D";
 
 	/** Organización */
 	private Integer orgID;
@@ -67,6 +73,9 @@ public class CurrentAccountQuery {
 	
 	/** Agregar Validaciones de Seguridad de Organizaciones */
 	private boolean addSecurityValidation = false;
+
+	/** Usar fecha/tasa propia del documento para convertir importes */
+	private boolean documentConvertRate = true;
 	
 	public CurrentAccountQuery(Properties ctx, Integer orgID,
 			Integer docTypeID, Boolean detailReceiptsPayments,
@@ -232,12 +241,17 @@ public class CurrentAccountQuery {
 			return amountExpression;
 		}
 
-		int accountingCurrencyID = Env.getC_Currency_ID(getCtx());
-		String standardConversion = "currencyconvert(" + amountExpression + ", d.c_currency_id, "
-				+ getCurrencyID() + ", CASE WHEN d.documenttable = 'C_Invoice' THEN source_invoice.dateinvoiced ELSE d.dateacct END, "
-				+ "CASE WHEN d.documenttable = 'C_Invoice' THEN COALESCE(source_invoice.c_conversiontype_id, 0) ELSE NULL END, "
-				+ "d.ad_client_id, d.ad_org_id)";
+		if (!isDocumentConvertRate()) {
+			return getStandardConvertedAmountExpression(amountExpression, getCutoffConversionDateExpression());
+		}
 
+		return getDocumentConvertedAmountExpression(amountExpression);
+	}
+
+	protected String getDocumentConvertedAmountExpression(String amountExpression) {
+		String standardConversion = getStandardConvertedAmountExpression(amountExpression, getDocumentConversionDateExpression());
+
+		int accountingCurrencyID = Env.getC_Currency_ID(getCtx());
 		if (getCurrencyID().intValue() != accountingCurrencyID) {
 			return standardConversion;
 		}
@@ -247,6 +261,49 @@ public class CurrentAccountQuery {
 				+ "AND COALESCE(source_invoice.cintolo_exchange_rate, 0) > 0 "
 				+ "THEN currencyround((" + amountExpression + ") * source_invoice.cintolo_exchange_rate, "
 				+ getCurrencyID() + ", NULL) ELSE " + standardConversion + " END";
+	}
+
+	protected String getStandardConvertedAmountExpression(String amountExpression, String conversionDateExpression) {
+		return "currencyconvert(" + amountExpression + ", d.c_currency_id, "
+				+ getCurrencyID() + ", " + conversionDateExpression + ", "
+				+ getConversionTypeExpression() + ", "
+				+ "d.ad_client_id, d.ad_org_id)";
+	}
+
+	protected String getDocumentConversionDateExpression() {
+		return "CASE WHEN d.documenttable = 'C_Invoice' THEN source_invoice.dateinvoiced ELSE d.dateacct END";
+	}
+
+	protected String getCutoffConversionDateExpression() {
+		return getDateToInlineQuery();
+	}
+
+	protected String getConversionTypeExpression() {
+		return "CASE WHEN d.documenttable = 'C_Invoice' THEN COALESCE(source_invoice.c_conversiontype_id, 0) ELSE NULL END";
+	}
+
+	public static boolean isConversionRateDateParameter(String name) {
+		return PARAM_IS_DOCUMENT_CONVERT_RATE.equalsIgnoreCase(name)
+				|| PARAM_CONVERSION_RATE_DATE.equalsIgnoreCase(name);
+	}
+
+	public static boolean getDocumentConvertRate(Object value, boolean defaultValue) {
+		if (value == null) {
+			return defaultValue;
+		}
+		if (value instanceof Boolean) {
+			return ((Boolean) value).booleanValue();
+		}
+		String stringValue = value.toString();
+		if ("Y".equalsIgnoreCase(stringValue) || "true".equalsIgnoreCase(stringValue)
+				|| CONVERSION_RATE_DATE_DOCUMENT.equalsIgnoreCase(stringValue)) {
+			return true;
+		}
+		if ("N".equalsIgnoreCase(stringValue) || "false".equalsIgnoreCase(stringValue)
+				|| CONVERSION_RATE_DATE_CUTOFF.equalsIgnoreCase(stringValue)) {
+			return false;
+		}
+		return defaultValue;
 	}
 
 	/**
@@ -496,5 +553,13 @@ public class CurrentAccountQuery {
 
 	protected void setAddSecurityValidation(boolean addSecurityValidation) {
 		this.addSecurityValidation = addSecurityValidation;
+	}
+
+	public boolean isDocumentConvertRate() {
+		return documentConvertRate;
+	}
+
+	public void setDocumentConvertRate(boolean documentConvertRate) {
+		this.documentConvertRate = documentConvertRate;
 	}
 }

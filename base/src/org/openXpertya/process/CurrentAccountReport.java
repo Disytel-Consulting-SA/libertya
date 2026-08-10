@@ -62,6 +62,9 @@ public class CurrentAccountReport extends SvrProcess {
 	
 	/** Generador de consultas de cuenta corriente */
 	private CurrentAccountQuery currentAccountQuery;
+
+	/** Usar fecha/tasa propia del documento para convertir importes */
+	private boolean p_documentConvertRate = true;
 	
 	/** Condición de los comprobantes: Efectivo, Cuenta Corriente, Todos */
 	private String condition;
@@ -113,6 +116,8 @@ public class CurrentAccountReport extends SvrProcess {
 			} else if (name.equalsIgnoreCase("IncludeCreditNotesRequest")) {
 				p_includeCreditNoteRequest = "Y".equals((String) para[i].getParameter());
 				p_includeCreditNoteRequest_char = (String)para[i].getParameter();
+			} else if (CurrentAccountQuery.isConversionRateDateParameter(name)) {
+				p_documentConvertRate = CurrentAccountQuery.getDocumentConvertRate(para[i].getParameter(), p_documentConvertRate);
 			} 
 			else {
 				log.log(Level.SEVERE, "prepare - Unknown Parameter: " + name);
@@ -429,7 +434,9 @@ public class CurrentAccountReport extends SvrProcess {
 			throws Exception {
 		StringBuffer query = new StringBuffer(
 				" SELECT 	o.C_Order_ID, o.DocumentNo, o.DateAcct, o.C_DocType_ID, ")
-				.append(" 			coalesce(currencyconvert(o.grandtotal - sum(matches.totalamtinvoiced), o.c_currency_id, ?, ('now'::text)::timestamp(6) with time zone, COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as pendingToInvoiceAmt, o.c_currency_id, o.grandtotal as Amount")
+				.append(" 			coalesce(currencyconvert(o.grandtotal - sum(matches.totalamtinvoiced), o.c_currency_id, ?, ")
+				.append(getOrderConversionDateExpression("o"))
+				.append(", COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as pendingToInvoiceAmt, o.c_currency_id, o.grandtotal as Amount")
 				.append(" FROM ")
 				.append(" ( ")
 				.append("				SELECT ol.c_orderline_id, ol.linetotalamt, ol.qtyordered, coalesce(sum(il.qtyinvoiced),0) as qtyinvoiced, coalesce(sum(il.linetotalamt),0) as totalamtinvoiced ")
@@ -524,7 +531,9 @@ public class CurrentAccountReport extends SvrProcess {
 			throws Exception {
 		StringBuffer query = new StringBuffer(
 				" SELECT 	o.C_Order_ID, o.DocumentNo, o.DateAcct, o.C_DocType_ID, ")
-				.append(" 			coalesce(currencyconvert(o.grandtotal, o.c_currency_id, ?, "+(p_DateTrx_To == null?"now()":"?::date")+", COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as grandtotalConverted, o.c_currency_id, o.grandtotal ")
+				.append(" 			coalesce(currencyconvert(o.grandtotal, o.c_currency_id, ?, ")
+				.append(getOrderConversionDateExpression("o"))
+				.append(", COALESCE(c_conversiontype_id,0), o.ad_client_id, o.ad_org_id),0) as grandtotalConverted, o.c_currency_id, o.grandtotal ")
 				.append(" FROM c_order o ")
 				.append(" JOIN c_doctype dt on dt.c_doctype_id = o.c_doctype_id ")
 				.append(" WHERE o.AD_Client_ID = ? ")
@@ -542,7 +551,6 @@ public class CurrentAccountReport extends SvrProcess {
 		PreparedStatement pstmt = DB.prepareStatement(query.toString(), get_TrxName(), true);
 
 		pstmt.setInt(i++, client_Currency_ID);
-		i = pstmtSetParam(i, p_DateTrx_To, pstmt);
 		pstmt.setInt(i++, getAD_Client_ID());
 		pstmt.setInt(i++, p_C_BPartnerID);
 		i = pstmtSetParam(i, p_DateTrx_From, pstmt);
@@ -638,8 +646,15 @@ public class CurrentAccountReport extends SvrProcess {
 				p_DateTrx_To, getCondition(), p_C_BPartnerID, p_AccountType);
 		caq.setOrgID(p_AD_Org_ID);
 		caq.setCurrencyID(client_Currency_ID);
+		caq.setDocumentConvertRate(isP_DocumentConvertRate());
 		
 		return caq;
+	}
+
+	protected String getOrderConversionDateExpression(String orderAlias) {
+		return isP_DocumentConvertRate()
+				? orderAlias + ".DateAcct"
+				: getCurrentAccountQuery().getDateToInlineQuery();
 	}
 
 	protected Integer getP_AD_Org_ID() {
@@ -704,6 +719,14 @@ public class CurrentAccountReport extends SvrProcess {
 
 	public void setClient_Currency_ID(int client_Currency_ID) {
 		this.client_Currency_ID = client_Currency_ID;
+	}
+
+	protected boolean isP_DocumentConvertRate() {
+		return p_documentConvertRate;
+	}
+
+	protected void setP_DocumentConvertRate(boolean p_documentConvertRate) {
+		this.p_documentConvertRate = p_documentConvertRate;
 	}
 	
 }

@@ -51,6 +51,9 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 	
 	/** Moneda de la compañía */
 	private int clientCurrencyID;
+
+	/** Usar fecha/tasa propia del documento para convertir importes */
+	private boolean documentConvertRate = true;
 	
 	/** Signo de documentos que son débitos (depende de p_AccountType) */
 	private int debit_signo_issotrx;
@@ -73,16 +76,24 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 		setBpParamID(bPartnerID);
 		setDateFrom(dateFrom);
 		setDateTo(dateTo);
+		setDocumentConvertRate(true);
 		setDebit_signo_issotrx(1);
 		setCredit_signo_isotrx(-1);
 		
 		setActualCAQ(new CurrentAccountQuery(getCtx(), null, null, false, getDateFrom(), getDateTo(), "A", bPartnerID,
 				getAccountType(), true));
+		getActualCAQ().setDocumentConvertRate(isDocumentConvertRate());
 		setCaq(getActualCAQ());
 	}
 	
 	public CurrentAccountBPartnerDataSource(Properties ctx, Integer pInstanceID, Timestamp dateFrom, Timestamp dateTo,
 			String accountType, Integer bPartnerID, String trxName, Integer orgId, Integer currencyID) {
+		this(ctx, pInstanceID, dateFrom, dateTo, accountType, bPartnerID, trxName, orgId, currencyID, true);
+	}
+
+	public CurrentAccountBPartnerDataSource(Properties ctx, Integer pInstanceID, Timestamp dateFrom, Timestamp dateTo,
+			String accountType, Integer bPartnerID, String trxName, Integer orgId, Integer currencyID,
+			boolean documentConvertRate) {
 		super(trxName);
 		setCtx(ctx);
 		setpInstanceID(pInstanceID);
@@ -92,6 +103,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 		setBpParamID(bPartnerID);
 		setDateFrom(dateFrom);
 		setDateTo(dateTo);
+		setDocumentConvertRate(documentConvertRate);
 		setDebit_signo_issotrx(1);
 		setCredit_signo_isotrx(-1);
 		
@@ -99,6 +111,7 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 				getAccountType(), true);
 		caq.setOrgID(orgId);
 		caq.setCurrencyID(currencyID);
+		caq.setDocumentConvertRate(isDocumentConvertRate());
 		setActualCAQ(caq);
 		setCaq(getActualCAQ());
 	}
@@ -453,6 +466,14 @@ public class CurrentAccountBPartnerDataSource extends QueryDataSource {
 
 	public void setCaq(CurrentAccountQuery caq) {
 		this.caq = caq;
+	}
+
+	public boolean isDocumentConvertRate() {
+		return documentConvertRate;
+	}
+
+	public void setDocumentConvertRate(boolean documentConvertRate) {
+		this.documentConvertRate = documentConvertRate;
 	}
 
 }

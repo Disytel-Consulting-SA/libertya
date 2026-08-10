@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
+import org.openXpertya.cc.CurrentAccountQuery;
 import org.openXpertya.model.MClient;
 import org.openXpertya.model.MClientInfo;
 import org.openXpertya.model.MConversionRate;
@@ -45,6 +46,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	int currencyID = 0;
 	String condition;
 	String conditionWhereClause;
+	boolean documentConvertRate = false;
 	
 	private Integer currencyClient;
 	private HashMap<Integer, BigDecimal> saldosMultimoneda = new HashMap<Integer, BigDecimal>();
@@ -104,6 +106,8 @@ public class EstadoDeCuentaProcess extends SvrProcess {
             	bpGroupID = para[ i ].getParameterAsInt();
             } else if( name.equalsIgnoreCase( "FilterInternalEC" )) {
             	filterInternalEC = ((String)para[ i ].getParameter()).equals("Y");
+			} else if( CurrentAccountQuery.isConversionRateDateParameter(name)) {
+				documentConvertRate = CurrentAccountQuery.getDocumentConvertRate(para[i].getParameter(), isDocumentConvertRate());
             } else {
                 log.log( Level.SEVERE,"prepare - Unknown Parameter: " + name );
             }
@@ -480,8 +484,9 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setDaysDue(rs.getInt("daysdue"));
 			ec.setDateDoc(rs.getTimestamp("datedoc"));
 			ec.setDiscountDate(rs.getTimestamp("discountdate"));
+			Timestamp conversionDate = getConversionDate(rs);
 			BigDecimal damt = MCurrency.currencyConvert(rs.getBigDecimal("discountamt"), rs.getInt("c_currency_id"),
-					currencyClient, rs.getDate("datedoc"), Env.getAD_Org_ID(getCtx()), getCtx());
+					currencyClient, conversionDate, Env.getAD_Org_ID(getCtx()), getCtx());
 			ec.setDiscountAmt(damt != null?damt.multiply(realSign):BigDecimal.ZERO);
 			ec.setGrandTotalMulticurrency(rs.getBigDecimal("grandtotalmulticurrency").multiply(realSign));
 			ec.setPaidAmtMulticurrency(rs.getBigDecimal("paidamtmulticurrency").multiply(realSign));
@@ -491,7 +496,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			ec.setPaidAmt(rs.getBigDecimal("paidamt").multiply(realSign));
 			ec.setOpenAmt(rs.getBigDecimal("openamt").multiply(realSign));
 			
-			BigDecimal rate = MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), 0);
+			BigDecimal rate = MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, conversionDate, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), 0);
 			this.incrementarSaldosMultimoneda(ec, rs.getInt("c_currency_id"));
 			
 			if (rate == null) {
@@ -506,7 +511,7 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 			
 			ec.setC_Currency_ID(rs.getInt("c_currency_id"));
 			ec.setC_ConversionType_ID(rs.getInt("c_conversiontype_id"));
-			ec.setConversionRate(MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, this.dateConvert, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), rs.getInt("c_order_id")));
+			ec.setConversionRate(MConversionRate.getRate(rs.getInt("c_currency_id"), currencyClient, conversionDate, rs.getInt("c_conversiontype_id"), getAD_Client_ID(), rs.getInt("c_order_id")));
 			ec.setIsPayScheduleValid(rs.getString("ispayschedulevalid")!=null && rs.getString("ispayschedulevalid").equalsIgnoreCase("Y")); 
 			ec.setC_InvoicePaySchedule_ID(rs.getInt("c_invoicepayschedule_id"));
 			ec.setC_PaymentTerm_ID(rs.getInt("c_paymentterm_id"));
@@ -758,6 +763,18 @@ public class EstadoDeCuentaProcess extends SvrProcess {
 	
 	protected boolean isShowByDateOpenDocumentsOnly() {
 		return SHOW_DOCUMENTS_BY_DATE_ONLY_OPEN_DOCUMENTS.equals(showDocuments);
+	}
+
+	protected Timestamp getConversionDate(ResultSet rs) throws Exception {
+		return isDocumentConvertRate() ? rs.getTimestamp("datedoc") : this.dateConvert;
+	}
+
+	protected boolean isDocumentConvertRate() {
+		return documentConvertRate;
+	}
+
+	protected void setDocumentConvertRate(boolean documentConvertRate) {
+		this.documentConvertRate = documentConvertRate;
 	}
 	
 	@Override
