@@ -115,7 +115,7 @@ public class ImportConversionRate extends SvrProcess {
 
         if( p_DeleteOldImported ) {
             sql = new StringBuffer( "DELETE I_Conversion_Rate " + "WHERE I_IsImported='Y'" ).append( clientCheck );
-            no = DB.executeUpdate( sql.toString());
+            no = DB.executeUpdate( sql.toString(), get_TrxName());
             log.fine( "doIt - Delete Old Impored =" + no );
         }
 
@@ -136,13 +136,13 @@ public class ImportConversionRate extends SvrProcess {
         sql.append( " CreateReciprocalRate = COALESCE (CreateReciprocalRate,'" ).append( p_CreateReciprocalRate
                 ?"Y"
                 :"N" ).append( "')," + " IsActive = COALESCE (IsActive, 'Y')," + " Created = COALESCE (Created, SysDate)," + " CreatedBy = COALESCE (CreatedBy, 0)," + " Updated = COALESCE (Updated, SysDate)," + " UpdatedBy = " ).append( getAD_User_ID()).append( "," + " I_ErrorMsg = NULL," + " Processed = 'N'," + " I_IsImported = 'N' " + "WHERE I_IsImported<>'Y' OR I_IsImported IS NULL" );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
         log.info( "doIt - Reset =" + no );
 
         // Org
 
-        sql = new StringBuffer( "UPDATE I_Conversion_Rate o " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '" + "WHERE (AD_Org_ID IS NULL" + " OR EXISTS (SELECT * FROM AD_Org oo WHERE o.AD_Org_ID=oo.AD_Org_ID AND (oo.IsSummary='Y' OR oo.IsActive='N')))" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        sql = new StringBuffer( "UPDATE I_Conversion_Rate o " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Org, '" + "WHERE (AD_Org_ID IS NULL" + " OR EXISTS (SELECT * FROM AD_Org orgchk WHERE o.AD_Org_ID=orgchk.AD_Org_ID AND (orgchk.IsSummary='Y' OR orgchk.IsActive='N')))" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no != 0 ) {
             log.warning( "doIt - Invalid Org =" + no );
@@ -151,14 +151,14 @@ public class ImportConversionRate extends SvrProcess {
         // Conversion Type
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET C_ConversionType_ID = (SELECT C_ConversionType_ID FROM C_ConversionType c" + " WHERE c.Value=i.ConversionTypeValue AND c.AD_Client_ID IN (0,i.AD_Client_ID) AND c.IsActive='Y') " + "WHERE C_ConversionType_ID IS NULL AND ConversionTypeValue IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no > 0 ) {
             log.fine( "doIt - Set ConversionType =" + no );
         }
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid ConversionType, ' " + "WHERE (C_ConversionType_ID IS NULL" + " OR NOT EXISTS (SELECT * FROM C_ConversionType c " + "WHERE i.C_ConversionType_ID=c.C_ConversionType_ID AND c.IsActive='Y'" + " AND c.AD_Client_ID IN (0,i.AD_Client_ID)))" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no != 0 ) {
             log.warning( "doIt - Invalid ConversionType =" + no );
@@ -167,14 +167,14 @@ public class ImportConversionRate extends SvrProcess {
         // Currency
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET C_Currency_ID = (SELECT C_Currency_ID FROM C_Currency c" + "     WHERE c.ISO_Code=i.ISO_Code AND c.AD_Client_ID IN (0,i.AD_Client_ID) AND c.IsActive='Y') " + "WHERE C_Currency_ID IS NULL AND ISO_Code IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no > 0 ) {
             log.fine( "doIt - Set Currency =" + no );
         }
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Currency, ' " + "WHERE (C_Currency_ID IS NULL" + " OR NOT EXISTS (SELECT * FROM C_Currency c " + "WHERE i.C_Currency_ID=c.C_Currency_ID AND c.IsActive='Y'" + " AND c.AD_Client_ID IN (0,i.AD_Client_ID)))" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no != 0 ) {
             log.warning( "doIt - Invalid Currency =" + no );
@@ -183,14 +183,14 @@ public class ImportConversionRate extends SvrProcess {
         // Currency To
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET C_Currency_ID_To = (SELECT C_Currency_ID FROM C_Currency c" + "     WHERE c.ISO_Code=i.ISO_Code_To AND c.AD_Client_ID IN (0,i.AD_Client_ID) AND c.IsActive='Y') " + "WHERE C_Currency_ID_To IS NULL AND ISO_Code_To IS NOT NULL" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no > 0 ) {
             log.fine( "doIt - Set Currency To =" + no );
         }
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Currency To, ' " + "WHERE (C_Currency_ID_To IS NULL" + " OR NOT EXISTS (SELECT * FROM C_Currency c " + "WHERE i.C_Currency_ID_To=c.C_Currency_ID AND c.IsActive='Y'" + " AND c.AD_Client_ID IN (0,i.AD_Client_ID)))" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no != 0 ) {
             log.warning( "doIt - Invalid Currency To =" + no );
@@ -198,22 +198,22 @@ public class ImportConversionRate extends SvrProcess {
 
         // Rates
 
-        sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET MultiplyRate = 1 / DivideRate " + "WHERE (MultiplyRate IS NULL OR MultiplyRate = 0) AND DivideRate IS NOT NULL AND DivideRate<>0" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET MultiplyRate = 1/DivideRate " + "WHERE (MultiplyRate IS NULL OR MultiplyRate = 0) AND DivideRate IS NOT NULL AND DivideRate<>0" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no > 0 ) {
             log.fine( "doIt - Set MultiplyRate =" + no );
         }
 
-        sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET DivideRate = 1 / MultiplyRate " + "WHERE (DivideRate IS NULL OR DivideRate = 0) AND MultiplyRate IS NOT NULL AND MultiplyRate<>0" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET DivideRate = 1/MultiplyRate " + "WHERE (DivideRate IS NULL OR DivideRate = 0) AND MultiplyRate IS NOT NULL AND MultiplyRate<>0" + " AND I_IsImported<>'Y'" ).append( clientCheck );
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no > 0 ) {
             log.fine( "doIt - Set DivideRate =" + no );
         }
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate i " + "SET I_IsImported='E', I_ErrorMsg=I_ErrorMsg||'ERR=Invalid Rates, ' " + "WHERE (MultiplyRate IS NULL OR MultiplyRate = 0 OR DivideRate IS NULL OR DivideRate = 0)" + " AND I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
 
         if( no != 0 ) {
             log.warning( "doIt - Invalid Rates =" + no );
@@ -234,7 +234,7 @@ public class ImportConversionRate extends SvrProcess {
         PreparedStatement pstmt = null;
 
         try {
-            pstmt = DB.prepareStatement( sql.toString());
+            pstmt = DB.prepareStatement( sql.toString(), get_TrxName());
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -289,7 +289,7 @@ public class ImportConversionRate extends SvrProcess {
         // Set Error to indicator to not imported
 
         sql = new StringBuffer( "UPDATE I_Conversion_Rate " + "SET I_IsImported='N', Updated=SysDate " + "WHERE I_IsImported<>'Y'" ).append( clientCheck );
-        no = DB.executeUpdate( sql.toString());
+        no = DB.executeUpdate( sql.toString(), get_TrxName());
         addLog( 0,null,new BigDecimal( no ),"@Errors@" );
 
         //

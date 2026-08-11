@@ -615,3 +615,185 @@ AND EXISTS (
 		AND p2.attribute = p.attribute
 		AND p2.ad_window_id IS NULL
 );
+
+--20260811-1340 alta del formato de importacion para tasas de cambio
+INSERT INTO AD_ImpFormat (
+    AD_ImpFormat_ID, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, AD_Table_ID, FormatType, Processing
+) VALUES (
+    nextval('seq_ad_impformat'), 0, 0, 'Y',
+    now(), 0, now(), 0,
+    'Cotizaciones de Moneda (CSV)',
+    'Formato de importación de tasas de cambio hacia la tabla staging I_Conversion_Rate. Ejecutar luego el proceso Import Conversion Rate.',
+    (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'I_Conversion_Rate'),
+    'C', 'N'
+);
+INSERT INTO AD_ImpFormat_Row (
+    AD_ImpFormat_Row_ID,
+    AD_Client_ID,
+    AD_Org_ID,
+    IsActive,
+    Created,
+    CreatedBy,
+    Updated,
+    UpdatedBy,
+    AD_ImpFormat_ID,
+    SeqNo,
+    Name,
+    AD_Column_ID,
+    StartNo,
+    EndNo,
+    DataType,
+    DataFormat,
+    DecimalPoint,
+    DivideBy100
+)
+VALUES
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    10,
+    'Moneda Origen (ISO)',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'ISO_Code'
+    ),
+    1, 0, 'S', NULL, '.', 'N'
+),
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    20,
+    'Moneda Destino (ISO)',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'ISO_Code_To'
+    ),
+    2, 0, 'S', NULL, '.', 'N'
+),
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    30,
+    'Tipo de Conversión',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'ConversionTypeValue'
+    ),
+    3, 0, 'S', NULL, '.', 'N'
+),
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    40,
+    'Fecha Desde',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'ValidFrom'
+    ),
+    4, 0, 'D', 'dd-MM-yyyy', '.', 'N'
+),
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    50,
+    'Fecha Hasta',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'ValidTo'
+    ),
+    5, 0, 'D', 'dd-MM-yyyy', '.', 'N'
+),
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    60,
+    'Tasa Multiplicadora',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'MultiplyRate'
+    ),
+    6, 0, 'N', NULL, '.', 'N'
+),
+(
+    nextval('seq_ad_impformat_row'),
+    0,
+    0,
+    'Y',
+    now(),
+    0,
+    now(),
+    0,
+    currval('seq_ad_impformat'),
+    70,
+    'Tasa Divisora',
+    (
+        SELECT c.AD_Column_ID
+        FROM AD_Column c
+        JOIN AD_Table t ON t.AD_Table_ID = c.AD_Table_ID
+        WHERE t.TableName = 'I_Conversion_Rate'
+          AND c.ColumnName = 'DivideRate'
+    ),
+    7, 0, 'N', NULL, '.', 'N'
+);
