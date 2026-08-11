@@ -6582,7 +6582,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		boolean isCredit = docType.getDocBaseType().equals(
 				MDocType.DOCBASETYPE_ARCreditMemo);
 		boolean isVerificarReversalType = false;
-		
+
 		// ////////////////////////////////////////////////////////////////
 		// LOCALIZACIÓN ARGENTINA
 		// Para la localización argentina es necesario contemplar el tipo
@@ -6715,11 +6715,25 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		}
 
 		setSkipExtraValidations(true);
-		
-		// Deep Copy
-		Timestamp dateDoc = Env.getDate();
-		
+
 		reversalDocType = reversalDocType != null ? reversalDocType : docType;
+
+		// Deep Copy
+		// Para ventas con contra-documento NO fiscal, se fecha igual que la
+		// factura original, no con la fecha de anulación (así el asiento
+		// contable queda en el período correcto). Los documentos fiscales
+		// (NC/ND con numeración legal correlativa) deben seguir emitiéndose
+		// a fecha de hoy: no puede existir un comprobante con fecha anterior
+		// y numeración posterior a otro ya emitido. Para compras, la
+		// Inversa-Corrección sigue usando la fecha de hoy (comportamiento
+		// intencional, ver Cancelar vs. Inversa-Corrección).
+		boolean useOriginalDate = isSOTrx() && !reversalDocType.isFiscalDocument();
+		if (useOriginalDate && !MPeriod.isOpen(getCtx(), getDateAcct(), docType.getDocBaseType(), docType)) {
+			m_processMsg = "@PeriodClosed@";
+			log.saveError("ErrorReverseCorrect", "@PeriodClosed@");
+			return false;
+		}
+		Timestamp dateDoc = useOriginalDate ? getDateAcct() : Env.getDate();
 
 		// dREHER control extra para devolver mejores errores a los usuarios
 		MInvoice reversal = null;
