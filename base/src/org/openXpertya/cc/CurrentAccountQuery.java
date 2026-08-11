@@ -124,8 +124,8 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" from (select ");
 		sqlDoc.append(" d.c_currency_id, ");
 		sqlDoc.append(" d.amount, ");
-		sqlDoc.append(getConvertedAmountExpression(getNativeDebitExpression()) + " AS debit, ");
-		sqlDoc.append(getConvertedAmountExpression(getNativeCreditExpression()) + " AS credit, ");
+		sqlDoc.append(getDebitExpression() + " AS debit, ");
+		sqlDoc.append(getCreditExpression() + " AS credit, ");
 		sqlDoc.append(" d.tipo_doc, ");
 		sqlDoc.append(" d.documentno, ");
 		sqlDoc.append(" d.datetrx, ");
@@ -133,7 +133,7 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" d.c_doctype_id, ");
 		sqlDoc.append(" d.documenttable, ");
 		sqlDoc.append(" d.document_id, ");
-		sqlDoc.append(getConvertedAmountExpression(getNativeOpenAmountExpression()) + " AS openamt, ");
+		sqlDoc.append(getOpenAmountExpression() + " AS openamt, ");
 		sqlDoc.append(" d.created, ");
 		sqlDoc.append(" d.c_bpartner_id, ");
 		sqlDoc.append(" d.ad_org_id, ");
@@ -153,7 +153,11 @@ public class CurrentAccountQuery {
 		sqlDoc.append(" LEFT JOIN c_doctype source_payment_doctype ON source_payment_doctype.c_doctype_id = source_payment.c_doctype_id ");
 		sqlDoc.append(" LEFT JOIN c_cashline source_cashline ON source_cashline.c_cashline_id = d.document_id ");
 		sqlDoc.append(" AND d.documenttable = 'C_CashLine' ");
+		sqlDoc.append(" LEFT JOIN c_cash source_cash ON source_cash.c_cash_id = source_cashline.c_cash_id ");
+		sqlDoc.append(" LEFT JOIN c_allocationhdr source_allocationhdr ON source_allocationhdr.c_allocationhdr_id = d.document_id ");
+		sqlDoc.append(" AND d.documenttable = 'C_AllocationHdr' ");
 		sqlDoc.append(getDocumentAvailableJoin());
+		sqlDoc.append(getDocumentAllocatedJoin());
 		sqlAppend(" WHERE d.AD_Client_ID = ? ", Env.getAD_Client_ID(getCtx()), sqlDoc);
 		if (getbPartnerID() != null)
 			sqlAppend("   AND d.C_Bpartner_ID = ? ", getbPartnerID(), sqlDoc);
@@ -187,6 +191,54 @@ public class CurrentAccountQuery {
 		return getNativeAmountExpression("credit", getFullCreditCondition());
 	}
 
+	protected String getOpenAmountExpression() {
+		String nativeOpenAmount = getCurrencyID() == null
+				? getNativeOpenAmountExpression()
+				: getNativeReportOpenAmountExpression();
+		return getConvertedAmountExpression(nativeOpenAmount);
+	}
+
+	protected String getDebitExpression() {
+		return getBalanceDocumentAmountExpression("debit", getFullDebitCondition());
+	}
+
+	protected String getCreditExpression() {
+		return getBalanceDocumentAmountExpression("credit", getFullCreditCondition());
+	}
+
+	protected String getBalanceDocumentAmountExpression(String columnName, String fullAmountCondition) {
+		if (getCurrencyID() == null) {
+			return getNativeAmountExpression(columnName, fullAmountCondition);
+		}
+
+		String standardAmount = getConvertedAmountExpression("d." + columnName);
+		String balanceFallbackAmount = getConvertedAmountExpression(getNativeAmountExpression(columnName, fullAmountCondition));
+		String openAmount = getConvertedAmountExpression(getNativeReconstructedOpenAmountExpression());
+		String nonInvoiceAllocated = getConvertedAmountExpression(getNativeNonInvoiceAllocatedAmountExpression());
+		String invoiceAllocated = "COALESCE(document_allocated.allocatedamt, 0::numeric)";
+		String convertedInvoiceAllocationCondition = getConvertedInvoiceAllocationCondition();
+		String reconstructedFullAmountCondition = getReconstructedFullAmountCondition(columnName, fullAmountCondition);
+		String fallbackAmount = "CASE WHEN " + getBalanceDocumentCondition() + " THEN " + balanceFallbackAmount
+				+ " ELSE " + standardAmount + " END";
+
+		return "CASE WHEN " + getReconstructedDocumentCondition() + " "
+				+ "AND COALESCE(d." + columnName + ", 0::numeric) <> 0::numeric "
+				+ "THEN CASE WHEN " + convertedInvoiceAllocationCondition + " "
+				+ "THEN " + invoiceAllocated + " + " + nonInvoiceAllocated + " "
+				+ "+ CASE WHEN " + reconstructedFullAmountCondition + " THEN " + openAmount + " ELSE 0::numeric END "
+				+ "ELSE " + fallbackAmount + " END "
+				+ "ELSE " + fallbackAmount + " END";
+	}
+
+	protected String getConvertedInvoiceAllocationCondition() {
+		String completeInvoiceAllocation = "(document_allocated.linecount > 0 "
+				+ "AND document_allocated.linecount = document_allocated.nativecount "
+				+ "AND document_allocated.linecount = document_allocated.allocatedcount)";
+		return "(" + completeInvoiceAllocation + " OR " + getAdvanceWithoutAllocatedLinesCondition() + ") "
+				+ "AND COALESCE(document_allocated.nativeamt, 0::numeric) >= 0::numeric "
+				+ "AND COALESCE(document_allocated.nativeamt, 0::numeric) <= ABS(d.amount) - " + getNativeReconstructedOpenAmountExpression() + " + 0.01::numeric";
+	}
+
 	protected String getNativeAmountExpression(String columnName, String fullAmountCondition) {
 		String allocatedAmt = getNativeAllocatedAmountExpression();
 		return "CASE WHEN " + getBalanceDocumentCondition() + " "
@@ -214,9 +266,47 @@ public class CurrentAccountQuery {
 				+ "ELSE d.openamt END";
 	}
 
+	protected String getNativeReportOpenAmountExpression() {
+		return "CASE WHEN " + getAdvanceAllocationCondition() + " "
+				+ "THEN " + getNativeReconstructedOpenAmountExpression() + " "
+				+ "ELSE " + getNativeOpenAmountExpression() + " END";
+	}
+
 	protected String getNativeAllocatedAmountExpression() {
 		return "CASE WHEN " + getBalanceDocumentCondition() + " "
 				+ "THEN ABS(d.amount) - ABS(document_available.openamt) ELSE 0::numeric END";
+	}
+
+	protected String getNativeNonInvoiceAllocatedAmountExpression() {
+		return "CASE WHEN " + getReconstructedDocumentCondition() + " "
+				+ "THEN GREATEST(ABS(d.amount) - " + getNativeReconstructedOpenAmountExpression() + " - COALESCE(document_allocated.nativeamt, 0::numeric), 0::numeric) "
+				+ "ELSE 0::numeric END";
+	}
+
+	protected String getNativeReconstructedOpenAmountExpression() {
+		return "CASE "
+				+ "WHEN " + getBalanceDocumentCondition() + " THEN ABS(document_available.openamt) "
+				+ "WHEN " + getAdvanceAllocationCondition() + " THEN GREATEST(ABS(d.amount) - COALESCE(document_allocated.nativeamt, 0::numeric), 0::numeric) "
+				+ "ELSE ABS(d.openamt) END";
+	}
+
+	protected String getAdvanceWithoutAllocatedLinesCondition() {
+		return "(" + getAdvanceAllocationCondition() + " AND document_allocated.linecount = 0)";
+	}
+
+	protected String getAdvanceAllocationCondition() {
+		return "(d.documenttable = 'C_AllocationHdr' AND source_allocationhdr.allocationtype IN ('RCA', 'OPA'))";
+	}
+
+	protected String getReconstructedFullAmountCondition(String columnName, String fullAmountCondition) {
+		return "(" + fullAmountCondition + " OR " + getAllocationFullAmountCondition(columnName) + ")";
+	}
+
+	protected String getAllocationFullAmountCondition(String columnName) {
+		if ("debit".equals(columnName)) {
+			return "(d.documenttable = 'C_AllocationHdr' AND d.issotrx = 'N')";
+		}
+		return "(d.documenttable = 'C_AllocationHdr' AND d.issotrx = 'Y')";
 	}
 
 	protected String getDocumentAvailableJoin() {
@@ -224,12 +314,156 @@ public class CurrentAccountQuery {
 				+ "WHEN d.documenttable = 'C_Payment' AND COALESCE(source_payment.c_charge_id, 0) = 0 THEN COALESCE(paymentavailable(d.document_id, " + getDateToInlineQuery() + "), 0::numeric) "
 				+ "WHEN d.documenttable = 'C_CashLine' AND COALESCE(source_cashline.c_charge_id, 0) = 0 THEN COALESCE(cashlineavailable(d.document_id, " + getDateToInlineQuery() + "), 0::numeric) "
 				+ "ELSE 0::numeric END AS openamt) document_available "
-				+ "ON " + getBalanceDocumentCondition() + " ";
+				+ "ON " + getReconstructedDocumentCondition() + " ";
+	}
+
+	protected String getDocumentAllocatedJoin() {
+		if (getCurrencyID() == null) {
+			return "";
+		}
+
+		String nativeAmount = getInvoiceAllocatedNetDocumentCurrencyAmountExpression();
+		String convertedAmount = getInvoiceAllocatedNetConvertedAmountExpression();
+		return " LEFT JOIN LATERAL (SELECT "
+				+ "SUM(" + nativeAmount + ") AS nativeamt, "
+				+ "SUM(" + convertedAmount + ") AS allocatedamt, "
+				+ "COUNT(*) AS linecount, "
+				+ "COUNT(" + nativeAmount + ") AS nativecount, "
+				+ "COUNT(" + convertedAmount + ") AS allocatedcount "
+				+ "FROM c_allocationline allocation_line "
+				+ "JOIN c_allocationhdr allocation_hdr ON allocation_hdr.c_allocationhdr_id = allocation_line.c_allocationhdr_id "
+				+ "LEFT JOIN c_invoice allocated_invoice ON allocated_invoice.c_invoice_id = allocation_line.c_invoice_id "
+				+ "LEFT JOIN c_invoice allocated_credit_invoice ON allocated_credit_invoice.c_invoice_id = allocation_line.c_invoice_credit_id "
+				+ "WHERE (" + getDirectAllocatedLineCondition() + " OR " + getAdvanceAppliedLineCondition() + ") "
+				+ "AND (allocation_line.c_invoice_id IS NOT NULL OR allocation_line.c_invoice_credit_id IS NOT NULL) "
+				+ "AND allocation_line.isactive = 'Y' "
+				+ "AND allocation_hdr.isactive = 'Y' "
+				+ "AND allocation_hdr.processed = 'Y' "
+				+ "AND allocation_hdr.docstatus IN ('CO', 'CL') "
+				+ "AND allocation_hdr.dateacct::date <= (" + getDateToInlineQuery() + ")::date) document_allocated "
+				+ "ON " + getReconstructedDocumentCondition() + " ";
+	}
+
+	protected String getDirectAllocatedLineCondition() {
+		return "(((d.documenttable = 'C_Payment' AND allocation_line.c_payment_id = d.document_id) "
+				+ "OR (d.documenttable = 'C_CashLine' AND allocation_line.c_cashline_id = d.document_id) "
+				+ "OR (d.documenttable = 'C_AllocationHdr' AND allocation_line.c_allocationhdr_id = d.document_id)) "
+				+ "AND (d.documenttable <> 'C_AllocationHdr' OR COALESCE(allocation_hdr.allocationtype, '') NOT IN ('RCA', 'OPA')))";
+	}
+
+	protected String getAdvanceAppliedLineCondition() {
+		return "(d.documenttable = 'C_AllocationHdr' AND EXISTS ("
+				+ "SELECT 1 "
+				+ "FROM c_allocationline advance_allocation_line "
+				+ "JOIN c_allocationhdr advance_allocation_hdr ON advance_allocation_hdr.c_allocationhdr_id = advance_allocation_line.c_allocationhdr_id "
+				+ "WHERE advance_allocation_line.c_allocationhdr_id = d.document_id "
+				+ "AND advance_allocation_hdr.allocationtype IN ('RCA', 'OPA') "
+				+ "AND advance_allocation_hdr.isactive = 'Y' "
+				+ "AND advance_allocation_hdr.processed = 'Y' "
+				+ "AND advance_allocation_hdr.docstatus IN ('CO', 'CL') "
+				+ "AND advance_allocation_line.isactive = 'Y' "
+				+ "AND allocation_line.c_allocationline_id <> advance_allocation_line.c_allocationline_id "
+				+ "AND ((advance_allocation_line.c_payment_id IS NOT NULL AND allocation_line.c_payment_id = advance_allocation_line.c_payment_id) "
+				+ "OR (advance_allocation_line.c_cashline_id IS NOT NULL AND allocation_line.c_cashline_id = advance_allocation_line.c_cashline_id) "
+				+ "OR (advance_allocation_line.c_invoice_credit_id IS NOT NULL AND allocation_line.c_invoice_credit_id = advance_allocation_line.c_invoice_credit_id))))";
+	}
+
+	protected String getInvoiceAllocatedNetDocumentCurrencyAmountExpression() {
+		String invoiceAmount = getInvoiceAllocatedDocumentCurrencyAmountExpression("allocated_invoice", "allocation_line.c_invoice_id");
+		String creditInvoiceAmount = getInvoiceAllocatedDocumentCurrencyAmountExpression("allocated_credit_invoice", "allocation_line.c_invoice_credit_id");
+		return "CASE WHEN " + getAdvanceCreditAppliedLineCondition() + " THEN " + invoiceAmount
+				+ " ELSE " + invoiceAmount + " - " + creditInvoiceAmount + " END";
+	}
+
+	protected String getInvoiceAllocatedDocumentCurrencyAmountExpression(String invoiceAlias, String invoiceIDColumn) {
+		return "CASE WHEN " + invoiceIDColumn + " IS NULL THEN 0::numeric "
+				+ "WHEN " + invoiceAlias + ".c_invoice_id IS NULL THEN NULL "
+				+ "WHEN allocation_hdr.c_currency_id = d.c_currency_id "
+				+ "THEN ABS(allocation_line.amount) "
+				+ "ELSE currencyconvert(ABS(allocation_line.amount), allocation_hdr.c_currency_id, d.c_currency_id, "
+				+ getDocumentAllocationConversionDateExpression() + ", "
+				+ getDocumentAllocationConversionTypeExpression() + ", "
+				+ "allocation_hdr.ad_client_id, allocation_hdr.ad_org_id) END";
+	}
+
+	protected String getDocumentAllocationConversionDateExpression() {
+		return "CASE WHEN d.documenttable = 'C_Payment' THEN source_payment.dateacct "
+				+ "WHEN d.documenttable = 'C_CashLine' THEN source_cash.dateacct ELSE d.dateacct END";
+	}
+
+	protected String getDocumentAllocationConversionTypeExpression() {
+		return "CASE WHEN d.documenttable = 'C_Payment' THEN COALESCE(source_payment.c_conversiontype_id, 0) ELSE 0 END";
+	}
+
+	protected String getInvoiceAllocatedNetConvertedAmountExpression() {
+		String invoiceAmount = getInvoiceAllocatedConvertedAmountExpression("allocated_invoice", "allocation_line.c_invoice_id");
+		String creditInvoiceAmount = getInvoiceAllocatedConvertedAmountExpression("allocated_credit_invoice", "allocation_line.c_invoice_credit_id");
+		return "CASE WHEN " + getAdvanceCreditAppliedLineCondition() + " THEN " + invoiceAmount
+				+ " ELSE " + invoiceAmount + " - " + creditInvoiceAmount + " END";
+	}
+
+	protected String getAdvanceCreditAppliedLineCondition() {
+		return "(d.documenttable = 'C_AllocationHdr' AND EXISTS ("
+				+ "SELECT 1 "
+				+ "FROM c_allocationline advance_credit_allocation_line "
+				+ "JOIN c_allocationhdr advance_credit_allocation_hdr ON advance_credit_allocation_hdr.c_allocationhdr_id = advance_credit_allocation_line.c_allocationhdr_id "
+				+ "WHERE advance_credit_allocation_line.c_allocationhdr_id = d.document_id "
+				+ "AND advance_credit_allocation_hdr.allocationtype IN ('RCA', 'OPA') "
+				+ "AND advance_credit_allocation_hdr.isactive = 'Y' "
+				+ "AND advance_credit_allocation_hdr.processed = 'Y' "
+				+ "AND advance_credit_allocation_hdr.docstatus IN ('CO', 'CL') "
+				+ "AND advance_credit_allocation_line.isactive = 'Y' "
+				+ "AND advance_credit_allocation_line.c_invoice_credit_id IS NOT NULL "
+				+ "AND allocation_line.c_invoice_credit_id = advance_credit_allocation_line.c_invoice_credit_id "
+				+ "AND allocation_line.c_allocationline_id <> advance_credit_allocation_line.c_allocationline_id))";
+	}
+
+	protected String getInvoiceAllocatedConvertedAmountExpression(String invoiceAlias, String invoiceIDColumn) {
+		String invoiceAmount = getInvoiceAllocatedNativeAmountExpression(invoiceAlias);
+		int accountingCurrencyID = Env.getC_Currency_ID(getCtx());
+		String invoiceToReportConversion = "currencyconvert(" + invoiceAmount + ", " + invoiceAlias + ".c_currency_id, "
+				+ getCurrencyID() + ", " + getInvoiceAllocationReportConversionDateExpression(invoiceAlias) + ", "
+				+ "COALESCE(" + invoiceAlias + ".c_conversiontype_id, 0), allocation_hdr.ad_client_id, allocation_hdr.ad_org_id)";
+
+		if (isDocumentConvertRate() && getCurrencyID().intValue() == accountingCurrencyID) {
+			invoiceToReportConversion = "CASE WHEN " + invoiceAlias + ".c_currency_id <> " + getCurrencyID() + " "
+					+ "AND COALESCE(" + invoiceAlias + ".cintolo_exchange_rate, 0) > 0 "
+					+ "THEN currencyround((" + invoiceAmount + ") * " + invoiceAlias + ".cintolo_exchange_rate, "
+					+ getCurrencyID() + ", NULL) ELSE " + invoiceToReportConversion + " END";
+		}
+
+		return "CASE WHEN " + invoiceIDColumn + " IS NULL THEN 0::numeric "
+				+ "WHEN " + invoiceAlias + ".c_invoice_id IS NULL THEN NULL "
+				+ "WHEN " + invoiceAlias + ".c_currency_id = " + getCurrencyID() + " "
+				+ "THEN " + invoiceAmount + " ELSE " + invoiceToReportConversion + " END";
+	}
+
+	protected String getInvoiceAllocationReportConversionDateExpression(String invoiceAlias) {
+		return isDocumentConvertRate()
+				? invoiceAlias + ".dateinvoiced::timestamp with time zone"
+				: getCutoffConversionDateExpression();
+	}
+
+	protected String getInvoiceAllocatedNativeAmountExpression(String invoiceAlias) {
+		int accountingCurrencyID = Env.getC_Currency_ID(getCtx());
+		return "CASE "
+				+ "WHEN allocation_hdr.c_currency_id = " + invoiceAlias + ".c_currency_id "
+				+ "THEN currencyround(ABS(allocation_line.amount), " + invoiceAlias + ".c_currency_id, NULL) "
+				+ "WHEN allocation_hdr.c_currency_id = " + accountingCurrencyID + " "
+				+ "AND COALESCE(" + invoiceAlias + ".cintolo_exchange_rate, 0) > 0 "
+				+ "THEN currencyround(ABS(allocation_line.amount)/" + invoiceAlias + ".cintolo_exchange_rate, " + invoiceAlias + ".c_currency_id, NULL) "
+				+ "ELSE currencyconvert(ABS(allocation_line.amount), allocation_hdr.c_currency_id, " + invoiceAlias + ".c_currency_id, "
+				+ invoiceAlias + ".dateinvoiced::timestamp with time zone, COALESCE(" + invoiceAlias + ".c_conversiontype_id, 0), "
+				+ "allocation_hdr.ad_client_id, allocation_hdr.ad_org_id) END";
 	}
 
 	protected String getBalanceDocumentCondition() {
 		return "((d.documenttable = 'C_Payment' AND COALESCE(source_payment.c_charge_id, 0) = 0) "
 				+ "OR (d.documenttable = 'C_CashLine' AND COALESCE(source_cashline.c_charge_id, 0) = 0))";
+	}
+
+	protected String getReconstructedDocumentCondition() {
+		return "(" + getBalanceDocumentCondition() + " OR d.documenttable = 'C_AllocationHdr')";
 	}
 
 	/**
