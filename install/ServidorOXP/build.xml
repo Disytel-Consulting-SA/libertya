@@ -584,10 +584,10 @@
 		includes="OXPRoot.jar,OXPRoot.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="Libertya"/>
-		<attribute name="Specification-Version" value="V25.0"/>
+		<attribute name="Specification-Version" value="V26.09"/>
 		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="libertya"/>
-		<attribute name="Implementation-Version" value="V25.0 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Version" value="V26.09 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
 		<!--attribute name="Class-Path" value="OXPRoot.jar OXP.jar OXPSLib.jar"/-->
 	  	<attribute name="Class-Path" value="OXPRoot.jar OXP.jar OXPSLib.jar"/>
@@ -604,10 +604,10 @@
 		 includes="OXPApps.war,OXP.jar,OXPSLib.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="ServidorAplicacionesLibertya"/>
-		<attribute name="Specification-Version" value="V25.0"/>
+		<attribute name="Specification-Version" value="V26.09"/>
 		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="ServidorAplicacionesLibertya"/>
-		<attribute name="Implementation-Version" value="V25.0 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Version" value="V26.09 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
 	  	<!--attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/-->
 	  	<attribute name="Class-Path" value="OXP.jar OXPSLib.jar"/>
@@ -624,10 +624,10 @@
 		includes="TiendaWebOXP.war,OXP.jar,OXPSLib.jar,OXPApps.jar"/>
 	  <manifest>
 		<attribute name="Specification-Title" value="TiendaWebLibertya"/>
-		<attribute name="Specification-Version" value="V25.0"/>
+		<attribute name="Specification-Version" value="V26.09"/>
 		<attribute name="Specification-Vendor" value="(C) 2026 DISYTEL."/>
 		<attribute name="Implementation-Title" value="TiendaWebLibertya"/>
-		<attribute name="Implementation-Version" value="V25.0 ${DSTAMP}-${TSTAMP}"/>
+		<attribute name="Implementation-Version" value="V26.09 ${DSTAMP}-${TSTAMP}"/>
 		<attribute name="Implementation-URL" value="http://www.libertya.org"/>
 	  	<!--attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/-->
 	  	<attribute name="Class-Path" value="OXP.jar OXPSLib.jar OXPApps.jar"/>

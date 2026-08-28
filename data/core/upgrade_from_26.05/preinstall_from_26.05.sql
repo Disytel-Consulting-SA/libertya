@@ -797,3 +797,8 @@ VALUES
     ),
     7, 0, 'N', NULL, '.', 'N'
 );
+
+
+--20260828-1056 Versionado de BBDD para release
+UPDATE ad_system SET version = '28-08-2026' WHERE ad_system_id = 0;
+
