@@ -46,7 +46,7 @@
 
 @Rem  Fija datos de la Versi�n
 @SET VERSION_OXP=Libertya
-@SET VERSION_OXP_FILE=V26.05
+@SET VERSION_OXP_FILE=V26.09
 @SET CONSULTORA_OXP=SERVICIOS_DIGITALES
 
 @Rem  Rutas a las librer�as de clases.

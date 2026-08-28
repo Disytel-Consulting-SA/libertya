@@ -537,6 +537,11 @@ public final class Attachment extends JDialog implements ActionListener {
         // size.width += 100;
         // size.height += 100;
         // centerPane.setPreferredSize(size);
+        
+        graphPanel.revalidate();
+        graphPanel.repaint();
+        centerPane.revalidate();
+        centerPane.repaint();
 
         pack();
     }    // displayData
@@ -884,73 +889,46 @@ public final class Attachment extends JDialog implements ActionListener {
 
     class GImage extends JPanel {
 
-        /**
-         * Constructor de la clase ...
-         *
-         */
-
-        public GImage() {
-            super();
-        }    // GImage
-
-        /** Descripción de Campos */
-
         private Image m_image = null;
 
-        /**
-         * Descripción de Método
-         *
-         *
-         * @param image
-         */
-
-        public void setImage( Image image ) {
+        public void setImage(Image image) {
             m_image = image;
 
-            if( m_image == null ) {
+            if (m_image == null) {
+                setPreferredSize(new Dimension(0, 0));
+                revalidate();
+                repaint();
                 return;
             }
 
-            MediaTracker mt = new MediaTracker( this );
-
-            mt.addImage( m_image,0 );
+            MediaTracker mt = new MediaTracker(this);
+            mt.addImage(m_image, 0);
 
             try {
-                mt.waitForID( 0 );
-            } catch( Exception e ) {
+                mt.waitForID(0);
+            } catch (Exception e) {
             }
 
-            Dimension dim = new Dimension( m_image.getWidth( this ),m_image.getHeight( this ));
+            Dimension dim = new Dimension(
+                m_image.getWidth(this),
+                m_image.getHeight(this)
+            );
 
-            this.setPreferredSize( dim );
-        }    // setImage
+            setPreferredSize(dim);
+            revalidate();
+            repaint();
+        }
 
-        /**
-         * Descripción de Método
-         *
-         *
-         * @param g
-         */
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
 
-        public void paint( Graphics g ) {
-            Insets in = getInsets();
-
-            if( m_image != null ) {
-                g.drawImage( m_image,in.left,in.top,this );
+            if (m_image != null) {
+                Insets in = getInsets();
+                g.drawImage(m_image, in.left, in.top, this);
             }
-        }    // paint
-
-        /**
-         * Descripción de Método
-         *
-         *
-         * @param g
-         */
-
-        public void update( Graphics g ) {
-            paint( g );
-        }    // update
-    }    // GImage
+        }
+    }
 
 
     /**

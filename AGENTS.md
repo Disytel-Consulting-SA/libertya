@@ -111,6 +111,7 @@ Las skills estan en `.agents/skills/` (ademas pueden estar symlinkeadas en otras
 | `conventional-commit` | Al crear commits: generar mensajes con formato Conventional Commits (`feat`/`fix`/`chore`, etc.) |
 | `requesting-code-review` | Antes de mergear ramas: pedir una revision estructurada del codigo |
 | `openproject-git-pr-conventions` | Al crear ramas/commits/PRs con OpenProject: fuerza `dev` como base, naming `feature/op-<wp>` o `fix/op-<wp>`, y PR a `dev` con `OP#<wp>` obligatorio |
+| `exportplugin` | Exportar componentes Libertya con `ExportPlugin.java`, `devinfo.properties`, y jars de metadata/patch por rango de `AD_ChangeLog_ID` |
 | `postgresql-database-engineering` | Trabajo con queries, indices, esquemas o performance en PostgreSQL |
 | `database-migrations-sql-migrations` | Crear scripts SQL de migracion en `data/` para nuevas versiones |
 

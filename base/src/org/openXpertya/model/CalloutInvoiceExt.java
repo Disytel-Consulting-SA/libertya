@@ -210,8 +210,12 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	 * Si no existe cotización para ese día en moneda extranjera, advierte para carga manual
 	 * y evita que quede el valor por defecto 1.
 	 */
-	private String updateInvoiceExchangeRate(Properties ctx, int WindowNo, MTab mTab) {
+	private String updateInvoiceExchangeRate(Properties ctx, int WindowNo, MTab mTab, boolean applyRate) {
 		if (isCalloutActive()) {
+			return "";
+		}
+		if (!applyRate) {
+			mTab.clearCurrentRecordWarning();
 			return "";
 		}
 		
@@ -292,19 +296,19 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 	}
 	
 	public String C_Currency_ID(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
-		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, mTab.isInserting() || mField.isChanged());
 	}
 	
 	public String DateInvoiced(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
-		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, mTab.isInserting() || mField.isChanged());
 	}
 	
 	public String DateAcct(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
-		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, mTab.isInserting() || mField.isChanged());
 	}
 	
 	public String C_ConversionType_ID(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
-		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, mTab.isInserting() || mField.isChanged());
 	}
 	
 	
@@ -512,7 +516,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 
 		}
 
-		return updateInvoiceExchangeRate(ctx, WindowNo, tab);
+		return updateInvoiceExchangeRate(ctx, WindowNo, tab, tab.isInserting());
 	}
 	
 	@Override
@@ -548,7 +552,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				
 			}
 		}
-		String exchangeRateResult = updateInvoiceExchangeRate(ctx, WindowNo, tab);
+		String exchangeRateResult = updateInvoiceExchangeRate(ctx, WindowNo, tab, tab.isInserting());
 		return Util.isEmpty(ret, true) ? exchangeRateResult : ret;
 	}
 	
@@ -985,7 +989,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 						.intValue(), pto);
 		}
 
-		return updateInvoiceExchangeRate(ctx, WindowNo, mTab);
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, mTab.isInserting());
     }    // bPartner
     
 	/**

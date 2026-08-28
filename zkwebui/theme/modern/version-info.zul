@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+<zscript>
+	import org.openXpertya.OpenXpertya;
+	var mainVersion = OpenXpertya.MAIN_VERSION;
+	var dateVersion = OpenXpertya.DATE_VERSION;
+	var dbVersion = OpenXpertya.DB_VERSION;
+	var dbInfo = OpenXpertya.getDatabaseInfo();
+	var vendorVersion = OpenXpertya.getImplementationVersion();
+</zscript>
+<html>
+<![CDATA[
+<div class="versionInfoBox" align="center">
+	Libertya ${mainVersion} | Binaries ${dateVersion} | DB ${dbVersion} | Build ${vendorVersion} | ${dbInfo}
+</div>
+]]>
+</html>
+</zk>

@@ -182,8 +182,13 @@ public class VPluginInstallerUtils  {
 		if (isEmulateInstall()) {
 			PluginUtils.appendStatus(" === Queries de registracion === ");
 			PluginUtils.appendStatus(registerComponentVersionAndPluginSQL.toString());
+			
+			PluginUtils.appendEmulation(getInitSentences(m_component_props),  PluginConstants.STAGE_INIT);
+			
 			PluginUtils.appendEmulation("-- Registracion de componente, version, plugin", PluginConstants.STAGE_REGISTER_COMPONENT);
 			PluginUtils.appendEmulation(registerComponentVersionAndPluginSQL.toString(),  PluginConstants.STAGE_REGISTER_COMPONENT);
+			
+			PluginUtils.appendEmulation(getFinalizeSentences(m_component_props),  PluginConstants.STAGE_FINALIZE);
 		}
 		
 		/* Informar todo OK */
@@ -191,6 +196,37 @@ public class VPluginInstallerUtils  {
 		writeInstallLog(m_component_props);
 	}
 
+	/** Query inicial para emulacion, a fin de validar que no se instalen dos veces la misma version de componente */
+	protected static String getInitSentences(Properties props) {
+		String prefix = (String)props.get(PluginConstants.PROP_PREFIX);
+		String version = (String)props.get(PluginConstants.PROP_VERSION);
+		return 
+				"-- Validacion preliminar de existencia de version de componente para evitar doble instalacion \n" +
+				"\\set ON_ERROR_STOP on \n" +
+				"BEGIN;\n\n" +
+				"DO $$ " +
+				"BEGIN " +
+				"   IF EXISTS ( " +
+				"		SELECT 1 " +
+				"		FROM AD_PLUGIN P " +
+				"		INNER JOIN AD_COMPONENTVERSION CV ON P.AD_COMPONENTVERSION_ID = CV.AD_COMPONENTVERSION_ID " + 
+				"		INNER JOIN AD_COMPONENT C ON CV.AD_COMPONENT_ID = C.AD_COMPONENT_ID " +
+				"		WHERE P.ISACTIVE = 'Y' " +
+				"		AND C.PREFIX = '" + prefix + "' " +
+				"		AND CV.VERSION = '"+ version + "' " + 
+				"    ) THEN " +
+				"        RAISE EXCEPTION 'El componente " + prefix + " " + version + " ya está instalado.'; " +
+				"   END IF; " +
+				"END $$; \n" ;
+	}
+	
+	protected static String getFinalizeSentences(Properties props) {
+		return  
+				"\n-- Commit de la transaccion \n" +
+				"COMMIT;\n";
+	}
+
+	
 	/** Finalizar la transaccion.  Si se está emulando entonces retrotraer todos los cambios */
 	protected static void finalizeTrx() {
 		if (isEmulateInstall())

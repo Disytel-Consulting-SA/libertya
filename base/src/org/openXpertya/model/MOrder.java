@@ -3524,19 +3524,30 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             	return DocAction.STATUS_Invalid;
         	}
 			
-			// La cantidad pedida no puede ser menor a la cantidad facturada
-			if (!Util.isEmpty(sLine.getQtyInvoiced(), true)
-					&& sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
-				m_processMsg = Msg.getMsg(getCtx(), "LinesWithQtyOrderedMinorToQtyInvoiced");
-            	return DocAction.STATUS_Invalid;
-        	}
-            
             //MProduct   product = sLine.getProduct(); -> depende de la cache en MProduct, que expira cada 5 min..
             MProduct   product = getProductFromCache(sLine.getM_Product_ID());
             
             //puede ser NULL
             if (product == null)
             	continue;
+            
+            
+            // La cantidad pedida no puede ser menor a la cantidad facturada
+            // dREHER Jul 26
+            /**
+             * Hoy permite facturar mas que lo que indica el pedido, pero luego al reactivar el pedido para hacer algun cambio
+             * verifica esto y da excepcion, o bien lo debe verificar siempre o no controlar cuando esta reactivando documento...
+             */
+            System.out.println("==> MOrder. Es un pedido reactivado= " + isReActivated() + " producto stockeable=" + product.isStocked());
+            if(!isReActivated()) {
+            	if (!Util.isEmpty(sLine.getQtyInvoiced(), true)
+            			&& sLine.getQtyOrdered().compareTo(sLine.getQtyInvoiced()) < 0) {
+            		m_processMsg = Msg.getMsg(getCtx(), "LinesWithQtyOrderedMinorToQtyInvoiced");
+            		return DocAction.STATUS_Invalid;
+            	}
+            }
+            
+            
         	//getM_AttributeSet_ID() con valor 0 represnta NULL,... NO tiene sentido hacer un 
             //new MAttributeSet con id 0, tal como esta el codigo acutalmente eso es equivalente
             //a "crear" un nuevo MAttributeSet NO a obtener el que tiene id 0
@@ -4561,14 +4572,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 				return false;
 			}
 			
-            // Actualizar la cantidad reservada o pedida en el stock
-			if (MProduct.isProductStocked(getCtx(), line.getM_Product_ID())
-					&& isBinding(dt)
-					&& !MStorage.add(getCtx(), getM_Warehouse_ID(), locatorID,
-							line.getM_Product_ID(), 0, 0, BigDecimal.ZERO,
-							qtyReserved, qtyOrdered, get_TrxName())) {
-				m_processMsg = "@CannotReserveStock@";
-                return false;
+			// Actualizar la cantidad reservada o pedida en el stock
+			// dREHER Jul 26, solo hacer esto si hay un producto cargado...
+			if(line.getM_Product_ID() > 0) {
+				if (MProduct.isProductStocked(getCtx(), line.getM_Product_ID())
+						&& isBinding(dt)
+						&& !MStorage.add(getCtx(), getM_Warehouse_ID(), locatorID,
+								line.getM_Product_ID(), 0, 0, BigDecimal.ZERO,
+								qtyReserved, qtyOrdered, get_TrxName())) {
+					m_processMsg = "@CannotReserveStock@";
+					return false;
+				}
 			}
 		}
         

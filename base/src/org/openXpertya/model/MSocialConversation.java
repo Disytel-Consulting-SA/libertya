@@ -40,6 +40,12 @@ public class MSocialConversation extends X_C_SocialConversation {
 	/** Value de preferencia activo = N para la politica de seguridad de conversaciones */
 	public static String CONVERSATION_SECURITY_POLICY_PREFERENCE_VALUE_DISABLED = "D";
 	
+	// Solo evitar la notificacion si la preferencia existe y es N.  Por defecto notificar (incluso si la preferencia no existe).
+	public static boolean shouldNotifyUnreadConversationsOnLogin() {
+		String pref = MPreference.GetCustomPreferenceValue("CONVERSATIONS_NOTIFY_PENDINGS_ON_LOGIN");
+		return !(pref!=null && "N".equalsIgnoreCase(pref));
+	}	
+	
 	/**
 	 * Retorna true si la política de seguridad para conversaciones se encuentra activada, 
 	 * limitando el acceso a las conversaciones según los permisos de visualización de registros
@@ -396,6 +402,53 @@ public class MSocialConversation extends X_C_SocialConversation {
 		if (attachID < 0)
 			attachID = 0;
 		return attachID;
+	}
+	
+	
+	/** Retorna un resumen de las conversaciones a las que esta suscripto el usuario. */
+	public static ArrayList<SocialConversationSummary> getSubscribedConversationsForUser(int userID) {
+		ArrayList<SocialConversationSummary> conversations = new ArrayList<SocialConversationSummary>();
+		String additionalWhereClause = isEnabledConversationSecurityPolicy()
+				? " AND sc.C_SocialConversation_ID IN ( " + getConversationAccessSQLFilter() + " ) " : "";
+		String sql = " SELECT sc.C_SocialConversation_ID, sc.Subject, ss.Read "
+				+ " FROM C_SocialSubscription ss "
+				+ " INNER JOIN C_SocialConversation sc ON sc.C_SocialConversation_ID = ss.C_SocialConversation_ID "
+				+ " WHERE ss.AD_User_ID = ? AND sc.AD_Client_ID = ? "
+				+ additionalWhereClause + " ORDER BY sc.C_SocialConversation_ID ";
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql);
+			ps.setInt(1, userID);
+			ps.setInt(2, Env.getAD_Client_ID(Env.getCtx()));
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				conversations.add(new SocialConversationSummary(rs.getInt("C_SocialConversation_ID"),
+						rs.getString("Subject"), "Y".equals(rs.getString("Read"))));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DB.close(rs, ps);
+		}
+		return conversations;
+	}
+
+	/** Datos requeridos para listar una conversacion. */
+	public static class SocialConversationSummary {
+		private final int conversationID;
+		private final String subject;
+		private final boolean read;
+
+		public SocialConversationSummary(int conversationID, String subject, boolean read) {
+			this.conversationID = conversationID;
+			this.subject = subject;
+			this.read = read;
+		}
+
+		public int getConversationID() { return conversationID; }
+		public String getSubject() { return subject; }
+		public boolean isRead() { return read; }
 	}
 	
 }

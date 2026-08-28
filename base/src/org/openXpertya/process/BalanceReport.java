@@ -48,6 +48,9 @@ public class BalanceReport extends SvrProcess {
 	private String condition;
 	/** Consulta de cuenta corriente centralizada */
 	private CurrentAccountQuery currentAccountQuery;
+
+	/** Usar fecha/tasa propia del documento para convertir importes */
+	private boolean documentConvertRate = true;
 	
 	/*
 	 *  Usar aproximación iterativa o global? Para casos donde hay poco volumen de
@@ -102,6 +105,8 @@ public class BalanceReport extends SvrProcess {
 				client_Currency_ID = tmp == null ? 0 : tmp.intValue();
 			} else if( name.equalsIgnoreCase( "FilterInternalEC" )) {
             	filterInternalEC = ((String)para[ i ].getParameter()).equals("Y");
+			} else if (CurrentAccountQuery.isConversionRateDateParameter(name)) {
+				documentConvertRate = CurrentAccountQuery.getDocumentConvertRate(para[i].getParameter(), isDocumentConvertRate());
             }
         }
         
@@ -123,6 +128,7 @@ public class BalanceReport extends SvrProcess {
 				getCondition(), null, p_AccountType);
         caq.setOrgID(p_AD_Org_ID);
         caq.setCurrencyID(client_Currency_ID);
+        caq.setDocumentConvertRate(isDocumentConvertRate());
         
         setCurrentAccountQuery(caq);
 	}
@@ -150,6 +156,7 @@ public class BalanceReport extends SvrProcess {
 						getCondition(), rsBP.getInt("c_bpartner_id"), p_AccountType);
 		        caq.setOrgID(p_AD_Org_ID);
 		        caq.setCurrencyID(client_Currency_ID);
+		        caq.setDocumentConvertRate(isDocumentConvertRate());
 		        
 		        setCurrentAccountQuery(caq);
 			}
@@ -166,7 +173,7 @@ public class BalanceReport extends SvrProcess {
 				sqlDoc.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
 			}
 			sqlDoc.append(" AND invoiceopen(c_invoice_id, 0, " + getCurrentAccountQuery().getDateToInlineQuery() + ") > 0	AND C_BPartner_id = t.c_bpartner_id ORDER BY DATEACCT desc LIMIT 1 ) as fecha_fact_reciente, ");
-			sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id, " + getCurrentAccountQuery().getDateToInlineQuery() + "), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
+			sqlDoc.append(" (select coalesce(sum(currencyconvert(invoiceopen(c_invoice_id, c_invoicepayschedule_id, " + getCurrentAccountQuery().getDateToInlineQuery() + "), c_currency_id, ").append(client_Currency_ID).append(", " + getInvoiceConversionDateExpression("i") + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
 							"from c_invoice_v as i " +
 							"where i.duedate::date <= ?::date " +
 							"		and i.c_bpartner_id = T.c_bpartner_id " +
@@ -176,7 +183,7 @@ public class BalanceReport extends SvrProcess {
 			}
 			sqlDoc.append(" AND AD_Client_ID = ").append(Env.getAD_Client_ID(getCtx()));
 			sqlDoc.append(") as duedebt, ");
-			sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", " + getCurrentAccountQuery().getDateToInlineQuery() + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
+			sqlDoc.append(" (select coalesce(sum(currencyconvert(paymentavailable(c_payment_id), c_currency_id, ").append(client_Currency_ID).append(", " + getPaymentConversionDateExpression(null) + ", COALESCE(c_conversiontype_id,0), ad_client_id, ad_org_id)),0.00) as duedebt " +
 							"from c_payment " +
 							"where duedate::date <= ?::date " +
 							"		and c_bpartner_id = T.c_bpartner_id " +
@@ -268,7 +275,8 @@ public class BalanceReport extends SvrProcess {
 											.append(p_AD_Org_ID == null?"0":p_AD_Org_ID).append(",")
 											.append(subindice).append(",")
 											.append(rs.getInt("C_BPartner_ID")).append(", '")
-											.append(rs.getString("SO_DESCRIPTION")).append("', ")
+											// dREHER Ago 26 - se escapa la comilla simple del texto libre para no romper la sintaxis del INSERT
+											.append(rs.getString("SO_DESCRIPTION").replace("'", "''")).append("', ")
 											.append(rs.getBigDecimal("Credit")).append(",")
 											.append(rs.getBigDecimal("Debit")).append(",")
 											.append(balance).append(", ");
@@ -315,7 +323,11 @@ public class BalanceReport extends SvrProcess {
 		
 		// si no hubo entradas directamente no se ejecuta sentencia de insercion alguna
 		if (subindice > 0){
-			int no = DB.executeUpdate(usql.toString(), get_TrxName());
+			// dREHER Ago 26 - se omite la conversion Oracle->Postgres para este INSERT masivo:
+			// Convert.convertIt() corta la sentencia si algun campo de texto libre (ej. SO_Description)
+			// contiene el patron " / " (lo interpreta como terminador de bloque PL/SQL), rompiendo
+			// el proceso con una excepcion que vuelca todo el SQL crudo en pantalla.
+			int no = DB.executeUpdate(usql.toString(), false, get_TrxName(), true);
 			if(no == 0){
 				throw new Exception("Error insertando datos en la tabla temporal");
 			}
@@ -367,6 +379,18 @@ public class BalanceReport extends SvrProcess {
 		return " ('"+ ((p_DateTrx_To != null) ? p_DateTrx_To + "'" : "now'::text") + ")::timestamp(6) without time zone ";
 	}
 
+	protected String getInvoiceConversionDateExpression(String invoiceAlias) {
+		return isDocumentConvertRate()
+				? invoiceAlias + ".dateinvoiced"
+				: getCurrentAccountQuery().getDateToInlineQuery();
+	}
+
+	protected String getPaymentConversionDateExpression(String paymentAlias) {
+		return isDocumentConvertRate()
+				? (Util.isEmpty(paymentAlias, true) ? "dateacct" : paymentAlias + ".dateacct")
+				: getCurrentAccountQuery().getDateToInlineQuery();
+	}
+
 
 	protected CurrentAccountQuery getCurrentAccountQuery() {
 		return currentAccountQuery;
@@ -375,6 +399,14 @@ public class BalanceReport extends SvrProcess {
 
 	protected void setCurrentAccountQuery(CurrentAccountQuery currentAccountQuery) {
 		this.currentAccountQuery = currentAccountQuery;
+	}
+
+	protected boolean isDocumentConvertRate() {
+		return documentConvertRate;
+	}
+
+	protected void setDocumentConvertRate(boolean documentConvertRate) {
+		this.documentConvertRate = documentConvertRate;
 	}
 	
 	private int pstmtSetParam(int index, Object value, PreparedStatement pstmt)

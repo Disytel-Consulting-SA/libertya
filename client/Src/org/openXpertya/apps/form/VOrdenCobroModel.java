@@ -710,13 +710,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		sql.append(", dateinvoiced, duedate, currencyIso, grandTotal, openTotal, COALESCE(convertedamt,0.00) AS convertedamt, COALESCE(openamt,0.00) AS openamt, isexchange, C_Currency_ID, paymentrule,\n");
 		sql.append("0.00 as descuento,");
 		sql.append("COALESCE(convertedamtfecfact,0.00) AS convertedamtfecfact, COALESCE(openamtfecfact,0.00) AS openamtfecfact, \n");
-		sql.append("MAX(COALESCE(exchangeRate,0)) as exchangeRate \n");
+		sql.append("MAX(COALESCE(exchangeRate,0)) as exchangeRate, MAX(COALESCE(c_conversiontype_id,0)) AS c_conversiontype_id, MAX(ad_client_id) AS ad_client_id, MAX(ad_org_id) AS ad_org_id \n");
 		sql.append("  FROM \n");
 		sql.append("  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, i.description, dateinvoiced, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, \n"); // ips.duedate
 		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
 		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , '"+ m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
 		sql.append("	ELSE abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, " + C_Currency_ID + " , '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
 		sql.append(" END AS ConvertedAmt, isexchange, \n");	
+		sql.append(" COALESCE(i.C_ConversionType_ID,0) AS c_conversiontype_id, i.AD_Client_ID AS ad_client_id, i.AD_Org_ID AS ad_org_id, \n");
 		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
 		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
 		sql.append(" 	ELSE currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", '" + m_fechaTrx + "'::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
@@ -805,6 +806,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				
 				// dREHER sep 24
 				rif.setExchangeRate(rs.getBigDecimal("exchangeRate"));
+				rif.setConversionTypeID(rs.getInt("c_conversiontype_id"));
+				rif.setAdClientID(rs.getInt("ad_client_id"));
+				rif.setAdOrgID(rs.getInt("ad_org_id"));
+				rif.setDateInvoiced(rs.getTimestamp("dateinvoiced"));
 				
 				m_facturas.add(rif);
 			}

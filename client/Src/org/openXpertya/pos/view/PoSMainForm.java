@@ -3196,10 +3196,10 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 			cCreditCardParamsPanel.add(getCCreditCardNumberLabel(), gridBagConstraints25);
 			cCreditCardParamsPanel.add(getCCreditCardNumberText(), gridBagConstraints26);
 			cCreditCardParamsPanel.add(getCCreditCardCouponParamsPanel(), gridBagConstraints28);
-			cCreditCardParamsPanel.add(cPosnetLabel, gridBagConstraints32);
+			cCreditCardParamsPanel.add(getCPosnetLabel(), gridBagConstraints32);
 			cCreditCardParamsPanel.add(getCPosnetText(), gridBagConstraints33);			
-			cCreditCardParamsPanel.add(cCardSeparator, gridBagConstraints31);
-			cCreditCardParamsPanel.add(cCardLabel, gridBagConstraints29);
+			cCreditCardParamsPanel.add(getCCardSeparator(), gridBagConstraints31);
+			cCreditCardParamsPanel.add(getCCardLabel(), gridBagConstraints29);
 			cCreditCardParamsPanel.add(getCCardText(), gridBagConstraints30);
 		}
 		// El combo de banco siempre se agrega fuera del If ya que el combo
@@ -6008,6 +6008,7 @@ public class PoSMainForm extends CPanel implements FormPanel, ASyncProcess, Disp
 		// Si esta Online pero NO es tarjeta real, ej QR Nave, continuar modalidad manual
 				
 		boolean isRealCreditCard = isRealCreditCard();
+		showCamposTarjeta(isOnLineMode() && isRealCreditCard);
 		
 		getCCashReturnPanel().setVisible(isRetiraEfectivo());
 		

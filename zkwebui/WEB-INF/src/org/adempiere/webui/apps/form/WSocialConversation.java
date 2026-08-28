@@ -41,13 +41,14 @@ import org.openXpertya.util.Env;
 import org.openXpertya.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zkex.zul.Borderlayout;
 import org.zkoss.zkex.zul.Center;
 import org.zkoss.zul.AbstractListModel;
 import org.zkoss.zul.ListModelExt;
 import org.zkoss.zul.RowRenderer;
 import org.zkoss.zul.Space;
-
+import org.zkoss.zul.Hbox;
 
 public class WSocialConversation extends Window  implements EventListener  {
 
@@ -109,6 +110,7 @@ public class WSocialConversation extends Window  implements EventListener  {
     protected Button    buttonGoToRecord = new Button();
     protected Button    buttonNewConversation = new Button();
     protected Button    buttonFindConversation = new Button();
+    protected Button 	buttonListConversations = new Button();
 	
     protected GridRenderer renderer;
     MessagesModel listModel = null;
@@ -116,6 +118,8 @@ public class WSocialConversation extends Window  implements EventListener  {
 	// dREHER
 	private AbstractADWindowPanel mPanel;
 	private String titulo;
+	
+	public static final String ON_READ_STATUS_CHANGED = "onConversationReadStatusChanged";
 	
     public int getRecordID() {
 		return recordID;
@@ -214,6 +218,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 		buttonGoToRecord.setLabel(Msg.translate(Env.getCtx(), "RelatedDocument"));
 		buttonNewConversation.setLabel(Msg.translate(Env.getCtx(), "StartAnotherConversation"));
 		buttonFindConversation.setLabel(Msg.translate(Env.getCtx(), "FindConversations"));
+		buttonListConversations.setLabel("Listar conversaciones");
 	}
 	
 	protected void loadConversation() {
@@ -287,6 +292,7 @@ public class WSocialConversation extends Window  implements EventListener  {
 	    	txtMessage.getComponent().setStyle("overflow: auto;"); // dREHER sep 24
 	    	
 	    	String defComponentWidth = "" + (int)((DEF_WIDTH - 60) / 5) + "px"; 	// 5 columnas de componentes
+	    	String navigateComponentWidth = "" + (int)((DEF_WIDTH - 60) / 6) + "px";
 	    	String defComponentWidthDouble = "" + (int)((DEF_WIDTH - 60) / 2.5) + "px";
 			this.setMaximizable(true);
 			this.setWidth(DEF_WIDTH+"px");
@@ -301,11 +307,12 @@ public class WSocialConversation extends Window  implements EventListener  {
 			this.setAttribute(Window.MODE_KEY, Window.MODE_EMBEDDED);
 						
 			
-			buttonGoToRecord.setWidth(defComponentWidth);
-			buttonPrevious.setWidth(defComponentWidth);
-			buttonNext.setWidth(defComponentWidth);
-			buttonFindConversation.setWidth(defComponentWidth);
-			buttonNewConversation.setWidth(defComponentWidth);
+			buttonGoToRecord.setWidth("100%");
+			buttonPrevious.setWidth("100%");
+			buttonNext.setWidth("100%");
+			buttonFindConversation.setWidth("100%");
+			buttonListConversations.setWidth("100%");
+			buttonNewConversation.setWidth("100%");
 			
 			txtSubject.getComponent().setWidth("99%");
 	    	
@@ -375,6 +382,11 @@ public class WSocialConversation extends Window  implements EventListener  {
 					findConversation();
 				}
 			});
+	    	buttonListConversations.addActionListener(new EventListener() {
+	    	    public void onEvent(Event e) {
+	    	        listConversations();
+	    	    }
+	    	});
 	    	buttonAttach.addActionListener(new EventListener() {
 				public void onEvent(Event e) {
 					attach();
@@ -408,16 +420,32 @@ public class WSocialConversation extends Window  implements EventListener  {
 
     	// Filas de componentes visuales
     	Grid gridPanel = GridFactory.newGridLayout();
-		gridPanel.setWidth("100%");
-    	Rows rows = gridPanel.newRows();
-		
-       	// Navigate panel
-		Row navigateRow = rows.newRow();
-		navigateRow.appendChild(buttonGoToRecord);
-		navigateRow.appendChild(buttonPrevious);
-		navigateRow.appendChild(buttonNext);
-		navigateRow.appendChild(buttonFindConversation);
-		navigateRow.appendChild(buttonNewConversation);
+    	gridPanel.setWidth("100%");
+      	Rows rows = gridPanel.newRows();
+
+        // Navigate panel
+	    Row navigateRow = rows.newRow();
+	    navigateRow.setSpans("5");
+	    Hbox navigateBox = new Hbox();
+	    navigateBox.setWidth("100%");
+	    //navigateBox.setWidths("16.66%,16.66%,16.66%,16.66%,16.66%,16.66%");
+	    
+	    String navigationButtonWidth = "" + (int)((DEF_WIDTH - 120) / 6) + "px";
+
+    	buttonGoToRecord.setWidth(navigationButtonWidth);
+    	buttonPrevious.setWidth(navigationButtonWidth);
+    	buttonNext.setWidth(navigationButtonWidth);
+    	buttonFindConversation.setWidth(navigationButtonWidth);
+    	buttonListConversations.setWidth(navigationButtonWidth);
+    	buttonNewConversation.setWidth(navigationButtonWidth);
+
+	    navigateBox.appendChild(buttonGoToRecord);
+	    navigateBox.appendChild(buttonPrevious);
+	    navigateBox.appendChild(buttonNext);
+	    navigateBox.appendChild(buttonFindConversation);
+	    navigateBox.appendChild(buttonListConversations);
+	    navigateBox.appendChild(buttonNewConversation);
+	    navigateRow.appendChild(navigateBox);
 
     	// Asunto header
 		Row subjectHeadRow = rows.newRow();
@@ -617,12 +645,17 @@ public class WSocialConversation extends Window  implements EventListener  {
 	}
 	
 	protected void markAsRead(boolean asRead) {
-		try {
-			SocialConversationModel.markAsReadNotRead(currentConversation, Env.getAD_User_ID(Env.getCtx()), asRead);
-			toggleComponents(false);
-		} catch (Exception e) {
-			FDialog.error(m_WindowNo, this, e.getMessage());
-		}	
+	    try {
+	        SocialConversationModel.markAsReadNotRead(
+	            currentConversation,
+	            Env.getAD_User_ID(Env.getCtx()),
+	            asRead
+	        );
+	        toggleComponents(false);
+	        Events.postEvent(ON_READ_STATUS_CHANGED, this, null);
+	    } catch (Exception e) {
+	        FDialog.error(m_WindowNo, this, e.getMessage());
+	    }
 	}
 
 	protected void newParticipant() {
@@ -767,6 +800,27 @@ public class WSocialConversation extends Window  implements EventListener  {
 		} catch (Exception e) {
 			FDialog.error(m_WindowNo, this, e.getMessage());
 		}
+	}
+	
+	
+	protected void listConversations() {
+	    WSocialConversationList dialog = new WSocialConversationList();
+	    Integer conversationID = dialog.selectConversation();
+
+	    if (conversationID == null)
+	        return;
+
+	    try {
+	        conversations = dialog.getConversationIDs();
+	        conversationPos = conversations.indexOf(conversationID);
+	        loadConversation();
+	        loadValues();
+	        tableModel.reload(currentConversation);
+	        toggleComponents(false);
+	    } catch (Exception e) {
+	        FDialog.error(m_WindowNo, this, e.getMessage()
+	        );
+	    }
 	}
 	
 	

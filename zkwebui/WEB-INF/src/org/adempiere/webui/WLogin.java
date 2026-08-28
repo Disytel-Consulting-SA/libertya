@@ -61,12 +61,14 @@ public class WLogin extends AbstractUIPart
         else
         	layout.setPage(page);
         LayoutUtils.addSclass(ITheme.LOGIN_WINDOW_CLASS, layout);
+        LayoutUtils.addSclass("login-shell", layout);
 
         Center center = new Center();
         center.setParent(layout);
         center.setBorder("none");
         center.setFlex(true);
         center.setAutoscroll(true);
+        center.setSclass("login-shell-center");
         center.setStyle("border: none; background-color: transparent;");
 
         Vbox vb = new Vbox();
@@ -75,6 +77,7 @@ public class WLogin extends AbstractUIPart
         vb.setWidth("100%");
         vb.setPack("center");
         vb.setAlign("center");
+        vb.setSclass("login-shell-stage");
         vb.setStyle("background-color: transparent;");
 
         LoginWindow loginWindow = new LoginWindow(app);
@@ -85,6 +88,7 @@ public class WLogin extends AbstractUIPart
         	//TODO: localization
         	String msg = "You might experience slow performance and user interface anomalies using your current browser to access the application. We recommend the use of Firefox, Google Chrome or Apple Safari.";
         	browserWarningWindow = new Window();
+        	browserWarningWindow.setSclass("login-browser-warning");
         	Div div = new Div();
         	div.setStyle("font-size: 9pt");
         	div.appendChild(new Text(msg));

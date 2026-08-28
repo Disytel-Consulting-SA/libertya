@@ -12,6 +12,7 @@ import org.openXpertya.model.MDocType;
 import org.openXpertya.model.MInvoice;
 import org.openXpertya.model.MInvoiceLine;
 import org.openXpertya.model.MRetencionSchema;
+import org.openXpertya.model.MTax;
 import org.openXpertya.model.RetencionProcessor;
 import org.openXpertya.model.X_M_Retencion_Invoice;
 import org.openXpertya.util.CLogger;
@@ -304,23 +305,40 @@ Cuando realices los pagos de las otras facturas, deberás considerar las retenci
 	 * @return
 	 * @author dREHER
 	 */
+	private boolean isInvoiceLineApplicableForRetention(MInvoiceLine line) {
+		if(line == null || line.getC_Tax_ID() <= 0) {
+			return true;
+		}
+		MTax tax = MTax.get(line.getCtx(), line.getC_Tax_ID(), line.get_TrxName());
+		return !tax.isNoAplicaRetencion();
+	}
+
 	private BigDecimal calculaNetoFC(MInvoice fc, MRetencionSchema retSchema) {
-		BigDecimal neto = fc.getNetAmount();
-		
+		BigDecimal neto = Env.ZERO;
 		BigDecimal netoLineas = Env.ZERO;
+		boolean hasSchemaLine = false;
 		for(MInvoiceLine line: fc.getLines()) {
+			if(!isInvoiceLineApplicableForRetention(line)) {
+				continue;
+			}
 			if(line.get_Value("C_RetencionSchema_ID")!=null) {
 				int C_RetencionSchema_ID  = (Integer)line.get_Value("C_RetencionSchema_ID");
 				if(C_RetencionSchema_ID == retSchema.getC_RetencionSchema_ID()) {
 					netoLineas = netoLineas.add(line.getLineNetAmount());
+					hasSchemaLine = true;
 				}
 			}
 		}
 		
-		// Si calculo neto de linea, quiere decir que alguna hizo referencia al esquema de retenciones, caso contrario es el total neto de la factura
-		if(netoLineas.compareTo(Env.ZERO) > 0)
-			neto = netoLineas;
+		if(hasSchemaLine) {
+			return netoLineas;
+		}
 		
+		for(MInvoiceLine line: fc.getLines()) {
+			if(isInvoiceLineApplicableForRetention(line)) {
+				neto = neto.add(line.getLineNetAmount());
+			}
+		}
 		return neto;
 	}
 	
@@ -336,22 +354,31 @@ Cuando realices los pagos de las otras facturas, deberás considerar las retenci
 	 * @author dREHER
 	 */
 	private BigDecimal calculaTotalLineas(MInvoice fc, MRetencionSchema retSchema) {
-		BigDecimal total = fc.getTotalLines();
-		
+		BigDecimal total = Env.ZERO;
 		BigDecimal totalLineas = Env.ZERO;
+		boolean hasSchemaLine = false;
 		for(MInvoiceLine line: fc.getLines()) {
+			if(!isInvoiceLineApplicableForRetention(line)) {
+				continue;
+			}
 			if(line.get_Value("C_RetencionSchema_ID")!=null) {
 				int C_RetencionSchema_ID  = (Integer)line.get_Value("C_RetencionSchema_ID");
 				if(C_RetencionSchema_ID == retSchema.getC_RetencionSchema_ID()) {
 					totalLineas = totalLineas.add(line.getLineTotalAmt());
+					hasSchemaLine = true;
 				}
 			}
 		}
 		
-		// Si calculo total de linea, quiere decir que alguna hizo referencia al esquema de retenciones, caso contrario es el total de lineas de la factura
-		if(totalLineas.compareTo(Env.ZERO) > 0)
-			total = totalLineas;
+		if(hasSchemaLine) {
+			return totalLineas;
+		}
 		
+		for(MInvoiceLine line: fc.getLines()) {
+			if(isInvoiceLineApplicableForRetention(line)) {
+				total = total.add(line.getLineTotalAmt());
+			}
+		}
 		return total;
 	}
 	

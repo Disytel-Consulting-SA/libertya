@@ -38,6 +38,8 @@ public final class ThemeManager {
 	public static String getSmallLogo() {
 		String theme = getTheme();
 		String def = ITheme.THEME_PATH_PREFIX+theme+ITheme.HEADER_LOGO_IMAGE;
+		if ("modern".equals(theme))
+			return def;
 		String url = MSysConfig.getValue("ZK_LOGO_SMALL", null);
 		if (url == null)
 			url = MSysConfig.getValue("WEBUI_LOGOURL", def);

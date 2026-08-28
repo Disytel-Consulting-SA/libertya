@@ -38,6 +38,7 @@ import org.openXpertya.model.MBankAccount;
 import org.openXpertya.model.MCash;
 import org.openXpertya.model.MCashLine;
 import org.openXpertya.model.MCintoloExchangeDifSettings;
+import org.openXpertya.model.MConversionRate;
 import org.openXpertya.model.MCurrency;
 import org.openXpertya.model.MDiscountSchema;
 import org.openXpertya.model.MDocType;
@@ -1033,6 +1034,9 @@ public class VOrdenPagoModel {
 		private BigDecimal exchangeRate = new BigDecimal(0); // dREHER Tasa de cambio de la factura
 		
 		private Timestamp dateInvoiced = null; // dREHER 5.0
+		private int conversionTypeID = 0;
+		private int adClientID = 0;
+		private int adOrgID = 0;
 
 		public Timestamp getDateInvoiced() {
 			return dateInvoiced;
@@ -1040,6 +1044,30 @@ public class VOrdenPagoModel {
 
 		public void setDateInvoiced(Timestamp dateInvoiced) {
 			this.dateInvoiced = dateInvoiced;
+		}
+
+		public int getConversionTypeID() {
+			return conversionTypeID;
+		}
+
+		public void setConversionTypeID(int conversionTypeID) {
+			this.conversionTypeID = conversionTypeID;
+		}
+
+		public int getAdClientID() {
+			return adClientID;
+		}
+
+		public void setAdClientID(int adClientID) {
+			this.adClientID = adClientID;
+		}
+
+		public int getAdOrgID() {
+			return adOrgID;
+		}
+
+		public void setAdOrgID(int adOrgID) {
+			this.adOrgID = adOrgID;
 		}
 
 		public ResultItemFactura(ResultSet rs) throws Exception {
@@ -1163,12 +1191,8 @@ public class VOrdenPagoModel {
 						exchangeRate = Env.ZERO;
 
 					// dREHER 5.0 se tienen que dar las dos condiciones para marcar mostrar mensaje de advertencia
-					BigDecimal conversion = MCurrency.currencyConvert(new BigDecimal(1), C_Currency_ID, currency_ID_To,
-							fecha==null?
-									fechaFC
-										:
-									fecha, 
-										0, getCtx());
+					Timestamp conversionDate = fecha == null ? fechaFC : fecha;
+					BigDecimal conversionRate = getConversionRate((ResultItemFactura) x, currency_ID_To, conversionDate);
 					
 					String isoCode = "";
 					if(currency_ID_To > 0) {
@@ -1177,7 +1201,7 @@ public class VOrdenPagoModel {
 					}
 					
 					
-					if ( Util.isEmpty(conversion, true) && exchangeRate.compareTo(Env.ZERO) == 0) {
+					if (fecha == null && conversionRate == null && exchangeRate.compareTo(Env.ZERO) == 0) {
 						
 						debug("validateConvertionRate. NO hay Tasa de conversion para Fecha FACT: " + 
 								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fechaFC) + " - ExchangeRate: " + exchangeRate);
@@ -1189,18 +1213,30 @@ public class VOrdenPagoModel {
 								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fechaFC) + " - Moneda: " + isoCode, true);
 						break;
 						
-					}else {
-						if(conversion == null && fecha!=null ) {
-							rs.setMsg("NO existe Tasa de conversion para Fecha: " + 
-									new java.text.SimpleDateFormat("dd/MM/yyyy").format(fecha) + " - Moneda: " + isoCode, true);
-							break;
-						}
+					} else if (fecha != null && conversionRate == null) {
+						rs.setMsg("NO existe Tasa de conversion para Fecha: " +
+								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fecha) + " - Moneda: " + isoCode, true);
+						break;
 					}
 						
 				// }
 			}
 		}
 		return rs;
+	}
+
+	private BigDecimal getConversionRate(ResultItemFactura factura, int currency_ID_To, Timestamp conversionDate) {
+		int conversionTypeID = factura.getConversionTypeID();
+		int clientID = factura.getAdClientID();
+		int orgID = factura.getAdOrgID();
+		if (clientID <= 0) {
+			clientID = Env.getAD_Client_ID(getCtx());
+		}
+		if (orgID <= 0) {
+			orgID = Env.getAD_Org_ID(getCtx());
+		}
+		return MConversionRate.getRate(C_Currency_ID, currency_ID_To, conversionDate, conversionTypeID,
+				clientID, orgID);
 	}
 
 	//
@@ -1615,7 +1651,7 @@ public class VOrdenPagoModel {
 		StringBuffer sql = new StringBuffer();
 
 		sql.append(
-				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, COALESCE(openTotal,0) AS openTotal,  sum(COALESCE(convertedamt,0)) as convertedamtsum, sum(COALESCE(openamt,0)) as openAmtSum, sum(COALESCE(openamt,0)) - sum(COALESCE(discount,0)) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule, MAX(COALESCE(exchangeRate,0)) as exchangeRate, MAX(dateInvoiced) AS dateInvoiced FROM ");
+				" SELECT c_invoice_id, 0, orgname, documentno,max(duedate) as duedatemax, currencyIso, grandTotal, COALESCE(openTotal,0) AS openTotal,  sum(COALESCE(convertedamt,0)) as convertedamtsum, sum(COALESCE(openamt,0)) as openAmtSum, sum(COALESCE(openamt,0)) - sum(COALESCE(discount,0)) as openAmtSumWithDiscount, isexchange, C_Currency_ID, paymentrule, MAX(COALESCE(exchangeRate,0)) as exchangeRate, MAX(dateInvoiced) AS dateInvoiced, MAX(COALESCE(c_conversiontype_id,0)) AS c_conversiontype_id, MAX(ad_client_id) AS ad_client_id, MAX(ad_org_id) AS ad_org_id FROM ");
 		sql.append(
 				"  (SELECT i.C_Invoice_ID, i.C_InvoicePaySchedule_ID, org.name as orgname, i.DocumentNo, coalesce(i.duedate,dateinvoiced) as DueDate, cu.iso_code as currencyIso, i.grandTotal, invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) as openTotal, "); // ips.duedate
 		
@@ -1646,6 +1682,9 @@ public class VOrdenPagoModel {
 		
 		sql.append("isexchange, ");
 		sql.append("dateInvoiced, ");
+		sql.append("COALESCE(i.C_ConversionType_ID,0) AS c_conversiontype_id, ");
+		sql.append("i.AD_Client_ID AS ad_client_id, ");
+		sql.append("i.AD_Org_ID AS ad_org_id, ");
 		
 		if( (getIsSOTrx().equals("Y") && 
 				isPorAhoraFuncionaComoSiempre) ||
@@ -1727,7 +1766,10 @@ public class VOrdenPagoModel {
 				
 				// dREHER
 				rif.setExchangeRate(rs.getBigDecimal("exchangeRate"));
-				
+				rif.setConversionTypeID(rs.getInt("c_conversiontype_id"));
+				rif.setAdClientID(rs.getInt("ad_client_id"));
+				rif.setAdOrgID(rs.getInt("ad_org_id"));
+
 				int facId = ((Integer) rif.getItem(m_facturasTableModel.getIdColIdx()));
 
 				// dREHER 5.0

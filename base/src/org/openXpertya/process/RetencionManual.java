@@ -26,6 +26,7 @@ public class RetencionManual extends SvrProcess {
 	private BigDecimal porcentajeRetencion;
 	private X_M_Retencion_Invoice retencion = null;
 	private String documentno;
+	private Timestamp fecha = null;
 
 	@Override
 	protected void prepare() {
@@ -47,6 +48,8 @@ public class RetencionManual extends SvrProcess {
 				baseImponible = (BigDecimal) para[i].getParameter();
 			} else if (name.equals("PorcentajeDeRetencion")) {
 				porcentajeRetencion = (BigDecimal) para[i].getParameter();
+			} else if (name.equals("Fecha")) { // dREHER
+				fecha = (Timestamp) para[i].getParameter();
 			}
 		}
 
@@ -197,8 +200,11 @@ public class RetencionManual extends SvrProcess {
 		fac_linea.setInvoice(recaudador_fac);
 		fac_linea.setC_Invoice_ID(recaudador_fac.getC_Invoice_ID());
 		fac_linea.setM_Product_ID(getRetencionSchema().getProduct());
-		fac_linea.setLineNetAmt(Env.ZERO);
-		fac_linea.setC_Tax_ID(0);
+		// dREHER - fix se debe indicar impuesto excento y el total neto de linea
+		fac_linea.setLineNetAmt(getMontoDeRetencion());
+		fac_linea.setC_Tax_ID(taxExenc);
+		// fac_linea.setLineNetAmt(Env.ZERO);
+		// fac_linea.setC_Tax_ID(0);
 		fac_linea.setLine(nrolinea);
 		fac_linea.setQty(1);
 		fac_linea.setPriceEntered(getMontoDeRetencion());
@@ -299,6 +305,11 @@ public class RetencionManual extends SvrProcess {
 	}
 
 	private Timestamp getDateTrx() {
+		
+		// dREHER si se paso la fecha como parametro, tomar esa fecha, caso contrario se toma la del entorno
+		if(fecha!=null)
+			return fecha;
+		
 		return Env.getContextAsDate(Env.getCtx(), "#Date");
 	}
 

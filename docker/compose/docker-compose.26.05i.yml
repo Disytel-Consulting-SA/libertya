@@ -1,0 +1,50 @@
+services:
+
+  db:
+    image: disytel/libertya-db-i:26.05
+    network_mode: host
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      LIBERTYA_DB_NAME: libertya
+      LIBERTYA_DB_USER: libertya
+      LIBERTYA_DB_PASS: libertya
+      PGPORT: "5439"
+    volumes:
+      - libertya_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -p 5439"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    image: disytel/libertya-i:26.05
+    network_mode: host
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      OXP_HOME: /ServidorOXP
+      SERVIDOR_BD_OXP: localhost
+      PUERTO_BD_OXP: "5439"
+      NOMBRE_BD_OXP: libertya
+      USUARIO_BD_OXP: libertya
+      PASSWD_BD_OXP: libertya
+      SYSTEM_BD_OXP: libertya
+      # SERVIDOR_APPS_OXP: hostname/IP accesible desde el cliente Java/Swing externo.
+      # En local usar "localhost"; en servidor remoto poner la IP/hostname público.
+      SERVIDOR_APPS_OXP: localhost
+      PUERTO_WEB_OXP: "8080"
+      PUERTO_SSL_OXP: "8443"
+      PUERTO_JNP_OXP: "1099"
+      KEYSTOREPASS_OXP: libertya
+      OPCIONES_JAVA_OXP: "-Xms512M -Xmx1024M -XX:MaxPermSize=512M -Dfile.encoding=UTF-8"
+      WAIT_FOR_DB: "true"
+      WAIT_FOR_DB_TIMEOUT: "60"
+    volumes:
+      - libertya_data:/ServidorOXP/data
+
+volumes:
+  libertya_pgdata:
+  libertya_data:

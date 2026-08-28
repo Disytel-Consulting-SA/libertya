@@ -459,16 +459,65 @@ public class MStorage extends X_M_Storage {
         }
 
         if( (diffQtyReserved != null) && (diffQtyReserved.compareTo( Env.ZERO ) != 0) ) {
+        	
+        	/**
+        	 * Si la cantidad reservada es menor a CERO, dejar en CERO!
+        	 * dREHER Jul 25
+        	 * TODO: detectar en que casos sucede esto
+        	 */
+        	
             if( storage0 == null ) {
-                storage.setQtyReserved( storage.getQtyReserved().add( diffQtyReserved ));
+                
+            	// storage.setQtyReserved(storage.getQtyReserved().add( diffQtyReserved ));
+                
+                BigDecimal qtyFinal = storage.getQtyReserved().add( diffQtyReserved );
+        		if(qtyFinal.compareTo(Env.ZERO) < 0)
+        			qtyFinal = Env.ZERO;
+                storage.setQtyReserved( qtyFinal );
+                
+                
             } else {
-                storage0.setQtyReserved( storage0.getQtyReserved().add( diffQtyReserved ));
+
+                // storage0.setQtyReserved( storage0.getQtyReserved().add( diffQtyReserved ));
+
+                BigDecimal qtyFinal = storage0.getQtyReserved().add( diffQtyReserved );
+        		if(qtyFinal.compareTo(Env.ZERO) < 0)
+        			qtyFinal = Env.ZERO;
+                storage0.setQtyReserved( qtyFinal );
             }
 
             diffText.append( " Reserved=" ).append( diffQtyReserved );
             changed = true;
         }
 
+        /**
+         * La cantidad ordenada nunca podria ser negativa
+         */
+        
+        if( (diffQtyOrdered != null) && (diffQtyOrdered.compareTo( Env.ZERO ) != 0) ) {
+            
+        	/**
+        	 * Si la cantidad ordenada es menor a CERO, dejar en CERO!
+        	 * dREHER Jul 25
+        	 */
+        	
+        	if( storage0 == null ) {
+        		BigDecimal qtyFinal = storage.getQtyOrdered().add( diffQtyOrdered );
+        		if(qtyFinal.compareTo(Env.ZERO) < 0)
+        			qtyFinal = Env.ZERO;
+                storage.setQtyOrdered( qtyFinal );
+            } else {
+            	BigDecimal qtyFinal = storage0.getQtyOrdered().add( diffQtyOrdered );
+        		if(qtyFinal.compareTo(Env.ZERO) < 0)
+        			qtyFinal = Env.ZERO;
+                storage0.setQtyOrdered(qtyFinal);
+            }
+
+            diffText.append( " Ordered=" ).append( diffQtyOrdered );
+            changed = true;
+        }
+        
+        /* Codigo original
         if( (diffQtyOrdered != null) && (diffQtyOrdered.compareTo( Env.ZERO ) != 0) ) {
             if( storage0 == null ) {
                 storage.setQtyOrdered( storage.getQtyOrdered().add( diffQtyOrdered ));
@@ -479,7 +528,8 @@ public class MStorage extends X_M_Storage {
             diffText.append( " Ordered=" ).append( diffQtyOrdered );
             changed = true;
         }
-
+		*/
+        
         if( changed ) {
             diffText.append( ") -> " ).append( storage.toString());
             s_log.fine( diffText.toString());

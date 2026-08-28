@@ -821,17 +821,27 @@ public class ExportArciba extends SvrProcess {
 				if (Util.isEmpty(tasa, true))
 					tasa = new BigDecimal(0.10);
 				
-				if(montoTotal.compareTo(retenido) != 0) {
-					
+				// dREHER - Ademas de comparar montoTotal contra retenido (heuristica que detecta
+				// inconsistencias en los datos), se valida explicitamente que el monto sujeto a
+				// retencion/percepcion sea mayor a cero. Esto es necesario porque para determinados
+				// proveedores (p.ej. proveedores exentos de IVA, cuya factura trae su propia percepcion
+				// calculada con la misma alicuota que la retencion practicada) el valor de "otros
+				// conceptos" termina coincidiendo con el de "retenido", haciendo que montoTotal == retenido
+				// aun cuando montoSujetoARetencion (columna 18, pago_actual_amt) vino en cero desde la
+				// consulta. En ese caso la heuristica original no dispara y el cero se exporta tal cual,
+				// lo que ARCIBA rechaza con "El monto sujeto a ret/percepciones no es valido, debe ser
+				// mayor a cero" (y en cascada el resto de las validaciones del registro).
+				if(montoTotal.compareTo(retenido) != 0 || montoSujetoARetencion.compareTo(Env.ZERO) <= 0) {
+
 					System.out.println("Monto Total: " + montoTotal + " Retenido: " + retenido + " Tasa: " + tasa);
-					
+
 					montoTotal = Env.ONEHUNDRED.multiply(retenido).divide(tasa, RoundingMode.HALF_DOWN);
 					montoSujetoARetencion = montoTotal;
 					montoTotal = montoSujetoARetencion.add(otrosConceptos);
-					
+
 					if(rs.getString(1).equals("2"))
 						montoTotal = montoTotal.add(importeIva);
-					
+
 				}
 
 		//	}

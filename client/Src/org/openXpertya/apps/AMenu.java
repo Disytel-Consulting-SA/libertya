@@ -48,8 +48,10 @@ import javax.swing.FocusManager;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -67,6 +69,7 @@ import org.openXpertya.apps.wf.WFPanel;
 import org.openXpertya.db.CConnection;
 import org.openXpertya.grid.tree.VTreePanel;
 import org.openXpertya.model.MClient;
+import org.openXpertya.model.MPreference;
 import org.openXpertya.model.MRole;
 import org.openXpertya.model.MSession;
 import org.openXpertya.model.MSocialConversation;
@@ -82,6 +85,9 @@ import org.openXpertya.utils.LYCloseWindowAdapter;
 import org.openXpertya.util.Language;
 import org.openXpertya.util.Msg;
 import org.openXpertya.util.Splash;
+
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 /**
  * Descripción de Clase
@@ -123,6 +129,13 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         wfPanel    = new WFPanel( this );
         treePanel  = new VTreePanel( m_WindowNo,true,false );    // !editable & hasBar
 
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowActivated(WindowEvent e) {
+                updateConversations();
+            }
+        });
+        
         try {
             jbInit();
             createMenu();
@@ -167,6 +180,13 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         splash.dispose();
         splash = null;
+        
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                showPendingConversations();
+            }
+        });
+        
     }    // AMenu
 
     /** Descripción de Campos */
@@ -213,6 +233,37 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
     
     private WindowManager windowManager = new WindowManager();
+    
+  
+    /**
+     * Informa al usuario cuando tiene conversaciones sin leer al iniciar la aplicacion.
+     */
+    private void showPendingConversations() {
+ 
+        if (getConversations() <= 0 || !MSocialConversation.shouldNotifyUnreadConversationsOnLogin()) {
+            return;
+        }
+
+        Object[] options = {
+            Msg.getMsg(m_ctx, "OK"),
+            Msg.getMsg(m_ctx, "No")
+        };
+
+        int response = JOptionPane.showOptionDialog(
+            this,
+            "Tiene conversaciones sin leer, desea visualizarlas?",
+            Msg.translate(m_ctx, "Conversations"),
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+
+        if (response == 0) {
+            gotoConversations();
+        }
+    }
     
     /**
      * Descripción de Método
@@ -700,6 +751,19 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
         updateInfo();
     }    // actionPerformed
 
+    
+    
+    /**
+     * Actualiza el contador de conversaciones no leidas.
+     */
+    private void updateConversations() {
+        bConversations.setText(
+            Msg.translate(Env.getCtx(), "Conversations")
+                + ": "
+                + getConversations()
+        );
+    }
+    
     /**
      * Descripción de Método
      *
@@ -869,7 +933,7 @@ public final class AMenu extends JFrame implements ActionListener,PropertyChange
 
         bTasks.setText( Msg.translate( m_ctx,"R_Request_ID" ) + ": " + requests );
         
-        bConversations.setText( Msg.translate(Env.getCtx(), "Conversations") + ": " + getConversations() );
+        updateConversations();
 
         // Memo
 

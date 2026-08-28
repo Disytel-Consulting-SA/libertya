@@ -97,6 +97,7 @@ public class RolePanel extends Window implements EventListener, Deferrable
         initComponents();
         init();
         this.setId("rolePanel");
+        this.setSclass("login-shell-panel login-shell-panel-role");
 
         AuFocus auf = new AuFocus(lstRole);
         Clients.response(auf);
@@ -116,6 +117,7 @@ public class RolePanel extends Window implements EventListener, Deferrable
         table.setDynamicProperty("cellpadding", "0");
     	table.setDynamicProperty("cellspacing", "5");
     	table.setSclass(ITheme.LOGIN_BOX_BODY_CLASS);
+    	table.setDynamicProperty("class", "login-form-grid login-role-grid");
 
     	this.appendChild(table);
 

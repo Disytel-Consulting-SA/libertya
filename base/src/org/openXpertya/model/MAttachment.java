@@ -596,7 +596,8 @@ public class MAttachment extends X_AD_Attachment {
 
         MAttachment		retValue	= null;
         PreparedStatement	pstmt		= null;
-        String			sql		= "SELECT * FROM AD_Attachment WHERE AD_Table_ID=? AND Record_ID=?";
+        // Fix ante posibles duplicidades de AD_Attachments para un mismo par tabla+registro: Tomar el adjunto más recientemente insertado 
+        String			sql		= "SELECT * FROM AD_Attachment WHERE AD_Table_ID=? AND Record_ID=? ORDER BY AD_Attachment_ID DESC LIMIT 1";
 
         try {
 

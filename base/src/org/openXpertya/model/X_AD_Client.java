@@ -260,11 +260,6 @@ List of data model validation classes separated by ;
  */
 public void setModelValidationClasses (String ModelValidationClasses)
 {
-if (ModelValidationClasses != null && ModelValidationClasses.length() > 255)
-{
-log.warning("Length > 255 - truncated");
-ModelValidationClasses = ModelValidationClasses.substring(0,255);
-}
 set_Value ("ModelValidationClasses", ModelValidationClasses);
 }
 /** Get Model Validation Classes.

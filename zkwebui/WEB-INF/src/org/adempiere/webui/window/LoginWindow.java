@@ -66,6 +66,7 @@ public class LoginWindow extends FWindow implements EventListener
     private void init()
     {
         this.appendChild(pnlLogin);
+        this.setSclass("login-shell-window");
         this.setStyle("background-color: transparent");
     }
 
