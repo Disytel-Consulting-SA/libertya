@@ -2056,6 +2056,19 @@ public class MField implements Serializable,Evaluatee {
 				return true;
 			return m_vo.ColumnName.equals("Password");
 		}
+		
+		
+		public int getAD_Field_ID() {
+		    return m_vo.AD_Field_ID;
+		}
+
+		public int getAD_Table_ID() {
+		    return m_vo.AD_Table_ID;
+		}
+
+		public String getReadOnlyLogic() {
+		    return m_vo.ReadOnlyLogic;
+		}
 
 }    // MField
 
