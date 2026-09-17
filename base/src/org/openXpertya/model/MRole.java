@@ -99,7 +99,6 @@ public final class MRole extends X_AD_Role
 		if (role == null || reload)
 		{
 			role = new MRole (ctx, AD_Role_ID, null);
-			s_roles.put (key, role);
 			if (AD_Role_ID == 0)
 			{
 				String trxName = null;
@@ -107,6 +106,10 @@ public final class MRole extends X_AD_Role
 			}
 			role.setAD_User_ID(AD_User_ID);
 			role.loadAccess(reload);
+			
+			// El rol debe publicarse en cache recién cuando toda su información de acceso está inicializada.
+			s_roles.put (key, role);
+			
 			s_log.info(role.toString());
 		}
 		return role;
