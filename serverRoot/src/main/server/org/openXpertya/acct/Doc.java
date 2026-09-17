@@ -1429,7 +1429,14 @@ public abstract class Doc {
             if( status.equals( STATUS_Posted )) {
                 for( int i = 0;i < m_fact.size();i++ ) { //m_fact.length
                     if( (m_fact.get(i) != null) && m_fact.get(i).save( getTrxName())) {
-                        ;
+                        if( !isFactAcctBalanced(m_fact.get(i), getTrxName())) {
+                            log.log(Level.SEVERE, "(fact not balanced) ... rolling back. " + p_vo.Error);
+                            trx.rollback();
+                            trx.close();
+                            unlock();
+
+                            return STATUS_Error;
+                        }
                     } else {
 						log.log(Level.SEVERE, "(fact not saved) ... rolling back." + CLogger.retrieveErrorAsString());
                         trx.rollback();
@@ -1490,6 +1497,64 @@ public abstract class Doc {
     }    // postCommit
 
     /**
+     * Verifica el balance de las lineas contables persistidas antes de confirmar
+     * la transaccion de posteo.
+     */
+    private boolean isFactAcctBalanced(Fact fact, String trxName) {
+        if( fact == null || fact.getAcctSchema() == null ) {
+            return true;
+        }
+
+        BigDecimal balance = getFactAcctBalance(fact.getAcctSchema().getC_AcctSchema_ID(), trxName);
+        if( balance == null ) {
+            balance = Env.ZERO;
+        }
+
+        boolean balanced = balance.compareTo(Env.ZERO) == 0;
+        if( !balanced ) {
+            p_vo.Error = "Fact_Acct not balanced - C_AcctSchema_ID=" + fact.getAcctSchema().getC_AcctSchema_ID()
+                    + ", AD_Table_ID=" + p_AD_Table_ID
+                    + ", Record_ID=" + p_Record_ID
+                    + ", Diff=" + balance;
+        }
+
+        return balanced;
+    }
+
+    /**
+     * Obtiene la diferencia contable persistida para el documento actual.
+     */
+    private BigDecimal getFactAcctBalance(int C_AcctSchema_ID, String trxName) {
+        String sql = "SELECT COALESCE(SUM(AmtAcctDr-AmtAcctCr),0) "
+                + "FROM Fact_Acct "
+                + "WHERE AD_Table_ID=? "
+                + "AND Record_ID=? "
+                + "AND C_AcctSchema_ID=?";
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            pstmt = DB.prepareStatement(sql, trxName);
+            pstmt.setInt(1, p_AD_Table_ID);
+            pstmt.setInt(2, p_Record_ID);
+            pstmt.setInt(3, C_AcctSchema_ID);
+            rs = pstmt.executeQuery();
+
+            if( rs.next()) {
+                return rs.getBigDecimal(1);
+            }
+        } catch( SQLException e ) {
+            throw new DBException(e, sql);
+        } finally {
+            DB.close(rs, pstmt);
+            rs = null;
+            pstmt = null;
+        }
+
+        return Env.ZERO;
+    }
+
+    /**
      * Descripción de Método
      *
      *
@@ -1499,7 +1564,7 @@ public abstract class Doc {
     protected String getTrxName() {
         if( m_trxName == null ) {
             if( p_vo != null ) {
-                m_trxName = "Post" + p_vo.DocumentType + p_Record_ID;
+                m_trxName = Trx.createTrxName( "Post" + p_vo.DocumentType + p_Record_ID + "_" + Thread.currentThread().getId());
             } else {
                 m_trxName = Trx.createTrxName( "Post" );
             }
@@ -1716,7 +1781,7 @@ public abstract class Doc {
 
             sql.append( p_AD_Table_ID ).append( " AND Record_ID=" ).append( p_Record_ID );
 
-            int no = DB.executeUpdate( sql.toString(),null);
+            int no = DB.executeUpdate( sql.toString(),getTrxName());
 
             log.info( "deleted=" + no );
         } else if( p_vo.Posted ) {
