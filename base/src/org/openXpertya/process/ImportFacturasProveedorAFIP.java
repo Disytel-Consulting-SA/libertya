@@ -503,6 +503,7 @@ public class ImportFacturasProveedorAFIP extends AbstractImportProcess {
 		invoice.setM_PriceList_ID(pl.getID());
 		invoice.setNetAmount(vim.getimporteopexentas().add(vim.getnetogravado()));
 		invoice.setGrandTotal(vim.gettotal());
+		invoice.set_ValueNoCheck("HTE_ManualGrandTotal", vim.gettotal());
 		invoice.setPreloadInvoice(true);
 		Integer mID = getMonedaID(vim.getMoneda().trim());
 		if(mID == null) {
