@@ -20,8 +20,8 @@
     --ly-primary: #162027;
     --ly-primary-strong: #0d1419;
     --ly-primary-soft: #e8edf0;
-    --ly-accent: #efb026;
-    --ly-accent-strong: #cc7f08;
+    --ly-accent: #E2A92D;
+    --ly-accent-strong: #BA7D1B;
     --ly-accent-soft: #fff1d3;
     --ly-danger: #b54747;
     --ly-shadow-sm: 0 10px 24px rgba(20, 25, 29, 0.08);
@@ -1367,7 +1367,7 @@ button.editor-button:hover .z-button-br,
 .editor-button.z-button:hover .z-button-bl,
 .editor-button.z-button:hover .z-button-bm,
 .editor-button.z-button:hover .z-button-br {
-    background: linear-gradient(180deg, #efb026 0%, #cc7f08 100%);
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%);
 }
 
 .editor-button img {
@@ -1750,7 +1750,7 @@ td.z-group-inner {
 .app-menu span.z-tree-root-close,
 .app-menu span.z-tree-tee-close,
 .app-menu span.z-tree-last-close {
-    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23d78b0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M3 2l4 3-4 3'/%3E%3C/svg%3E\") !important;
+    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23BA7D1B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M3 2l4 3-4 3'/%3E%3C/svg%3E\") !important;
 }
 
 .app-sidepanel .app-menu span.z-tree-root-open,
@@ -1759,7 +1759,7 @@ td.z-group-inner {
 .app-menu span.z-tree-root-open,
 .app-menu span.z-tree-tee-open,
 .app-menu span.z-tree-last-open {
-    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23d78b0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
+    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23BA7D1B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
 }
 
 tr.z-group,
@@ -1989,7 +1989,7 @@ div.z-grid-header th.z-auxheader,
 .login-box-footer #Ok .z-button-bl,
 .login-box-footer #Ok .z-button-bm,
 .login-box-footer #Ok .z-button-br {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%);
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%);
     background-image: none;
     color: #13191d;
     box-shadow: inset 0 1px 0 rgba(255, 245, 214, 0.75);
@@ -2339,7 +2339,7 @@ div.z-grid-header th.z-auxheader,
 }
 
 .login-shell-panel .login-box-footer-pnl #Ok .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #13191d !important;
 }
 
@@ -2457,7 +2457,7 @@ div.z-grid-header th.z-auxheader,
 }
 
 .login-shell-panel .login-box-footer-pnl > span.z-button > table.login-btn.login-btn-primary .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #13191d !important;
 }
 
@@ -2609,7 +2609,7 @@ div.z-grid-header th.z-auxheader,
 
 .login-shell-panel-role .z-combobox-pp .z-combo-item-seld,
 .login-shell-panel-role .z-combobox-pp .z-combo-item-over-seld {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     border: 1px solid #d18a14 !important;
 }
 
@@ -2628,7 +2628,7 @@ div.z-grid-header th.z-auxheader,
 
 .login-shell-panel-role .login-box-footer-pnl .z-hbox:first-child table.login-btn .z-button-cm,
 .login-shell-panel-role .login-box-footer-pnl span.z-button:first-child table.login-btn .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #13191d !important;
 }
 
@@ -2844,7 +2844,7 @@ div.menu-tree-cell-cnt {
 
 .z-tab-seld .z-tab-hl .z-tab-text,
 .z-tab-seld .z-tab-hl:hover .z-tab-text {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(255, 221, 143, 0.36), 0 10px 22px rgba(11, 15, 18, 0.26) !important;
 }
@@ -2912,7 +2912,7 @@ div.menu-tree-cell-cnt {
 
 .z-combobox-pp .z-combo-item-seld,
 .z-combobox-pp .z-combo-item-over-seld {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     border: 1px solid #d18a14 !important;
 }
 
@@ -2958,7 +2958,7 @@ div.menu-tree-cell-cnt {
 .z-tab-seld .z-tab-hl .z-tab-text,
 .z-tab-seld .z-tab-hl:hover .z-tab-text {
     background: linear-gradient(180deg, #1b2329 0%, #10161a 100%) !important;
-    color: #f2b52f !important;
+    color: #E2A92D !important;
     box-shadow: inset 0 0 0 1px rgba(242, 181, 47, 0.55), 0 10px 22px rgba(11, 15, 18, 0.22) !important;
 }
 
@@ -3064,7 +3064,7 @@ div.menu-tree-cell-cnt {
 .app-sidepanel .app-menu tr.z-treerow-seld .z-treecell-cnt,
 .app-sidepanel .app-menu .z-treerow-selected .z-treecell-cnt,
 .app-sidepanel .app-menu .z-treerow-seld .z-treecell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3116,8 +3116,8 @@ div.menu-tree-cell-cnt {
 .app-menu tr.z-treerow-seld .z-treecell-cnt,
 .app-menu .z-treerow-selected .z-treecell-cnt,
 .app-menu .z-treerow-seld .z-treecell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
-    background-color: #efb026 !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
+    background-color: #E2A92D !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3144,7 +3144,7 @@ div.menu-tree-cell-cnt {
 .app-menu tr.z-tree-row-over-seld td.menu-tree-cell div.menu-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-seld td.menu-tree-cell div.menu-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-over-seld td.menu-tree-cell div.menu-tree-cell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3161,7 +3161,7 @@ div.menu-tree-cell-cnt {
 .app-menu tr.z-tree-row-over-seld td.z-tree-row-focus .z-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-seld td.z-tree-row-focus .z-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-over-seld td.z-tree-row-focus .z-tree-cell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3193,8 +3193,8 @@ div.menu-tree-cell-cnt {
 .app-menu-tree tr.z-tree-row-seld td.z-tree-cell > div.z-tree-cell-cnt,
 .app-menu-tree tr.z-tree-row-over td.z-tree-cell > div.z-tree-cell-cnt,
 .app-menu-tree tr.z-tree-row-over-seld td.z-tree-cell > div.z-tree-cell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
-    background-color: #efb026 !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
+    background-color: #E2A92D !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3231,7 +3231,7 @@ div.menu-tree-cell-cnt {
     font-family: var(--ly-font-sans);
     font-size: 13px;
     font-weight: 700;
-    color: #d78b0e;
+    color: #BA7D1B;
 }
 
 .app-shell-menu-region .z-border-layout-icon.z-west-colps:before {
@@ -3313,7 +3313,7 @@ div.menu-tree-cell-cnt {
 
 .desktop-tabbox .z-tab-seld .z-tab-hm,
 .desktop-tabbox .z-tab-seld .z-tab-hm-close {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45), 0 8px 18px rgba(11, 15, 18, 0.18) !important;
 }
 
@@ -3430,7 +3430,7 @@ div.menu-tree-cell-cnt {
 }
 
 .z-menu-popup .z-menu-item-over > .z-menu-item-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border: 1px solid #d18a14 !important;
@@ -3444,7 +3444,7 @@ div.menu-tree-cell-cnt {
 .z-menu-popup .z-menu-item-over a.z-menu-item-cnt,
 .z-menu-popup .z-menu-item:hover > a.z-menu-item-cnt,
 .z-menu-popup .z-menu-item > a.z-menu-item-cnt:hover {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border-color: #d18a14 !important;
@@ -3454,7 +3454,7 @@ div.menu-tree-cell-cnt {
 
 .z-menu-popup li.selected.z-menu-item > .z-menu-item-cnt,
 .z-menu-popup li.selected.z-menu-item-over > .z-menu-item-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border: 1px solid #d18a14 !important;
@@ -3465,7 +3465,7 @@ div.menu-tree-cell-cnt {
 .z-menu-popup li.selected.z-menu-item-over > .z-menu-item-cnt:hover,
 .z-menu-popup li.selected.z-menu-item > a.z-menu-item-cnt:hover,
 .z-menu-popup li.selected.z-menu-item-over > a.z-menu-item-cnt:hover {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border: 1px solid #d18a14 !important;
@@ -3494,7 +3494,7 @@ div.menu-tree-cell-cnt {
 }
 
 .app-statusbar .status-db:hover {
-    color: #f2b52f !important;
+    color: #E2A92D !important;
 }
 
 /* Record info dialog */
@@ -3574,7 +3574,7 @@ div.menu-tree-cell-cnt {
 }
 
 .record-info-button .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     border: 1px solid #d18a14 !important;
     border-radius: 12px !important;
@@ -3663,7 +3663,7 @@ td.z-group-inner {
     width: 12px !important;
     min-width: 12px !important;
     height: 12px !important;
-    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23d78b0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
+    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23BA7D1B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
     background-repeat: no-repeat !important;
     background-position: center center !important;
     background-size: 10px 10px !important;
@@ -4458,7 +4458,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 }
 
 .z-window-modal > .z-window-modal-cl > .z-window-modal-cr > .z-window-modal-cm > .z-window-modal-cnt > div[style*="width:100%;text-align:right;"] > span.z-button > table.z-button:has(img[src*="Ok16.png"]) .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
 }
 
 /* Final adwindow-toolbar hover artifact fix */
@@ -4582,7 +4582,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 }
 
 .z-window-modal > .z-window-modal-cl > .z-window-modal-cr > .z-window-modal-cm > .z-window-modal-cnt > .z-tabbox .z-tab-seld .z-tab-hm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     border-radius: 10px 10px 0 0 !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45), 0 8px 18px rgba(11, 15, 18, 0.18) !important;
 }
@@ -4628,7 +4628,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 }
 
 .z-window-modal table.action-button.z-button:has(img[src*="Ok24.png"]) .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -5425,7 +5425,7 @@ table.action-text-button.z-button .z-button-cm img {
 
 table.action-button.z-button:has(img[src*="Ok16.png"]) .z-button-cm,
 table.action-text-button.z-button:has(img[src*="Ok16.png"]) .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -5668,7 +5668,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 
 .z-datebox-calmon td.z-datebox-seld,
 .z-datebox-calday td.z-datebox-seld {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     font-weight: 700 !important;
 }
@@ -5907,7 +5907,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bl,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bm,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-br {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -6091,7 +6091,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bl,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bm,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-br {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -6476,7 +6476,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 .adwindow-navbtn-sel,
 .adwindow-left-navbtn-sel,
 .adwindow-right-navbtn-sel {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     border-color: rgba(209, 138, 20, 0.45) !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
