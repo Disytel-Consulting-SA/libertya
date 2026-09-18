@@ -224,6 +224,23 @@ body {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    min-height: 36px !important;
+}
+
+/* Boton generico sin ninguna clase de layout propia (ej. el boton de
+   Atributos en la barra de filtros de Info Producto, creado como
+   Button() suelto sin sclass): sin un ancho propio se estira segun
+   la celda del grid contenedora y el icono queda distorsionado. Se
+   fija un tamaño de icono consistente con el resto de los botones. */
+.z-button .z-button-cm img {
+    max-width: 20px !important;
+    max-height: 20px !important;
+    object-fit: contain !important;
+}
+
+table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn) {
+    width: 36px !important;
+    max-width: 36px !important;
 }
 
 /* Las celdas de esquina (tl/tm/tr/bl/bm/br) heredan una altura del
