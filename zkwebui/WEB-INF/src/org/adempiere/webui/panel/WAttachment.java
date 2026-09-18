@@ -266,7 +266,7 @@ public class WAttachment extends Window implements EventListener
 
 		// dREHER TODO: ver de que se maximize segun tamaño de la pestaña del explorador (idem ventanas normales)
 		this.setWidth("100%"); // 700px // dREHER Ene 25 -> 900px
-		this.setHeight("700px"); // 600px
+		this.setHeight("100%"); // 700px // 600px
 		this.setMaximized(true); // true
 		
 		this.setTitle("Attachment");

@@ -238,6 +238,29 @@ body {
     filter: none !important;
 }
 
+/* Diferenciar por intencion los botones sin texto que hoy se ven todos
+   iguales (ej. barra de Adjuntos): confirmar en dorado, eliminar en rojo. */
+.z-button:has(img[src*="Ok16.png"]) .z-button-cm,
+.z-button:has(img[src*="Ok16.png"]) .z-button-cl,
+.z-button:has(img[src*="Ok16.png"]) .z-button-cr,
+.z-button:has(img[src*="Ok24.png"]) .z-button-cm,
+.z-button:has(img[src*="Ok24.png"]) .z-button-cl,
+.z-button:has(img[src*="Ok24.png"]) .z-button-cr {
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%);
+}
+
+.z-button:has(img[src*="Delete16"]) .z-button-cm,
+.z-button:has(img[src*="Delete16"]) .z-button-cl,
+.z-button:has(img[src*="Delete16"]) .z-button-cr,
+.z-button:has(img[src*="Delete24"]) .z-button-cm,
+.z-button:has(img[src*="Delete24"]) .z-button-cl,
+.z-button:has(img[src*="Delete24"]) .z-button-cr,
+.z-button:has(img[src*="ExternalDelete"]) .z-button-cm,
+.z-button:has(img[src*="ExternalDelete"]) .z-button-cl,
+.z-button:has(img[src*="ExternalDelete"]) .z-button-cr {
+    background: linear-gradient(180deg, #c65c5c 0%, #9c3d3d 100%);
+}
+
 .login-btn:hover .z-button-cm,
 .z-button:hover .z-button-cm,
 .z-button:hover .z-button-cl,
@@ -1264,9 +1287,13 @@ div.z-tree,
     box-shadow: inset 0 0 0 1px rgba(239, 176, 38, 0.35);
 }
 
+/* Estado "activo" de un boton toggle (ej. el "ganchito" de Adjuntos
+   cuando el registro ya tiene uno): antes casi no se notaba por el
+   bajo contraste, se refuerza con el dorado de marca bien solido. */
 .depressed img {
-    background: linear-gradient(135deg, rgba(239, 176, 38, 0.24), rgba(204, 127, 8, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(239, 176, 38, 0.38);
+    background: linear-gradient(135deg, #E2A92D 0%, #BA7D1B 100%) !important;
+    box-shadow: inset 0 0 0 1px rgba(17, 24, 29, 0.35) !important;
+    filter: none !important;
 }
 
 .window-container-toolbar-btn {
