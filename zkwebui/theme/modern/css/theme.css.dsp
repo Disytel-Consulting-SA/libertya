@@ -243,6 +243,16 @@ table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):
     max-width: 36px !important;
 }
 
+/* El <span class="z-button"> exterior tambien hereda min-width:104px
+   de la regla base .z-button (linea ~177), pensada para un boton de
+   texto. En un boton suelto sin sclass (ej. Atributos en la barra de
+   filtros de Info Producto) eso no se recorta en ningun lado y se ve
+   como un rectangulo enorme con el icono perdido en una esquina. */
+span.z-button:has(> table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button)) {
+    min-width: 36px !important;
+    width: 36px !important;
+}
+
 /* Las celdas de esquina (tl/tm/tr/bl/bm/br) heredan una altura del
    skin base de ZK que empuja el contenido del boton hacia arriba.
    Ya se habia detectado y resuelto puntualmente para el boton de
