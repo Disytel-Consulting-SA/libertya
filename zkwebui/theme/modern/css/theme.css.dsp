@@ -216,19 +216,14 @@ body {
 }
 
 /* Los botones sin texto quedaban con el icono pegado arriba en vez de
-   centrado verticalmente (los botones con texto, ej. Exportar, ya
-   centran por su propio flex en .action-text-button). */
+   centrado verticalmente. vertical-align no alcanzaba porque el alto
+   extra del boton no vive en la fila del icono; se usa el mismo
+   truco de flex que ya centra bien a .action-text-button (Exportar). */
 .login-btn .z-button-cm,
-.z-button .z-button-cm,
-.z-button .z-button-cl,
-.z-button .z-button-cr,
-.z-button .z-button-tl,
-.z-button .z-button-tm,
-.z-button .z-button-tr,
-.z-button .z-button-bl,
-.z-button .z-button-bm,
-.z-button .z-button-br {
-    vertical-align: middle;
+.z-button .z-button-cm {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 /* Excepcion: el icono "Ok" queda sobre fondo dorado con texto oscuro
