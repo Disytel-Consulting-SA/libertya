@@ -238,17 +238,20 @@ body {
     object-fit: contain !important;
 }
 
-table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn) {
+/* IMPORTANTE: estas reglas se acotan a botones sueltos (sin sclass
+   propia) que ademas son icono-only conocidos (ej. "Atributos" en la
+   barra de filtros de Info Producto, PAttribute16/24.png). Achicar
+   CUALQUIER .z-button sin sclass rompia los botones Ok/Cancelar de
+   dialogos de confirmacion de procesos, que tambien son z-button
+   "sueltos" pero CON texto y necesitan su ancho normal (104px) - a
+   esos solo hay que alinearles el icono verticalmente (ver flex +
+   min-height en la regla base de .z-button-cm), no achicarlos. */
+table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):has(img[src*="PAttribute"]) {
     width: 36px !important;
     max-width: 36px !important;
 }
 
-/* El <span class="z-button"> exterior tambien hereda min-width:104px
-   de la regla base .z-button (linea ~177), pensada para un boton de
-   texto. En un boton suelto sin sclass (ej. Atributos en la barra de
-   filtros de Info Producto) eso no se recorta en ningun lado y se ve
-   como un rectangulo enorme con el icono perdido en una esquina. */
-span.z-button:has(> table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button)) {
+span.z-button:has(> table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button):has(img[src*="PAttribute"])) {
     min-width: 36px !important;
     width: 36px !important;
 }
@@ -259,7 +262,7 @@ span.z-button:has(> table.z-button:not(.action-button):not(.action-text-button):
    propio y termina colapsada/oculta, con las celdas vacias de al lado
    (cl/cr) ocupando el espacio visible. Se le da un ancho explicito,
    igual que ya se hace para .action-button. */
-table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button) .z-button-cm {
+table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button):has(img[src*="PAttribute"]) .z-button-cm {
     width: 36px !important;
 }
 
