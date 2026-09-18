@@ -390,7 +390,12 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         confirmPanel = new ConfirmPanel(true, true, false, true, true, true);  // Elaine 2008/12/16
         confirmPanel.addActionListener(Events.ON_CLICK, this);
         confirmPanel.setStyle("border-top: 2px groove #444; padding-top: 4px");
-        
+
+        // dREHER: mostrar la palabra "Cancelar" junto al icono (antes solo icono)
+        Button cancelButton = confirmPanel.getButton(ConfirmPanel.A_CANCEL);
+        cancelButton.setLabel(Msg.getMsg(Env.getCtx(), "Cancel"));
+        LayoutUtils.addSclass("action-text-button", cancelButton);
+
         // Elaine 2008/12/16
 		confirmPanel.getButton(ConfirmPanel.A_CUSTOMIZE).setVisible(hasCustomize());
 		confirmPanel.getButton(ConfirmPanel.A_HISTORY).setVisible(hasHistory());
