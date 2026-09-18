@@ -69,7 +69,6 @@ import jxl.format.Colour;
 import jxl.format.Pattern;
 import jxl.write.DateFormat;
 import jxl.write.DateTime;
-import jxl.write.Label;
 import jxl.write.NumberFormat;
 import jxl.write.WritableCellFormat;
 import jxl.write.WritableFont;
@@ -1553,17 +1552,17 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 			}
 	        // Título
 	        int rowNum = 0;
-	        sheet.addCell(new Label(0, rowNum, "Exportación de " + translatedTableName, headerStyle));
+	        sheet.addCell(new jxl.write.Label(0, rowNum, "Exportación de " + translatedTableName, headerStyle));
 	        sheet.mergeCells(0, rowNum, columnNames.size(), rowNum);
 	        rowNum++;
 
 	        // Fecha actual
-	        sheet.addCell(new Label(0, rowNum, "Fecha de exportación: " + formattedDate, headerStyle));
+	        sheet.addCell(new jxl.write.Label(0, rowNum, "Fecha de exportación: " + formattedDate, headerStyle));
 	        sheet.mergeCells(0, rowNum, columnNames.size(), rowNum);
 	        rowNum++;
 
 	        // Filtros aplicados
-	        sheet.addCell(new Label(0, rowNum, appliedFilters, headerStyle));
+	        sheet.addCell(new jxl.write.Label(0, rowNum, appliedFilters, headerStyle));
 	        sheet.mergeCells(0, rowNum, columnNames.size(), rowNum);
 	        rowNum++;
 	        // Espacio en blanco
@@ -1586,7 +1585,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 
 	        for (int i = 0; i < columnNames.size(); i++) {
 	        	if(i>1) {
-	        		sheet.addCell(new Label(columna, headerRowNum, columnNames.get(col), columnHeaderStyle));
+	        		sheet.addCell(new jxl.write.Label(columna, headerRowNum, columnNames.get(col), columnHeaderStyle));
 	        		columna++;
 	        	}
 	        	col++;
@@ -1668,7 +1667,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	            		} else {
 	            			String valorFinal = value.toString();
 	            			valorFinal = valorFinal.equals("true") ? "Si": valorFinal.equals("false") ? "No" : valorFinal;
-	            			sheet.addCell(new Label(columna, dataRowNum, valorFinal, createTextFormat(bold, wrap)));
+	            			sheet.addCell(new jxl.write.Label(columna, dataRowNum, valorFinal, createTextFormat(bold, wrap)));
 	            		}
 
 						// Ajustar el ancho de la columna
@@ -1709,7 +1708,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 					if (isNumber) {
 						sheet.addCell(new jxl.write.Number(columna, totalRowNum, totalValue.doubleValue(), style));
 					} else {
-						sheet.addCell(new Label(columna, totalRowNum, "", style));
+						sheet.addCell(new jxl.write.Label(columna, totalRowNum, "", style));
 					}
 
 					columna++;
