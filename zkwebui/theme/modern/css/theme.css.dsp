@@ -4143,6 +4143,23 @@ button.editor-button img,
 .payment-top-fields-grid .lookup-editor-box > table,
 .receipt-top-fields-grid .lookup-editor-box > table {
     width: 100% !important;
+    table-layout: fixed !important;
+}
+
+/* Con table-layout:fixed hay que reservar explicitamente el ancho de
+   la celda del boton de busqueda; si no, la tabla puede terminar mas
+   ancha que su contenedor y el boton queda recortado fuera de vista
+   (ver Recibos de Clientes: campo Entidad Comercial / Esquema Descuento). */
+.payment-top-fields-grid .lookup-editor-box > table > tbody > tr > td.lookup-editor-cell,
+.receipt-top-fields-grid .lookup-editor-box > table > tbody > tr > td.lookup-editor-cell {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+}
+
+.payment-top-fields-grid .lookup-editor-box > table > tbody > tr > td:first-child,
+.receipt-top-fields-grid .lookup-editor-box > table > tbody > tr > td:first-child {
+    width: auto !important;
 }
 
 .payment-top-fields-grid .z-separator-ver,
