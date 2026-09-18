@@ -5536,10 +5536,32 @@ table.action-text-button.z-button .z-button-cm {
     white-space: nowrap !important;
 }
 
+/* La regla de arriba esta pensada para botones CON texto (centra via
+   line-height, que no alinea al medio una <img>) pero tambien matcheaba
+   a action-button (solo icono, sin texto): quedaba con el ancho/padding
+   de un boton de texto (124px, padding 0 18px) y el icono pegado
+   arriba por la alineacion baseline por defecto de las imagenes.
+   Se separa action-button con su propio tamaño compacto y flex centering. */
+table.action-button.z-button .z-button-cm {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 40px !important;
+    width: 40px !important;
+    padding: 0 !important;
+}
+
 table.action-button.z-button .z-button-cm img,
 table.action-text-button.z-button .z-button-cm img {
     vertical-align: middle !important;
     margin-right: 6px !important;
+}
+
+/* La regla de arriba trae margin-right:6px pensado para separar icono
+   y texto en action-text-button; en action-button (solo icono, sin
+   texto al lado) ese margen descentra el icono dentro del flex. */
+table.action-button.z-button .z-button-cm img {
+    margin-right: 0 !important;
 }
 
 table.action-button.z-button:has(img[src*="Ok16.png"]) .z-button-cm,
