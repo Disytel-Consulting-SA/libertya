@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Vector;
 import java.util.logging.Level;
 
@@ -61,18 +60,22 @@ import org.adempiere.webui.plugin.common.PluginInfoPanelUtils;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.DataFormat;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFCellStyle;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import jxl.CellView;
+import jxl.Workbook;
+import jxl.format.Alignment;
+import jxl.format.Border;
+import jxl.format.BorderLineStyle;
+import jxl.format.Colour;
+import jxl.format.Pattern;
+import jxl.write.DateFormat;
+import jxl.write.DateTime;
+import jxl.write.Label;
+import jxl.write.NumberFormat;
+import jxl.write.WritableCellFormat;
+import jxl.write.WritableFont;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 import org.openXpertya.minigrid.ColumnInfo;
 import org.openXpertya.minigrid.IDColumn;
 import org.openXpertya.model.MCurrency;
@@ -1523,18 +1526,19 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	
 	private void exportarXLSX() {
 	    try {
-	        // Crear workbook
-	        XSSFWorkbook workbook = new XSSFWorkbook();
-	        XSSFSheet sheet = workbook.createSheet("Exportado desde Libertya");
+	        // Crear workbook (jxl, formato .xls - evita el conflicto de
+	        // versiones de Apache POI con JasperReports/OXPSLib/OXPXLib,
+	        // que traen empaquetada una version vieja de POI)
+	        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+	        WritableWorkbook workbook = Workbook.createWorkbook(bos);
+	        WritableSheet sheet = workbook.createSheet("Exportado desde Libertya", 0);
 
 	        List<String> columnNames = getColumnNames();
 	        ListModelTable model = getTableModel();
 
 	        // Estilo para encabezados
-	        XSSFCellStyle headerStyle = workbook.createCellStyle();
-	        headerStyle.setFont(workbook.createFont());
-	        headerStyle.getFont().setBold(true);
-	        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+	        WritableCellFormat headerStyle = createTextFormat(true, false);
+	        headerStyle.setAlignment(Alignment.CENTRE);
 
 	        // Agregar el título de la ventana como la primera fila
 	        String translatedTableName = getTitleXLS(); // Obtener el título de la ventana
@@ -1549,56 +1553,45 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 			}
 	        // Título
 	        int rowNum = 0;
-	        XSSFRow titleRow = sheet.createRow(rowNum++);
-	        XSSFCell titleCell = titleRow.createCell(0);
-	        titleCell.setCellValue("Exportación de " + translatedTableName);
-	        titleCell.setCellStyle(headerStyle);
-	        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, columnNames.size())); // Combinar celdas
+	        sheet.addCell(new Label(0, rowNum, "Exportación de " + translatedTableName, headerStyle));
+	        sheet.mergeCells(0, rowNum, columnNames.size(), rowNum);
+	        rowNum++;
 
 	        // Fecha actual
-	        XSSFRow dateRow = sheet.createRow(rowNum++);
-	        XSSFCell dateCell = dateRow.createCell(0);
-	        dateCell.setCellValue("Fecha de exportación: " + formattedDate);
-	        dateCell.setCellStyle(headerStyle);
-	        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, columnNames.size())); // Combinar celdas
+	        sheet.addCell(new Label(0, rowNum, "Fecha de exportación: " + formattedDate, headerStyle));
+	        sheet.mergeCells(0, rowNum, columnNames.size(), rowNum);
+	        rowNum++;
 
 	        // Filtros aplicados
-	        XSSFRow filterRow = sheet.createRow(rowNum++);
-	        XSSFCell filterCell = filterRow.createCell(0);
-	        filterCell.setCellValue(appliedFilters);
-	        filterCell.setCellStyle(headerStyle);
-	        sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(2, 2, 0, columnNames.size())); // Combinar celdas
+	        sheet.addCell(new Label(0, rowNum, appliedFilters, headerStyle));
+	        sheet.mergeCells(0, rowNum, columnNames.size(), rowNum);
+	        rowNum++;
 	        // Espacio en blanco
 	        rowNum++;
 
 	        // Encabezados
-	        XSSFRow headerRow = sheet.createRow(rowNum++);
+	        int headerRowNum = rowNum++;
 	        int col = 0;
 	        int columna = 0;
-	        
+
 	        BigDecimal[] totals = new BigDecimal[p_layoutXLS.length];
 	        BigDecimal[] counts = new BigDecimal[p_layoutXLS.length];
-	        
-	        
+
+	        WritableFont columnHeaderFont = new WritableFont(WritableFont.ARIAL, 10, WritableFont.BOLD,
+	        		false, jxl.format.UnderlineStyle.NO_UNDERLINE, Colour.WHITE);
+	        WritableCellFormat columnHeaderStyle = new WritableCellFormat(columnHeaderFont);
+	        columnHeaderStyle.setAlignment(Alignment.CENTRE);
+	        columnHeaderStyle.setBackground(Colour.AQUA, Pattern.GRAY_50);
+	        columnHeaderStyle.setBorder(Border.BOTTOM, BorderLineStyle.THIN);
+
 	        for (int i = 0; i < columnNames.size(); i++) {
 	        	if(i>1) {
-	        		XSSFCell cell = headerRow.createCell(columna);
-	        		cell.setCellValue(columnNames.get(col));
-					XSSFCellStyle style = workbook.createCellStyle();
-					style.setFont(workbook.createFont());
-					style.getFont().setBold(true);
-					style.getFont().setColor(IndexedColors.WHITE.getIndex());
-					style.setAlignment(HorizontalAlignment.CENTER);
-			        style.setFillPattern(FillPatternType.BIG_SPOTS);
-			        style.setBorderBottom(BorderStyle.THIN);
-			        style.setFillBackgroundColor(IndexedColors.AQUA.index);
-			        headerRow.setRowStyle(style);
-					cell.setCellStyle(style);
+	        		sheet.addCell(new Label(columna, headerRowNum, columnNames.get(col), columnHeaderStyle));
 	        		columna++;
 	        	}
 	        	col++;
 	        }
-	        
+
 	        // Inicializar totales y conteos
 			for (int i = 0; i < p_layoutXLS.length; i++) {
 				if (p_layoutXLS[i].isTotalize()) {
@@ -1608,50 +1601,31 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 					counts[i] = BigDecimal.ZERO;
 				}
 			}
-			
+
 			int round = MCurrency.getStdPrecision(Env.getCtx(), Env.getC_Currency_ID(Env.getCtx()));
 
 	        // Filas de datos
 	        for (int row = 0; row < model.getSize(); row++) {
 	        	ArrayList<Object> rowData = (ArrayList<Object>) model.getElementAt(row);
 	            col  = 0;
-	            XSSFRow dataRow = sheet.createRow(rowNum++);
+	            int dataRowNum = rowNum++;
 	            columna = 0;
 	            for (Object value : rowData) {
 	            	if(col > 1) {
-	            		
+
 	            		boolean isNumber = false;
 	            		boolean isDate = false;
-	            		
-	            		XSSFCell cell = dataRow.createCell(columna);
+
 	            		if (value != null) {
-	            			
-	            			if(value instanceof Date || value instanceof Timestamp) 
+
+	            			if(value instanceof Date || value instanceof Timestamp)
 	            				isDate = true;
-	            			
+
 							if (value instanceof BigDecimal || value instanceof Double || value instanceof Integer) {
 								isNumber = true;
 							}
-	            			
-							if(isDate) {
-								cell.setCellValue((Timestamp)value);
-							}else if(isNumber) {
-								
-								if (value instanceof BigDecimal) {
-									cell.setCellValue(((BigDecimal) value).setScale(round).doubleValue());
-								} else if (value instanceof Integer) {
-									cell.setCellValue(((Integer) value).doubleValue());
-								} else if (value instanceof Double) {
-									cell.setCellValue((Double) value);
-								} else
-									cell.setCellValue((Double)value);
-							}else {
-								String valorFinal = value.toString();
-		            			valorFinal = valorFinal.equals("true") ? "Si": valorFinal.equals("false") ? "No" : valorFinal;
-		            			cell.setCellValue(valorFinal);	
-							}
 	            		}
-	            		
+
 						if (p_layoutXLS[col].isTotalize()) {
 							if (value instanceof BigDecimal) {
 								totals[col] = totals[col].add((BigDecimal) value);
@@ -1660,7 +1634,7 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 							}
 							isNumber = true;
 						}
-						
+
 						if (p_layoutXLS[col].isCount()) {
 							if (value instanceof BigDecimal) {
                                 counts[col] = counts[col].add(new BigDecimal(1));
@@ -1673,101 +1647,87 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
                             }
 							isNumber = true;
                         }
-                		
-						XSSFCellStyle style = workbook.createCellStyle();
-						style.setFont(workbook.createFont());
-						
-						if (p_layoutXLS[col].isBold()) {
-							style.getFont().setBold(true);
-						}
 
-						if (isNumber) {
-							setLocalizedNumberFormat(workbook, style);
-						}
-						
-						if (isDate) {
-							setLocalizedDateFormat(workbook, style);
-						}
-						
-						if (p_layoutXLS[col].getColWidth() > 0) {
-							style.setWrapText(true);
-						}
-						
-						cell.setCellStyle(style);
+						boolean bold = p_layoutXLS[col].isBold();
+						boolean wrap = p_layoutXLS[col].getColWidth() > 0;
+
+	            		if (value == null) {
+	            			sheet.addCell(new jxl.write.Blank(columna, dataRowNum, createTextFormat(bold, wrap)));
+	            		} else if (isDate) {
+	            			sheet.addCell(new DateTime(columna, dataRowNum, (Timestamp) value, createDateFormat(bold)));
+	            		} else if (isNumber) {
+	            			double numberValue;
+	            			if (value instanceof BigDecimal) {
+	            				numberValue = ((BigDecimal) value).setScale(round).doubleValue();
+	            			} else if (value instanceof Integer) {
+	            				numberValue = ((Integer) value).doubleValue();
+	            			} else {
+	            				numberValue = (Double) value;
+	            			}
+	            			sheet.addCell(new jxl.write.Number(columna, dataRowNum, numberValue, createNumberFormat(bold)));
+	            		} else {
+	            			String valorFinal = value.toString();
+	            			valorFinal = valorFinal.equals("true") ? "Si": valorFinal.equals("false") ? "No" : valorFinal;
+	            			sheet.addCell(new Label(columna, dataRowNum, valorFinal, createTextFormat(bold, wrap)));
+	            		}
 
 						// Ajustar el ancho de la columna
 						if (p_layoutXLS[col].getColWidth() > 0) {
-							sheet.setColumnWidth(columna, p_layoutXLS[columna].getColWidth() * 256); // ancho en caracteres
+							sheet.setColumnView(columna, p_layoutXLS[col].getColWidth());
 						} else {
-							sheet.autoSizeColumn(columna);
+							CellView cv = new CellView();
+							cv.setAutosize(true);
+							sheet.setColumnView(columna, cv);
 						}
-	            		
+
 	            		columna++;
 	            	}
 	            	col++;
 	            }
 	        }
-	        
+
 	        // Totales
-	        XSSFRow totalRow = sheet.createRow(rowNum++);
-	        
+	        int totalRowNum = rowNum++;
+
 	        columna = 0;
 			for (int i = 0; i < p_layoutXLS.length; i++) {
-				
+
 				if(i>1) {
 
-					XSSFCell  cell = null;
 					boolean isNumber = false;
+					BigDecimal totalValue = null;
 					if (p_layoutXLS[i].isTotalize()) {
-						cell = totalRow.createCell(columna);
-						cell.setCellValue(((BigDecimal) totals[i]).setScale(round).doubleValue());
+						totalValue = totals[i].setScale(round, java.math.RoundingMode.HALF_UP);
 						isNumber = true;
 					} else if (p_layoutXLS[i].isCount()) {
-						cell = totalRow.createCell(columna);
-						cell.setCellValue(((BigDecimal) counts[i]).setScale(round).doubleValue());
+						totalValue = counts[i].setScale(round, java.math.RoundingMode.HALF_UP);
 						isNumber = true;
-					} else {
-						cell = totalRow.createCell(columna);
-						cell.setCellValue("");
 					}
-					
-					XSSFCellStyle style = workbook.createCellStyle();
-					style.setFont(workbook.createFont());
-					style.getFont().setBold(true);
-					style.getFont().setColor(IndexedColors.WHITE.getIndex());
-			        style = getCellStyleBackgroundColorWithPattern(style);
-			        style.setBorderTop(BorderStyle.THIN);
-			        totalRow.setRowStyle(style);
+
+					WritableCellFormat style = isNumber ? createTotalNumberFormat() : createTotalTextFormat();
+
 					if (isNumber) {
-						setLocalizedNumberFormat(workbook, style);
+						sheet.addCell(new jxl.write.Number(columna, totalRowNum, totalValue.doubleValue(), style));
+					} else {
+						sheet.addCell(new Label(columna, totalRowNum, "", style));
 					}
-					cell.setCellStyle(style);
 
 					columna++;
 
 				}
 			}
 
-
-			// Ajustar el ancho de las columnas después de escribir los datos
-			for (int colIndex = 0; colIndex < columnNames.size(); colIndex++) {
-			    sheet.autoSizeColumn(colIndex);
-			}
-
-			
-	        // Convertir a byte[]
-	        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-	        workbook.write(bos);
+	        workbook.write();
 	        workbook.close();
 
 	        byte[] data = bos.toByteArray();
 
 	        // Descargar
-	        String fileName = "export_" + p_tableName.trim().replace(" ", "_") + "_" + Env.getDate(Env.getCtx()) + ".xlsx";
-	        AMedia media = new AMedia(fileName, "xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", data);
+	        String fileName = "export_" + p_tableName.trim().replace(" ", "_") + "_" + Env.getDate(Env.getCtx()) + ".xls";
+	        AMedia media = new AMedia(fileName, "xls", "application/vnd.ms-excel", data);
 	        Filedownload.save(media);
 	    } catch (Exception e) {
-	        FDialog.error(0, this, "Error al exportar XLSX: " + e.getMessage());
+	        FDialog.error(0, this, "Error al exportar XLS: " + e.getMessage());
 	        e.printStackTrace();
 	    }
 	}
@@ -1895,40 +1855,46 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	}
 
 	
-	private void setLocalizedNumberFormat(Workbook workbook, XSSFCellStyle style) {
-		
-		// Configurar el Locale para español de Argentina
-	    Locale locale = new Locale("es", "AR");
-
-	    // Crear un formato numérico con separadores de miles y decimales adecuados
-	    String pattern = "#,##0.00"; // Separador de miles con punto y decimal con coma
-
-	    // Configurar el formato en el estilo de la celda
-	    DataFormat dataFormat = workbook.createDataFormat();
-	    style.setAlignment(HorizontalAlignment.RIGHT);
-	    style.setDataFormat(dataFormat.getFormat(pattern));
-	}
-	
-	private void setLocalizedDateFormat(Workbook workbook, XSSFCellStyle style) {
-		
-		// Configurar el Locale para español de Argentina
-	    Locale locale = new Locale("es", "AR");
-
-	    // Crear un formato de fecha adecuado
-	    String pattern = "dd/MM/yyyy"; // dias, mes y año
-
-	    // Configurar el formato en el estilo de la celda
-	    DataFormat dataFormat = workbook.createDataFormat();
-	    style.setAlignment(HorizontalAlignment.LEFT);
-	    style.setDataFormat(dataFormat.getFormat(pattern));
+	private WritableCellFormat createTextFormat(boolean bold, boolean wrap) throws WriteException {
+		WritableFont font = new WritableFont(WritableFont.ARIAL, 10, bold ? WritableFont.BOLD : WritableFont.NO_BOLD);
+		WritableCellFormat style = new WritableCellFormat(font);
+		if (wrap) {
+			style.setWrap(true);
+		}
+		return style;
 	}
 
-	public XSSFCellStyle getCellStyleBackgroundColorWithPattern(XSSFCellStyle cellStyle) {
-	    // Cambiar el color de fondo de la celda con un patrón
-	    cellStyle.setFillBackgroundColor(IndexedColors.GREY_25_PERCENT.index);
-	    cellStyle.setFillPattern(FillPatternType.FINE_DOTS);
-	    
-	    return cellStyle;
+	private WritableCellFormat createNumberFormat(boolean bold) throws WriteException {
+		// Formato numerico con separador de miles y decimales (es-AR)
+		WritableFont font = new WritableFont(WritableFont.ARIAL, 10, bold ? WritableFont.BOLD : WritableFont.NO_BOLD);
+		WritableCellFormat style = new WritableCellFormat(font, new NumberFormat("#,##0.00"));
+		style.setAlignment(Alignment.RIGHT);
+		return style;
+	}
+
+	private WritableCellFormat createDateFormat(boolean bold) throws WriteException {
+		WritableFont font = new WritableFont(WritableFont.ARIAL, 10, bold ? WritableFont.BOLD : WritableFont.NO_BOLD);
+		WritableCellFormat style = new WritableCellFormat(font, new DateFormat("dd/MM/yyyy"));
+		style.setAlignment(Alignment.LEFT);
+		return style;
+	}
+
+	private WritableCellFormat createTotalNumberFormat() throws WriteException {
+		WritableFont font = new WritableFont(WritableFont.ARIAL, 10, WritableFont.BOLD);
+		font.setColour(Colour.WHITE);
+		WritableCellFormat style = new WritableCellFormat(font, new NumberFormat("#,##0.00"));
+		style.setBackground(Colour.GREY_25_PERCENT, Pattern.GRAY_25);
+		style.setBorder(Border.TOP, BorderLineStyle.THIN);
+		return style;
+	}
+
+	private WritableCellFormat createTotalTextFormat() throws WriteException {
+		WritableFont font = new WritableFont(WritableFont.ARIAL, 10, WritableFont.BOLD);
+		font.setColour(Colour.WHITE);
+		WritableCellFormat style = new WritableCellFormat(font);
+		style.setBackground(Colour.GREY_25_PERCENT, Pattern.GRAY_25);
+		style.setBorder(Border.TOP, BorderLineStyle.THIN);
+		return style;
 	}
 	
 
@@ -1950,8 +1916,8 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 		btnExport.addEventListener(Events.ON_CLICK, ev -> exportarCSV());
 		buttonContainer.appendChild(btnExport);
 
-		// Botón Exportar XLSX
-		Button btnXLSX = new Button("Exportar XLSX");
+		// Botón Exportar XLS
+		Button btnXLSX = new Button("Exportar XLS");
 		btnXLSX.setImage("/images/Export24.png");
 		btnXLSX.setTooltiptext("Exportar resultados a Excel");
 		LayoutUtils.addSclass("action-text-button", btnXLSX);
