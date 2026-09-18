@@ -5565,10 +5565,13 @@ table.action-text-button.z-button .z-button-cm {
    de un boton de texto (124px, padding 0 18px) y el icono pegado
    arriba por la alineacion baseline por defecto de las imagenes.
    Se separa action-button con su propio tamaño compacto y flex centering.
-   Excepcion: en dialogos de parametros de proceso, action-button se usa
-   con icono Y texto juntos (ej. "Iniciar" con Ok16.png) - a esos no hay
-   que achicarlos a 40px, solo corresponde a los botones sin texto. */
-table.action-button.z-button:not(:has(img[src*="Ok16"])):not(:has(img[src*="Ok24"])):not(:has(img[src*="Cancel16"])):not(:has(img[src*="Cancel24"])) .z-button-cm {
+   Excepcion: cuando ademas tiene la clase action-text-button (se le
+   agrego label a un boton que nace icono-only, ej. Cancelar/Atributos/
+   Actualizar/Historial/Acercar/Personalizar), NO se achica: ese boton
+   tiene texto y necesita el ancho normal de action-text-button. Se
+   excluye por la clase en si, no por icono, para no tener que listar
+   cada caso nuevo. */
+table.action-button.z-button:not(.action-text-button) .z-button-cm {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -5584,11 +5587,10 @@ table.action-text-button.z-button .z-button-cm img {
 }
 
 /* La regla de arriba trae margin-right:6px pensado para separar icono
-   y texto en action-text-button; en action-button (solo icono, sin
-   texto al lado) ese margen descentra el icono dentro del flex. Los
-   Ok/Cancel de dialogos de proceso son action-button CON texto, a esos
-   el margen no se les saca. */
-table.action-button.z-button:not(:has(img[src*="Ok16"])):not(:has(img[src*="Ok24"])):not(:has(img[src*="Cancel16"])):not(:has(img[src*="Cancel24"])) .z-button-cm img {
+   y texto en action-text-button; en action-button puro (solo icono, sin
+   la clase action-text-button) ese margen descentra el icono dentro
+   del flex. */
+table.action-button.z-button:not(.action-text-button) .z-button-cm img {
     margin-right: 0 !important;
 }
 

@@ -391,15 +391,18 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
         confirmPanel.addActionListener(Events.ON_CLICK, this);
         confirmPanel.setStyle("border-top: 2px groove #444; padding-top: 4px");
 
-        // dREHER: mostrar la palabra "Cancelar" junto al icono (antes solo icono)
-        Button cancelButton = confirmPanel.getButton(ConfirmPanel.A_CANCEL);
-        cancelButton.setLabel(Msg.getMsg(Env.getCtx(), "Cancel"));
-        LayoutUtils.addSclass("action-text-button", cancelButton);
+        // dREHER: mostrar la leyenda junto al icono (antes solo icono),
+        // mismo estilo y tamaño que Exportar/Exportar XLS
+        addTextLabel(confirmPanel.getButton(ConfirmPanel.A_CANCEL), "Cancel");
+        addTextLabel(confirmPanel.getButton(ConfirmPanel.A_REFRESH), "Refresh");
+        addTextLabel(confirmPanel.getButton(ConfirmPanel.A_HISTORY), "History");
+        addTextLabel(confirmPanel.getButton(ConfirmPanel.A_ZOOM), "Zoom");
+        addTextLabel(confirmPanel.getButton(ConfirmPanel.A_CUSTOMIZE), "Customize");
 
         // Elaine 2008/12/16
 		confirmPanel.getButton(ConfirmPanel.A_CUSTOMIZE).setVisible(hasCustomize());
 		confirmPanel.getButton(ConfirmPanel.A_HISTORY).setVisible(hasHistory());
-		confirmPanel.getButton(ConfirmPanel.A_ZOOM).setVisible(hasZoom());		
+		confirmPanel.getButton(ConfirmPanel.A_ZOOM).setVisible(hasZoom());
 		//
 		if (!isLookup()) 
 		{
@@ -1527,6 +1530,16 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	 */
 
 	private static final int DEFAULT_XLS_COLUMN_WIDTH = 20;
+
+	// dREHER: agrega leyenda traducible a un boton de icono, con el mismo
+	// estilo (action-text-button) que Exportar/Exportar XLS/Cancelar
+	private void addTextLabel(Button button, String messageKey) {
+		if (button == null) {
+			return;
+		}
+		button.setLabel(Msg.getMsg(Env.getCtx(), messageKey));
+		LayoutUtils.addSclass("action-text-button", button);
+	}
 
 	private void exportarXLSX() {
 	    try {
