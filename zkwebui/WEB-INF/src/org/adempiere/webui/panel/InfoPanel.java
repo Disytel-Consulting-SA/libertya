@@ -60,7 +60,6 @@ import org.adempiere.webui.plugin.common.PluginInfoPanelUtils;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import jxl.CellView;
 import jxl.Workbook;
 import jxl.format.Alignment;
 import jxl.format.Border;
@@ -1521,8 +1520,9 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 
 		En Libertya ya se incluye poi-3.9 ?
 	 */
-	
-	
+
+	private static final int DEFAULT_XLS_COLUMN_WIDTH = 20;
+
 	private void exportarXLSX() {
 	    try {
 	        // Crear workbook (jxl, formato .xls - evita el conflicto de
@@ -1670,14 +1670,12 @@ public abstract class InfoPanel extends Window implements EventListener, WTableM
 	            			sheet.addCell(new jxl.write.Label(columna, dataRowNum, valorFinal, createTextFormat(bold, wrap)));
 	            		}
 
-						// Ajustar el ancho de la columna
-						if (p_layoutXLS[col].getColWidth() > 0) {
-							sheet.setColumnView(columna, p_layoutXLS[col].getColWidth());
-						} else {
-							CellView cv = new CellView();
-							cv.setAutosize(true);
-							sheet.setColumnView(columna, cv);
-						}
+						// Ajustar el ancho de la columna. jxl.CellView#setAutosize
+						// no se usa: JasperReports.jar trae empaquetada una copia
+						// vieja de jxl (sin ese metodo) que gana por orden de
+						// classpath, asi que se usa un ancho fijo razonable.
+						sheet.setColumnView(columna, p_layoutXLS[col].getColWidth() > 0
+								? p_layoutXLS[col].getColWidth() : DEFAULT_XLS_COLUMN_WIDTH);
 
 	            		columna++;
 	            	}
