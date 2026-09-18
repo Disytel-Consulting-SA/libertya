@@ -253,6 +253,16 @@ span.z-button:has(> table.z-button:not(.action-button):not(.action-text-button):
     width: 36px !important;
 }
 
+/* La celda del icono (.z-button-cm) pasa a display:flex (ver regla
+   base mas arriba) para centrar el icono, pero eso la saca del layout
+   automatico de la tabla: el navegador no logra calcularle un ancho
+   propio y termina colapsada/oculta, con las celdas vacias de al lado
+   (cl/cr) ocupando el espacio visible. Se le da un ancho explicito,
+   igual que ya se hace para .action-button. */
+table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button) .z-button-cm {
+    width: 36px !important;
+}
+
 /* Las celdas de esquina (tl/tm/tr/bl/bm/br) heredan una altura del
    skin base de ZK que empuja el contenido del boton hacia arriba.
    Ya se habia detectado y resuelto puntualmente para el boton de
