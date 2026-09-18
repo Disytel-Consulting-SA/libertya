@@ -198,6 +198,30 @@ body {
     font-weight: bold;
 }
 
+/* Iconos de botones sin texto (ConfirmPanel: Actualizar, Historial, Zoom, etc.)
+   quedaban invisibles sobre el fondo oscuro de .z-button; se fuerzan a blanco.
+   Reglas mas especificas con !important (ej. .window-container-toolbar-btn img)
+   siguen ganando sobre esta. */
+.login-btn .z-button-cm img,
+.z-button .z-button-cm img,
+.z-button .z-button-cl img,
+.z-button .z-button-cr img,
+.z-button .z-button-tl img,
+.z-button .z-button-tm img,
+.z-button .z-button-tr img,
+.z-button .z-button-bl img,
+.z-button .z-button-bm img,
+.z-button .z-button-br img {
+    filter: brightness(0) invert(1);
+}
+
+/* Excepcion: el icono "Ok" queda sobre fondo dorado con texto oscuro
+   (ver reglas :has(img[src*="Ok16/24.png"]) mas abajo), no debe forzarse a blanco. */
+.z-button img[src*="Ok16.png"],
+.z-button img[src*="Ok24.png"] {
+    filter: none !important;
+}
+
 .login-btn:hover .z-button-cm,
 .z-button:hover .z-button-cm,
 .z-button:hover .z-button-cl,
