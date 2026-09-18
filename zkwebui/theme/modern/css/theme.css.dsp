@@ -226,6 +226,29 @@ body {
     justify-content: center !important;
 }
 
+/* Las celdas de esquina (tl/tm/tr/bl/bm/br) heredan una altura del
+   skin base de ZK que empuja el contenido del boton hacia arriba.
+   Ya se habia detectado y resuelto puntualmente para el boton de
+   login (.login-shell-panel ... #Ok .z-button-br { height: 0 }); se
+   generaliza aca para cualquier boton sin texto. */
+.login-btn .z-button-tl,
+.login-btn .z-button-tm,
+.login-btn .z-button-tr,
+.login-btn .z-button-bl,
+.login-btn .z-button-bm,
+.login-btn .z-button-br,
+.z-button .z-button-tl,
+.z-button .z-button-tm,
+.z-button .z-button-tr,
+.z-button .z-button-bl,
+.z-button .z-button-bm,
+.z-button .z-button-br {
+    height: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+}
+
 /* Excepcion: el icono "Ok" queda sobre fondo dorado con texto oscuro
    (ver reglas :has(img[src*="Ok16/24.png"]) mas abajo), no debe forzarse a blanco. */
 .z-button img[src*="Ok16.png"],
