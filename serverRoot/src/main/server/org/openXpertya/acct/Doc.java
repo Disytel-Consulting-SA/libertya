@@ -1585,6 +1585,49 @@ public abstract class Doc {
         DB.executeUpdate( sql.toString(),null );    // no trx
     }                                               // unlock
 
+    /**
+     * Bloquea la fila del comprobante dentro de la transaccion de posteo, de modo
+     * que un segundo posteo del mismo comprobante espere a que el primero confirme.
+     *
+     * @return el valor actual de Posted (ya confirmado por otro posteo, si lo hubo),
+     *         o null si no se pudo bloquear
+     */
+    private Boolean lockForPosting() {
+        String sql = "SELECT Posted FROM " + p_TableName + " WHERE " + p_TableName + "_ID=? FOR UPDATE";
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            pstmt = DB.prepareStatement( sql,getTrxName());
+            pstmt.setInt( 1,p_Record_ID );
+            rs = pstmt.executeQuery();
+
+            if( rs.next()) {
+                return Boolean.valueOf( "Y".equals( rs.getString( 1 )));
+            }
+
+            log.log( Level.SEVERE,"Cannot lock for posting - not found: " + p_TableName + "_ID=" + p_Record_ID );
+        } catch( SQLException e ) {
+            log.log( Level.SEVERE,"Cannot lock for posting: " + p_TableName + "_ID=" + p_Record_ID,e );
+        } finally {
+            DB.close( rs,pstmt );
+        }
+
+        return null;
+    }    // lockForPosting
+
+    /**
+     * Descarta la transaccion de posteo (y el lock de lockForPosting)
+     */
+    private void releasePostingTrx() {
+        Trx trx = Trx.get( getTrxName(),false );
+
+        if( trx != null ) {
+            trx.rollback();
+            trx.close();
+        }
+    }    // releasePostingTrx
+
     // General Document Methods
 
     /**
@@ -1774,8 +1817,29 @@ public abstract class Doc {
 
                 return false;
             }
+        } else if( p_vo.Posted ) {
+            log.log( Level.SEVERE,toString() + " - Document already posted" );
 
-            // delete it
+            return false;
+        }
+
+        // Serializar posteos concurrentes del mismo comprobante: el bloqueo por
+        // Processing='Y' se ignora con force, y sin esto dos posteos simultaneos
+        // generaban el asiento duplicado (cada uno borraba sin ver las lineas aun
+        // no confirmadas del otro). El lock se libera en postCommit.
+
+        Boolean postedNow = lockForPosting();
+
+        if( postedNow == null ) {
+            releasePostingTrx();
+            unlock();
+
+            return false;
+        }
+
+        if( force ) {
+
+            // delete it (incluye lo confirmado por un posteo concurrente previo)
 
             StringBuffer sql = new StringBuffer( "DELETE Fact_Acct " + "WHERE AD_Table_ID=" );
 
@@ -1784,8 +1848,10 @@ public abstract class Doc {
             int no = DB.executeUpdate( sql.toString(),getTrxName());
 
             log.info( "deleted=" + no );
-        } else if( p_vo.Posted ) {
-            log.log( Level.SEVERE,toString() + " - Document already posted" );
+        } else if( postedNow.booleanValue()) {
+            log.log( Level.SEVERE,toString() + " - Document already posted by a concurrent process" );
+            releasePostingTrx();
+            unlock();
 
             return false;
         }
