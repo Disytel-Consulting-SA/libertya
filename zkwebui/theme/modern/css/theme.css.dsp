@@ -20,8 +20,8 @@
     --ly-primary: #162027;
     --ly-primary-strong: #0d1419;
     --ly-primary-soft: #e8edf0;
-    --ly-accent: #efb026;
-    --ly-accent-strong: #cc7f08;
+    --ly-accent: #E2A92D;
+    --ly-accent-strong: #BA7D1B;
     --ly-accent-soft: #fff1d3;
     --ly-danger: #b54747;
     --ly-shadow-sm: 0 10px 24px rgba(20, 25, 29, 0.08);
@@ -196,6 +196,127 @@ body {
     background-image: none;
     color: #fff;
     font-weight: bold;
+}
+
+/* Iconos de botones sin texto (ConfirmPanel: Actualizar, Historial, Zoom, etc.)
+   quedaban invisibles sobre el fondo oscuro de .z-button; se fuerzan a blanco.
+   Reglas mas especificas con !important (ej. .window-container-toolbar-btn img)
+   siguen ganando sobre esta. */
+.login-btn .z-button-cm img,
+.z-button .z-button-cm img,
+.z-button .z-button-cl img,
+.z-button .z-button-cr img,
+.z-button .z-button-tl img,
+.z-button .z-button-tm img,
+.z-button .z-button-tr img,
+.z-button .z-button-bl img,
+.z-button .z-button-bm img,
+.z-button .z-button-br img {
+    filter: brightness(0) invert(1);
+}
+
+/* Los botones sin texto quedaban con el icono pegado arriba en vez de
+   centrado verticalmente. vertical-align no alcanzaba porque el alto
+   extra del boton no vive en la fila del icono; se usa el mismo
+   truco de flex que ya centra bien a .action-text-button (Exportar). */
+.login-btn .z-button-cm,
+.z-button .z-button-cm {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 36px !important;
+}
+
+/* Boton generico sin ninguna clase de layout propia (ej. el boton de
+   Atributos en la barra de filtros de Info Producto, creado como
+   Button() suelto sin sclass): sin un ancho propio se estira segun
+   la celda del grid contenedora y el icono queda distorsionado. Se
+   fija un tamaño de icono consistente con el resto de los botones. */
+.z-button .z-button-cm img {
+    max-width: 20px !important;
+    max-height: 20px !important;
+    object-fit: contain !important;
+}
+
+/* IMPORTANTE: estas reglas se acotan a botones sueltos (sin sclass
+   propia) que ademas son icono-only conocidos (ej. "Atributos" en la
+   barra de filtros de Info Producto, PAttribute16/24.png). Achicar
+   CUALQUIER .z-button sin sclass rompia los botones Ok/Cancelar de
+   dialogos de confirmacion de procesos, que tambien son z-button
+   "sueltos" pero CON texto y necesitan su ancho normal (104px) - a
+   esos solo hay que alinearles el icono verticalmente (ver flex +
+   min-height en la regla base de .z-button-cm), no achicarlos. */
+table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):has(img[src*="PAttribute"]) {
+    width: 36px !important;
+    max-width: 36px !important;
+}
+
+span.z-button:has(> table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button):has(img[src*="PAttribute"])) {
+    min-width: 36px !important;
+    width: 36px !important;
+}
+
+/* La celda del icono (.z-button-cm) pasa a display:flex (ver regla
+   base mas arriba) para centrar el icono, pero eso la saca del layout
+   automatico de la tabla: el navegador no logra calcularle un ancho
+   propio y termina colapsada/oculta, con las celdas vacias de al lado
+   (cl/cr) ocupando el espacio visible. Se le da un ancho explicito,
+   igual que ya se hace para .action-button. */
+table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):not(.login-btn):not(.form-button):has(img[src*="PAttribute"]) .z-button-cm {
+    width: 36px !important;
+}
+
+/* Las celdas de esquina (tl/tm/tr/bl/bm/br) heredan una altura del
+   skin base de ZK que empuja el contenido del boton hacia arriba.
+   Ya se habia detectado y resuelto puntualmente para el boton de
+   login (.login-shell-panel ... #Ok .z-button-br { height: 0 }); se
+   generaliza aca para cualquier boton sin texto. */
+.login-btn .z-button-tl,
+.login-btn .z-button-tm,
+.login-btn .z-button-tr,
+.login-btn .z-button-bl,
+.login-btn .z-button-bm,
+.login-btn .z-button-br,
+.z-button .z-button-tl,
+.z-button .z-button-tm,
+.z-button .z-button-tr,
+.z-button .z-button-bl,
+.z-button .z-button-bm,
+.z-button .z-button-br {
+    height: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Excepcion: el icono "Ok" queda sobre fondo dorado con texto oscuro
+   (ver reglas :has(img[src*="Ok16/24.png"]) mas abajo), no debe forzarse a blanco. */
+.z-button img[src*="Ok16.png"],
+.z-button img[src*="Ok24.png"] {
+    filter: none !important;
+}
+
+/* Diferenciar por intencion los botones sin texto que hoy se ven todos
+   iguales (ej. barra de Adjuntos): confirmar en dorado, eliminar en rojo. */
+.z-button:has(img[src*="Ok16.png"]) .z-button-cm,
+.z-button:has(img[src*="Ok16.png"]) .z-button-cl,
+.z-button:has(img[src*="Ok16.png"]) .z-button-cr,
+.z-button:has(img[src*="Ok24.png"]) .z-button-cm,
+.z-button:has(img[src*="Ok24.png"]) .z-button-cl,
+.z-button:has(img[src*="Ok24.png"]) .z-button-cr {
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%);
+}
+
+.z-button:has(img[src*="Delete16"]) .z-button-cm,
+.z-button:has(img[src*="Delete16"]) .z-button-cl,
+.z-button:has(img[src*="Delete16"]) .z-button-cr,
+.z-button:has(img[src*="Delete24"]) .z-button-cm,
+.z-button:has(img[src*="Delete24"]) .z-button-cl,
+.z-button:has(img[src*="Delete24"]) .z-button-cr,
+.z-button:has(img[src*="ExternalDelete"]) .z-button-cm,
+.z-button:has(img[src*="ExternalDelete"]) .z-button-cl,
+.z-button:has(img[src*="ExternalDelete"]) .z-button-cr {
+    background: linear-gradient(180deg, #c65c5c 0%, #9c3d3d 100%);
 }
 
 .login-btn:hover .z-button-cm,
@@ -1224,9 +1345,13 @@ div.z-tree,
     box-shadow: inset 0 0 0 1px rgba(239, 176, 38, 0.35);
 }
 
+/* Estado "activo" de un boton toggle (ej. el "ganchito" de Adjuntos
+   cuando el registro ya tiene uno): antes casi no se notaba por el
+   bajo contraste, se refuerza con el dorado de marca bien solido. */
 .depressed img {
-    background: linear-gradient(135deg, rgba(239, 176, 38, 0.24), rgba(204, 127, 8, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(239, 176, 38, 0.38);
+    background: linear-gradient(135deg, #E2A92D 0%, #BA7D1B 100%) !important;
+    box-shadow: inset 0 0 0 1px rgba(17, 24, 29, 0.35) !important;
+    filter: none !important;
 }
 
 .window-container-toolbar-btn {
@@ -1367,7 +1492,7 @@ button.editor-button:hover .z-button-br,
 .editor-button.z-button:hover .z-button-bl,
 .editor-button.z-button:hover .z-button-bm,
 .editor-button.z-button:hover .z-button-br {
-    background: linear-gradient(180deg, #efb026 0%, #cc7f08 100%);
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%);
 }
 
 .editor-button img {
@@ -1750,7 +1875,7 @@ td.z-group-inner {
 .app-menu span.z-tree-root-close,
 .app-menu span.z-tree-tee-close,
 .app-menu span.z-tree-last-close {
-    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23d78b0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M3 2l4 3-4 3'/%3E%3C/svg%3E\") !important;
+    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23BA7D1B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M3 2l4 3-4 3'/%3E%3C/svg%3E\") !important;
 }
 
 .app-sidepanel .app-menu span.z-tree-root-open,
@@ -1759,7 +1884,7 @@ td.z-group-inner {
 .app-menu span.z-tree-root-open,
 .app-menu span.z-tree-tee-open,
 .app-menu span.z-tree-last-open {
-    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23d78b0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
+    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23BA7D1B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
 }
 
 tr.z-group,
@@ -1989,7 +2114,7 @@ div.z-grid-header th.z-auxheader,
 .login-box-footer #Ok .z-button-bl,
 .login-box-footer #Ok .z-button-bm,
 .login-box-footer #Ok .z-button-br {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%);
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%);
     background-image: none;
     color: #13191d;
     box-shadow: inset 0 1px 0 rgba(255, 245, 214, 0.75);
@@ -2339,7 +2464,7 @@ div.z-grid-header th.z-auxheader,
 }
 
 .login-shell-panel .login-box-footer-pnl #Ok .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #13191d !important;
 }
 
@@ -2457,7 +2582,7 @@ div.z-grid-header th.z-auxheader,
 }
 
 .login-shell-panel .login-box-footer-pnl > span.z-button > table.login-btn.login-btn-primary .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #13191d !important;
 }
 
@@ -2609,7 +2734,7 @@ div.z-grid-header th.z-auxheader,
 
 .login-shell-panel-role .z-combobox-pp .z-combo-item-seld,
 .login-shell-panel-role .z-combobox-pp .z-combo-item-over-seld {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     border: 1px solid #d18a14 !important;
 }
 
@@ -2628,7 +2753,7 @@ div.z-grid-header th.z-auxheader,
 
 .login-shell-panel-role .login-box-footer-pnl .z-hbox:first-child table.login-btn .z-button-cm,
 .login-shell-panel-role .login-box-footer-pnl span.z-button:first-child table.login-btn .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #13191d !important;
 }
 
@@ -2844,7 +2969,7 @@ div.menu-tree-cell-cnt {
 
 .z-tab-seld .z-tab-hl .z-tab-text,
 .z-tab-seld .z-tab-hl:hover .z-tab-text {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(255, 221, 143, 0.36), 0 10px 22px rgba(11, 15, 18, 0.26) !important;
 }
@@ -2912,7 +3037,7 @@ div.menu-tree-cell-cnt {
 
 .z-combobox-pp .z-combo-item-seld,
 .z-combobox-pp .z-combo-item-over-seld {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     border: 1px solid #d18a14 !important;
 }
 
@@ -2958,7 +3083,7 @@ div.menu-tree-cell-cnt {
 .z-tab-seld .z-tab-hl .z-tab-text,
 .z-tab-seld .z-tab-hl:hover .z-tab-text {
     background: linear-gradient(180deg, #1b2329 0%, #10161a 100%) !important;
-    color: #f2b52f !important;
+    color: #E2A92D !important;
     box-shadow: inset 0 0 0 1px rgba(242, 181, 47, 0.55), 0 10px 22px rgba(11, 15, 18, 0.22) !important;
 }
 
@@ -3064,7 +3189,7 @@ div.menu-tree-cell-cnt {
 .app-sidepanel .app-menu tr.z-treerow-seld .z-treecell-cnt,
 .app-sidepanel .app-menu .z-treerow-selected .z-treecell-cnt,
 .app-sidepanel .app-menu .z-treerow-seld .z-treecell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3116,8 +3241,8 @@ div.menu-tree-cell-cnt {
 .app-menu tr.z-treerow-seld .z-treecell-cnt,
 .app-menu .z-treerow-selected .z-treecell-cnt,
 .app-menu .z-treerow-seld .z-treecell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
-    background-color: #efb026 !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
+    background-color: #E2A92D !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3144,7 +3269,7 @@ div.menu-tree-cell-cnt {
 .app-menu tr.z-tree-row-over-seld td.menu-tree-cell div.menu-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-seld td.menu-tree-cell div.menu-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-over-seld td.menu-tree-cell div.menu-tree-cell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3161,7 +3286,7 @@ div.menu-tree-cell-cnt {
 .app-menu tr.z-tree-row-over-seld td.z-tree-row-focus .z-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-seld td.z-tree-row-focus .z-tree-cell-cnt,
 .app-sidepanel .app-menu tr.z-tree-row-over-seld td.z-tree-row-focus .z-tree-cell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3193,8 +3318,8 @@ div.menu-tree-cell-cnt {
 .app-menu-tree tr.z-tree-row-seld td.z-tree-cell > div.z-tree-cell-cnt,
 .app-menu-tree tr.z-tree-row-over td.z-tree-cell > div.z-tree-cell-cnt,
 .app-menu-tree tr.z-tree-row-over-seld td.z-tree-cell > div.z-tree-cell-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
-    background-color: #efb026 !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
+    background-color: #E2A92D !important;
     color: #11181d !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;
     font-weight: 700 !important;
@@ -3231,7 +3356,7 @@ div.menu-tree-cell-cnt {
     font-family: var(--ly-font-sans);
     font-size: 13px;
     font-weight: 700;
-    color: #d78b0e;
+    color: #BA7D1B;
 }
 
 .app-shell-menu-region .z-border-layout-icon.z-west-colps:before {
@@ -3313,7 +3438,7 @@ div.menu-tree-cell-cnt {
 
 .desktop-tabbox .z-tab-seld .z-tab-hm,
 .desktop-tabbox .z-tab-seld .z-tab-hm-close {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45), 0 8px 18px rgba(11, 15, 18, 0.18) !important;
 }
 
@@ -3430,7 +3555,7 @@ div.menu-tree-cell-cnt {
 }
 
 .z-menu-popup .z-menu-item-over > .z-menu-item-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border: 1px solid #d18a14 !important;
@@ -3444,7 +3569,7 @@ div.menu-tree-cell-cnt {
 .z-menu-popup .z-menu-item-over a.z-menu-item-cnt,
 .z-menu-popup .z-menu-item:hover > a.z-menu-item-cnt,
 .z-menu-popup .z-menu-item > a.z-menu-item-cnt:hover {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border-color: #d18a14 !important;
@@ -3454,7 +3579,7 @@ div.menu-tree-cell-cnt {
 
 .z-menu-popup li.selected.z-menu-item > .z-menu-item-cnt,
 .z-menu-popup li.selected.z-menu-item-over > .z-menu-item-cnt {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border: 1px solid #d18a14 !important;
@@ -3465,7 +3590,7 @@ div.menu-tree-cell-cnt {
 .z-menu-popup li.selected.z-menu-item-over > .z-menu-item-cnt:hover,
 .z-menu-popup li.selected.z-menu-item > a.z-menu-item-cnt:hover,
 .z-menu-popup li.selected.z-menu-item-over > a.z-menu-item-cnt:hover {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     background-image: none !important;
     color: #13191d !important;
     border: 1px solid #d18a14 !important;
@@ -3494,7 +3619,7 @@ div.menu-tree-cell-cnt {
 }
 
 .app-statusbar .status-db:hover {
-    color: #f2b52f !important;
+    color: #E2A92D !important;
 }
 
 /* Record info dialog */
@@ -3574,7 +3699,7 @@ div.menu-tree-cell-cnt {
 }
 
 .record-info-button .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     border: 1px solid #d18a14 !important;
     border-radius: 12px !important;
@@ -3663,7 +3788,7 @@ td.z-group-inner {
     width: 12px !important;
     min-width: 12px !important;
     height: 12px !important;
-    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23d78b0e' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
+    background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='none' stroke='%23BA7D1B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.8' d='M2 3l3 4 3-4'/%3E%3C/svg%3E\") !important;
     background-repeat: no-repeat !important;
     background-position: center center !important;
     background-size: 10px 10px !important;
@@ -4076,6 +4201,23 @@ button.editor-button img,
 .payment-top-fields-grid .lookup-editor-box > table,
 .receipt-top-fields-grid .lookup-editor-box > table {
     width: 100% !important;
+    table-layout: fixed !important;
+}
+
+/* Con table-layout:fixed hay que reservar explicitamente el ancho de
+   la celda del boton de busqueda; si no, la tabla puede terminar mas
+   ancha que su contenedor y el boton queda recortado fuera de vista
+   (ver Recibos de Clientes: campo Entidad Comercial / Esquema Descuento). */
+.payment-top-fields-grid .lookup-editor-box > table > tbody > tr > td.lookup-editor-cell,
+.receipt-top-fields-grid .lookup-editor-box > table > tbody > tr > td.lookup-editor-cell {
+    width: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+}
+
+.payment-top-fields-grid .lookup-editor-box > table > tbody > tr > td:first-child,
+.receipt-top-fields-grid .lookup-editor-box > table > tbody > tr > td:first-child {
+    width: auto !important;
 }
 
 .payment-top-fields-grid .z-separator-ver,
@@ -4458,7 +4600,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 }
 
 .z-window-modal > .z-window-modal-cl > .z-window-modal-cr > .z-window-modal-cm > .z-window-modal-cnt > div[style*="width:100%;text-align:right;"] > span.z-button > table.z-button:has(img[src*="Ok16.png"]) .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
 }
 
 /* Final adwindow-toolbar hover artifact fix */
@@ -4582,7 +4724,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 }
 
 .z-window-modal > .z-window-modal-cl > .z-window-modal-cr > .z-window-modal-cm > .z-window-modal-cnt > .z-tabbox .z-tab-seld .z-tab-hm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     border-radius: 10px 10px 0 0 !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45), 0 8px 18px rgba(11, 15, 18, 0.18) !important;
 }
@@ -4628,7 +4770,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 }
 
 .z-window-modal table.action-button.z-button:has(img[src*="Ok24.png"]) .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -5417,15 +5559,45 @@ table.action-text-button.z-button .z-button-cm {
     white-space: nowrap !important;
 }
 
+/* La regla de arriba esta pensada para botones CON texto (centra via
+   line-height, que no alinea al medio una <img>) pero tambien matcheaba
+   a action-button (solo icono, sin texto): quedaba con el ancho/padding
+   de un boton de texto (124px, padding 0 18px) y el icono pegado
+   arriba por la alineacion baseline por defecto de las imagenes.
+   Se separa action-button con su propio tamaño compacto y flex centering.
+   Dos excepciones, NO se achican:
+   - Clase action-text-button (se le agrego label a un boton que nace
+     icono-only, ej. Cancelar/Atributos/Actualizar/Historial/Acercar/
+     Personalizar en ventanas de info).
+   - Icono Ok/Cancel 16/24 (botones "Iniciar"/"Cancelar" de dialogos
+     de parametros de proceso, que traen texto sin la clase
+     action-text-button). */
+table.action-button.z-button:not(.action-text-button):not(:has(img[src*="Ok16"])):not(:has(img[src*="Ok24"])):not(:has(img[src*="Cancel16"])):not(:has(img[src*="Cancel24"])) .z-button-cm {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 40px !important;
+    width: 40px !important;
+    padding: 0 !important;
+}
+
 table.action-button.z-button .z-button-cm img,
 table.action-text-button.z-button .z-button-cm img {
     vertical-align: middle !important;
     margin-right: 6px !important;
 }
 
+/* La regla de arriba trae margin-right:6px pensado para separar icono
+   y texto en action-text-button; en action-button puro (solo icono, sin
+   la clase action-text-button) ese margen descentra el icono dentro
+   del flex. */
+table.action-button.z-button:not(.action-text-button):not(:has(img[src*="Ok16"])):not(:has(img[src*="Ok24"])):not(:has(img[src*="Cancel16"])):not(:has(img[src*="Cancel24"])) .z-button-cm img {
+    margin-right: 0 !important;
+}
+
 table.action-button.z-button:has(img[src*="Ok16.png"]) .z-button-cm,
 table.action-text-button.z-button:has(img[src*="Ok16.png"]) .z-button-cm {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -5668,7 +5840,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 
 .z-datebox-calmon td.z-datebox-seld,
 .z-datebox-calday td.z-datebox-seld {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     font-weight: 700 !important;
 }
@@ -5907,7 +6079,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bl,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bm,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-br {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -6091,7 +6263,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bl,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-bm,
 .z-window-modal table.action-text-button:has(img[src*="Ok16.png"]) .z-button-br {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
 }
 
@@ -6476,7 +6648,7 @@ div[id^="Field_"][style*="white-space:nowrap"] > table > tbody > tr > td.editor-
 .adwindow-navbtn-sel,
 .adwindow-left-navbtn-sel,
 .adwindow-right-navbtn-sel {
-    background: linear-gradient(180deg, #f2b52f 0%, #d78b0e 100%) !important;
+    background: linear-gradient(180deg, #E2A92D 0%, #BA7D1B 100%) !important;
     color: #11181d !important;
     border-color: rgba(209, 138, 20, 0.45) !important;
     box-shadow: inset 0 0 0 1px rgba(209, 138, 20, 0.45) !important;

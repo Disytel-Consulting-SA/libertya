@@ -44,6 +44,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 
 import org.adempiere.webui.apps.AEnv;
+import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.ConfirmPanel;
@@ -428,6 +429,8 @@ public class InfoProductPanel extends InfoPanel implements EventListener
 
 		// Product Attribute Instance
 		m_PAttributeButton = confirmPanel.createButton(ConfirmPanel.A_PATTRIBUTE);
+		m_PAttributeButton.setLabel(Msg.getMsg(Env.getCtx(), "PAttribute"));
+		LayoutUtils.addSclass("action-text-button", m_PAttributeButton);
 		confirmPanel.addComponentsLeft(m_PAttributeButton);
 		m_PAttributeButton.addActionListener(this);
 		m_PAttributeButton.setEnabled(false);

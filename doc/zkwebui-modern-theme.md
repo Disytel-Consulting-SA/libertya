@@ -11,6 +11,9 @@ Este entregable agrega un theme alternativo `modern` para `zkwebui` sin modifica
 - `zkwebui/theme/modern/login-links.zul`
 - `zkwebui/theme/modern/vendor-logo.zul`
 - `zkwebui/theme/modern/version-info.zul`
+- `zkwebui/theme/modern/images/header-logo.png` e `icon.png`: isotipo de la familia Libertya, compartido por todas las marcas (no cambia con el producto).
+- `zkwebui/theme/modern/images/login-logo.png`: logo grande de login/seleccion de rol. Por defecto es **Libertya ERP**.
+- `zkwebui/theme/modern/images/login-logo-next.png`: variante del logo grande para **Libertya Next**, se activa por sysconfig (ver "Marca del logo grande (ERP / Next)").
 
 ## Activacion
 
@@ -30,6 +33,21 @@ Si no existe:
 INSERT INTO AD_SysConfig (AD_SysConfig_ID, AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy, Name, Value, Description, EntityType)
 VALUES (<nuevo_id>, 0, 0, 'Y', NOW(), 100, NOW(), 100, 'ZK_THEME', 'modern', 'Theme activo del cliente web ZK', 'D');
 ```
+
+## Marca del logo grande (ERP / Next)
+
+El logo grande de login y de seleccion de rol se resuelve por `MSysConfig` usando la clave `ZK_LOGO_LARGE`. Sin esa clave definida, se usa el default del theme activo (`login-logo.png`), que en `modern` es **Libertya ERP**.
+
+Para mostrar el logo de **Libertya Next** en su lugar:
+
+```sql
+INSERT INTO AD_SysConfig (AD_SysConfig_ID, AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy, Name, Value, Description, EntityType)
+VALUES (<nuevo_id>, 0, 0, 'Y', NOW(), 100, NOW(), 100, 'ZK_LOGO_LARGE', '/theme/modern/images/login-logo-next.png', 'Logo grande de login/rol - variante Libertya Next', 'D');
+```
+
+Para volver al default (Libertya ERP), borrar esa fila o poner `IsActive = 'N'`.
+
+El logo chico del header/topbar (`ZK_LOGO_SMALL`, con fallback al legado `WEBUI_LOGOURL`) no distingue marca: siempre muestra el isotipo compartido, ya que a ese tamano (~34px) el acento bicolor del descriptor no se lee con nitidez segun la guia de marca.
 
 ## Build
 

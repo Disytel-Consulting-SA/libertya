@@ -89,7 +89,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		super();
         this.setTitle(title);
 		this.setWidth("500px");
-		this.setHeight("500px");
+		this.setHeight("680px");
 		this.setClosable(true);
 		this.setBorder("normal");
         this.setStyle("position:absolute");
@@ -277,7 +277,7 @@ public class WEMailDialog extends Window implements EventListener, ValueChangeLi
 		
 		Borderlayout layout = new Borderlayout();
 		layout.setWidth("490px");
-		layout.setHeight("470px");
+		layout.setHeight("650px");
 		layout.setStyle("background-color: white; position: absolute;");
 		
 		Center center = new Center();
