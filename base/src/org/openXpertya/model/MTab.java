@@ -2080,7 +2080,7 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                 return " ";
             }
 
-            Object[] arguments = new Object[ 6 ];
+            Object[] arguments = new Object[ 7 ];
             boolean  filled    = false;
 
             // dREHER asegurar el cierre de conexiones
@@ -2124,6 +2124,9 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
                     arguments[ 4 ] = grandEuro;
 
                     arguments[ 5 ] = MCurrency.getISO_Code(Env.getCtx(), Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" ));
+
+                    // {6} - Tasa de cambio: la registrada en la factura o, si no hay, la implicita en la conversion
+                    arguments[ 6 ] = getSummaryExchangeRate( isOrder, Record_ID, grandTotal, grandEuro );
                     filled         = true;
                 }
 
@@ -2229,6 +2232,26 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
         return null;
     }    // getTrxInfo
+
+    /**
+     * Tasa de cambio a mostrar en la barra de estado de pedidos y facturas ({6} de OrderSummary).
+     * En facturas usa la Tasa de Cambio registrada; si no existe, la tasa implicita
+     * entre el total convertido a la moneda de la compania y el total del documento.
+     */
+    private Double getSummaryExchangeRate( boolean isOrder,int Record_ID,Double grandTotal,Double convertedTotal ) {
+        if( !isOrder ) {
+            BigDecimal invoiceRate = DB.getSQLValueBD( null,"SELECT Cintolo_Exchange_Rate FROM C_Invoice WHERE C_Invoice_ID=?",Record_ID );
+            if( invoiceRate != null && invoiceRate.signum() > 0 ) {
+                return new Double( invoiceRate.doubleValue());
+            }
+        }
+
+        if( grandTotal == null || convertedTotal == null || grandTotal.doubleValue() == 0 ) {
+            return new Double( 1 );
+        }
+
+        return new Double( convertedTotal.doubleValue() / grandTotal.doubleValue());
+    }    // getSummaryExchangeRate
 
     /**
      * Descripción de Método
