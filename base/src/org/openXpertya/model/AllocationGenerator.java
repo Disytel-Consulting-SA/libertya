@@ -1849,7 +1849,9 @@ public class AllocationGenerator {
 				inv.setC_Campaign_ID(debInv.getC_Campaign_ID());
 				
 				// dREHER - Como se trata de una diferencia de cambio, setearla...
-				inv.set_Value("Cintolo_Apply_Exchange_Dif", true);	
+				inv.set_Value("Cintolo_Apply_Exchange_Dif", true);
+				// Traza con el recibo que origino la diferencia de cambio (definicion R3.1)
+				inv.set_Value("Cintolo_Exchange_Dif_Receipt", getAllocationHdr().getC_AllocationHdr_ID());
 				if(isFiscal) {
 					inv.set_Value("LYEIPeriodFrom", getAllocationHdr().getDateAcct());
 					inv.set_Value("LYEIPeriodTo", getAllocationHdr().getDateAcct());
@@ -1992,7 +1994,9 @@ public class AllocationGenerator {
 			inv.setGrandTotal(amt);
 
 			// dREHER - Como se trata de una diferencia de cambio, setearla...
-			inv.set_Value("Cintolo_Apply_Exchange_Dif", true);		
+			inv.set_Value("Cintolo_Apply_Exchange_Dif", true);
+			// Traza con el recibo que origino la diferencia de cambio (definicion R3.1)
+			inv.set_Value("Cintolo_Exchange_Dif_Receipt", getAllocationHdr().getC_AllocationHdr_ID());
 			if(isFiscal) {
 				inv.set_Value("LYEIPeriodFrom", getAllocationHdr().getDateAcct());
 				inv.set_Value("LYEIPeriodTo", getAllocationHdr().getDateAcct());
