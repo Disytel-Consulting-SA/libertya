@@ -914,13 +914,12 @@ public class AllocationGenerator {
 			debitNumber++;
 			
 			// En el caso de pagos trabajar con el metodo estandar
+			// En recibos el debito se valua a la tasa de la factura (getConvertedAmount) y la diferencia
+			// de cambio, si se incluye, viaja como un debito/credito aparte (NC/ND o comprobante interno).
+			// Por eso no se descuenta ni se usa como tolerancia: restarla dejaba la factura con saldo
+			// pendiente por el importe de la diferencia y el cobro con ese mismo importe sin imputar.
 			if(isReceipt) {
-				allowExchangeDifference = getExchangeDif(debitDocument.getId());
-
-				// dREHER sep 24
-				if(!isInclude()) { //  && !isEmit()
-					allowExchangeDifference = Env.ZERO;
-				}
+				allowExchangeDifference = Env.ZERO;
 			}
 			
 			// Se recorren todos los débitos para ser imputados con los créditos.
@@ -951,10 +950,6 @@ public class AllocationGenerator {
 				if (debitAmount == null)
 					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),debitDocument.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 			}
-			
-			// En el caso de pagos trabajar con el metodo estandar 
-			if(isReceipt)
-				debitAmount = debitAmount.subtract(allowExchangeDifference);
 			
 			debug("generateImputationLines-documentNo= " + debitDocument.documentNo 
 					+ " debitAmount= " + debitAmount
