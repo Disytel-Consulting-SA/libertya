@@ -405,6 +405,18 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 				if(taxID <= 0) {
 					taxID = DB.getSQLValue(null, "SELECT c_tax_id FROM c_tax WHERE name = 'Standard'");
 				}
+				// Los comprobantes internos (no fiscales) por diferencia de cambio no llevan IVA
+				int nonFiscal = DB.getSQLValue(get_TrxName(),
+						"SELECT COUNT(*) FROM C_Invoice i JOIN C_DocType dt ON dt.C_DocType_ID = i.C_DocTypeTarget_ID "
+						+ "WHERE i.C_Invoice_ID = ? AND dt.IsFiscalDocument = 'N'", invoiceID);
+				if(nonFiscal > 0) {
+					int exemptTaxID = DB.getSQLValue(null,
+							"SELECT C_Tax_ID FROM C_Tax WHERE IsTaxExempt = 'Y' AND IsActive = 'Y' AND AD_Client_ID = ? "
+							+ "ORDER BY IsDefault DESC, C_Tax_ID LIMIT 1", Env.getAD_Client_ID(getCtx()));
+					if(exemptTaxID > 0) {
+						taxID = exemptTaxID;
+					}
+				}
 				il.setC_Tax_ID(taxID);
 					response += "Diferencia de cambio por cheque nro. <b>" 
 							+ cheq.getPayment().getCheckNo() 

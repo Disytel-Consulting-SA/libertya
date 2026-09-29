@@ -2016,6 +2016,11 @@ public class AllocationGenerator {
 		// Se crea la invoiceLine 		
 		MProduct product = getExchangeDifProduct(exchangeDifSettings);
 		MTax tax = getExchangeDifTax(product);
+		// Los comprobantes internos (no fiscales) por diferencia de cambio no llevan IVA
+		MDocType exchangeDifDocType = MDocType.get(getCtx(), inv.getC_DocTypeTarget_ID());
+		if(exchangeDifDocType != null && !exchangeDifDocType.isFiscalDocument()) {
+			tax = getExchangeDifExemptTax();
+		}
 		
 		
 		/**
@@ -2605,6 +2610,21 @@ public class AllocationGenerator {
 		return tax;
 	}
 	
+	/**
+	 * Retorna el impuesto exento (IsTaxExempt) de la compañía, usado en los comprobantes
+	 * internos (no fiscales) por diferencia de cambio.
+	 */
+	protected MTax getExchangeDifExemptTax() throws Exception {
+		int taxID = DB.getSQLValue(getTrxName(),
+				"SELECT C_Tax_ID FROM C_Tax WHERE IsTaxExempt = 'Y' AND IsActive = 'Y' AND AD_Client_ID = ? "
+				+ "ORDER BY IsDefault DESC, C_Tax_ID LIMIT 1",
+				Env.getAD_Client_ID(getCtx()));
+		if(taxID <= 0) {
+			throw new Exception("No existe un impuesto exento activo (Exento de Impuesto) para los comprobantes internos por diferencia de cambio");
+		}
+		return new MTax(getCtx(), taxID, getTrxName());
+	}
+
 	/**
 	 * Indica si la factura debe ser emitida mediante un controlador fiscal.
 	 * @param invoice Factura a evaluar.
