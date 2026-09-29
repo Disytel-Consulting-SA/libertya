@@ -709,7 +709,11 @@ public class LaunchInvoice extends SvrProcess {
 	// CINTOLO. Obtiene el valor en dólares de la factura
 	private BigDecimal getTotalUSD(MInvoice invoice) {
 		if(invoice.getC_Currency_ID() == 100) return null;
-		
+
+		// La leyenda de equivalencia en USD solo corresponde a facturas con Clausula de Ajuste (definicion R3.1)
+		Object adjustmentClause = invoice.get_Value("Cintolo_Adjustment_Clause");
+		if(!Boolean.TRUE.equals(adjustmentClause) && !"Y".equals(adjustmentClause)) return null;
+
 		BigDecimal conversion;
 		BigDecimal rate = invoice.get_Value("Cintolo_Exchange_Rate") != null ? 
 				(BigDecimal)invoice.get_Value("Cintolo_Exchange_Rate") : Env.ZERO;
