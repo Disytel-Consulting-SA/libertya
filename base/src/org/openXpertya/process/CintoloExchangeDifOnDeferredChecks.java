@@ -316,8 +316,12 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 					i.setC_Letra_Comprobante_ID(DB.getSQLValue(null, 
 							"SELECT c_letra_comprobante_id FROM c_letra_comprobante WHERE letra = 'A'"));
 					i.setBPartner(cheq.getbPartner());
-					
-					
+
+					// setBPartner asigna la tarifa de la entidad comercial: volver a aplicar la tarifa
+					// de diferencia de cambio y su moneda (igual que en recibos)
+					i.setM_PriceList_ID(priceListID);
+					i.setC_Currency_ID(DB.getSQLValue(null, "SELECT C_Currency_ID FROM M_PriceList WHERE M_PriceList_ID = ?", priceListID));
+
 					i = setDocType(i, cheq.getbPartner(), isCredit, ptoVenta);
 					
 					debug("Tipo de comprobante: " + i.getC_DocTypeTarget_ID());
