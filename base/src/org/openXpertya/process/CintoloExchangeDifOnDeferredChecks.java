@@ -198,7 +198,8 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 		String formatedDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 		String response = "";
 		MBPartner bPartner = null; // Para corte de control
-		int invoiceID = 0;				
+		int invoiceID = 0;
+		ArrayList<MInvoiceLine> exchangeDifLines = new ArrayList<MInvoiceLine>();
 		
 		/**
 		 * Si el check Acumular diferencias de cambio en el cliente no está activo, 
@@ -404,8 +405,10 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 			if(!il.save()) {
 					System.out.println("Error al guardar la línea de NC/ND. " + il.getProcessMsg());
 					response += "Error al guardar linea NC/ND. " + il.getProcessMsg() + "<br>";
-			} 
-			
+			} else {
+				exchangeDifLines.add(il);
+			}
+
 				// dREHER sep 24, hacerlo por BDD, ya que el payment puede estar completo o cerrado y 
 				// seguramente de algun error al guardar la refencia a la linea de factura
 				if(DB.executeUpdate("UPDATE C_Payment SET CINTOLO_Ref_Invoiceline_ID=" + il.getC_InvoiceLine_ID() +
@@ -413,11 +416,25 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 					System.out.println("Error al guardar el cheque referenciado en el pago!");
 					response += "El cheque: <b>" + cheq.getNroCheque() + " </b>No se pudo vincular al medio de pago: <b>" 
 							+ cheq.getPayment().getDocumentNo() + "</b><br>";
-				} 
+				}
 
-			} 
+			}
 		}
-		
+
+		// Con tarifa de impuestos y percepciones incluidas, al guardar la primera vez las lineas
+		// el comprobante aun no tiene importes y la tasa de percepciones se calcula en cero.
+		// Se vuelven a guardar para que el neto descuente tambien las percepciones.
+		for (MInvoiceLine exchangeDifLine : exchangeDifLines) {
+			MInvoice exchangeDifInvoice = new MInvoice(getCtx(), exchangeDifLine.getC_Invoice_ID(), get_TrxName());
+			if(!exchangeDifInvoice.isTaxIncluded() || !exchangeDifInvoice.isPerceptionsIncluded()) {
+				continue;
+			}
+			exchangeDifLine.setPriceEntered(exchangeDifLine.getPriceEntered());
+			if(!exchangeDifLine.save()) {
+				response += "Error al recalcular linea NC/ND " + exchangeDifInvoice.getDocumentNo() + ". " + exchangeDifLine.getProcessMsg() + "<br>";
+			}
+		}
+
 		return response;
 	}
 	
