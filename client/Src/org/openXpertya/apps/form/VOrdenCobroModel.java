@@ -730,7 +730,8 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		// dREHER a fecha factura
 		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
-		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
+		// Factura en pesos con clausula: a fecha de factura vale su propio importe en pesos (el facturado a su tasa)
+		sql.append("	THEN abs(currencyConvert( i.grandtotal, i.C_Currency_ID, " + C_Currency_ID + " , i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
 		sql.append("	ELSE \n ");
 		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 AND i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN \n ");
 		sql.append(" 			      ROUND(i.GrandTotal * i.Cintolo_Exchange_Rate, 2) \n ");
@@ -738,7 +739,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		sql.append("        END \n");
 		sql.append(" END AS ConvertedAmtFecFact,");
 		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
-		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
+		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
 		sql.append(" 	ELSE \n ");
 		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 AND i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN \n "); 
 		sql.append("        	 ROUND(invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) * i.Cintolo_Exchange_Rate,2) \n"  );
