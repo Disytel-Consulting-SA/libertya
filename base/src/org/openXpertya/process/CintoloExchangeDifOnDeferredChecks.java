@@ -380,7 +380,7 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 				il.setC_Invoice_ID(invoiceID);
 				il.setQty(1);
 					il.setM_Product_ID(DB.getSQLValue(null, 
-						"SELECT m_product_id FROM c_cintolo_exchange_dif_settings ORDER BY created DESC LIMIT 1"));
+						"SELECT m_product_id FROM c_cintolo_exchange_dif_settings WHERE isactive = 'Y' ORDER BY created DESC LIMIT 1"));
 				BigDecimal price = cheq.getArsExchangeDif();
 				il.setPriceActual(price);
 				il.setPriceEntered(price);
@@ -392,8 +392,16 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 							+ " Fecha vto: " + cheq.getPayment().getDueDate().toString().substring(0, 10) 
 							+ ", tasa vto: " + cheq.getDueRate().floatValue();
 				il.setDescription(desc);
-					il.setC_Tax_ID(DB.getSQLValue(null, 
-						"SELECT c_tax_id FROM c_tax WHERE name = 'Standard'"));
+				// Impuesto segun la categoria del articulo de diferencia de cambio (igual que en recibos);
+				// si no se encuentra, se mantiene el impuesto Standard como antes
+				int taxID = DB.getSQLValue(null,
+						"SELECT t.c_tax_id FROM c_tax t JOIN m_product p ON p.c_taxcategory_id = t.c_taxcategory_id "
+						+ "WHERE p.m_product_id = ? AND t.isactive = 'Y' ORDER BY t.isdefault DESC, t.c_tax_id LIMIT 1",
+						il.getM_Product_ID());
+				if(taxID <= 0) {
+					taxID = DB.getSQLValue(null, "SELECT c_tax_id FROM c_tax WHERE name = 'Standard'");
+				}
+				il.setC_Tax_ID(taxID);
 					response += "Diferencia de cambio por cheque nro. <b>" 
 							+ cheq.getPayment().getCheckNo() 
 							+ " Fecha cobro: <b>" + cheq.getPayment().getDateTrx().toString().substring(0, 10) + "</b>"
