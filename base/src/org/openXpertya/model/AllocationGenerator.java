@@ -2032,6 +2032,7 @@ public class AllocationGenerator {
 		 * dREHER sep 24
 		 */
 
+		List<MInvoiceLine> exchangeDifLines = new ArrayList<MInvoiceLine>();
 		if (this.getDebits() != null) {
 			for (Document x : this.getDebits()){
 				BigDecimal amtDifCambio = getExchangeDif(x.getId());
@@ -2045,17 +2046,31 @@ public class AllocationGenerator {
 							x.getExchangeRate(),
 							amtDifCambio,
 							tax,
-							product);		
+							product);
 
 					if(!invoiceLine.save()){
-						throw new Exception("Can't create " + (isCredit ? "credit" : "debit")																																																		
-								+ " document line for discounts. Original Error: "+CLogger.retrieveErrorAsString());  
+						throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
+								+ " document line for discounts. Original Error: "+CLogger.retrieveErrorAsString());
 					}
+					exchangeDifLines.add(invoiceLine);
 
 				}
 			}
-		}	
-		
+		}
+
+		// Con tarifa de impuestos y percepciones incluidas, al guardar la primera vez las lineas
+		// el comprobante aun no tiene importes y la tasa de percepciones se calcula en cero.
+		// Se vuelven a guardar para que el neto descuente tambien las percepciones.
+		if(inv != null && inv.isTaxIncluded() && inv.isPerceptionsIncluded()) {
+			for (MInvoiceLine invoiceLine : exchangeDifLines) {
+				invoiceLine.setPriceEntered(invoiceLine.getPriceEntered());
+				if(!invoiceLine.save()){
+					throw new Exception("Can't update " + (isCredit ? "credit" : "debit")
+							+ " document line for exchange difference. Original Error: "+CLogger.retrieveErrorAsString());
+				}
+			}
+		}
+
 		// dREHER agregada las lineas recalcular total
 		if(inv!=null) {
 			inv.recalculateTotal();
@@ -2134,6 +2149,8 @@ public class AllocationGenerator {
 		invoiceLine.setQty(1);
 		// Setear el precio con el monto del descuento
 		amt = amt.abs();
+		// Importe de la diferencia (con impuestos) para la descripcion de la linea
+		BigDecimal difAmt = amt;
 		
 		BigDecimal impuesto = Env.ZERO;
 		/**
@@ -2170,7 +2187,7 @@ public class AllocationGenerator {
 		String desc = 	"Reci " + getDocumentNo() + " " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + 
 				" TC " + MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" FC " + documentNo + " " + fecha.toString().substring(0, 10) + 
-		" " + amt.divide(Env.ONE, 2, RoundingMode.DOWN) +
+		" " + difAmt.divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" TC " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN);
 		
 		invoiceLine.setDescription(desc);
