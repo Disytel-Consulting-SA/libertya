@@ -327,9 +327,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		return exchangeDifference.divide(totalInvoice,RoundingMode.HALF_UP).multiply(Env.ONEHUNDRED);
 	}
 	
+	/**
+	 * Segun definicion funcional R3.1, Emitir viene desactivado solo si la diferencia
+	 * de cambio no supera el umbral ni en importe ni en porcentaje; si supera cualquiera
+	 * de los dos, se sugiere emitir.
+	 */
 	@Override
 	public boolean shouldEmit() {
-		return exchangeDifferenceLimit.compareTo(exchangeDifference.abs()) < 0 &&
+		return exchangeDifferenceLimit.compareTo(exchangeDifference.abs()) < 0 ||
 				exchangeDifferencePercentLimit.compareTo(exchangeDifferencePercent.abs()) < 0;
 	}
 	
