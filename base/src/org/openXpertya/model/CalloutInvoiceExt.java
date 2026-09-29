@@ -205,13 +205,18 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return "";
 	}
 	
+	/** Indica que se esta actualizando la tasa de cambio de la factura (evita reentrada) */
+	private static boolean updatingInvoiceExchangeRate = false;
+
 	/**
 	 * Actualiza la tasa de cambio de la factura según moneda/fecha seleccionada.
 	 * Si no existe cotización para ese día en moneda extranjera, advierte para carga manual
 	 * y evita que quede el valor por defecto 1.
 	 */
 	private String updateInvoiceExchangeRate(Properties ctx, int WindowNo, MTab mTab, boolean applyRate) {
-		if (isCalloutActive()) {
+		// Guarda propia contra reentrada: no depender del indicador global de callouts, que otro
+		// callout puede dejar activo (y entonces la tasa nunca se proponia)
+		if (updatingInvoiceExchangeRate) {
 			return "";
 		}
 		if (!applyRate) {
@@ -219,7 +224,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			return "";
 		}
 		
-		setCalloutActive(true);
+		updatingInvoiceExchangeRate = true;
 		try {
 			int accountingCurrencyID = Env.getContextAsInt(ctx, "$C_Currency_ID");
 			if (accountingCurrencyID <= 0) {
@@ -282,7 +287,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			}
 			return "";
 		} finally {
-			setCalloutActive(false);
+			updatingInvoiceExchangeRate = false;
 		}
 	}
 	
