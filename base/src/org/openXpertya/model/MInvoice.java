@@ -2675,9 +2675,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			setC_Letra_Comprobante_ID(0);
 		}
 		
-		// Si es un débito, se aplican las percepciones
+		// Si es un débito, se aplican las percepciones, salvo en comprobantes
+		// internos (no fiscales) por diferencia de cambio
 		if (isDebit && !isProcessed()) {
-			setApplyPercepcion(true);
+			boolean isInternalExchangeDif = Boolean.TRUE.equals(get_Value("Cintolo_Apply_Exchange_Dif"))
+					&& !docType.isFiscalDocument();
+			setApplyPercepcion(!isInternalExchangeDif);
 		}
 
 		/*
