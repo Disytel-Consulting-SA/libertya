@@ -712,7 +712,7 @@ div.z-listbox-footer .z-list-footer,
 
 .z-row-over,
 .z-listitem-over {
-    background: #f3f8fc;
+    background: #f7f1e5;
 }
 
 .mandatory-decorator-text {
@@ -984,6 +984,17 @@ td.z-group-foot-inner {
 
 tr.z-row td.z-row-inner {
     border-bottom: 1px solid #eef2f6;
+}
+
+/* ZK pinta las filas impares con celeste (#F0FAFF) y el hover con azul;
+   en dialogos y formularios se ven como franjas celestes fuera de paleta. */
+tr.z-grid-odd,
+tr.z-grid-odd td.z-row-inner {
+    background: var(--ly-surface);
+}
+
+tr.z-row-over td.z-row-inner {
+    background: #f7f1e5;
 }
 
 td.z-group-inner {
@@ -1631,6 +1642,8 @@ input:focus,
 textarea:focus {
     border-color: rgba(239, 176, 38, 0.82);
     box-shadow: 0 0 0 4px rgba(239, 176, 38, 0.16);
+    /* el contorno propio del navegador (azul/negro) se superponia al anillo del theme */
+    outline: none;
 }
 
 .z-combobox .z-combobox-img,
