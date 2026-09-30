@@ -62,7 +62,8 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 		this.ordenCobro = ordenCobro;
 		this.setTitle("Emitir/Incluir Nota de Cred/Deb");
 		this.setWidth("500px");
-		this.setHeight("290px");
+		// Sin alto fijo: con el theme modern las filas son mas altas y el alto
+		// fijo cortaba los botones
 		this.setStyle("border: solid; 2px; padding: 2px;");
 		
 		this.exchangeDif = exchangeDif;
@@ -116,7 +117,9 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 		this.appendChild(createGrid());
 
 		// Botones a la derecha
-		this.appendChild(customHtml);
+		Html buttonsSpacer = new Html();
+		buttonsSpacer.setContent("<div>&nbsp;<br></div>");
+		this.appendChild(buttonsSpacer);
 		
 		Panel pnlButtonRight = new Panel();
         pnlButtonRight.appendChild(okButton);

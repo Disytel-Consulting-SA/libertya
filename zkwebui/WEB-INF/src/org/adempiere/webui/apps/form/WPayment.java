@@ -141,7 +141,7 @@ public class WPayment extends Window
 			m_initOK = false;
 		}
 		//
-		this.setHeight("400px");
+		this.setHeight("460px");
 		this.setWidth("500px");
 		this.setBorder("normal");
 	}	//	VPayment
@@ -271,6 +271,8 @@ public class WPayment extends Window
 		mainLayout.setHeight("100%");
 		mainLayout.setWidth("100%");
 		Center center = new Center();
+		// Con el theme modern las filas son mas altas: scroll en vez de cortar campos
+		center.setAutoscroll(true);
 		mainLayout.appendChild(center);
 		center.appendChild(centerPanel);
 		//

@@ -13,6 +13,7 @@ import org.openXpertya.util.Msg;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Space;
 
 public class WUserDataChange extends Window  implements EventListener {
@@ -50,12 +51,12 @@ public class WUserDataChange extends Window  implements EventListener {
 		// Titulo y tamaño de la ventana
 		this.setTitle(getMsg("ChangeUserPassword"));
 		this.setWidth("500px");
-		this.setHeight("170px");
+		// Sin alto fijo: con el theme modern las filas son mas altas y el alto
+		// fijo cortaba la ultima fila y los botones
 		this.setClosable(false);
 		
 		// Panel principal				
 		Grid mainPanel = new Grid();
-    	mainPanel.setHeight("100%");
     	mainPanel.setWidth("100%");
     	this.appendChild(mainPanel);
     	
@@ -88,9 +89,13 @@ public class WUserDataChange extends Window  implements EventListener {
     	row.appendChild(repeatPasswordLabel.rightAlign());
     	row.appendChild(repeatPasswordText.getComponent());
     	
-    	row = rows.newRow();
-    	row.appendChild(okButton);  	
-    	row.appendChild(cancelButton);
+    	Hbox buttonsPanel = new Hbox();
+    	buttonsPanel.setWidth("100%");
+    	buttonsPanel.setPack("end");
+    	buttonsPanel.setStyle("margin-top: 8px;");
+    	buttonsPanel.appendChild(okButton);
+    	buttonsPanel.appendChild(cancelButton);
+    	this.appendChild(buttonsPanel);
     	
 	}
 	
