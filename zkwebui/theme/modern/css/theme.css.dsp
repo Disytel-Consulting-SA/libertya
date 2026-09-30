@@ -289,6 +289,24 @@ table.z-button:not(.action-button):not(.action-text-button):not(.editor-button):
     overflow: hidden !important;
 }
 
+/* La celda central (.z-button-cm) es display:flex (ver regla base), asi que
+   deja de ser una celda de tabla y no participa del reparto de ancho: el
+   ancho sobrante del boton se lo quedaba la celda lateral .z-button-cl,
+   pintada con el fondo oscuro, y se veia una franja oscura a la izquierda
+   del contenido (ej. Activities del dashboard, boton de atributos en el
+   filtro de Info Producto). Igual que ya se hace con .action-button y
+   .action-text-button, se ocultan las filas de esquina y las celdas
+   laterales para que el boton quede formado solo por la celda central.
+   Se excluye .login-btn: los botones de login/seleccion de rol ya tienen
+   su propio armado (celdas laterales transparentes de ancho 0) y ocultarlas
+   rompia el ancho y la separacion entre Ok y Cancelar. */
+table.z-button:not(.login-btn) > tbody > tr:first-child,
+table.z-button:not(.login-btn) > tbody > tr:last-child,
+table.z-button:not(.login-btn) .z-button-cl,
+table.z-button:not(.login-btn) .z-button-cr {
+    display: none !important;
+}
+
 /* Excepcion: el icono "Ok" queda sobre fondo dorado con texto oscuro
    (ver reglas :has(img[src*="Ok16/24.png"]) mas abajo), no debe forzarse a blanco. */
 .z-button img[src*="Ok16.png"],
