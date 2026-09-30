@@ -49,6 +49,8 @@ Para volver al default (Libertya ERP), borrar esa fila o poner `IsActive = 'N'`.
 
 El logo chico del header/topbar (`ZK_LOGO_SMALL`, con fallback al legado `WEBUI_LOGOURL`) no distingue marca: siempre muestra el isotipo compartido, ya que a ese tamano (~34px) el acento bicolor del descriptor no se lee con nitidez segun la guia de marca.
 
+Scripts completos para configurar una instancia como Libertya ERP o Libertya Next (theme, logos y favicon): ver `doc/zkwebui-logo-branding.md`.
+
 ## Build
 
 Desde el repo:
