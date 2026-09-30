@@ -314,6 +314,51 @@ table.z-button:not(.login-btn) .z-button-cr {
     filter: none !important;
 }
 
+/* Activities del dashboard (Aviso, Solicitudes, Conversaciones, Flujos de
+   trabajo): se muestran como accesos claros tipo lista en vez del boton
+   oscuro generico. Los botones se identifican por su icono, que solo se
+   usa en DPActivities. GetMail16 y Assignment16 son casi opacos: el filtro
+   generico que fuerza iconos a blanco los dejaba como un cuadrado blanco,
+   por eso aca se pasan a gris. */
+table.z-button:has(img[src*="GetMail16.png"]),
+table.z-button:has(img[src*="Request16.png"]),
+table.z-button:has(img[src*="Conversation16.png"]),
+table.z-button:has(img[src*="Assignment16.png"]) {
+    width: 260px !important;
+    min-width: 260px !important;
+    height: auto !important;
+}
+
+table.z-button:has(img[src*="GetMail16.png"]) .z-button-cm,
+table.z-button:has(img[src*="Request16.png"]) .z-button-cm,
+table.z-button:has(img[src*="Conversation16.png"]) .z-button-cm,
+table.z-button:has(img[src*="Assignment16.png"]) .z-button-cm {
+    justify-content: flex-start !important;
+    gap: 10px;
+    min-height: 36px !important;
+    padding: 0 14px !important;
+    background: var(--ly-surface) !important;
+    border: 1px solid var(--ly-border);
+    border-radius: var(--ly-radius-sm);
+    color: var(--ly-text) !important;
+    font-weight: 600;
+}
+
+table.z-button:has(img[src*="GetMail16.png"]):hover .z-button-cm,
+table.z-button:has(img[src*="Request16.png"]):hover .z-button-cm,
+table.z-button:has(img[src*="Conversation16.png"]):hover .z-button-cm,
+table.z-button:has(img[src*="Assignment16.png"]):hover .z-button-cm {
+    background: var(--ly-accent-soft) !important;
+    border-color: var(--ly-accent);
+}
+
+.z-button img[src*="GetMail16.png"],
+.z-button img[src*="Request16.png"],
+.z-button img[src*="Conversation16.png"],
+.z-button img[src*="Assignment16.png"] {
+    filter: grayscale(1) brightness(0.55) !important;
+}
+
 /* Diferenciar por intencion los botones sin texto que hoy se ven todos
    iguales (ej. barra de Adjuntos): confirmar en dorado, eliminar en rojo. */
 .z-button:has(img[src*="Ok16.png"]) .z-button-cm,
