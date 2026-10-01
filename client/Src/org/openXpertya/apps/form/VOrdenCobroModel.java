@@ -327,9 +327,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		return exchangeDifference.divide(totalInvoice,RoundingMode.HALF_UP).multiply(Env.ONEHUNDRED);
 	}
 	
+	/**
+	 * Segun definicion funcional R3.1, Emitir viene desactivado solo si la diferencia
+	 * de cambio no supera el umbral ni en importe ni en porcentaje; si supera cualquiera
+	 * de los dos, se sugiere emitir.
+	 */
 	@Override
 	public boolean shouldEmit() {
-		return exchangeDifferenceLimit.compareTo(exchangeDifference.abs()) < 0 &&
+		return exchangeDifferenceLimit.compareTo(exchangeDifference.abs()) < 0 ||
 				exchangeDifferencePercentLimit.compareTo(exchangeDifferencePercent.abs()) < 0;
 	}
 	
@@ -725,23 +730,25 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		// dREHER a fecha factura
 		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
-		sql.append("	THEN abs(currencyConvert( i.grandtotal / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency, " + C_Currency_ID + " , i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
+		// Factura en pesos con clausula: a fecha de factura vale su propio importe en pesos (el facturado a su tasa)
+		sql.append("	THEN abs(currencyConvert( i.grandtotal, i.C_Currency_ID, " + C_Currency_ID + " , i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
 		sql.append("	ELSE \n ");
-		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 THEN \n ");
+		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 AND i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN \n ");
 		sql.append(" 			      ROUND(i.GrandTotal * i.Cintolo_Exchange_Rate, 2) \n ");
 		sql.append("             ELSE abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, " + C_Currency_ID + " , i.dateinvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID)) \n");
 		sql.append("        END \n");
 		sql.append(" END AS ConvertedAmtFecFact,");
 		sql.append(" CASE WHEN (i.Cintolo_Adjustment_Clause = 'Y' AND cu.iso_code = 'ARS' AND i.Cintolo_Exchange_Rate IS NOT NULL AND i.Cintolo_Adjustment_Clause_Currency IS NOT NULL) \n");
-		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) / i.Cintolo_Exchange_Rate, i.Cintolo_Adjustment_Clause_Currency , "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
+		sql.append(" 	THEN currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
 		sql.append(" 	ELSE \n ");
-		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 THEN \n "); 
+		sql.append("        CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0)>0 AND i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN \n "); 
 		sql.append("        	 ROUND(invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) * i.Cintolo_Exchange_Rate,2) \n"  );
 		sql.append("    	     ELSE currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, "+ C_Currency_ID +", i.dateInvoiced::date, NULL, i.AD_Client_ID, i.AD_Org_ID) \n");
 		sql.append("        END \n");
 		sql.append(" END AS openAmtFecFact, \n");
 		
-		sql.append( "COALESCE(i.Cintolo_Exchange_Rate,0) AS exchangeRate \n"); // dREHER
+		// La tasa de la factura solo aplica en moneda extranjera o con clausula de ajuste; en pesos sin clausula se ignora
+		sql.append( "CASE WHEN i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " OR i.Cintolo_Adjustment_Clause = 'Y' THEN COALESCE(i.Cintolo_Exchange_Rate,0) ELSE 0 END AS exchangeRate \n"); // dREHER
 		
 		sql.append("  FROM c_invoice_v AS i \n");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) \n");

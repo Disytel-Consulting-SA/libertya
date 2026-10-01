@@ -914,13 +914,12 @@ public class AllocationGenerator {
 			debitNumber++;
 			
 			// En el caso de pagos trabajar con el metodo estandar
+			// En recibos el debito se valua a la tasa de la factura (getConvertedAmount) y la diferencia
+			// de cambio, si se incluye, viaja como un debito/credito aparte (NC/ND o comprobante interno).
+			// Por eso no se descuenta ni se usa como tolerancia: restarla dejaba la factura con saldo
+			// pendiente por el importe de la diferencia y el cobro con ese mismo importe sin imputar.
 			if(isReceipt) {
-				allowExchangeDifference = getExchangeDif(debitDocument.getId());
-
-				// dREHER sep 24
-				if(!isInclude()) { //  && !isEmit()
-					allowExchangeDifference = Env.ZERO;
-				}
+				allowExchangeDifference = Env.ZERO;
 			}
 			
 			// Se recorren todos los débitos para ser imputados con los créditos.
@@ -951,10 +950,6 @@ public class AllocationGenerator {
 				if (debitAmount == null)
 					throw new AllocationGeneratorException(getMsg("NoConversionRate") + ": " + (new MCurrency(getCtx(),debitDocument.getCurrencyId(),getTrxName())).getISO_Code() + " - " + (new MCurrency(getCtx(),Env.getContextAsInt( getCtx(), "$C_Currency_ID" ),getTrxName())).getISO_Code());
 			}
-			
-			// En el caso de pagos trabajar con el metodo estandar 
-			if(isReceipt)
-				debitAmount = debitAmount.subtract(allowExchangeDifference);
 			
 			debug("generateImputationLines-documentNo= " + debitDocument.documentNo 
 					+ " debitAmount= " + debitAmount
@@ -1849,7 +1844,9 @@ public class AllocationGenerator {
 				inv.setC_Campaign_ID(debInv.getC_Campaign_ID());
 				
 				// dREHER - Como se trata de una diferencia de cambio, setearla...
-				inv.set_Value("Cintolo_Apply_Exchange_Dif", true);	
+				inv.set_Value("Cintolo_Apply_Exchange_Dif", true);
+				// Traza con el recibo que origino la diferencia de cambio (definicion R3.1)
+				inv.set_Value("Cintolo_Exchange_Dif_Receipt", getAllocationHdr().getC_AllocationHdr_ID());
 				if(isFiscal) {
 					inv.set_Value("LYEIPeriodFrom", getAllocationHdr().getDateAcct());
 					inv.set_Value("LYEIPeriodTo", getAllocationHdr().getDateAcct());
@@ -1992,7 +1989,9 @@ public class AllocationGenerator {
 			inv.setGrandTotal(amt);
 
 			// dREHER - Como se trata de una diferencia de cambio, setearla...
-			inv.set_Value("Cintolo_Apply_Exchange_Dif", true);		
+			inv.set_Value("Cintolo_Apply_Exchange_Dif", true);
+			// Traza con el recibo que origino la diferencia de cambio (definicion R3.1)
+			inv.set_Value("Cintolo_Exchange_Dif_Receipt", getAllocationHdr().getC_AllocationHdr_ID());
 			if(isFiscal) {
 				inv.set_Value("LYEIPeriodFrom", getAllocationHdr().getDateAcct());
 				inv.set_Value("LYEIPeriodTo", getAllocationHdr().getDateAcct());
@@ -2017,6 +2016,11 @@ public class AllocationGenerator {
 		// Se crea la invoiceLine 		
 		MProduct product = getExchangeDifProduct(exchangeDifSettings);
 		MTax tax = getExchangeDifTax(product);
+		// Los comprobantes internos (no fiscales) por diferencia de cambio no llevan IVA
+		MDocType exchangeDifDocType = MDocType.get(getCtx(), inv.getC_DocTypeTarget_ID());
+		if(exchangeDifDocType != null && !exchangeDifDocType.isFiscalDocument()) {
+			tax = getExchangeDifExemptTax();
+		}
 		
 		
 		/**
@@ -2028,6 +2032,7 @@ public class AllocationGenerator {
 		 * dREHER sep 24
 		 */
 
+		List<MInvoiceLine> exchangeDifLines = new ArrayList<MInvoiceLine>();
 		if (this.getDebits() != null) {
 			for (Document x : this.getDebits()){
 				BigDecimal amtDifCambio = getExchangeDif(x.getId());
@@ -2041,17 +2046,31 @@ public class AllocationGenerator {
 							x.getExchangeRate(),
 							amtDifCambio,
 							tax,
-							product);		
+							product);
 
 					if(!invoiceLine.save()){
-						throw new Exception("Can't create " + (isCredit ? "credit" : "debit")																																																		
-								+ " document line for discounts. Original Error: "+CLogger.retrieveErrorAsString());  
+						throw new Exception("Can't create " + (isCredit ? "credit" : "debit")
+								+ " document line for discounts. Original Error: "+CLogger.retrieveErrorAsString());
 					}
+					exchangeDifLines.add(invoiceLine);
 
 				}
 			}
-		}	
-		
+		}
+
+		// Con tarifa de impuestos y percepciones incluidas, al guardar la primera vez las lineas
+		// el comprobante aun no tiene importes y la tasa de percepciones se calcula en cero.
+		// Se vuelven a guardar para que el neto descuente tambien las percepciones.
+		if(inv != null && inv.isTaxIncluded() && inv.isPerceptionsIncluded()) {
+			for (MInvoiceLine invoiceLine : exchangeDifLines) {
+				invoiceLine.setPriceEntered(invoiceLine.getPriceEntered());
+				if(!invoiceLine.save()){
+					throw new Exception("Can't update " + (isCredit ? "credit" : "debit")
+							+ " document line for exchange difference. Original Error: "+CLogger.retrieveErrorAsString());
+				}
+			}
+		}
+
 		// dREHER agregada las lineas recalcular total
 		if(inv!=null) {
 			inv.recalculateTotal();
@@ -2130,6 +2149,8 @@ public class AllocationGenerator {
 		invoiceLine.setQty(1);
 		// Setear el precio con el monto del descuento
 		amt = amt.abs();
+		// Importe de la diferencia (con impuestos) para la descripcion de la linea
+		BigDecimal difAmt = amt;
 		
 		BigDecimal impuesto = Env.ZERO;
 		/**
@@ -2166,7 +2187,7 @@ public class AllocationGenerator {
 		String desc = 	"Reci " + getDocumentNo() + " " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + 
 				" TC " + MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" FC " + documentNo + " " + fecha.toString().substring(0, 10) + 
-		" " + amt.divide(Env.ONE, 2, RoundingMode.DOWN) +
+		" " + difAmt.divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" TC " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN);
 		
 		invoiceLine.setDescription(desc);
@@ -2589,6 +2610,21 @@ public class AllocationGenerator {
 		return tax;
 	}
 	
+	/**
+	 * Retorna el impuesto exento (IsTaxExempt) de la compañía, usado en los comprobantes
+	 * internos (no fiscales) por diferencia de cambio.
+	 */
+	protected MTax getExchangeDifExemptTax() throws Exception {
+		int taxID = DB.getSQLValue(getTrxName(),
+				"SELECT C_Tax_ID FROM C_Tax WHERE IsTaxExempt = 'Y' AND IsActive = 'Y' AND AD_Client_ID = ? "
+				+ "ORDER BY IsDefault DESC, C_Tax_ID LIMIT 1",
+				Env.getAD_Client_ID(getCtx()));
+		if(taxID <= 0) {
+			throw new Exception("No existe un impuesto exento activo (Exento de Impuesto) para los comprobantes internos por diferencia de cambio");
+		}
+		return new MTax(getCtx(), taxID, getTrxName());
+	}
+
 	/**
 	 * Indica si la factura debe ser emitida mediante un controlador fiscal.
 	 * @param invoice Factura a evaluar.

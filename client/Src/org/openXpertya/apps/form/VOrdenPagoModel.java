@@ -1673,7 +1673,7 @@ public class VOrdenPagoModel {
 			sql.append(" coalesce(abs(currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
 				+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID)),0) as ConvertedAmt, ");
 		}else {
-			sql.append(" abs( coalesce(CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0) > 0 THEN  "
+			sql.append(" abs( coalesce(CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0) > 0 AND i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN  "
 					+ " 	currencyRound(i.GrandTotal * i.Cintolo_Exchange_Rate, " + C_Currency_ID + ", null) "
 					+ "ELSE "
 					+ "		currencyConvert( i.GrandTotal, i.C_Currency_ID, ?, '" + m_fechaTrx
@@ -1696,7 +1696,7 @@ public class VOrdenPagoModel {
 						+ "'::date, null, i.AD_Client_ID, i.AD_Org_ID),0) AS openAmt,  ");
 		}else {
 			sql.append(
-					" coalesce( CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0) > 0 THEN "
+					" coalesce( CASE WHEN COALESCE(i.Cintolo_Exchange_Rate,0) > 0 AND i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN "
 					+ " 	currencyRound(invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)) * i.Cintolo_Exchange_Rate," + C_Currency_ID + ", null) "
 					+ "ELSE "
 					+ " 	currencyConvert( invoiceOpen(i.C_Invoice_ID, COALESCE(i.C_InvoicePaySchedule_ID, 0)), i.C_Currency_ID, ?, '"
@@ -1708,7 +1708,8 @@ public class VOrdenPagoModel {
 		
 		sql.append(" ROUND(getdiscount(i.c_invoice_id, ips.c_payschedule_id, i.dateinvoiced, ips.duedate, '" + m_fechaTrx + "', i.grandtotal), 2) AS discount, ");
 		
-		sql.append( "COALESCE(i.Cintolo_Exchange_Rate,0) AS exchangeRate"); // dREHER
+		// La tasa de la factura solo aplica en moneda extranjera; en la moneda de la compania se ignora
+		sql.append( "CASE WHEN i.C_Currency_ID <> " + Env.getContextAsInt(Env.getCtx(), "$C_Currency_ID") + " THEN COALESCE(i.Cintolo_Exchange_Rate,0) ELSE 0 END AS exchangeRate"); // dREHER
 		
 		sql.append("  FROM c_invoice_v AS i ");
 		sql.append("  LEFT JOIN ad_org org ON (org.ad_org_id=i.ad_org_id) ");
