@@ -1919,8 +1919,92 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         return new MTabQueryDefinition(
                 m_vo.TableName,
                 m_vo.WhereClause,
-                getOrderByClause(m_vo.onlyCurrentRows)
+                getOrderByClause(m_vo.onlyCurrentRows),
+                isDetail(),
+                getLinkColumnName()
         );
+    }
+    
+    
+    /**
+     * Retorna la clausula WHERE contextual correspondiente a esta pestaña,
+     * sin ejecutar ninguna consulta ni modificar su estado.
+     *
+     * Para pestañas detalle incorpora la relacion con el registro padre
+     * utilizando el contexto de la ventana.
+     *
+     * @return clausula WHERE contextual
+     */
+    public String getContextualWhereClause() {
+
+        StringBuffer where = new StringBuffer(m_vo.WhereClause);
+
+        if (!isDetail()) {
+            return where.toString();
+        }
+
+        String lc = getLinkColumnName();
+
+        if (lc == null || lc.length() == 0) {
+            appendWhereCondition(where, "2=3");
+            return where.toString();
+        }
+
+        String value = Env.getContext(
+                m_vo.ctx,
+                m_vo.WindowNo,
+                getParentTabNo(),
+                lc,
+                true
+        );
+
+        // Compatibilidad con el comportamiento existente de MTab.query()
+        if (value == null || value.length() == 0) {
+            value = Env.getContext(
+                    m_vo.ctx,
+                    m_vo.WindowNo,
+                    lc,
+                    true
+            );
+        }
+
+        if (value == null || value.length() == 0) {
+            appendWhereCondition(where, "2=3");
+            return where.toString();
+        }
+
+        StringBuffer condition = new StringBuffer();
+
+        condition.append(getTableName())
+                 .append(".")
+                 .append(lc)
+                 .append("=");
+
+        if (lc.endsWith("_ID")) {
+            condition.append(
+                    DB.TO_NUMBER(
+                            new BigDecimal(value),
+                            DisplayType.ID
+                    )
+            );
+        } else {
+            condition.append(DB.TO_STRING(value));
+        }
+
+        appendWhereCondition(where, condition.toString());
+
+        return where.toString();
+    }
+
+    private void appendWhereCondition(
+            StringBuffer where,
+            String condition) {
+
+        if (where.length() > 0) {
+            where.append(" AND ");
+        }
+
+        where.append(condition);
     }
     
     

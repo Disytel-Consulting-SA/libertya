@@ -2,16 +2,6 @@ package org.openXpertya.model;
 
 import java.io.Serializable;
 
-/**
- * Definicion de consulta asociada a una pestaña de Libertya.
- *
- * Esta clase contiene la informacion estructural necesaria para que
- * consumidores externos a la UI tradicional puedan reproducir el
- * universo de registros definido por una MTab sin ejecutar la consulta.
- *
- * No contiene criterios de paginacion, filtros adicionales del usuario
- * ni ninguna otra consideracion propia de un consumidor particular.
- */
 public final class MTabQueryDefinition implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -19,15 +9,22 @@ public final class MTabQueryDefinition implements Serializable {
     private final String tableName;
     private final String whereClause;
     private final String orderByClause;
+    private final boolean detail;
+    private final String linkColumnName;
 
     public MTabQueryDefinition(
             String tableName,
             String whereClause,
-            String orderByClause) {
+            String orderByClause,
+            boolean detail,
+            String linkColumnName) {
 
         this.tableName = tableName;
         this.whereClause = whereClause != null ? whereClause : "";
         this.orderByClause = orderByClause != null ? orderByClause : "";
+        this.detail = detail;
+        this.linkColumnName =
+                linkColumnName != null ? linkColumnName : "";
     }
 
     public String getTableName() {
@@ -42,10 +39,20 @@ public final class MTabQueryDefinition implements Serializable {
         return orderByClause;
     }
 
+    public boolean isDetail() {
+        return detail;
+    }
+
+    public String getLinkColumnName() {
+        return linkColumnName;
+    }
+
     @Override
     public String toString() {
         return "MTabQueryDefinition[tableName=" + tableName
                 + ", whereClause=" + whereClause
-                + ", orderByClause=" + orderByClause + "]";
+                + ", orderByClause=" + orderByClause
+                + ", detail=" + detail
+                + ", linkColumnName=" + linkColumnName + "]";
     }
 }
