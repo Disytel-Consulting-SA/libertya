@@ -230,7 +230,7 @@ public class ZkReportViewer extends Window implements EventListener {
 		toolBar.appendChild(new Separator("vertical"));
 		
 		bSendMail.setImage("/images/SendMail24.png");
-		bSendMail.setTooltiptext("Send Mail");
+		bSendMail.setTooltiptext(Msg.getMsg(Env.getCtx(), "SendMail"));
 		toolBar.appendChild(bSendMail);
 		bSendMail.addEventListener(Events.ON_CLICK, this);
 		
