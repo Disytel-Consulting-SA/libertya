@@ -1900,6 +1900,31 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
         return m_extendedWhere;
     }    // getWhereExtended
 
+    
+    
+    /**
+     * Retorna la definicion estructural de consulta de esta pestaña.
+     *
+     * La definicion incluye el WhereClause configurado para la pestaña
+     * (incluyendo las restricciones incorporadas durante la creacion del
+     * MTabVO) y el orden natural determinado por CORE.
+     *
+     * Este metodo no ejecuta ninguna consulta ni modifica el estado de la
+     * pestaña.
+     *
+     * @return definicion de consulta de la pestaña
+     */
+    public MTabQueryDefinition getQueryDefinition() {
+
+        return new MTabQueryDefinition(
+                m_vo.TableName,
+                m_vo.WhereClause,
+                getOrderByClause(m_vo.onlyCurrentRows)
+        );
+    }
+    
+    
+    
     /**
      * Descripción de Método
      *
