@@ -198,7 +198,8 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 		String formatedDate = date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 		String response = "";
 		MBPartner bPartner = null; // Para corte de control
-		int invoiceID = 0;				
+		int invoiceID = 0;
+		ArrayList<MInvoiceLine> exchangeDifLines = new ArrayList<MInvoiceLine>();
 		
 		/**
 		 * Si el check Acumular diferencias de cambio en el cliente no está activo, 
@@ -315,8 +316,12 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 					i.setC_Letra_Comprobante_ID(DB.getSQLValue(null, 
 							"SELECT c_letra_comprobante_id FROM c_letra_comprobante WHERE letra = 'A'"));
 					i.setBPartner(cheq.getbPartner());
-					
-					
+
+					// setBPartner asigna la tarifa de la entidad comercial: volver a aplicar la tarifa
+					// de diferencia de cambio y su moneda (igual que en recibos)
+					i.setM_PriceList_ID(priceListID);
+					i.setC_Currency_ID(DB.getSQLValue(null, "SELECT C_Currency_ID FROM M_PriceList WHERE M_PriceList_ID = ?", priceListID));
+
 					i = setDocType(i, cheq.getbPartner(), isCredit, ptoVenta);
 					
 					debug("Tipo de comprobante: " + i.getC_DocTypeTarget_ID());
@@ -379,7 +384,7 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 				il.setC_Invoice_ID(invoiceID);
 				il.setQty(1);
 					il.setM_Product_ID(DB.getSQLValue(null, 
-						"SELECT m_product_id FROM c_cintolo_exchange_dif_settings ORDER BY created DESC LIMIT 1"));
+						"SELECT m_product_id FROM c_cintolo_exchange_dif_settings WHERE isactive = 'Y' ORDER BY created DESC LIMIT 1"));
 				BigDecimal price = cheq.getArsExchangeDif();
 				il.setPriceActual(price);
 				il.setPriceEntered(price);
@@ -391,8 +396,28 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 							+ " Fecha vto: " + cheq.getPayment().getDueDate().toString().substring(0, 10) 
 							+ ", tasa vto: " + cheq.getDueRate().floatValue();
 				il.setDescription(desc);
-					il.setC_Tax_ID(DB.getSQLValue(null, 
-						"SELECT c_tax_id FROM c_tax WHERE name = 'Standard'"));
+				// Impuesto segun la categoria del articulo de diferencia de cambio (igual que en recibos);
+				// si no se encuentra, se mantiene el impuesto Standard como antes
+				int taxID = DB.getSQLValue(null,
+						"SELECT t.c_tax_id FROM c_tax t JOIN m_product p ON p.c_taxcategory_id = t.c_taxcategory_id "
+						+ "WHERE p.m_product_id = ? AND t.isactive = 'Y' ORDER BY t.isdefault DESC, t.c_tax_id LIMIT 1",
+						il.getM_Product_ID());
+				if(taxID <= 0) {
+					taxID = DB.getSQLValue(null, "SELECT c_tax_id FROM c_tax WHERE name = 'Standard'");
+				}
+				// Los comprobantes internos (no fiscales) por diferencia de cambio no llevan IVA
+				int nonFiscal = DB.getSQLValue(get_TrxName(),
+						"SELECT COUNT(*) FROM C_Invoice i JOIN C_DocType dt ON dt.C_DocType_ID = i.C_DocTypeTarget_ID "
+						+ "WHERE i.C_Invoice_ID = ? AND dt.IsFiscalDocument = 'N'", invoiceID);
+				if(nonFiscal > 0) {
+					int exemptTaxID = DB.getSQLValue(null,
+							"SELECT C_Tax_ID FROM C_Tax WHERE IsTaxExempt = 'Y' AND IsActive = 'Y' AND AD_Client_ID = ? "
+							+ "ORDER BY IsDefault DESC, C_Tax_ID LIMIT 1", Env.getAD_Client_ID(getCtx()));
+					if(exemptTaxID > 0) {
+						taxID = exemptTaxID;
+					}
+				}
+				il.setC_Tax_ID(taxID);
 					response += "Diferencia de cambio por cheque nro. <b>" 
 							+ cheq.getPayment().getCheckNo() 
 							+ " Fecha cobro: <b>" + cheq.getPayment().getDateTrx().toString().substring(0, 10) + "</b>"
@@ -404,8 +429,10 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 			if(!il.save()) {
 					System.out.println("Error al guardar la línea de NC/ND. " + il.getProcessMsg());
 					response += "Error al guardar linea NC/ND. " + il.getProcessMsg() + "<br>";
-			} 
-			
+			} else {
+				exchangeDifLines.add(il);
+			}
+
 				// dREHER sep 24, hacerlo por BDD, ya que el payment puede estar completo o cerrado y 
 				// seguramente de algun error al guardar la refencia a la linea de factura
 				if(DB.executeUpdate("UPDATE C_Payment SET CINTOLO_Ref_Invoiceline_ID=" + il.getC_InvoiceLine_ID() +
@@ -413,11 +440,25 @@ public class CintoloExchangeDifOnDeferredChecks extends SvrProcess {
 					System.out.println("Error al guardar el cheque referenciado en el pago!");
 					response += "El cheque: <b>" + cheq.getNroCheque() + " </b>No se pudo vincular al medio de pago: <b>" 
 							+ cheq.getPayment().getDocumentNo() + "</b><br>";
-				} 
+				}
 
-			} 
+			}
 		}
-		
+
+		// Con tarifa de impuestos y percepciones incluidas, al guardar la primera vez las lineas
+		// el comprobante aun no tiene importes y la tasa de percepciones se calcula en cero.
+		// Se vuelven a guardar para que el neto descuente tambien las percepciones.
+		for (MInvoiceLine exchangeDifLine : exchangeDifLines) {
+			MInvoice exchangeDifInvoice = new MInvoice(getCtx(), exchangeDifLine.getC_Invoice_ID(), get_TrxName());
+			if(!exchangeDifInvoice.isTaxIncluded() || !exchangeDifInvoice.isPerceptionsIncluded()) {
+				continue;
+			}
+			exchangeDifLine.setPriceEntered(exchangeDifLine.getPriceEntered());
+			if(!exchangeDifLine.save()) {
+				response += "Error al recalcular linea NC/ND " + exchangeDifInvoice.getDocumentNo() + ". " + exchangeDifLine.getProcessMsg() + "<br>";
+			}
+		}
+
 		return response;
 	}
 	

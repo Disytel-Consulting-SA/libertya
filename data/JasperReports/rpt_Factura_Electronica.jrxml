@@ -1606,7 +1606,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
     )
 )]]></imageExpression>
 				</image>
-				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="0"
 						y="104"
@@ -1619,7 +1619,7 @@ $V{LETRA}.equals("A") && $P{TIPOCOMPROBANTE}.equalsIgnoreCase("NOTA DE CREDITO")
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font fontName="Arial" pdfFontName="Helvetica" size="7" isItalic="false"/>
 					</textElement>
-				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TOTAL_USD} != null ? "El monto equivale a USD " + $P{TOTAL_USD} + ".El mismo deberá ser abonado con el tipo de cambio vendedor del Banco de la Nación Argentina a la fecha de hacerse efectivo el pago." : ""]]></textFieldExpression>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{TOTAL_USD} != null ? "El monto equivale a USD " + new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(new java.util.Locale("es", "AR"))).format($P{TOTAL_USD}) + ". El mismo deberá ser abonado con el tipo de cambio vendedor del Banco de la Nación Argentina a la fecha de hacerse efectivo el pago." : ""]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="false" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement

@@ -205,13 +205,18 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 		return "";
 	}
 	
+	/** Indica que se esta actualizando la tasa de cambio de la factura (evita reentrada) */
+	private static boolean updatingInvoiceExchangeRate = false;
+
 	/**
 	 * Actualiza la tasa de cambio de la factura según moneda/fecha seleccionada.
 	 * Si no existe cotización para ese día en moneda extranjera, advierte para carga manual
 	 * y evita que quede el valor por defecto 1.
 	 */
 	private String updateInvoiceExchangeRate(Properties ctx, int WindowNo, MTab mTab, boolean applyRate) {
-		if (isCalloutActive()) {
+		// Guarda propia contra reentrada: no depender del indicador global de callouts, que otro
+		// callout puede dejar activo (y entonces la tasa nunca se proponia)
+		if (updatingInvoiceExchangeRate) {
 			return "";
 		}
 		if (!applyRate) {
@@ -219,7 +224,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			return "";
 		}
 		
-		setCalloutActive(true);
+		updatingInvoiceExchangeRate = true;
 		try {
 			int accountingCurrencyID = Env.getContextAsInt(ctx, "$C_Currency_ID");
 			if (accountingCurrencyID <= 0) {
@@ -230,11 +235,19 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				return "";
 			}
 			
-			// Si está en moneda contable, no aplica tasa manual de diferencia de cambio.
+			// Moneda de la tasa: la de la factura, o en facturas en moneda contable con
+			// clausula de ajuste, la moneda de la clausula
+			int rateCurrencyID = invoiceCurrencyID.intValue();
+
+			// Si está en moneda contable, solo aplica tasa si tiene clausula de ajuste.
 			if (accountingCurrencyID > 0 && invoiceCurrencyID.intValue() == accountingCurrencyID) {
-				mTab.setValue("Cintolo_Exchange_Rate", null);
-				mTab.clearCurrentRecordWarning();
-				return "";
+				Integer clauseCurrencyID = getAdjustmentClauseCurrencyID(mTab, accountingCurrencyID);
+				if (clauseCurrencyID == null) {
+					mTab.setValue("Cintolo_Exchange_Rate", null);
+					mTab.clearCurrentRecordWarning();
+					return "";
+				}
+				rateCurrencyID = clauseCurrencyID.intValue();
 			}
 			
 			Timestamp conversionDate = (Timestamp) mTab.getValue("DateAcct");
@@ -256,7 +269,7 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			}
 			
 			BigDecimal conversionRate = MConversionRate.getRate(
-					invoiceCurrencyID,
+					rateCurrencyID,
 					accountingCurrencyID,
 					conversionDate,
 					conversionTypeID,
@@ -274,10 +287,34 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 			}
 			return "";
 		} finally {
-			setCalloutActive(false);
+			updatingInvoiceExchangeRate = false;
 		}
 	}
 	
+	/**
+	 * @return moneda de la clausula de ajuste si la factura la tiene activa y es distinta
+	 *         de la moneda contable; null en caso contrario
+	 */
+	private Integer getAdjustmentClauseCurrencyID(MTab mTab, int accountingCurrencyID) {
+		Object adjustmentClause = mTab.getValue("Cintolo_Adjustment_Clause");
+		if (!Boolean.TRUE.equals(adjustmentClause) && !"Y".equals(adjustmentClause)) {
+			return null;
+		}
+		Integer clauseCurrencyID = getIntValue(mTab.getValue("Cintolo_Adjustment_Clause_Currency"));
+		if (clauseCurrencyID == null || clauseCurrencyID <= 0 || clauseCurrencyID.intValue() == accountingCurrencyID) {
+			return null;
+		}
+		return clauseCurrencyID;
+	}
+
+	public String Cintolo_Adjustment_Clause(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, true);
+	}
+
+	public String Cintolo_Adjustment_Clause_Currency(Properties ctx, int WindowNo, MTab mTab, MField mField, Object value) {
+		return updateInvoiceExchangeRate(ctx, WindowNo, mTab, true);
+	}
+
 	private Integer getIntValue(Object value) {
 		if (value == null) {
 			return null;
