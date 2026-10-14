@@ -31,7 +31,7 @@ import java.util.Iterator;
 
 /**
  *  MLookup Data Cache.
- *  - not synchronized on purpose -
+ *  Access to the shared cache is synchronized to support concurrent requests.
  *  Called from MLookup.
  *  Only caches multiple use for a single window!
  *  @author Comunidad de Desarrollo openXpertya
@@ -45,7 +45,21 @@ public class MLookupCache {
     private static CLogger	s_log	= CLogger.getCLogger(MLookupCache.class);
 
     /** Static Lookup data with MLookupInfo -> HashMap */
-    private static CCache	s_loadedLookups	= new CCache("MLookupCache", 50);
+    private static final CCache s_loadedLookups = new CCache("MLookupCache", 50) {
+        private static final long serialVersionUID = 1L;
+
+        // CacheMgt y la expiracion pueden invalidar la cache fuera de MLookupCache.
+        // Usar el mismo monitor evita modificaciones durante las iteraciones.
+        @Override
+        public synchronized int reset() {
+            return super.reset();
+        }
+
+        @Override
+        public synchronized void clear() {
+            super.clear();
+        }
+    };
 
     /** ********************************************************************* */
 
@@ -60,30 +74,33 @@ public class MLookupCache {
      */
     public static void cacheReset(int WindowNo) {
 
-        String	key	= String.valueOf(WindowNo) + ":";
-        int	startNo	= s_loadedLookups.size();
-
-        // find keys of Lookups to delete
-        ArrayList	toDelete	= new ArrayList();
-        Iterator	iterator	= s_loadedLookups.keySet().iterator();
-
-        while (iterator.hasNext()) {
-
-            String	info	= (String) iterator.next();
-
-            if ((info != null) && info.startsWith(key)) {
-                toDelete.add(info);
+        synchronized (s_loadedLookups) {
+            String	key	= String.valueOf(WindowNo) + ":";
+            int	startNo	= s_loadedLookups.size();
+    
+            // find keys of Lookups to delete
+            ArrayList	toDelete	= new ArrayList();
+            Iterator	iterator	= s_loadedLookups.keySet().iterator();
+    
+            while (iterator.hasNext()) {
+    
+                String	info	= (String) iterator.next();
+    
+                if ((info != null) && info.startsWith(key)) {
+                    toDelete.add(info);
+                }
             }
+    
+            // Do the actual delete
+            for (int i = 0; i < toDelete.size(); i++) {
+                s_loadedLookups.remove(toDelete.get(i));
+            }
+    
+            int	endNo	= s_loadedLookups.size();
+    
+            s_log.fine("cacheReset - WindowNo=" + WindowNo + " - " + startNo + " -> " + endNo);
+    
         }
-
-        // Do the actual delete
-        for (int i = 0; i < toDelete.size(); i++) {
-            s_loadedLookups.remove(toDelete.get(i));
-        }
-
-        int	endNo	= s_loadedLookups.size();
-
-        s_log.fine("cacheReset - WindowNo=" + WindowNo + " - " + startNo + " -> " + endNo);
 
     }		// cacheReset
 
@@ -96,7 +113,9 @@ public class MLookupCache {
     protected static void loadEnd(MLookupInfo info, HashMap lookup) {
 
         if (info.IsValidated && (lookup.size() > 0)) {
-            s_loadedLookups.put(getKey(info), lookup);
+            synchronized (s_loadedLookups) {
+                s_loadedLookups.put(getKey(info), lookup);
+            }
         }
 
     }		// loadEnd
@@ -111,38 +130,41 @@ public class MLookupCache {
      */
     protected static boolean loadFromCache(MLookupInfo info, HashMap lookupTarget) {
 
-        String	key	= getKey(info);
-        HashMap	cache	= (HashMap) s_loadedLookups.get(key);
-
-        if (cache == null) {
-            return false;
+        synchronized (s_loadedLookups) {
+            String	key	= getKey(info);
+            HashMap	cache	= (HashMap) s_loadedLookups.get(key);
+    
+            if (cache == null) {
+                return false;
+            }
+    
+            // Nothing cached
+            if (cache.size() == 0) {
+    
+                s_loadedLookups.remove(key);
+    
+                return false;
+            }
+    
+            // Copy Asynchronously to speed things up
+            // if (cache.size() > ?) copyAsync
+            // copy cache
+            // we can use iterator, as the lookup loading is complete (i.e. no additional entries)
+            Iterator	iterator	= cache.keySet().iterator();
+    
+            while (iterator.hasNext()) {
+    
+                Object	cacheKey	= iterator.next();
+                Object	cacheData	= cache.get(cacheKey);
+    
+                lookupTarget.put(cacheKey, cacheData);
+            }
+    
+            s_log.fine("loadFromCache - #" + lookupTarget.size());
+    
+            return true;
+    
         }
-
-        // Nothing cached
-        if (cache.size() == 0) {
-
-            s_loadedLookups.remove(key);
-
-            return false;
-        }
-
-        // Copy Asynchronously to speed things up
-        // if (cache.size() > ?) copyAsync
-        // copy cache
-        // we can use iterator, as the lookup loading is complete (i.e. no additional entries)
-        Iterator	iterator	= cache.keySet().iterator();
-
-        while (iterator.hasNext()) {
-
-            Object	cacheKey	= iterator.next();
-            Object	cacheData	= cache.get(cacheKey);
-
-            lookupTarget.put(cacheKey, cacheData);
-        }
-
-        s_log.fine("loadFromCache - #" + lookupTarget.size());
-
-        return true;
 
     }		// copyLookup
 
