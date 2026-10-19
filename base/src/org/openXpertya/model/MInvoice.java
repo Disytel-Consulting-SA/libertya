@@ -3028,12 +3028,17 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		}
 	}
 	
+	/**
+	 * Fecha para buscar la tasa de cambio de la factura: la fecha de la
+	 * factura exacta (no la de hoy ni la contable), ya que esa tasa se usa
+	 * luego para las diferencias de cambio.
+	 */
 	private Timestamp getExchangeRateLookupDate() {
-		if(getDateAcct() != null) {
-			return new Timestamp(getFechaConversion().getTime());
-		}
 		if(getDateInvoiced() != null) {
 			return getDateInvoiced();
+		}
+		if(getDateAcct() != null) {
+			return new Timestamp(getFechaConversion().getTime());
 		}
 		return Env.getDate();
 	}
