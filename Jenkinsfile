@@ -458,6 +458,8 @@ pipeline {
                 def branchName = "${env.BRANCH_NAME}"
                 def branchColor = (branchName == 'master') ? '#dc3545' : '#0366d6'
                 def branchLabel = (branchName == 'master') ? '🏷️ RELEASE' : '🔧 DEV'
+                // En dev la etiqueta ya indica la rama; en master y en otras ramas se aclara cuál es
+                def ramaHtml = (branchName == 'dev') ? '' : "<span style=\"color: #666; margin-left: 8px;\">Rama: ${branchName}</span>"
                 def resumenTests = env.TESTS_RESUMEN ?: 'No se ejecutaron'
 
                 // Si falló sin tests fallidos (compilación, deploy, etc.) se muestra el final del log.
@@ -471,7 +473,7 @@ pipeline {
                             <h2 style="color:#2277BB; margin-top:0;">${emoji} Jenkins - Libertya Core</h2>
                             <div style="background: ${branchColor}22; border-left: 4px solid ${branchColor}; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
                                 <strong style="color: ${branchColor};">${branchLabel}</strong>
-                                <span style="color: #666; margin-left: 8px;">Rama: ${branchName}</span>
+                                ${ramaHtml}
                             </div>
                             <p>Resumen del último build ejecutado:</p>
                             <hr style="border:none; border-top:1px solid #eee; margin:16px 0;">
