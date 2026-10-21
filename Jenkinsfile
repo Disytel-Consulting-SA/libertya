@@ -55,6 +55,17 @@ pipeline {
                     checkout scm
 
                     script {
+                        // "--skip" en el mensaje del último commit omite el build (p. ej. cambios solo de documentación).
+                        // Un build lanzado a mano desde Jenkins se ejecuta siempre.
+                        def mensajeCommit = sh(script: 'git log -1 --pretty=%B', returnStdout: true)
+                        def lanzadoAMano = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
+                        if (!lanzadoAMano && mensajeCommit ==~ /(?s).*(^|\s)--skip(\s.*)?/) {
+                            env.BUILD_OMITIDO = 'true'
+                            currentBuild.description = 'Omitido por --skip en el commit'
+                            currentBuild.result = 'NOT_BUILT'
+                            error 'Build omitido: el último commit tiene --skip'
+                        }
+
                         env.LIBERTYA_COMMIT = sh(
                             script: "git rev-parse --short=8 HEAD",
                             returnStdout: true
@@ -444,6 +455,11 @@ pipeline {
     post {
         always {
             script {
+                // Build omitido por --skip: no se manda mail
+                if (env.BUILD_OMITIDO == 'true') {
+                    return
+                }
+
                 // Detalle de tests fallidos generado por scripts/test-failures.gradle
                 def fallosResumen = 'lyrestapi/build/test-failures/resumen.html'
                 def fallosHtml = fileExists(fallosResumen) ? readFile(file: fallosResumen, encoding: 'UTF-8') : ''
@@ -517,9 +533,7 @@ pipeline {
                     body: mensaje,
                     mimeType: 'text/html',
                     attachmentsPattern: 'lyrestapi/build/test-failures/detalle-fallos.txt',
-                    // Temporal mientras se prueba el nuevo formato del mail; después restaurar:
-                    // federico.cristina@disytel.net, ignacio.aita@disytel.net, jorge.dreher@disytel.net
-                    to: 'julian.viejo@disytel.net'
+                    to: 'julian.viejo@disytel.net, federico.cristina@disytel.net, ignacio.aita@disytel.net, jorge.dreher@disytel.net'
                 )
             }
         }
