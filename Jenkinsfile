@@ -21,8 +21,6 @@ pipeline {
         IS_DEV = "${env.BRANCH_NAME == 'dev'}"
         IS_MASTER = "${env.BRANCH_NAME == 'master'}"
         
-        REPORTS_DIR = "/var/reportes"
-        
         // Metadata
         DEVINFO_FILE_LOCATION = "${WORKDIR}/libertya/data/core/upgrade_from_22.0"
         DEVINFO_FILE = "${DEVINFO_FILE_LOCATION}/devinfo.properties"
@@ -57,6 +55,17 @@ pipeline {
                     checkout scm
 
                     script {
+                        // "--skip" en el mensaje del último commit omite el build (p. ej. cambios solo de documentación).
+                        // Un build lanzado a mano desde Jenkins se ejecuta siempre.
+                        def mensajeCommit = sh(script: 'git log -1 --pretty=%B', returnStdout: true)
+                        def lanzadoAMano = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
+                        if (!lanzadoAMano && mensajeCommit ==~ /(?s).*(^|\s)--skip(\s.*)?/) {
+                            env.BUILD_OMITIDO = 'true'
+                            currentBuild.description = 'Omitido por --skip en el commit'
+                            currentBuild.result = 'NOT_BUILT'
+                            error 'Build omitido: el último commit tiene --skip'
+                        }
+
                         env.LIBERTYA_COMMIT = sh(
                             script: "git rev-parse --short=8 HEAD",
                             returnStdout: true
@@ -180,7 +189,25 @@ pipeline {
                 dir('lyrestapi') {
                     sh 'java -version'
                     sh 'chmod +x ./gradlew'
-                    sh './gradlew clean test --info'
+                    // Se borran resultados previos para que el mail nunca muestre fallos de otro build
+                    sh 'rm -rf build/test-results build/reports/tests build/test-failures'
+                    sh './gradlew clean test --info --init-script ../libertya/scripts/test-failures.gradle'
+                }
+            }
+            post {
+                always {
+                    script {
+                        def resultado = junit testResults: 'lyrestapi/build/test-results/test/*.xml', allowEmptyResults: true
+                        env.TESTS_RESUMEN = "${resultado.totalCount} total · ${resultado.failCount} fallidos · ${resultado.skipCount} omitidos"
+                    }
+                    // Reporte HTML completo de Gradle como artifact del build
+                    sh '''
+                        rm -f reporte-tests.zip
+                        if [ -d lyrestapi/build/reports/tests/test ]; then
+                            cd lyrestapi/build/reports/tests && zip -qr "$WORKSPACE/reporte-tests.zip" test
+                        fi
+                    '''
+                    archiveArtifacts artifacts: 'reporte-tests.zip', allowEmptyArchive: true
                 }
             }
         }
@@ -428,15 +455,14 @@ pipeline {
     post {
         always {
             script {
-                // Configurar reportes
-                sh "mkdir -p ${REPORTS_DIR}"
-                sh """
-                    if [ -d "${WORKDIR}/lyrestapi/build/reports/tests/test" ]; then
-                        cp -r ${WORKDIR}/lyrestapi/build/reports/tests/test/. ${REPORTS_DIR}
-                    fi
-                """
-                sh "chmod -R o+r ${REPORTS_DIR}"
-                sh "find ${REPORTS_DIR} -type d -exec chmod o+x {} \\;"
+                // Build omitido por --skip: no se manda mail
+                if (env.BUILD_OMITIDO == 'true') {
+                    return
+                }
+
+                // Detalle de tests fallidos generado por scripts/test-failures.gradle
+                def fallosResumen = 'lyrestapi/build/test-failures/resumen.html'
+                def fallosHtml = fileExists(fallosResumen) ? readFile(file: fallosResumen, encoding: 'UTF-8') : ''
 
                 // Enviar email con configuración según rama
                 def fechaHora = new Date().format("yyyy-MM-dd HH:mm:ss", TimeZone.getTimeZone('America/Argentina/Buenos_Aires'))
@@ -448,57 +474,67 @@ pipeline {
                 def branchName = "${env.BRANCH_NAME}"
                 def branchColor = (branchName == 'master') ? '#dc3545' : '#0366d6'
                 def branchLabel = (branchName == 'master') ? '🏷️ RELEASE' : '🔧 DEV'
-                
-                withCredentials([string(credentialsId: 'report-url', variable: 'REPORT_URL')]) {
-                    def linkReport = "${env.REPORT_URL}"
+                // En dev la etiqueta ya indica la rama; en master y en otras ramas se aclara cuál es
+                def ramaHtml = (branchName == 'dev') ? '' : "<span style=\"color: #666; margin-left: 8px;\">Rama: ${branchName}</span>"
+                def resumenTests = env.TESTS_RESUMEN ?: 'No se ejecutaron'
 
-                    def mensaje = """
-                    <html>
-                        <body style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 30px;">
-                            <div style="background: #fff; border-radius: 12px; box-shadow: 0 4px 16px #0001; padding: 24px; max-width: 540px; margin: 0 auto;">
-                                <h2 style="color:#2277BB; margin-top:0;">${emoji} Jenkins - Libertya Core</h2>
-                                <div style="background: ${branchColor}22; border-left: 4px solid ${branchColor}; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
-                                    <strong style="color: ${branchColor};">${branchLabel}</strong>
-                                    <span style="color: #666; margin-left: 8px;">Rama: ${branchName}</span>
-                                </div>
-                                <p>Resumen del último build ejecutado:</p>
-                                <hr style="border:none; border-top:1px solid #eee; margin:16px 0;">
-                                <table style="width:100%; font-size: 15px;">
-                                    <tr>
-                                        <td><b>Estado:</b></td>
-                                        <td><span style="color:${colorStatus}; font-weight:bold;">${status}</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Fecha y hora:</b></td>
-                                        <td>${fechaHora}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Commit Libertya:</b></td>
-                                        <td><code style="font-size:13px;">${commitLibertya}</code></td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Commit lyrestapi:</b></td>
-                                        <td><code style="font-size:13px;">${commitLyrestapi}</code></td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Ver reporte:</b></td>
-                                        <td><a href="${linkReport}" style="color:#2277BB;">Tests completos</a></td>
-                                    </tr>
-                                </table>
-                                <p style="font-size: 12px; color: #aaa; text-align: right; margin-top: 20px;">Jenkins CI/CD</p>
+                // Si falló sin tests fallidos (compilación, deploy, etc.) se muestra el final del log.
+                // Va entre comillas simples para que el token lo expanda email-ext y no Groovy.
+                def finalLog = (status != 'SUCCESS' && !fallosHtml) ? '<p style="margin:16px 0 4px;"><b>Final del log:</b></p><pre style="white-space:pre-wrap; word-break:break-all; font-size:12px; background:#f6f8fa; padding:8px; border-radius:4px;">${BUILD_LOG, maxLines=60, escapeHtml=true}</pre>' : ''
+
+                def mensaje = """
+                <html>
+                    <body style="font-family: Arial, sans-serif; background: #f6f8fa; padding: 30px;">
+                        <div style="background: #fff; border-radius: 12px; box-shadow: 0 4px 16px #0001; padding: 24px; max-width: 760px; margin: 0 auto;">
+                            <h2 style="color:#2277BB; margin-top:0;">${emoji} Jenkins - Libertya Core</h2>
+                            <div style="background: ${branchColor}22; border-left: 4px solid ${branchColor}; padding: 12px; margin-bottom: 16px; border-radius: 4px;">
+                                <strong style="color: ${branchColor};">${branchLabel}</strong>
+                                ${ramaHtml}
                             </div>
-                        </body>
-                    </html>
-                    """
+                            <p>Resumen del último build ejecutado:</p>
+                            <hr style="border:none; border-top:1px solid #eee; margin:16px 0;">
+                            <table style="width:100%; font-size: 15px;">
+                                <tr>
+                                    <td><b>Estado:</b></td>
+                                    <td><span style="color:${colorStatus}; font-weight:bold;">${status}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Fecha y hora:</b></td>
+                                    <td>${fechaHora}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Commit Libertya:</b></td>
+                                    <td><code style="font-size:13px;">${commitLibertya}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Commit lyrestapi:</b></td>
+                                    <td><code style="font-size:13px;">${commitLyrestapi}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Tests:</b></td>
+                                    <td>${resumenTests}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Build:</b></td>
+                                    <td><a href="${env.BUILD_URL}" style="color:#2277BB;">#${env.BUILD_NUMBER}</a> <span style="color:#888; font-size:13px;">(por túnel SSH; reporte completo en Artifacts)</span></td>
+                                </tr>
+                            </table>
+                            ${fallosHtml}
+                            ${finalLog}
+                            <p style="font-size: 12px; color: #aaa; text-align: right; margin-top: 20px;">Jenkins CI/CD</p>
+                        </div>
+                    </body>
+                </html>
+                """
 
-                    emailext (
-                        from: 'Jenkins <lby.ic@libertya.org>',
-                        subject: "${emoji} Build ${status} - Libertya Core (${branchName})",
-                        body: mensaje,
-                        mimeType: 'text/html',
-                        to: 'julian.viejo@disytel.net, federico.cristina@disytel.net, ignacio.aita@disytel.net, jorge.dreher@disytel.net'
-                    )
-                }
+                emailext (
+                    from: 'Jenkins <lby.ic@libertya.org>',
+                    subject: "${emoji} Build ${status} - Libertya Core (${branchName})",
+                    body: mensaje,
+                    mimeType: 'text/html',
+                    attachmentsPattern: 'lyrestapi/build/test-failures/detalle-fallos.txt',
+                    to: 'julian.viejo@disytel.net, federico.cristina@disytel.net, ignacio.aita@disytel.net, jorge.dreher@disytel.net'
+                )
             }
         }
     }

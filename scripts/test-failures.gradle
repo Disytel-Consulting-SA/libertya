@@ -1,0 +1,80 @@
+// Init script de CI: lo usa el Jenkinsfile al correr los tests de lyrestapi
+// (./gradlew test --init-script ../libertya/scripts/test-failures.gradle).
+//
+// Por cada test fallido guarda el mensaje de error, el stack trace y la salida propia
+// del test (no la de toda la clase) en build/test-failures/:
+//   - resumen.html: los primeros fallos con el final de su salida, para el cuerpo del mail.
+//   - detalle-fallos.txt: todos los fallos completos, para adjuntar al mail.
+// Si no hay fallos no se genera nada. Las contraseñas y tokens Bearer de los logs se enmascaran.
+import org.gradle.api.tasks.testing.TestResult
+
+def MAX_FALLOS_EN_MAIL = 10
+def LINEAS_DE_SALIDA = 30
+def MAX_LARGO_LINEA = 500
+def MAX_LARGO_ERROR = 2000
+
+def enmascarar = { String s ->
+    s.replaceAll(/(password=)[^,}\s]*/, '$1***')
+     .replaceAll(/("password"\s*:\s*")[^"]*/, '$1***')
+     .replaceAll(/(Bearer )[\w.-]+/, '$1***')
+}
+// El '$' también se escapa para que email-ext no lo interprete como token
+def escapar = { String s ->
+    s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('$', '&#36;')
+}
+def recortar = { String linea -> linea.length() > MAX_LARGO_LINEA ? linea.take(MAX_LARGO_LINEA) + ' …' : linea }
+def clave = { desc -> "${desc.className}#${desc.name}".toString() }
+
+allprojects {
+    tasks.withType(Test).configureEach { Test t ->
+        def salidas = [:].withDefault { new StringBuilder() }
+        def fallos = []
+        def destino = t.project.layout.buildDirectory.dir('test-failures')
+
+        t.onOutput { desc, evento -> salidas[clave(desc)] << evento.message }
+
+        t.afterTest { desc, resultado ->
+            if (resultado.resultType == TestResult.ResultType.FAILURE) {
+                def stack = new StringWriter()
+                resultado.exception?.printStackTrace(new PrintWriter(stack))
+                fallos << [
+                    nombre: "${desc.className?.tokenize('.')?.last()} › ${desc.displayName}".toString(),
+                    error : enmascarar(resultado.exception?.toString() ?: 'Sin mensaje de error'),
+                    stack : enmascarar(stack.toString()),
+                    salida: enmascarar(salidas[clave(desc)].toString())
+                ]
+            }
+            salidas.remove(clave(desc))
+        }
+
+        // La suite raíz termina una sola vez, aunque la tarea falle por los tests
+        t.afterSuite { desc, resultado ->
+            if (desc.parent != null || fallos.isEmpty()) {
+                return
+            }
+            def dir = destino.get().asFile
+            dir.mkdirs()
+
+            def pre = '<pre style="white-space:pre-wrap; word-break:break-all; font-size:12px; background:#f6f8fa; padding:8px; border-radius:4px;">'
+            def html = fallos.take(MAX_FALLOS_EN_MAIL).collect { f ->
+                def cola = f.salida.readLines().takeRight(LINEAS_DE_SALIDA).collect(recortar).join('\n')
+                def bloque = "<h4 style=\"margin:16px 0 4px;\">❌ ${escapar(f.nombre)}</h4>" +
+                        "${pre}${escapar(f.error.take(MAX_LARGO_ERROR))}</pre>"
+                if (cola) {
+                    bloque += "<p style=\"margin:8px 0 4px;\">Salida del test (últimas ${LINEAS_DE_SALIDA} líneas):</p>" +
+                            "${pre}${escapar(cola)}</pre>"
+                }
+                bloque
+            }.join('\n')
+            if (fallos.size() > MAX_FALLOS_EN_MAIL) {
+                html += "<p>… y ${fallos.size() - MAX_FALLOS_EN_MAIL} fallos más en el adjunto.</p>"
+            }
+            new File(dir, 'resumen.html').write(html, 'UTF-8')
+
+            def detalle = fallos.collect { f ->
+                "=== ${f.nombre} ===\n\n${f.stack}\n--- Salida del test ---\n${f.salida}\n"
+            }.join('\n')
+            new File(dir, 'detalle-fallos.txt').write(detalle, 'UTF-8')
+        }
+    }
+}
