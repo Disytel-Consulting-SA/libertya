@@ -4172,6 +4172,12 @@ public class VOrdenPagoModel {
 		BigDecimal totalAmt = BigDecimal.ZERO;
 		ResultItemFactura fac = (ResultItemFactura) m_facturas.get(row);
 		BigDecimal amt = pay ? fac.getToPayAmt() : BigDecimal.ZERO;
+		// Si es ventas, completar con el monto de fecha factura, igual que en
+		// updatePayAllInvoices. Con el saldo a la tasa de la fecha del recibo, si esta
+		// es menor a la de la factura, el monto en moneda del comprobante queda incompleto
+		if (pay && isSOTrx() && fac.getOpenCurrentAmtFecFact() != null) {
+			amt = fac.getOpenCurrentAmtFecFact();
+		}
 		// Solamente cambio el valor cuando no estamos en el momento de
 		// pagar
 		if (!toPayMoment) {

@@ -2036,7 +2036,10 @@ public class AllocationGenerator {
 		if (this.getDebits() != null) {
 			for (Document x : this.getDebits()){
 				BigDecimal amtDifCambio = getExchangeDif(x.getId());
-				if(amtDifCambio.compareTo(BigDecimal.ZERO) > 0){
+				// La diferencia es negativa cuando es a favor del cliente (nota de crédito),
+				// se incluyen solo las facturas cuya diferencia tenga el signo del comprobante.
+				// El importe de la línea se toma en valor absoluto
+				if(isCredit ? amtDifCambio.compareTo(BigDecimal.ZERO) < 0 : amtDifCambio.compareTo(BigDecimal.ZERO) > 0){
 
 					MInvoiceLine invoiceLine = createInvoiceLineForExchangeDif(
 							inv,
