@@ -232,6 +232,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				
 				BigDecimal exchangeDif = currentTotalArs.subtract(oldTotalArs);
 
+				// Las columnas son del saldo abierto completo: en un cobro parcial la diferencia
+				// corresponde solo a la proporcion que se cobra (A Pagar / Pendiente, en moneda de la factura)
+				BigDecimal openAmt = (BigDecimal)((ResultItemFactura) x).getItem(m_facturasTableModel.getOpenAmtColIdx());
+				BigDecimal manualAmt = ((ResultItemFactura) x).getManualAmount();
+				if(openAmt != null && openAmt.compareTo(Env.ZERO) > 0 && manualAmt.compareTo(openAmt) < 0) {
+					exchangeDif = exchangeDif.multiply(manualAmt).divide(openAmt, 2, RoundingMode.HALF_UP);
+				}
+
 				dif = dif.add(exchangeDif);
 
 				debug("Saldos abiertos. A la fecha del comprobante: " + i.getDocumentNo() + " TotalARS hoy: " + oldTotalArs + 
@@ -319,12 +327,16 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
 					MInvoice i = new MInvoice(m_ctx,id,trxName); 
-					totalInvoice = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+					totalInvoice = totalInvoice.add(MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx));
 					//totalInvoice = totalInvoice.add(i.getGrandTotal());
 				}
 			}
 		}
-		return exchangeDifference.divide(totalInvoice,RoundingMode.HALF_UP).multiply(Env.ONEHUNDRED);
+		if (totalInvoice.compareTo(BigDecimal.ZERO) == 0) {
+			return BigDecimal.ZERO;
+		}
+		// Escala explicita: sin ella el cociente toma la escala de la diferencia (2) y el % solo puede ser entero
+		return exchangeDifference.multiply(Env.ONEHUNDRED).divide(totalInvoice, 2, RoundingMode.HALF_UP);
 	}
 	
 	/**
