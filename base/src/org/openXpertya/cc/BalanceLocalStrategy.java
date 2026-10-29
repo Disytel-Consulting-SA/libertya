@@ -349,7 +349,7 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 		CallResult result1 = new CallResult();
 		CallResult result2 = new CallResult();
 		long t0 = System.currentTimeMillis();
-		System.out.println("[CC afterProcessDocument] inicio doc=" + (doc != null ? doc.get_TableName() + " " + doc.get_ID() : null));
+		System.out.println("[CC afterProcessDocument] inicio doc=" + (doc != null ? doc.get_TableName() + " " + doc.getID() : null));
 		// Actualizo el crédito
 		result1 = updateBPBalance(ctx, bPartnerColumnNameUID,
 				bPartnerColumnValueUID, orgColumnNameUID, orgColumnValueUID,
