@@ -2833,12 +2833,14 @@ public class VOrdenPagoModel {
 		boolean saveOk = true;
 		errorNo = PROCERROR_UNKNOWN;
 		Vector<MedioPago> pays = new Vector<VOrdenPagoModel.MedioPago>(getMediosPago());
+		long t0 = System.currentTimeMillis();
+		logStep("INICIO doPostProcesarNormal trx=" + get_TrxName() + " medios de pago=" + pays.size(), t0);
 
 		try {
 			
 			// 1. Crear débitos y créditos customs (descuentos o recargos)
 			makeCustomDebitsCredits(pays);
-			
+			logStep("1. makeCustomDebitsCredits", t0);
 			
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
@@ -2850,44 +2852,57 @@ public class VOrdenPagoModel {
 
 			// Se setean las propiedades del encabezado
 			updateAllocationHdr(hdr);
+			logStep("2. createAllocationHdr/updateAllocationHdr hdr=" + hdr.getDocumentNo(), t0);
 
 			// 3. Retenciones
 			m_retGen.setTrxName(get_TrxName()); // dREHER
 			m_retGen.setProjectID(getProjectID());
 			m_retGen.setCampaignID(getCampaignID());
 			m_retGen.save(hdr);
+			logStep("3. retenciones", t0);
 
 			// TODO: Revisar por aca!!!!! CINTOLO
 			// 4. Generar los pagos, completos.
 			if (saveOk && !generarPagosDesdeMediosPagos(pays, hdr)) {
 				saveOk = false;
 				errorNo = PROCERROR_PAYMENTS_GENERATION;
+				logStep("4. generarPagosDesdeMediosPagos FALLO", t0);
 			} else {
+				logStep("4. generarPagosDesdeMediosPagos", t0);
 				// 5. Agregar las facturas de debito
 				agregarRetencionesComoMediosPagos(pays, hdr);
+				logStep("5. agregarRetencionesComoMediosPagos", t0);
 
 				// CINTOLO: En este metodo se llama al POGeneratos que llama al AllocationGenerator
 				// 6. Guardar allocation lines online creadas
 				processOnlineAllocationLines(hdr, pays, true);
+				logStep("6. processOnlineAllocationLines", t0);
 
 				// 98. Completar HDR
 				getPoGenerator().completeAllocation();
+				logStep("98. completeAllocation", t0);
 
 				// 99. Realizar operaciones custom al final del procesamiento
 				doPostProcesarNormalCustom();
+				logStep("99. doPostProcesarNormalCustom", t0);
 
 				// Realizar las tareas de cuenta corriente previas a terminar el
 				// procesamiento
 				performAditionalCurrentAccountWork();
+				logStep("performAditionalCurrentAccountWork", t0);
 
 				// Si estuvo todo bien entonces realizo las tareas posteriores a
 				// terminar el procesamiento y confirmación de transacción
 				afterProcessDocuments();
+				logStep("afterProcessDocuments", t0);
 			}
 
-			if (saveOk)
+			if (saveOk) {
 				saveOk = trx.commit();
+				logStep("commit ok=" + saveOk, t0);
+			}
 		} catch (Exception e) {
+			logStep("EXCEPCION " + e, t0);
 			log.log(Level.SEVERE, "doPostProcesarNormal", e);
 			saveOk = false;
 			setMsgAMostrar(e.getMessage());
@@ -2908,8 +2923,18 @@ public class VOrdenPagoModel {
 		if (saveOk) {
 			errorNo = PROCERROR_OK;
 		}
+		logStep("FIN doPostProcesarNormal ok=" + saveOk + " errorNo=" + errorNo, t0);
 
 		return errorNo;
+	}
+
+	/**
+	 * Traza con hora y milisegundos acumulados desde el inicio del procesamiento,
+	 * siempre activa (no depende de SHOW_DEBUG) para diagnosticar demoras al emitir.
+	 */
+	protected void logStep(String step, long t0) {
+		System.out.println("[OP/Recibo " + new java.sql.Timestamp(System.currentTimeMillis())
+				+ " +" + (System.currentTimeMillis() - t0) + "ms] " + step);
 	}
 
 	/**

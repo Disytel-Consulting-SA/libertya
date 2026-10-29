@@ -62,12 +62,16 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 			String orgColumnNameUID, Object orgColumnValueUID,
 			String trxName) {
 		CallResult result = new CallResult();
+		long t0 = System.currentTimeMillis();
 		// Obtengo la entidad comercial
 		MBPartner bp = getBPartner(ctx, bPartnerColumnNameUID, bPartnerColumnValueUID, trxName);
 		MOrg org = getOrg(ctx, orgColumnNameUID, orgColumnValueUID, trxName);
+		System.out.println("[CC updateBPBalance] inicio bp=" + bp.getID() + " trx=" + trxName);
 		// Obtener el saldo
 		CurrentAccountBalanceData onCreditData = getBalanceData(org, bp,
 				MInvoice.PAYMENTRULE_OnCredit);
+		long t1 = System.currentTimeMillis();
+		System.out.println("[CC updateBPBalance] getBalanceData " + (t1 - t0) + "ms balance=" + onCreditData.getBalance());
 		bp.setTotalOpenBalance(onCreditData.getBalance());
 		bp.setSO_CreditUsed(onCreditData.getCreditUsed());
 		bp.setActualLifeTimeValue(onCreditData.getActualLifeTimeValue());
@@ -75,6 +79,7 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 		if(!bp.save()){
 			result.setMsg(CLogger.retrieveErrorAsString(), true);
 		}
+		System.out.println("[CC updateBPBalance] bp.save " + (System.currentTimeMillis() - t1) + "ms");
 		result.setResult(bp.getTotalOpenBalance());
 		return result;
 	}
@@ -343,14 +348,19 @@ public class BalanceLocalStrategy extends CurrentAccountBalanceStrategy {
 			Object aditionalWorkResult, String trxName) {
 		CallResult result1 = new CallResult();
 		CallResult result2 = new CallResult();
+		long t0 = System.currentTimeMillis();
+		System.out.println("[CC afterProcessDocument] inicio doc=" + (doc != null ? doc.get_TableName() + " " + doc.get_ID() : null));
 		// Actualizo el crédito
 		result1 = updateBPBalance(ctx, bPartnerColumnNameUID,
 				bPartnerColumnValueUID, orgColumnNameUID, orgColumnValueUID,
 				trxName);
+		long t1 = System.currentTimeMillis();
+		System.out.println("[CC afterProcessDocument] updateBPBalance " + (t1 - t0) + "ms");
 		// Seteo el estado actual del cliente y lo obtengo
 		result2 = setCurrentAccountStatus(ctx, bPartnerColumnNameUID,
 				bPartnerColumnValueUID, orgColumnNameUID, orgColumnValueUID,
 				trxName);
+		System.out.println("[CC afterProcessDocument] setCurrentAccountStatus " + (System.currentTimeMillis() - t1) + "ms");
 		// Retorno el que tiene error, si es que hay uno
 		return result1.isError()?result1:result2;
 	}
