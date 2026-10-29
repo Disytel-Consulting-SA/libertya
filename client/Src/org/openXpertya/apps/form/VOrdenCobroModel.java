@@ -232,6 +232,14 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				
 				BigDecimal exchangeDif = currentTotalArs.subtract(oldTotalArs);
 
+				// Las columnas son del saldo abierto completo: en un cobro parcial la diferencia
+				// corresponde solo a la proporcion que se cobra (A Pagar / Pendiente, en moneda de la factura)
+				BigDecimal openAmt = (BigDecimal)((ResultItemFactura) x).getItem(m_facturasTableModel.getOpenAmtColIdx());
+				BigDecimal manualAmt = ((ResultItemFactura) x).getManualAmount();
+				if(openAmt != null && openAmt.compareTo(Env.ZERO) > 0 && manualAmt.compareTo(openAmt) < 0) {
+					exchangeDif = exchangeDif.multiply(manualAmt).divide(openAmt, 2, RoundingMode.HALF_UP);
+				}
+
 				dif = dif.add(exchangeDif);
 
 				debug("Saldos abiertos. A la fecha del comprobante: " + i.getDocumentNo() + " TotalARS hoy: " + oldTotalArs + 
