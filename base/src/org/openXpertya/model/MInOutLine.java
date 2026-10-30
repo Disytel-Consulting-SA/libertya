@@ -700,10 +700,15 @@ public class MInOutLine extends X_M_InOutLine {
         }
 		
 		// dREHER 30-01-2026 Si el producto NO corresponde con el proveedor elegido, NO DEJA AVANZAR
-		if(!inout.isSOTrx()) {
+		// Solo aplica a líneas con artículo y sin pedido: si la línea viene de un pedido de
+		// compra, el pedido ya admitió el artículo para ese proveedor
+		if(!inout.isSOTrx() && getM_Product_ID() > 0 && getC_OrderLine_ID() <= 0) {
 			MProductPO po = MProductPO.get(Env.getCtx(), getM_Product_ID(), inout.getC_BPartner_ID(), get_TrxName());
 			if (po == null) {
-				log.saveError("El artículo no pertenece al proveedor", "");
+				MProduct prod = MProduct.get(getCtx(), getM_Product_ID());
+				MBPartner vendor = new MBPartner(getCtx(), inout.getC_BPartner_ID(), get_TrxName());
+				log.saveError("El artículo " + (prod != null ? prod.getValue() + " - " + prod.getName() : getM_Product_ID())
+						+ " no pertenece al proveedor " + vendor.getName(), "");
 				return false;
 			}
 		}

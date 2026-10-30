@@ -266,7 +266,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 			}
 			// Guarda la línea de remito
 			if (!iol.save()) {
-				throw new CreateFromSaveException("@InOutLineSaveError@ (# "
+				throw new CreateFromSaveException("Error al guardar la línea del remito (# "
 						+ docLine.lineNo + "):<br>"
 						+ CLogger.retrieveErrorAsString());
 
