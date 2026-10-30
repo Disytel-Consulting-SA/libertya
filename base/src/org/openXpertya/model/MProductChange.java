@@ -596,6 +596,8 @@ public class MProductChange extends X_M_ProductChange implements DocAction {
 		MInventory inventory = new MInventory(warehouse);
 		inventory.setMovementDate(getDateTrx());
 		inventory.setDescription(getInventoryDescription(productChangeVoid));
+		// Las líneas se crean con ChargeAccount "C"; en inventarios físicos el tipo es obligatorio en cabecera.
+		inventory.set_Value("InventoryType", MInventoryLine.INVENTORYTYPE_ChargeAccount);
 		// Intenta guardar el inventory, si no es posible se lanza una excepciÃ³n.
 		if (!inventory.save()) {
 			throw new Exception("@InventoryCreateError@: " + CLogger.retrieveErrorAsString());
