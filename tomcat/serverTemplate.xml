@@ -33,7 +33,8 @@
       </Realm>
 -->
       <Host name="localhost"  appBase="webapps"
-            unpackWARs="true" autoDeploy="true">
+            unpackWARs="true" autoDeploy="true"
+            deployIgnore="^axis\.war$">
       </Host>
     </Engine>
   </Service>

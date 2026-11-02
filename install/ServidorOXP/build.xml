@@ -748,6 +748,13 @@
 	<copy file="${basedir}/utils/DetenerServidorTomcat.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>
   	<copy file="${basedir}/utils/IniciarServidorTomcat.bat" tofile="${basedir}/utils/IniciarServidor.bat" overwrite="yes" failonerror="no"/>	  	  	
   	<copy file="${basedir}/utils/DetenerServidorTomcat.bat" tofile="${basedir}/utils/DetenerServidor.bat" overwrite="yes" failonerror="no"/>
+  	
+  	<!-- LYWS: regenerar el contexto /axis desde el directorio maestro axis.war 
+  		(jboss deployaba axis.war en axis, pero tomcat no. se realiza la copia para retro-compatibilidad de URLs -->
+  	<delete dir="${DEPLOY_APPS_OXP}/axis" quiet="true"/>
+  	<copy todir="${DEPLOY_APPS_OXP}/axis" failonerror="false" overwrite="true">
+  	    <fileset dir="${DEPLOY_APPS_OXP}/axis.war"/>
+  	</copy>  
   </target>
 	
   <!-- ==================================================== -->
