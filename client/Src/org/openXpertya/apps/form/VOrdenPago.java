@@ -2215,7 +2215,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	    		}
     		} 
     		
-    		status = m_model.doPostProcesar(maxPaymentAllowed);
+    		// OP#8516 Se informa al usuario que se esta generando el comprobante, ya que puede demorar
+    		javax.swing.JDialog dlgProcesando = showProcessingDialog();
+    		try {
+    			status = m_model.doPostProcesar(maxPaymentAllowed);
+    		} finally {
+    			closeProcessingDialog(dlgProcesando);
+    		}
     		
     		switch (status) 
     		{
@@ -2255,6 +2261,52 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     // dREHER
 	private void debug(String string) {
 		System.out.println("==> VOrdenPago. " + string);
+	}
+
+	/**
+	 * OP#8516 Muestra un aviso de que se esta generando el recibo o la orden de pago, para que el usuario
+	 * sepa que el programa no esta colgado mientras se completa el comprobante. El proceso corre en el hilo
+	 * de la interfaz, por lo que el aviso se pinta de forma inmediata antes de comenzar.
+	 * 
+	 * @return el dialogo mostrado, para cerrarlo con {@link #closeProcessingDialog(javax.swing.JDialog)}
+	 */
+	protected javax.swing.JDialog showProcessingDialog() {
+		javax.swing.JDialog dlg = null;
+		try {
+			String msg = getModel().isSOTrx() ? "Generando Recibo, por favor espere..."
+					: "Generando Orden de Pago, por favor espere...";
+			dlg = new javax.swing.JDialog(m_frame, false);
+			dlg.setUndecorated(true);
+			javax.swing.JLabel lbl = new javax.swing.JLabel(msg, javax.swing.SwingConstants.CENTER);
+			lbl.setFont(lbl.getFont().deriveFont(java.awt.Font.BOLD, 15f));
+			javax.swing.JPanel panel = new javax.swing.JPanel(new BorderLayout());
+			panel.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+					javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY, 2),
+					javax.swing.BorderFactory.createEmptyBorder(25, 50, 25, 50)));
+			panel.add(lbl, BorderLayout.CENTER);
+			dlg.setContentPane(panel);
+			dlg.pack();
+			dlg.setLocationRelativeTo(m_frame);
+			dlg.setVisible(true);
+			// Se pinta ya mismo: el proceso que sigue bloquea el hilo de la interfaz
+			panel.paintImmediately(0, 0, panel.getWidth(), panel.getHeight());
+			m_frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		} catch (Exception e) {
+			// El aviso es solo informativo: un problema al mostrarlo no debe impedir generar el comprobante
+			debug("No se pudo mostrar el aviso de procesamiento: " + e.getMessage());
+		}
+		return dlg;
+	}
+
+	protected void closeProcessingDialog(javax.swing.JDialog dlg) {
+		try {
+			m_frame.setCursor(Cursor.getDefaultCursor());
+			if (dlg != null) {
+				dlg.dispose();
+			}
+		} catch (Exception e) {
+			debug("No se pudo cerrar el aviso de procesamiento: " + e.getMessage());
+		}
 	}
 
 	protected CallResult validateDebitNote() {

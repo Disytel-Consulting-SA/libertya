@@ -388,7 +388,13 @@ public class VOrdenCobro extends VOrdenPago {
 	    		}
     		} 
     		
-    		status = m_model.doPostProcesar(maxPaymentAllowed);
+    		// OP#8516 Se informa al usuario que se esta generando el comprobante, ya que puede demorar
+    		javax.swing.JDialog dlgProcesando = showProcessingDialog();
+    		try {
+    			status = m_model.doPostProcesar(maxPaymentAllowed);
+    		} finally {
+    			closeProcessingDialog(dlgProcesando);
+    		}
     		
     		switch (status) 
     		{
