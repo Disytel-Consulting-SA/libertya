@@ -55,6 +55,10 @@ public class DocumentsDataSource extends OPDataSource {
 				// con la fecha de emision el importe imputado no coincidia con el saldo cuando ambas fechas difieren
 				+ "	 SUM(CASE "
 				+ "		 WHEN ah.c_currency_id = i.c_currency_id THEN al.amount + al.discountamt + al.writeoffamt "
+				// OP#8516 Pago en la moneda de la factura con tasa de cambio propia (anticipo): se usa esa tasa
+				+ "		 WHEN al.c_payment_id IS NOT NULL AND payment_exchange_rate(al.c_payment_id) IS NOT NULL "
+				+ "			 AND (SELECT p.c_currency_id FROM c_payment p WHERE p.c_payment_id = al.c_payment_id) = i.c_currency_id "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/payment_exchange_rate(al.c_payment_id), i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
 				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateacct::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
