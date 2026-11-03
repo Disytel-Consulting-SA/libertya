@@ -99,6 +99,12 @@ public class AllocationGenerator {
 	 */
 	public java.util.Map<Integer, BigDecimal> exchangeDifPurchasesByInvoice = null;
 	/**
+	 * OP#8516 Parte de la diferencia de cambio de pagos a proveedores que corresponde a lo cubierto con anticipos en la
+	 * misma moneda de la factura: id de la factura y diferencia en moneda de la compañía (positiva: pérdida, negativa:
+	 * ganancia). Se registra en un asiento del mayor vinculado a la asignación.
+	 */
+	public java.util.Map<Integer, BigDecimal> exchangeDifJournalByInvoice = null;
+	/**
 	 * OP#8516 Tasa de cambio propia de pagos que se usan como medio de pago (anticipos en moneda extranjera): id del
 	 * pago y tasa. Si un pago tiene tasa propia, se valoriza en moneda de la compañía con esa tasa y no con la de la
 	 * tabla de tasas de cambio.
@@ -424,6 +430,7 @@ public class AllocationGenerator {
 				// OP#8516 En pagos a proveedores se generan Débito/Crédito Proveedor por la diferencia de cambio
 				if(emit || include) {
 					generateDebitCreditExchangeDifferencePurchases();
+					generateExchangeDifferenceJournalPurchases();
 				}
 			}
 
@@ -2196,6 +2203,97 @@ public class AllocationGenerator {
 		}
 		if(!credits.isEmpty()) {
 			createExchangeDifDocumentPurchases(true, credits);
+		}
+	}
+
+	/**
+	 * OP#8516 Registra en un asiento del mayor (tipo de documento Asiento) la diferencia de cambio de lo que se canceló
+	 * con anticipos en la misma moneda de la factura. Es una diferencia de valuación, no una deuda con el proveedor, por
+	 * lo que no se genera un Débito/Crédito de Proveedor. Pérdida: Debe Pérdida por diferencia de cambio realizada /
+	 * Haber Proveedores. Ganancia: Debe Proveedores / Haber Ganancia por diferencia de cambio realizada.
+	 * El asiento se vincula a la asignación (GL_Journal.C_AllocationHdr_ID) para anularlo al revertirla. Si solo se emite
+	 * queda en borrador como propuesta; si además se incluye, se completa.
+	 * 
+	 * OPCION 2 (pendiente de definir con Siasa): en lugar del asiento, generar un par Débito de Proveedor (VID) + Crédito
+	 * de Proveedor (VDC) por el mismo monto e imputarlos entre sí dentro de esta misma asignación, de modo que la
+	 * diferencia quede como documentos visibles en la cuenta corriente sin alterar el saldo. Se haría llamando a
+	 * createExchangeDifDocumentPurchases(false, debits) y createExchangeDifDocumentPurchases(true, credits) con el mismo
+	 * mapa de montos (valor absoluto) y luego addDebitDocument/addCreditDocument de ambos con el mismo total, en lugar
+	 * de crear el asiento de este método.
+	 */
+	protected void generateExchangeDifferenceJournalPurchases() throws Exception {
+		if(exchangeDifJournalByInvoice == null || exchangeDifJournalByInvoice.isEmpty()) {
+			return;
+		}
+		BigDecimal total = Env.ZERO;
+		for(BigDecimal v : exchangeDifJournalByInvoice.values()) {
+			total = total.add(v);
+		}
+		if(total.signum() == 0) {
+			return;
+		}
+		int clientID = Env.getAD_Client_ID(getCtx());
+		MAllocationHdr hdr = getAllocationHdr();
+		MAcctSchema as = MAcctSchema.getClientAcctSchema(getCtx(), clientID)[0];
+		int currencyID = as.getC_Currency_ID();
+
+		int docTypeID = DB.getSQLValue(getTrxName(), "SELECT C_DocType_ID FROM C_DocType WHERE DocBaseType = 'GLJ' AND IsActive = 'Y' AND AD_Client_ID IN (0, ?) ORDER BY AD_Client_ID DESC, C_DocType_ID LIMIT 1", clientID);
+		if(docTypeID <= 0) {
+			throw new Exception("No existe un tipo de documento de asiento (GLJ) para registrar la diferencia de cambio.");
+		}
+		int categoryID = DB.getSQLValue(getTrxName(), "SELECT GL_Category_ID FROM GL_Category WHERE IsActive = 'Y' AND AD_Client_ID IN (0, ?) ORDER BY IsDefault DESC, AD_Client_ID DESC, GL_Category_ID LIMIT 1", clientID);
+		if(categoryID <= 0) {
+			throw new Exception("No existe una categoría contable para registrar la diferencia de cambio.");
+		}
+		int liabilityID = DB.getSQLValue(getTrxName(), "SELECT V_Liability_Acct FROM C_BP_Vendor_Acct WHERE C_BPartner_ID = ? AND C_AcctSchema_ID = ?", hdr.getC_BPartner_ID(), as.getC_AcctSchema_ID());
+		if(liabilityID <= 0) {
+			throw new Exception("El proveedor no tiene cuenta de proveedores configurada para registrar la diferencia de cambio.");
+		}
+		boolean loss = total.signum() > 0;
+		int resultAcctID = loss ? as.getAcctSchemaDefault().getRealizedLoss_Acct() : as.getAcctSchemaDefault().getRealizedGain_Acct();
+		if(resultAcctID <= 0) {
+			throw new Exception("No está configurada la cuenta de " + (loss ? "pérdida" : "ganancia") + " por diferencia de cambio realizada.");
+		}
+		BigDecimal amt = total.abs();
+
+		MJournal journal = new MJournal(getCtx(), 0, getTrxName());
+		journal.setAD_Org_ID(hdr.getAD_Org_ID());
+		journal.setC_AcctSchema_ID(as.getC_AcctSchema_ID());
+		journal.setC_DocType_ID(docTypeID);
+		journal.setGL_Category_ID(categoryID);
+		journal.setC_Currency_ID(currencyID);
+		journal.setDateDoc(hdr.getDateAcct());
+		journal.setDateAcct(hdr.getDateAcct());
+		journal.setDescription("Diferencia de cambio por anticipos en Orden de Pago " + hdr.getDocumentNo());
+		journal.set_Value("C_AllocationHdr_ID", hdr.getC_AllocationHdr_ID());
+		if(!journal.save()) {
+			throw new Exception("No se pudo crear el asiento de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+		}
+		MJournalLine debit = new MJournalLine(journal);
+		debit.setLine(10);
+		debit.setC_ValidCombination_ID(loss ? resultAcctID : liabilityID);
+		debit.setAmtSourceDr(amt);
+		debit.setDescription(journal.getDescription());
+		if(!debit.save()) {
+			throw new Exception("No se pudo crear la línea del asiento de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+		}
+		MJournalLine credit = new MJournalLine(journal);
+		credit.setLine(20);
+		credit.setC_ValidCombination_ID(loss ? liabilityID : resultAcctID);
+		credit.setAmtSourceCr(amt);
+		credit.setDescription(journal.getDescription());
+		if(!credit.save()) {
+			throw new Exception("No se pudo crear la línea del asiento de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+		}
+		if(!include) {
+			debug("generateExchangeDifferenceJournalPurchases. NO SE INCLUYE, queda en borrador asiento " + journal.getDocumentNo());
+			return;
+		}
+		if(!journal.processIt(MJournal.DOCACTION_Complete)) {
+			throw new Exception("No se pudo completar el asiento de diferencia de cambio: " + journal.getProcessMsg());
+		}
+		if(!journal.save()) {
+			throw new Exception(CLogger.retrieveErrorAsString());
 		}
 	}
 

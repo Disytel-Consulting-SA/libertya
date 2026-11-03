@@ -1486,7 +1486,34 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			throw new Exception("@VoidRetentionError@ (" + invoice.getDocumentNo() + "): " + errorMsg);
     }
     
+    /**
+     * OP#8516 Anula los asientos de diferencia de cambio (GL_Journal) que generó esta asignación: los completos se
+     * revierten y los que están en borrador se anulan.
+     */
+    private void voidDiffCambioJournals() throws Exception {
+    	PreparedStatement ps = DB.prepareStatement(
+    			"SELECT GL_Journal_ID FROM GL_Journal WHERE C_AllocationHdr_ID = ? AND DocStatus IN ('DR','CO') AND IsActive = 'Y'",
+    			get_TrxName());
+    	ResultSet r = null;
+    	try {
+    		ps.setInt(1, getC_AllocationHdr_ID());
+    		r = ps.executeQuery();
+    		while (r.next()) {
+    			MJournal journal = new MJournal(getCtx(), r.getInt(1), get_TrxName());
+    			String action = DocAction.STATUS_Completed.equals(journal.getDocStatus())
+    					? DocAction.ACTION_Reverse_Correct : DocAction.ACTION_Void;
+    			if (!journal.processIt(action) || !journal.save()) {
+    				throw new Exception("No se pudo anular el asiento " + journal.getDocumentNo() + ": "
+    						+ (journal.getProcessMsg() != null ? journal.getProcessMsg() : CLogger.retrieveErrorAsString()));
+    			}
+    		}
+    	} finally {
+    		try { if (r != null) r.close(); ps.close(); } catch (Exception e) {}
+    	}
+    }
+
     private void voidDiffCambio() throws Exception {
+    	voidDiffCambioJournals();
     	// Se obtienen las ND o NC por diferencia de cambio
     	String sql = 
     			"SELECT distinct i.c_invoice_id  " +

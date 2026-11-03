@@ -4368,6 +4368,7 @@ public class VOrdenPagoModel {
 			getPoGenerator().setInclude(isCintoloInclude);
 			getPoGenerator().setEmit(isCintoloEmit);
 			getPoGenerator().exchangeDifPurchasesByInvoice = new HashMap<Integer, BigDecimal>(exchangeDifPurchasesByInvoice);
+			getPoGenerator().exchangeDifJournalByInvoice = new HashMap<Integer, BigDecimal>(exchangeDifJournalByInvoice);
 			// Los anticipos en moneda extranjera se valorizan con la tasa propia de cada uno
 			HashMap<Integer, BigDecimal> tasasPagos = new HashMap<Integer, BigDecimal>();
 			for (MedioPago pago : pagos) {
@@ -4709,6 +4710,14 @@ public class VOrdenPagoModel {
 	 * se pagan menos).
 	 */
 	protected java.util.LinkedHashMap<Integer, BigDecimal> exchangeDifPurchasesByInvoice = new java.util.LinkedHashMap<Integer, BigDecimal>();
+	/**
+	 * OP#8516 Parte de la diferencia de cambio que corresponde a lo cubierto con anticipos en la misma moneda de la
+	 * factura: se registra en un asiento del mayor y no como documento. Id de la factura y diferencia.
+	 */
+	protected java.util.LinkedHashMap<Integer, BigDecimal> exchangeDifJournalByInvoice = new java.util.LinkedHashMap<Integer, BigDecimal>();
+	/** OP#8516 Por factura: monto cubierto con anticipos (moneda de la factura) y su valor en pesos con la tasa de cada anticipo */
+	protected java.util.Map<Integer, BigDecimal> anticipoCubiertoMoneda = new java.util.HashMap<Integer, BigDecimal>();
+	protected java.util.Map<Integer, BigDecimal> anticipoCubiertoPesos = new java.util.HashMap<Integer, BigDecimal>();
 
 	public java.util.Map<Integer, BigDecimal> getExchangeDifPurchasesByInvoice() {
 		return exchangeDifPurchasesByInvoice;
@@ -4725,6 +4734,7 @@ public class VOrdenPagoModel {
 	public BigDecimal calculateExchangeDifferencePurchases() {
 		BigDecimal total = BigDecimal.ZERO;
 		exchangeDifPurchasesByInvoice.clear();
+		exchangeDifJournalByInvoice.clear();
 		if (m_facturas == null) {
 			return total;
 		}
@@ -4737,21 +4747,42 @@ public class VOrdenPagoModel {
 			}
 			int invoiceID = (Integer) rif.getItem(m_facturasTableModel.getIdColIdx());
 			MInvoice invoice = new MInvoice(m_ctx, invoiceID, trxName);
-			BigDecimal valueAtInvoice = MCurrency.currencyConvert(rif.getManualAmount(), cur, C_Currency_ID,
-					invoice.getDateAcct(), 0, m_ctx);
-			if (valueAtInvoice == null) {
-				debug("Sin tasa de cambio a la fecha de aplicación de la factura " + invoice.getDocumentNo()
-						+ ", no se calcula la diferencia de cambio");
-				continue;
-			}
+			BigDecimal usd = rif.getManualAmount();
 			BigDecimal paid = rif.getManualAmtClientCurrency() == null ? BigDecimal.ZERO : rif.getManualAmtClientCurrency();
-			BigDecimal dif = paid.subtract(valueAtInvoice).setScale(precision, RoundingMode.HALF_UP);
-			debug("Diferencia de cambio compras. Factura " + invoice.getDocumentNo() + " USD " + rif.getManualAmount()
-					+ " pagado ARS " + paid + " valor a fecha de aplicación (" + invoice.getDateAcct() + ") ARS "
-					+ valueAtInvoice + " diferencia " + dif);
-			if (dif.signum() != 0) {
-				exchangeDifPurchasesByInvoice.put(invoiceID, dif);
-				total = total.add(dif);
+			BigDecimal coveredUsd = anticipoCubiertoMoneda.containsKey(invoiceID) ? anticipoCubiertoMoneda.get(invoiceID) : BigDecimal.ZERO;
+			BigDecimal coveredPesos = anticipoCubiertoPesos.containsKey(invoiceID) ? anticipoCubiertoPesos.get(invoiceID) : BigDecimal.ZERO;
+
+			// Parte de la factura cubierta por anticipos en la misma moneda: la diferencia es solo de valuacion y
+			// se registra en un asiento del mayor (no es una deuda con el proveedor)
+			BigDecimal difAsiento = BigDecimal.ZERO;
+			if (coveredUsd.signum() > 0) {
+				BigDecimal valueCovered = MCurrency.currencyConvert(coveredUsd, cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+				if (valueCovered != null) {
+					difAsiento = coveredPesos.subtract(valueCovered).setScale(precision, RoundingMode.HALF_UP);
+				}
+			}
+			// Parte pagada en pesos: la diferencia se salda con un Debito/Credito de Proveedor
+			BigDecimal restUsd = usd.subtract(coveredUsd);
+			BigDecimal restPesos = paid.subtract(coveredPesos);
+			BigDecimal difDocumento = BigDecimal.ZERO;
+			if (restUsd.signum() > 0) {
+				BigDecimal valueRest = MCurrency.currencyConvert(restUsd, cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+				if (valueRest == null) {
+					debug("Sin tasa de cambio a la fecha de aplicación de la factura " + invoice.getDocumentNo()
+							+ ", no se calcula la diferencia de cambio");
+				} else {
+					difDocumento = restPesos.subtract(valueRest).setScale(precision, RoundingMode.HALF_UP);
+				}
+			}
+			debug("Diferencia de cambio compras. Factura " + invoice.getDocumentNo() + " USD " + usd + " (anticipos "
+					+ coveredUsd + ") pagado ARS " + paid + ": asiento " + difAsiento + " documento " + difDocumento);
+			if (difAsiento.signum() != 0) {
+				exchangeDifJournalByInvoice.put(invoiceID, difAsiento);
+				total = total.add(difAsiento);
+			}
+			if (difDocumento.signum() != 0) {
+				exchangeDifPurchasesByInvoice.put(invoiceID, difDocumento);
+				total = total.add(difDocumento);
 			}
 		}
 		return total;
@@ -4786,6 +4817,8 @@ public class VOrdenPagoModel {
 						? poolPesos.get(mp.monedaOriginalID).add(pesos) : pesos);
 			}
 		}
+		anticipoCubiertoMoneda.clear();
+		anticipoCubiertoPesos.clear();
 		if (poolMoneda.isEmpty()) {
 			// Sin anticipos en moneda extranjera: pesos de las facturas segun la tasa del comprobante
 			if (exchangeRateComprobante != null) {
@@ -4816,6 +4849,8 @@ public class VOrdenPagoModel {
 				cubiertoPesos = pesosDisp.multiply(cubierto).divide(disponible, precision, RoundingMode.HALF_UP);
 				poolMoneda.put(cur, disponible.subtract(cubierto));
 				poolPesos.put(cur, pesosDisp.subtract(cubiertoPesos));
+				anticipoCubiertoMoneda.put((Integer) rif.getItem(m_facturasTableModel.getIdColIdx()), cubierto);
+				anticipoCubiertoPesos.put((Integer) rif.getItem(m_facturasTableModel.getIdColIdx()), cubiertoPesos);
 			}
 			// Lo que no cubren los anticipos se valoriza con la tasa del comprobante o, si no hay, la de la tabla
 			BigDecimal restante = usd.subtract(cubierto);
@@ -4848,18 +4883,16 @@ public class VOrdenPagoModel {
 		this.exchangeDifference = calculateExchangeDifferencePurchases();
 
 		BigDecimal totalValue = BigDecimal.ZERO;
-		for (Integer invoiceID : exchangeDifPurchasesByInvoice.keySet()) {
-			for (ResultItem x : m_facturas) {
-				ResultItemFactura rif = (ResultItemFactura) x;
-				if (invoiceID.equals(rif.getItem(m_facturasTableModel.getIdColIdx()))) {
-					MInvoice invoice = new MInvoice(m_ctx, invoiceID, trxName);
-					BigDecimal value = MCurrency.currencyConvert(rif.getManualAmount(),
-							(Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx()), C_Currency_ID,
-							invoice.getDateAcct(), 0, m_ctx);
-					if (value != null) {
-						totalValue = totalValue.add(value);
-					}
-				}
+		for (ResultItem x : m_facturas == null ? new java.util.Vector<ResultItem>() : m_facturas) {
+			ResultItemFactura rif = (ResultItemFactura) x;
+			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
+			if (cur == C_Currency_ID || rif.getManualAmount() == null || rif.getManualAmount().signum() <= 0) {
+				continue;
+			}
+			MInvoice invoice = new MInvoice(m_ctx, (Integer) rif.getItem(m_facturasTableModel.getIdColIdx()), trxName);
+			BigDecimal value = MCurrency.currencyConvert(rif.getManualAmount(), cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+			if (value != null) {
+				totalValue = totalValue.add(value);
 			}
 		}
 		this.exchangeDifferencePercent = totalValue.signum() == 0 ? BigDecimal.ZERO
