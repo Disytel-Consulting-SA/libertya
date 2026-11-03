@@ -2679,6 +2679,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		int cc = tblFacturas.getColumnModel().getColumnCount();
 		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
 		TableColumn tc2 = tblFacturas.getColumnModel().getColumn(cc - 2);
+		// OP#8516 Se ensancha la columna del número de documento para que se vea completo
+		String docColName = Msg.getElement(Env.getCtx(), "DocumentNo");
+		for (int i = 0; i < cc; i++) {
+			TableColumn docCol = tblFacturas.getColumnModel().getColumn(i);
+			if (docColName != null && docColName.equals(docCol.getHeaderValue())) {
+				docCol.setPreferredWidth(150);
+				docCol.setWidth(150);
+				break;
+			}
+		}
 		tc.setCellEditor(cellEd);
 		tc2.setCellEditor(cellEd2);
 		cellEd.addCellEditorListener(this);
