@@ -2108,8 +2108,10 @@ public class AllocationGenerator {
 		
 		// - Si es un crédito lo guardo como un medio de pago
 		// - Si es un débito lo guardo donde se encuentran las facturas
-		if(isCredit){			
-			this.addCreditDocument(inv.getID(), amt, AllocationDocumentType.INVOICE);
+		if(isCredit){
+			// amt es negativo cuando la diferencia es a favor del cliente, pero el crédito se imputa por su monto en positivo:
+			// con el signo negativo la línea de la NC resta del cobro y la factura queda con saldo abierto
+			this.addCreditDocument(inv.getID(), amt.abs(), AllocationDocumentType.INVOICE);
 		} else {
 
 			debug("generateDebitCreditExchangeDifference. Debe agregar DEBITO DocumentNo=" + inv.getDocumentNo());
