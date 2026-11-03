@@ -2288,8 +2288,21 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			dlg.pack();
 			dlg.setLocationRelativeTo(m_frame);
 			dlg.setVisible(true);
-			// Se pinta ya mismo: el proceso que sigue bloquea el hilo de la interfaz
-			panel.paintImmediately(0, 0, panel.getWidth(), panel.getHeight());
+			// El proceso que sigue bloquea el hilo de la interfaz, por eso el contenido se pinta a mano:
+			// se espera un instante a que el sistema de ventanas termine de mostrar la ventana, ya que
+			// si se pinta antes la pintura se pierde y el cuadro queda sin texto
+			try {
+				Thread.sleep(150);
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+			}
+			dlg.validate();
+			java.awt.Graphics g = dlg.getGraphics();
+			if (g != null) {
+				dlg.paintAll(g);
+				g.dispose();
+			}
+			java.awt.Toolkit.getDefaultToolkit().sync();
 			m_frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		} catch (Exception e) {
 			// El aviso es solo informativo: un problema al mostrarlo no debe impedir generar el comprobante
