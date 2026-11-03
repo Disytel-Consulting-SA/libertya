@@ -840,6 +840,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	dateTrx = VComponentsFactory.VDateFactory();
 		dateTrx.setValue(new Date());
 		dateTrx.setMandatory(true);
+		createTasaCambio();
 		dateTrx.addVetoableChangeListener(new VetoableChangeListener() {
 			
 			@Override
@@ -848,6 +849,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				
 				m_model.setFechaOP(dateTrx.getTimestamp());
 				m_model.actualizarFacturas();
+				refrescarTasaCambio();
 				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
 				
 				/**
@@ -864,6 +866,62 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		});
     }
     
+    /**
+     * OP#8516 Crea el campo Tasa de cambio del comprobante y el panel que lo agrupa con la fecha.
+     * La tasa se propone con la tasa del día (tabla de tasas de cambio) y el usuario puede
+     * modificarla.
+     */
+    protected void createTasaCambio() {
+    	lblTasaCambio = new javax.swing.JLabel("Tasa de cambio:");
+    	txtTasaCambio = new VNumber();
+    	txtTasaCambio.setDisplayType(DisplayType.CostPrice);
+    	txtTasaCambio.setReadWrite(false);
+    	txtTasaCambio.setToolTipText("Tasa de cambio del comprobante (moneda de la compañía por unidad de moneda extranjera). "
+    			+ "Se propone la tasa del día y puede modificarse.");
+    	txtTasaCambio.addVetoableChangeListener(new VetoableChangeListener() {
+			@Override
+			public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+				BigDecimal nueva = (BigDecimal) txtTasaCambio.getValue();
+				BigDecimal actual = m_model.getExchangeRateComprobante();
+				if (nueva != null && nueva.signum() <= 0) {
+					nueva = null;
+				}
+				if ((nueva == null && actual == null) || (nueva != null && actual != null && nueva.compareTo(actual) == 0)) {
+					return;
+				}
+				m_model.setExchangeRateComprobante(nueva);
+				// Si la dejó vacía se vuelve a proponer la tasa del día
+				m_model.setExchangeRateManual(nueva != null);
+				if (nueva == null) {
+					m_model.actualizarTasaComprobanteDefault();
+					refrescarTasaCambio();
+				}
+				m_model.recalcularMontosPorTasaComprobante();
+			}
+		});
+    	panelFechaTasa = new javax.swing.JPanel();
+    	panelFechaTasa.setOpaque(false);
+    	panelFechaTasa.setLayout(new javax.swing.BoxLayout(panelFechaTasa, javax.swing.BoxLayout.X_AXIS));
+    	panelFechaTasa.add(dateTrx);
+    	panelFechaTasa.add(javax.swing.Box.createHorizontalStrut(8));
+    	panelFechaTasa.add(lblTasaCambio);
+    	panelFechaTasa.add(javax.swing.Box.createHorizontalStrut(4));
+    	panelFechaTasa.add(txtTasaCambio);
+    }
+
+    /**
+     * OP#8516 Actualiza el campo Tasa de cambio con el valor del modelo. Solo se habilita si
+     * hay facturas en moneda extranjera y se está en la pestaña de selección de facturas.
+     */
+    protected void refrescarTasaCambio() {
+    	if (txtTasaCambio == null || m_model == null) {
+    		return;
+    	}
+    	boolean hayMonedaExtranjera = m_model.getExchangeRateCurrencyID() > 0;
+    	txtTasaCambio.setValue(m_model.getExchangeRateComprobante());
+    	txtTasaCambio.setReadWrite(hayMonedaExtranjera && jTabbedPane1.getSelectedIndex() == 0);
+    }
+
     protected void setActionEnabled(String action, boolean enabled) {
 		String kAction = (enabled?action:"none");
         KeyStroke keyStroke = getActionKeys().get(action);
@@ -995,7 +1053,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboClient, 0, 234, Short.MAX_VALUE)
                     .add(BPartnerSel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
-                    .add(dateTrx, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+                    .add(panelFechaTasa, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
                     .add(txtDescription,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,234,Short.MAX_VALUE)
                 		)
                 .addContainerGap())
@@ -1014,7 +1072,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             	.add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
             			.add(lblDateTrx)
-            			.add(dateTrx,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            			.add(panelFechaTasa,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 		.add(lblDescription)
@@ -1919,6 +1977,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	}
     	
     	m_model.setFechaTablaFacturas(invoiceDatePick.getTimestamp(),rInvoiceAll.isSelected());
+    	refrescarTasaCambio();
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
@@ -2095,6 +2154,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			// pestaña
     		updateComponentsPreProcesar();
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		fldDocumentNo.setValue(getModel().getDocumentNo());
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
@@ -2335,6 +2395,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private javax.swing.ButtonGroup buttonGroup2;
     protected VLookup cboCampaign;
     protected VDate dateTrx;
+    // OP#8516 Tasa de cambio del comprobante, se muestra junto a la fecha
+    protected javax.swing.JPanel panelFechaTasa;
+    protected javax.swing.JLabel lblTasaCambio;
+    protected VNumber txtTasaCambio;
     protected VLookup cboClient;
     protected VLookup cboOrg;
     protected VLookup cboProject;
@@ -3180,6 +3244,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	            public void run() {
 	            	// Actualizo el modelo
 	            	getModel().updateBPartner((Integer)BPartnerSel.getValue());
+	            	refrescarTasaCambio();
 					// Actualizo los componentes custom de la interfaz gráfica
 					// relacionados con el cambio de la entidad comercial
 	            	customUpdateBPartnerRelatedComponents(true);
@@ -3272,6 +3337,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			cboDocumentType.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			fldDocumentNo.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			dateTrx.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
+			refrescarTasaCambio();
 			cboPaymentRule.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			
 		} else if (arg0.getSource() == jTabbedPane2) {
@@ -3949,6 +4015,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_model.setBPartnerFacturas(0);
 		radPayTypeStd.setSelected(true);
 		m_model.actualizarFacturas();
+		m_model.setExchangeRateManual(false);
+		refrescarTasaCambio();
 		cboCampaign.setValue(null);
 		cboProject.setValue(null);
 		cboCurrency.setValue(m_C_Currency_ID);
@@ -4054,6 +4122,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		getModel().setPaymentRule(((ValueNamePair)cboPaymentRule.getValue()).getValue());
 		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", ((ValueNamePair) cboPaymentRule.getValue()).getValue());
 		getModel().actualizarFacturas();
+		refrescarTasaCambio();
 	}
 
 	/* === Contenido migrado de VOrdenPagoModel === */

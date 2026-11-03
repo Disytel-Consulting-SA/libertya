@@ -329,6 +329,7 @@ public class VOrdenCobro extends VOrdenPago {
 			// Actualizo componentes gráficos antes de pasar a la siguiente pestaña
     		updateComponentsPreProcesar();
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		fldDocumentNo.setValue(getModel().getDocumentNo());
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
@@ -744,7 +745,7 @@ public class VOrdenCobro extends VOrdenPago {
 										.add(fldDocumentNo,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												234, Short.MAX_VALUE)
-										.add(dateTrx,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+										.add(panelFechaTasa,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												234, Short.MAX_VALUE)
 										)
 								.addContainerGap()));
@@ -789,7 +790,7 @@ public class VOrdenCobro extends VOrdenPago {
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.BASELINE)
 										.add(lblDateTrx)
-										.add(dateTrx,
+										.add(panelFechaTasa,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))

@@ -1201,7 +1201,8 @@ public class VOrdenPagoModel {
 					}
 					
 					
-					if (fecha == null && conversionRate == null && exchangeRate.compareTo(Env.ZERO) == 0) {
+					if (fecha == null && conversionRate == null && exchangeRate.compareTo(Env.ZERO) == 0
+							&& !usaTasaComprobante(currency_ID_To)) {
 						
 						debug("validateConvertionRate. NO hay Tasa de conversion para Fecha FACT: " + 
 								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fechaFC) + " - ExchangeRate: " + exchangeRate);
@@ -1213,7 +1214,7 @@ public class VOrdenPagoModel {
 								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fechaFC) + " - Moneda: " + isoCode, true);
 						break;
 						
-					} else if (fecha != null && conversionRate == null) {
+					} else if (fecha != null && conversionRate == null && !usaTasaComprobante(currency_ID_To)) {
 						rs.setMsg("NO existe Tasa de conversion para Fecha: " +
 								new java.text.SimpleDateFormat("dd/MM/yyyy").format(fecha) + " - Moneda: " + isoCode, true);
 						break;
@@ -1256,6 +1257,17 @@ public class VOrdenPagoModel {
 	private Integer projectID = 0;
 	private Integer campaignID = 0;
 	
+	/**
+	 * OP#8516 Tasa de cambio del comprobante (recibo/OP): unidades de la moneda de la compañía
+	 * por cada unidad de moneda extranjera. Si es nula o cero se utiliza la tasa de la tabla de
+	 * tasas de cambio a la fecha del comprobante. Aplica solamente a la moneda extranjera
+	 * indicada en exchangeRateCurrencyID.
+	 */
+	private BigDecimal exchangeRateComprobante = null;
+	private int exchangeRateCurrencyID = 0;
+	/** Indica si el usuario modificó la tasa, para no pisarla con la tasa del día */
+	private boolean exchangeRateManual = false;
+
 	// CINTOLO. Valores de diferencia de cambio.
 	protected BigDecimal exchangeDifference = BigDecimal.ZERO;
 	protected BigDecimal exchangeDifferencePercent = BigDecimal.ZERO;
@@ -1545,6 +1557,189 @@ public class VOrdenPagoModel {
 		m_fechaTrx = fecha;
 	}
 
+	public BigDecimal getExchangeRateComprobante() {
+		return exchangeRateComprobante;
+	}
+
+	/**
+	 * Setea la tasa de cambio del comprobante, ingresada por el usuario.
+	 * Una tasa nula o menor o igual a cero equivale a no tener tasa propia.
+	 */
+	public void setExchangeRateComprobante(BigDecimal rate) {
+		this.exchangeRateComprobante = (rate == null || rate.signum() <= 0) ? null : rate;
+	}
+
+	public int getExchangeRateCurrencyID() {
+		return exchangeRateCurrencyID;
+	}
+
+	public boolean isExchangeRateManual() {
+		return exchangeRateManual;
+	}
+
+	public void setExchangeRateManual(boolean exchangeRateManual) {
+		this.exchangeRateManual = exchangeRateManual;
+	}
+
+	/**
+	 * @return true si la tasa del comprobante aplica a la moneda recibida
+	 */
+	public boolean usaTasaComprobante(int currency_ID_To) {
+		return exchangeRateComprobante != null && exchangeRateComprobante.signum() > 0
+				&& currency_ID_To > 0 && currency_ID_To == exchangeRateCurrencyID
+				&& currency_ID_To != C_Currency_ID;
+	}
+
+	/**
+	 * Determina la moneda extranjera a la que aplica la tasa del comprobante (la de la primera
+	 * factura en moneda extranjera) y, si el usuario no cargó una tasa propia, propone la tasa
+	 * de la tabla a la fecha del comprobante.
+	 */
+	public void actualizarTasaComprobanteDefault() {
+		int foreignCurrencyID = 0;
+		if (m_facturas != null) {
+			for (ResultItem x : m_facturas) {
+				int cur = (Integer) x.getItem(m_facturasTableModel.getCurrencyColIdx());
+				if (cur > 0 && cur != C_Currency_ID) {
+					foreignCurrencyID = cur;
+					break;
+				}
+			}
+		}
+		if (foreignCurrencyID != exchangeRateCurrencyID) {
+			// Cambió la moneda: la tasa anterior ya no corresponde
+			exchangeRateManual = false;
+			exchangeRateComprobante = null;
+		}
+		exchangeRateCurrencyID = foreignCurrencyID;
+		if (foreignCurrencyID == 0) {
+			exchangeRateManual = false;
+			exchangeRateComprobante = null;
+		} else if (!exchangeRateManual) {
+			setExchangeRateComprobante(getTasaDelDia(foreignCurrencyID));
+		}
+	}
+
+	/**
+	 * @return tasa de la tabla de tasas de cambio a la fecha del comprobante para pasar de la
+	 *         moneda recibida a la de la compañía, null si no existe
+	 */
+	public BigDecimal getTasaDelDia(int currencyID) {
+		if (currencyID <= 0 || currencyID == C_Currency_ID || m_fechaTrx == null) {
+			return null;
+		}
+		return MConversionRate.getRate(currencyID, C_Currency_ID, m_fechaTrx, 0,
+				Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(getCtx()));
+	}
+
+	/**
+	 * Calcula los montos a pagar de una factura con la tasa del comprobante.
+	 * 
+	 * @param clientAmtEdited
+	 *            true si el usuario ingresó el monto en moneda de la compañía, false si
+	 *            lo ingresó en la moneda de la factura
+	 */
+	protected void aplicarTasaComprobante(int row, ResultItemFactura rif, int currency_ID_To,
+			boolean clientAmtEdited) {
+		BigDecimal rate = exchangeRateComprobante;
+		int precFactura = MCurrency.getStdPrecision(getCtx(), currency_ID_To);
+		int precLocal = mCurency.getStdPrecision();
+
+		BigDecimal openFactura = (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenAmtColIdx());
+		if (openFactura == null) {
+			openFactura = BigDecimal.ZERO;
+		}
+		if (rif.isToPayWithPaymentTerm() && rif.getPaymentTermDiscount() != null) {
+			openFactura = openFactura
+					.subtract(rif.getPaymentTermDiscount().divide(rate, precFactura, RoundingMode.HALF_UP));
+		}
+
+		BigDecimal amtFactura;
+		BigDecimal amtLocal = null;
+		if (clientAmtEdited) {
+			amtLocal = rif.getManualAmtClientCurrency();
+			if (amtLocal == null || amtLocal.signum() < 0) {
+				amtLocal = BigDecimal.ZERO;
+			}
+			amtFactura = amtLocal.divide(rate, precFactura, RoundingMode.HALF_UP);
+		} else {
+			amtFactura = rif.getManualAmount();
+			if (amtFactura == null || amtFactura.signum() < 0) {
+				amtFactura = BigDecimal.ZERO;
+			}
+		}
+
+		// No se puede pagar más que el saldo de la factura
+		if (amtFactura.compareTo(openFactura) > 0) {
+			amtFactura = openFactura;
+			amtLocal = null;
+		}
+		// Si se ingresó el monto en moneda de la compañía y no se topeó, se respeta lo ingresado
+		if (amtLocal == null) {
+			amtLocal = amtFactura.multiply(rate).setScale(precLocal, RoundingMode.HALF_UP);
+		}
+		rif.setManualAmount(amtFactura);
+		rif.setManualAmtClientCurrency(amtLocal);
+		debug("Montos con tasa de cambio del comprobante " + rate + ": monto factura=" + amtFactura
+				+ " monto moneda compania=" + amtLocal);
+	}
+
+	/**
+	 * Completa (o limpia) el monto a pagar de una factura con el saldo total, usando la tasa
+	 * del comprobante.
+	 * 
+	 * @return monto en moneda de la compañía que quedó para la factura
+	 */
+	protected BigDecimal aplicarTasaComprobantePagarTodo(int row, ResultItemFactura rif, int currency_ID_To,
+			boolean pay) {
+		if (pay) {
+			BigDecimal openFactura = (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenAmtColIdx());
+			rif.setManualAmount(openFactura == null ? BigDecimal.ZERO : openFactura);
+			aplicarTasaComprobante(row, rif, currency_ID_To, false);
+		} else {
+			rif.setManualAmount(BigDecimal.ZERO);
+			rif.setManualAmtClientCurrency(BigDecimal.ZERO);
+		}
+		return rif.getManualAmtClientCurrency();
+	}
+
+	/**
+	 * @return la tasa del comprobante si se utilizó en al menos una factura con monto a pagar,
+	 *         null en caso contrario
+	 */
+	public BigDecimal getTasaComprobanteAplicada() {
+		if (m_facturas == null || exchangeRateComprobante == null) {
+			return null;
+		}
+		for (ResultItem x : m_facturas) {
+			ResultItemFactura rif = (ResultItemFactura) x;
+			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
+			if (usaTasaComprobante(cur) && rif.getManualAmount() != null && rif.getManualAmount().signum() > 0) {
+				return exchangeRateComprobante;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Cuando el usuario cambia la tasa del comprobante se recalcula el monto en moneda de la
+	 * compañía de las facturas que ya tienen un monto a pagar, manteniendo el monto en la
+	 * moneda de la factura.
+	 */
+	public void recalcularMontosPorTasaComprobante() {
+		if (m_facturas == null) {
+			return;
+		}
+		for (int i = 0; i < m_facturas.size(); i++) {
+			ResultItemFactura rif = (ResultItemFactura) m_facturas.get(i);
+			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
+			if (usaTasaComprobante(cur) && rif.getManualAmount() != null && rif.getManualAmount().signum() > 0) {
+				aplicarTasaComprobante(i, rif, cur, false);
+			}
+		}
+		m_facturasTableModel.fireTableDataChanged();
+	}
+
 	public Timestamp getFechaOP() {
 		return m_fechaTrx;
 	}
@@ -1642,6 +1837,7 @@ public class VOrdenPagoModel {
 
 			// Si es pago adelantado, no muestra ninguna factura.
 
+			actualizarTasaComprobanteDefault();
 			m_facturasTableModel.fireChanged(false);
 			return;
 		}
@@ -1795,6 +1991,7 @@ public class VOrdenPagoModel {
 			}
 		}
 
+		actualizarTasaComprobanteDefault();
 		m_facturasTableModel.fireChanged(false);
 
 	}
@@ -2708,6 +2905,7 @@ public class VOrdenPagoModel {
 			// asignación creada
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
+			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAplicada(); // OP#8516
 			
 			/**
 			 * Para cobros adelantados se debe ajustar el tipo de asignacion correspondiente
@@ -2843,6 +3041,7 @@ public class VOrdenPagoModel {
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
+			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAplicada(); // OP#8516
 			
 			hdr = getPoGenerator().createAllocationHdr();
 			
@@ -2993,6 +3192,11 @@ public class VOrdenPagoModel {
 	 */
 	public void actualizarPagarConPagarCurrency(int row, ResultItemFactura rif, int currency_ID_To,
 			boolean useOpenAmtIfZero) {
+		// OP#8516 Si el comprobante tiene tasa de cambio propia se calcula con esa tasa
+		if (usaTasaComprobante(currency_ID_To)) {
+			aplicarTasaComprobante(row, rif, currency_ID_To, true);
+			return;
+		}
 		BigDecimal manualAmtClientCurrency = rif.getManualAmtClientCurrency();
 		BigDecimal openAmt = ((m_facturas.get(row).getItem(m_facturasTableModel.getOpenCurrentAmtColIdx())) == null)
 				? BigDecimal.ZERO
@@ -3090,6 +3294,11 @@ public class VOrdenPagoModel {
 
 	public void actualizarPagarCurrencyConPagar(int row, ResultItemFactura rif, int currency_ID_To,
 			boolean useOpenAmtIfZero) {
+		// OP#8516 Si el comprobante tiene tasa de cambio propia se calcula con esa tasa
+		if (usaTasaComprobante(currency_ID_To)) {
+			aplicarTasaComprobante(row, rif, currency_ID_To, false);
+			return;
+		}
 		BigDecimal manualAmt = rif.getManualAmount();
 		BigDecimal openAmt = (BigDecimal) m_facturas.get(row).getItem(m_facturasTableModel.getOpenAmtColIdx());
 		// Sumar o restar algún monto custom
@@ -4139,6 +4348,14 @@ public class VOrdenPagoModel {
 		int i = 0;
 		for (; i < totalInvoices; i++) {
 			fac = (ResultItemFactura) m_facturas.get(i);
+			// OP#8516 Con tasa de cambio propia del comprobante se paga el saldo en la moneda de la factura
+			int facCurrency = (Integer) fac.getItem(m_facturasTableModel.getCurrencyColIdx());
+			if (usaTasaComprobante(facCurrency)) {
+				if (!toPayMoment) {
+					totalAmt = totalAmt.add(aplicarTasaComprobantePagarTodo(i, fac, facCurrency, payAll));
+				}
+				continue;
+			}
 			amt = payAll ? fac.getToPayAmt() : BigDecimal.ZERO;
 			
 			// dREHER sep 24
@@ -4171,6 +4388,14 @@ public class VOrdenPagoModel {
 	public BigDecimal updatePayInvoice(boolean pay, int row, boolean toPayMoment) {
 		BigDecimal totalAmt = BigDecimal.ZERO;
 		ResultItemFactura fac = (ResultItemFactura) m_facturas.get(row);
+		// OP#8516 Con tasa de cambio propia del comprobante se paga el saldo en la moneda de la factura
+		int facCurrency = (Integer) fac.getItem(m_facturasTableModel.getCurrencyColIdx());
+		if (usaTasaComprobante(facCurrency)) {
+			if (!toPayMoment) {
+				totalAmt = totalAmt.add(aplicarTasaComprobantePagarTodo(row, fac, facCurrency, pay));
+			}
+			return totalAmt;
+		}
 		BigDecimal amt = pay ? fac.getToPayAmt() : BigDecimal.ZERO;
 		// Si es ventas, completar con el monto de fecha factura, igual que en
 		// updatePayAllInvoices. Con el saldo a la tasa de la fecha del recibo, si esta
