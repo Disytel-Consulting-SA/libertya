@@ -366,6 +366,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         txtMedioPago2 = new javax.swing.JTextField();
         txtRetenciones2 = new javax.swing.JTextField();
         txtTotalPagar2 = new javax.swing.JTextField();
+        // OP#8516 Los importes de los totales se alinean a la derecha
+        txtDifCambio.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtMedioPago2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtRetenciones2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtTotalPagar2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         lblTotalPagar2 = new javax.swing.JLabel();
         lblRetenciones2 = new javax.swing.JLabel();
         lblDifCambio = new javax.swing.JLabel();
