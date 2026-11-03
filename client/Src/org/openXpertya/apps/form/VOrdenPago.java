@@ -466,7 +466,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					}
 				});
         
-        m_frame.setMinimumSize(new java.awt.Dimension(1200, 800)); // dREHER ajustar la ventana por defecto. OP#8516: mas ancha para ver todas las columnas
+        // OP#8516: mas ancha para ver todas las columnas (la grilla de la orden de pago tiene mas columnas que la del recibo)
+        m_frame.setMinimumSize(new java.awt.Dimension(m_model.isSOTrx() ? 1200 : 1400, 800)); // dREHER ajustar la ventana por defecto
         m_frame.setSize(m_frame.getMinimumSize());
         // m_frame.setOpaque(false);
         jPanel1.setOpaque(false);
