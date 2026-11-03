@@ -42,7 +42,7 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
 		this.ordenCobro = ordenCobro;
 		boolean isPurchase = !ordenCobro.getModel().isSOTrx(); // OP#8516
 		this.setTitle(isPurchase ? "Emitir/Incluir Cr\u00e9dito/D\u00e9bito de Proveedor" : "Emitir/Incluir Nota de Cred/Deb");
-		setSize(580, 320); // OP#8516: mas ancha para ver bien los importes
+		setSize(580, 380); // OP#8516: mas ancha para ver bien los importes y mas alta para la nota informativa
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setLocationRelativeTo(null);
 		getContentPane().setLayout(new BorderLayout());
@@ -66,7 +66,7 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
 		// OP#8516 Nota informativa (por ejemplo, que el importe es provisorio)
 		lblNota = new CLabel("");
 		lblNota.setVerticalAlignment(SwingConstants.TOP);
-		lblNota.setBounds(10, 232, 546, 40);
+		lblNota.setBounds(10, 234, 546, 70);
 		contentPanel.add(lblNota);
 		{
 			CLabel lblNewLabel_1 = new CLabel("");
