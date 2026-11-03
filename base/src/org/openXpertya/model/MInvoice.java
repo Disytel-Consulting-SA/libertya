@@ -2410,12 +2410,13 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// moneda, tipo de conversion, fechas o pedido). Si solo cambia, por ejemplo, el estado de pago de una factura
 		// ya confirmada, no corresponde volver a exigirlo: impedia marcar como pagada una factura cuya tarifa esta en
 		// otra moneda y no tiene tasa a su fecha de aplicacion.
+		// (la tarifa y su moneda se usan mas abajo, por eso se declaran fuera del control)
+		MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
+		int priceListCurrency = priceList.getC_Currency_ID();
 		boolean controlarConversionMoneda = is_new() || is_ValueChanged("M_PriceList_ID") || is_ValueChanged("C_Currency_ID")
 				|| is_ValueChanged("C_ConversionType_ID") || is_ValueChanged("DateAcct") || is_ValueChanged("DateInvoiced")
 				|| is_ValueChanged("C_Order_ID");
 		if (controlarConversionMoneda) {
-			MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
-			int priceListCurrency = priceList.getC_Currency_ID();
 			if ((priceListCurrency != getC_Currency_ID() && MCurrency
 					.currencyConvert(new BigDecimal(1), priceListCurrency,
 							getC_Currency_ID(), this.getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), // dREHER Jun 25
