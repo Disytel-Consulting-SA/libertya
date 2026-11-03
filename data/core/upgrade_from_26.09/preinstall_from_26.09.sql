@@ -225,3 +225,31 @@ CREATE OR REPLACE FUNCTION libertya.getallocatedamt(p_c_invoice_id integer, p_c_
  LANGUAGE plpgsql
 AS $function$  DECLARE 	v_MultiplierAP		NUMERIC := 1; 	v_PaidAmt			NUMERIC := 0; 	v_ConversionType_ID INTEGER := p_c_conversionType_ID; 	v_Currency_ID       INTEGER := p_c_currency_id; 	v_Temp     NUMERIC; 	v_SchedulesAmt NUMERIC; 	v_Diff NUMERIC; 	ar			RECORD; 	s			RECORD; 	v_DateAcct timestamp without time zone; 	schedule_founded boolean; v_PayRate NUMERIC; BEGIN 	 	IF (p_MultiplierAP IS NOT NULL) THEN 		v_MultiplierAP := p_MultiplierAP::numeric; 	END IF; 	 	SELECT DateAcct 	       INTO v_DateAcct 	FROM C_Invoice  	WHERE C_Invoice_ID = p_c_invoice_id; 	FOR ar IN  		SELECT	a.AD_Client_ID, a.AD_Org_ID, 		al.Amount, al.DiscountAmt, al.WriteOffAmt, 		a.C_Currency_ID, a.DateTrx , al.C_Invoice_Credit_ID, al.C_Payment_ID, (SELECT pp.C_Currency_ID FROM C_Payment pp WHERE pp.C_Payment_ID = al.C_Payment_ID) AS PayCurrency_ID 		FROM	C_AllocationLine al 		INNER JOIN C_AllocationHdr a ON (al.C_AllocationHdr_ID=a.C_AllocationHdr_ID) 		WHERE	(al.C_Invoice_ID = p_C_Invoice_ID OR  				al.C_Invoice_Credit_ID = p_C_Invoice_ID )            	AND   a.IsActive='Y'           	AND   (p_fechacorte is null OR a.dateacct::date <= p_fechacorte::date) 	LOOP 	     		IF (p_C_Invoice_ID = ar.C_Invoice_Credit_ID) THEN 		   v_Temp := ar.Amount; 		ELSE 		   v_Temp := ar.Amount + ar.DisCountAmt + ar.WriteOffAmt; 		END IF; 		 		v_PayRate := NULL; IF (ar.C_Payment_ID IS NOT NULL AND ar.C_Currency_ID <> v_Currency_ID AND ar.PayCurrency_ID = v_Currency_ID AND p_C_Invoice_ID <> COALESCE(ar.C_Invoice_Credit_ID, 0)) THEN v_PayRate := payment_exchange_rate(ar.C_Payment_ID); END IF; IF (v_PayRate IS NOT NULL) THEN v_PaidAmt := v_PaidAmt + v_Temp / v_PayRate; ELSE v_PaidAmt := v_PaidAmt + currencyConvert(v_Temp, ar.C_Currency_ID, v_Currency_ID, v_DateAcct, v_ConversionType_ID, ar.AD_Client_ID, ar.AD_Org_ID); END IF; 	 	END LOOP; 	 	IF (p_c_invoicepayschedule_id > 0) THEN  		v_SchedulesAmt := 0; 		schedule_founded := false;         		FOR s IN  SELECT  ips.C_InvoicePaySchedule_ID, currencyConvert(ips.DueAmt, i.c_currency_id, v_Currency_ID, v_DateAcct, v_ConversionType_ID, i.AD_Client_ID, i.AD_Org_ID) as DueAmt 	         			FROM    C_InvoicePaySchedule ips 	         			INNER JOIN C_Invoice i on (ips.C_Invoice_ID = i.C_Invoice_ID) 		 			WHERE	ips.C_Invoice_ID = p_c_invoice_id AND   ips.IsValid='Y'         	 			ORDER BY ips.DueDate  		LOOP     			 			v_SchedulesAmt := v_SchedulesAmt + s.DueAmt; 			schedule_founded := s.C_InvoicePaySchedule_ID = p_c_invoicepayschedule_id; 			IF (schedule_founded) THEN 				 				v_Diff := v_PaidAmt - v_SchedulesAmt; 				 				 				IF (v_Diff >= 0) THEN 					v_PaidAmt := s.DueAmt; 				ELSE 					 					 					v_PaidAmt := s.DueAmt - abs(v_Diff); 					 					 					IF (v_PaidAmt <= 0) THEN 						v_PaidAmt := 0; 					END IF; 				END IF; 				EXIT; 			END IF; 		END LOOP; 		 		IF (NOT schedule_founded) THEN 			v_PaidAmt := 0; 		END IF; 	END IF; 	 	RETURN	v_PaidAmt * v_MultiplierAP; END; $function$;
 
+--20261104-1100 OP#8516 Vinculo del asiento del mayor con la orden de pago o recibo que lo genero (diferencia de cambio de anticipos)
+update ad_system set dummy = (SELECT addcolumnifnotexists('GL_Journal','C_AllocationHdr_ID','integer'));
+
+INSERT INTO AD_Column (
+    AD_Column_ID, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, Help, Version, EntityType, ColumnName,
+    AD_Table_ID, AD_Reference_ID, FieldLength,
+    IsKey, IsParent, IsMandatory, IsUpdateable, IsIdentifier, IsTranslated, IsEncrypted,
+    IsSelectionColumn, AD_Element_ID, IsSyncDatabase, IsAlwaysUpdateable, CalloutAlsoOnLoad, IsLink,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    nextval('seq_ad_column'), 0, 0, 'Y',
+    now(), 0, now(), 0,
+    'Asignacion', 'Asignacion (orden de pago o recibo) que genero el asiento', NULL, 0, 'D', 'C_AllocationHdr_ID',
+    t.AD_Table_ID, 19, 22,
+    'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+    'N', (SELECT AD_Element_ID FROM AD_Element WHERE ColumnName = 'C_AllocationHdr_ID' ORDER BY AD_Element_ID LIMIT 1), 'N', 'N', 'N', 'N',
+    'CORE-AD_Column-20261104110000000-851602',
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Table t
+WHERE t.TableName = 'GL_Journal'
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Column c
+      WHERE c.AD_Table_ID = t.AD_Table_ID AND c.ColumnName = 'C_AllocationHdr_ID'
+  );
+
