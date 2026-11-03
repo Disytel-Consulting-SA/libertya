@@ -2272,6 +2272,8 @@ public class AllocationGenerator {
 		}
 		MJournalLine debit = new MJournalLine(journal);
 		debit.setLine(10);
+		debit.setC_Currency_ID(currencyID);
+		debit.setC_ConversionType_ID(journal.getC_ConversionType_ID());
 		debit.setC_ValidCombination_ID(loss ? resultAcctID : liabilityID);
 		debit.setAmtSourceDr(amt);
 		debit.setDescription(journal.getDescription());
@@ -2280,6 +2282,8 @@ public class AllocationGenerator {
 		}
 		MJournalLine credit = new MJournalLine(journal);
 		credit.setLine(20);
+		credit.setC_Currency_ID(currencyID);
+		credit.setC_ConversionType_ID(journal.getC_ConversionType_ID());
 		credit.setC_ValidCombination_ID(loss ? liabilityID : resultAcctID);
 		credit.setAmtSourceCr(amt);
 		credit.setDescription(journal.getDescription());
