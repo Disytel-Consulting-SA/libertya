@@ -951,6 +951,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	if (!cur.equals(tasaMedioPagoCurrency)) {
     		txtTasaMedioPago.setValue(m_model.getTasaDelDia(cur));
     		tasaMedioPagoCurrency = cur;
+    		// El importe sugerido para el pago se recalcula con la nueva tasa
+    		updatePayAmt(getModel().getSaldoMediosPago());
     	}
     }
 
@@ -1140,6 +1142,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         txtTasaMedioPago = new VNumber();
         txtTasaMedioPago.setDisplayType(DisplayType.CostPrice);
         txtTasaMedioPago.setReadWrite(false);
+        // Al cambiar la tasa se vuelve a sugerir el importe del pago (saldo en pesos / tasa)
+        txtTasaMedioPago.addVetoableChangeListener(new VetoableChangeListener() {
+			@Override
+			public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+				updatePayAmt(getModel().getSaldoMediosPago());
+			}
+		});
         txtTasaMedioPago.setToolTipText("Tasa de cambio con la que se paga en moneda extranjera (moneda de la compañía por unidad "
         		+ "de moneda extranjera). Se propone la tasa del día y puede modificarse.");
         panelMonedaTasa = new javax.swing.JPanel();
