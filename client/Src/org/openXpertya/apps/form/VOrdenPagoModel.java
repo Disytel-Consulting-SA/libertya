@@ -1734,6 +1734,16 @@ public class VOrdenPagoModel {
 		return rif.getManualAmtClientCurrency();
 	}
 
+	/** OP#8516 Tasa del comprobante utilizada, capturada al pre-procesar para grabarla al completar */
+	private BigDecimal exchangeRateAplicada = null;
+
+	/**
+	 * @return la tasa que se debe grabar en la cabecera del comprobante, null si no se utilizó
+	 */
+	protected BigDecimal getTasaComprobanteAGrabar() {
+		return exchangeRateAplicada != null ? exchangeRateAplicada : getTasaComprobanteAplicada();
+	}
+
 	/**
 	 * @return la tasa del comprobante si se utilizó en al menos una factura con monto a pagar,
 	 *         null en caso contrario
@@ -2176,6 +2186,10 @@ public class VOrdenPagoModel {
 	public int doPreProcesar() {
 
 		BigDecimal total = getSumaTotalPagarFacturas();
+		
+		// OP#8516 Se captura la tasa del comprobante ahora, cuando los montos a pagar todavía están
+		// cargados: al completar el comprobante ya no se pueden obtener de la grilla
+		exchangeRateAplicada = getTasaComprobanteAplicada();
 
 		// Tengo que poder pagar algo al menos
 
@@ -2944,7 +2958,7 @@ public class VOrdenPagoModel {
 			// asignación creada
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
-			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAplicada(); // OP#8516
+			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAGrabar(); // OP#8516
 			
 			/**
 			 * Para cobros adelantados se debe ajustar el tipo de asignacion correspondiente
@@ -3080,7 +3094,7 @@ public class VOrdenPagoModel {
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
-			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAplicada(); // OP#8516
+			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAGrabar(); // OP#8516
 			
 			hdr = getPoGenerator().createAllocationHdr();
 			
