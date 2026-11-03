@@ -217,6 +217,11 @@ public class VOrdenPagoModel {
 
 		// Almacena el Currency_ID con el que creado el MP (USD, EUR, ARS, etc).
 		public Integer monedaOriginalID = C_Currency_ID;
+		/**
+		 * OP#8516 Tasa de cambio con la que se paga en moneda extranjera (moneda de la compañía por unidad de la
+		 * moneda del pago). Nula si el pago es en la moneda de la compañía o no se indicó.
+		 */
+		public BigDecimal exchangeRate = null;
 
 		public String toString() {
 			String tipoStr;
@@ -1734,6 +1739,22 @@ public class VOrdenPagoModel {
 		return rif.getManualAmtClientCurrency();
 	}
 
+	/**
+	 * OP#8516 @return la tasa de cambio del primer medio de pago en moneda extranjera que la tenga, null si ninguno
+	 */
+	public BigDecimal getTasaMediosPagoMonedaExtranjera() {
+		if (m_mediosPago == null) {
+			return null;
+		}
+		for (MedioPago mp : m_mediosPago) {
+			if (mp.monedaOriginalID != null && mp.monedaOriginalID != C_Currency_ID && mp.exchangeRate != null
+					&& mp.exchangeRate.signum() > 0) {
+				return mp.exchangeRate;
+			}
+		}
+		return null;
+	}
+
 	/** OP#8516 Tasa del comprobante utilizada, capturada al pre-procesar para grabarla al completar */
 	private BigDecimal exchangeRateAplicada = null;
 
@@ -2958,7 +2979,7 @@ public class VOrdenPagoModel {
 			// asignación creada
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
-			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAGrabar(); // OP#8516
+			getPoGenerator().exchangeRateComprobante = getTasaMediosPagoMonedaExtranjera(); // OP#8516 anticipo: tasa del pago en moneda extranjera
 			
 			/**
 			 * Para cobros adelantados se debe ajustar el tipo de asignacion correspondiente
@@ -3094,7 +3115,8 @@ public class VOrdenPagoModel {
 			// 2. Se crea el generador de orden de pago.
 			getPoGenerator().setTrxName(get_TrxName()); // dREHER
 			getPoGenerator().fechaOP = getFechaOP(); // Fecha de la OP/Recibo
-			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAGrabar(); // OP#8516
+			getPoGenerator().exchangeRateComprobante = getTasaComprobanteAGrabar() != null ? getTasaComprobanteAGrabar()
+					: getTasaMediosPagoMonedaExtranjera(); // OP#8516
 			
 			hdr = getPoGenerator().createAllocationHdr();
 			

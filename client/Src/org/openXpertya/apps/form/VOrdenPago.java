@@ -851,6 +851,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				m_model.setFechaOP(dateTrx.getTimestamp());
 				m_model.actualizarFacturas();
 				refrescarTasaCambio();
+				tasaMedioPagoCurrency = null;
+				refrescarTasaMedioPago();
 				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
 				
 				/**
@@ -922,6 +924,45 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	boolean hayMonedaExtranjera = m_model.getExchangeRateCurrencyID() > 0;
     	txtTasaCambio.setValue(m_model.getExchangeRateComprobante());
     	txtTasaCambio.setReadWrite(hayMonedaExtranjera && jTabbedPane1.getSelectedIndex() == 0);
+    }
+
+    /**
+     * OP#8516 Habilita el campo Tasa de cambio del pago cuando la moneda elegida es extranjera y propone la tasa
+     * del día al cambiar la moneda o la fecha.
+     */
+    protected void refrescarTasaMedioPago() {
+    	if (txtTasaMedioPago == null || cboCurrency == null || m_model == null) {
+    		return;
+    	}
+    	Integer cur = (Integer) cboCurrency.getValue();
+    	boolean foreign = cur != null && cur > 0 && cur != m_C_Currency_ID;
+    	if (!foreign) {
+    		txtTasaMedioPago.setValue(null);
+    		txtTasaMedioPago.setReadWrite(false);
+    		tasaMedioPagoCurrency = null;
+    		return;
+    	}
+    	txtTasaMedioPago.setReadWrite(true);
+    	if (!cur.equals(tasaMedioPagoCurrency)) {
+    		txtTasaMedioPago.setValue(m_model.getTasaDelDia(cur));
+    		tasaMedioPagoCurrency = cur;
+    	}
+    }
+
+    /**
+     * OP#8516 @return la tasa de cambio ingresada para el pago en moneda extranjera, null si el pago es en la
+     *         moneda de la compañía
+     */
+    public BigDecimal getTasaMedioPago() {
+    	if (txtTasaMedioPago == null || cboCurrency == null) {
+    		return null;
+    	}
+    	Integer cur = (Integer) cboCurrency.getValue();
+    	if (cur == null || cur <= 0 || cur == m_C_Currency_ID) {
+    		return null;
+    	}
+    	BigDecimal rate = (BigDecimal) txtTasaMedioPago.getValue();
+    	return (rate == null || rate.signum() <= 0) ? null : rate;
     }
 
     protected void setActionEnabled(String action, boolean enabled) {
@@ -1089,6 +1130,21 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      * Creo el panel que contiene Campaña y Proyecto
      */
     protected void createCamProyPanel(){
+        // OP#8516 El combo Moneda se agrupa con la tasa de cambio del pago
+        lblTasaMedioPago = new javax.swing.JLabel("Tasa de cambio:");
+        txtTasaMedioPago = new VNumber();
+        txtTasaMedioPago.setDisplayType(DisplayType.CostPrice);
+        txtTasaMedioPago.setReadWrite(false);
+        txtTasaMedioPago.setToolTipText("Tasa de cambio con la que se paga en moneda extranjera (moneda de la compañía por unidad "
+        		+ "de moneda extranjera). Se propone la tasa del día y puede modificarse.");
+        panelMonedaTasa = new javax.swing.JPanel();
+        panelMonedaTasa.setOpaque(false);
+        panelMonedaTasa.setLayout(new javax.swing.BoxLayout(panelMonedaTasa, javax.swing.BoxLayout.X_AXIS));
+        panelMonedaTasa.add(cboCurrency);
+        panelMonedaTasa.add(javax.swing.Box.createHorizontalStrut(8));
+        panelMonedaTasa.add(lblTasaMedioPago);
+        panelMonedaTasa.add(javax.swing.Box.createHorizontalStrut(4));
+        panelMonedaTasa.add(txtTasaMedioPago);
         panelCamProy.setOpaque(false);
     	org.jdesktop.layout.GroupLayout panelCamProyLayout = new org.jdesktop.layout.GroupLayout(panelCamProy);
         panelCamProy.setLayout(panelCamProyLayout);
@@ -1103,7 +1159,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cboCampaign, 0, 239, Short.MAX_VALUE)
                     .add(cboProject, 0, 239, Short.MAX_VALUE)
-                    .add(cboCurrency, 0, 239, Short.MAX_VALUE)))
+                    .add(panelMonedaTasa, 0, 239, Short.MAX_VALUE)))
         );
         panelCamProyLayout.setVerticalGroup(
             panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1119,7 +1175,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 	.add(lblCurrency)
-                    .add(cboCurrency, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(panelMonedaTasa, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }
@@ -1644,7 +1700,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected void savePMFinalize(VOrdenPagoModel.MedioPago mp) throws Exception {
     	if(mp != null){
-    		if (!m_model.validateCurrentConversionRate((Integer) cboCurrency.getValue()))
+    		// OP#8516 No se exige tasa de tabla si el pago en moneda extranjera trae su propia tasa
+    		if ((mp.exchangeRate == null || mp.exchangeRate.signum() <= 0)
+    				&& !m_model.validateCurrentConversionRate((Integer) cboCurrency.getValue()))
     			throw new InterruptedException("@NoCurrencyConvertError@");
     		m_model.addMedioPago(mp);
     	}
@@ -1659,6 +1717,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	MedioPagoEfectivo mpe = m_model.getNuevoMedioPagoEfectivo();
     	try {
 			mpe.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpe.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -1694,6 +1753,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	MedioPagoTransferencia mpt = m_model.getNuevoMedioPagoTransferencia();		
     	try {
 			mpt.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpt.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -1731,6 +1791,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		mpc.aLaOrden = txtChequeALaOrden.getText();		
 		try {
 			mpc.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpc.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -2511,6 +2572,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     // OP#8516 Tasa de cambio del comprobante, se muestra junto a la fecha
     protected javax.swing.JPanel panelFechaTasa;
     protected javax.swing.JLabel lblTasaCambio;
+    // OP#8516 Tasa de cambio del pago en moneda extranjera, junto al combo Moneda de la pestaña Forma de Pago
+    protected javax.swing.JPanel panelMonedaTasa;
+    protected javax.swing.JLabel lblTasaMedioPago;
+    protected VNumber txtTasaMedioPago;
+    private Integer tasaMedioPagoCurrency = null;
     protected VNumber txtTasaCambio;
     protected VLookup cboClient;
     protected VLookup cboOrg;
@@ -2902,6 +2968,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         cboCurrency.setMandatory(true);
         cboCurrency.setValue(m_C_Currency_ID);
         cboCurrency.refresh();
+        refrescarTasaMedioPago();
         setCurrencyContext();
 
         // Cuando cambia el documento de crédito, se carga el 
@@ -3418,6 +3485,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	        } );			
 		} else if (e.getSource() == cboCurrency) {
 			updateDependent();
+			refrescarTasaMedioPago();
 		} else if (e.getSource() == efectivoLibroCaja) {
 			
 		} else if (e.getSource() == transfCtaBancaria) {
