@@ -54,6 +54,10 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
 		lblNewLabel.setText("<html>\r\n<div style='text-align: center;'>\r\n\tEmitir y/o incluír en el cobro de las Notas de Crédito o Notas de Débito que correspondan." +
 		"\r\n<b>Si una factura en moneda extranjera se cobrará en la misma moneda, por favor active ambas opciones: Emitir/Incluir</div>\r\n</b></html>");
 		//lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 14));
+		if (isPurchase) { // OP#8516
+			lblNewLabel.setText("<html>\r\n<div style='text-align: center;'>\r\n\tEmitir y/o incluir en el pago los Cr\u00e9ditos o D\u00e9bitos de Proveedor por diferencia de cambio que correspondan." +
+			"\r\n<b>Para cancelar el saldo de una factura en moneda extranjera, active ambas opciones: Emitir/Incluir</div>\r\n</b></html>");
+		}
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		lblNewLabel.setBounds(10, 14, 386, 65);
 		contentPanel.add(lblNewLabel);

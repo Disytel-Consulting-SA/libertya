@@ -4294,6 +4294,14 @@ public class VOrdenPagoModel {
 		// dREHER configura como debe calcularse los montos de los debitos
 		getPoGenerator().setCalcularMontoSegunTasaCambioFC(isFacturaProveedorTasaCambioInterna());
 		
+		// OP#8516 Diferencia de cambio en pagos a proveedores: si se emite y/o se incluye, el generador crea
+		// los documentos de Débito/Crédito de Proveedor
+		if (!isSOTrx()) {
+			getPoGenerator().setInclude(isCintoloInclude);
+			getPoGenerator().setEmit(isCintoloEmit);
+			getPoGenerator().exchangeDifPurchasesByInvoice = new HashMap<Integer, BigDecimal>(exchangeDifPurchasesByInvoice);
+		}
+		
 		// Se crean las líneas de imputación entre las facturas y los pagos
 		// CINTOLO dREHER flujo de armado de documentos de dif de cambio...
 		getPoGenerator().generateLines();
