@@ -98,6 +98,12 @@ public class AllocationGenerator {
 	 * compañía (positiva si se pagan más pesos que el valor de la factura a su fecha de aplicación, negativa si menos).
 	 */
 	public java.util.Map<Integer, BigDecimal> exchangeDifPurchasesByInvoice = null;
+	/**
+	 * OP#8516 Tasa de cambio propia de pagos que se usan como medio de pago (anticipos en moneda extranjera): id del
+	 * pago y tasa. Si un pago tiene tasa propia, se valoriza en moneda de la compañía con esa tasa y no con la de la
+	 * tabla de tasas de cambio.
+	 */
+	public java.util.Map<Integer, BigDecimal> paymentExchangeRates = null;
 	
 	// dREHER
 	/** Permite calcular el monto de los debitos segun la tasa de cambio especificada en el comprobante y no seguna la tasa de cambio vigente */
@@ -387,6 +393,17 @@ public class AllocationGenerator {
 	 * las líneas de asignación.
 	 */
 	public void generateLines() throws AllocationGeneratorException {	
+		// OP#8516 Anticipos en moneda extranjera: cada pago se valoriza con su tasa propia
+		if(paymentExchangeRates != null && !paymentExchangeRates.isEmpty() && getCredits() != null) {
+			for(Document credit : getCredits()) {
+				if(credit instanceof Payment) {
+					BigDecimal ownRate = paymentExchangeRates.get(credit.getId());
+					if(ownRate != null && ownRate.signum() > 0) {
+						credit.setExchangeRate(ownRate);
+					}
+				}
+			}
+		}
 		try {
 			
 			// dREHER - En el caso de CINTOLO las diferencias de cambio ya estan calculadas previamente, pasarle la info al metodo de generacion de documentos

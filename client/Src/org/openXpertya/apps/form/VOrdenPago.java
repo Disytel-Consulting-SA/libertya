@@ -2240,6 +2240,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     						m_model.getExchangeDifferenceLimit(),
     						m_model.getExchangeDifferencePercentLimit(),
     						m_model.shouldEmitPurchases());
+    				// Primer dialogo (al pasar a la pestaña de pago): el importe es provisorio
+    				difForm.setNota("Importe provisorio, calculado con la tasa de cambio de esta orden de pago. Si pagás con "
+    						+ "anticipos en moneda extranjera, la diferencia se recalcula al emitir el pago con la tasa de cada anticipo.");
     				difForm.setModal(true);
     				difForm.setVisible(true);
     			}
@@ -2317,6 +2320,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     						m_model.getExchangeDifferenceLimit(),
     						m_model.getExchangeDifferencePercentLimit(),
     						m_model.shouldEmitPurchases());
+    				difForm.setNota("Diferencia definitiva: valor de los anticipos con la tasa de cada uno contra el valor de la factura.");
     				difForm.setModal(true);
     				difForm.setVisible(true);
     			}

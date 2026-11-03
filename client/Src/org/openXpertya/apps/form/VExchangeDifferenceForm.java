@@ -31,6 +31,7 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
     private CCheckBox chckbxInclude;
     private CButton okButton;
     private CButton cancelButton;
+    private CLabel lblNota; // OP#8516 nota informativa al pie del dialogo
     
 	private final javax.swing.JPanel contentPanel = new JPanel();
 
@@ -62,6 +63,11 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
 		lblNewLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		lblNewLabel.setBounds(10, 14, 546, 65);
 		contentPanel.add(lblNewLabel);
+		// OP#8516 Nota informativa (por ejemplo, que el importe es provisorio)
+		lblNota = new CLabel("");
+		lblNota.setVerticalAlignment(SwingConstants.TOP);
+		lblNota.setBounds(10, 232, 546, 40);
+		contentPanel.add(lblNota);
 		{
 			CLabel lblNewLabel_1 = new CLabel("");
 			//lblNewLabel_1.setFont(new Font("Tahoma", Font.PLAIN, 14));
@@ -163,6 +169,13 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
 		}
 	}
 	
+	/**
+	 * OP#8516 Muestra una nota informativa al pie del diálogo.
+	 */
+	public void setNota(String nota) {
+		lblNota.setText(nota == null || nota.length() == 0 ? "" : "<html><i>" + nota + "</i></html>");
+	}
+
 	/**
 	 * OP#8516 Formatea un importe con separador de miles y 2 decimales para facilitar la lectura.
 	 */

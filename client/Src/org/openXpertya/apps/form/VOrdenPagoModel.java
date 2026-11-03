@@ -4368,6 +4368,15 @@ public class VOrdenPagoModel {
 			getPoGenerator().setInclude(isCintoloInclude);
 			getPoGenerator().setEmit(isCintoloEmit);
 			getPoGenerator().exchangeDifPurchasesByInvoice = new HashMap<Integer, BigDecimal>(exchangeDifPurchasesByInvoice);
+			// Los anticipos en moneda extranjera se valorizan con la tasa propia de cada uno
+			HashMap<Integer, BigDecimal> tasasPagos = new HashMap<Integer, BigDecimal>();
+			for (MedioPago pago : pagos) {
+				if (pago instanceof MedioPagoAdelantado && pago.exchangeRate != null && pago.exchangeRate.signum() > 0
+						&& pago.monedaOriginalID != null && pago.monedaOriginalID != C_Currency_ID) {
+					tasasPagos.put(((MedioPagoAdelantado) pago).getC_Payment_ID(), pago.exchangeRate);
+				}
+			}
+			getPoGenerator().paymentExchangeRates = tasasPagos;
 		}
 		
 		// Se crean las líneas de imputación entre las facturas y los pagos
@@ -4782,6 +4791,8 @@ public class VOrdenPagoModel {
 			if (exchangeRateComprobante != null) {
 				recalcularMontosPorTasaComprobante();
 			}
+			// Se informa la diferencia vigente (sin anticipos)
+			calculateExchangeDifferenceValuesPurchases();
 			return false;
 		}
 		int precision = mCurency.getStdPrecision();
@@ -4823,6 +4834,8 @@ public class VOrdenPagoModel {
 		if (ajusto) {
 			debug("Anticipos en moneda extranjera aplicados a las facturas en moneda extranjera");
 			m_facturasTableModel.fireTableDataChanged();
+			// La diferencia de cambio informada se actualiza con el valor de los anticipos
+			calculateExchangeDifferenceValuesPurchases();
 		}
 		return ajusto;
 	}
