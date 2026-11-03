@@ -897,6 +897,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					refrescarTasaCambio();
 				}
 				m_model.recalcularMontosPorTasaComprobante();
+				updateTotalAPagar1();
 			}
 		});
     	panelFechaTasa = new javax.swing.JPanel();

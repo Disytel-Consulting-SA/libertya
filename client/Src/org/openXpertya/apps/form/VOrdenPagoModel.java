@@ -1025,6 +1025,17 @@ public class VOrdenPagoModel {
 		
 		private BigDecimal paymentTermDiscount = new BigDecimal(0); // Desc/Rego Esq. Vto
 		
+		/** OP#8516 true si el último monto ingresado fue el de la moneda de la compañía (A Pagar ARS) */
+		private boolean montoEnMonedaLocal = false;
+		
+		public boolean isMontoEnMonedaLocal() {
+			return montoEnMonedaLocal;
+		}
+
+		public void setMontoEnMonedaLocal(boolean montoEnMonedaLocal) {
+			this.montoEnMonedaLocal = montoEnMonedaLocal;
+		}
+		
 		private BigDecimal totalCurrentAmtFecFact = new BigDecimal(0); // total ARS a fecha fact
 		private BigDecimal openCurrentAmtFecFact = new BigDecimal(0); // open ARS a fecha fact
 
@@ -1680,6 +1691,7 @@ public class VOrdenPagoModel {
 		}
 		rif.setManualAmount(amtFactura);
 		rif.setManualAmtClientCurrency(amtLocal);
+		rif.setMontoEnMonedaLocal(clientAmtEdited);
 		debug("Montos con tasa de cambio del comprobante " + rate + ": monto factura=" + amtFactura
 				+ " monto moneda compania=" + amtLocal);
 	}
@@ -1722,9 +1734,10 @@ public class VOrdenPagoModel {
 	}
 
 	/**
-	 * Cuando el usuario cambia la tasa del comprobante se recalcula el monto en moneda de la
-	 * compañía de las facturas que ya tienen un monto a pagar, manteniendo el monto en la
-	 * moneda de la factura.
+	 * Cuando el usuario cambia la tasa del comprobante se recalculan los montos de las facturas
+	 * que ya tienen un monto a pagar, manteniendo el monto del lado que ingresó el usuario: si
+	 * ingresó pesos se conserva ese importe y se recalcula la moneda de la factura; en caso
+	 * contrario se conserva el monto en moneda de la factura y se recalculan los pesos.
 	 */
 	public void recalcularMontosPorTasaComprobante() {
 		if (m_facturas == null) {
@@ -1734,7 +1747,7 @@ public class VOrdenPagoModel {
 			ResultItemFactura rif = (ResultItemFactura) m_facturas.get(i);
 			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
 			if (usaTasaComprobante(cur) && rif.getManualAmount() != null && rif.getManualAmount().signum() > 0) {
-				aplicarTasaComprobante(i, rif, cur, false);
+				aplicarTasaComprobante(i, rif, cur, rif.isMontoEnMonedaLocal());
 			}
 		}
 		m_facturasTableModel.fireTableDataChanged();

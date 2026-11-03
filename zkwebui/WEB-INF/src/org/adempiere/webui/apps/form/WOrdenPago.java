@@ -3426,6 +3426,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			refrescarTasaCambio();
 		}
 		m_model.recalcularMontosPorTasaComprobante();
+		updateTotalAPagar1();
 	}
 
 	/**
