@@ -466,7 +466,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					}
 				});
         
-        m_frame.setMinimumSize(new java.awt.Dimension(800, 800)); // dREHER ajustar la ventana por defecto
+        m_frame.setMinimumSize(new java.awt.Dimension(1200, 800)); // dREHER ajustar la ventana por defecto. OP#8516: mas ancha para ver todas las columnas
         m_frame.setSize(m_frame.getMinimumSize());
         // m_frame.setOpaque(false);
         jPanel1.setOpaque(false);
