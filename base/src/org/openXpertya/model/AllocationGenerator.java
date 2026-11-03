@@ -2262,6 +2262,7 @@ public class AllocationGenerator {
 		journal.setC_DocType_ID(docTypeID);
 		journal.setGL_Category_ID(categoryID);
 		journal.setC_Currency_ID(currencyID);
+		journal.setC_ConversionType_ID(MConversionType.getDefault(clientID));
 		journal.setDateDoc(hdr.getDateAcct());
 		journal.setDateAcct(hdr.getDateAcct());
 		journal.setDescription("Diferencia de cambio por anticipos en Orden de Pago " + hdr.getDocumentNo());
