@@ -137,3 +137,53 @@ WHERE l.IsActive = 'Y' AND l.IsSystemLanguage = 'Y'
       SELECT 1 FROM AD_Field_Trl t
       WHERE t.AD_Field_ID = f.AD_Field_ID AND t.AD_Language = l.AD_Language
   );
+
+--20261103-1700 OP#8516 Campo Tasa de cambio en la ventana de facturas de proveedor (Invoice (Vendor))
+INSERT INTO AD_Field (
+    AD_Field_ID, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, IsCentrallyMaintained, AD_Tab_ID, AD_Column_ID,
+    IsDisplayed, DisplayLogic, DisplayLength, IsReadOnly, SeqNo, IsSameLine,
+    IsHeading, IsFieldOnly, IsEncrypted, EntityType, IsDisplayedInGrid, ExportRealValue,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    nextval('seq_ad_field'), 0, 0, 'Y',
+    now(), 0, now(), 0,
+    'Tasa de cambio', 'Tasa de cambio del comprobante (moneda de la compania por cada unidad de moneda extranjera)', 'N', t.AD_Tab_ID, c.AD_Column_ID,
+    'Y', '@C_Currency_ID@!@$C_Currency_ID@', 20, 'N', 275, 'Y',
+    'N', 'N', 'N', 'D', 'N', 'N',
+    'CORE-AD_Field-20261103170000000-' || t.AD_Tab_ID,
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Tab t
+INNER JOIN AD_Column c ON (c.AD_Table_ID = t.AD_Table_ID AND c.ColumnName = 'Cintolo_Exchange_Rate')
+WHERE t.AD_Tab_ID = 290
+  AND t.AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'C_Invoice')
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Field f
+      WHERE f.AD_Tab_ID = t.AD_Tab_ID AND f.AD_Column_ID = c.AD_Column_ID
+  );
+
+INSERT INTO AD_Field_Trl (
+    AD_Field_ID, AD_Language, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, IsTranslated,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    f.AD_Field_ID, l.AD_Language, 0, 0, 'Y',
+    now(), 0, now(), 0,
+    f.Name, f.Description, 'N',
+    'CORE-AD_Field_Trl-8516-' || f.AD_Tab_ID || '-' || l.AD_Language || '-tasa',
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Field f
+INNER JOIN AD_Column c ON (c.AD_Column_ID = f.AD_Column_ID AND c.ColumnName = 'Cintolo_Exchange_Rate')
+CROSS JOIN AD_Language l
+WHERE f.AD_Tab_ID = 290
+  AND f.AD_ComponentObjectUID = 'CORE-AD_Field-20261103170000000-290'
+  AND l.IsActive = 'Y' AND l.IsSystemLanguage = 'Y'
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Field_Trl t
+      WHERE t.AD_Field_ID = f.AD_Field_ID AND t.AD_Language = l.AD_Language
+  );
+
