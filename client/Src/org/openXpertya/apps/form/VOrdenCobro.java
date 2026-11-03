@@ -661,7 +661,7 @@ public class VOrdenCobro extends VOrdenPago {
 																org.jdesktop.layout.LayoutStyle.RELATED)
 														.add(txtTotalPagar1,
 																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-																95,
+																140,
 																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
 														.addPreferredGap(
 																org.jdesktop.layout.LayoutStyle.RELATED)))
