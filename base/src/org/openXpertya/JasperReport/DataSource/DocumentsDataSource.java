@@ -51,11 +51,13 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "	 cu.iso_code as Currency, "
 				+ "	 i.grandtotal AS GrandTotalAmt, "
 				// +"	 SUM(al.amount + al.discountamt + al.writeoffamt) AS AllocatedAmt, "
+				// OP#8516 La conversion usa la fecha de aplicacion de la factura, igual que el saldo (getAllocatedAmt);
+				// con la fecha de emision el importe imputado no coincidia con el saldo cuando ambas fechas difieren
 				+ "	 SUM(CASE "
 				+ "		 WHEN ah.c_currency_id = i.c_currency_id THEN al.amount + al.discountamt + al.writeoffamt "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
-				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateinvoiced::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
+				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateacct::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
 				+ "	 END) AS AllocatedAmt, "
 				+ "	 invoiceopen(i.C_Invoice_ID,0) AS OpenAmt "
 				+ "FROM c_allocationhdr ah "
