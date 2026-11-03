@@ -1523,11 +1523,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         	pstmt = null;
         	rs = null;
 
-        	// OP#8516 Los documentos de diferencia de cambio que solo se emitieron (borrador, sin incluir en la
-        	// asignación) no figuran en sus líneas: se anulan igualmente, ya que son propuestas de este comprobante
-        	// y no deben quedar huérfanos.
+        	// OP#8516 Los documentos de diferencia de cambio que generó este comprobante y no figuran en sus líneas
+        	// (por ejemplo, los que solo se emitieron y quedaron en borrador, o completos pero sin imputar) se anulan
+        	// igualmente: nacen de este comprobante y no deben quedar huérfanos.
         	pstmt = DB.prepareStatement(
-        			"SELECT c_invoice_id FROM c_invoice WHERE cintolo_exchange_dif_receipt = ? AND docstatus = 'DR' AND isactive = 'Y'",
+        			"SELECT c_invoice_id FROM c_invoice WHERE cintolo_exchange_dif_receipt = ? AND docstatus IN ('DR','CO') AND isactive = 'Y'",
         			get_TrxName());
         	pstmt.setInt(1, getC_AllocationHdr_ID());
         	rs = pstmt.executeQuery();
