@@ -13,6 +13,9 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.apps.AEnv;
+import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Env;
 import org.adempiere.webui.panel.ADForm;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Html;
@@ -61,7 +64,7 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 	public WExchangeDifferenceForm(WOrdenCobro ordenCobro, BigDecimal exchangeDif, BigDecimal exchangeDifPercent, BigDecimal limit, BigDecimal limitPercent, boolean shouldEmit) throws InterruptedException {
 		this.ordenCobro = ordenCobro;
 		this.setTitle("Emitir/Incluir Nota de Cred/Deb");
-		this.setWidth("500px");
+		this.setWidth("640px"); // OP#8516: mas ancha para ver bien los importes
 		// Sin alto fijo: con el theme modern las filas son mas altas y el alto
 		// fijo cortaba los botones
 		this.setStyle("border: solid; 2px; padding: 2px;");
@@ -133,17 +136,27 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 		
 	}
 
+	/**
+	 * OP#8516 Formatea un importe con separador de miles y 2 decimales para facilitar la lectura.
+	 */
+	private static String formatAmount(BigDecimal amount) {
+		if (amount == null) {
+			return "";
+		}
+		return DisplayType.getNumberFormat(DisplayType.Amount, AEnv.getLanguage(Env.getCtx())).format(amount);
+	}
+
 	private Component createGrid() {
 		Label lblNewLabel_1 = new Label("Diferencia %:");
 		
-		lblExchangeDifPercnt = new Label(exchangeDifPercent.toString());
-		lblLimitPercent = new Label(limitPercent.toString());
+		lblExchangeDifPercnt = new Label(formatAmount(exchangeDifPercent));
+		lblLimitPercent = new Label(formatAmount(limitPercent));
 		
 		Label lblNewLabel_2 = new Label("Diferencia $:");
 		
-		lblLimit = new Label(limit.toString());
+		lblLimit = new Label(formatAmount(limit));
 		
-		lblExchangeDif = new Label(exchangeDif.toString());
+		lblExchangeDif = new Label(formatAmount(exchangeDif));
 		
 		chckbxInclude = new Checkbox();
 		chckbxInclude.setText("Incluir");
