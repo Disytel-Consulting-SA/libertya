@@ -91,6 +91,8 @@ public class AllocationGenerator {
 	
 	/** Fecha del recibo/op */
 	public Timestamp fechaOP = null;
+	/** OP#8516 Tasa de cambio del comprobante (recibo/OP), se graba en la cabecera de la asignación. Nula si no se utilizó. */
+	public BigDecimal exchangeRateComprobante = null;
 	
 	// dREHER
 	/** Permite calcular el monto de los debitos segun la tasa de cambio especificada en el comprobante y no seguna la tasa de cambio vigente */
@@ -307,6 +309,9 @@ public class AllocationGenerator {
 		newAllocationHdr.setC_Currency_ID(clientCurrencyID);
 		newAllocationHdr.setDateAcct(systemDate);
 		newAllocationHdr.setDateTrx(systemDate);
+		if(exchangeRateComprobante != null){
+			newAllocationHdr.setExchangeRate(exchangeRateComprobante);
+		}
 		if(getDocType() != null){
 			newAllocationHdr.setC_DocType_ID(getDocType().getID());
 			try{
