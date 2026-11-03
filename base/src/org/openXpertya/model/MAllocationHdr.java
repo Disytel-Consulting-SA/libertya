@@ -1299,8 +1299,22 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 					.hasNext();) {
 				MPayment paym = (MPayment) allocPays.next();
 				msg.append(paym.getDocumentNo());
+				// OP#8516 Se indica la asignación que retiene el pago (por ejemplo, la del anticipo original)
+				String otherAllocs = DB.getSQLValueString(get_TrxName(),
+						"SELECT string_agg(DISTINCT ah.DocumentNo, ', ') FROM C_AllocationLine al "
+								+ "INNER JOIN C_AllocationHdr ah ON (ah.C_AllocationHdr_ID = al.C_AllocationHdr_ID) "
+								+ "WHERE al.C_Payment_ID = ? AND al.C_AllocationHdr_ID <> ? AND ah.DocStatus IN ('CO','CL') "
+								+ "AND ah.IsActive = 'Y' AND al.IsActive = 'Y'",
+						paym.getC_Payment_ID(), getC_AllocationHdr_ID());
+				if (!Util.isEmpty(otherAllocs, true)) {
+					msg.append(" - asignación ").append(otherAllocs);
+				}
 				msg.append(allocPays.hasNext() ? ", " : ")");
 			}
+    		// Un pago que ya se usó en otra asignación (típico de los anticipos) no se puede anular junto con esta
+    		msg.append(". Los pagos están asignados también en otro comprobante. Si son anticipos aplicados en esta "
+    				+ "operación, use \"Revertir asignación\": libera los anticipos y anula los documentos generados, "
+    				+ "sin anular los pagos.");
     		throw new Exception(msg.toString());
     	}
     	
