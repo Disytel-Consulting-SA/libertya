@@ -1148,7 +1148,30 @@ public class AllocationGenerator {
 		}
 		// El total de la asignación es la suma de los débitos o créditos según
 		// corresponda
-		getAllocationHdr().setGrandTotal(onlyCredits ? getCreditsAmount() : getDebitsAmount());
+		BigDecimal hdrTotal = onlyCredits ? getCreditsAmount() : getDebitsAmount();
+		// OP#8516 En un pago adelantado en moneda extranjera con tasa de cambio propia, el total se calcula con esa tasa
+		if(onlyCredits && exchangeRateComprobante != null && exchangeRateComprobante.signum() > 0) {
+			hdrTotal = getDocumentsAmountWithOwnRate(getCredits(), exchangeRateComprobante);
+		}
+		getAllocationHdr().setGrandTotal(hdrTotal);
+	}
+
+	/**
+	 * OP#8516 Suma de los montos de los documentos en moneda de la compañía, convirtiendo los que están en moneda
+	 * extranjera con la tasa indicada y no con la de la tabla de tasas de cambio.
+	 */
+	private BigDecimal getDocumentsAmountWithOwnRate(List<Document> documents, BigDecimal rate) throws AllocationGeneratorException {
+		int companyCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		int precision = MCurrency.getStdPrecision(getCtx(), companyCurrencyID);
+		BigDecimal total = BigDecimal.ZERO;
+		for (Document document : documents) {
+			if (document.getCurrencyId() != companyCurrencyID) {
+				total = total.add(document.getAmount().multiply(rate).setScale(precision, RoundingMode.HALF_UP));
+			} else {
+				total = total.add(document.getConvertedAmount());
+			}
+		}
+		return total;
 	}
 	
 	/**
