@@ -23,3 +23,73 @@ FROM (VALUES
 WHERE c.ad_table_id = (SELECT ad_table_id FROM ad_table WHERE tablename = 'C_Invoice')
   AND c.columnname = v.columnname
   AND COALESCE(c.callout, '') NOT LIKE '%' || v.callout || '%';
+
+--20261103-1130 OP#8516 Tasa de cambio en la cabecera de recibos y ordenes de pago (C_AllocationHdr)
+update ad_system set dummy = (SELECT addcolumnifnotexists('C_AllocationHdr','ExchangeRate','numeric(20,4)'));
+
+INSERT INTO AD_Element (
+    AD_Element_ID, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    ColumnName, EntityType, Name, PrintName, Description, AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    nextval('seq_ad_element'), 0, 0, 'Y',
+    now(), 0, now(), 0,
+    'ExchangeRate', 'D', 'Tasa de cambio', 'Tasa de cambio',
+    'Tasa de cambio del comprobante (moneda de la compania por cada unidad de moneda extranjera)',
+    'CORE-AD_Element-20261103113000000-851600',
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+WHERE NOT EXISTS (SELECT 1 FROM AD_Element WHERE ColumnName = 'ExchangeRate');
+
+INSERT INTO AD_Column (
+    AD_Column_ID, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, Help, Version, EntityType, ColumnName,
+    AD_Table_ID, AD_Reference_ID, FieldLength,
+    IsKey, IsParent, IsMandatory, IsUpdateable, IsIdentifier, IsTranslated, IsEncrypted,
+    IsSelectionColumn, AD_Element_ID, IsSyncDatabase, IsAlwaysUpdateable, CalloutAlsoOnLoad, IsLink,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    nextval('seq_ad_column'), 0, 0, 'Y',
+    now(), 0, now(), 0,
+    'Tasa de cambio',
+    'Tasa de cambio del comprobante (moneda de la compania por cada unidad de moneda extranjera). Si esta vacia se utiliza la tasa de la tabla de tasas de cambio a la fecha del comprobante.',
+    NULL, 0, 'D', 'ExchangeRate',
+    t.AD_Table_ID, 22, 20,
+    'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+    'N', (SELECT AD_Element_ID FROM AD_Element WHERE ColumnName = 'ExchangeRate' ORDER BY AD_Element_ID LIMIT 1), 'N', 'N', 'N', 'N',
+    'CORE-AD_Column-20261103113000000-851601',
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Table t
+WHERE t.TableName = 'C_AllocationHdr'
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Column c
+      WHERE c.AD_Table_ID = t.AD_Table_ID AND c.ColumnName = 'ExchangeRate'
+  );
+
+-- Campo de solo lectura en las ventanas que muestran la cabecera de recibos, ordenes de pago y asignaciones
+INSERT INTO AD_Field (
+    AD_Field_ID, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, IsCentrallyMaintained, AD_Tab_ID, AD_Column_ID,
+    IsDisplayed, DisplayLength, IsReadOnly, SeqNo, IsSameLine,
+    IsHeading, IsFieldOnly, IsEncrypted, EntityType, IsDisplayedInGrid, ExportRealValue,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    nextval('seq_ad_field'), 0, 0, 'Y',
+    now(), 0, now(), 0,
+    'Tasa de cambio', 'Tasa de cambio del comprobante', 'N', t.AD_Tab_ID, c.AD_Column_ID,
+    'Y', 20, 'Y', 135, 'N',
+    'N', 'N', 'N', 'D', 'Y', 'N',
+    'CORE-AD_Field-20261103113000000-' || t.AD_Tab_ID,
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Tab t
+INNER JOIN AD_Column c ON (c.AD_Table_ID = t.AD_Table_ID AND c.ColumnName = 'ExchangeRate')
+WHERE t.AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'C_AllocationHdr')
+  AND t.TabLevel = 0
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Field f
+      WHERE f.AD_Tab_ID = t.AD_Tab_ID AND f.AD_Column_ID = c.AD_Column_ID
+  );
