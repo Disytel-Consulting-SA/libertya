@@ -1035,6 +1035,21 @@ public class VOrdenPagoModel {
 		public void setMontoEnMonedaLocal(boolean montoEnMonedaLocal) {
 			this.montoEnMonedaLocal = montoEnMonedaLocal;
 		}
+
+		/**
+		 * OP#8516 Monto ingresado por el usuario (en la moneda indicada por montoEnMonedaLocal), sin
+		 * topes ni conversiones. Los recálculos por cambio de tasa parten siempre de este valor, para
+		 * que un valor intermedio de la tasa no pise el monto original.
+		 */
+		private BigDecimal montoOrigen = null;
+
+		public BigDecimal getMontoOrigen() {
+			return montoOrigen;
+		}
+
+		public void setMontoOrigen(BigDecimal montoOrigen) {
+			this.montoOrigen = montoOrigen;
+		}
 		
 		private BigDecimal totalCurrentAmtFecFact = new BigDecimal(0); // total ARS a fecha fact
 		private BigDecimal openCurrentAmtFecFact = new BigDecimal(0); // open ARS a fecha fact
@@ -1680,6 +1695,9 @@ public class VOrdenPagoModel {
 			}
 		}
 
+		// Se guarda el monto ingresado antes de aplicar topes
+		rif.setMontoOrigen(clientAmtEdited ? amtLocal : amtFactura);
+
 		// No se puede pagar más que el saldo de la factura
 		if (amtFactura.compareTo(openFactura) > 0) {
 			amtFactura = openFactura;
@@ -1711,6 +1729,7 @@ public class VOrdenPagoModel {
 		} else {
 			rif.setManualAmount(BigDecimal.ZERO);
 			rif.setManualAmtClientCurrency(BigDecimal.ZERO);
+			rif.setMontoOrigen(null);
 		}
 		return rif.getManualAmtClientCurrency();
 	}
@@ -1746,7 +1765,14 @@ public class VOrdenPagoModel {
 		for (int i = 0; i < m_facturas.size(); i++) {
 			ResultItemFactura rif = (ResultItemFactura) m_facturas.get(i);
 			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
-			if (usaTasaComprobante(cur) && rif.getManualAmount() != null && rif.getManualAmount().signum() > 0) {
+			BigDecimal origen = rif.getMontoOrigen();
+			if (usaTasaComprobante(cur) && origen != null && origen.signum() > 0) {
+				// Se parte del monto que ingresó el usuario y no del resultado del cálculo anterior
+				if (rif.isMontoEnMonedaLocal()) {
+					rif.setManualAmtClientCurrency(origen);
+				} else {
+					rif.setManualAmount(origen);
+				}
 				aplicarTasaComprobante(i, rif, cur, rif.isMontoEnMonedaLocal());
 			}
 		}
