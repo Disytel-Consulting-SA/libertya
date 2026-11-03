@@ -2303,6 +2303,28 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		 * si arroja error. 
     		 * El usuario decide si desea continuar o no.
     		 */
+    		// OP#8516 Pago con anticipos en moneda extranjera: la diferencia de cambio se conoce recien ahora (valor de
+    		// los anticipos con la tasa de cada uno contra el valor de la factura): se recalcula y se vuelve a informar
+    		if (!m_model.isSOTrx() && m_model.ajustarPesosFacturasConAnticipos()) {
+    			m_model.calculateExchangeDifferenceValuesPurchases();
+    			shouldContinue = true;
+    			setCintoloEmit(false);
+    			setCintoloInclude(false);
+    			if (m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
+    				VExchangeDifferenceForm difForm = new VExchangeDifferenceForm(this,
+    						m_model.getExchangeDifference(),
+    						m_model.getExchangeDifferencePercent().abs(),
+    						m_model.getExchangeDifferenceLimit(),
+    						m_model.getExchangeDifferencePercentLimit(),
+    						m_model.shouldEmitPurchases());
+    				difForm.setModal(true);
+    				difForm.setVisible(true);
+    			}
+    			if (!shouldContinue) {
+    				return;
+    			}
+    		}
+    		
     		int status = m_model.nonBlockingValidations();
     		if(status == VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST) {
 	    		if(showAsk("PaymentsPartnerCheckWithoutBankList")) {

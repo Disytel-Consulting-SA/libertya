@@ -3688,7 +3688,33 @@ public class VOrdenPagoModel {
 		else
 			mp = new MedioPagoAdelantado(payID, amount, monedaOriginalID);
 
+		// OP#8516 Un anticipo en moneda extranjera se valoriza con la tasa de la OP adelantada con la que se hizo
+		if (!isCash && monedaOriginalID != null && monedaOriginalID != C_Currency_ID) {
+			mp.exchangeRate = getTasaAnticipo(payID, monedaOriginalID);
+		}
+
 		return mp;
+	}
+
+	/**
+	 * OP#8516 Tasa de cambio de un anticipo en moneda extranjera: la de la asignación (OP adelantada) que lo originó
+	 * y, si no la tiene (anticipos anteriores), la de la tabla de tasas de cambio a la fecha del pago.
+	 */
+	public BigDecimal getTasaAnticipo(int paymentID, int currencyID) {
+		BigDecimal rate = DB.getSQLValueBD(getTrxName(),
+				"SELECT ah.ExchangeRate FROM C_AllocationLine al "
+						+ "INNER JOIN C_AllocationHdr ah ON ah.C_AllocationHdr_ID = al.C_AllocationHdr_ID "
+						+ "WHERE al.C_Payment_ID = ? AND ah.IsActive = 'Y' AND ah.DocStatus IN ('CO','CL') "
+						+ "AND ah.AllocationType IN ('OPA','RCA') AND ah.ExchangeRate IS NOT NULL AND ah.ExchangeRate > 0 "
+						+ "ORDER BY ah.Created LIMIT 1",
+				paymentID);
+		if (rate != null && rate.signum() > 0) {
+			return rate;
+		}
+		Timestamp payDate = VModelHelper.getSQLValueTimestamp(getTrxName(),
+				"SELECT DateAcct FROM C_Payment WHERE C_Payment_ID = ?", paymentID);
+		return MConversionRate.getRate(currencyID, C_Currency_ID, payDate, 0, Env.getAD_Client_ID(getCtx()),
+				Env.getAD_Org_ID(getCtx()));
 	}
 
 	public int getC_Currency_ID() {
@@ -3976,10 +4002,12 @@ public class VOrdenPagoModel {
 		m_mediosPago.add(mp);
 		recalculateNetAmountNCFromCredits();
 		updateAddingMedioPago(mp);
+		ajustarPesosFacturasConAnticipos(); // OP#8516
 	}
 
 	public void removeMedioPago(MedioPago mp) {
 		m_mediosPago.remove(mp);
+		ajustarPesosFacturasConAnticipos(); // OP#8516
 		recalculateNetAmountNCFromCredits();
 		updateRemovingMedioPago(mp);
 	}
@@ -4706,6 +4734,85 @@ public class VOrdenPagoModel {
 			}
 		}
 		return total;
+	}
+
+	/**
+	 * OP#8516 Cuando una factura en moneda extranjera se paga con anticipos en moneda extranjera, lo que se paga en
+	 * pesos es el valor de los anticipos (cada uno con su tasa). Se reparten esos pesos entre las facturas en moneda
+	 * extranjera en proporción a su valor, para que el saldo de la OP cierre y la diferencia de cambio resulte de
+	 * comparar lo pagado con el valor de la factura. Si ya no hay anticipos en moneda extranjera se restituyen los
+	 * pesos calculados con la tasa del comprobante.
+	 * 
+	 * @return true si se repartió el valor de anticipos
+	 */
+	public boolean ajustarPesosFacturasConAnticipos() {
+		if (isSOTrx() || m_facturas == null || m_mediosPago == null) {
+			return false;
+		}
+		boolean hayAnticipoExtranjero = false;
+		BigDecimal totalMedios = BigDecimal.ZERO;
+		for (MedioPago mp : m_mediosPago) {
+			BigDecimal imp = mp.getImporte();
+			totalMedios = totalMedios.add(imp == null ? BigDecimal.ZERO : imp);
+			if (mp instanceof MedioPagoAdelantado && mp.monedaOriginalID != null && mp.monedaOriginalID != C_Currency_ID) {
+				hayAnticipoExtranjero = true;
+			}
+		}
+		if (!hayAnticipoExtranjero) {
+			// Sin anticipos en moneda extranjera: pesos de las facturas segun la tasa del comprobante
+			if (exchangeRateComprobante != null) {
+				recalcularMontosPorTasaComprobante();
+			}
+			return false;
+		}
+		int precision = mCurency.getStdPrecision();
+		BigDecimal pesosFacturasLocales = BigDecimal.ZERO;
+		java.util.List<ResultItemFactura> extranjeras = new java.util.ArrayList<ResultItemFactura>();
+		java.util.List<BigDecimal> pesos = new java.util.ArrayList<BigDecimal>();
+		BigDecimal valorExtranjeras = BigDecimal.ZERO;
+		for (ResultItem x : m_facturas) {
+			ResultItemFactura rif = (ResultItemFactura) x;
+			if (rif.getManualAmount() == null || rif.getManualAmount().signum() <= 0) {
+				continue;
+			}
+			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
+			if (cur == C_Currency_ID) {
+				pesosFacturasLocales = pesosFacturasLocales.add(rif.getManualAmtClientCurrency() == null
+						? BigDecimal.ZERO : rif.getManualAmtClientCurrency());
+				continue;
+			}
+			int invoiceID = (Integer) rif.getItem(m_facturasTableModel.getIdColIdx());
+			MInvoice invoice = new MInvoice(m_ctx, invoiceID, trxName);
+			BigDecimal value = MCurrency.currencyConvert(rif.getManualAmount(), cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+			if (value == null || value.signum() <= 0) {
+				continue;
+			}
+			extranjeras.add(rif);
+			pesos.add(value);
+			valorExtranjeras = valorExtranjeras.add(value);
+		}
+		if (extranjeras.isEmpty() || valorExtranjeras.signum() <= 0) {
+			return false;
+		}
+		BigDecimal paraExtranjeras = totalMedios.subtract(pesosFacturasLocales);
+		if (paraExtranjeras.signum() < 0) {
+			paraExtranjeras = BigDecimal.ZERO;
+		}
+		BigDecimal acumulado = BigDecimal.ZERO;
+		for (int i = 0; i < extranjeras.size(); i++) {
+			BigDecimal parte;
+			if (i == extranjeras.size() - 1) {
+				parte = paraExtranjeras.subtract(acumulado);
+			} else {
+				parte = paraExtranjeras.multiply(pesos.get(i)).divide(valorExtranjeras, precision, RoundingMode.HALF_UP);
+			}
+			acumulado = acumulado.add(parte);
+			extranjeras.get(i).setManualAmtClientCurrency(parte);
+		}
+		debug("Anticipos en moneda extranjera: se reparten " + paraExtranjeras + " pesos entre " + extranjeras.size()
+				+ " factura(s) en moneda extranjera");
+		m_facturasTableModel.fireTableDataChanged();
+		return true;
 	}
 
 	/**
