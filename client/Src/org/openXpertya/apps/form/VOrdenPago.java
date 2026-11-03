@@ -2312,10 +2312,16 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	 * @return el dialogo mostrado, para cerrarlo con {@link #closeProcessingDialog(javax.swing.JDialog)}
 	 */
 	protected javax.swing.JDialog showProcessingDialog() {
+		return showProcessingDialog(getModel().isSOTrx() ? "Generando Recibo, por favor espere..."
+				: "Generando Orden de Pago, por favor espere...");
+	}
+
+	/**
+	 * OP#8516 Muestra el aviso de procesamiento con el mensaje indicado.
+	 */
+	protected javax.swing.JDialog showProcessingDialog(String msg) {
 		javax.swing.JDialog dlg = null;
 		try {
-			String msg = getModel().isSOTrx() ? "Generando Recibo, por favor espere..."
-					: "Generando Orden de Pago, por favor espere...";
 			dlg = new javax.swing.JDialog(m_frame, false);
 			dlg.setUndecorated(true);
 			javax.swing.JLabel lbl = new javax.swing.JLabel(msg, javax.swing.SwingConstants.CENTER);
@@ -3362,6 +3368,10 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			
 			SwingUtilities.invokeLater( new Runnable() {
 	            public void run() {
+	            	// OP#8516 Se informa que se están buscando los comprobantes, ya que puede demorar
+	            	javax.swing.JDialog dlgBuscando = BPartnerSel.getValue() == null ? null
+	            			: showProcessingDialog("Buscando comprobantes pendientes, por favor espere...");
+	            	try {
 	            	// Actualizo el modelo
 	            	getModel().updateBPartner((Integer)BPartnerSel.getValue());
 	            	refrescarTasaCambio();
@@ -3400,6 +3410,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 						radPayTypeStd.setSelected(true);
 						onTipoPagoChange(false);
 					}	
+					} finally {
+						closeProcessingDialog(dlgBuscando);
+					}
 					
 	            }
 	        } );			
