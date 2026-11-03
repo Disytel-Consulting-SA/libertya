@@ -46,6 +46,7 @@ import org.adempiere.webui.editor.IZoomableEditor;
 import org.adempiere.webui.editor.WDateEditor;
 import org.adempiere.webui.editor.WEditor;
 import org.adempiere.webui.editor.WEditorPopupMenu;
+import org.adempiere.webui.editor.WNumberEditor;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WStringEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
@@ -224,6 +225,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		dateTrx.setMandatory(true);
 		dateTrx.setValue(getModel().getFechaOP());
 		dateTrx.addValueChangeListener(this);
+		
+		// OP#8516 Tasa de cambio del comprobante: se propone la tasa del dia y el usuario puede modificarla
+		txtTasaCambio = new WNumberEditor("ExchangeRate", false, true, true, DisplayType.CostPrice, "Tasa de cambio");
+		txtTasaCambio.getComponent().setTooltiptext("Tasa de cambio del comprobante (moneda de la compañía por unidad de moneda extranjera). "
+				+ "Se propone la tasa del día y puede modificarse.");
+		txtTasaCambio.addValueChangeListener(this);
 		
         radPayTypeStd = new Radio();
         radPayTypeAdv = new Radio();
@@ -535,6 +542,12 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	row.appendChild(new Space());
     	row.appendChild(cboPaymentRule.getLabel().rightAlign());
     	row.appendChild(cboPaymentRule.getComponent());
+    	row.appendChild(new Space());
+    	
+    	// OP#8516 Tasa de cambio del comprobante
+    	row = rows.newRow();
+    	row.appendChild(txtTasaCambio.getLabel().rightAlign());
+    	row.appendChild(txtTasaCambio.getComponent());
     	row.appendChild(new Space());
     }
     
@@ -1047,6 +1060,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	}
     	
     	m_model.setFechaTablaFacturas(new Timestamp(((Date)invoiceDatePick.getComponent().getValue()).getTime()), rInvoiceAll.isSelected());
+    	refrescarTasaCambio();
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
@@ -1156,6 +1170,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		
     		m_model.setActualizarFacturasAuto(false);
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		// Fuerzo la actualizacion de los valores de la interfaz
     		onTipoPagoChange(true);
     		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
@@ -1464,6 +1479,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected WTableDirEditor cboCurrency;
     protected WTableDirEditor cboPaymentRule;
     protected WDateEditor dateTrx;
+    // OP#8516 Tasa de cambio del comprobante
+    protected WNumberEditor txtTasaCambio;
     
     protected Map<String, ValueNamePair> paymentRules;
     
@@ -2160,12 +2177,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 */
 	public void valueChange(ValueChangeEvent e) {
 		// System.out.println("vetoableChange: " + arg0);
-		if (e.getSource() == BPartnerSel) {
+		if (e.getSource() == txtTasaCambio) {
+			onTasaCambioChange();
+		} else if (e.getSource() == BPartnerSel) {
 
         	// Actualizo el modelo. Utilizo newValueOnChange, dado que si utilizo newValue,
 			// obtengo null (o el valor viejo) en este punto del código
 			getModel().updateBPartner(null);
         	getModel().updateBPartner((Integer)BPartnerSel.getNewValueOnChange());
+        	refrescarTasaCambio();
 			// Actualizo los componentes custom de la interfaz gráfica
 			// relacionados con el cambio de la entidad comercial
         	customUpdateBPartnerRelatedComponents(true);
@@ -2243,6 +2263,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		} else if(e.getSource() == dateTrx){
 			m_model.setFechaOP((Timestamp)dateTrx.getValue());
 			m_model.actualizarFacturas();
+			refrescarTasaCambio();
 			Env.setContext(m_ctx, m_WindowNo, "Date", (Timestamp)dateTrx.getValue());
 			
 			/**
@@ -2281,6 +2302,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			fldDocumentNo.setReadWrite(tabbox.getSelectedIndex() == 0);
 			cboPaymentRule.setReadWrite(tabbox.getSelectedIndex() == 0);
 			dateTrx.setReadWrite(tabbox.getSelectedIndex() == 0);
+			refrescarTasaCambio();
 		} else if (arg0.getTarget().getParent().getParent() == mpTabbox) {
 			// TAB de medios de pago
 			updateContextValues();
@@ -3051,6 +3073,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		m_model.setBPartnerFacturas(0);
 		radPayTypeStd.setSelected(true);
 		m_model.actualizarFacturas();
+		m_model.setExchangeRateManual(false);
+		refrescarTasaCambio();
 		cboCampaign.setValue(null);
 		cboProject.setValue(null);
 		cboCurrency.setValue(m_C_Currency_ID);
@@ -3378,6 +3402,43 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		getModel().setPaymentRule((String)cboPaymentRule.getValue());
 		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", (String)cboPaymentRule.getValue());
 		getModel().actualizarFacturas();
+		refrescarTasaCambio();
+	}
+
+	/**
+	 * OP#8516 El usuario modificó la tasa de cambio del comprobante: se recalculan los montos
+	 * en moneda de la compañía de las facturas con monto a pagar.
+	 */
+	protected void onTasaCambioChange() {
+		BigDecimal nueva = (BigDecimal) txtTasaCambio.getValue();
+		BigDecimal actual = m_model.getExchangeRateComprobante();
+		if (nueva != null && nueva.signum() <= 0) {
+			nueva = null;
+		}
+		if ((nueva == null && actual == null) || (nueva != null && actual != null && nueva.compareTo(actual) == 0)) {
+			return;
+		}
+		m_model.setExchangeRateComprobante(nueva);
+		// Si la dejó vacía se vuelve a proponer la tasa del día
+		m_model.setExchangeRateManual(nueva != null);
+		if (nueva == null) {
+			m_model.actualizarTasaComprobanteDefault();
+			refrescarTasaCambio();
+		}
+		m_model.recalcularMontosPorTasaComprobante();
+	}
+
+	/**
+	 * OP#8516 Actualiza el campo Tasa de cambio con el valor del modelo. Solo se habilita si
+	 * hay facturas en moneda extranjera y se está en la pestaña de selección de facturas.
+	 */
+	protected void refrescarTasaCambio() {
+		if (txtTasaCambio == null || m_model == null) {
+			return;
+		}
+		boolean hayMonedaExtranjera = m_model.getExchangeRateCurrencyID() > 0;
+		txtTasaCambio.setValue(m_model.getExchangeRateComprobante());
+		txtTasaCambio.setReadWrite(hayMonedaExtranjera && tabbox.getSelectedIndex() == 0);
 	}
 	
 	/**

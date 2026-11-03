@@ -243,6 +243,7 @@ public class WOrdenCobro extends WOrdenPago {
     		
     		m_model.setActualizarFacturasAuto(false);
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		// Fuerzo la actualizacion de los valores de la interfaz
     		onTipoPagoChange(true);
     		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
@@ -2286,6 +2287,12 @@ public class WOrdenCobro extends WOrdenPago {
     	row.appendChild(new Space());
     	row.appendChild(cboPaymentRule.getLabel().rightAlign());
     	row.appendChild(cboPaymentRule.getComponent());
+    	row.appendChild(new Space());
+    	
+    	// OP#8516 Tasa de cambio del comprobante
+    	row = rows.newRow();
+    	row.appendChild(txtTasaCambio.getLabel().rightAlign());
+    	row.appendChild(txtTasaCambio.getComponent());
     	row.appendChild(new Space());
     }
     
