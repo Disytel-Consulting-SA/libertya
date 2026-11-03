@@ -139,31 +139,7 @@ public class WOrdenCobro extends WOrdenPago {
 	protected WStringEditor txtCheckBarcode;
 	
 	// CINTOLO: Se agregan los campos para el PopUp
-    protected boolean isCintoloEmit = false;
-    protected boolean isCintoloInclude = false;
-    protected boolean shouldContinue = true;
-    
-    public void setContinue(boolean shouldContinue) {
-    	this.shouldContinue = shouldContinue;
-    }
-    
-    public boolean isCintoloEmit() {
-    	return isCintoloEmit;
-    }
-    
-    public boolean isCintoloInclude() {
-    	return isCintoloInclude;
-    }
-    
-    public void setCintoloEmit(boolean emit) {
-    	isCintoloEmit = emit;
-    	m_model.setCintoloEmit(emit);
-    }
-    
-    public void setCintoloInclude(boolean include) {
-    	isCintoloInclude = include;
-    	m_model.setCintoloInclude(include);
-    }
+    // OP#8516 isCintoloEmit/isCintoloInclude/shouldContinue y sus métodos están en WOrdenPago
 
 	public WOrdenCobro() {
 		super();

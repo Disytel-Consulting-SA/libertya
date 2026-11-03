@@ -314,6 +314,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         cboCurrency = new WTableDirEditor("C_Currency_ID", false, false, true, lookupCurrency);
         addPopupMenu(cboCurrency, true, true, false);
         
+        // OP#8516 Tasa de cambio con la que se paga en moneda extranjera (pestaña de formas de pago)
+        txtTasaMedioPago = new WNumberEditor("ExchangeRate", false, false, true, DisplayType.CostPrice, "Tasa de cambio");
+        txtTasaMedioPago.getComponent().setTooltiptext("Tasa de cambio con la que se paga en moneda extranjera (moneda de la compañía por unidad "
+        		+ "de moneda extranjera). Se propone la tasa del día y puede modificarse.");
+        
         cmdProcess = new Button();        
         cmdCancel = new Button();
 
@@ -776,6 +781,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	MedioPagoEfectivo mpe = m_model.getNuevoMedioPagoEfectivo();
     	try {
 			mpe.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpe.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -803,6 +809,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	MedioPagoTransferencia mpt = m_model.getNuevoMedioPagoTransferencia();		
     	try {
 			mpt.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpt.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -844,6 +851,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		mpc.aLaOrden = txtChequeALaOrden.getValue().toString();		
 		try {
 			mpc.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpc.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -1061,6 +1069,8 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	
     	m_model.setFechaTablaFacturas(new Timestamp(((Date)invoiceDatePick.getComponent().getValue()).getTime()), rInvoiceAll.isSelected());
     	refrescarTasaCambio();
+    	tasaMedioPagoCurrency = null; // OP#8516 la tasa del dia del pago depende de la fecha
+    	refrescarTasaMedioPago();
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
@@ -1231,6 +1241,21 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		
 			// Actualizo componentes gráficos antes de pasar a la siguiente
 			// pestaña
+    		// OP#8516 Diferencia de cambio en pagos a proveedores en moneda extranjera
+    		if (!m_model.isSOTrx()) {
+    			m_model.calculateExchangeDifferenceValuesPurchases();
+    			shouldContinue = true;
+    			setCintoloEmit(false);
+    			setCintoloInclude(false);
+    			if (m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
+    				mostrarDiferenciaCambioProveedores("Importe provisorio, calculado con la tasa de cambio de esta orden de pago. "
+    						+ "Si pagás con anticipos en moneda extranjera, la diferencia se recalcula al emitir el pago con la tasa de cada anticipo.");
+    			}
+    			if (!shouldContinue) {
+    				return;
+    			}
+    		}
+    		
     		updateComponentsPreProcesar();
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
@@ -1251,8 +1276,28 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     		
     		m_model.setProjectID(getC_Project_ID() == null?0:getC_Project_ID());
     		m_model.setCampaignID(getC_Campaign_ID() == null?0:getC_Campaign_ID());
-    		BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
-    		m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
+    		// OP#8516 Como en el escritorio: la diferencia de cambio se calcula solo para cobros
+    		if (m_model.isSOTrx()) {
+    			BigDecimal exchangeDifference = getModel().calculateExchangeDifference();
+    			m_model.setExchangeDifference( exchangeDifference == null?BigDecimal.ZERO:exchangeDifference);
+    		} else {
+    			m_model.setExchangeDifference(Env.ZERO);
+    		}
+    		
+    		// OP#8516 Pago con anticipos en moneda extranjera: la diferencia de cambio se conoce recien ahora (valor de
+    		// los anticipos con la tasa de cada uno contra el valor de la factura): se recalcula y se vuelve a informar
+    		if (!m_model.isSOTrx() && m_model.ajustarPesosFacturasConAnticipos()) {
+    			m_model.calculateExchangeDifferenceValuesPurchases();
+    			shouldContinue = true;
+    			setCintoloEmit(false);
+    			setCintoloInclude(false);
+    			if (m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
+    				mostrarDiferenciaCambioProveedores("Diferencia definitiva: valor de los anticipos con la tasa de cada uno contra el valor de la factura.");
+    			}
+    			if (!shouldContinue) {
+    				return;
+    			}
+    		}
     		
     		/*
     		 * Esta validacion se realiza primero porque no necesariamente bloquea el proceso
@@ -1481,6 +1526,36 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     protected WDateEditor dateTrx;
     // OP#8516 Tasa de cambio del comprobante
     protected WNumberEditor txtTasaCambio;
+    // OP#8516 Tasa de cambio del pago en moneda extranjera (pestaña de formas de pago)
+    protected WNumberEditor txtTasaMedioPago;
+    private Integer tasaMedioPagoCurrency = null;
+
+    // Emitir/Incluir los documentos de diferencia de cambio (diálogo de diferencia de cambio)
+    protected boolean isCintoloEmit = false;
+    protected boolean isCintoloInclude = false;
+    protected boolean shouldContinue = true;
+
+    public void setContinue(boolean shouldContinue) {
+    	this.shouldContinue = shouldContinue;
+    }
+
+    public boolean isCintoloEmit() {
+    	return isCintoloEmit;
+    }
+
+    public boolean isCintoloInclude() {
+    	return isCintoloInclude;
+    }
+
+    public void setCintoloEmit(boolean emit) {
+    	isCintoloEmit = emit;
+    	m_model.setCintoloEmit(emit);
+    }
+
+    public void setCintoloInclude(boolean include) {
+    	isCintoloInclude = include;
+    	m_model.setCintoloInclude(include);
+    }
     
     protected Map<String, ValueNamePair> paymentRules;
     
@@ -1697,6 +1772,7 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
         cboCurrency.setMandatory(true);
         cboCurrency.setValue(m_C_Currency_ID);
 //        cboCurrency.refresh();
+        refrescarTasaMedioPago(); // OP#8516
         setCurrencyContext();
 
         // Cuando cambia el documento de crédito, se carga el 
@@ -1735,6 +1811,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
     	cboCurrency.addValueChangeListener(new ValueChangeListener() {
 			public void valueChange(ValueChangeEvent evt) {
 				setCurrencyContext();
+				refrescarTasaMedioPago(); // OP#8516
+    			updatePayAmt(getModel().getSaldoMediosPago());
+			}
+		});
+    	// OP#8516 Al cambiar la tasa se vuelve a sugerir el importe del pago (saldo en pesos / tasa)
+    	txtTasaMedioPago.addValueChangeListener(new ValueChangeListener() {
+			public void valueChange(ValueChangeEvent evt) {
     			updatePayAmt(getModel().getSaldoMediosPago());
 			}
 		});
@@ -2989,7 +3072,13 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	protected void updatePayAmt(BigDecimal amt){
 		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
 
-		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
+		// OP#8516 Si el pago en moneda extranjera tiene tasa de cambio propia, el importe sugerido se calcula con ella
+		BigDecimal tasaMedioPago = getTasaMedioPago();
+		if (tasaMedioPago != null && currencyID != m_C_Currency_ID) {
+			amt = amt.divide(tasaMedioPago, MCurrency.getStdPrecision(m_ctx, currencyID), java.math.RoundingMode.HALF_UP);
+		} else {
+			amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
+		}
 
 		Integer tabIndexSelected = mpTabbox.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
@@ -3002,6 +3091,15 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 			txtEfectivoImporte.setValue(numberFormat(amt));
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_PAGO_ADELANTADO)){
+			// OP#8516 El importe sugerido no puede superar lo disponible del pago elegido, en la moneda del pago
+			Object pagoElegido = pagoAdelantado.getValue();
+			boolean esEfectivo = cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX;
+			if (!esEfectivo && pagoElegido instanceof Integer && amt != null) {
+				BigDecimal disp = getModel().getPagoAdelantadoAvailableAmtOriginal((Integer) pagoElegido);
+				if (disp != null && disp.compareTo(amt) < 0) {
+					amt = disp;
+				}
+			}
 			txtPagoAdelantadoImporte.setValue(numberFormat(amt));
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_TRANSFERENCIA)){
@@ -3202,6 +3300,11 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 		row.appendChild(cboCurrency.getComponent());
 		
 		addFieldsToCampProy(row);
+		
+		// OP#8516 Tasa de cambio del pago en moneda extranjera
+		row = rows.newRow();
+		row.appendChild(txtTasaMedioPago.getLabel().rightAlign());
+		row.appendChild(txtTasaMedioPago.getComponent());
 		
 		panelchildren.appendChild(gridpanel);
 		panel.appendChild(panelchildren);
@@ -3409,6 +3512,64 @@ public class WOrdenPago extends ADForm implements ValueChangeListener, TableMode
 	 * OP#8516 El usuario modificó la tasa de cambio del comprobante: se recalculan los montos
 	 * en moneda de la compañía de las facturas con monto a pagar.
 	 */
+	/**
+	 * OP#8516 Habilita el campo Tasa de cambio del pago cuando la moneda elegida es extranjera y propone la tasa
+	 * del día al cambiar la moneda o la fecha.
+	 */
+	protected void refrescarTasaMedioPago() {
+		if (txtTasaMedioPago == null || cboCurrency == null || m_model == null) {
+			return;
+		}
+		Integer cur = (Integer) cboCurrency.getValue();
+		boolean foreign = cur != null && cur > 0 && cur != m_C_Currency_ID;
+		if (!foreign) {
+			txtTasaMedioPago.setValue(null);
+			txtTasaMedioPago.setReadWrite(false);
+			tasaMedioPagoCurrency = null;
+			return;
+		}
+		txtTasaMedioPago.setReadWrite(true);
+		if (!cur.equals(tasaMedioPagoCurrency)) {
+			tasaMedioPagoCurrency = cur;
+			txtTasaMedioPago.setValue(m_model.getTasaDelDia(cur));
+		}
+	}
+
+	/**
+	 * OP#8516 @return la tasa de cambio ingresada para el pago en moneda extranjera, null si el pago es en la
+	 *         moneda de la compañía
+	 */
+	public BigDecimal getTasaMedioPago() {
+		if (txtTasaMedioPago == null || cboCurrency == null) {
+			return null;
+		}
+		Integer cur = (Integer) cboCurrency.getValue();
+		if (cur == null || cur <= 0 || cur == m_C_Currency_ID) {
+			return null;
+		}
+		BigDecimal rate = (BigDecimal) txtTasaMedioPago.getValue();
+		return (rate == null || rate.signum() <= 0) ? null : rate;
+	}
+
+	/**
+	 * OP#8516 Muestra el diálogo de diferencia de cambio de un pago a proveedores. El resultado (emitir/incluir y si
+	 * se continúa) vuelve por setCintoloEmit/setCintoloInclude/setContinue.
+	 */
+	protected void mostrarDiferenciaCambioProveedores(String nota) {
+		try {
+			WExchangeDifferenceForm difForm = new WExchangeDifferenceForm(this,
+					m_model.getExchangeDifference(),
+					m_model.getExchangeDifferencePercent().abs(),
+					m_model.getExchangeDifferenceLimit(),
+					m_model.getExchangeDifferencePercentLimit(),
+					m_model.shouldEmitPurchases());
+			difForm.setNota(nota);
+			AEnv.showWindow(difForm);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
 	protected void onTasaCambioChange() {
 		BigDecimal nueva = (BigDecimal) txtTasaCambio.getValue();
 		BigDecimal actual = m_model.getExchangeRateComprobante();
