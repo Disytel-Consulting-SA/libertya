@@ -905,6 +905,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 	        	voidPayments();
 	        	voidDiffCambio();
 	        }
+	        // OP#8516 En una orden de pago, al revertir la asignación (sin anular los pagos, por ejemplo cuando se pagó con
+	        // anticipos) también se anulan los documentos de diferencia de cambio que generó la propia orden de pago
+	        else if (ALLOCATIONACTION_RevertAllocation.equals(getAllocationAction()) && !isSOTrx()) {
+	        	voidDiffCambio();
+	        }
 	        
 		    // Acción específica de Allocations: Anular Pagos y Retenciones
 	        // Se deben anular las retenciones asociadas a esta asignación.
