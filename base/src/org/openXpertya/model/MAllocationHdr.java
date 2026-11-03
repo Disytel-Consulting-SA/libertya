@@ -1482,6 +1482,23 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         		// Se anula ND o NC emitida por diferencia de cambio
         		voidRetentionInvoice(invoice); //La función que anula las facturas de retención es válida para anular diff de cambio
         	}
+        	rs.close();
+        	pstmt.close();
+        	pstmt = null;
+        	rs = null;
+
+        	// OP#8516 Los documentos de diferencia de cambio que solo se emitieron (borrador, sin incluir en la
+        	// asignación) no figuran en sus líneas: se anulan igualmente, ya que son propuestas de este comprobante
+        	// y no deben quedar huérfanos.
+        	pstmt = DB.prepareStatement(
+        			"SELECT c_invoice_id FROM c_invoice WHERE cintolo_exchange_dif_receipt = ? AND docstatus = 'DR' AND isactive = 'Y'",
+        			get_TrxName());
+        	pstmt.setInt(1, getC_AllocationHdr_ID());
+        	rs = pstmt.executeQuery();
+        	while (rs.next()) {
+        		MInvoice draftInvoice = new MInvoice(getCtx(), rs.getInt("C_Invoice_ID"), get_TrxName());
+        		voidRetentionInvoice(draftInvoice);
+        	}
         } catch (SQLException e) {
         	log.log(Level.SEVERE, "voidIt->voidDiffCambio", e);
         	throw new Exception();
