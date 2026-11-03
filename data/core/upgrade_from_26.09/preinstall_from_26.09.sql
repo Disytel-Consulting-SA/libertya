@@ -93,3 +93,47 @@ WHERE t.AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'C_All
       SELECT 1 FROM AD_Field f
       WHERE f.AD_Tab_ID = t.AD_Tab_ID AND f.AD_Column_ID = c.AD_Column_ID
   );
+
+--20261103-1530 OP#8516 Traducciones del elemento y de los campos de la tasa de cambio (necesarias para que el modelo y las ventanas vean la columna en idiomas no base)
+INSERT INTO AD_Element_Trl (
+    AD_Element_ID, AD_Language, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, PrintName, Description, IsTranslated,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    e.AD_Element_ID, l.AD_Language, 0, 0, 'Y',
+    now(), 0, now(), 0,
+    e.Name, e.PrintName, e.Description, 'N',
+    'CORE-AD_Element_Trl-8516-' || l.AD_Language,
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Element e
+CROSS JOIN AD_Language l
+WHERE e.ColumnName = 'ExchangeRate'
+  AND l.IsActive = 'Y' AND l.IsSystemLanguage = 'Y'
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Element_Trl t
+      WHERE t.AD_Element_ID = e.AD_Element_ID AND t.AD_Language = l.AD_Language
+  );
+
+INSERT INTO AD_Field_Trl (
+    AD_Field_ID, AD_Language, AD_Client_ID, AD_Org_ID, IsActive,
+    Created, CreatedBy, Updated, UpdatedBy,
+    Name, Description, IsTranslated,
+    AD_ComponentObjectUID, AD_ComponentVersion_ID
+)
+SELECT
+    f.AD_Field_ID, l.AD_Language, 0, 0, 'Y',
+    now(), 0, now(), 0,
+    f.Name, f.Description, 'N',
+    'CORE-AD_Field_Trl-8516-' || f.AD_Tab_ID || '-' || l.AD_Language,
+    (SELECT AD_ComponentVersion_ID FROM AD_ComponentVersion WHERE AD_ComponentObjectUID = 'CORE-AD_ComponentVersion-1010413')
+FROM AD_Field f
+INNER JOIN AD_Column c ON (c.AD_Column_ID = f.AD_Column_ID AND c.ColumnName = 'ExchangeRate')
+INNER JOIN AD_Table tb ON (tb.AD_Table_ID = c.AD_Table_ID AND tb.TableName = 'C_AllocationHdr')
+CROSS JOIN AD_Language l
+WHERE l.IsActive = 'Y' AND l.IsSystemLanguage = 'Y'
+  AND NOT EXISTS (
+      SELECT 1 FROM AD_Field_Trl t
+      WHERE t.AD_Field_ID = f.AD_Field_ID AND t.AD_Language = l.AD_Language
+  );
