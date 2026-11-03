@@ -172,6 +172,12 @@ public class VOrdenPagoModel {
 
 		// Este metodo retorna el importe en la moneda de la Compañia
 		public BigDecimal getImporte() {
+			// OP#8516 Si el pago en moneda extranjera tiene su propia tasa de cambio, se convierte con esa tasa
+			if (exchangeRate != null && exchangeRate.signum() > 0 && getMonedaOriginalID() != null
+					&& getMonedaOriginalID() != C_Currency_ID && getImporteMonedaOriginal() != null) {
+				return getImporteMonedaOriginal().multiply(exchangeRate).setScale(mCurency.getStdPrecision(),
+						RoundingMode.HALF_UP);
+			}
 			// Es correcto que se convierta a la fecha Actual
 			return MCurrency.currencyConvert(getImporteMonedaOriginal(), getMonedaOriginalID(), C_Currency_ID,
 					// new Timestamp(System.currentTimeMillis()),

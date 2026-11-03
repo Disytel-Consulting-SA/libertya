@@ -4129,7 +4129,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	protected void updatePayAmt(BigDecimal amt){
 		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
 
-		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
+		// OP#8516 Si el pago en moneda extranjera tiene tasa de cambio propia, el importe sugerido se calcula con ella
+		BigDecimal tasaMedioPago = getTasaMedioPago();
+		if (tasaMedioPago != null && currencyID != m_C_Currency_ID) {
+			amt = amt.divide(tasaMedioPago, MCurrency.getStdPrecision(m_ctx, currencyID), java.math.RoundingMode.HALF_UP);
+		} else {
+			amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
+		}
 		
 		Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
