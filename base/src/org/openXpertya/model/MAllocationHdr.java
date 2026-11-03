@@ -1026,12 +1026,38 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			return false;
         }
         
+        // OP#8516 Al revertir una orden de pago se anulan los documentos de diferencia de cambio que generó
+        if (!voidDiffCambioPaymentOrder()) {
+        	return false;
+        }
+        
         boolean retValue = reverseIt();
 
         setDocAction( DOCACTION_None );
 
         return retValue;
     }    // reverseCorrectionIt
+
+    /**
+     * OP#8516 En una orden de pago, anula los documentos de diferencia de cambio (Débito/Crédito de Proveedor) que
+     * generó la propia orden de pago, ya sea que estén imputados en ella o en borrador. Se utiliza al revertir la
+     * asignación sin anular los pagos, por ejemplo cuando se pagó con anticipos.
+     * 
+     * @return false si no se pudieron anular, con el mensaje en processMsg
+     */
+    private boolean voidDiffCambioPaymentOrder() {
+    	if (isSOTrx()) {
+    		return true;
+    	}
+    	setAditionalWorks(new HashMap<PO, Object>());
+    	try {
+    		voidDiffCambio();
+    	} catch (Exception e) {
+    		m_processMsg = e.getMessage();
+    		return false;
+    	}
+    	return true;
+    }
 
     /**
      * Descripción de Método
@@ -1042,6 +1068,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 
     public boolean reverseAccrualIt() {
         log.info( toString());
+
+        // OP#8516 Al revertir una orden de pago se anulan los documentos de diferencia de cambio que generó
+        if (!voidDiffCambioPaymentOrder()) {
+        	return false;
+        }
 
         boolean retValue = reverseIt();
 
