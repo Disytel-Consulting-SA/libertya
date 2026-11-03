@@ -693,6 +693,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			
 			// Si es pago adelantado, no muestra ninguna factura.
 			
+			actualizarTasaComprobanteDefault(); // OP#8516
 			m_facturasTableModel.fireChanged(false);
 			return;
 		}
@@ -837,6 +838,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 		
 		applyBPartnerDiscount();
+		actualizarTasaComprobanteDefault(); // OP#8516
 		m_facturasTableModel.fireChanged(false);
 		
 	}
