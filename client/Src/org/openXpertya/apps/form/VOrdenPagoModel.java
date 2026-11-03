@@ -4618,6 +4618,100 @@ public class VOrdenPagoModel {
 		this.poGenerator = poGenerator;
 	}
 
+	/**
+	 * OP#8516 Diferencia de cambio por factura en pagos a proveedores: id de la factura y diferencia en moneda
+	 * de la compañía (positiva: se pagan más pesos que el valor de la factura a su fecha de aplicación; negativa:
+	 * se pagan menos).
+	 */
+	protected java.util.LinkedHashMap<Integer, BigDecimal> exchangeDifPurchasesByInvoice = new java.util.LinkedHashMap<Integer, BigDecimal>();
+
+	public java.util.Map<Integer, BigDecimal> getExchangeDifPurchasesByInvoice() {
+		return exchangeDifPurchasesByInvoice;
+	}
+
+	/**
+	 * OP#8516 Calcula la diferencia de cambio de una orden de pago a proveedores. Para cada factura en moneda
+	 * extranjera con monto a pagar: pesos que se pagan menos el valor en pesos de lo que se cancela de la factura,
+	 * convertido con la tasa de la fecha de aplicación de la factura. Es la misma tasa con la que se calcula el saldo
+	 * de la factura al imputar los pesos (getAllocatedAmt), por lo que esta diferencia es la que queda sin cancelar.
+	 * 
+	 * @return diferencia total en moneda de la compañía
+	 */
+	public BigDecimal calculateExchangeDifferencePurchases() {
+		BigDecimal total = BigDecimal.ZERO;
+		exchangeDifPurchasesByInvoice.clear();
+		if (m_facturas == null) {
+			return total;
+		}
+		int precision = mCurency.getStdPrecision();
+		for (ResultItem x : m_facturas) {
+			ResultItemFactura rif = (ResultItemFactura) x;
+			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
+			if (cur == C_Currency_ID || rif.getManualAmount() == null || rif.getManualAmount().signum() <= 0) {
+				continue;
+			}
+			int invoiceID = (Integer) rif.getItem(m_facturasTableModel.getIdColIdx());
+			MInvoice invoice = new MInvoice(m_ctx, invoiceID, trxName);
+			BigDecimal valueAtInvoice = MCurrency.currencyConvert(rif.getManualAmount(), cur, C_Currency_ID,
+					invoice.getDateAcct(), 0, m_ctx);
+			if (valueAtInvoice == null) {
+				debug("Sin tasa de cambio a la fecha de aplicación de la factura " + invoice.getDocumentNo()
+						+ ", no se calcula la diferencia de cambio");
+				continue;
+			}
+			BigDecimal paid = rif.getManualAmtClientCurrency() == null ? BigDecimal.ZERO : rif.getManualAmtClientCurrency();
+			BigDecimal dif = paid.subtract(valueAtInvoice).setScale(precision, RoundingMode.HALF_UP);
+			debug("Diferencia de cambio compras. Factura " + invoice.getDocumentNo() + " USD " + rif.getManualAmount()
+					+ " pagado ARS " + paid + " valor a fecha de aplicación (" + invoice.getDateAcct() + ") ARS "
+					+ valueAtInvoice + " diferencia " + dif);
+			if (dif.signum() != 0) {
+				exchangeDifPurchasesByInvoice.put(invoiceID, dif);
+				total = total.add(dif);
+			}
+		}
+		return total;
+	}
+
+	/**
+	 * OP#8516 Calcula los valores que informa el diálogo de diferencia de cambio en pagos a proveedores: diferencia,
+	 * porcentaje sobre el valor de las facturas y límites de la configuración de diferencia de cambio activa.
+	 */
+	public void calculateExchangeDifferenceValuesPurchases() {
+		this.exchangeDifference = calculateExchangeDifferencePurchases();
+
+		BigDecimal totalValue = BigDecimal.ZERO;
+		for (Integer invoiceID : exchangeDifPurchasesByInvoice.keySet()) {
+			for (ResultItem x : m_facturas) {
+				ResultItemFactura rif = (ResultItemFactura) x;
+				if (invoiceID.equals(rif.getItem(m_facturasTableModel.getIdColIdx()))) {
+					MInvoice invoice = new MInvoice(m_ctx, invoiceID, trxName);
+					BigDecimal value = MCurrency.currencyConvert(rif.getManualAmount(),
+							(Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx()), C_Currency_ID,
+							invoice.getDateAcct(), 0, m_ctx);
+					if (value != null) {
+						totalValue = totalValue.add(value);
+					}
+				}
+			}
+		}
+		this.exchangeDifferencePercent = totalValue.signum() == 0 ? BigDecimal.ZERO
+				: exchangeDifference.multiply(Env.ONEHUNDRED).divide(totalValue, 2, RoundingMode.HALF_UP);
+
+		this.exchangeDifferenceLimit = BigDecimal.ZERO;
+		this.exchangeDifferencePercentLimit = BigDecimal.ZERO;
+		int settingsID = DB.getSQLValue(trxName, "SELECT C_Cintolo_Exchange_Dif_Settings_ID "
+				+ "FROM C_Cintolo_Exchange_Dif_Settings WHERE IsActive='Y' ORDER BY Created DESC");
+		if (settingsID > 0) {
+			MCintoloExchangeDifSettings settings = new MCintoloExchangeDifSettings(m_ctx, settingsID, trxName);
+			if (settings.getAmount_Limit() != null) {
+				this.exchangeDifferenceLimit = settings.getAmount_Limit();
+			}
+			if (settings.getPercentage_Limit() != null) {
+				this.exchangeDifferencePercentLimit = settings.getPercentage_Limit();
+			}
+		}
+	}
+
 	public BigDecimal calculateExchangeDifference() {
 		HashMap<Integer, BigDecimal> facts = new HashMap<Integer, BigDecimal>();
 		if (m_facturas != null) {
@@ -4797,6 +4891,15 @@ public class VOrdenPagoModel {
 	
 	public boolean shouldEmit() {
 		return false;
+	}
+
+	/**
+	 * OP#8516 En pagos a proveedores, igual que en cobros, Emitir viene activado si la diferencia de cambio supera
+	 * el umbral en importe o en porcentaje.
+	 */
+	public boolean shouldEmitPurchases() {
+		return exchangeDifferenceLimit.compareTo(exchangeDifference.abs()) < 0
+				|| exchangeDifferencePercentLimit.compareTo(exchangeDifferencePercent.abs()) < 0;
 	}
 	
 	public void calculateExchangeDifferenceValues() {

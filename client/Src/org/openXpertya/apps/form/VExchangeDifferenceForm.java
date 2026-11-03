@@ -21,7 +21,7 @@ import org.compiere.swing.CDialog;
 import org.compiere.swing.CLabel;
 
 public class VExchangeDifferenceForm extends CDialog implements ActionListener {
-    VOrdenCobro ordenCobro;
+    VOrdenPago ordenCobro; // OP#8516: recibo (VOrdenCobro) u orden de pago
 	private CLabel lblLimit;
     private CLabel lblExchangeDif;
     private CLabel lblLimitPercent;
@@ -36,9 +36,10 @@ public class VExchangeDifferenceForm extends CDialog implements ActionListener {
 	/**
 	 * Create the dialog.
 	 */
-	public VExchangeDifferenceForm(VOrdenCobro ordenCobro, BigDecimal exchangeDif, BigDecimal exchangeDifPercent, BigDecimal limit, BigDecimal limitPercent, boolean shouldEmit) {
+	public VExchangeDifferenceForm(VOrdenPago ordenCobro, BigDecimal exchangeDif, BigDecimal exchangeDifPercent, BigDecimal limit, BigDecimal limitPercent, boolean shouldEmit) {
 		this.ordenCobro = ordenCobro;
-		this.setTitle("Emitir/Incluir Nota de Cred/Deb");
+		boolean isPurchase = !ordenCobro.getModel().isSOTrx(); // OP#8516
+		this.setTitle(isPurchase ? "Emitir/Incluir Cr\u00e9dito/D\u00e9bito de Proveedor" : "Emitir/Incluir Nota de Cred/Deb");
 		setSize(420, 320);
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		setLocationRelativeTo(null);

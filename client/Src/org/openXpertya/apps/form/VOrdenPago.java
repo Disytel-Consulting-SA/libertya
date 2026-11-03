@@ -2152,6 +2152,27 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     			return;
     		}
     		
+			// OP#8516 Diferencia de cambio en pagos a proveedores en moneda extranjera
+    		if (!m_model.isSOTrx()) {
+    			m_model.calculateExchangeDifferenceValuesPurchases();
+    			shouldContinue = true;
+    			setCintoloEmit(false);
+    			setCintoloInclude(false);
+    			if (m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
+    				VExchangeDifferenceForm difForm = new VExchangeDifferenceForm(this,
+    						m_model.getExchangeDifference(),
+    						m_model.getExchangeDifferencePercent().abs(),
+    						m_model.getExchangeDifferenceLimit(),
+    						m_model.getExchangeDifferencePercentLimit(),
+    						m_model.shouldEmitPurchases());
+    				difForm.setModal(true);
+    				difForm.setVisible(true);
+    			}
+    			if (!shouldContinue) {
+    				return;
+    			}
+    		}
+    		
 			// Actualizo componentes gráficos antes de pasar a la siguiente
 			// pestaña
     		updateComponentsPreProcesar();
@@ -2262,6 +2283,25 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     // dREHER
 	private void debug(String string) {
 		System.out.println("==> VOrdenPago. " + string);
+	}
+
+	// OP#8516 Diálogo de diferencia de cambio en pagos a proveedores (el recibo tiene su propia versión)
+	protected boolean shouldContinue = true;
+	protected boolean isCintoloEmit = false;
+	protected boolean isCintoloInclude = false;
+
+	public void setContinue(boolean shouldContinue) {
+		this.shouldContinue = shouldContinue;
+	}
+
+	public void setCintoloEmit(boolean emit) {
+		isCintoloEmit = emit;
+		m_model.setCintoloEmit(emit);
+	}
+
+	public void setCintoloInclude(boolean include) {
+		isCintoloInclude = include;
+		m_model.setCintoloInclude(include);
 	}
 
 	/**
