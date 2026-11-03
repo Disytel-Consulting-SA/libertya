@@ -2406,15 +2406,24 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		}
 
 		// Disytel: Si no hay conversion, no permitir seleccionar moneda destino
-		MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
-		int priceListCurrency = priceList.getC_Currency_ID();
-		if ((priceListCurrency != getC_Currency_ID() && MCurrency
-				.currencyConvert(new BigDecimal(1), priceListCurrency,
-						getC_Currency_ID(), this.getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), // dREHER Jun 25
-						getCtx()) == null)
-				|| !validateOrderCurrencyConvert()) {
-			log.saveError("Error", Msg.getMsg(getCtx(), "NoCurrencyConversion"));
-			return false;
+		// OP#8516 Solo se controla cuando el comprobante es nuevo o cambia algo que determina la conversion (tarifa,
+		// moneda, tipo de conversion, fechas o pedido). Si solo cambia, por ejemplo, el estado de pago de una factura
+		// ya confirmada, no corresponde volver a exigirlo: impedia marcar como pagada una factura cuya tarifa esta en
+		// otra moneda y no tiene tasa a su fecha de aplicacion.
+		boolean controlarConversionMoneda = is_new() || is_ValueChanged("M_PriceList_ID") || is_ValueChanged("C_Currency_ID")
+				|| is_ValueChanged("C_ConversionType_ID") || is_ValueChanged("DateAcct") || is_ValueChanged("DateInvoiced")
+				|| is_ValueChanged("C_Order_ID");
+		if (controlarConversionMoneda) {
+			MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
+			int priceListCurrency = priceList.getC_Currency_ID();
+			if ((priceListCurrency != getC_Currency_ID() && MCurrency
+					.currencyConvert(new BigDecimal(1), priceListCurrency,
+							getC_Currency_ID(), this.getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), // dREHER Jun 25
+							getCtx()) == null)
+					|| !validateOrderCurrencyConvert()) {
+				log.saveError("Error", Msg.getMsg(getCtx(), "NoCurrencyConversion"));
+				return false;
+			}
 		}
 
 		// Si la Tarifa es mayor a 0 setear el Impuesto Incluido a partir de la
