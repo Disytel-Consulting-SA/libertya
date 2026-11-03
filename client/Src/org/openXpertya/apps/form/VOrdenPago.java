@@ -3052,6 +3052,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		
     	});
 
+        // OP#8516 Al elegir el pago adelantado se muestra lo disponible en la moneda del pago y se sugiere el importe
+        // sin superarlo
+        pagoAdelantado.addVetoableChangeListener(new VetoableChangeListener() {
+			public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+				final Object nuevo = evt.getNewValue();
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						if (nuevo instanceof Integer) {
+							txtPagoAdelantadoAvailable.setValue(getModel().getPagoAdelantadoAvailableAmtOriginal((Integer) nuevo));
+							updatePayAmt(getModel().getSaldoMediosPago());
+						}
+					}
+				});
+			}
+		});
+
         // Cuando cambia el documento de pago adelantado, se carga el 
         // importe disponible en el text correspondiente
         /*pagoAdelantado.addActionListener(new ActionListener() {
@@ -4184,6 +4200,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			txtEfectivoImporte.setValue(amt);
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_PAGO_ADELANTADO)){
+			// OP#8516 El importe sugerido no puede superar lo disponible del pago elegido, en la moneda del pago
+			Object pagoElegido = pagoAdelantado.getValue();
+			boolean esEfectivo = cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX;
+			if (!esEfectivo && pagoElegido instanceof Integer && amt != null) {
+				BigDecimal disp = getModel().getPagoAdelantadoAvailableAmtOriginal((Integer) pagoElegido);
+				if (disp != null && disp.compareTo(amt) < 0) {
+					amt = disp;
+				}
+			}
 			txtPagoAdelantadoImporte.setValue(amt);
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_TRANSFERENCIA)){

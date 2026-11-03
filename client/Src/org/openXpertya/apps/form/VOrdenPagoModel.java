@@ -3677,8 +3677,9 @@ public class VOrdenPagoModel {
 					new Object[] { getMsg("AdvancedPayment"), getMsg("Payment") }));
 
 		// El disponible del cobro/pago es mayor al monto ingresado?
+		// OP#8516 El monto ingresado esta en la moneda del pago: el disponible se compara en esa misma moneda
 		BigDecimal payAvailable = (isCash ? getCashAdelantadoAvailableAmt(payID)
-				: getPagoAdelantadoAvailableAmt(payID));
+				: getPagoAdelantadoAvailableAmtOriginal(payID));
 		if (payAvailable.compareTo(amount) < 0)
 			throw new Exception("@AmountGreatherThanAvalaibleError@ (" + payAvailable + ")");
 
@@ -3751,6 +3752,17 @@ public class VOrdenPagoModel {
 		return " ABS(cashlineAvailable(C_CashLine_ID)) > 0 " + " AND SIGN(amount) = " + getSignoIsSOTrx()
 				+ " AND C_CashLine.C_BPartner_ID = @C_BPartner_ID@ " + " AND C_CashLine.DocStatus IN ('CO','CL') "
 				+ " AND C_CashLine.C_Currency_ID = @C_Currency_ID@ ";
+	}
+
+	/**
+	 * OP#8516 @return el monto disponible del pago en la moneda del propio pago, sin convertir
+	 */
+	public BigDecimal getPagoAdelantadoAvailableAmtOriginal(int paymentID) {
+		try {
+			return (BigDecimal) DB.getSQLObject(null, "SELECT paymentAvailable(?)", new Object[] { paymentID });
+		} catch (Exception e) {
+			return null;
+		}
 	}
 
 	public BigDecimal getPagoAdelantadoAvailableAmt(int paymentID) {
@@ -4749,16 +4761,23 @@ public class VOrdenPagoModel {
 		if (isSOTrx() || m_facturas == null || m_mediosPago == null) {
 			return false;
 		}
-		boolean hayAnticipoExtranjero = false;
-		BigDecimal totalMedios = BigDecimal.ZERO;
+		// Anticipos en moneda extranjera disponibles para aplicar, por moneda: monto en su moneda y valor en pesos
+		java.util.Map<Integer, BigDecimal> poolMoneda = new java.util.HashMap<Integer, BigDecimal>();
+		java.util.Map<Integer, BigDecimal> poolPesos = new java.util.HashMap<Integer, BigDecimal>();
 		for (MedioPago mp : m_mediosPago) {
-			BigDecimal imp = mp.getImporte();
-			totalMedios = totalMedios.add(imp == null ? BigDecimal.ZERO : imp);
 			if (mp instanceof MedioPagoAdelantado && mp.monedaOriginalID != null && mp.monedaOriginalID != C_Currency_ID) {
-				hayAnticipoExtranjero = true;
+				BigDecimal orig = mp.getImporteMonedaOriginal();
+				BigDecimal pesos = mp.getImporte();
+				if (orig == null || pesos == null) {
+					continue;
+				}
+				poolMoneda.put(mp.monedaOriginalID, poolMoneda.containsKey(mp.monedaOriginalID)
+						? poolMoneda.get(mp.monedaOriginalID).add(orig) : orig);
+				poolPesos.put(mp.monedaOriginalID, poolPesos.containsKey(mp.monedaOriginalID)
+						? poolPesos.get(mp.monedaOriginalID).add(pesos) : pesos);
 			}
 		}
-		if (!hayAnticipoExtranjero) {
+		if (poolMoneda.isEmpty()) {
 			// Sin anticipos en moneda extranjera: pesos de las facturas segun la tasa del comprobante
 			if (exchangeRateComprobante != null) {
 				recalcularMontosPorTasaComprobante();
@@ -4766,10 +4785,7 @@ public class VOrdenPagoModel {
 			return false;
 		}
 		int precision = mCurency.getStdPrecision();
-		BigDecimal pesosFacturasLocales = BigDecimal.ZERO;
-		java.util.List<ResultItemFactura> extranjeras = new java.util.ArrayList<ResultItemFactura>();
-		java.util.List<BigDecimal> pesos = new java.util.ArrayList<BigDecimal>();
-		BigDecimal valorExtranjeras = BigDecimal.ZERO;
+		boolean ajusto = false;
 		for (ResultItem x : m_facturas) {
 			ResultItemFactura rif = (ResultItemFactura) x;
 			if (rif.getManualAmount() == null || rif.getManualAmount().signum() <= 0) {
@@ -4777,42 +4793,38 @@ public class VOrdenPagoModel {
 			}
 			int cur = (Integer) rif.getItem(m_facturasTableModel.getCurrencyColIdx());
 			if (cur == C_Currency_ID) {
-				pesosFacturasLocales = pesosFacturasLocales.add(rif.getManualAmtClientCurrency() == null
-						? BigDecimal.ZERO : rif.getManualAmtClientCurrency());
 				continue;
 			}
-			int invoiceID = (Integer) rif.getItem(m_facturasTableModel.getIdColIdx());
-			MInvoice invoice = new MInvoice(m_ctx, invoiceID, trxName);
-			BigDecimal value = MCurrency.currencyConvert(rif.getManualAmount(), cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
-			if (value == null || value.signum() <= 0) {
-				continue;
+			BigDecimal usd = rif.getManualAmount();
+			BigDecimal disponible = poolMoneda.get(cur);
+			BigDecimal pesosDisp = poolPesos.get(cur);
+			BigDecimal cubierto = BigDecimal.ZERO;
+			BigDecimal cubiertoPesos = BigDecimal.ZERO;
+			if (disponible != null && disponible.signum() > 0) {
+				cubierto = usd.min(disponible);
+				cubiertoPesos = pesosDisp.multiply(cubierto).divide(disponible, precision, RoundingMode.HALF_UP);
+				poolMoneda.put(cur, disponible.subtract(cubierto));
+				poolPesos.put(cur, pesosDisp.subtract(cubiertoPesos));
 			}
-			extranjeras.add(rif);
-			pesos.add(value);
-			valorExtranjeras = valorExtranjeras.add(value);
-		}
-		if (extranjeras.isEmpty() || valorExtranjeras.signum() <= 0) {
-			return false;
-		}
-		BigDecimal paraExtranjeras = totalMedios.subtract(pesosFacturasLocales);
-		if (paraExtranjeras.signum() < 0) {
-			paraExtranjeras = BigDecimal.ZERO;
-		}
-		BigDecimal acumulado = BigDecimal.ZERO;
-		for (int i = 0; i < extranjeras.size(); i++) {
-			BigDecimal parte;
-			if (i == extranjeras.size() - 1) {
-				parte = paraExtranjeras.subtract(acumulado);
-			} else {
-				parte = paraExtranjeras.multiply(pesos.get(i)).divide(valorExtranjeras, precision, RoundingMode.HALF_UP);
+			// Lo que no cubren los anticipos se valoriza con la tasa del comprobante o, si no hay, la de la tabla
+			BigDecimal restante = usd.subtract(cubierto);
+			BigDecimal restantePesos = BigDecimal.ZERO;
+			if (restante.signum() > 0) {
+				if (exchangeRateComprobante != null && exchangeRateComprobante.signum() > 0 && usaTasaComprobante(cur)) {
+					restantePesos = restante.multiply(exchangeRateComprobante).setScale(precision, RoundingMode.HALF_UP);
+				} else {
+					BigDecimal conv = MCurrency.currencyConvert(restante, cur, C_Currency_ID, m_fechaTrx, 0, m_ctx);
+					restantePesos = conv == null ? BigDecimal.ZERO : conv;
+				}
 			}
-			acumulado = acumulado.add(parte);
-			extranjeras.get(i).setManualAmtClientCurrency(parte);
+			rif.setManualAmtClientCurrency(cubiertoPesos.add(restantePesos));
+			ajusto = true;
 		}
-		debug("Anticipos en moneda extranjera: se reparten " + paraExtranjeras + " pesos entre " + extranjeras.size()
-				+ " factura(s) en moneda extranjera");
-		m_facturasTableModel.fireTableDataChanged();
-		return true;
+		if (ajusto) {
+			debug("Anticipos en moneda extranjera aplicados a las facturas en moneda extranjera");
+			m_facturasTableModel.fireTableDataChanged();
+		}
+		return ajusto;
 	}
 
 	/**
