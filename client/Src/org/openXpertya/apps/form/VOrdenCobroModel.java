@@ -230,6 +230,17 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if(currentTotalArs==null)
 					currentTotalArs = Env.ZERO;
 				
+				// OP#8516 Si el recibo tiene tasa de cambio propia, el saldo en moneda de la compania
+				// al dia del cobro se calcula con esa tasa y no con la de la tabla
+				int facCurrency = (Integer)((ResultItemFactura) x).getItem(m_facturasTableModel.getCurrencyColIdx());
+				if (usaTasaComprobante(facCurrency)) {
+					BigDecimal openFactura = (BigDecimal)((ResultItemFactura) x).getItem(m_facturasTableModel.getOpenAmtColIdx());
+					if (openFactura != null) {
+						currentTotalArs = openFactura.multiply(getExchangeRateComprobante())
+								.setScale(mCurency.getStdPrecision(), RoundingMode.HALF_UP);
+					}
+				}
+				
 				BigDecimal exchangeDif = currentTotalArs.subtract(oldTotalArs);
 
 				dif = dif.add(exchangeDif);
