@@ -4718,10 +4718,22 @@ public class VOrdenPagoModel {
 	}
 
 	/**
+	 * OP#8516 Valor en moneda de la compañía de un monto de una factura en moneda extranjera: con la tasa de cambio
+	 * propia de la factura si la tiene (por defecto es la de la tabla a su fecha de aplicación, y el usuario puede
+	 * modificarla); si no, con la tasa de la tabla a la fecha de aplicación.
+	 */
+	protected BigDecimal valorEnMonedaCompania(BigDecimal amount, int cur, MInvoice invoice) {
+		Object own = invoice.get_Value("Cintolo_Exchange_Rate");
+		if (own instanceof BigDecimal && ((BigDecimal) own).signum() > 0) {
+			return amount.multiply((BigDecimal) own).setScale(mCurency.getStdPrecision(), RoundingMode.HALF_UP);
+		}
+		return MCurrency.currencyConvert(amount, cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+	}
+
+	/**
 	 * OP#8516 Calcula la diferencia de cambio de una orden de pago a proveedores. Para cada factura en moneda
 	 * extranjera con monto a pagar: pesos que se pagan menos el valor en pesos de lo que se cancela de la factura,
-	 * convertido con la tasa de la fecha de aplicación de la factura. Es la misma tasa con la que se calcula el saldo
-	 * de la factura al imputar los pesos (getAllocatedAmt), por lo que esta diferencia es la que queda sin cancelar.
+	 * convertido con la tasa de la factura (propia si la tiene, si no la de la tabla a su fecha de aplicación).
 	 * 
 	 * @return diferencia total en moneda de la compañía
 	 */
@@ -4750,7 +4762,7 @@ public class VOrdenPagoModel {
 			// se registra en un asiento del mayor (no es una deuda con el proveedor)
 			BigDecimal difAsiento = BigDecimal.ZERO;
 			if (coveredUsd.signum() > 0) {
-				BigDecimal valueCovered = MCurrency.currencyConvert(coveredUsd, cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+				BigDecimal valueCovered = valorEnMonedaCompania(coveredUsd, cur, invoice);
 				if (valueCovered != null) {
 					difAsiento = coveredPesos.subtract(valueCovered).setScale(precision, RoundingMode.HALF_UP);
 				}
@@ -4760,7 +4772,7 @@ public class VOrdenPagoModel {
 			BigDecimal restPesos = paid.subtract(coveredPesos);
 			BigDecimal difDocumento = BigDecimal.ZERO;
 			if (restUsd.signum() > 0) {
-				BigDecimal valueRest = MCurrency.currencyConvert(restUsd, cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+				BigDecimal valueRest = valorEnMonedaCompania(restUsd, cur, invoice);
 				if (valueRest == null) {
 					debug("Sin tasa de cambio a la fecha de aplicación de la factura " + invoice.getDocumentNo()
 							+ ", no se calcula la diferencia de cambio");
@@ -4884,7 +4896,7 @@ public class VOrdenPagoModel {
 				continue;
 			}
 			MInvoice invoice = new MInvoice(m_ctx, (Integer) rif.getItem(m_facturasTableModel.getIdColIdx()), trxName);
-			BigDecimal value = MCurrency.currencyConvert(rif.getManualAmount(), cur, C_Currency_ID, invoice.getDateAcct(), 0, m_ctx);
+			BigDecimal value = valorEnMonedaCompania(rif.getManualAmount(), cur, invoice);
 			if (value != null) {
 				totalValue = totalValue.add(value);
 			}
