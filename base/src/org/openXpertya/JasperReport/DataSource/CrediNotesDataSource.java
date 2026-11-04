@@ -42,7 +42,27 @@ class CreditNotesDataSource extends OPDataSource {
 
 	@Override
 	protected String getDataSQL() {
-		String sql = getOrdenPagoDataSource().getCreditNotesQuery();
+		// OP#8516 Ademas de las notas de credito imputadas, se informan las de diferencia de cambio del
+		// comprobante que quedaron en borrador (no imputadas), con su importe en moneda de la nota, para
+		// que se vea como se cubre la diferencia entre la factura y lo cobrado/pagado
+		String sql = "SELECT q.C_Invoice_ID, q.PaymentType, q.Description, q.DocumentNo, q.DocumentDate, q.Amount, q.PayAmt, q.Currency "
+				+ "FROM (" + getOrdenPagoDataSource().getCreditNotesQuery() + ") q "
+				+ "UNION ALL "
+				+ "SELECT dn.C_Invoice_ID, "
+				+ "	 'Crédito'::CHARACTER VARYING AS PaymentType, "
+				+ "	 (dt.PrintName || ' (borrador, no imputada)')::CHARACTER VARYING AS Description, "
+				+ "	 dn.DocumentNo::CHARACTER VARYING AS DocumentNo, "
+				+ "	 dn.DateAcct AS DocumentDate, "
+				+ "	 dn.GrandTotal AS Amount, "
+				+ "	 dn.GrandTotal AS PayAmt, "
+				+ "	 cu.iso_code AS Currency "
+				+ "FROM c_invoice dn "
+				+ "  JOIN c_doctype dt ON dt.C_DocType_ID = dn.C_DocTypetarget_ID "
+				+ "  JOIN c_currency cu ON cu.C_Currency_ID = dn.C_Currency_ID "
+				+ "WHERE dn.Cintolo_Exchange_Dif_Receipt = ? "
+				+ "  AND dn.DocStatus IN ('DR', 'IP') "
+				+ "  AND dt.DocBaseType IN ('ARC', 'APC') "
+				+ "  AND NOT EXISTS (SELECT 1 FROM c_allocationline x WHERE x.C_AllocationHdr_ID = dn.Cintolo_Exchange_Dif_Receipt AND x.C_Invoice_Credit_ID = dn.C_Invoice_ID)";
 		return sql;
 	}
 	
@@ -50,6 +70,7 @@ class CreditNotesDataSource extends OPDataSource {
 	protected void setQueryParameters(PreparedStatement pstmt)
 			throws SQLException {
 		int i = 1;
+		pstmt.setInt(i++, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 		pstmt.setInt(i++, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 	}
 	

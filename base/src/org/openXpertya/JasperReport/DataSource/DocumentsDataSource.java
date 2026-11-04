@@ -59,6 +59,10 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "		 WHEN al.c_payment_id IS NOT NULL AND payment_exchange_rate(al.c_payment_id) IS NOT NULL "
 				+ "			 AND (SELECT p.c_currency_id FROM c_payment p WHERE p.c_payment_id = al.c_payment_id) = i.c_currency_id "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/payment_exchange_rate(al.c_payment_id), i.c_currency_id, NULL) "
+				// OP#8516 Cobro/pago en moneda de la compania con tasa de cambio propia del comprobante: se usa esa tasa,
+				// igual que el saldo de la factura, para que lo imputado cierre con el importe de la factura
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(ah.exchangerate, 0) > 0 "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/ah.exchangerate, i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
 				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateacct::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
@@ -70,33 +74,7 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "  JOIN c_currency cu ON i.C_Currency_ID = cu.C_Currency_ID "
 				+ "  JOIN C_DocType dt ON dt.C_DocType_ID = i.C_DocTypetarget_ID "
 				+ "WHERE ah.C_AllocationHdr_ID = ? "
-				+ "GROUP BY al.C_Invoice_ID, i.DocumentNo, dt.DocBaseType, GrandTotalAmt, OpenAmt, Currency "
-				// OP#8516 Notas de credito/debito de diferencia de cambio del comprobante que quedaron en borrador:
-				// no son lineas de la asignacion, pero cubren parte de la factura. Se informan convertidas a la
-				// moneda de la factura original (credito suma, debito resta) para que los importes cierren
-				+ "UNION ALL "
-				+ "SELECT dn.DocumentNo || ' (dif. de cambio)' AS DocumentNo, "
-				+ "	 cu.iso_code AS Currency, "
-				+ "	 (CASE WHEN dtd.DocBaseType IN ('ARC', 'APC') THEN 1 ELSE -1 END) * (CASE "
-				+ "		 WHEN oi.c_invoice_id IS NULL OR oi.c_currency_id = dn.c_currency_id THEN dn.grandtotal "
-				+ "		 WHEN dn.c_currency_id = " + accountingCurrencyID + " AND COALESCE(oi.cintolo_exchange_rate, 0) > 0 "
-				+ "			 THEN currencyRound(dn.grandtotal/oi.cintolo_exchange_rate, oi.c_currency_id, NULL) "
-				+ "		 ELSE currencyconvert(dn.grandtotal, dn.c_currency_id, oi.c_currency_id, oi.dateacct::timestamp with time zone, COALESCE(oi.c_conversiontype_id, 0), dn.ad_client_id, dn.ad_org_id) "
-				+ "	 END)::numeric AS GrandTotalAmt, "
-				+ "	 (CASE WHEN dtd.DocBaseType IN ('ARC', 'APC') THEN 1 ELSE -1 END) * (CASE "
-				+ "		 WHEN oi.c_invoice_id IS NULL OR oi.c_currency_id = dn.c_currency_id THEN dn.grandtotal "
-				+ "		 WHEN dn.c_currency_id = " + accountingCurrencyID + " AND COALESCE(oi.cintolo_exchange_rate, 0) > 0 "
-				+ "			 THEN currencyRound(dn.grandtotal/oi.cintolo_exchange_rate, oi.c_currency_id, NULL) "
-				+ "		 ELSE currencyconvert(dn.grandtotal, dn.c_currency_id, oi.c_currency_id, oi.dateacct::timestamp with time zone, COALESCE(oi.c_conversiontype_id, 0), dn.ad_client_id, dn.ad_org_id) "
-				+ "	 END)::numeric AS AllocatedAmt, "
-				+ "	 0::numeric AS OpenAmt "
-				+ "FROM c_invoice dn "
-				+ "  JOIN C_DocType dtd ON dtd.C_DocType_ID = dn.C_DocTypetarget_ID "
-				+ "  LEFT JOIN c_invoice oi ON oi.C_Invoice_ID = dn.C_Invoice_Orig_ID "
-				+ "  JOIN c_currency cu ON cu.C_Currency_ID = COALESCE(oi.C_Currency_ID, dn.C_Currency_ID) "
-				+ "WHERE dn.Cintolo_Exchange_Dif_Receipt = ? "
-				+ "  AND dn.DocStatus IN ('DR', 'IP') "
-				+ "  AND NOT EXISTS (SELECT 1 FROM c_allocationline x WHERE x.C_AllocationHdr_ID = dn.Cintolo_Exchange_Dif_Receipt AND x.C_Invoice_ID = dn.C_Invoice_ID)";
+				+ "GROUP BY al.C_Invoice_ID, i.DocumentNo, dt.DocBaseType, GrandTotalAmt, OpenAmt, Currency ";
 		return sql;
 	}
 
@@ -104,7 +82,6 @@ public class DocumentsDataSource extends OPDataSource {
 	protected void setQueryParameters(PreparedStatement pstmt)
 			throws SQLException {
 		pstmt.setInt(1, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
-		pstmt.setInt(2, getOrdenPagoDataSource().getP_C_AllocationHdr_ID());
 	}
 
 	/**
