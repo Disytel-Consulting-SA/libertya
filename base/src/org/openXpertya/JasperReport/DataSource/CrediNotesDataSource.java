@@ -45,12 +45,15 @@ class CreditNotesDataSource extends OPDataSource {
 		// OP#8516 Ademas de las notas de credito imputadas, se informan las de diferencia de cambio del
 		// comprobante que quedaron en borrador (no imputadas), con su importe en moneda de la nota, para
 		// que se vea como se cubre la diferencia entre la factura y lo cobrado/pagado
-		String sql = "SELECT q.C_Invoice_ID, q.PaymentType, q.Description, q.DocumentNo, q.DocumentDate, q.Amount, q.PayAmt, q.Currency "
+		String sql = "SELECT q.C_Invoice_ID, q.PaymentType, "
+				+ "	 (CASE WHEN ci.Cintolo_Apply_Exchange_Dif = 'Y' THEN q.Description || ' (imputado)' ELSE q.Description END)::CHARACTER VARYING AS Description, "
+				+ "	 q.DocumentNo, q.DocumentDate, q.Amount, q.PayAmt, q.Currency "
 				+ "FROM (" + getOrdenPagoDataSource().getCreditNotesQuery() + ") q "
+				+ "  JOIN c_invoice ci ON ci.C_Invoice_ID = q.C_Invoice_ID "
 				+ "UNION ALL "
 				+ "SELECT dn.C_Invoice_ID, "
 				+ "	 'Crédito'::CHARACTER VARYING AS PaymentType, "
-				+ "	 (dt.PrintName || ' (borrador, no imputada)')::CHARACTER VARYING AS Description, "
+				+ "	 (dt.PrintName || ' (s/imputar)')::CHARACTER VARYING AS Description, "
 				+ "	 dn.DocumentNo::CHARACTER VARYING AS DocumentNo, "
 				+ "	 dn.DateAcct AS DocumentDate, "
 				+ "	 dn.GrandTotal AS Amount, "
