@@ -253,3 +253,21 @@ WHERE t.TableName = 'GL_Journal'
       WHERE c.AD_Table_ID = t.AD_Table_ID AND c.ColumnName = 'C_AllocationHdr_ID'
   );
 
+
+--20261104-1200 OP#8516 Tasa de cambio propia de la factura: la ventana la propone al cambiar moneda, fecha o tipo de conversion, y se muestra en facturas de cliente en moneda extranjera
+UPDATE AD_Column
+SET Callout = CASE WHEN Callout IS NULL OR Callout = '' THEN 'org.openXpertya.model.CalloutInvoiceExt.' || ColumnName
+                   ELSE Callout || ';org.openXpertya.model.CalloutInvoiceExt.' || ColumnName END,
+    Updated = now()
+WHERE AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'C_Invoice')
+  AND ColumnName IN ('C_Currency_ID', 'DateInvoiced', 'DateAcct', 'C_ConversionType_ID')
+  AND (Callout IS NULL OR Callout NOT LIKE '%CalloutInvoiceExt.' || ColumnName || '%');
+
+UPDATE AD_Field
+SET DisplayLogic = '@Cintolo_Adjustment_Clause@=''Y'' | @C_Currency_ID@!@$C_Currency_ID@',
+    Updated = now()
+WHERE AD_Tab_ID = 263
+  AND AD_Column_ID = (SELECT c.AD_Column_ID FROM AD_Column c
+                      WHERE c.ColumnName = 'Cintolo_Exchange_Rate'
+                        AND c.AD_Table_ID = (SELECT AD_Table_ID FROM AD_Table WHERE TableName = 'C_Invoice'))
+  AND DisplayLogic = '@Cintolo_Adjustment_Clause@=''Y'' | @C_Currency_ID@ = 100';

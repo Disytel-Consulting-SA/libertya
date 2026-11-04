@@ -1379,20 +1379,14 @@ public class VOrdenPagoModel {
 		setComportamientoTasaCambio();
 	}
 
+	/**
+	 * En compras se usa la tasa de cambio de la factura cuando la tiene; si no, la tabla de tasas
+	 * (los SQL y calculos ya caen a la tabla cuando la factura no tiene tasa).
+	 */
 	private void setComportamientoTasaCambio() {
 		if(!isSOTrx()) {
-			String isTasaCambioFacturaProv = MPreference.GetCustomPreferenceValue("TasaCambioEnFCProveedor", Env.getAD_Client_ID(getCtx()));
-			if(Util.isEmpty(isTasaCambioFacturaProv, true)) {
-				isTasaCambioFacturaProv = "N";
-			}
-			
-			if("Y".equals(isTasaCambioFacturaProv))
-				setFacturaProveedorTasaCambioInterna(true);
-			else
-				setFacturaProveedorTasaCambioInterna(false);
-			
-			debug("FC Proveedor utiliza tasa cambio en factura ? " + (isFacturaProveedorTasaCambioInterna?"Si":"No"));
-			
+			setFacturaProveedorTasaCambioInterna(true);
+			debug("FC Proveedor utiliza tasa cambio en factura cuando la tiene");
 		}
 	}
 

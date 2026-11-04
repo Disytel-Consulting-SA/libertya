@@ -250,10 +250,10 @@ public class CalloutInvoiceExt extends CalloutInvoice {
 				rateCurrencyID = clauseCurrencyID.intValue();
 			}
 			
-			// La tasa se controla a la fecha de la factura, no a la fecha de hoy
-			Timestamp conversionDate = (Timestamp) mTab.getValue("DateInvoiced");
+			// La tasa por defecto se busca con la fecha contable
+			Timestamp conversionDate = (Timestamp) mTab.getValue("DateAcct");
 			if (conversionDate == null) {
-				conversionDate = (Timestamp) mTab.getValue("DateAcct");
+				conversionDate = (Timestamp) mTab.getValue("DateInvoiced");
 			}
 			if (conversionDate == null) {
 				conversionDate = Env.getDate();
