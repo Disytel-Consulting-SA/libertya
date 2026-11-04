@@ -4002,8 +4002,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			boolean inPayment, String paymentTenderType) {
 		BigDecimal retValue = null;
 		StringBuffer sql = new StringBuffer(
-				"SELECT SUM(currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
-						+ "ah.C_Currency_ID, i.C_Currency_ID,ah.DateTrx,i.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID)) "
+				// OP#8516 Facturas de proveedor con tasa de cambio propia: lo imputado en la moneda de la compania se
+				// convierte con esa tasa, igual que en la funcion getallocatedamt (la barra va sin espacios por el conversor)
+				"SELECT SUM(CASE WHEN i.IsSOTrx='N' AND COALESCE(i.Cintolo_Exchange_Rate,0) > 0 AND ah.C_Currency_ID = " + Env.getContextAsInt(getCtx(), "$C_Currency_ID")
+						+ " AND i.C_Currency_ID <> ah.C_Currency_ID THEN (al.Amount+al.DiscountAmt+al.WriteOffAmt)/i.Cintolo_Exchange_Rate ELSE currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
+						+ "ah.C_Currency_ID, i.C_Currency_ID,ah.DateTrx,i.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID) END) "
 						+ "FROM C_AllocationLine al"
 						+ " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID)"
 						+ " INNER JOIN C_Invoice i ON (al.C_Invoice_ID=i.C_Invoice_ID) "

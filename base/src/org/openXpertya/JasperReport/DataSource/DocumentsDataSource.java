@@ -61,6 +61,9 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/payment_exchange_rate(al.c_payment_id), i.c_currency_id, NULL) "
 				// OP#8516 Cobro/pago en moneda de la compania con tasa de cambio propia del comprobante: se usa esa tasa,
 				// igual que el saldo de la factura, para que lo imputado cierre con el importe de la factura
+				// Factura de proveedor con tasa propia: el saldo se calcula con esa tasa (getallocatedamt)
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND i.issotrx = 'N' AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(ah.exchangerate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/ah.exchangerate, i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
