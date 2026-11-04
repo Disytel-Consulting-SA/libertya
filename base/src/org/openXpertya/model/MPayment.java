@@ -886,7 +886,7 @@ public final class MPayment extends X_C_Payment implements DocAction,ProcessCall
         //
 
         // OP#8516 Si el pago tiene tasa de cambio propia se usa en lugar de la tabla de tasas
-        String sql = "SELECT SUM(CASE WHEN payment_exchange_rate(p.C_Payment_ID) IS NOT NULL AND ah.C_Currency_ID <> p.C_Currency_ID THEN al.Amount / payment_exchange_rate(p.C_Payment_ID) ELSE currencyConvert(al.Amount," + "ah.C_Currency_ID, p.C_Currency_ID,ah.DateTrx,p.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID) END) " + "FROM C_AllocationLine al" + " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID) " + " INNER JOIN C_Payment p ON (al.C_Payment_ID=p.C_Payment_ID) " + "WHERE al.C_Payment_ID=?" + " AND ah.IsActive='Y' AND al.IsActive='Y'";
+        String sql = "SELECT SUM(CASE WHEN payment_exchange_rate(p.C_Payment_ID) IS NOT NULL AND ah.C_Currency_ID <> p.C_Currency_ID THEN al.Amount/payment_exchange_rate(p.C_Payment_ID) ELSE currencyConvert(al.Amount," + "ah.C_Currency_ID, p.C_Currency_ID,ah.DateTrx,p.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID) END) " + "FROM C_AllocationLine al" + " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID) " + " INNER JOIN C_Payment p ON (al.C_Payment_ID=p.C_Payment_ID) " + "WHERE al.C_Payment_ID=?" + " AND ah.IsActive='Y' AND al.IsActive='Y'";
 
         // + " AND al.C_Invoice_ID IS NOT NULL";
 
