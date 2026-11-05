@@ -8244,6 +8244,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		int currecy_Client = Env
 				.getContextAsInt(Env.getCtx(), "$C_Currency_ID");
 		if (getC_Currency_ID() != currecy_Client) {
+			// OP#8516: si el comprobante tiene tasa de cambio propia no depende de la tabla de tasas
+			Object ownRate = get_Value("Cintolo_Exchange_Rate");
+			if (ownRate instanceof BigDecimal && ((BigDecimal) ownRate).signum() > 0) {
+				return true;
+			}
 			return (MCurrency.currencyConvert(new BigDecimal(1),
 					currecy_Client, getC_Currency_ID(), getFechaConversion(),
 					getAD_Org_ID(), getC_ConversionType_ID(), getCtx()) != null); // dREHER Jun 25
