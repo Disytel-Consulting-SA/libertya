@@ -64,6 +64,13 @@ public class DocumentsDataSource extends OPDataSource {
 				// Factura de proveedor con tasa propia: el saldo se calcula con esa tasa (getallocatedamt)
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND i.issotrx = 'N' AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
+				// OP#8516 Factura de cliente en moneda extranjera cobrada con una NC/ND de diferencia de cambio incluida en el recibo:
+				// lo imputado (cobro + NC/ND) equivale a la factura a su propia tasa, por lo que se convierte con ella
+				// y la factura cerrada muestra su importe completo (si la NC/ND queda en borrador se usa la tasa del recibo)
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND i.issotrx = 'Y' AND i.c_currency_id <> " + accountingCurrencyID
+				+ "			 AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
+				+ "			 AND EXISTS (SELECT 1 FROM c_invoice d WHERE d.cintolo_exchange_dif_receipt = ah.c_allocationhdr_id AND d.docstatus IN ('CO','CL')) "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(ah.exchangerate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/ah.exchangerate, i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
