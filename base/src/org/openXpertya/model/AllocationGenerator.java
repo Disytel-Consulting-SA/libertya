@@ -2476,12 +2476,12 @@ public class AllocationGenerator {
 				"U$S " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN) + " " +
 				"cobrada " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + " " +
 				"U$S " +  
-				MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN);
+				getReceiptRateForDescription().divide(Env.ONE, 2, RoundingMode.DOWN);
 		*/
 		
 		// Formato nuevo a Oct 24
 		String desc = 	"Reci " + getDocumentNo() + " " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + 
-				" TC " + MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN) +
+				" TC " + getReceiptRateForDescription().divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" FC " + documentNo + " " + fecha.toString().substring(0, 10) + 
 		" " + difAmt.divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" TC " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN);
@@ -2496,6 +2496,18 @@ public class AllocationGenerator {
 	}
 	
 	// TODO: Mejorar la lógica de este método. Debe retornar la moneda en la que se está pagando las facturas.
+	/**
+	 * OP#8516 Tasa del cobro para la descripcion de las lineas de diferencia de cambio: la propia del
+	 * comprobante si la tiene; si no, la de la tabla a la fecha del cobro (cero si no existe).
+	 */
+	private BigDecimal getReceiptRateForDescription() {
+		if(exchangeRateComprobante != null && exchangeRateComprobante.signum() > 0) {
+			return exchangeRateComprobante;
+		}
+		BigDecimal rate = MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx));
+		return rate != null ? rate : Env.ZERO;
+	}
+
 	private int getCreditsCurrency() {
 		int currency = PESOS_ARG;
 		for(Document doc: getCredits()) {
@@ -2606,7 +2618,7 @@ public class AllocationGenerator {
 		*/
 		
 		String desc = 	"Reci " + getDocumentNo() + " " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + 
-						" TC " + MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN) +
+						" TC " + getReceiptRateForDescription().divide(Env.ONE, 2, RoundingMode.DOWN) +
 				" FC " + documentNo + " " + fecha.toString().substring(0, 10) + 
 				" " + amt.divide(Env.ONE, 2, RoundingMode.DOWN) +
 				" TC " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN);
