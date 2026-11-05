@@ -278,8 +278,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
 					MInvoice i = new MInvoice(m_ctx,id,trxName); 
-					if((i.get_Value("Cintolo_Adjustment_Clause") != null && 
-							(Boolean) i.get_Value("Cintolo_Adjustment_Clause")) || i.getC_Currency_ID() == 100) {
+					// Moneda extranjera: siempre corresponde evaluar la dif. de cambio.
+					// Moneda local: solo si la factura tiene clausula de ajuste.
+					boolean isLocalCurrency = i.getC_Currency_ID() == Env.getContextAsInt(m_ctx, "$C_Currency_ID");
+					if(!isLocalCurrency || Boolean.TRUE.equals(i.get_Value("Cintolo_Adjustment_Clause"))) {
 						return true;
 					}
 				}
