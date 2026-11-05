@@ -884,6 +884,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	txtTasaCambio = new VNumber();
     	txtTasaCambio.setDisplayType(DisplayType.CostPrice);
     	txtTasaCambio.setReadWrite(false);
+    	// Solo digitos, separadores decimales y signo: una letra tipeada sin querer generaba excepciones al parsear
+    	((javax.swing.text.AbstractDocument) txtTasaCambio.getTextField().getDocument()).setDocumentFilter(new javax.swing.text.DocumentFilter() {
+			private final String permitidos = "[0-9.,+\\-]*";
+			@Override
+			public void insertString(FilterBypass fb, int offset, String string, javax.swing.text.AttributeSet attr) throws javax.swing.text.BadLocationException {
+				if (string != null && string.matches(permitidos)) {
+					super.insertString(fb, offset, string, attr);
+				}
+			}
+			@Override
+			public void replace(FilterBypass fb, int offset, int length, String text, javax.swing.text.AttributeSet attrs) throws javax.swing.text.BadLocationException {
+				if (text == null || text.matches(permitidos)) {
+					super.replace(fb, offset, length, text, attrs);
+				}
+			}
+		});
     	txtTasaCambio.setToolTipText("Tasa de cambio del comprobante (moneda de la compañía por unidad de moneda extranjera). "
     			+ "Se propone la tasa del día y puede modificarse.");
     	txtTasaCambio.addVetoableChangeListener(new VetoableChangeListener() {
