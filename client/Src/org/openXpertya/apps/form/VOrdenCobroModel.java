@@ -1012,6 +1012,18 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		@Override
 		public Object getValueAt(int row, int column) {
+			// OP#8516 Con tasa propia del recibo, el total y el pendiente en moneda de la compania de las facturas
+			// en moneda extranjera se muestran con esa tasa (no dependen de que exista tasa en la tabla para la fecha)
+			if (column == getOpenAmtColIdx() + 1 || column == getOpenCurrentAmtColIdx()) {
+				ResultItemFactura rif = (ResultItemFactura) item.get(row);
+				Object cur = rif.getItem(getCurrencyColIdx());
+				if (cur instanceof Integer && usaTasaComprobante((Integer) cur)) {
+					Object base = rif.getItem(column == getOpenAmtColIdx() + 1 ? getOpenAmtColIdx() - 1 : getOpenAmtColIdx());
+					if (base instanceof BigDecimal) {
+						return ((BigDecimal) base).multiply(getExchangeRateComprobante()).setScale(mCurency.getStdPrecision(), RoundingMode.HALF_UP);
+					}
+				}
+			}
 			if (column < getDescuentoColIdx()) // getColumnCount() - 4) sep 24 
 				return super.getValueAt(row, column);
 			
