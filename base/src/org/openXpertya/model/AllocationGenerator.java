@@ -1819,8 +1819,12 @@ public class AllocationGenerator {
 		BigDecimal sumaPayments = new BigDecimal(0);
 		BigDecimal sumaPaymentsAllocDate = new BigDecimal(0);
 		for (PaymentMediumInfo mp : pays){
-			sumaPaymentsAllocDate = sumaPaymentsAllocDate.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx));
-			sumaPayments = sumaPayments.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), mp.getDate(), Env.getAD_Org_ID(ctx), ctx));
+			// OP#8516 Sin tasa en la tabla para la fecha la conversion es nula: se toma cero
+			// (la diferencia de cambio con tasa propia llega por parametro y no depende de este calculo)
+			BigDecimal payAllocDate = MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx);
+			BigDecimal payDate = MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), mp.getDate(), Env.getAD_Org_ID(ctx), ctx);
+			sumaPaymentsAllocDate = sumaPaymentsAllocDate.add(payAllocDate != null ? payAllocDate : Env.ZERO);
+			sumaPayments = sumaPayments.add(payDate != null ? payDate : Env.ZERO);
 		}
 		
 		BigDecimal sumInvoices = new BigDecimal(0);
@@ -1828,7 +1832,8 @@ public class AllocationGenerator {
 		for (Integer id : facts.keySet()){
 			MInvoice invoice = new MInvoice(ctx, id, trxName);
 		
-			sumInvoicesAllocDate = sumInvoicesAllocDate.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx));
+			BigDecimal invAllocDate = MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx);
+			sumInvoicesAllocDate = sumInvoicesAllocDate.add(invAllocDate != null ? invAllocDate : Env.ZERO);
 			
 			// dREHER Feb '25
 			BigDecimal amtConvert = MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), invoice.getDateAcct(), Env.getAD_Org_ID(ctx), ctx);
