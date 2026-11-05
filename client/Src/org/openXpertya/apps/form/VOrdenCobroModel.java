@@ -1930,6 +1930,12 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(suma==null)
 			suma = new BigDecimal(0);
 		
+		// OP#8516 Con tasa propia del recibo en moneda extranjera el importe a cobrar es el total a la tasa
+		// del recibo: la diferencia de cambio (NC/ND) cierra la factura valuada a su tasa y no se suma ni
+		// se resta al efectivo (criterio de Siasa: pesos cobrados = USD x tasa del cobro)
+		if(usaTasaComprobante(getExchangeRateCurrencyID()))
+			return suma;
+		
 		// dREHER sep 24
 		if(!isCintoloEmit && !isCintoloInclude)
 			return suma;
