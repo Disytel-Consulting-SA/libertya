@@ -187,7 +187,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	@Override
 	public void processExchangeDifference() {			
 		// Si no hay diferencia de cambio, no se agrega nada al arbol
-		if(exchangeDifference.equals(Env.ZERO)) {
+		if(exchangeDifference.signum() == 0) {
 			return;
 		}
 		
@@ -1941,7 +1941,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			return suma;
 		
 		// CINTOLO: Se recalcula el total en base a si se incluye o no la diferencia de cambio
-		if(!isCintoloEmit || (isCintoloEmit && !isCintoloInclude && !calculateExchangeDifference().equals(Env.ZERO))) {
+		if(!isCintoloEmit || (isCintoloEmit && !isCintoloInclude && calculateExchangeDifference().signum() != 0)) {
 			debug("Antes... Suma= " + suma + " resta= " + exchangeDifference + " final= " + suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO));	
 			// suma = suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO);
 		}

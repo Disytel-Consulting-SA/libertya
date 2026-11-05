@@ -287,7 +287,7 @@ public class WOrdenCobro extends WOrdenPago {
     		isCintoloEmit = false;
     		isCintoloInclude = false;
 			if(m_model.isAdjustmentClause() 
-					&& m_model.getExchangeDifference() != null && !m_model.getExchangeDifference().equals(Env.ZERO)) {
+					&& m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
 				WExchangeDifferenceForm diffDialog;
 				try {
 					diffDialog = new WExchangeDifferenceForm(this, 

@@ -309,7 +309,7 @@ public class VOrdenCobro extends VOrdenPago {
     		isCintoloEmit = false;
     		isCintoloInclude = false;
 			if(m_model.isAdjustmentClause() 
-					&& m_model.getExchangeDifference() != null && !m_model.getExchangeDifference().equals(Env.ZERO)) {
+					&& m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
 				VExchangeDifferenceForm test = new VExchangeDifferenceForm(this, 
 						m_model.getExchangeDifference(),
 						m_model.getExchangeDifferencePercent().abs(),
