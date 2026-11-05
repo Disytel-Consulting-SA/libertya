@@ -187,7 +187,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 	@Override
 	public void processExchangeDifference() {			
 		// Si no hay diferencia de cambio, no se agrega nada al arbol
-		if(exchangeDifference.equals(Env.ZERO)) {
+		if(exchangeDifference.signum() == 0) {
 			return;
 		}
 		
@@ -230,6 +230,17 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if(currentTotalArs==null)
 					currentTotalArs = Env.ZERO;
 				
+				// OP#8516 Si el recibo tiene tasa de cambio propia, el saldo en moneda de la compania
+				// al dia del cobro se calcula con esa tasa y no con la de la tabla
+				int facCurrency = (Integer)((ResultItemFactura) x).getItem(m_facturasTableModel.getCurrencyColIdx());
+				if (usaTasaComprobante(facCurrency)) {
+					BigDecimal openFactura = (BigDecimal)((ResultItemFactura) x).getItem(m_facturasTableModel.getOpenAmtColIdx());
+					if (openFactura != null) {
+						currentTotalArs = openFactura.multiply(getExchangeRateComprobante())
+								.setScale(mCurency.getStdPrecision(), RoundingMode.HALF_UP);
+					}
+				}
+				
 				BigDecimal exchangeDif = currentTotalArs.subtract(oldTotalArs);
 
 				dif = dif.add(exchangeDif);
@@ -267,8 +278,10 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
 					MInvoice i = new MInvoice(m_ctx,id,trxName); 
-					if((i.get_Value("Cintolo_Adjustment_Clause") != null && 
-							(Boolean) i.get_Value("Cintolo_Adjustment_Clause")) || i.getC_Currency_ID() == 100) {
+					// Moneda extranjera: siempre corresponde evaluar la dif. de cambio.
+					// Moneda local: solo si la factura tiene clausula de ajuste.
+					boolean isLocalCurrency = i.getC_Currency_ID() == Env.getContextAsInt(m_ctx, "$C_Currency_ID");
+					if(!isLocalCurrency || Boolean.TRUE.equals(i.get_Value("Cintolo_Adjustment_Clause"))) {
 						return true;
 					}
 				}
@@ -307,6 +320,21 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		return limit;
 	}
 	
+	/**
+	 * OP#8516 Total de la factura en la moneda de la compania: con la tasa propia de la factura si
+	 * esta en moneda extranjera y la tiene; si no, con la tabla de tasas a la fecha de la factura.
+	 * Nunca devuelve null (sin tasa en la tabla, cero).
+	 */
+	private BigDecimal getInvoiceTotalBase(MInvoice i) {
+		int accountingCurrencyID = Env.getContextAsInt(m_ctx, "$C_Currency_ID");
+		Object rate = i.get_Value("Cintolo_Exchange_Rate");
+		if (i.getC_Currency_ID() != accountingCurrencyID && rate instanceof BigDecimal && ((BigDecimal) rate).signum() > 0) {
+			return i.getGrandTotal().multiply((BigDecimal) rate).setScale(2, RoundingMode.HALF_UP);
+		}
+		BigDecimal total = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), accountingCurrencyID, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+		return total != null ? total : Env.ZERO;
+	}
+	
 	@Override
 	public BigDecimal calculateExchangeDifferencePercent() {
 		if (exchangeDifference.compareTo(BigDecimal.ZERO) == 0) {
@@ -319,7 +347,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
 					MInvoice i = new MInvoice(m_ctx,id,trxName); 
-					totalInvoice = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+					totalInvoice = getInvoiceTotalBase(i);
 					//totalInvoice = totalInvoice.add(i.getGrandTotal());
 				}
 			}
@@ -693,6 +721,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 			
 			// Si es pago adelantado, no muestra ninguna factura.
 			
+			actualizarTasaComprobanteDefault(); // OP#8516
 			m_facturasTableModel.fireChanged(false);
 			return;
 		}
@@ -837,6 +866,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		}
 		
 		applyBPartnerDiscount();
+		actualizarTasaComprobanteDefault(); // OP#8516
 		m_facturasTableModel.fireChanged(false);
 		
 	}
@@ -982,6 +1012,18 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		
 		@Override
 		public Object getValueAt(int row, int column) {
+			// OP#8516 Con tasa propia del recibo, el total y el pendiente en moneda de la compania de las facturas
+			// en moneda extranjera se muestran con esa tasa (no dependen de que exista tasa en la tabla para la fecha)
+			if (column == getOpenAmtColIdx() + 1 || column == getOpenCurrentAmtColIdx()) {
+				ResultItemFactura rif = (ResultItemFactura) item.get(row);
+				Object cur = rif.getItem(getCurrencyColIdx());
+				if (cur instanceof Integer && usaTasaComprobante((Integer) cur)) {
+					Object base = rif.getItem(column == getOpenAmtColIdx() + 1 ? getOpenAmtColIdx() - 1 : getOpenAmtColIdx());
+					if (base instanceof BigDecimal) {
+						return ((BigDecimal) base).multiply(getExchangeRateComprobante()).setScale(mCurency.getStdPrecision(), RoundingMode.HALF_UP);
+					}
+				}
+			}
 			if (column < getDescuentoColIdx()) // getColumnCount() - 4) sep 24 
 				return super.getValueAt(row, column);
 			
@@ -1900,12 +1942,18 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		if(suma==null)
 			suma = new BigDecimal(0);
 		
+		// OP#8516 Con tasa propia del recibo en moneda extranjera el importe a cobrar es el total a la tasa
+		// del recibo: la diferencia de cambio (NC/ND) cierra la factura valuada a su tasa y no se suma ni
+		// se resta al efectivo (criterio de Siasa: pesos cobrados = USD x tasa del cobro)
+		if(usaTasaComprobante(getExchangeRateCurrencyID()))
+			return suma;
+		
 		// dREHER sep 24
 		if(!isCintoloEmit && !isCintoloInclude)
 			return suma;
 		
 		// CINTOLO: Se recalcula el total en base a si se incluye o no la diferencia de cambio
-		if(!isCintoloEmit || (isCintoloEmit && !isCintoloInclude && !calculateExchangeDifference().equals(Env.ZERO))) {
+		if(!isCintoloEmit || (isCintoloEmit && !isCintoloInclude && calculateExchangeDifference().signum() != 0)) {
 			debug("Antes... Suma= " + suma + " resta= " + exchangeDifference + " final= " + suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO));	
 			// suma = suma.subtract(exchangeDifference!=null?exchangeDifference:Env.ZERO);
 		}

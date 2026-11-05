@@ -309,7 +309,7 @@ public class VOrdenCobro extends VOrdenPago {
     		isCintoloEmit = false;
     		isCintoloInclude = false;
 			if(m_model.isAdjustmentClause() 
-					&& m_model.getExchangeDifference() != null && !m_model.getExchangeDifference().equals(Env.ZERO)) {
+					&& m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
 				VExchangeDifferenceForm test = new VExchangeDifferenceForm(this, 
 						m_model.getExchangeDifference(),
 						m_model.getExchangeDifferencePercent().abs(),
@@ -329,6 +329,7 @@ public class VOrdenCobro extends VOrdenPago {
 			// Actualizo componentes gráficos antes de pasar a la siguiente pestaña
     		updateComponentsPreProcesar();
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		fldDocumentNo.setValue(getModel().getDocumentNo());
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
@@ -387,7 +388,13 @@ public class VOrdenCobro extends VOrdenPago {
 	    		}
     		} 
     		
-    		status = m_model.doPostProcesar(maxPaymentAllowed);
+    		// OP#8516 Se informa al usuario que se esta generando el comprobante, ya que puede demorar
+    		javax.swing.JDialog dlgProcesando = showProcessingDialog();
+    		try {
+    			status = m_model.doPostProcesar(maxPaymentAllowed);
+    		} finally {
+    			closeProcessingDialog(dlgProcesando);
+    		}
     		
     		switch (status) 
     		{
@@ -654,7 +661,7 @@ public class VOrdenCobro extends VOrdenPago {
 																org.jdesktop.layout.LayoutStyle.RELATED)
 														.add(txtTotalPagar1,
 																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
-																95,
+																140,
 																org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
 														.addPreferredGap(
 																org.jdesktop.layout.LayoutStyle.RELATED)))
@@ -744,7 +751,7 @@ public class VOrdenCobro extends VOrdenPago {
 										.add(fldDocumentNo,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												234, Short.MAX_VALUE)
-										.add(dateTrx,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
+										.add(panelFechaTasa,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												234, Short.MAX_VALUE)
 										)
 								.addContainerGap()));
@@ -789,7 +796,7 @@ public class VOrdenCobro extends VOrdenPago {
 										.createParallelGroup(
 												org.jdesktop.layout.GroupLayout.BASELINE)
 										.add(lblDateTrx)
-										.add(dateTrx,
+										.add(panelFechaTasa,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,
 												org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,
 												org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))

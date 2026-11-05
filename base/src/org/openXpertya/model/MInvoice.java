@@ -2406,15 +2406,25 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		}
 
 		// Disytel: Si no hay conversion, no permitir seleccionar moneda destino
+		// OP#8516 Solo se controla cuando el comprobante es nuevo o cambia algo que determina la conversion (tarifa,
+		// moneda, tipo de conversion, fechas o pedido). Si solo cambia, por ejemplo, el estado de pago de una factura
+		// ya confirmada, no corresponde volver a exigirlo: impedia marcar como pagada una factura cuya tarifa esta en
+		// otra moneda y no tiene tasa a su fecha de aplicacion.
+		// (la tarifa y su moneda se usan mas abajo, por eso se declaran fuera del control)
 		MPriceList priceList = new MPriceList(getCtx(), getM_PriceList_ID(), get_TrxName());
 		int priceListCurrency = priceList.getC_Currency_ID();
-		if ((priceListCurrency != getC_Currency_ID() && MCurrency
-				.currencyConvert(new BigDecimal(1), priceListCurrency,
-						getC_Currency_ID(), this.getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), // dREHER Jun 25
-						getCtx()) == null)
-				|| !validateOrderCurrencyConvert()) {
-			log.saveError("Error", Msg.getMsg(getCtx(), "NoCurrencyConversion"));
-			return false;
+		boolean controlarConversionMoneda = is_new() || is_ValueChanged("M_PriceList_ID") || is_ValueChanged("C_Currency_ID")
+				|| is_ValueChanged("C_ConversionType_ID") || is_ValueChanged("DateAcct") || is_ValueChanged("DateInvoiced")
+				|| is_ValueChanged("C_Order_ID");
+		if (controlarConversionMoneda) {
+			if ((priceListCurrency != getC_Currency_ID() && MCurrency
+					.currencyConvert(new BigDecimal(1), priceListCurrency,
+							getC_Currency_ID(), this.getFechaConversion(), getAD_Org_ID(), getC_ConversionType_ID(), // dREHER Jun 25
+							getCtx()) == null)
+					|| !validateOrderCurrencyConvert()) {
+				log.saveError("Error", Msg.getMsg(getCtx(), "NoCurrencyConversion"));
+				return false;
+			}
 		}
 
 		// Si la Tarifa es mayor a 0 setear el Impuesto Incluido a partir de la
@@ -2967,8 +2977,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	
 	/**
 	 * Para facturas en moneda distinta a la contable:
-	 * - Si existe cotización del día, la toma por defecto en Cintolo_Exchange_Rate.
-	 * - Si no existe, fuerza carga manual y evita persistir el default 1.
+	 * - Si no tiene tasa cargada, toma por defecto la cotizacion de la fecha de la factura.
+	 * - Si el usuario ya cargo una tasa, se respeta. Solo se vuelve a proponer la de la
+	 *   tabla en una factura existente cuando cambia la fecha, la moneda o el tipo de
+	 *   conversion y el usuario no toco la tasa.
+	 * - Si no hay cotizacion y no hay tasa cargada, fuerza carga manual y evita persistir el default 1.
 	 */
 	private boolean defaultInvoiceExchangeRate() {
 		int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
@@ -2979,6 +2992,21 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		}
 		
 		BigDecimal currentRate = getInvoiceExchangeRate();
+		boolean rateIsEmpty = currentRate == null
+				|| currentRate.compareTo(Env.ZERO) <= 0
+				|| currentRate.compareTo(Env.ONE) == 0;
+		// La tabla de tasas solo reemplaza a la tasa de la factura si el usuario no la modifico
+		// y la factura es nueva o cambio alguno de los datos con los que se busca la tasa
+		boolean proposeAgain = !is_ValueChanged("Cintolo_Exchange_Rate")
+				&& (is_new()
+						|| is_ValueChanged("DateAcct")
+						|| is_ValueChanged("C_Currency_ID")
+						|| is_ValueChanged("C_ConversionType_ID"));
+		
+		if(!rateIsEmpty && !proposeAgain) {
+			return true;
+		}
+		
 		BigDecimal systemRate = MConversionRate.getRate(
 				getC_Currency_ID(),
 				accountingCurrencyID,
@@ -2988,24 +3016,17 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 				getAD_Org_ID());
 		
 		if(systemRate != null && systemRate.compareTo(Env.ZERO) > 0) {
-			if(currentRate == null
-					|| currentRate.compareTo(Env.ZERO) <= 0
-					|| currentRate.compareTo(Env.ONE) == 0
-					|| !is_ValueChanged("Cintolo_Exchange_Rate")) {
-				set_ValueNoCheck("Cintolo_Exchange_Rate", systemRate);
-			}
+			set_ValueNoCheck("Cintolo_Exchange_Rate", systemRate);
 			return true;
 		}
 		
-		// Sin cotización del día: no dejar valor por defecto 1 en moneda extranjera.
-		if(!is_ValueChanged("Cintolo_Exchange_Rate")) {
+		// Sin cotizacion para la fecha: no dejar valor por defecto 1 en moneda extranjera.
+		if(proposeAgain) {
 			set_ValueNoCheck("Cintolo_Exchange_Rate", null);
-			currentRate = null;
+			rateIsEmpty = true;
 		}
 		
-		if(currentRate == null
-				|| currentRate.compareTo(Env.ZERO) <= 0
-				|| currentRate.compareTo(Env.ONE) == 0) {
+		if(rateIsEmpty) {
 			log.saveError("Error", "No existe tasa de cambio para la fecha seleccionada. Debe completar manualmente la Tasa de Cambio de la factura.");
 			return false;
 		}
@@ -3013,6 +3034,20 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		return true;
 	}
 	
+	/**
+	 * OP#8516 Total de la factura en la moneda de la compania: con la tasa propia de la
+	 * factura si esta en moneda extranjera y la tiene, caso contrario con la tabla de tasas.
+	 */
+	private BigDecimal getGrandTotalBase() {
+		int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		BigDecimal rate = getInvoiceExchangeRate();
+		if (getC_Currency_ID() != accountingCurrencyID && rate != null && rate.signum() > 0) {
+			return getGrandTotal(true).multiply(rate).setScale(2, BigDecimal.ROUND_HALF_UP);
+		}
+		return MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
+				getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
+	}
+
 	private BigDecimal getInvoiceExchangeRate() {
 		Object exchangeRate = get_Value("Cintolo_Exchange_Rate");
 		if(exchangeRate == null) {
@@ -3029,16 +3064,15 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	}
 	
 	/**
-	 * Fecha para buscar la tasa de cambio de la factura: la fecha de la
-	 * factura exacta (no la de hoy ni la contable), ya que esa tasa se usa
-	 * luego para las diferencias de cambio.
+	 * Fecha para buscar la tasa de cambio por defecto de la factura: la fecha
+	 * contable (con el mismo criterio de dia habil de getFechaConversion()).
 	 */
 	private Timestamp getExchangeRateLookupDate() {
-		if(getDateInvoiced() != null) {
-			return getDateInvoiced();
-		}
 		if(getDateAcct() != null) {
 			return new Timestamp(getFechaConversion().getTime());
+		}
+		if(getDateInvoiced() != null) {
+			return getDateInvoiced();
 		}
 		return Env.getDate();
 	}
@@ -3982,8 +4016,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 			boolean inPayment, String paymentTenderType) {
 		BigDecimal retValue = null;
 		StringBuffer sql = new StringBuffer(
-				"SELECT SUM(currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
-						+ "ah.C_Currency_ID, i.C_Currency_ID,ah.DateTrx,i.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID)) "
+				// OP#8516 Facturas de proveedor con tasa de cambio propia: lo imputado en la moneda de la compania se
+				// convierte con esa tasa, igual que en la funcion getallocatedamt (la barra va sin espacios por el conversor)
+				"SELECT SUM(CASE WHEN i.IsSOTrx='N' AND COALESCE(i.Cintolo_Exchange_Rate,0) > 0 AND ah.C_Currency_ID = " + Env.getContextAsInt(getCtx(), "$C_Currency_ID")
+						+ " AND i.C_Currency_ID <> ah.C_Currency_ID THEN (al.Amount+al.DiscountAmt+al.WriteOffAmt)/i.Cintolo_Exchange_Rate ELSE currencyConvert(al.Amount+al.DiscountAmt+al.WriteOffAmt,"
+						+ "ah.C_Currency_ID, i.C_Currency_ID,ah.DateTrx,i.C_ConversionType_ID, al.AD_Client_ID,al.AD_Org_ID) END) "
 						+ "FROM C_AllocationLine al"
 						+ " INNER JOIN C_AllocationHdr ah ON (al.C_AllocationHdr_ID=ah.C_AllocationHdr_ID)"
 						+ " INNER JOIN C_Invoice i ON (al.C_Invoice_ID=i.C_Invoice_ID) "
@@ -5420,7 +5457,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		// dREHER en el caso de facturas de proveedor y que se calcula todo en base a la
 		// tasa de cambio de la factura, se ajusta calculo del total convertido
 		BigDecimal invAmt = Env.ZERO;
-		if (!isSOTrx() && getFCProvTasaCambio()) {
+		if (!isSOTrx()) {
 			int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
 			BigDecimal invoiceExchangeRate = getInvoiceExchangeRate();
 			
@@ -5433,8 +5470,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 						getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
 			}
 		} else {
-			invAmt = MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
-					getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
+			invAmt = getGrandTotalBase();
 		}
 
 		// Modified by Matías Cap
@@ -5892,26 +5928,6 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		return !Util.isEmpty(getOldGrandTotal(), true) && (!this.getGrandTotal().equals(this.getOldGrandTotal()));
 	}
 	
-	/**
-	 * @return Si-> se calcula el comprobante segun tasa de cambio de la factura, No
-	 *         -> comportamiento estandar, se calcula tasa de cambio a la fecha de
-	 *         la OP dREHER
-	 */
-	private boolean getFCProvTasaCambio() {
-
-		String isTasaCambioFacturaProv = MPreference.GetCustomPreferenceValue("TasaCambioEnFCProveedor",
-				Env.getAD_Client_ID(Env.getCtx()));
-		if (Util.isEmpty(isTasaCambioFacturaProv, true)) {
-			isTasaCambioFacturaProv = "N";
-		}
-
-		if ("Y".equals(isTasaCambioFacturaProv))
-			return true;
-		else
-			return false;
-
-	}
-
 	/**
 	 * Crea un document discount con los datos parámetro. No guarda el PO.
 	 * @param baseAmt
@@ -7708,11 +7724,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	public void setAuxiliarInfo(AuxiliarDTO auxDTO, boolean processed) {
 		auxDTO.setAuthCode(getAuthCode());
 		// Monto convertido
-		BigDecimal invAmt = MConversionRate.convertBase(
-				getCtx(),
-				getGrandTotal(true), // CM adjusted
-				getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(),
-				getAD_Org_ID());
+		BigDecimal invAmt = getGrandTotalBase();
 		auxDTO.setAmt(invAmt);
 		auxDTO.setDateTrx(getDateInvoiced());
 		auxDTO.setDocType(MCentralAux.DOCTYPE_Invoice);
@@ -8241,6 +8253,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		int currecy_Client = Env
 				.getContextAsInt(Env.getCtx(), "$C_Currency_ID");
 		if (getC_Currency_ID() != currecy_Client) {
+			// OP#8516: si el comprobante tiene tasa de cambio propia no depende de la tabla de tasas
+			Object ownRate = get_Value("Cintolo_Exchange_Rate");
+			if (ownRate instanceof BigDecimal && ((BigDecimal) ownRate).signum() > 0) {
+				return true;
+			}
 			return (MCurrency.currencyConvert(new BigDecimal(1),
 					currecy_Client, getC_Currency_ID(), getFechaConversion(),
 					getAD_Org_ID(), getC_ConversionType_ID(), getCtx()) != null); // dREHER Jun 25

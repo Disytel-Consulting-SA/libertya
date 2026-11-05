@@ -2230,9 +2230,20 @@ public class MTab implements DataStatusListener,Evaluatee,Serializable {
 
                     Double grandEuro = new Double( rs.getDouble( 5 ));
 
+                    String companyISO = MCurrency.getISO_Code(Env.getCtx(), Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" ));
+
+                    // OP#8516: factura en moneda extranjera con tasa propia, el total en la moneda de la compania
+                    // se calcula con esa tasa y no depende de la tabla de tasas de cambio
+                    if( !isOrder && !companyISO.equals( currency )) {
+                        BigDecimal ownRate = DB.getSQLValueBD( null,"SELECT Cintolo_Exchange_Rate FROM C_Invoice WHERE C_Invoice_ID=?",Record_ID );
+                        if( ownRate != null && ownRate.signum() > 0 ) {
+                            grandEuro = new Double( new BigDecimal( grandTotal.doubleValue()).multiply( ownRate ).setScale( 2,BigDecimal.ROUND_HALF_UP ).doubleValue());
+                        }
+                    }
+
                     arguments[ 4 ] = grandEuro;
 
-                    arguments[ 5 ] = MCurrency.getISO_Code(Env.getCtx(), Env.getContextAsInt( Env.getCtx(), "$C_Currency_ID" ));
+                    arguments[ 5 ] = companyISO;
 
                     // {6} - Tasa de cambio: la registrada en la factura o, si no hay, la implicita en la conversion
                     arguments[ 6 ] = getSummaryExchangeRate( isOrder, Record_ID, grandTotal, grandEuro );

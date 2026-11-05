@@ -139,31 +139,7 @@ public class WOrdenCobro extends WOrdenPago {
 	protected WStringEditor txtCheckBarcode;
 	
 	// CINTOLO: Se agregan los campos para el PopUp
-    protected boolean isCintoloEmit = false;
-    protected boolean isCintoloInclude = false;
-    protected boolean shouldContinue = true;
-    
-    public void setContinue(boolean shouldContinue) {
-    	this.shouldContinue = shouldContinue;
-    }
-    
-    public boolean isCintoloEmit() {
-    	return isCintoloEmit;
-    }
-    
-    public boolean isCintoloInclude() {
-    	return isCintoloInclude;
-    }
-    
-    public void setCintoloEmit(boolean emit) {
-    	isCintoloEmit = emit;
-    	m_model.setCintoloEmit(emit);
-    }
-    
-    public void setCintoloInclude(boolean include) {
-    	isCintoloInclude = include;
-    	m_model.setCintoloInclude(include);
-    }
+    // OP#8516 isCintoloEmit/isCintoloInclude/shouldContinue y sus métodos están en WOrdenPago
 
 	public WOrdenCobro() {
 		super();
@@ -243,6 +219,7 @@ public class WOrdenCobro extends WOrdenPago {
     		
     		m_model.setActualizarFacturasAuto(false);
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		// Fuerzo la actualizacion de los valores de la interfaz
     		onTipoPagoChange(true);
     		m_model.setPagoNormal(radPayTypeStd.isSelected(), monto);
@@ -310,7 +287,7 @@ public class WOrdenCobro extends WOrdenPago {
     		isCintoloEmit = false;
     		isCintoloInclude = false;
 			if(m_model.isAdjustmentClause() 
-					&& m_model.getExchangeDifference() != null && !m_model.getExchangeDifference().equals(Env.ZERO)) {
+					&& m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
 				WExchangeDifferenceForm diffDialog;
 				try {
 					diffDialog = new WExchangeDifferenceForm(this, 
@@ -2286,6 +2263,12 @@ public class WOrdenCobro extends WOrdenPago {
     	row.appendChild(new Space());
     	row.appendChild(cboPaymentRule.getLabel().rightAlign());
     	row.appendChild(cboPaymentRule.getComponent());
+    	row.appendChild(new Space());
+    	
+    	// OP#8516 Tasa de cambio del comprobante
+    	row = rows.newRow();
+    	row.appendChild(txtTasaCambio.getLabel().rightAlign());
+    	row.appendChild(txtTasaCambio.getComponent());
     	row.appendChild(new Space());
     }
     
