@@ -320,6 +320,21 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 		return limit;
 	}
 	
+	/**
+	 * OP#8516 Total de la factura en la moneda de la compania: con la tasa propia de la factura si
+	 * esta en moneda extranjera y la tiene; si no, con la tabla de tasas a la fecha de la factura.
+	 * Nunca devuelve null (sin tasa en la tabla, cero).
+	 */
+	private BigDecimal getInvoiceTotalBase(MInvoice i) {
+		int accountingCurrencyID = Env.getContextAsInt(m_ctx, "$C_Currency_ID");
+		Object rate = i.get_Value("Cintolo_Exchange_Rate");
+		if (i.getC_Currency_ID() != accountingCurrencyID && rate instanceof BigDecimal && ((BigDecimal) rate).signum() > 0) {
+			return i.getGrandTotal().multiply((BigDecimal) rate).setScale(2, RoundingMode.HALF_UP);
+		}
+		BigDecimal total = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), accountingCurrencyID, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+		return total != null ? total : Env.ZERO;
+	}
+	
 	@Override
 	public BigDecimal calculateExchangeDifferencePercent() {
 		if (exchangeDifference.compareTo(BigDecimal.ZERO) == 0) {
@@ -332,7 +347,7 @@ public class VOrdenCobroModel extends VOrdenPagoModel {
 				if (((ResultItemFactura) x).getManualAmount().compareTo(BigDecimal.ZERO) > 0) {
 					int id = ((Integer) ((ResultItemFactura) x).getItem(m_facturasTableModel.getIdColIdx()));
 					MInvoice i = new MInvoice(m_ctx,id,trxName); 
-					totalInvoice = MCurrency.currencyConvert(i.getGrandTotal(), i.getC_Currency_ID(), 118, i.getDateInvoiced(), i.getAD_Org_ID(), m_ctx);
+					totalInvoice = getInvoiceTotalBase(i);
 					//totalInvoice = totalInvoice.add(i.getGrandTotal());
 				}
 			}
