@@ -3034,6 +3034,20 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		return true;
 	}
 	
+	/**
+	 * OP#8516 Total de la factura en la moneda de la compania: con la tasa propia de la
+	 * factura si esta en moneda extranjera y la tiene, caso contrario con la tabla de tasas.
+	 */
+	private BigDecimal getGrandTotalBase() {
+		int accountingCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		BigDecimal rate = getInvoiceExchangeRate();
+		if (getC_Currency_ID() != accountingCurrencyID && rate != null && rate.signum() > 0) {
+			return getGrandTotal(true).multiply(rate).setScale(2, BigDecimal.ROUND_HALF_UP);
+		}
+		return MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
+				getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
+	}
+
 	private BigDecimal getInvoiceExchangeRate() {
 		Object exchangeRate = get_Value("Cintolo_Exchange_Rate");
 		if(exchangeRate == null) {
@@ -5456,8 +5470,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 						getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
 			}
 		} else {
-			invAmt = MConversionRate.convertBase(getCtx(), getGrandTotal(true), // CM adjusted
-					getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(), getAD_Org_ID());
+			invAmt = getGrandTotalBase();
 		}
 
 		// Modified by Matías Cap
@@ -7711,11 +7724,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 	public void setAuxiliarInfo(AuxiliarDTO auxDTO, boolean processed) {
 		auxDTO.setAuthCode(getAuthCode());
 		// Monto convertido
-		BigDecimal invAmt = MConversionRate.convertBase(
-				getCtx(),
-				getGrandTotal(true), // CM adjusted
-				getC_Currency_ID(), getDateAcct(), 0, getAD_Client_ID(),
-				getAD_Org_ID());
+		BigDecimal invAmt = getGrandTotalBase();
 		auxDTO.setAmt(invAmt);
 		auxDTO.setDateTrx(getDateInvoiced());
 		auxDTO.setDocType(MCentralAux.DOCTYPE_Invoice);
