@@ -134,12 +134,16 @@ public class MOrg extends X_AD_Org {
 
             // Access
             MRoleOrgAccess.createForOrg(this);
-            MRole.getDefault(getCtx(), true);		// reload
-
             MUserOrgAccess.createForOrg(this);
-            
+
             // TreeNode
             insert_Tree(MTree_Base.TREETYPE_Organization);
+
+            // Recargar el rol recién al final, una vez creados los accesos por rol y por usuario
+            // y el nodo del árbol. Si se recarga antes, los roles con IsUseUserOrgAccess='Y' (o con
+            // acceso por árbol de organizaciones) no incluyen la nueva organización y la pestaña
+            // "Información de la organización" no muestra el AD_OrgInfo recién creado.
+            MRole.getDefault(getCtx(), true);		// reload
         }
 
         // Value/Name change
