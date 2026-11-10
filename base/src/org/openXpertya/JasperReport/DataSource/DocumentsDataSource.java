@@ -51,11 +51,31 @@ public class DocumentsDataSource extends OPDataSource {
 				+ "	 cu.iso_code as Currency, "
 				+ "	 i.grandtotal AS GrandTotalAmt, "
 				// +"	 SUM(al.amount + al.discountamt + al.writeoffamt) AS AllocatedAmt, "
+				// OP#8516 La conversion usa la fecha de aplicacion de la factura, igual que el saldo (getAllocatedAmt);
+				// con la fecha de emision el importe imputado no coincidia con el saldo cuando ambas fechas difieren
 				+ "	 SUM(CASE "
 				+ "		 WHEN ah.c_currency_id = i.c_currency_id THEN al.amount + al.discountamt + al.writeoffamt "
+				// OP#8516 Pago en la moneda de la factura con tasa de cambio propia (anticipo): se usa esa tasa
+				+ "		 WHEN al.c_payment_id IS NOT NULL AND payment_exchange_rate(al.c_payment_id) IS NOT NULL "
+				+ "			 AND (SELECT p.c_currency_id FROM c_payment p WHERE p.c_payment_id = al.c_payment_id) = i.c_currency_id "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/payment_exchange_rate(al.c_payment_id), i.c_currency_id, NULL) "
+				// OP#8516 Cobro/pago en moneda de la compania con tasa de cambio propia del comprobante: se usa esa tasa,
+				// igual que el saldo de la factura, para que lo imputado cierre con el importe de la factura
+				// Factura de proveedor con tasa propia: el saldo se calcula con esa tasa (getallocatedamt)
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND i.issotrx = 'N' AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
+				// OP#8516 Factura de cliente en moneda extranjera cobrada con una NC/ND de diferencia de cambio incluida en el recibo:
+				// lo imputado (cobro + NC/ND) equivale a la factura a su propia tasa, por lo que se convierte con ella
+				// y la factura cerrada muestra su importe completo (si la NC/ND queda en borrador se usa la tasa del recibo)
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND i.issotrx = 'Y' AND i.c_currency_id <> " + accountingCurrencyID
+				+ "			 AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
+				+ "			 AND EXISTS (SELECT 1 FROM c_invoice d WHERE d.cintolo_exchange_dif_receipt = ah.c_allocationhdr_id AND d.docstatus IN ('CO','CL')) "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
+				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(ah.exchangerate, 0) > 0 "
+				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/ah.exchangerate, i.c_currency_id, NULL) "
 				+ "		 WHEN ah.c_currency_id = " + accountingCurrencyID + " AND COALESCE(i.cintolo_exchange_rate, 0) > 0 "
 				+ "			 THEN currencyRound((al.amount + al.discountamt + al.writeoffamt)/i.cintolo_exchange_rate, i.c_currency_id, NULL) "
-				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateinvoiced::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
+				+ "		 ELSE currencyconvert(al.amount + al.discountamt + al.writeoffamt, ah.c_currency_id, i.c_currency_id, i.dateacct::timestamp with time zone, COALESCE(i.c_conversiontype_id, 0), ah.ad_client_id, ah.ad_org_id) "
 				+ "	 END) AS AllocatedAmt, "
 				+ "	 invoiceopen(i.C_Invoice_ID,0) AS OpenAmt "
 				+ "FROM c_allocationhdr ah "

@@ -91,6 +91,25 @@ public class AllocationGenerator {
 	
 	/** Fecha del recibo/op */
 	public Timestamp fechaOP = null;
+	/** OP#8516 Tasa de cambio del comprobante (recibo/OP), se graba en la cabecera de la asignación. Nula si no se utilizó. */
+	public BigDecimal exchangeRateComprobante = null;
+	/**
+	 * OP#8516 Diferencia de cambio por factura en pagos a proveedores: id de la factura y diferencia en moneda de la
+	 * compañía (positiva si se pagan más pesos que el valor de la factura a su fecha de aplicación, negativa si menos).
+	 */
+	public java.util.Map<Integer, BigDecimal> exchangeDifPurchasesByInvoice = null;
+	/**
+	 * OP#8516 Parte de la diferencia de cambio de pagos a proveedores que corresponde a lo cubierto con anticipos en la
+	 * misma moneda de la factura: id de la factura y diferencia en moneda de la compañía (positiva: pérdida, negativa:
+	 * ganancia). Se registra en un asiento del mayor vinculado a la asignación.
+	 */
+	public java.util.Map<Integer, BigDecimal> exchangeDifJournalByInvoice = null;
+	/**
+	 * OP#8516 Tasa de cambio propia de pagos que se usan como medio de pago (anticipos en moneda extranjera): id del
+	 * pago y tasa. Si un pago tiene tasa propia, se valoriza en moneda de la compañía con esa tasa y no con la de la
+	 * tabla de tasas de cambio.
+	 */
+	public java.util.Map<Integer, BigDecimal> paymentExchangeRates = null;
 	
 	// dREHER
 	/** Permite calcular el monto de los debitos segun la tasa de cambio especificada en el comprobante y no seguna la tasa de cambio vigente */
@@ -307,6 +326,9 @@ public class AllocationGenerator {
 		newAllocationHdr.setC_Currency_ID(clientCurrencyID);
 		newAllocationHdr.setDateAcct(systemDate);
 		newAllocationHdr.setDateTrx(systemDate);
+		if(exchangeRateComprobante != null){
+			newAllocationHdr.setExchangeRate(exchangeRateComprobante);
+		}
 		if(getDocType() != null){
 			newAllocationHdr.setC_DocType_ID(getDocType().getID());
 			try{
@@ -377,6 +399,17 @@ public class AllocationGenerator {
 	 * las líneas de asignación.
 	 */
 	public void generateLines() throws AllocationGeneratorException {	
+		// OP#8516 Anticipos en moneda extranjera: cada pago se valoriza con su tasa propia
+		if(paymentExchangeRates != null && !paymentExchangeRates.isEmpty() && getCredits() != null) {
+			for(Document credit : getCredits()) {
+				if(credit instanceof Payment) {
+					BigDecimal ownRate = paymentExchangeRates.get(credit.getId());
+					if(ownRate != null && ownRate.signum() > 0) {
+						credit.setExchangeRate(ownRate);
+					}
+				}
+			}
+		}
 		try {
 			
 			// dREHER - En el caso de CINTOLO las diferencias de cambio ya estan calculadas previamente, pasarle la info al metodo de generacion de documentos
@@ -394,7 +427,11 @@ public class AllocationGenerator {
 				
 			}else {
 				diffExchange = null;
-				debug("Al tratarse de pagos NO genera diferencia de cambios...");
+				// OP#8516 En pagos a proveedores se generan Débito/Crédito Proveedor por la diferencia de cambio
+				if(emit || include) {
+					generateDebitCreditExchangeDifferencePurchases();
+					generateExchangeDifferenceJournalPurchases();
+				}
 			}
 
 			
@@ -1135,7 +1172,30 @@ public class AllocationGenerator {
 		}
 		// El total de la asignación es la suma de los débitos o créditos según
 		// corresponda
-		getAllocationHdr().setGrandTotal(onlyCredits ? getCreditsAmount() : getDebitsAmount());
+		BigDecimal hdrTotal = onlyCredits ? getCreditsAmount() : getDebitsAmount();
+		// OP#8516 En un pago adelantado en moneda extranjera con tasa de cambio propia, el total se calcula con esa tasa
+		if(onlyCredits && exchangeRateComprobante != null && exchangeRateComprobante.signum() > 0) {
+			hdrTotal = getDocumentsAmountWithOwnRate(getCredits(), exchangeRateComprobante);
+		}
+		getAllocationHdr().setGrandTotal(hdrTotal);
+	}
+
+	/**
+	 * OP#8516 Suma de los montos de los documentos en moneda de la compañía, convirtiendo los que están en moneda
+	 * extranjera con la tasa indicada y no con la de la tabla de tasas de cambio.
+	 */
+	private BigDecimal getDocumentsAmountWithOwnRate(List<Document> documents, BigDecimal rate) throws AllocationGeneratorException {
+		int companyCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+		int precision = MCurrency.getStdPrecision(getCtx(), companyCurrencyID);
+		BigDecimal total = BigDecimal.ZERO;
+		for (Document document : documents) {
+			if (document.getCurrencyId() != companyCurrencyID) {
+				total = total.add(document.getAmount().multiply(rate).setScale(precision, RoundingMode.HALF_UP));
+			} else {
+				total = total.add(document.getConvertedAmount());
+			}
+		}
+		return total;
 	}
 	
 	/**
@@ -1759,8 +1819,12 @@ public class AllocationGenerator {
 		BigDecimal sumaPayments = new BigDecimal(0);
 		BigDecimal sumaPaymentsAllocDate = new BigDecimal(0);
 		for (PaymentMediumInfo mp : pays){
-			sumaPaymentsAllocDate = sumaPaymentsAllocDate.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx));
-			sumaPayments = sumaPayments.add(MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), mp.getDate(), Env.getAD_Org_ID(ctx), ctx));
+			// OP#8516 Sin tasa en la tabla para la fecha la conversion es nula: se toma cero
+			// (la diferencia de cambio con tasa propia llega por parametro y no depende de este calculo)
+			BigDecimal payAllocDate = MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx);
+			BigDecimal payDate = MCurrency.currencyConvert(mp.getAmount(), mp.getCurrencyId(), Env.getContextAsInt(ctx, "$C_Currency_ID"), mp.getDate(), Env.getAD_Org_ID(ctx), ctx);
+			sumaPaymentsAllocDate = sumaPaymentsAllocDate.add(payAllocDate != null ? payAllocDate : Env.ZERO);
+			sumaPayments = sumaPayments.add(payDate != null ? payDate : Env.ZERO);
 		}
 		
 		BigDecimal sumInvoices = new BigDecimal(0);
@@ -1768,7 +1832,8 @@ public class AllocationGenerator {
 		for (Integer id : facts.keySet()){
 			MInvoice invoice = new MInvoice(ctx, id, trxName);
 		
-			sumInvoicesAllocDate = sumInvoicesAllocDate.add(MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx));
+			BigDecimal invAllocDate = MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), allocDate, Env.getAD_Org_ID(ctx), ctx);
+			sumInvoicesAllocDate = sumInvoicesAllocDate.add(invAllocDate != null ? invAllocDate : Env.ZERO);
 			
 			// dREHER Feb '25
 			BigDecimal amtConvert = MCurrency.currencyConvert(facts.get(id), invoice.getC_Currency_ID(), Env.getContextAsInt(ctx, "$C_Currency_ID"), invoice.getDateAcct(), Env.getAD_Org_ID(ctx), ctx);
@@ -2119,6 +2184,234 @@ public class AllocationGenerator {
 		}
 	}
 	
+	/**
+	 * OP#8516 Genera los documentos de diferencia de cambio de un pago a proveedores. Por las facturas en moneda
+	 * extranjera cuyo pago en pesos supera el valor de la factura a su fecha de aplicación se genera un Débito de
+	 * Proveedor (aumenta lo que se debe), y por las que quedan por debajo un Crédito de Proveedor (lo disminuye),
+	 * en moneda de la compañía, para que el pago cancele el saldo de la factura.
+	 * Si solo se emite, los documentos quedan en borrador como propuesta; si además se incluyen, se completan y
+	 * se agregan a la asignación.
+	 */
+	protected void generateDebitCreditExchangeDifferencePurchases() throws Exception {
+		if(exchangeDifPurchasesByInvoice == null || exchangeDifPurchasesByInvoice.isEmpty()) {
+			return;
+		}
+		java.util.LinkedHashMap<Integer, BigDecimal> debits = new java.util.LinkedHashMap<Integer, BigDecimal>();
+		java.util.LinkedHashMap<Integer, BigDecimal> credits = new java.util.LinkedHashMap<Integer, BigDecimal>();
+		for(java.util.Map.Entry<Integer, BigDecimal> e : exchangeDifPurchasesByInvoice.entrySet()) {
+			if(e.getValue().signum() > 0) {
+				debits.put(e.getKey(), e.getValue());
+			} else if(e.getValue().signum() < 0) {
+				credits.put(e.getKey(), e.getValue().abs());
+			}
+		}
+		if(!debits.isEmpty()) {
+			createExchangeDifDocumentPurchases(false, debits);
+		}
+		if(!credits.isEmpty()) {
+			createExchangeDifDocumentPurchases(true, credits);
+		}
+	}
+
+	/**
+	 * OP#8516 Registra en un asiento del mayor (tipo de documento Asiento) la diferencia de cambio de lo que se canceló
+	 * con anticipos en la misma moneda de la factura. Es una diferencia de valuación, no una deuda con el proveedor, por
+	 * lo que no se genera un Débito/Crédito de Proveedor. Pérdida: Debe Pérdida por diferencia de cambio realizada /
+	 * Haber Proveedores. Ganancia: Debe Proveedores / Haber Ganancia por diferencia de cambio realizada.
+	 * El asiento se vincula a la asignación (GL_Journal.C_AllocationHdr_ID) para anularlo al revertirla. Si solo se emite
+	 * queda en borrador como propuesta; si además se incluye, se completa.
+	 * 
+	 * OPCION 2 (pendiente de definir con Siasa): en lugar del asiento, generar un par Débito de Proveedor (VID) + Crédito
+	 * de Proveedor (VDC) por el mismo monto e imputarlos entre sí dentro de esta misma asignación, de modo que la
+	 * diferencia quede como documentos visibles en la cuenta corriente sin alterar el saldo. Se haría llamando a
+	 * createExchangeDifDocumentPurchases(false, debits) y createExchangeDifDocumentPurchases(true, credits) con el mismo
+	 * mapa de montos (valor absoluto) y luego addDebitDocument/addCreditDocument de ambos con el mismo total, en lugar
+	 * de crear el asiento de este método.
+	 */
+	protected void generateExchangeDifferenceJournalPurchases() throws Exception {
+		if(exchangeDifJournalByInvoice == null || exchangeDifJournalByInvoice.isEmpty()) {
+			return;
+		}
+		BigDecimal total = Env.ZERO;
+		for(BigDecimal v : exchangeDifJournalByInvoice.values()) {
+			total = total.add(v);
+		}
+		if(total.signum() == 0) {
+			return;
+		}
+		int clientID = Env.getAD_Client_ID(getCtx());
+		MAllocationHdr hdr = getAllocationHdr();
+		MAcctSchema as = MAcctSchema.getClientAcctSchema(getCtx(), clientID)[0];
+		int currencyID = as.getC_Currency_ID();
+
+		int docTypeID = DB.getSQLValue(getTrxName(), "SELECT C_DocType_ID FROM C_DocType WHERE DocBaseType = 'GLJ' AND IsActive = 'Y' AND AD_Client_ID IN (0, ?) ORDER BY AD_Client_ID DESC, C_DocType_ID LIMIT 1", clientID);
+		if(docTypeID <= 0) {
+			throw new Exception("No existe un tipo de documento de asiento (GLJ) para registrar la diferencia de cambio.");
+		}
+		int categoryID = DB.getSQLValue(getTrxName(), "SELECT GL_Category_ID FROM GL_Category WHERE IsActive = 'Y' AND AD_Client_ID IN (0, ?) ORDER BY IsDefault DESC, AD_Client_ID DESC, GL_Category_ID LIMIT 1", clientID);
+		if(categoryID <= 0) {
+			throw new Exception("No existe una categoría contable para registrar la diferencia de cambio.");
+		}
+		int liabilityID = DB.getSQLValue(getTrxName(), "SELECT V_Liability_Acct FROM C_BP_Vendor_Acct WHERE C_BPartner_ID = ? AND C_AcctSchema_ID = ?", hdr.getC_BPartner_ID(), as.getC_AcctSchema_ID());
+		if(liabilityID <= 0) {
+			throw new Exception("El proveedor no tiene cuenta de proveedores configurada para registrar la diferencia de cambio.");
+		}
+		boolean loss = total.signum() > 0;
+		int resultAcctID = loss ? as.getAcctSchemaDefault().getRealizedLoss_Acct() : as.getAcctSchemaDefault().getRealizedGain_Acct();
+		if(resultAcctID <= 0) {
+			throw new Exception("No está configurada la cuenta de " + (loss ? "pérdida" : "ganancia") + " por diferencia de cambio realizada.");
+		}
+		BigDecimal amt = total.abs();
+
+		MJournal journal = new MJournal(getCtx(), 0, getTrxName());
+		journal.setAD_Org_ID(hdr.getAD_Org_ID());
+		journal.setC_AcctSchema_ID(as.getC_AcctSchema_ID());
+		journal.setC_DocType_ID(docTypeID);
+		journal.setGL_Category_ID(categoryID);
+		journal.setC_Currency_ID(currencyID);
+		journal.setC_ConversionType_ID(MConversionType.getDefault(clientID));
+		journal.setDateDoc(hdr.getDateAcct());
+		journal.setDateAcct(hdr.getDateAcct());
+		journal.setDescription("Diferencia de cambio por anticipos en Orden de Pago " + hdr.getDocumentNo());
+		journal.set_Value("C_AllocationHdr_ID", hdr.getC_AllocationHdr_ID());
+		if(!journal.save()) {
+			throw new Exception("No se pudo crear el asiento de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+		}
+		MJournalLine debit = new MJournalLine(journal);
+		debit.setLine(10);
+		debit.setC_Currency_ID(currencyID);
+		debit.setC_ConversionType_ID(journal.getC_ConversionType_ID());
+		debit.setC_ValidCombination_ID(loss ? resultAcctID : liabilityID);
+		debit.setAmtSourceDr(amt);
+		debit.setDescription(journal.getDescription());
+		if(!debit.save()) {
+			throw new Exception("No se pudo crear la línea del asiento de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+		}
+		MJournalLine credit = new MJournalLine(journal);
+		credit.setLine(20);
+		credit.setC_Currency_ID(currencyID);
+		credit.setC_ConversionType_ID(journal.getC_ConversionType_ID());
+		credit.setC_ValidCombination_ID(loss ? liabilityID : resultAcctID);
+		credit.setAmtSourceCr(amt);
+		credit.setDescription(journal.getDescription());
+		if(!credit.save()) {
+			throw new Exception("No se pudo crear la línea del asiento de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+		}
+		if(!include) {
+			debug("generateExchangeDifferenceJournalPurchases. NO SE INCLUYE, queda en borrador asiento " + journal.getDocumentNo());
+			return;
+		}
+		if(!journal.processIt(MJournal.DOCACTION_Complete)) {
+			throw new Exception("No se pudo completar el asiento de diferencia de cambio: " + journal.getProcessMsg());
+		}
+		if(!journal.save()) {
+			throw new Exception(CLogger.retrieveErrorAsString());
+		}
+	}
+
+	private void createExchangeDifDocumentPurchases(boolean isCredit, java.util.Map<Integer, BigDecimal> difs) throws Exception {
+		int clientID = Env.getAD_Client_ID(getCtx());
+		int companyCurrencyID = Env.getContextAsInt(getCtx(), "$C_Currency_ID");
+
+		// Tipo de documento: Débito Proveedor (VID) o Crédito Proveedor (VDC), configurables por preferencia
+		String docTypeKey = MPreference.GetCustomPreferenceValue(
+				isCredit ? "DIF_CAMBIO_DOCTYPE_OP_CRED" : "DIF_CAMBIO_DOCTYPE_OP_DEB", clientID);
+		if(Util.isEmpty(docTypeKey, true)) {
+			docTypeKey = isCredit ? "VDC" : "VID";
+		}
+		MDocType difDocType = MDocType.getDocType(getCtx(), docTypeKey, getTrxName());
+		if(difDocType == null || difDocType.getID() <= 0) {
+			throw new Exception("No existe el tipo de comprobante '" + docTypeKey + "' para la diferencia de cambio en pagos a proveedores. "
+					+ "Configure la preferencia " + (isCredit ? "DIF_CAMBIO_DOCTYPE_OP_CRED" : "DIF_CAMBIO_DOCTYPE_OP_DEB"));
+		}
+
+		// Tarifa de compra en moneda de la compañía: preferencia DIF_CAMBIO_TARIFA_COMPRA o, si no existe, una tarifa de compra
+		int priceListID = 0;
+		String priceListName = MPreference.GetCustomPreferenceValue("DIF_CAMBIO_TARIFA_COMPRA", clientID);
+		if(!Util.isEmpty(priceListName, true)) {
+			priceListID = DB.getSQLValue(getTrxName(), "SELECT M_PriceList_ID FROM M_PriceList WHERE Name = ? AND IsActive = 'Y' AND IsSOPriceList = 'N' ORDER BY M_PriceList_ID LIMIT 1", priceListName);
+		}
+		if(priceListID <= 0) {
+			priceListID = DB.getSQLValue(getTrxName(), "SELECT M_PriceList_ID FROM M_PriceList WHERE IsActive = 'Y' AND IsSOPriceList = 'N' AND C_Currency_ID = ? AND AD_Client_ID IN (0, ?) ORDER BY CASE WHEN Name = 'Costo' THEN 0 ELSE 1 END, M_PriceList_ID LIMIT 1", companyCurrencyID, clientID);
+		}
+		if(priceListID <= 0) {
+			throw new Exception("No existe una tarifa de compra en moneda de la compañía para la diferencia de cambio en pagos a proveedores. Configure la preferencia DIF_CAMBIO_TARIFA_COMPRA.");
+		}
+
+		MCintoloExchangeDifSettings settings = getActiveExchangeDifSettings();
+		MProduct product = getExchangeDifProduct(settings);
+		// Los comprobantes internos por diferencia de cambio no llevan IVA
+		MTax tax = getExchangeDifExemptTax();
+
+		MAllocationHdr hdr = getAllocationHdr();
+		MInvoice inv = new MInvoice(getCtx(), 0, getTrxName());
+		inv.setAD_Org_ID(hdr.getAD_Org_ID());
+		inv.setBPartner(getBPartner());
+		inv.setManualGeneralDiscount(Env.ZERO);
+		inv.setC_DocTypeTarget_ID(difDocType.getID());
+		inv.setIsSOTrx(difDocType.isSOTrx());
+		inv.setDateInvoiced(hdr.getDateAcct());
+		inv.setDateAcct(hdr.getDateAcct());
+		inv.setM_PriceList_ID(priceListID);
+		inv.setC_Currency_ID(companyCurrencyID);
+		inv.setApplyPercepcion(false);
+		inv.setCreateCashLine(false);
+		inv.setDocAction(MInvoice.DOCACTION_Complete);
+		inv.setDocStatus(MInvoice.DOCSTATUS_Drafted);
+		inv.setCurrentAccountVerified(true);
+		inv.setUpdateBPBalance(false);
+		inv.setDescription("Diferencia de cambio por Orden de Pago " + hdr.getDocumentNo());
+		// Marca como diferencia de cambio y traza con la orden de pago que la originó
+		inv.set_Value("Cintolo_Apply_Exchange_Dif", true);
+		inv.set_Value("Cintolo_Exchange_Dif_Receipt", hdr.getC_AllocationHdr_ID());
+		if(!inv.save()) {
+			throw new Exception("No se pudo crear el " + (isCredit ? "crédito" : "débito") + " de proveedor por diferencia de cambio: "
+					+ CLogger.retrieveErrorAsString());
+		}
+
+		BigDecimal total = Env.ZERO;
+		for(java.util.Map.Entry<Integer, BigDecimal> e : difs.entrySet()) {
+			MInvoice origin = new MInvoice(getCtx(), e.getKey(), getTrxName());
+			BigDecimal amt = e.getValue();
+			MInvoiceLine line = new MInvoiceLine(inv);
+			line.setQty(1);
+			line.setM_Product_ID(product.getID());
+			line.setPriceEntered(amt);
+			line.setPriceActual(amt);
+			line.setPriceList(amt);
+			line.setC_Tax_ID(tax.getID());
+			line.setLineNetAmt(amt);
+			line.setLineNetAmount(amt);
+			line.setDescription("Dif. de cambio por FC " + origin.getDocumentNo() + " fecha de aplicación "
+					+ origin.getDateAcct().toString().substring(0, 10) + " pagada en OP " + hdr.getDocumentNo()
+					+ " " + hdr.getDateAcct().toString().substring(0, 10));
+			if(!line.save()) {
+				throw new Exception("No se pudo crear la línea de diferencia de cambio: " + CLogger.retrieveErrorAsString());
+			}
+			total = total.add(amt);
+		}
+		inv.recalculateTotal();
+		inv.save();
+
+		// Si solo se emite, queda en borrador como propuesta
+		if(!include) {
+			debug("generateDebitCreditExchangeDifferencePurchases. NO SE INCLUYE, queda en borrador DocumentNo=" + inv.getDocumentNo());
+			return;
+		}
+
+		if(isCredit) {
+			inv.setSkipAutomaticCreditAllocCreation(true);
+		}
+		processDocument(inv, MInvoice.DOCACTION_Complete);
+
+		// Un débito se imputa junto a las facturas, un crédito como medio de pago
+		if(isCredit) {
+			this.addCreditDocument(inv.getID(), total, AllocationDocumentType.INVOICE);
+		} else {
+			this.addDebitDocument(inv.getID(), total, AllocationDocumentType.INVOICE);
+		}
+	}
+
 	// dREHER
 	private MBPartner getBPartner() {
 		MBPartner bPartner = new MBPartner(getCtx(),getAllocationHdr().getC_BPartner_ID(), getTrxName());
@@ -2185,12 +2478,12 @@ public class AllocationGenerator {
 				"U$S " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN) + " " +
 				"cobrada " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + " " +
 				"U$S " +  
-				MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN);
+				getReceiptRateForDescription().divide(Env.ONE, 2, RoundingMode.DOWN);
 		*/
 		
 		// Formato nuevo a Oct 24
 		String desc = 	"Reci " + getDocumentNo() + " " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + 
-				" TC " + MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN) +
+				" TC " + getReceiptRateForDescription().divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" FC " + documentNo + " " + fecha.toString().substring(0, 10) + 
 		" " + difAmt.divide(Env.ONE, 2, RoundingMode.DOWN) +
 		" TC " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN);
@@ -2205,6 +2498,18 @@ public class AllocationGenerator {
 	}
 	
 	// TODO: Mejorar la lógica de este método. Debe retornar la moneda en la que se está pagando las facturas.
+	/**
+	 * OP#8516 Tasa del cobro para la descripcion de las lineas de diferencia de cambio: la propia del
+	 * comprobante si la tiene; si no, la de la tabla a la fecha del cobro (cero si no existe).
+	 */
+	private BigDecimal getReceiptRateForDescription() {
+		if(exchangeRateComprobante != null && exchangeRateComprobante.signum() > 0) {
+			return exchangeRateComprobante;
+		}
+		BigDecimal rate = MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx));
+		return rate != null ? rate : Env.ZERO;
+	}
+
 	private int getCreditsCurrency() {
 		int currency = PESOS_ARG;
 		for(Document doc: getCredits()) {
@@ -2315,7 +2620,7 @@ public class AllocationGenerator {
 		*/
 		
 		String desc = 	"Reci " + getDocumentNo() + " " + getAllocationHdr().getDateTrx().toString().substring(0, 10) + 
-						" TC " + MConversionRate.getRate(100, PESOS_ARG, getAllocationHdr().getDateTrx(), 0, Env.getAD_Client_ID(getCtx()), Env.getAD_Org_ID(ctx)).divide(Env.ONE, 2, RoundingMode.DOWN) +
+						" TC " + getReceiptRateForDescription().divide(Env.ONE, 2, RoundingMode.DOWN) +
 				" FC " + documentNo + " " + fecha.toString().substring(0, 10) + 
 				" " + amt.divide(Env.ONE, 2, RoundingMode.DOWN) +
 				" TC " + exchangeRate.divide(Env.ONE, 2, RoundingMode.DOWN);

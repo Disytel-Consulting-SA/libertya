@@ -905,6 +905,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 	        	voidPayments();
 	        	voidDiffCambio();
 	        }
+	        // OP#8516 En una orden de pago, al revertir la asignación (sin anular los pagos, por ejemplo cuando se pagó con
+	        // anticipos) también se anulan los documentos de diferencia de cambio que generó la propia orden de pago
+	        else if (ALLOCATIONACTION_RevertAllocation.equals(getAllocationAction()) && !isSOTrx()) {
+	        	voidDiffCambio();
+	        }
 	        
 		    // Acción específica de Allocations: Anular Pagos y Retenciones
 	        // Se deben anular las retenciones asociadas a esta asignación.
@@ -1021,12 +1026,38 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			return false;
         }
         
+        // OP#8516 Al revertir una orden de pago se anulan los documentos de diferencia de cambio que generó
+        if (!voidDiffCambioPaymentOrder()) {
+        	return false;
+        }
+        
         boolean retValue = reverseIt();
 
         setDocAction( DOCACTION_None );
 
         return retValue;
     }    // reverseCorrectionIt
+
+    /**
+     * OP#8516 En una orden de pago, anula los documentos de diferencia de cambio (Débito/Crédito de Proveedor) que
+     * generó la propia orden de pago, ya sea que estén imputados en ella o en borrador. Se utiliza al revertir la
+     * asignación sin anular los pagos, por ejemplo cuando se pagó con anticipos.
+     * 
+     * @return false si no se pudieron anular, con el mensaje en processMsg
+     */
+    private boolean voidDiffCambioPaymentOrder() {
+    	if (isSOTrx()) {
+    		return true;
+    	}
+    	setAditionalWorks(new HashMap<PO, Object>());
+    	try {
+    		voidDiffCambio();
+    	} catch (Exception e) {
+    		m_processMsg = e.getMessage();
+    		return false;
+    	}
+    	return true;
+    }
 
     /**
      * Descripción de Método
@@ -1037,6 +1068,11 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 
     public boolean reverseAccrualIt() {
         log.info( toString());
+
+        // OP#8516 Al revertir una orden de pago se anulan los documentos de diferencia de cambio que generó
+        if (!voidDiffCambioPaymentOrder()) {
+        	return false;
+        }
 
         boolean retValue = reverseIt();
 
@@ -1263,8 +1299,22 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 					.hasNext();) {
 				MPayment paym = (MPayment) allocPays.next();
 				msg.append(paym.getDocumentNo());
+				// OP#8516 Se indica la asignación que retiene el pago (por ejemplo, la del anticipo original)
+				String otherAllocs = DB.getSQLValueString(get_TrxName(),
+						"SELECT string_agg(DISTINCT ah.DocumentNo, ', ') FROM C_AllocationLine al "
+								+ "INNER JOIN C_AllocationHdr ah ON (ah.C_AllocationHdr_ID = al.C_AllocationHdr_ID) "
+								+ "WHERE al.C_Payment_ID = ? AND al.C_AllocationHdr_ID <> ? AND ah.DocStatus IN ('CO','CL') "
+								+ "AND ah.IsActive = 'Y' AND al.IsActive = 'Y'",
+						paym.getC_Payment_ID(), getC_AllocationHdr_ID());
+				if (!Util.isEmpty(otherAllocs, true)) {
+					msg.append(" - asignación ").append(otherAllocs);
+				}
 				msg.append(allocPays.hasNext() ? ", " : ")");
 			}
+    		// Un pago que ya se usó en otra asignación (típico de los anticipos) no se puede anular junto con esta
+    		msg.append(". Los pagos están asignados también en otro comprobante. Si son anticipos aplicados en esta "
+    				+ "operación, use \"Revertir asignación\": libera los anticipos y anula los documentos generados, "
+    				+ "sin anular los pagos.");
     		throw new Exception(msg.toString());
     	}
     	
@@ -1450,7 +1500,34 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
 			throw new Exception("@VoidRetentionError@ (" + invoice.getDocumentNo() + "): " + errorMsg);
     }
     
+    /**
+     * OP#8516 Anula los asientos de diferencia de cambio (GL_Journal) que generó esta asignación: los completos se
+     * revierten y los que están en borrador se anulan.
+     */
+    private void voidDiffCambioJournals() throws Exception {
+    	PreparedStatement ps = DB.prepareStatement(
+    			"SELECT GL_Journal_ID FROM GL_Journal WHERE C_AllocationHdr_ID = ? AND DocStatus IN ('DR','CO') AND IsActive = 'Y'",
+    			get_TrxName());
+    	ResultSet r = null;
+    	try {
+    		ps.setInt(1, getC_AllocationHdr_ID());
+    		r = ps.executeQuery();
+    		while (r.next()) {
+    			MJournal journal = new MJournal(getCtx(), r.getInt(1), get_TrxName());
+    			String action = DocAction.STATUS_Completed.equals(journal.getDocStatus())
+    					? DocAction.ACTION_Reverse_Correct : DocAction.ACTION_Void;
+    			if (!journal.processIt(action) || !journal.save()) {
+    				throw new Exception("No se pudo anular el asiento " + journal.getDocumentNo() + ": "
+    						+ (journal.getProcessMsg() != null ? journal.getProcessMsg() : CLogger.retrieveErrorAsString()));
+    			}
+    		}
+    	} finally {
+    		try { if (r != null) r.close(); ps.close(); } catch (Exception e) {}
+    	}
+    }
+
     private void voidDiffCambio() throws Exception {
+    	voidDiffCambioJournals();
     	// Se obtienen las ND o NC por diferencia de cambio
     	String sql = 
     			"SELECT distinct i.c_invoice_id  " +
@@ -1481,6 +1558,23 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction, Curr
         		MInvoice invoice = new MInvoice(getCtx(), rs.getInt("C_Invoice_ID"), get_TrxName());
         		// Se anula ND o NC emitida por diferencia de cambio
         		voidRetentionInvoice(invoice); //La función que anula las facturas de retención es válida para anular diff de cambio
+        	}
+        	rs.close();
+        	pstmt.close();
+        	pstmt = null;
+        	rs = null;
+
+        	// OP#8516 Los documentos de diferencia de cambio que generó este comprobante y no figuran en sus líneas
+        	// (por ejemplo, los que solo se emitieron y quedaron en borrador, o completos pero sin imputar) se anulan
+        	// igualmente: nacen de este comprobante y no deben quedar huérfanos.
+        	pstmt = DB.prepareStatement(
+        			"SELECT c_invoice_id FROM c_invoice WHERE cintolo_exchange_dif_receipt = ? AND docstatus IN ('DR','CO') AND isactive = 'Y'",
+        			get_TrxName());
+        	pstmt.setInt(1, getC_AllocationHdr_ID());
+        	rs = pstmt.executeQuery();
+        	while (rs.next()) {
+        		MInvoice draftInvoice = new MInvoice(getCtx(), rs.getInt("C_Invoice_ID"), get_TrxName());
+        		voidRetentionInvoice(draftInvoice);
         	}
         } catch (SQLException e) {
         	log.log(Level.SEVERE, "voidIt->voidDiffCambio", e);

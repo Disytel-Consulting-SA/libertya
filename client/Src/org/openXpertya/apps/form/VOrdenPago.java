@@ -366,6 +366,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         txtMedioPago2 = new javax.swing.JTextField();
         txtRetenciones2 = new javax.swing.JTextField();
         txtTotalPagar2 = new javax.swing.JTextField();
+        // OP#8516 Los importes de los totales se alinean a la derecha
+        txtDifCambio.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtMedioPago2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtRetenciones2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+        txtTotalPagar2.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
         lblTotalPagar2 = new javax.swing.JLabel();
         lblRetenciones2 = new javax.swing.JLabel();
         lblDifCambio = new javax.swing.JLabel();
@@ -466,7 +471,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 					}
 				});
         
-        m_frame.setMinimumSize(new java.awt.Dimension(800, 800)); // dREHER ajustar la ventana por defecto
+        // OP#8516: mas ancha para ver todas las columnas (la grilla de la orden de pago tiene mas columnas que la del recibo)
+        m_frame.setMinimumSize(new java.awt.Dimension(m_model.isSOTrx() ? 1200 : 1400, 800)); // dREHER ajustar la ventana por defecto
         m_frame.setSize(m_frame.getMinimumSize());
         // m_frame.setOpaque(false);
         jPanel1.setOpaque(false);
@@ -840,6 +846,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	dateTrx = VComponentsFactory.VDateFactory();
 		dateTrx.setValue(new Date());
 		dateTrx.setMandatory(true);
+		createTasaCambio();
 		dateTrx.addVetoableChangeListener(new VetoableChangeListener() {
 			
 			@Override
@@ -848,6 +855,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 				
 				m_model.setFechaOP(dateTrx.getTimestamp());
 				m_model.actualizarFacturas();
+				refrescarTasaCambio();
+				tasaMedioPagoCurrency = null;
+				refrescarTasaMedioPago();
 				Env.setContext(m_ctx, m_WindowNo, "Date", dateTrx.getTimestamp());
 				
 				/**
@@ -864,6 +874,120 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		});
     }
     
+    /**
+     * OP#8516 Crea el campo Tasa de cambio del comprobante y el panel que lo agrupa con la fecha.
+     * La tasa se propone con la tasa del día (tabla de tasas de cambio) y el usuario puede
+     * modificarla.
+     */
+    protected void createTasaCambio() {
+    	lblTasaCambio = new javax.swing.JLabel("Tasa de cambio:");
+    	txtTasaCambio = new VNumber();
+    	txtTasaCambio.setDisplayType(DisplayType.CostPrice);
+    	txtTasaCambio.setReadWrite(false);
+    	// Solo digitos, separadores decimales y signo: una letra tipeada sin querer generaba excepciones al parsear
+    	((javax.swing.text.AbstractDocument) txtTasaCambio.getTextField().getDocument()).setDocumentFilter(new javax.swing.text.DocumentFilter() {
+			private final String permitidos = "[0-9.,+\\-]*";
+			@Override
+			public void insertString(FilterBypass fb, int offset, String string, javax.swing.text.AttributeSet attr) throws javax.swing.text.BadLocationException {
+				if (string != null && string.matches(permitidos)) {
+					super.insertString(fb, offset, string, attr);
+				}
+			}
+			@Override
+			public void replace(FilterBypass fb, int offset, int length, String text, javax.swing.text.AttributeSet attrs) throws javax.swing.text.BadLocationException {
+				if (text == null || text.matches(permitidos)) {
+					super.replace(fb, offset, length, text, attrs);
+				}
+			}
+		});
+    	txtTasaCambio.setToolTipText("Tasa de cambio del comprobante (moneda de la compañía por unidad de moneda extranjera). "
+    			+ "Se propone la tasa del día y puede modificarse.");
+    	txtTasaCambio.addVetoableChangeListener(new VetoableChangeListener() {
+			@Override
+			public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+				BigDecimal nueva = (BigDecimal) txtTasaCambio.getValue();
+				BigDecimal actual = m_model.getExchangeRateComprobante();
+				if (nueva != null && nueva.signum() <= 0) {
+					nueva = null;
+				}
+				if ((nueva == null && actual == null) || (nueva != null && actual != null && nueva.compareTo(actual) == 0)) {
+					return;
+				}
+				m_model.setExchangeRateComprobante(nueva);
+				// Si la dejó vacía se vuelve a proponer la tasa del día
+				m_model.setExchangeRateManual(nueva != null);
+				if (nueva == null) {
+					m_model.actualizarTasaComprobanteDefault();
+					refrescarTasaCambio();
+				}
+				m_model.recalcularMontosPorTasaComprobante();
+				updateTotalAPagar1();
+			}
+		});
+    	panelFechaTasa = new javax.swing.JPanel();
+    	panelFechaTasa.setOpaque(false);
+    	panelFechaTasa.setLayout(new javax.swing.BoxLayout(panelFechaTasa, javax.swing.BoxLayout.X_AXIS));
+    	panelFechaTasa.add(dateTrx);
+    	panelFechaTasa.add(javax.swing.Box.createHorizontalStrut(8));
+    	panelFechaTasa.add(lblTasaCambio);
+    	panelFechaTasa.add(javax.swing.Box.createHorizontalStrut(4));
+    	panelFechaTasa.add(txtTasaCambio);
+    }
+
+    /**
+     * OP#8516 Actualiza el campo Tasa de cambio con el valor del modelo. Solo se habilita si
+     * hay facturas en moneda extranjera y se está en la pestaña de selección de facturas.
+     */
+    protected void refrescarTasaCambio() {
+    	if (txtTasaCambio == null || m_model == null) {
+    		return;
+    	}
+    	boolean hayMonedaExtranjera = m_model.getExchangeRateCurrencyID() > 0;
+    	txtTasaCambio.setValue(m_model.getExchangeRateComprobante());
+    	txtTasaCambio.setReadWrite(hayMonedaExtranjera && jTabbedPane1.getSelectedIndex() == 0);
+    }
+
+    /**
+     * OP#8516 Habilita el campo Tasa de cambio del pago cuando la moneda elegida es extranjera y propone la tasa
+     * del día al cambiar la moneda o la fecha.
+     */
+    protected void refrescarTasaMedioPago() {
+    	if (txtTasaMedioPago == null || cboCurrency == null || m_model == null) {
+    		return;
+    	}
+    	Integer cur = (Integer) cboCurrency.getValue();
+    	boolean foreign = cur != null && cur > 0 && cur != m_C_Currency_ID;
+    	if (!foreign) {
+    		txtTasaMedioPago.setValue(null);
+    		txtTasaMedioPago.setReadWrite(false);
+    		tasaMedioPagoCurrency = null;
+    		return;
+    	}
+    	txtTasaMedioPago.setReadWrite(true);
+    	if (!cur.equals(tasaMedioPagoCurrency)) {
+    		txtTasaMedioPago.setValue(m_model.getTasaDelDia(cur));
+    		tasaMedioPagoCurrency = cur;
+    		// El importe sugerido para el pago se recalcula con la nueva tasa
+    		updatePayAmt(getModel().getSaldoMediosPago());
+    	}
+    }
+
+    /**
+     * OP#8516 @return la tasa de cambio ingresada para el pago en moneda extranjera, null si el pago es en la
+     *         moneda de la compañía
+     */
+    public BigDecimal getTasaMedioPago() {
+    	if (txtTasaMedioPago == null || cboCurrency == null) {
+    		return null;
+    	}
+    	Integer cur = (Integer) cboCurrency.getValue();
+    	if (cur == null || cur <= 0 || cur == m_C_Currency_ID) {
+    		return null;
+    	}
+    	BigDecimal rate = (BigDecimal) txtTasaMedioPago.getValue();
+    	return (rate == null || rate.signum() <= 0) ? null : rate;
+    }
+
     protected void setActionEnabled(String action, boolean enabled) {
 		String kAction = (enabled?action:"none");
         KeyStroke keyStroke = getActionKeys().get(action);
@@ -899,7 +1023,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 179, Short.MAX_VALUE)
                         .add(lblTotalPagar1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(txtTotalPagar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(txtTotalPagar1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)))
                 .addContainerGap())
         );
@@ -995,7 +1119,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(cboClient, 0, 234, Short.MAX_VALUE)
                     .add(BPartnerSel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
-                    .add(dateTrx, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
+                    .add(panelFechaTasa, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 234, Short.MAX_VALUE)
                     .add(txtDescription,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,234,Short.MAX_VALUE)
                 		)
                 .addContainerGap())
@@ -1014,7 +1138,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             	.add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
             			.add(lblDateTrx)
-            			.add(dateTrx,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            			.add(panelFechaTasa,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE,org.jdesktop.layout.GroupLayout.DEFAULT_SIZE,org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(jPanel9Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 		.add(lblDescription)
@@ -1029,6 +1153,28 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
      * Creo el panel que contiene Campaña y Proyecto
      */
     protected void createCamProyPanel(){
+        // OP#8516 El combo Moneda se agrupa con la tasa de cambio del pago
+        lblTasaMedioPago = new javax.swing.JLabel("Tasa de cambio:");
+        txtTasaMedioPago = new VNumber();
+        txtTasaMedioPago.setDisplayType(DisplayType.CostPrice);
+        txtTasaMedioPago.setReadWrite(false);
+        // Al cambiar la tasa se vuelve a sugerir el importe del pago (saldo en pesos / tasa)
+        txtTasaMedioPago.addVetoableChangeListener(new VetoableChangeListener() {
+			@Override
+			public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+				updatePayAmt(getModel().getSaldoMediosPago());
+			}
+		});
+        txtTasaMedioPago.setToolTipText("Tasa de cambio con la que se paga en moneda extranjera (moneda de la compañía por unidad "
+        		+ "de moneda extranjera). Se propone la tasa del día y puede modificarse.");
+        panelMonedaTasa = new javax.swing.JPanel();
+        panelMonedaTasa.setOpaque(false);
+        panelMonedaTasa.setLayout(new javax.swing.BoxLayout(panelMonedaTasa, javax.swing.BoxLayout.X_AXIS));
+        panelMonedaTasa.add(cboCurrency);
+        panelMonedaTasa.add(javax.swing.Box.createHorizontalStrut(8));
+        panelMonedaTasa.add(lblTasaMedioPago);
+        panelMonedaTasa.add(javax.swing.Box.createHorizontalStrut(4));
+        panelMonedaTasa.add(txtTasaMedioPago);
         panelCamProy.setOpaque(false);
     	org.jdesktop.layout.GroupLayout panelCamProyLayout = new org.jdesktop.layout.GroupLayout(panelCamProy);
         panelCamProy.setLayout(panelCamProyLayout);
@@ -1043,7 +1189,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(cboCampaign, 0, 239, Short.MAX_VALUE)
                     .add(cboProject, 0, 239, Short.MAX_VALUE)
-                    .add(cboCurrency, 0, 239, Short.MAX_VALUE)))
+                    .add(panelMonedaTasa, 0, 239, Short.MAX_VALUE)))
         );
         panelCamProyLayout.setVerticalGroup(
             panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -1059,7 +1205,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(panelCamProyLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                 	.add(lblCurrency)
-                    .add(cboCurrency, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(panelMonedaTasa, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }
@@ -1333,11 +1479,11 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
                             .add(lblMedioPago2))
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel4Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRetenciones2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMedioPago2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDifCambio, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtSaldo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 75, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtRetenciones2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtTotalPagar2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtMedioPago2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtDifCambio, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, txtSaldo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                     .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 344, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1584,7 +1730,9 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     
     protected void savePMFinalize(VOrdenPagoModel.MedioPago mp) throws Exception {
     	if(mp != null){
-    		if (!m_model.validateCurrentConversionRate((Integer) cboCurrency.getValue()))
+    		// OP#8516 No se exige tasa de tabla si el pago en moneda extranjera trae su propia tasa
+    		if ((mp.exchangeRate == null || mp.exchangeRate.signum() <= 0)
+    				&& !m_model.validateCurrentConversionRate((Integer) cboCurrency.getValue()))
     			throw new InterruptedException("@NoCurrencyConvertError@");
     		m_model.addMedioPago(mp);
     	}
@@ -1599,6 +1747,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	MedioPagoEfectivo mpe = m_model.getNuevoMedioPagoEfectivo();
     	try {
 			mpe.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpe.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -1634,6 +1783,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	MedioPagoTransferencia mpt = m_model.getNuevoMedioPagoTransferencia();		
     	try {
 			mpt.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpt.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -1671,6 +1821,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		mpc.aLaOrden = txtChequeALaOrden.getText();		
 		try {
 			mpc.monedaOriginalID = (Integer) cboCurrency.getValue();
+			mpc.exchangeRate = getTasaMedioPago(); // OP#8516
 		} catch (Exception e) {
 			throw new Exception(cboCurrency.getValue().toString());
 		}
@@ -1919,6 +2070,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     	}
     	
     	m_model.setFechaTablaFacturas(invoiceDatePick.getTimestamp(),rInvoiceAll.isSelected());
+    	refrescarTasaCambio();
     	updatePayAllInvoices(toPayMoment);
     }//GEN-LAST:event_onFechaChange
 
@@ -2091,10 +2243,35 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     			return;
     		}
     		
+			// OP#8516 Diferencia de cambio en pagos a proveedores en moneda extranjera
+    		if (!m_model.isSOTrx()) {
+    			m_model.calculateExchangeDifferenceValuesPurchases();
+    			shouldContinue = true;
+    			setCintoloEmit(false);
+    			setCintoloInclude(false);
+    			if (m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
+    				VExchangeDifferenceForm difForm = new VExchangeDifferenceForm(this,
+    						m_model.getExchangeDifference(),
+    						m_model.getExchangeDifferencePercent().abs(),
+    						m_model.getExchangeDifferenceLimit(),
+    						m_model.getExchangeDifferencePercentLimit(),
+    						m_model.shouldEmitPurchases());
+    				// Primer dialogo (al pasar a la pestaña de pago): el importe es provisorio
+    				difForm.setNota("Importe provisorio, calculado con la tasa de cambio de esta orden de pago. Si pagás con "
+    						+ "anticipos en moneda extranjera, la diferencia se recalcula al emitir el pago con la tasa de cada anticipo.");
+    				difForm.setModal(true);
+    				difForm.setVisible(true);
+    			}
+    			if (!shouldContinue) {
+    				return;
+    			}
+    		}
+    		
 			// Actualizo componentes gráficos antes de pasar a la siguiente
 			// pestaña
     		updateComponentsPreProcesar();
     		dateTrx.setReadWrite(false);
+    		txtTasaCambio.setReadWrite(false);
     		fldDocumentNo.setValue(getModel().getDocumentNo());
     		// Avanza a la siguiente tab
     		m_cambioTab = true;
@@ -2145,6 +2322,29 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		 * si arroja error. 
     		 * El usuario decide si desea continuar o no.
     		 */
+    		// OP#8516 Pago con anticipos en moneda extranjera: la diferencia de cambio se conoce recien ahora (valor de
+    		// los anticipos con la tasa de cada uno contra el valor de la factura): se recalcula y se vuelve a informar
+    		if (!m_model.isSOTrx() && m_model.ajustarPesosFacturasConAnticipos()) {
+    			m_model.calculateExchangeDifferenceValuesPurchases();
+    			shouldContinue = true;
+    			setCintoloEmit(false);
+    			setCintoloInclude(false);
+    			if (m_model.getExchangeDifference() != null && m_model.getExchangeDifference().signum() != 0) {
+    				VExchangeDifferenceForm difForm = new VExchangeDifferenceForm(this,
+    						m_model.getExchangeDifference(),
+    						m_model.getExchangeDifferencePercent().abs(),
+    						m_model.getExchangeDifferenceLimit(),
+    						m_model.getExchangeDifferencePercentLimit(),
+    						m_model.shouldEmitPurchases());
+    				difForm.setNota("Diferencia definitiva: valor de los anticipos con la tasa de cada uno contra el valor de la factura.");
+    				difForm.setModal(true);
+    				difForm.setVisible(true);
+    			}
+    			if (!shouldContinue) {
+    				return;
+    			}
+    		}
+    		
     		int status = m_model.nonBlockingValidations();
     		if(status == VOrdenPagoModel.PROCERROR_PARTNER_WITHOUT_BANKLIST) {
 	    		if(showAsk("PaymentsPartnerCheckWithoutBankList")) {
@@ -2154,7 +2354,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	    		}
     		} 
     		
-    		status = m_model.doPostProcesar(maxPaymentAllowed);
+    		// OP#8516 Se informa al usuario que se esta generando el comprobante, ya que puede demorar
+    		javax.swing.JDialog dlgProcesando = showProcessingDialog();
+    		try {
+    			status = m_model.doPostProcesar(maxPaymentAllowed);
+    		} finally {
+    			closeProcessingDialog(dlgProcesando);
+    		}
     		
     		switch (status) 
     		{
@@ -2194,6 +2400,90 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     // dREHER
 	private void debug(String string) {
 		System.out.println("==> VOrdenPago. " + string);
+	}
+
+	// OP#8516 Diálogo de diferencia de cambio en pagos a proveedores (el recibo tiene su propia versión)
+	protected boolean shouldContinue = true;
+	protected boolean isCintoloEmit = false;
+	protected boolean isCintoloInclude = false;
+
+	public void setContinue(boolean shouldContinue) {
+		this.shouldContinue = shouldContinue;
+	}
+
+	public void setCintoloEmit(boolean emit) {
+		isCintoloEmit = emit;
+		m_model.setCintoloEmit(emit);
+	}
+
+	public void setCintoloInclude(boolean include) {
+		isCintoloInclude = include;
+		m_model.setCintoloInclude(include);
+	}
+
+	/**
+	 * OP#8516 Muestra un aviso de que se esta generando el recibo o la orden de pago, para que el usuario
+	 * sepa que el programa no esta colgado mientras se completa el comprobante. El proceso corre en el hilo
+	 * de la interfaz, por lo que el aviso se pinta de forma inmediata antes de comenzar.
+	 * 
+	 * @return el dialogo mostrado, para cerrarlo con {@link #closeProcessingDialog(javax.swing.JDialog)}
+	 */
+	protected javax.swing.JDialog showProcessingDialog() {
+		return showProcessingDialog(getModel().isSOTrx() ? "Generando Recibo, por favor espere..."
+				: "Generando Orden de Pago, por favor espere...");
+	}
+
+	/**
+	 * OP#8516 Muestra el aviso de procesamiento con el mensaje indicado.
+	 */
+	protected javax.swing.JDialog showProcessingDialog(String msg) {
+		javax.swing.JDialog dlg = null;
+		try {
+			dlg = new javax.swing.JDialog(m_frame, false);
+			dlg.setUndecorated(true);
+			javax.swing.JLabel lbl = new javax.swing.JLabel(msg, javax.swing.SwingConstants.CENTER);
+			lbl.setFont(lbl.getFont().deriveFont(java.awt.Font.BOLD, 15f));
+			javax.swing.JPanel panel = new javax.swing.JPanel(new BorderLayout());
+			panel.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+					javax.swing.BorderFactory.createLineBorder(java.awt.Color.GRAY, 2),
+					javax.swing.BorderFactory.createEmptyBorder(25, 50, 25, 50)));
+			panel.add(lbl, BorderLayout.CENTER);
+			dlg.setContentPane(panel);
+			dlg.pack();
+			dlg.setLocationRelativeTo(m_frame);
+			dlg.setVisible(true);
+			// El proceso que sigue bloquea el hilo de la interfaz, por eso el contenido se pinta a mano:
+			// se espera un instante a que el sistema de ventanas termine de mostrar la ventana, ya que
+			// si se pinta antes la pintura se pierde y el cuadro queda sin texto
+			try {
+				Thread.sleep(150);
+			} catch (InterruptedException ie) {
+				Thread.currentThread().interrupt();
+			}
+			dlg.validate();
+			java.awt.Graphics g = dlg.getGraphics();
+			if (g != null) {
+				dlg.paintAll(g);
+				g.dispose();
+			}
+			java.awt.Toolkit.getDefaultToolkit().sync();
+			m_frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+		} catch (Exception e) {
+			// El aviso es solo informativo: un problema al mostrarlo no debe impedir generar el comprobante
+			debug("No se pudo mostrar el aviso de procesamiento: " + e.getMessage());
+		}
+		return dlg;
+	}
+
+	protected void closeProcessingDialog(javax.swing.JDialog dlg) {
+		try {
+			m_frame.setCursor(Cursor.getDefaultCursor());
+			if (dlg != null) {
+				dlg.dispose();
+			}
+		} catch (Exception e) {
+			debug("No se pudo cerrar el aviso de procesamiento: " + e.getMessage());
+		}
 	}
 
 	protected CallResult validateDebitNote() {
@@ -2335,6 +2625,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     private javax.swing.ButtonGroup buttonGroup2;
     protected VLookup cboCampaign;
     protected VDate dateTrx;
+    // OP#8516 Tasa de cambio del comprobante, se muestra junto a la fecha
+    protected javax.swing.JPanel panelFechaTasa;
+    protected javax.swing.JLabel lblTasaCambio;
+    // OP#8516 Tasa de cambio del pago en moneda extranjera, junto al combo Moneda de la pestaña Forma de Pago
+    protected javax.swing.JPanel panelMonedaTasa;
+    protected javax.swing.JLabel lblTasaMedioPago;
+    protected VNumber txtTasaMedioPago;
+    private Integer tasaMedioPagoCurrency = null;
+    protected VNumber txtTasaCambio;
     protected VLookup cboClient;
     protected VLookup cboOrg;
     protected VLookup cboProject;
@@ -2614,6 +2913,19 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		int cc = tblFacturas.getColumnModel().getColumnCount();
 		TableColumn tc = tblFacturas.getColumnModel().getColumn(cc - 1);
 		TableColumn tc2 = tblFacturas.getColumnModel().getColumn(cc - 2);
+		// OP#8516 Se ensancha la columna del número de documento para que se vea completo
+		// (en la OP el encabezado es el elemento DocumentNo y en el recibo es Document/Documento)
+		java.util.List<String> docColNames = java.util.Arrays.asList(Msg.getElement(Env.getCtx(), "DocumentNo"),
+				Msg.getElement(Env.getCtx(), "Document"), "Documento");
+		for (int i = 0; i < cc; i++) {
+			TableColumn docCol = tblFacturas.getColumnModel().getColumn(i);
+			if (docCol.getHeaderValue() != null && docColNames.contains(docCol.getHeaderValue().toString())) {
+				docCol.setMinWidth(150);
+				docCol.setPreferredWidth(150);
+				docCol.setWidth(150);
+				break;
+			}
+		}
 		tc.setCellEditor(cellEd);
 		tc2.setCellEditor(cellEd2);
 		cellEd.addCellEditorListener(this);
@@ -2712,6 +3024,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
         cboCurrency.setMandatory(true);
         cboCurrency.setValue(m_C_Currency_ID);
         cboCurrency.refresh();
+        refrescarTasaMedioPago();
         setCurrencyContext();
 
         // Cuando cambia el documento de crédito, se carga el 
@@ -2758,6 +3071,22 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
     		}
     		
     	});
+
+        // OP#8516 Al elegir el pago adelantado se muestra lo disponible en la moneda del pago y se sugiere el importe
+        // sin superarlo
+        pagoAdelantado.addVetoableChangeListener(new VetoableChangeListener() {
+			public void vetoableChange(PropertyChangeEvent evt) throws PropertyVetoException {
+				final Object nuevo = evt.getNewValue();
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						if (nuevo instanceof Integer) {
+							txtPagoAdelantadoAvailable.setValue(getModel().getPagoAdelantadoAvailableAmtOriginal((Integer) nuevo));
+							updatePayAmt(getModel().getSaldoMediosPago());
+						}
+					}
+				});
+			}
+		});
 
         // Cuando cambia el documento de pago adelantado, se carga el 
         // importe disponible en el text correspondiente
@@ -3178,8 +3507,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			
 			SwingUtilities.invokeLater( new Runnable() {
 	            public void run() {
+	            	// OP#8516 Se informa que se están buscando los comprobantes, ya que puede demorar
+	            	javax.swing.JDialog dlgBuscando = BPartnerSel.getValue() == null ? null
+	            			: showProcessingDialog("Buscando comprobantes pendientes, por favor espere...");
+	            	try {
 	            	// Actualizo el modelo
 	            	getModel().updateBPartner((Integer)BPartnerSel.getValue());
+	            	refrescarTasaCambio();
 					// Actualizo los componentes custom de la interfaz gráfica
 					// relacionados con el cambio de la entidad comercial
 	            	customUpdateBPartnerRelatedComponents(true);
@@ -3215,11 +3549,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 						radPayTypeStd.setSelected(true);
 						onTipoPagoChange(false);
 					}	
+					} finally {
+						closeProcessingDialog(dlgBuscando);
+					}
 					
 	            }
 	        } );			
 		} else if (e.getSource() == cboCurrency) {
 			updateDependent();
+			refrescarTasaMedioPago();
 		} else if (e.getSource() == efectivoLibroCaja) {
 			
 		} else if (e.getSource() == transfCtaBancaria) {
@@ -3272,6 +3610,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			cboDocumentType.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			fldDocumentNo.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			dateTrx.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
+			refrescarTasaCambio();
 			cboPaymentRule.setReadWrite(jTabbedPane1.getSelectedIndex() == 0);
 			
 		} else if (arg0.getSource() == jTabbedPane2) {
@@ -3862,7 +4201,13 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 	protected void updatePayAmt(BigDecimal amt){
 		int currencyID = ( (Integer) cboCurrency.getValue() == null) ? m_C_Currency_ID : (Integer) cboCurrency.getValue();
 
-		amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
+		// OP#8516 Si el pago en moneda extranjera tiene tasa de cambio propia, el importe sugerido se calcula con ella
+		BigDecimal tasaMedioPago = getTasaMedioPago();
+		if (tasaMedioPago != null && currencyID != m_C_Currency_ID) {
+			amt = amt.divide(tasaMedioPago, MCurrency.getStdPrecision(m_ctx, currencyID), java.math.RoundingMode.HALF_UP);
+		} else {
+			amt = MCurrency.currencyConvert(amt, m_C_Currency_ID, currencyID, getModel().m_fechaTrx, getModel().AD_Org_ID, m_ctx);
+		}
 		
 		Integer tabIndexSelected = jTabbedPane2.getSelectedIndex();
 		if(tabIndexSelected.equals(TAB_INDEX_CHEQUE)){
@@ -3875,6 +4220,15 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 			txtEfectivoImporte.setValue(amt);
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_PAGO_ADELANTADO)){
+			// OP#8516 El importe sugerido no puede superar lo disponible del pago elegido, en la moneda del pago
+			Object pagoElegido = pagoAdelantado.getValue();
+			boolean esEfectivo = cboPagoAdelantadoType.getSelectedIndex() == PAGO_ADELANTADO_TYPE_CASH_INDEX;
+			if (!esEfectivo && pagoElegido instanceof Integer && amt != null) {
+				BigDecimal disp = getModel().getPagoAdelantadoAvailableAmtOriginal((Integer) pagoElegido);
+				if (disp != null && disp.compareTo(amt) < 0) {
+					amt = disp;
+				}
+			}
 			txtPagoAdelantadoImporte.setValue(amt);
 		}
 		else if(tabIndexSelected.equals(TAB_INDEX_TRANSFERENCIA)){
@@ -3949,6 +4303,8 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		m_model.setBPartnerFacturas(0);
 		radPayTypeStd.setSelected(true);
 		m_model.actualizarFacturas();
+		m_model.setExchangeRateManual(false);
+		refrescarTasaCambio();
 		cboCampaign.setValue(null);
 		cboProject.setValue(null);
 		cboCurrency.setValue(m_C_Currency_ID);
@@ -4054,6 +4410,7 @@ public class VOrdenPago extends CPanel implements FormPanel,ActionListener,Table
 		getModel().setPaymentRule(((ValueNamePair)cboPaymentRule.getValue()).getValue());
 		Env.setContext(m_ctx, m_WindowNo, "PaymentRule", ((ValueNamePair) cboPaymentRule.getValue()).getValue());
 		getModel().actualizarFacturas();
+		refrescarTasaCambio();
 	}
 
 	/* === Contenido migrado de VOrdenPagoModel === */

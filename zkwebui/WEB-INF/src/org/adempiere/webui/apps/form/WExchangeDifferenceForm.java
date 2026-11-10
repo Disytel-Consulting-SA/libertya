@@ -13,6 +13,9 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.apps.AEnv;
+import org.openXpertya.util.DisplayType;
+import org.openXpertya.util.Env;
 import org.adempiere.webui.panel.ADForm;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Html;
@@ -36,7 +39,8 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 	 */
 	private static final long serialVersionUID = 1L;
 	private static final boolean DEBUG = true;
-	WOrdenCobro ordenCobro;
+	WOrdenPago ordenCobro; // OP#8516: recibo (WOrdenCobro) u orden de pago
+	private Label lblNota; // OP#8516 nota informativa al pie del dialogo
 	private Label lblLimit;
     private Label lblExchangeDif;
     private Label lblLimitPercent;
@@ -53,15 +57,17 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 	private BigDecimal limit = null;
 	private BigDecimal limitPercent = null;
 	private boolean shouldEmit = false;
+	private boolean isPurchase = false;
 
 	/**
 	 * Create the dialog.
 	 * @throws InterruptedException 
 	 */
-	public WExchangeDifferenceForm(WOrdenCobro ordenCobro, BigDecimal exchangeDif, BigDecimal exchangeDifPercent, BigDecimal limit, BigDecimal limitPercent, boolean shouldEmit) throws InterruptedException {
+	public WExchangeDifferenceForm(WOrdenPago ordenCobro, BigDecimal exchangeDif, BigDecimal exchangeDifPercent, BigDecimal limit, BigDecimal limitPercent, boolean shouldEmit) throws InterruptedException {
 		this.ordenCobro = ordenCobro;
-		this.setTitle("Emitir/Incluir Nota de Cred/Deb");
-		this.setWidth("500px");
+		this.isPurchase = !ordenCobro.getModel().isSOTrx(); // OP#8516
+		this.setTitle(isPurchase ? "Emitir/Incluir Crédito/Débito de Proveedor" : "Emitir/Incluir Nota de Cred/Deb");
+		this.setWidth("640px"); // OP#8516: mas ancha para ver bien los importes
 		// Sin alto fijo: con el theme modern las filas son mas altas y el alto
 		// fijo cortaba los botones
 		this.setStyle("border: solid; 2px; padding: 2px;");
@@ -85,8 +91,15 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 		lblTitulo.setText("Emitir y/o incluír en el cobro de las Notas de Crédito o Notas de Débito que correspondan.");
 		lblTitulo.setWidth("100%");
 		
+		if (isPurchase) {
+			lblTitulo.setText("Emitir y/o incluir en el pago los Créditos o Débitos de Proveedor por diferencia de cambio que correspondan.");
+		}
+		
 		Label lblSubtitulo = new Label();
 		lblSubtitulo.setText("Si una factura en moneda extranjera se cobrará en la misma moneda, por favor active ambas opciones: Emitir/Incluir");
+		if (isPurchase) {
+			lblSubtitulo.setText("Para cancelar el saldo de una factura en moneda extranjera, active ambas opciones: Emitir/Incluir");
+		}
 		lblSubtitulo.setWidth("100%");
 		lblSubtitulo.setStyle("font-weight: bold;");
 		
@@ -116,6 +129,12 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 		// Controles intermedios
 		this.appendChild(createGrid());
 
+		// OP#8516 Nota informativa (por ejemplo, que el importe es provisorio)
+		lblNota = new Label("");
+		lblNota.setWidth("100%");
+		lblNota.setStyle("font-style: italic; display: block; margin-top: 8px;");
+		this.appendChild(lblNota);
+
 		// Botones a la derecha
 		Html buttonsSpacer = new Html();
 		buttonsSpacer.setContent("<div>&nbsp;<br></div>");
@@ -133,17 +152,34 @@ public class WExchangeDifferenceForm extends Window implements ActionListener {
 		
 	}
 
+	/**
+	 * OP#8516 Muestra una nota informativa al pie del diálogo.
+	 */
+	public void setNota(String nota) {
+		lblNota.setValue(nota == null ? "" : nota);
+	}
+
+	/**
+	 * OP#8516 Formatea un importe con separador de miles y 2 decimales para facilitar la lectura.
+	 */
+	private static String formatAmount(BigDecimal amount) {
+		if (amount == null) {
+			return "";
+		}
+		return DisplayType.getNumberFormat(DisplayType.Amount, AEnv.getLanguage(Env.getCtx())).format(amount);
+	}
+
 	private Component createGrid() {
 		Label lblNewLabel_1 = new Label("Diferencia %:");
 		
-		lblExchangeDifPercnt = new Label(exchangeDifPercent.toString());
-		lblLimitPercent = new Label(limitPercent.toString());
+		lblExchangeDifPercnt = new Label(formatAmount(exchangeDifPercent));
+		lblLimitPercent = new Label(formatAmount(limitPercent));
 		
 		Label lblNewLabel_2 = new Label("Diferencia $:");
 		
-		lblLimit = new Label(limit.toString());
+		lblLimit = new Label(formatAmount(limit));
 		
-		lblExchangeDif = new Label(exchangeDif.toString());
+		lblExchangeDif = new Label(formatAmount(exchangeDif));
 		
 		chckbxInclude = new Checkbox();
 		chckbxInclude.setText("Incluir");

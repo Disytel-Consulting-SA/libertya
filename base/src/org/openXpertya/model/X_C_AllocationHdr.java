@@ -512,4 +512,14 @@ BigDecimal bd = (BigDecimal)get_Value("Retencion_Amt");
 if (bd == null) return Env.ZERO;
 return bd;
 }
+/** Set ExchangeRate */
+public void setExchangeRate (BigDecimal ExchangeRate)
+{
+set_Value ("ExchangeRate", ExchangeRate);
+}
+/** Get ExchangeRate */
+public BigDecimal getExchangeRate() 
+{
+return (BigDecimal)get_Value("ExchangeRate");
+}
 }

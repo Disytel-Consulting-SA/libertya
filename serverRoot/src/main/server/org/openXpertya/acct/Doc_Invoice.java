@@ -426,6 +426,16 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
      * @return
      */
 
+    /**
+     * OP#8516 En comprobantes de proveedor en moneda extranjera con tasa de cambio propia, las lineas del asiento
+     * se convierten con esa tasa en lugar de la de la tabla de tasas (la tasa por defecto es la de la tabla).
+     */
+    private void setTasaPropiaCompras( Fact fact,MAcctSchema as ) {
+        if( (p_vo.tasaConversion != null) && (p_vo.tasaConversion.signum() > 0) && (p_vo.C_Currency_ID != as.getC_Currency_ID()) ) {
+            fact.setTasaConversion( p_vo.tasaConversion );
+        }
+    }
+
     public Fact createFact( MAcctSchema as ) {
 
         // create Fact Header
@@ -530,6 +540,9 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
 
         else if( p_vo.DocumentType.equals( DOCTYPE_APInvoice )) {
 
+            // OP#8516 Si la factura tiene tasa de cambio propia, se contabiliza con esa tasa
+            setTasaPropiaCompras( fact,as );
+
             // Liability               CR
 
             fact.createLine( null,getAccount( Doc.ACCTTYPE_V_Liability,as ),p_vo.C_Currency_ID,null,getAmount( Doc.AMTTYPE_Gross ));
@@ -571,6 +584,9 @@ public class Doc_Invoice extends Doc implements DocProjectSplitterInterface {
         // APC
 
         else if( p_vo.DocumentType.equals( DOCTYPE_APCredit )) {
+
+            // OP#8516 Si el comprobante tiene tasa de cambio propia, se contabiliza con esa tasa
+            setTasaPropiaCompras( fact,as );
 
             // Liability       DR
 
