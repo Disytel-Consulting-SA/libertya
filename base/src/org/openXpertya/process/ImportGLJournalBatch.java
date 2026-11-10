@@ -513,7 +513,7 @@ public class ImportGLJournalBatch extends SvrProcess {
 						+ " INNER JOIN C_Year y ON (y.C_Year_ID=p.C_Year_ID)"
 						+ " INNER JOIN AD_ClientInfo c ON (c.C_Calendar_ID=y.C_Calendar_ID)"
 						+ " WHERE c.AD_Client_ID=i.AD_Client_ID"
-						+ " AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.PeriodType='S' AND ROWNUM=1) "
+						+ " AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.PeriodType='S' AND p.IsActive='Y' AND ROWNUM=1) "
 						+ "WHERE C_Period_ID IS NULL"
 						+ " AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
@@ -526,7 +526,7 @@ public class ImportGLJournalBatch extends SvrProcess {
 						+ " INNER JOIN C_Year y ON (y.C_Year_ID=p.C_Year_ID)"
 						+ " INNER JOIN AD_ClientInfo c ON (c.C_Calendar_ID=y.C_Calendar_ID) "
 						+ " WHERE c.AD_Client_ID=i.AD_Client_ID"
-						+ " AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.PeriodType='S' AND ROWNUM=1)"
+						+ " AND i.DateAcct BETWEEN p.StartDate AND p.EndDate AND p.PeriodType='S' AND p.IsActive='Y' AND ROWNUM=1)"
 						+ " AND I_IsImported<>'Y'").append(clientCheck);
 		no = DB.executeUpdate(sql.toString(), get_TrxName());
 

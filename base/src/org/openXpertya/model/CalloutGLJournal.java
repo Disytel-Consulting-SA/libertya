@@ -83,7 +83,7 @@ public class CalloutGLJournal extends CalloutEngine {
         // When DateAcct is changed, set C_Period_ID
 
         else if( colName.equals( "DateAcct" )) {
-            String sql = "SELECT C_Period_ID " + "FROM C_Period " + "WHERE C_Year_ID IN " + "     (SELECT C_Year_ID FROM C_Year WHERE C_Calendar_ID =" + "  (SELECT C_Calendar_ID FROM AD_ClientInfo WHERE AD_Client_ID=?))" + " AND ? BETWEEN StartDate AND EndDate" + " AND PeriodType='S'";
+            String sql = "SELECT C_Period_ID " + "FROM C_Period " + "WHERE C_Year_ID IN " + "     (SELECT C_Year_ID FROM C_Year WHERE C_Calendar_ID =" + "  (SELECT C_Calendar_ID FROM AD_ClientInfo WHERE AD_Client_ID=?))" + " AND ? BETWEEN StartDate AND EndDate" + " AND PeriodType='S' AND IsActive='Y'";
 
             try {
                 PreparedStatement pstmt = DB.prepareStatement( sql );
