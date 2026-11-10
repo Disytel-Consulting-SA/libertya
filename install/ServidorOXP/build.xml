@@ -712,12 +712,9 @@
 	<copy file="${basedir}/lib/webui.war" todir="${DEPLOY_APPS_OXP}"/>
   	<delete dir="lib2" failonerror="no"/>
 
-	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto.
-		AxisJar.jar se incorpora en este punto para compatibilidad con Tomcat (bajo Jboss se incluia en jboss-service.xml).  
-	Directorio default: axis.war -->
+	<!-- Incluir OXP.jar y OXPSLib.jar en LYWS (exista o no) para independencia del contexto. -->
 	<copy file="${basedir}/lib/OXP.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
 	<copy file="${basedir}/lib/OXPSLib.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
-  	<copy file="${basedir}/lib/AxisJar.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
   </target>
 	
 	
@@ -732,6 +729,8 @@
 	<copy file="${basedir}/utils/DetenerServidorJBoss.sh" tofile="${basedir}/utils/DetenerServidor.sh" overwrite="yes" failonerror="no"/>
   	<copy file="${basedir}/utils/IniciarServidorJBoss.bat" tofile="${basedir}/utils/IniciarServidor.bat" overwrite="yes" failonerror="no"/>
   	<copy file="${basedir}/utils/DetenerServidorJBoss.bat" tofile="${basedir}/utils/DetenerServidor.bat" overwrite="yes" failonerror="no"/>
+  	
+  	<chmod dir="${basedir}/utils" perm="ugo+x" includes="IniciarServidor.sh,DetenerServidor.sh"/>
   </target>
 		
 	
@@ -741,6 +740,12 @@
   <target name="setupDeployTomcat" depends="setupEAR, setupTomcat, setupDeploy" if="isAppsTomcat"
 	  description="Deploy Servidor de Aplicaciones Libertya - Tomcat">
 
+  	<!-- AxisJar.jar y otras se incorpora en este punto para compatibilidad con Tomcat (bajo Jboss se incluia en jboss-service.xml). Directorio default: axis.war -->
+  	<copy file="${basedir}/lib/AxisJar.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/lib/itext_1.5.4.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/lib/JasperReports.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
+  	<copy file="${basedir}/lib/mail.jar" todir="${DEPLOY_APPS_OXP}/axis.war/WEB-INF/lib" overwrite="yes" failonerror="no"/>
+  	
   	<!-- Tomcat. OXPRoot.war debe llamarse ROOT.war para que sea la plicacion base -->
   	<delete dir="${basedir}/tomcat/webapps/ROOT"/>
   	<copy file="${basedir}/lib/OXPRoot.war" tofile="${DEPLOY_APPS_OXP}/ROOT.war" overwrite="yes" failonerror="no"/>
@@ -755,6 +760,9 @@
   	<copy todir="${DEPLOY_APPS_OXP}/axis" failonerror="false" overwrite="true">
   	    <fileset dir="${DEPLOY_APPS_OXP}/axis.war"/>
   	</copy>  
+  	
+  	<chmod dir="${basedir}/utils" perm="ugo+x" includes="IniciarServidor.sh,DetenerServidor.sh"/>
+  	
   </target>
 	
   <!-- ==================================================== -->

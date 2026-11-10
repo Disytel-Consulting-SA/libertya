@@ -584,6 +584,8 @@ public class MTransfer extends X_M_Transfer implements DocAction {
 		MInventory inventory = new MInventory(warehouse);
 		inventory.setMovementDate(getDateTrx());
 		inventory.setDescription(getInventoryDescription());
+		// Las líneas se crean con ChargeAccount "C"; en inventarios físicos el tipo es obligatorio en cabecera.
+		inventory.set_Value("InventoryType", MInventoryLine.INVENTORYTYPE_ChargeAccount);
 		// Intenta guardar el inventario, si no es posible se lanza una
 		// excepción.
 		if (!inventory.save()) {

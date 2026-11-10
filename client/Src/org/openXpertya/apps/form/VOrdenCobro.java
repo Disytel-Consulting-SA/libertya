@@ -390,11 +390,13 @@ public class VOrdenCobro extends VOrdenPago {
     		
     		// OP#8516 Se informa al usuario que se esta generando el comprobante, ya que puede demorar
     		javax.swing.JDialog dlgProcesando = showProcessingDialog();
+    		long tProc = System.currentTimeMillis();
     		try {
     			status = m_model.doPostProcesar(maxPaymentAllowed);
     		} finally {
     			closeProcessingDialog(dlgProcesando);
     		}
+    		m_model.logStep("VOrdenCobro: doPostProcesar termino status=" + status, tProc);
     		
     		switch (status) 
     		{
@@ -421,6 +423,7 @@ public class VOrdenCobro extends VOrdenPago {
     		if (status == VOrdenPagoModel.PROCERROR_OK)
     		{
 	    		m_model.mostrarInforme(this, isPrintRetentions());
+	    		m_model.logStep("VOrdenCobro: mostrarInforme termino", tProc);
 	    		
 	    		// Reset	    		
 	    		reset();
