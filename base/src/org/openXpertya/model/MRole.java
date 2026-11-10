@@ -2331,7 +2331,7 @@ public final class MRole extends X_AD_Role
 	 *	@param keyColumnName (fully qualified) key column name
 	 *	@return where clause or ""
 	 */
-	private String getRecordWhere (int AD_Table_ID, String keyColumnName)
+	public String getRecordWhere (int AD_Table_ID, String keyColumnName)
 	{
 		loadRecordAccess(false);
 		//
