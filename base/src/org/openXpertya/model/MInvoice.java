@@ -9559,8 +9559,12 @@ public class MInvoice extends X_C_Invoice implements DocAction, Authorization, C
 		BigDecimal pv = seq.getCurrentNext().subtract(new BigDecimal(seqNo));  //300000000
 		int nroComp = getNumeroComprobante(); // 998 
 		
-		if(isVoidProcess() && getDocumentNo().length() > 8)
-			nroComp = new Integer(getDocumentNo().substring(getDocumentNo().length()-8, getDocumentNo().length()));   //'00001000'
+		if(isVoidProcess() && getDocumentNo().length() > 8) {
+			String docNoTail = getDocumentNo().substring(getDocumentNo().length()-8, getDocumentNo().length());   //'00001000'
+			// Los comprobantes internos (ej. DDC-19608) no terminan en 8 dígitos: no llevan numeración fiscal, se deja el NumeroComprobante
+			if(docNoTail.matches("\\d+"))
+				nroComp = new Integer(docNoTail);
+		}
 		
 		/**
 		 * Cuando llega via hasta aca via reversion, el campo NumeroComprobante es el mismo
