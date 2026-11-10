@@ -44,7 +44,14 @@ public class OnCreditCurrentAccountBalanceData extends
             
             }
             
+            long t0 = System.currentTimeMillis();
             rs = ps.executeQuery();
+            long elapsed = System.currentTimeMillis() - t0;
+            System.out.println("[CC loadBalanceData] bp=" + getBpartner().getID() + " executeQuery " + elapsed + "ms");
+            // Si tarda, se imprime la consulta completa para poder analizarla con EXPLAIN
+            if (elapsed > 3000) {
+            	System.out.println("[CC loadBalanceData] CONSULTA LENTA (" + elapsed + "ms): " + sql);
+            }
             if( rs.next()) {
 //                setCreditUsed(rs.getBigDecimal( 1 ));
                 setBalance(rs.getBigDecimal( 1 ));

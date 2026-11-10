@@ -330,12 +330,12 @@ public class CurrentAccountQuery {
 				+ "COUNT(*) AS linecount, "
 				+ "COUNT(" + nativeAmount + ") AS nativecount, "
 				+ "COUNT(" + convertedAmount + ") AS allocatedcount "
-				+ "FROM c_allocationline allocation_line "
+				+ "FROM (" + getDocumentAllocationLineIDsQuery() + ") document_allocation_line "
+				+ "JOIN c_allocationline allocation_line ON allocation_line.c_allocationline_id = document_allocation_line.c_allocationline_id "
 				+ "JOIN c_allocationhdr allocation_hdr ON allocation_hdr.c_allocationhdr_id = allocation_line.c_allocationhdr_id "
 				+ "LEFT JOIN c_invoice allocated_invoice ON allocated_invoice.c_invoice_id = allocation_line.c_invoice_id "
 				+ "LEFT JOIN c_invoice allocated_credit_invoice ON allocated_credit_invoice.c_invoice_id = allocation_line.c_invoice_credit_id "
-				+ "WHERE (" + getDirectAllocatedLineCondition() + " OR " + getAdvanceAppliedLineCondition() + ") "
-				+ "AND (allocation_line.c_invoice_id IS NOT NULL OR allocation_line.c_invoice_credit_id IS NOT NULL) "
+				+ "WHERE (allocation_line.c_invoice_id IS NOT NULL OR allocation_line.c_invoice_credit_id IS NOT NULL) "
 				+ "AND allocation_line.isactive = 'Y' "
 				+ "AND allocation_hdr.isactive = 'Y' "
 				+ "AND allocation_hdr.processed = 'Y' "
@@ -344,28 +344,42 @@ public class CurrentAccountQuery {
 				+ "ON " + getReconstructedDocumentCondition() + " ";
 	}
 
-	protected String getDirectAllocatedLineCondition() {
-		return "(((d.documenttable = 'C_Payment' AND allocation_line.c_payment_id = d.document_id) "
-				+ "OR (d.documenttable = 'C_CashLine' AND allocation_line.c_cashline_id = d.document_id) "
-				+ "OR (d.documenttable = 'C_AllocationHdr' AND allocation_line.c_allocationhdr_id = d.document_id)) "
-				+ "AND (d.documenttable <> 'C_AllocationHdr' OR COALESCE(allocation_hdr.allocationtype, '') NOT IN ('RCA', 'OPA')))";
-	}
-
-	protected String getAdvanceAppliedLineCondition() {
-		return "(d.documenttable = 'C_AllocationHdr' AND EXISTS ("
-				+ "SELECT 1 "
-				+ "FROM c_allocationline advance_allocation_line "
+	/**
+	 * Ids de las líneas de allocation que corresponden al documento d, uno por
+	 * tipo de documento y todos accediendo por índice desde el propio documento
+	 * (cada rama se corta de inmediato si el documento es de otro tipo). Un
+	 * filtro con OR entre estas condiciones obligaba a recorrer todo
+	 * c_allocationline por cada documento y a evaluar un EXISTS por línea.
+	 * UNION (y no UNION ALL) para no repetir una línea que coincida por más de
+	 * un vínculo.
+	 */
+	protected String getDocumentAllocationLineIDsQuery() {
+		return "SELECT al.c_allocationline_id FROM c_allocationline al "
+				+ "WHERE d.documenttable = 'C_Payment' AND al.c_payment_id = d.document_id "
+				+ "UNION "
+				+ "SELECT al.c_allocationline_id FROM c_allocationline al "
+				+ "WHERE d.documenttable = 'C_CashLine' AND al.c_cashline_id = d.document_id "
+				+ "UNION "
+				// Líneas propias de la allocation, salvo que sea un anticipo
+				+ "SELECT al.c_allocationline_id FROM c_allocationline al "
+				+ "JOIN c_allocationhdr h ON h.c_allocationhdr_id = al.c_allocationhdr_id "
+				+ "WHERE d.documenttable = 'C_AllocationHdr' AND al.c_allocationhdr_id = d.document_id "
+				+ "AND COALESCE(h.allocationtype, '') NOT IN ('RCA', 'OPA') "
+				+ "UNION "
+				// Líneas aplicadas contra los pagos, cajas o créditos de un anticipo
+				+ "SELECT al.c_allocationline_id FROM c_allocationline advance_allocation_line "
 				+ "JOIN c_allocationhdr advance_allocation_hdr ON advance_allocation_hdr.c_allocationhdr_id = advance_allocation_line.c_allocationhdr_id "
-				+ "WHERE advance_allocation_line.c_allocationhdr_id = d.document_id "
+				+ "JOIN c_allocationline al ON al.c_allocationline_id <> advance_allocation_line.c_allocationline_id "
+				+ "AND ((advance_allocation_line.c_payment_id IS NOT NULL AND al.c_payment_id = advance_allocation_line.c_payment_id) "
+				+ "OR (advance_allocation_line.c_cashline_id IS NOT NULL AND al.c_cashline_id = advance_allocation_line.c_cashline_id) "
+				+ "OR (advance_allocation_line.c_invoice_credit_id IS NOT NULL AND al.c_invoice_credit_id = advance_allocation_line.c_invoice_credit_id)) "
+				+ "WHERE d.documenttable = 'C_AllocationHdr' "
+				+ "AND advance_allocation_line.c_allocationhdr_id = d.document_id "
 				+ "AND advance_allocation_hdr.allocationtype IN ('RCA', 'OPA') "
 				+ "AND advance_allocation_hdr.isactive = 'Y' "
 				+ "AND advance_allocation_hdr.processed = 'Y' "
 				+ "AND advance_allocation_hdr.docstatus IN ('CO', 'CL') "
-				+ "AND advance_allocation_line.isactive = 'Y' "
-				+ "AND allocation_line.c_allocationline_id <> advance_allocation_line.c_allocationline_id "
-				+ "AND ((advance_allocation_line.c_payment_id IS NOT NULL AND allocation_line.c_payment_id = advance_allocation_line.c_payment_id) "
-				+ "OR (advance_allocation_line.c_cashline_id IS NOT NULL AND allocation_line.c_cashline_id = advance_allocation_line.c_cashline_id) "
-				+ "OR (advance_allocation_line.c_invoice_credit_id IS NOT NULL AND allocation_line.c_invoice_credit_id = advance_allocation_line.c_invoice_credit_id))))";
+				+ "AND advance_allocation_line.isactive = 'Y'";
 	}
 
 	protected String getInvoiceAllocatedNetDocumentCurrencyAmountExpression() {

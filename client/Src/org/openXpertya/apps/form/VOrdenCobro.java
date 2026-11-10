@@ -387,7 +387,9 @@ public class VOrdenCobro extends VOrdenPago {
 	    		}
     		} 
     		
+    		long tProc = System.currentTimeMillis();
     		status = m_model.doPostProcesar(maxPaymentAllowed);
+    		m_model.logStep("VOrdenCobro: doPostProcesar termino status=" + status, tProc);
     		
     		switch (status) 
     		{
@@ -414,6 +416,7 @@ public class VOrdenCobro extends VOrdenPago {
     		if (status == VOrdenPagoModel.PROCERROR_OK)
     		{
 	    		m_model.mostrarInforme(this, isPrintRetentions());
+	    		m_model.logStep("VOrdenCobro: mostrarInforme termino", tProc);
 	    		
 	    		// Reset	    		
 	    		reset();
