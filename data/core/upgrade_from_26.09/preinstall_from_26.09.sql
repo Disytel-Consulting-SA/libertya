@@ -693,10 +693,11 @@ UNION ALL
           WHERE (ah.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND al.c_invoice_credit_id IS NOT NULL));
 
 -- 20261112-1530 OP#8206 Cuenta corriente: las ventas en efectivo cobradas por Libro de Caja no se descuentan del saldo.
--- Las lineas de caja de tipo Invoice no tienen c_bpartner_id propio (el informe filtra por cliente y las descartaba) y quedaban
--- ocultas por una allocation MAN con total 0, que tampoco se muestra (grandtotal - creditamt > 0). Cambios solo en la rama de lineas de caja:
--- 1) cliente = COALESCE(linea de caja, factura de la linea); 2) las allocations MAN con total 0 no cuentan como "saldadas"
---    (montosaldado_visible) para decidir si se muestra la linea ni para el debito. openamt no cambia.
+-- Las lineas de caja de tipo Invoice se aplican a su factura con una allocation MAN de total 0 (Libro de Caja). La vista oculta la
+-- linea de caja (esta saldada por la allocation) y tampoco muestra la allocation (grandtotal - creditamt > 0), por lo que el credito
+-- se perdia y la factura quedaba como deuda. Ademas la linea no tiene c_bpartner_id propio y la allocation no siempre lo tiene.
+-- Se agrega una rama que muestra esas allocations como C_AllocationHdr con el importe de sus lineas de caja (credito si es un cobro,
+-- debito si es un pago) y el cliente tomado de la factura. La rama de lineas de caja no cambia.
 CREATE OR REPLACE VIEW c_alldocumentscc_v AS
  SELECT c.c_currency_id,
         CASE
@@ -788,6 +789,44 @@ UNION ALL
      LEFT JOIN c_payment cp ON cp.c_payment_id = al.c_payment_id
      LEFT JOIN c_doctype cd ON cd.c_doctype_id = cp.c_doctype_id
   WHERE (ah.allocationtype::text = ANY (ARRAY['RC'::character varying::text, 'OP'::character varying::text, 'MAN'::character varying::text])) AND (ah.grandtotal - COALESCE(alc.creditamt, 0::numeric)) > 0::numeric AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+UNION ALL
+ SELECT ah.c_currency_id,
+    abs(s.total) AS amount,
+    GREATEST(- s.total, 0::numeric) AS debit,
+    GREATEST(s.total, 0::numeric) AS credit,
+    COALESCE(dt.name, 'Asignación Manual'::character varying) AS tipo_doc,
+    ah.documentno,
+    ah.datetrx,
+    ah.dateacct,
+    ah.c_doctype_id,
+    'C_AllocationHdr'::text AS documenttable,
+    ah.c_allocationhdr_id AS document_id,
+    0 AS openamt,
+    ah.created,
+    COALESCE(ah.c_bpartner_id, s.c_bpartner_id) AS c_bpartner_id,
+    ah.ad_org_id,
+    ah.ad_client_id,
+        CASE
+            WHEN s.total > 0::numeric THEN 'Y'::bpchar
+            ELSE 'N'::bpchar
+        END AS issotrx,
+    NULL::integer AS c_invoicepayschedule_id,
+    NULL::timestamp without time zone AS duedate
+   FROM c_allocationhdr ah
+     LEFT JOIN c_doctype dt ON ah.c_doctype_id = dt.c_doctype_id
+     JOIN ( SELECT x.c_allocationhdr_id,
+            sum(x.amount) AS total,
+            min(x.c_bpartner_id) AS c_bpartner_id
+           FROM ( SELECT DISTINCT al.c_allocationhdr_id,
+                    cl.c_cashline_id,
+                    cl.amount,
+                    i.c_bpartner_id
+                   FROM c_allocationline al
+                     JOIN c_cashline cl ON cl.c_cashline_id = al.c_cashline_id AND cl.processed = 'Y'::bpchar AND (cl.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
+                     JOIN c_invoice i ON i.c_invoice_id = al.c_invoice_id
+                  WHERE al.isactive = 'Y'::bpchar) x
+          GROUP BY x.c_allocationhdr_id) s ON s.c_allocationhdr_id = ah.c_allocationhdr_id
+  WHERE ah.allocationtype::text = 'MAN'::text AND ah.grandtotal = 0::numeric AND s.total <> 0::numeric AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
 UNION ALL
  SELECT ah.c_currency_id,
     ah.grandtotal AS amount,
@@ -997,7 +1036,7 @@ UNION ALL
         CASE
             WHEN COALESCE(ch.c_charge_id, 0) = 0 THEN
             CASE
-                WHEN p.amount > 0::numeric THEN abs(COALESCE(al.montosaldado_visible, 0::numeric)) * 1::numeric
+                WHEN p.amount > 0::numeric THEN abs(COALESCE(al.montosaldado, 0::numeric)) * 1::numeric
                 ELSE abs(p.amount) * 1::numeric
             END
             ELSE 0::numeric
@@ -1006,7 +1045,7 @@ UNION ALL
             WHEN COALESCE(ch.c_charge_id, 0) = 0 THEN
             CASE
                 WHEN p.amount > 0::numeric THEN abs(p.amount)
-                ELSE abs(COALESCE(al.montosaldado_visible, 0::numeric))
+                ELSE abs(COALESCE(al.montosaldado, 0::numeric))
             END
             ELSE 0::numeric
         END AS credit,
@@ -1026,7 +1065,7 @@ UNION ALL
             ELSE 0::numeric
         END AS openamt,
     p.created,
-    COALESCE(p.c_bpartner_id, ic.c_bpartner_id) AS c_bpartner_id,
+    p.c_bpartner_id,
     p.ad_org_id,
     p.ad_client_id,
         CASE
@@ -1038,18 +1077,16 @@ UNION ALL
    FROM c_cashline p
      JOIN c_cash c ON p.c_cash_id = c.c_cash_id
      LEFT JOIN c_charge ch ON ch.c_charge_id = p.c_charge_id
-     LEFT JOIN c_invoice ic ON ic.c_invoice_id = p.c_invoice_id
      LEFT JOIN LATERAL ( SELECT d.c_cashline_id,
             d.isactive,
             sum(d.montosaldado) AS montosaldado,
-            sum(d.montosaldado) FILTER (WHERE NOT (COALESCE(ah.allocationtype::text, ''::text) = 'MAN'::text AND COALESCE(ah.grandtotal, 1::numeric) = 0::numeric)) AS montosaldado_visible,
             count(aha.c_allocationhdr_id) AS cant
            FROM c_allocation_detail_v d
              LEFT JOIN c_allocationhdr aha ON d.c_allocationhdr_id = aha.c_allocationhdr_id AND (aha.allocationtype::text = ANY (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND aha.processed = 'Y'::bpchar AND (aha.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
              LEFT JOIN c_allocationhdr ah ON d.c_allocationhdr_id = ah.c_allocationhdr_id AND (ah.allocationtype::text <> ALL (ARRAY['RCA'::character varying::text, 'OPA'::character varying::text])) AND ah.processed = 'Y'::bpchar AND (ah.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar]))
           WHERE d.c_cashline_id = p.c_cashline_id
           GROUP BY d.c_cashline_id, d.isactive) al ON al.c_cashline_id = p.c_cashline_id AND al.isactive = 'Y'::bpchar
-  WHERE p.processed = 'Y'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (al.c_cashline_id IS NULL OR COALESCE(al.montosaldado_visible, 0::numeric) < abs(p.amount)) AND (al.cant IS NULL OR al.cant = 0)
+  WHERE p.processed = 'Y'::bpchar AND (p.docstatus = ANY (ARRAY['CO'::bpchar, 'CL'::bpchar])) AND (al.c_cashline_id IS NULL OR al.montosaldado < abs(p.amount)) AND (al.cant IS NULL OR al.cant = 0)
 UNION ALL
  SELECT c.c_currency_id,
         CASE
