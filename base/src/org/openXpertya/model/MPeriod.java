@@ -105,7 +105,7 @@ public class MPeriod extends X_C_Period implements ITime{
 	        while( it.hasNext()) {
 	            MPeriod period = ( MPeriod )it.next();
 	
-	            if( period.isStandardPeriod() && period.isInPeriod( DateAcct )) {
+	            if( period.isActive() && period.isStandardPeriod() && period.isInPeriod( DateAcct )) {
 	                return period;
 	            }
 	        }
@@ -115,7 +115,7 @@ public class MPeriod extends X_C_Period implements ITime{
 
         MPeriod retValue     = null;
         int     AD_Client_ID = Env.getAD_Client_ID( ctx );
-        String  sql          = "SELECT * " + "FROM C_Period " + "WHERE C_Year_ID IN " + "(SELECT C_Year_ID FROM C_Year WHERE C_Calendar_ID= " + "(SELECT C_Calendar_ID FROM AD_ClientInfo WHERE AD_Client_ID=?))" + " AND ?::date BETWEEN date_trunc('day',StartDate) AND date_trunc('day',EndDate)" + " AND PeriodType='S'";
+        String  sql          = "SELECT * " + "FROM C_Period " + "WHERE C_Year_ID IN " + "(SELECT C_Year_ID FROM C_Year WHERE C_Calendar_ID= " + "(SELECT C_Calendar_ID FROM AD_ClientInfo WHERE AD_Client_ID=?))" + " AND ?::date BETWEEN date_trunc('day',StartDate) AND date_trunc('day',EndDate)" + " AND PeriodType='S' AND IsActive='Y'";
 
         try {
             PreparedStatement pstmt = DB.prepareStatement( sql,null, true );
