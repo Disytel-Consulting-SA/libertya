@@ -81,8 +81,14 @@ public abstract class Doc {
 
     public static String[] documentsTableName = null;
 
-    /** show log console - dREHER */
-	private static boolean isDebug = true;
+    /**
+     * show log console - dREHER
+     * Desactivado por defecto: con true, cada intento de contabilizacion escribe varias lineas a
+     * System.out y al log a nivel INFO (JBoss las vuelca en server.log). El motor contable reintenta
+     * en cada ciclo los documentos que no puede bloquear, lo que llego a generar ~1,6 GB de log por dia.
+     * Para depurar, activar temporalmente con -Dlibertya.acct.debug=true.
+     */
+	private static boolean isDebug = Boolean.getBoolean("libertya.acct.debug");
 
     static{
     	documentsTableID = new int[] {
