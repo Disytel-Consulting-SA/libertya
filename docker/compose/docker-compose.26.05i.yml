@@ -1,14 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Libertya ERP — Internacional — versión 26.05
+#
+# Compose de distribución: es el mismo que publica docker/DOCKERHUB.md (página
+# de disytel/libertya-i en Docker Hub). Si cambiás uno, actualizá el otro.
+# La edición LOC_AR (docker-compose.<ver>ar.yml) es este mismo archivo
+# con -ar en lugar de -i en las dos líneas image:.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Configuración: reemplazá lo que sigue a `:-`, o definí la variable en un
+# archivo .env en esta misma carpeta (el .env tiene prioridad).
+x-libertya:
+  # IP o nombre del servidor, como lo ven las PCs con el cliente Swing.
+  host: &host ${LIBERTYA_HOST:-localhost}
+  # Contraseñas de la base. Se fijan en el PRIMER arranque.
+  db-password: &db_password ${LIBERTYA_DB_PASSWORD:-libertya}        # usuario libertya
+  postgres-password: &postgres_password ${POSTGRES_PASSWORD:-libertya} # superusuario postgres
+
 services:
 
   db:
+    # Edición (-ar Argentina / -i Internacional) y versión: iguales en las dos imágenes.
     image: disytel/libertya-db-i:26.05
+    restart: unless-stopped
     network_mode: host
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: *postgres_password
       LIBERTYA_DB_NAME: libertya
       LIBERTYA_DB_USER: libertya
-      LIBERTYA_DB_PASS: libertya
+      LIBERTYA_DB_PASS: *db_password
       PGPORT: "5439"
     volumes:
       - libertya_pgdata:/var/lib/postgresql/data
@@ -20,21 +40,20 @@ services:
 
   app:
     image: disytel/libertya-i:26.05
+    restart: unless-stopped
     network_mode: host
     depends_on:
       db:
         condition: service_healthy
     environment:
       OXP_HOME: /ServidorOXP
-      SERVIDOR_BD_OXP: localhost
+      SERVIDOR_APPS_OXP: *host
+      SERVIDOR_BD_OXP: *host   # el cliente Swing se conecta directo a la base
       PUERTO_BD_OXP: "5439"
       NOMBRE_BD_OXP: libertya
       USUARIO_BD_OXP: libertya
-      PASSWD_BD_OXP: libertya
-      SYSTEM_BD_OXP: libertya
-      # SERVIDOR_APPS_OXP: hostname/IP accesible desde el cliente Java/Swing externo.
-      # En local usar "localhost"; en servidor remoto poner la IP/hostname público.
-      SERVIDOR_APPS_OXP: localhost
+      PASSWD_BD_OXP: *db_password
+      SYSTEM_BD_OXP: *postgres_password
       PUERTO_WEB_OXP: "8080"
       PUERTO_SSL_OXP: "8443"
       PUERTO_JNP_OXP: "1099"
