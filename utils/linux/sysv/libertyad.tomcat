@@ -1,0 +1,151 @@
+#!/bin/bash
+#
+# libertyad - Servidor de aplicaciones Libertya (Tomcat), script de inicio SysV
+#
+# Instalación (como root):
+#   cp /ServidorOXP/utils/linux/sysv/libertyad.tomcat /etc/init.d/libertyad
+#   chmod 755 /etc/init.d/libertyad
+#   CentOS/RHEL/Fedora: chkconfig --add libertyad && chkconfig libertyad on
+#   Debian/Ubuntu:      update-rc.d libertyad defaults
+#
+# Sirve para todas las distros: tiene el encabezado chkconfig (RedHat) y el LSB (Debian).
+# Configuración opcional en /etc/sysconfig/libertyad o /etc/default/libertyad:
+#   OXP_HOME, LIBERTYA_USER, LIBERTYA_GROUP, PID_FILE, STOP_TIMEOUT
+#
+# chkconfig: 2345 98 02
+# description: Libertya Application Server (Tomcat)
+#
+### BEGIN INIT INFO
+# Provides:          libertyad
+# Required-Start:    $network $remote_fs $syslog
+# Required-Stop:     $network $remote_fs $syslog
+# Should-Start:      postgresql
+# Should-Stop:       postgresql
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Libertya Application Server (Tomcat)
+### END INIT INFO
+
+if [ "$(id -u)" -ne 0 ]; then
+	echo "Se requiere ejecutar como root" >&2
+	exit 4
+fi
+
+OXP_HOME=/ServidorOXP
+LIBERTYA_USER=libertya
+LIBERTYA_GROUP=libertya
+# Mismo PID file que usaba el script SysV de JBoss y que espera scripts/deploy_remote.sh
+PID_FILE=/var/run/libertya/libertya.pid
+# Segundos que se espera el shutdown ordenado antes de forzar con SIGKILL
+STOP_TIMEOUT=180
+
+[ -r /etc/sysconfig/libertyad ] && . /etc/sysconfig/libertyad
+[ -r /etc/default/libertyad ] && . /etc/default/libertyad
+
+PID_DIR=$(dirname "$PID_FILE")
+
+leer_pid() {
+	[ -s "$PID_FILE" ] && cat "$PID_FILE" 2>/dev/null
+}
+
+# Corriendo = el PID del archivo existe y es un Tomcat (evita falsos positivos por PID reutilizado)
+esta_corriendo() {
+	local pid
+	pid=$(leer_pid)
+	[ -n "$pid" ] \
+		&& kill -0 "$pid" 2>/dev/null \
+		&& grep -qa 'org.apache.catalina.startup.Bootstrap' "/proc/$pid/cmdline" 2>/dev/null
+}
+
+iniciar() {
+	if esta_corriendo; then
+		echo "El servidor ya se encuentra iniciado (PID $(leer_pid))"
+		return 0
+	fi
+
+	rm -f "$PID_FILE"
+	mkdir -p "$PID_DIR"
+	chown "$LIBERTYA_USER:$LIBERTYA_GROUP" "$PID_DIR"
+
+	echo -n "Iniciando Servidor Libertya (Tomcat) "
+
+	# catalina.sh start deja Java en segundo plano y guarda su PID en CATALINA_PID.
+	# Se usa un shell de login (-l) para tomar el perfil del usuario, igual que el unit de systemd.
+	su -l -s /bin/bash \
+		-c "export OXP_HOME='$OXP_HOME' CATALINA_PID='$PID_FILE'; cd \"\$OXP_HOME/tomcat/bin\" && ./IniciarServidor.sh" \
+		"$LIBERTYA_USER" >/dev/null
+
+	# Verificar que Java no haya muerto apenas arrancó (opciones de JVM inválidas, permisos, etc.)
+	sleep 2
+	if esta_corriendo; then
+		echo "[OK] (PID $(leer_pid))"
+		return 0
+	fi
+
+	echo "[ERROR] Ver $OXP_HOME/tomcat/logs/catalina.out"
+	return 1
+}
+
+detener() {
+	if ! esta_corriendo; then
+		echo "El servidor no esta iniciado"
+		rm -f "$PID_FILE"
+		return 0
+	fi
+
+	local pid i=0
+	pid=$(leer_pid)
+	echo -n "Deteniendo Servidor Libertya (Tomcat) "
+
+	# SIGTERM dispara el shutdown hook de Tomcat (shutdown ordenado), igual que systemd.
+	# No depende del puerto de shutdown (8005).
+	kill -TERM "$pid" 2>/dev/null
+	while kill -0 "$pid" 2>/dev/null; do
+		if [ "$i" -ge "$STOP_TIMEOUT" ]; then
+			echo -n " no respondio en ${STOP_TIMEOUT}s, se fuerza con SIGKILL"
+			kill -KILL "$pid" 2>/dev/null
+			sleep 1
+			break
+		fi
+		sleep 1
+		i=$((i + 1))
+		[ $((i % 5)) -eq 0 ] && echo -n "."
+	done
+
+	rm -f "$PID_FILE"
+	echo " [OK]"
+	return 0
+}
+
+# Imprime 1 (corriendo) o 0 (detenido): utils/restartPostgres.sh lee esta salida.
+# El código de salida sigue LSB: 0 corriendo, 1 detenido con PID file, 3 detenido.
+estado() {
+	if esta_corriendo; then
+		echo "1"
+		return 0
+	fi
+	echo "0"
+	[ -f "$PID_FILE" ] && return 1
+	return 3
+}
+
+case "$1" in
+	start)
+		iniciar
+		;;
+	stop)
+		detener
+		;;
+	restart|force-reload)
+		detener
+		iniciar
+		;;
+	status)
+		estado
+		;;
+	*)
+		echo "Uso: /etc/init.d/libertyad {start|stop|restart|status}"
+		exit 2
+		;;
+esac
+exit $?

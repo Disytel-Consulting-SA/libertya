@@ -1,0 +1,48 @@
+# Libertya - servicio systemd para el servidor de aplicaciones Tomcat
+#
+# Instalación (como root):
+#   cp /ServidorOXP/utils/linux/systemd/libertyad.service.tomcat /etc/systemd/system/libertyad.service
+#   systemctl daemon-reload
+#   systemctl enable --now libertyad
+#
+# Tomcat se ejecuta en primer plano (catalina.sh run) para que el proceso Java sea
+# el proceso principal del servicio. No usar IniciarServidorTomcat.sh ni startup.sh:
+# dejan Java en segundo plano, systemd da el servicio por terminado y mata a Tomcat.
+#
+# La salida de Tomcat va al journal (journalctl -u libertyad), no a catalina.out.
+
+[Unit]
+Description=Libertya Application Server (Tomcat)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=libertya
+Group=libertya
+WorkingDirectory=/ServidorOXP/utils
+Environment=OXP_HOME=/ServidorOXP
+EnvironmentFile=-/etc/sysconfig/libertyad
+EnvironmentFile=-/etc/default/libertyad
+
+# Carga el entorno de Libertya (TomcatEnv.sh) y reemplaza el shell por el proceso Java.
+ExecStart=/bin/bash -lc 'cd /ServidorOXP/tomcat/bin && . ./TomcatEnv.sh && export CATALINA_OPTS="$BASE_CATALINA_OPTS" && exec ./catalina.sh run'
+
+# Sin ExecStop a propósito: al detener, systemd manda SIGTERM a Java y Tomcat hace
+# el shutdown ordenado. Java sale con 143 (SIGTERM), contemplado en SuccessExitStatus.
+
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=180
+KillMode=control-group
+KillSignal=SIGTERM
+FinalKillSignal=SIGKILL
+SendSIGKILL=yes
+SuccessExitStatus=143
+UMask=0027
+StandardOutput=journal
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target
