@@ -24,8 +24,8 @@ journalctl -u libertyad -f
 
 Para JBoss es igual, con `libertyad.service.jboss`.
 
-- Corre como el usuario `libertya`. Se pueden agregar variables en `/etc/sysconfig/libertyad` (RedHat) o `/etc/default/libertyad` (Debian).
-- Si Libertya no está en `/ServidorOXP`, ajustar `WorkingDirectory`, `OXP_HOME` y la ruta del `ExecStart`.
+- Corre como el usuario `libertya`. En el de Tomcat se pueden agregar variables en `/etc/sysconfig/libertyad` (RedHat) o `/etc/default/libertyad` (Debian).
+- Si Libertya no está en `/ServidorOXP`, ajustar `WorkingDirectory`, `OXP_HOME` y las rutas de `ExecStart` (y `ExecStop` en el de JBoss).
 - Con Tomcat, la salida va al journal y no a `catalina.out`, porque Tomcat corre en primer plano (`catalina.sh run`).
 
 ## SysV (sistemas sin systemd)

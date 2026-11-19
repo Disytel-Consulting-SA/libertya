@@ -1,35 +1,27 @@
 [Unit]
-Description=Libertya Application Server (JBoss)
-After=network-online.target
-Wants=network-online.target
+Description=Libertya Application Server 3
+After=network.target
 
 [Service]
 Type=simple
 User=libertya
 Group=libertya
-WorkingDirectory=/ServidorOXP/utils
+WorkingDirectory=/ServidorOXP
+
+Environment=JAVA_HOME=/opt/jdk-11.0.24+8
 Environment=OXP_HOME=/ServidorOXP
-EnvironmentFile=-/etc/sysconfig/libertyad
-EnvironmentFile=-/etc/default/libertyad
 
-# Inicia en foreground para que systemd controle el proceso real.
-ExecStart=/bin/bash -lc 'exec ./IniciarServidor.sh'
+RuntimeDirectory=libertya
+RuntimeDirectoryMode=0755
 
-# Intenta shutdown limpio por script (el -S se ignoraba en el script actual).
-ExecStop=/bin/bash -lc './DetenerServidor.sh'
+ExecStart=/bin/bash -lc '/ServidorOXP/utils/IniciarServidorJBoss.sh & sleep 1; exit 0'
+ExecStop=/bin/bash  -lc '/ServidorOXP/utils/DetenerServidorJBoss.sh -S'
 
+RemainAfterExit=yes
+TimeoutStartSec=3min
+TimeoutStopSec=45s
 Restart=on-failure
-RestartSec=10
-TimeoutStartSec=300
-TimeoutStopSec=180
-KillMode=control-group
-KillSignal=SIGTERM
-FinalKillSignal=SIGKILL
-SendSIGKILL=yes
-SuccessExitStatus=143
-UMask=0027
-StandardOutput=journal
-StandardError=inherit
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
