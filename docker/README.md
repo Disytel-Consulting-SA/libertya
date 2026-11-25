@@ -11,6 +11,7 @@ Estructura del directorio:
 docker/
 ├── .gitignore               ← excluye artefactos de build (ZIP, dump, JARs de plugins)
 ├── DOCKERHUB.md             ← guía de instalación (Overview de disytel/libertya-i)
+├── PENDIENTE-upgrades-y-lyrestapi.md ← análisis de upgrades y lyrestapi (no implementado)
 ├── README.md
 ├── app/
 │   ├── Dockerfile           ← imagen del servidor Libertya (JBoss)
@@ -275,6 +276,10 @@ instalación en uso se cambia el tag, la base no se actualiza y el servidor nuev
 queda corriendo contra una base de la versión anterior. Hoy no hay en Docker un
 equivalente a correr el PluginInstaller con los `upgrade_from_*`, por eso la guía
 de Docker Hub indica no cambiar el tag de una instalación en uso.
+
+El análisis y el diseño propuesto (modo `upgrade` en el entrypoint, y cómo sumar
+lyrestapi al compose) están en
+[`PENDIENTE-upgrades-y-lyrestapi.md`](PENDIENTE-upgrades-y-lyrestapi.md).
 
 ---
 
